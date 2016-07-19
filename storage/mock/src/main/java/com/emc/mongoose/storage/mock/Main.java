@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.JacksonConfigLoader;
-import com.emc.mongoose.storage.mock.http.Nagaina;
+import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import java.io.IOException;

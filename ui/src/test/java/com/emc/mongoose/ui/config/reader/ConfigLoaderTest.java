@@ -1,25 +1,27 @@
-package com.emc.mongoose.ui.config.reader.jackson;
+package com.emc.mongoose.ui.config.reader;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.model.util.TimeUtil;
+import com.emc.mongoose.ui.config.reader.jackson.JacksonConfigLoader;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Map;
 
-import static com.emc.mongoose.ui.config.ConfigMatcher.equalTo;
-import static com.emc.mongoose.ui.config.ConfigNullMatcher.notNullValue;
-import static com.emc.mongoose.ui.config.ConfigNullMatcher.nullValue;
+import static com.emc.mongoose.ui.config.matcher.ConfigMatcher.equalTo;
+import static com.emc.mongoose.ui.config.matcher.ConfigNullMatcher.notNullValue;
+import static com.emc.mongoose.ui.config.matcher.ConfigNullMatcher.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  Created by kurila on 14.07.16.
  */
-public class JacksonConfigLoaderTest {
+public class ConfigLoaderTest {
 
+	@SuppressWarnings("ConstantConditions")
 	@Test
-	public void shouldParseWithOutFireballsThrowing()
+	public void shouldParseWithoutFireballsThrowing()
 	throws IOException {
 		final Config config = JacksonConfigLoader.loadDefaultConfig();
 		assertThat(config, notNullValue());

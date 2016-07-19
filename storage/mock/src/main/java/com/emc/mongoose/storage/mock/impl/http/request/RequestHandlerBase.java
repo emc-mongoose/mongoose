@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.http.request;
+package com.emc.mongoose.storage.mock.impl.http.request;
 
 import io.netty.channel.ChannelInboundHandlerAdapter;
 

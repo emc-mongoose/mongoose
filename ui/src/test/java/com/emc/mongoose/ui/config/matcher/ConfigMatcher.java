@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.config;
+package com.emc.mongoose.ui.config.matcher;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
