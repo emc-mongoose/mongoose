@@ -16,7 +16,7 @@ import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.model.impl.io.task.BasicDataIoTaskFactory;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItemFactory;
-import com.emc.mongoose.storage.driver.BasicDriver;
+import com.emc.mongoose.storage.driver.base.DriverBase;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,8 +40,8 @@ public class Main {
 		final List<Generator<I, O>> generators = new ArrayList<>(generatorCount);
 		for(int i = 0; i < generatorCount; i ++) {
 			final List<Driver<I, O>> drivers = new ArrayList<>(2);
-			drivers.add(new BasicDriver<>());
-			drivers.add(new BasicDriver<>());
+			drivers.add(new DriverBase<>());
+			drivers.add(new DriverBase<>());
 			generators.add(
 				new BasicGenerator<>(
 					drivers, LoadType.CREATE, (ItemFactory<I>) new BasicDataItemFactory(),

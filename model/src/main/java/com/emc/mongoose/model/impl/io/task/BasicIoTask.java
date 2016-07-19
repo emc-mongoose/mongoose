@@ -16,7 +16,7 @@ implements IoTask<I> {
 	protected final I item;
 	//
 	protected volatile String nodeAddr = null;
-	protected volatile IoTask.Status status = IoTask.Status.FAIL_UNKNOWN;
+	protected volatile Status status = Status.PENDING;
 	protected volatile long reqTimeStart = 0;
 	protected volatile long reqTimeDone = 0;
 	protected volatile long respTimeStart = 0;

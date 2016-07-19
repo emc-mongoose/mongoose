@@ -120,8 +120,16 @@ implements Serializable {
 		}
 	}
 	//
+	public long getMin() {
+		return min;
+	}
+	//
+	public long getMax() {
+		return min + range;
+	}
+	//
 	private final static int APPROXIMATION_COUNT = 100;
-	public final long getAvgDataSize() {
+	public final long getAvg() {
 		if(range == 0) {
 			return min;
 		} else {
