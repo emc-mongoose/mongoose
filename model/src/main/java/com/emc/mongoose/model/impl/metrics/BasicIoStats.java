@@ -19,7 +19,7 @@ implements IoStats {
 	protected final String name;
 	protected final Clock clock = new ResumableUserTimeClock();
 	protected final Histogram reqDuration, respLatency;
-	protected final CustomMeter throughPutSucc, throughPutFail, reqBytes;
+	protected final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
 	protected LongAdder reqDurationSum, respLatencySum;
 	//
@@ -29,16 +29,16 @@ implements IoStats {
 		respLatencySum = new LongAdder();
 		reqDuration = new Histogram(new UnsafeButFasterUniformReservoir());
 		reqDurationSum = new LongAdder();
-		throughPutSucc = new CustomMeter(clock, updateIntervalSec);
-		throughPutFail = new CustomMeter(clock, updateIntervalSec);
+		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
+		throughputFail = new CustomMeter(clock, updateIntervalSec);
 		reqBytes = new CustomMeter(clock, updateIntervalSec);
 	}
 	//
 	@Override
 	public void start() {
 		tsStartMicroSec = TimeUnit.NANOSECONDS.toMicros(System.nanoTime());
-		throughPutSucc.resetStartTime();
-		throughPutFail.resetStartTime();
+		throughputSuccess.resetStartTime();
+		throughputFail.resetStartTime();
 		reqBytes.resetStartTime();
 	}
 	//
@@ -337,7 +337,7 @@ implements IoStats {
 	//
 	@Override
 	public void markSucc(final long size, final int duration, final int latency) {
-		throughPutSucc.mark();
+		throughputSuccess.mark();
 		reqBytes.mark(size);
 		reqDuration.update(duration);
 		reqDurationSum.add(duration);
@@ -349,7 +349,7 @@ implements IoStats {
 	public void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	) {
-		throughPutSucc.mark(count);
+		throughputSuccess.mark(count);
 		reqBytes.mark(bytes);
 		for(final long duration : durationValues) {
 			reqDuration.update(duration);
@@ -363,12 +363,12 @@ implements IoStats {
 	//
 	@Override
 	public void markFail() {
-		throughPutFail.mark();
+		throughputFail.mark();
 	}
 	//
 	@Override
 	public void markFail(final long count) {
-		throughPutFail.mark(count);
+		throughputFail.mark(count);
 	}
 	//
 	@Override
@@ -378,8 +378,8 @@ implements IoStats {
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
 		return new BasicSnapshot(
-			throughPutSucc.getCount(), throughPutSucc.getLastRate(), throughPutFail.getCount(),
-			throughPutFail.getLastRate(), reqBytes.getCount(), reqBytes.getLastRate(),
+			throughputSuccess.getCount(), throughputSuccess.getLastRate(), throughputFail.getCount(),
+			throughputFail.getLastRate(), reqBytes.getCount(), reqBytes.getLastRate(),
 			prevElapsedTimeMicroSec + currElapsedTime, reqDurationSum.sum(), respLatencySum.sum(),
 			reqDurSnapshot, respLatSnapshot
 		);

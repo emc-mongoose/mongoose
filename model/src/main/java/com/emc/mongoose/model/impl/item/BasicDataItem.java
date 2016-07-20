@@ -115,13 +115,13 @@ implements DataItem {
 		}
 	}
 	//
-	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	private final static ThreadLocal<StringBuilder> STR_BUILDER_CONTAINER = new ThreadLocal<>();
 	@Override
 	public String toString() {
-		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
+		StringBuilder strBuilder = STR_BUILDER_CONTAINER.get();
 		if(strBuilder == null) {
 			strBuilder = new StringBuilder();
-			THR_LOCAL_STR_BUILDER.set(strBuilder);
+			STR_BUILDER_CONTAINER.set(strBuilder);
 		} else {
 			strBuilder.setLength(0); // reset
 		}

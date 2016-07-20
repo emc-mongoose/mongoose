@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.http.request;
+package com.emc.mongoose.storage.mock.impl.http.request;
 
 /**
  Created on 12.07.16.

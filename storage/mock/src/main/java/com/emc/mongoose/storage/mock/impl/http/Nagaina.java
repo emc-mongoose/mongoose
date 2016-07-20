@@ -1,13 +1,16 @@
-package com.emc.mongoose.storage.mock.http;
+package com.emc.mongoose.storage.mock.impl.http;
 
+import com.emc.mongoose.model.api.item.DataItem;
+import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import com.emc.mongoose.storage.mock.StorageMock;
-import com.emc.mongoose.storage.mock.http.request.AtmosRequestHandler;
-import com.emc.mongoose.storage.mock.http.request.RequestHandlerBase;
-import com.emc.mongoose.storage.mock.http.request.S3RequestHandler;
-import com.emc.mongoose.storage.mock.http.request.SwiftRequestHandler;
+import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
+import com.emc.mongoose.storage.mock.impl.http.request.RequestHandlerBase;
+import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
+import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -30,7 +33,8 @@ import java.util.stream.Stream;
 /**
  Created on 11.07.16.
  */
-public class Nagaina implements StorageMock {
+public class Nagaina extends StorageMockBase<MutableDataItemMock>{
+
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -42,6 +46,7 @@ public class Nagaina implements StorageMock {
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(final Config config) {
+		super(config.getStorageConfig().getMockConfig(), config.getLoadConfig().getMetricsConfig(), config.getItemConfig());
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
@@ -54,9 +59,9 @@ public class Nagaina implements StorageMock {
 		atmosRequestHandler = new AtmosRequestHandler();
 	}
 
-	@Override
-	public void start()
+	public void doStart()
 	throws IllegalStateException {
+		super.start();
 		final int portsNumber = dispatchGroups.length;
 		for (int i = 0; i < portsNumber; i++) {
 			try {
@@ -190,5 +195,14 @@ public class Nagaina implements StorageMock {
 	@Override
 	public boolean isInterrupted() {
 		return false;
+	}
+
+	@Override
+	protected MutableDataItemMock newDataObject(final String id, final long offset, final long size) {
+		return null;
+	}
+
+	@Override
+	protected void startListening() {
 	}
 }

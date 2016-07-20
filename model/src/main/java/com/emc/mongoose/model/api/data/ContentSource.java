@@ -9,6 +9,10 @@ import java.nio.ByteBuffer;
  */
 public interface ContentSource
 extends Cloneable, Closeable, Externalizable {
+
+	enum Type {
+		FILE, SEED
+	}
 	//
 	int getSize();
 	//
