@@ -13,31 +13,23 @@ extends IoStatsBase {
 	protected final AtomicLong reqDurationSum = new AtomicLong(0);
 	protected final AtomicLong respLatencySum = new AtomicLong(0);
 	//
-	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
+	protected final CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	//
 	public BasicIoStats(
 		final String name, final boolean serveJmxFlag, final int updateIntervalSec
 	) {
 		super(name, serveJmxFlag);
 		this.updateIntervalSec = updateIntervalSec;
+		throughPutSucc = new CustomMeter(clock, updateIntervalSec);
+		throughPutFail = new CustomMeter(clock, updateIntervalSec);
+		reqBytes = new CustomMeter(clock, updateIntervalSec);
 	}
 	//
 	@Override
 	public void start() {
-		// init load exec time dependent metrics
-		throughPutSucc = metrics.register(
-			CustomMetricRegistry.name(name, METRIC_NAME_SUCC),
-			new CustomMeter(clock, updateIntervalSec)
-		);
-		throughPutFail = metrics.register(
-			CustomMetricRegistry.name(name, METRIC_NAME_FAIL),
-			new CustomMeter(clock, updateIntervalSec)
-		);
-		reqBytes = metrics.register(
-			CustomMetricRegistry.name(name, METRIC_NAME_BYTE),
-			new CustomMeter(clock, updateIntervalSec)
-		);
-		//
+		throughPutSucc.resetStartTime();
+		throughPutFail.resetStartTime();
+		reqBytes.resetStartTime();
 		super.start();
 	}
 	//

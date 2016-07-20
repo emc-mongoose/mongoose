@@ -18,7 +18,7 @@ implements Metric {
 	//
 	private final EWMA rateAvg;
 	private final LongAdder count = new LongAdder();
-	private final long startTime;
+	private long startTime;
 	private final AtomicLong lastTick;
 	private final Clock clock;
 	//
@@ -33,7 +33,12 @@ implements Metric {
 	public CustomMeter(final int periodSec) {
 		this(Clock.defaultClock(), periodSec);
 	}
-	//
+
+	public void resetStartTime() {
+		startTime = clock.getTick();
+		lastTick.set(startTime);
+	}
+
 	/**
 	 * Mark the occurrence of an event.
 	 */

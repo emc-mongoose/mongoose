@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 //
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
@@ -12,6 +13,7 @@ import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 15.09.15.
@@ -39,14 +41,8 @@ implements IoStats {
 			mBeanServer = null;
 			jmxReporter = null;
 		}
-		respLatency = metrics.register(
-			CustomMetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT),
-			new Histogram(new UniformReservoir())
-		);
-		reqDuration = metrics.register(
-			CustomMetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR),
-			new Histogram(new UniformReservoir())
-		);
+		respLatency = new Histogram(new UniformReservoir());
+		reqDuration = new Histogram(new UniformReservoir());
 	}
 	//
 	@Override
@@ -332,47 +328,108 @@ implements IoStats {
 		@Override
 		public final String toSuccRatesString() {
 			return String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_FLOAT_PAIR, getSuccRateMean(), succRateLast
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_PAIR, getSuccRateMean(), succRateLast
 			);
 		}
 		//
 		@Override
 		public final String toByteRatesString() {
 			return String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_FLOAT_PAIR,
-				getByteRateMean() / MIB, byteRateLast / MIB
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_PAIR, getByteRateMean() / MIB, byteRateLast / MIB
 			);
 		}
 		//
 		@Override
 		public final String toString() {
+
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
+
+			final double elapsedTime = getElapsedTime() / M;
+			final String elapsedTimeStr;
+			if(elapsedTime < 1) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
+			} else if(elapsedTime < 10 ) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
+			} else if(elapsedTime < 100) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
+			} else if(elapsedTime < 1000){
+				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
+			} else {
+				elapsedTimeStr = Long.toString((long) elapsedTime);
+			}
+
+			final double durationSum = getDurationSum() / M;
+			final String durationSumStr;
+			if(durationSum < 1) {
+				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
+			} else if(durationSum < 10 ) {
+				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
+			} else if(durationSum < 100) {
+				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
+			} else if(durationSum < 1000){
+				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
+			} else {
+				durationSumStr = Long.toString((long) durationSum);
+			}
+
 			return String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-				toCountsString(),
-				toDurString(), toLatString(),
-				toSuccRatesString(), toByteRatesString()
+				Locale.ROOT, MSG_FMT_METRICS,
+				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
+				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
+				getByteRateMean() / MIB, getByteRateLast() / MIB,
+				toDurString(), toLatString()
 			);
 		}
 		//
 		@Override
 		public final String toSummaryString() {
+
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
+
+			final double elapsedTime = getElapsedTime() / M;
+			final String elapsedTimeStr;
+			if(elapsedTime < 1) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
+			} else if(elapsedTime < 10 ) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
+			} else if(elapsedTime < 100) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
+			} else if(elapsedTime < 1000){
+				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
+			} else {
+				elapsedTimeStr = Long.toString((long) elapsedTime);
+			}
+
+			final double durationSum = getDurationSum() / M;
+			final String durationSumStr;
+			if(durationSum < 1) {
+				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
+			} else if(durationSum < 10 ) {
+				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
+			} else if(durationSum < 100) {
+				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
+			} else if(durationSum < 1000){
+				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
+			} else {
+				durationSumStr = Long.toString((long) durationSum);
+			}
+
 			return String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-				toCountsString(),
-				toDurSummaryString(), toLatSummaryString(),
-				toSuccRatesString(), toByteRatesString()
+				Locale.ROOT, MSG_FMT_METRICS,
+				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
+				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
+				getByteRateMean() / MIB, getByteRateLast() / MIB,
+				toDurSummaryString(), toLatSummaryString()
 			);
 		}
 	}

@@ -10,30 +10,28 @@ extends Closeable {
 	//
 	int MIB = 0x100000;
 	//
-	String
-		METRIC_NAME_SUCC = "succ",
-		METRIC_NAME_FAIL = "fail",
-		METRIC_NAME_BYTE = "byte",
-		METRIC_NAME_SUBM = "subm",
-		METRIC_NAME_REJ = "rej",
-		METRIC_NAME_REQ = "req",
-		METRIC_NAME_TP = "TP",
-		METRIC_NAME_BW = "BW",
-		METRIC_NAME_DUR = "dur",
-		METRIC_NAME_LAT = "lat",
-		//
-		METRIC_NAME_COUNT = "count",
-		METRIC_NAME_RATE = "rate",
-		METRIC_NAME_MEAN = "mean",
-		METRIC_NAME_LAST = "last",
-		METRIC_NAME_MIN = "min",
-		METRIC_NAME_STDDEV = "stdDev",
-		METRIC_NAME_MAX = "max",
-		//
-		NAME_SEP = "@",
-		//
-		MSG_FMT_METRICS = "count=(%s); duration[us]=(%s); latency[us]=(%s); TP[op/s]=(%s); BW[MB/s]=(%s)",
-		MSG_FMT_FLOAT_PAIR = "%.3f/%.3f";
+	String METRIC_NAME_SUCC = "succ";
+	String METRIC_NAME_FAIL = "fail";
+	String METRIC_NAME_BYTE = "byte";
+	String METRIC_NAME_TP = "TP";
+	String METRIC_NAME_BW = "BW";
+	String METRIC_NAME_DUR = "dur";
+	String METRIC_NAME_LAT = "lat";
+	String METRIC_NAME_COUNT = "count";
+	String METRIC_NAME_RATE = "rate";
+	String METRIC_NAME_MEAN = "mean";
+	String METRIC_NAME_LAST = "last";
+	//
+	String MSG_FMT_PAIR = "%.3f/%.3f";
+	String MSG_FMT_COUNT = "n=(%d/%d); ";
+	String MSG_FMT_TIME = "t[s]=(%s/%s); ";
+	String MSG_FMT_TP= "TP[op/s]=(" + MSG_FMT_PAIR + "); ";
+	String MSG_FMT_SIZE = "size=(%s); ";
+	String MSG_FMT_BW = "BW[MB/s]=(" + MSG_FMT_PAIR + "); ";
+	String MSG_FMT_DUR = "dur[us]=(%s); ";
+	String MSG_FMT_LAT = "lat[us]=(%s)";
+	String MSG_FMT_METRICS = MSG_FMT_COUNT + MSG_FMT_TIME + MSG_FMT_TP + MSG_FMT_SIZE + MSG_FMT_BW +
+		MSG_FMT_DUR + MSG_FMT_LAT;
 	//
 	void start();
 	boolean isStarted();
