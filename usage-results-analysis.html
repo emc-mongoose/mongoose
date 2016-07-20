@@ -75,24 +75,51 @@
 					</p>
 					<p>
 						After several initialization statements Mongoose starts reporting its progress every 10 seconds. Progress information is printed with the following layout:
+						<table>
+						<tr><th>Version &lt; 2.4.0</th><th>Version &ge; 2.4.0</th></tr>
+						<tr><td>
 						<pre>
-&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt;
-    count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;);
-        duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); 
-            latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); 
-            TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;);
-                BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)
-						</pre>
+&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt; &#8617;
+count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
+duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); &#8617;
+latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); &#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
+BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)
+						</pre></td><td><pre>
+&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt; &#8617;
+n=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
+t[s]=(&lt;JOB_TIME&gt;/&lt;DURATION_SUM&gt;) &#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
+size=(&lt;SIZE&gt); &#8617;
+BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;) &#8617;
+dur[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); &#8617;
+lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;)
+						</pre></td></tr></table>
 					</p>
 					<p>
 						The summary metrics statement has a bit different metrics layout:
+						<table>
+							<tr><th>Version &lt; 2.4.0</th><th>Version &ge; 2.4.0</th></tr>
+							<tr><td>
 						<pre>
-    count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;);
-        duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); 
-            latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); 
-                TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;);
-                    BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)
+count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
+duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); &#8617;
+latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); &#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
+BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)
 						</pre>
+							</td><td>
+						<pre>
+n=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
+t[s]=(&lt;JOB_TIME&gt;/&lt;DURATION_SUM&gt;) &#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
+size=(&lt;SIZE&gt); &#8617;
+BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;) &#8617;
+dur[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); &#8617;
+lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;)
+						</pre>
+							</td></tr>
+						</table>
 						Where <i>"LOQ"</i> is a low quartile of the distribution and <i>"HIQ"</i> is a high quartile.
 					</p>
 				</fieldset>
@@ -128,64 +155,132 @@
 								<p>The file contains Mongoose internal log messages.</p>
 							</li>
 							<li>
-								<p><b>perf.avg.csv</b> (optional, created by Mongoose >= 0.8)</p>
+								<p><b>perf.avg.csv</b> (optional, created by Mongoose &ge; 0.8)</p>
 								<p>The file contains periodic performance metrics dumps. The header line describes the content:</p>
-								<p>
-									<fieldset>
-										DateTimeISO8601,<br/>
-										LoadId,<br/>
-										TypeAPI,<br/>
-										TypeLoad,<br/>
-										CountConn,<br/>
-										CountNode,<br/>
-										CountLoadServer,<br/>
-										CountSucc,<br/>
-										CountFail,<br/>
-										DurationAvg[us],<br/>
-										DurationMin[us],<br/>
-										DurationMax[us],<br/>
-										LatencyAvg[us],<br/>
-										LatencyMin[us],<br/>
-										LatencyMax[us],<br/>
-										TPAvg[op/s],<br/>
-										TPLast[op/s],<br/>
-										BWAvg[MB/s],<br/>
-										BWLast[MB/s]
-									</fieldset>
-								</p>
+								<table>
+									<tr><th>Version &lt; 2.4.0</th><th>Version &ge; 2.4.0 </th></tr>
+									<tr>
+										<td>
+											<fieldset>
+												DateTimeISO8601,<br/>
+												LoadId,<br/>
+												TypeAPI,<br/>
+												TypeLoad,<br/>
+												CountConn,<br/>
+												CountNode,<br/>
+												CountLoadServer,<br/>
+												CountSucc,<br/>
+												CountFail,<br/>
+												DurationAvg[us],<br/>
+												DurationMin[us],<br/>
+												DurationMax[us],<br/>
+												LatencyAvg[us],<br/>
+												LatencyMin[us],<br/>
+												LatencyMax[us],<br/>
+												TPAvg[op/s],<br/>
+												TPLast[op/s],<br/>
+												BWAvg[MB/s],<br/>
+												BWLast[MB/s]
+											</fieldset>
+										</td>
+										<td>
+											<fieldset>
+												DateTimeISO8601,<br/>
+												LoadId,<br/>
+												TypeAPI,<br/>
+												TypeLoad,<br/>
+												CountConn,<br/>
+												CountNode,<br/>
+												CountLoadServer,<br/>
+												CountSucc,<br/>
+												CountFail,<br/>
+												JobDuration[s],<br/>
+												DurationSum[s],<br/>
+												TPAvg[op/s],<br/>
+												TPLast[op/s],<br/>
+												Size,<br/>
+												BWAvg[MB/s],<br/>
+												BWLast[MB/s],<br/>
+												DurationAvg[us],<br/>
+												DurationMin[us],<br/>
+												DurationMax[us],<br/>
+												LatencyAvg[us],<br/>
+												LatencyMin[us],<br/>
+												LatencyMax[us]
+											</fieldset>
+										</td>
+									</tr>
+								</table>
 							</li>
 							<li>
 								<p><b>perf.sum.csv</b></p>
 								<p>The file contains summary performance information calculated at the end of the run. The header line describes the content:</p>
-								<p>
-									<fieldset>
-										DateTimeISO8601,<br/>
-										LoadId,<br/>
-										TypeAPI,<br/>
-										TypeLoad,<br/>
-										CountConn,<br/>
-										CountNode,<br/>
-										CountLoadServer,<br/>
-										CountSucc,<br/>
-										CountFail,<br/>
-										DurationAvg[us],<br/>
-										DurationMin[us],<br/>
-										DurationLoQ[us],<br/>
-										DurationMed[us],<br/>
-										DurationHiQ[us],<br/>
-										DurationMax[us],<br/>
-										LatencyAvg[us],<br/>
-										LatencyMin[us],<br/>
-										LatencyLoQ[us],<br/>
-										LatencyMed[us],<br/>
-										LatencyHiQ[us],<br/>
-										LatencyMax[us],<br/>
-										TPAvg[op/s],<br/>
-										TPLast[op/s],<br/>
-										BWAvg[MB/s],<br/>
-										BWLast[MB/s]
-									</fieldset>
-								</p>
+								<table>
+									<tr><th>Version &lt; 2.4.0</th><th>Version &ge; 2.4.0 </th></tr>
+									<tr>
+										<td>
+											<fieldset>
+												DateTimeISO8601,<br/>
+												LoadId,<br/>
+												TypeAPI,<br/>
+												TypeLoad,<br/>
+												CountConn,<br/>
+												CountNode,<br/>
+												CountLoadServer,<br/>
+												CountSucc,<br/>
+												CountFail,<br/>
+												DurationAvg[us],<br/>
+												DurationMin[us],<br/>
+												DurationLoQ[us],<br/>
+												DurationMed[us],<br/>
+												DurationHiQ[us],<br/>
+												DurationMax[us],<br/>
+												LatencyAvg[us],<br/>
+												LatencyMin[us],<br/>
+												LatencyLoQ[us],<br/>
+												LatencyMed[us],<br/>
+												LatencyHiQ[us],<br/>
+												LatencyMax[us],<br/>
+												TPAvg[op/s],<br/>
+												TPLast[op/s],<br/>
+												BWAvg[MB/s],<br/>
+												BWLast[MB/s]
+											</fieldset>
+										</td>
+										<td>
+											<fieldset>
+												DateTimeISO8601,<br/>
+												LoadId,<br/>
+												TypeAPI,<br/>
+												TypeLoad,<br/>
+												CountConn,<br/>
+												CountNode,<br/>
+												CountLoadServer,<br/>
+												CountSucc,<br/>
+												CountFail,<br/>
+												JobDuration[s],<br/>
+												DurationSum[s],<br/>
+												TPAvg[op/s],<br/>
+												TPLast[op/s],<br/>
+												Size,<br/>
+												BWAvg[MB/s],<br/>
+												BWLast[MB/s],<br/>
+												DurationAvg[us],<br/>
+												DurationMin[us],<br/>
+												DurationLoQ[us],<br/>
+												DurationMed[us],<br/>
+												DurationHiQ[us],<br/>
+												DurationMax[us],<br/>
+												LatencyAvg[us],<br/>
+												LatencyMin[us],<br/>
+												LatencyLoQ[us],<br/>
+												LatencyMed[us],<br/>
+												LatencyHiQ[us],<br/>
+												LatencyMax[us]
+											</fieldset>
+										</td>
+									</tr>
+								</table>
 							</li>
 							<li>
 								<p><b>perf.trace.csv</b></p>
