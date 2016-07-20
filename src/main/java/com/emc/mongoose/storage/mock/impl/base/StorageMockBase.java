@@ -309,7 +309,6 @@ implements StorageMock<T> {
 		return obj;
 	}
 	//
-	//
 	private final class DeleteObjectTask
 	extends BasicFuture<T>
 	implements RunnableFuture<T> {

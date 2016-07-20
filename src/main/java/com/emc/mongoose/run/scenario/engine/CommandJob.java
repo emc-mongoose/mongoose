@@ -98,7 +98,7 @@ extends JobBase {
 							}
 						} catch(final IOException e) {
 							LogUtil.exception(
-								LOG, Level.DEBUG, e, "Failed to read the process stdin"
+								LOG, Level.DEBUG, e, "Failed to read the process error input"
 							);
 						}
 					}
