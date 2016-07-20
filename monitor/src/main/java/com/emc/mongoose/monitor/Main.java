@@ -17,7 +17,6 @@ import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.model.impl.io.task.BasicDataIoTaskFactory;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItemFactory;
-import com.emc.mongoose.storage.driver.base.DriverBase;
 
 import java.io.IOException;
 import java.util.ArrayList;
