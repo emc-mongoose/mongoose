@@ -25,10 +25,9 @@ implements FileItemOutput<T> {
 	throws IOException {
 		super(
 			new ObjectOutputStream(
-				new BufferedOutputStream(
-					Files.newOutputStream(
-						itemsDstPath, StandardOpenOption.APPEND, StandardOpenOption.WRITE
-					)
+				Files.newOutputStream(
+					itemsDstPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE
 				)
 			)
 		);

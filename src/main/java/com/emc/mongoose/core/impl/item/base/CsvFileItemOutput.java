@@ -22,7 +22,8 @@ implements FileItemOutput<T> {
 	) throws IOException {
 		super(
 			Files.newOutputStream(
-				itemsFilePath, StandardOpenOption.APPEND, StandardOpenOption.WRITE
+				itemsFilePath, StandardOpenOption.APPEND, StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE
 			),
 			itemCls, contentSrc
 		);

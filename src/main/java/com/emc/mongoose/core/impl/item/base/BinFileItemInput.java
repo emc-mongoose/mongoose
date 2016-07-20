@@ -29,9 +29,7 @@ implements FileItemInput<T> {
 	 */
 	public BinFileItemInput(final Path itemsSrcPath)
 	throws IOException {
-		super(
-			buildObjectInputStream(itemsSrcPath)
-		);
+		super(buildObjectInputStream(itemsSrcPath));
 		this.itemsSrcPath = itemsSrcPath;
 	}
 	//
