@@ -6,7 +6,7 @@
 				"size" : "10KB"
 			},
 			"dst" : {
-				"container" : "pre_10KB_items"
+				"container" : "test-bucket"
 			}
 		},
 		"load" : {
@@ -17,6 +17,7 @@
 		}
 	},
 	"jobs" : [
+		// precondition jobs
 		{
 			"type" : "precondition",
 			"config" : {
@@ -60,102 +61,308 @@
 					"type" : "update"
 				}
 			}
-		}, {
+		},
+		// create jobs
+		{
 			"type" : "for",
 			"value" : "threads",
 			"in" : [
-				1, 2, 5, 10, 20, 40
+				1, 2, 3, 4, 5, 10, 15, 20, 25, 40
 			],
 			"config" : {
+				"item" : {
+					"data" :  {
+						"size" : "10KB"
+					},
+					"dst" : {
+						"file" : "10KB_items.csv"
+					}
+				},
 				"load" : {
 					"threads" : "${threads}"
 				}
 			},
 			"jobs" : [
 				{
+					"type" : "load"
+				}
+			]
+		}, {
+			"type" : "for",
+			"value" : "threads",
+			"in" : [
+				1, 2, 3, 4, 5, 10, 15, 20, 25, 40
+			],
+			"config" : {
+				"item" : {
+					"data" :  {
+						"size" : "100KB"
+					},
+					"dst" : {
+						"file" : "100KB_items.csv"
+					}
+				},
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		}, {
+			"type" : "for",
+			"value" : "threads",
+			"in" : [
+				1, 2, 3, 4, 5, 10, 15, 20, 25
+			],
+			"config" : {
+				"item" : {
+					"data" :  {
+						"size" : "1MB"
+					},
+					"dst" : {
+						"file" : "1MB_items.csv"
+					}
+				},
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		}, {
+			"type" : "for",
+			"value" : "threads",
+			"in" : [
+				1, 2, 3, 4, 5, 10, 15, 20
+			],
+			"config" : {
+				"item" : {
+					"data" :  {
+						"size" : "10MB"
+					},
+					"dst" : {
+						"file" : "10MB_items.csv"
+					}
+				},
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		}, {
+			"type" : "for",
+			"value" : "threads",
+			"in" : [
+				1, 2, 3, 4, 5, 10, 15
+			],
+			"config" : {
+				"item" : {
+					"data" :  {
+						"size" : "100MB"
+					},
+					"dst" : {
+						"file" : "100MB_items.csv"
+					}
+				},
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		}, {
+			"type" : "for",
+			"value" : "threads",
+			"in" : [
+				1, 2, 3, 4, 5, 10
+			],
+			"config" : {
+				"item" : {
+					"data" :  {
+						"size" : "200MB"
+					},
+					"dst" : {
+						"file" : "200MB_items.csv"
+					}
+				},
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		},
+		// read and delete jobs
+		{
+			"type" : "for",
+			"value" : "loadType",
+			"in" : [
+				"read", "delete"
+			],
+			"config" : {
+				"load" : {
+					"type" : "${loadType}"
+				}
+			},
+			"jobs" : [
+				{
 					"type" : "for",
-					"value" : "size",
+					"value" : "threads",
 					"in" : [
-						"10KB", "100KB", "1MB", "10MB", "100MB", "200MB"
+						1, 2, 3, 4, 5, 10, 15, 20, 25, 40
 					],
 					"config" : {
 						"item" : {
-							"data" : {
-								"size" : "${size}"
+							"data" :  {
+								"size" : "10KB"
 							},
-							"dst" : {
-								"container" : "tgt_container"
+							"src" : {
+								"file" : "10KB_items.csv"
 							}
 						},
 						"load" : {
-							"metrics" : {
-								"period" : 0
-							}
+							"threads" : "${threads}"
 						}
 					},
 					"jobs" : [
 						{
-							"type" : "load",
-							"config" : {
-								"item" : {
-									"dst" : {
-										"file" : "step_${size}_${threads}threads.csv"
-									}
-								},
-								"run" : {
-									"id" : "step_${size}_${threads}threads_create"
-								}
+							"type" : "load"
+						}
+					]
+				}, {
+					"type" : "for",
+					"value" : "threads",
+					"in" : [
+						1, 2, 3, 4, 5, 10, 15, 20, 25, 40
+					],
+					"config" : {
+						"item" : {
+							"data" :  {
+								"size" : "100KB"
+							},
+							"src" : {
+								"file" : "100KB_items.csv"
 							}
-						}, {
-							"type" : "load",
-							"config" : {
-								"item" : {
-									"src" : {
-										"file" : "step_${size}_${threads}threads.csv"
-									}
-								},
-								"load" : {
-									"circular" : true,
-									"type" : "read"
-								},
-								"run" : {
-									"id" : "step_${size}_${threads}threads_read"
-								}
+						},
+						"load" : {
+							"threads" : "${threads}"
+						}
+					},
+					"jobs" : [
+						{
+							"type" : "load"
+						}
+					]
+				}, {
+					"type" : "for",
+					"value" : "threads",
+					"in" : [
+						1, 2, 3, 4, 5, 10, 15, 20, 25
+					],
+					"config" : {
+						"item" : {
+							"data" :  {
+								"size" : "1MB"
+							},
+							"src" : {
+								"file" : "1MB_items.csv"
 							}
-						}, {
-							"type" : "load",
-							"config" : {
-								"item" : {
-									"data" : {
-										"ranges" : 1
-									},
-									"src" : {
-										"file" : "step_${size}_${threads}threads.csv"
-									}
-								},
-								"load" : {
-									"circular" : true,
-									"type" : "update"
-								},
-								"run" : {
-									"id" : "step_${size}_${threads}threads_update"
-								}
+						},
+						"load" : {
+							"threads" : "${threads}"
+						}
+					},
+					"jobs" : [
+						{
+							"type" : "load"
+						}
+					]
+				}, {
+					"type" : "for",
+					"value" : "threads",
+					"in" : [
+						1, 2, 3, 4, 5, 10, 15, 20
+					],
+					"config" : {
+						"item" : {
+							"data" :  {
+								"size" : "10MB"
+							},
+							"src" : {
+								"file" : "10MB_items.csv"
 							}
-						}, {
-							"type" : "load",
-							"config" : {
-								"item" : {
-									"src" : {
-										"file" : "step_${size}_${threads}threads.csv"
-									}
-								},
-								"load" : {
-									"type" : "delete"
-								},
-								"run" : {
-									"id" : "step_${size}_${threads}threads_delete"
-								}
+						},
+						"load" : {
+							"threads" : "${threads}"
+						}
+					},
+					"jobs" : [
+						{
+							"type" : "load"
+						}
+					]
+				}, {
+					"type" : "for",
+					"value" : "threads",
+					"in" : [
+						1, 2, 3, 4, 5, 10, 15
+					],
+					"config" : {
+						"item" : {
+							"data" :  {
+								"size" : "100MB"
+							},
+							"src" : {
+								"file" : "100MB_items.csv"
 							}
+						},
+						"load" : {
+							"threads" : "${threads}"
+						}
+					},
+					"jobs" : [
+						{
+							"type" : "load"
+						}
+					]
+				}, {
+					"type" : "for",
+					"value" : "threads",
+					"in" : [
+						1, 2, 3, 4, 5, 10
+					],
+					"config" : {
+						"item" : {
+							"data" :  {
+								"size" : "200MB"
+							},
+							"src" : {
+								"file" : "200MB_items.csv"
+							}
+						},
+						"load" : {
+							"threads" : "${threads}"
+						}
+					},
+					"jobs" : [
+						{
+							"type" : "load"
 						}
 					]
 				}
