@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Mongoose Fractional Statistics</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<fieldset>
+	<legend><h2>FRACTIONAL STATISTICS</h2></legend>
+	<fieldset>
+		<legend><h3>INTRODUCTION</h3></legend>
+		<p>
+			Realize the case: create or read large single data item (file either object) using many
+			concurrent connections ("threads"). The single data item should be split to the equal
+			ranges with count equal to the configured concurrency level.
+		</p>
+	</fieldset>
+	<fieldset>
+		<legend><h3>LIMITATIONS</h3></legend>
+		N/A ?
+	</fieldset>
+	<fieldset>
+		<legend><h3>APPROACH</h3></legend>
+		TODO
+	</fieldset>
+	<fieldset>
+		<legend><h3>CONFIGURATION</h3></legend>
+		N/A ?
+	</fieldset>
+	<fieldset>
+		<legend><h3>REPORTING</h3></legend>
+		<p>
+			Report:
+			<ol>
+				<li>Fractional (real) summary number of the items processed successfully</li>
+				<li>Integer (64 bit) number of the bytes processed</li>
+				<li>Timing statistics (duration/latency x min/med/max)</li>
+				<li>Throughput (last/total averages)</li>
+				<li>Bandwidth (last/total averages)</li>
+			</ol>
+		</p>
+	</fieldset>
+</fieldset>
+</body>
+</html>
