@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
+import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
-import com.emc.mongoose.model.impl.item.CsvItemInput;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
@@ -239,7 +239,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 	@Override
 	public long getSize() {
 		long size = 0;
-		for(final ObjectContainerMock<T> c : storageMap.values()) { //TODO chech are values right?
+		for(final ObjectContainerMock<T> c : storageMap.values()) { //TODO check are values right?
 			size += c.size();
 		}
 		return size;
@@ -337,330 +337,183 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 	//
 	protected abstract void startListening();
 
-	private class PutObjectsBatchTask
-		implements RunnableFuture<T> {
+	private abstract class ContainerTaskBase extends FutureTaskBase<T> {
+		private final String containerName;
 
-		private String containerName;
-		private List<T> dataItems;
-
-		public PutObjectsBatchTask(final String containerName, final List<T> dataItems) {
+		ContainerTaskBase(final String containerName) {
 			this.containerName = containerName;
-			this.dataItems = dataItems;
 		}
 
-		@Override
-		public void run() {
+		ObjectContainerMock<T> getContainer() {
+			return storageMap.get(containerName);
 		}
 
-		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
+		boolean setException() {
+			return setException(new ContainerMockNotFoundException(containerName));
 		}
 	}
 
-	private class ListObjectTask
-		implements RunnableFuture<T> {
+	private class PutObjectsBatchTask extends FutureTaskBase<List<T>> {
 
-		public ListObjectTask(
-			final String container, final String afterOid, final Collection<T> buffDst,
-			final int limit
-		) {
+		private final String containerName;
+		private final List<T> objects;
 
-		}
-
-		@Override
-		public void run() {
-		}
-
-		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
-		}
-	}
-
-	private class DeleteObjectTask
-		implements RunnableFuture<T> {
-
-		public DeleteObjectTask(final String container, final String id) {
-
-		}
-
-		@Override
-		public void run() {
-		}
-
-		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
-		}
-	}
-
-	private class GetObjectTask
-		implements RunnableFuture<T> {
-
-		public GetObjectTask(final String container, final String oid) {
-
-		}
-
-		@Override
-		public void run() {
-		}
-
-		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
-		}
-	}
-
-	private class PutObjectTask
-		implements RunnableFuture<T> {
-
-		private String containerName;
-		private T dataItem;
-
-		public PutObjectTask(final String containerName, final T dataItems) {
+		PutObjectsBatchTask(final String containerName, final List<T> objects) {
 			this.containerName = containerName;
-			this.dataItem = dataItem;
+			this.objects = objects;
 		}
 
 		@Override
 		public void run() {
+			final ObjectContainerMock<T> container = storageMap.get(containerName);
+			if (container != null) {
+				objects.forEach(object -> container.put(object.getName(), object));
+				set(new ArrayList<>(container.values()));
+			} else {
+				setException(new ContainerMockNotFoundException(containerName));
+			}
+		}
+
+	}
+
+	private class ListObjectTask extends ContainerTaskBase {
+
+		private final String afterObjectId;
+		private final Collection<T> outputBuffer;
+		private final int limit;
+
+		ListObjectTask(
+			final String containerName, final String afterObjectId,
+			final Collection<T> outputBuffer, final int limit
+		) {
+			super(containerName);
+			this.afterObjectId = afterObjectId;
+			this.outputBuffer = outputBuffer;
+			this.limit = limit;
 		}
 
 		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
+		public void run() {
+			final ObjectContainerMock<T> container = getContainer();
+			if(container != null) {
+				set(container.list(afterObjectId, outputBuffer, limit));
+			} else {
+				setException();
+			}
 		}
 	}
 
-	private class DeleteContainerTask
-		implements RunnableFuture<T> {
+	private class DeleteObjectTask extends ContainerTaskBase {
 
-		public DeleteContainerTask(
-			final String name
-		) {
+		private final String objectId;
+
+		DeleteObjectTask(final String containerName, final String objectId) {
+			super(containerName);
+			this.objectId = objectId;
 		}
 
 		@Override
 		public void run() {
-		}
-
-		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
+			final ObjectContainerMock<T> container = getContainer();
+			if(container != null) {
+				set(container.remove(objectId));
+			} else {
+				setException();
+			}
 		}
 	}
 
-	private class GetContainerTask
-		implements RunnableFuture<ObjectContainerMock<T>> {
+	private class GetObjectTask extends ContainerTaskBase {
 
-		public GetContainerTask(
-			final String name
-		) {
+		private final String objectId;
+
+		GetObjectTask(final String containerName, final String objectId) {
+			super(containerName);
+			this.objectId = objectId;
 		}
 
 		@Override
 		public void run() {
-		}
-
-		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public ObjectContainerMock<T> get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public ObjectContainerMock<T> get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
+			final ObjectContainerMock<T> container = getContainer();
+			if(container != null) {
+				set(container.get(objectId));
+			} else {
+				setException();
+			}
 		}
 	}
 
-	private class PutContainerTask
-		implements RunnableFuture<T> {
+	private class PutObjectTask extends ContainerTaskBase {
 
-		public PutContainerTask(
-			final String name
-		) {
+		private T object;
 
+		PutObjectTask(final String containerName, final T object) {
+			super(containerName);
+			this.object = object;
 		}
 
 		@Override
 		public void run() {
+			final ObjectContainerMock<T> container =
+				getContainer();
+			if(container != null) {
+				set(container.put(object.getName(), object));
+			} else {
+				setException();
+			}
+		}
+	}
+
+	private class DeleteContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
+
+		private final String containerName;
+
+		DeleteContainerTask(final String containerName) {
+			this.containerName = containerName;
 		}
 
 		@Override
-		public boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
+		public void run() {
+			if (storageMap.containsKey(containerName)) {
+				set(storageMap.remove(containerName));
+			} else {
+				setException(new ContainerMockNotFoundException(containerName));
+			}
+		}
+
+	}
+
+	private class GetContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
+
+		private final String containerName;
+
+		GetContainerTask(final String containerName) {
+			this.containerName = containerName;
 		}
 
 		@Override
-		public boolean isCancelled() {
-			return false;
+		public void run() {
+			if (storageMap.containsKey(containerName)) {
+				set(storageMap.get(containerName));
+			} else {
+				setException(new ContainerMockNotFoundException(containerName));
+			}
+		}
+
+	}
+
+	private class PutContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
+
+		private final String containerName;
+
+		public PutContainerTask(final String containerName) {
+			this.containerName = containerName;
 		}
 
 		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public T get()
-		throws InterruptedException, ExecutionException {
-			return null;
-		}
-
-		@Override
-		public T get(final long timeout, final TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-			return null;
+		public void run() {
+			set(storageMap.put(containerName, new BasicObjectContainerMock<>(containerCapacity)));
+			ioStats.containerCreate();
 		}
 	}
 }

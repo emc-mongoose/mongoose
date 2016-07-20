@@ -9,9 +9,17 @@ import java.util.Map;
 /**
  Created on 19.07.16.
  */
-public interface ObjectContainerMock<T extends MutableDataItem> extends Map<String, T> {
+public interface ObjectContainerMock<T extends MutableDataItem> {
+
+	T get (final String key);
+
+	T put(final String key, final T value);
+
+	T remove(final String key);
 
 	int size();
-	//
-	T list(final String afterOid, final Collection<T> buffDst, final int limit);
+
+	T list(final String afterObjectId, final Collection<T> outputBuffer, final int limit);
+
+	Collection<T> values();
 }
