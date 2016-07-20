@@ -11,19 +11,23 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.Input;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.NoSuchElementException;
@@ -71,27 +75,39 @@ implements DataLoadBuilderClient<T, W, U> {
 		setDataSize(appConfig.getItemDataSize());
 		setDataRanges(appConfig.getItemDataRanges());
 		//
-		try {
-			final String listFile = appConfig.getItemSrcFile();
-			if(itemsFileExists(listFile) && loadSvcMap != null) {
+		final String listFilePathStr = appConfig.getItemSrcFile();
+		if(itemsFileExists(listFilePathStr)) {
+			try {
 				setInput(
 					new CsvFileDataItemInput<>(
-						Paths.get(listFile), (Class<T>) ioConfig.getItemClass(),
+						Paths.get(listFilePathStr), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)
 				);
-				// disable file-based item sources on the load servers side
-				for(final V nextLoadBuilder : loadSvcMap.values()) {
-					nextLoadBuilder.setInput(null);
-				}
+			} catch(final IOException | NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 			}
-		} catch(final NoSuchElementException e) {
-			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
-		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Invalid items input file path: {}", itemInput);
-		} catch(final SecurityException | NoSuchMethodException e) {
-			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
+		//
+		final String dstFilePathStr = appConfig.getItemDstFile();
+		if(dstFilePathStr != null && !dstFilePathStr.isEmpty()) {
+			final Path dstFilePath = Paths.get(dstFilePathStr);
+			try {
+				/*if(Files.exists(dstFilePath) && Files.size(dstFilePath) > 0) {
+					LOG.warn(
+						Markers.ERR, "Items destination file \"{}\" is not empty", dstFilePathStr
+					);
+				}*/
+				setOutput(
+					new CsvFileItemOutput<>(
+						dstFilePath, (Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
 	}
 	//

@@ -93,11 +93,11 @@ implements DataLoadBuilder<T, U> {
 		if(dstFilePathStr != null && !dstFilePathStr.isEmpty()) {
 			final Path dstFilePath = Paths.get(dstFilePathStr);
 			try {
-				if(Files.exists(dstFilePath) && Files.size(dstFilePath) > 0) {
+				/*if(Files.exists(dstFilePath) && Files.size(dstFilePath) > 0) {
 					LOG.warn(
 						Markers.ERR, "Items destination file \"{}\" is not empty", dstFilePathStr
 					);
-				}
+				}*/
 				setOutput(
 					new CsvFileItemOutput<>(
 						dstFilePath, (Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource()
