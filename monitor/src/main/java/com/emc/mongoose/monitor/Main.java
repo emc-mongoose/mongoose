@@ -1,5 +1,6 @@
 package com.emc.mongoose.monitor;
 
+import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.ui.config.reader.jackson.JacksonConfigLoader;
@@ -40,8 +41,8 @@ public class Main {
 		final List<Generator<I, O>> generators = new ArrayList<>(generatorCount);
 		for(int i = 0; i < generatorCount; i ++) {
 			final List<Driver<I, O>> drivers = new ArrayList<>(2);
-			drivers.add(new DriverBase<>());
-			drivers.add(new DriverBase<>());
+			drivers.add(new BasicFileDriver<>(config.getLoadConfig(), config.getIoConfig().getBufferConfig()));
+			drivers.add(new BasicFileDriver<>(config.getLoadConfig(), config.getIoConfig().getBufferConfig()));
 			generators.add(
 				new BasicGenerator<>(
 					drivers, LoadType.CREATE, (ItemFactory<I>) new BasicDataItemFactory(),

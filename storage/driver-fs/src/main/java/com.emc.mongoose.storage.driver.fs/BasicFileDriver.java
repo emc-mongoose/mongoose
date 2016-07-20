@@ -25,7 +25,7 @@ extends FsDriverBase<I, O> {
 	protected void executeIoTask(final O ioTask) {
 		final LoadType ioType = ioTask.getLoadType();
 		final I fileItem = ioTask.getItem();
-		final String dstDir, srcDir;
+		final String dstDir = null, srcDir = null;
 		final Set<OpenOption> openOptions = new HashSet<>();
 		switch(ioType) {
 			case CREATE:
@@ -41,5 +41,33 @@ extends FsDriverBase<I, O> {
 				deleteFile(fileItem, srcDir, dstDir, openOptions);
 				break;
 		}
+	}
+
+	private void createFile(
+		final I fileItem, final String srcDir, final String dstDir,
+		final Set<OpenOption> openOptions
+	) {
+
+	}
+
+	private void readFile(
+		final I fileItem, final String srcDir, final String dstDir,
+		final Set<OpenOption> openOptions
+	) {
+
+	}
+
+	private void updateFile(
+		final I fileItem, final String srcDir, final String dstDir,
+		final Set<OpenOption> openOptions
+	) {
+
+	}
+
+	private void deleteFile(
+		final I fileItem, final String srcDir, final String dstDir,
+		final Set<OpenOption> openOptions
+	) {
+
 	}
 }
