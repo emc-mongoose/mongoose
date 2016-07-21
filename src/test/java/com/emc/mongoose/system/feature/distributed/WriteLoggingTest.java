@@ -188,9 +188,9 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountLoadServer", nextRec.get(6));
 					Assert.assertEquals("CountSucc", nextRec.get(7));
 					Assert.assertEquals("CountFail", nextRec.get(8));
-					Assert.assertEquals("JobDuration[s]", nextRec.get(9));
-					Assert.assertEquals("DurationSum[s]", nextRec.get(10));
-					Assert.assertEquals("Size", nextRec.get(11));
+					Assert.assertEquals("Size", nextRec.get(9));
+					Assert.assertEquals("JobDuration[s]", nextRec.get(10));
+					Assert.assertEquals("DurationSum[s]", nextRec.get(11));
 					Assert.assertEquals("TPAvg[op/s]", nextRec.get(12));
 					Assert.assertEquals("TPLast[op/s]", nextRec.get(13));
 					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(14));
@@ -234,9 +234,9 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountLoadServer", nextRec.get(6));
 					Assert.assertEquals("CountSucc", nextRec.get(7));
 					Assert.assertEquals("CountFail", nextRec.get(8));
-					Assert.assertEquals("JobDuration[s]", nextRec.get(9));
-					Assert.assertEquals("DurationSum[s]", nextRec.get(10));
-					Assert.assertEquals("Size", nextRec.get(11));
+					Assert.assertEquals("Size", nextRec.get(9));
+					Assert.assertEquals("JobDuration[s]", nextRec.get(10));
+					Assert.assertEquals("DurationSum[s]", nextRec.get(11));
 					Assert.assertEquals("TPAvg[op/s]", nextRec.get(12));
 					Assert.assertEquals("TPLast[op/s]", nextRec.get(13));
 					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(14));

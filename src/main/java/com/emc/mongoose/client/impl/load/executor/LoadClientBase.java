@@ -677,7 +677,7 @@ implements LoadClient<T, W> {
 	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 
-		long ts = System.currentTimeMillis();
+		final long ts = System.currentTimeMillis();
 		long timeOutMilliSec = timeUnit.toMillis(timeOut);
 		timeOutMilliSec = timeOutMilliSec > 0 ? timeOutMilliSec : Long.MAX_VALUE;
 

@@ -381,9 +381,9 @@ implements IoStats {
 			}
 
 			return String.format(
-				Locale.ROOT, MSG_FMT_METRICS, getSuccCount(), getFailCount(),
+				Locale.ROOT, MSG_FMT_METRICS,
+				getSuccCount(), getFailCount(), SizeInBytes.formatFixedSize(getByteCount()),
 				formatNumber(getElapsedTime() / M), formatNumber(getDurationSum() / M),
-				SizeInBytes.formatFixedSize(getByteCount()),
 				formatNumber(getSuccRateMean()), formatNumber(getSuccRateLast()),
 				formatNumber(getByteRateMean() / MIB), formatNumber(getByteRateLast() / MIB),
 				toDurString(), toLatString()
@@ -401,9 +401,9 @@ implements IoStats {
 			}
 
 			return String.format(
-				Locale.ROOT, MSG_FMT_METRICS, getSuccCount(), getFailCount(),
+				Locale.ROOT, MSG_FMT_METRICS,
+				getSuccCount(), getFailCount(), SizeInBytes.formatFixedSize(getByteCount()),
 				formatNumber(getElapsedTime() / M), formatNumber(getDurationSum() / M),
-				SizeInBytes.formatFixedSize(getByteCount()),
 				formatNumber(getSuccRateMean()), formatNumber(getSuccRateLast()),
 				formatNumber(getByteRateMean() / MIB), formatNumber(getByteRateLast() / MIB),
 				toDurSummaryString(), toLatSummaryString()

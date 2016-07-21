@@ -24,13 +24,13 @@ extends Closeable {
 	//
 	String MSG_FMT_PAIR = "%.3f/%.3f";
 	String MSG_FMT_COUNT = "n=(%d/%d); ";
-	String MSG_FMT_TIME = "t[s]=(%s/%s); ";
 	String MSG_FMT_SIZE = "size=(%s); ";
+	String MSG_FMT_TIME = "t[s]=(%s/%s); ";
 	String MSG_FMT_TP= "TP[op/s]=(%s/%s); ";
 	String MSG_FMT_BW = "BW[MB/s]=(%s/%s); ";
 	String MSG_FMT_DUR = "dur[us]=(%s); ";
 	String MSG_FMT_LAT = "lat[us]=(%s)";
-	String MSG_FMT_METRICS = MSG_FMT_COUNT + MSG_FMT_TIME + MSG_FMT_SIZE + MSG_FMT_TP + MSG_FMT_BW +
+	String MSG_FMT_METRICS = MSG_FMT_COUNT + MSG_FMT_SIZE + MSG_FMT_TIME + MSG_FMT_TP + MSG_FMT_BW +
 		MSG_FMT_DUR + MSG_FMT_LAT;
 	//
 	void start();

@@ -63,7 +63,10 @@ implements Scenario {
 	//
 	public JsonScenario(final AppConfig config, final Map<String, Object> tree)
 	throws IOException, CloneNotSupportedException {
-		super(config, overrideFromEnv(tree));
+		super(config, overrideFromEnv(validateAgainstSchema(tree)));
+	}
+	//
+	private static final Map<String, Object> validateAgainstSchema(final Map<String, Object> tree) {
 		/*final Path schemaPath = Paths.get(
 			BasicConfig.getWorkingDir(), DIR_SCENARIO, FNAME_SCENARIO_SCHEMA
 		);
@@ -75,6 +78,7 @@ implements Scenario {
 		} catch(final ProcessingException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to load the scenario schema");
 		}*/
+		return tree;
 	}
 	//
 	private static final Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
