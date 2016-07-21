@@ -677,9 +677,11 @@ implements LoadClient<T, W> {
 	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 
+		if(timeOut < 0) {
+			throw new IllegalArgumentException("time out argument should not be negative");
+		}
 		final long ts = System.currentTimeMillis();
-		long timeOutMilliSec = timeUnit.toMillis(timeOut);
-		timeOutMilliSec = timeOutMilliSec > 0 ? timeOutMilliSec : Long.MAX_VALUE;
+		final long timeOutMilliSec = timeUnit.toMillis(timeOut == 0 ? Long.MAX_VALUE : timeOut);
 
 		final Set<String> loadSvcAddrs = remoteLoadMap.keySet();
 		String loadSvcAddr;
@@ -687,6 +689,7 @@ implements LoadClient<T, W> {
 		while(System.currentTimeMillis() - ts < timeOutMilliSec) {
 
 			for(final Iterator<String> it = loadSvcAddrs.iterator(); it.hasNext();) {
+
 				loadSvcAddr = it.next();
 				try {
 					if(remoteLoadMap.get(loadSvcAddr).await(1, TimeUnit.SECONDS)) {
@@ -696,11 +699,14 @@ implements LoadClient<T, W> {
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote await");
 				}
+
+				if(System.currentTimeMillis() - ts < timeOutMilliSec) {
+					break;
+				}
 			}
 
 			if(
-				loadSvcAddrs.isEmpty() &&
-				super.await(1, TimeUnit.SECONDS) &&
+				loadSvcAddrs.isEmpty() && super.await(1, TimeUnit.SECONDS) &&
 				remotePutExecutor.awaitTermination(1, TimeUnit.SECONDS)
 			) {
 				break;
