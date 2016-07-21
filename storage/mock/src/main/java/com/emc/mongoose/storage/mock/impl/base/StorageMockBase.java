@@ -1,5 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
+import com.emc.mongoose.common.collection.ListingLRUMap;
+import com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer;
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
@@ -15,7 +17,6 @@ import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReach
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import org.apache.commons.collections4.map.LRUMap;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,11 +29,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,16 +41,17 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class StorageMockBase<T extends MutableDataItemMock> implements StorageMock<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final int DEFAULT_BATCH_SIZE = 0x1000;
 
-	protected final String dataSrcPath;
-	protected final StorageIoStats ioStats;
-	protected final Class<T> itemClass;
+	private AtomicBoolean started = new AtomicBoolean(false);
+
+	private final String dataSrcPath;
+	private final StorageIoStats ioStats;
+	private final Class<T> itemClass;
 	protected final ContentSource contentSrc;
-	protected final int storageCapacity, containerCapacity;
+	private final int storageCapacity, containerCapacity;
 
-	private final Map<String, ObjectContainerMock<T>> storageMap;
-	private final Sequencer sequencer;
+	private final ListingLRUMap<String, ObjectContainerMock<T>> storageMap;
+	private final String defaultContainerName;
 
 	private AtomicBoolean isCapacityExhausted = new AtomicBoolean(false);
 
@@ -62,54 +62,57 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		final Config.ItemConfig itemConfig) {
 		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig =
 			mockConfig.getContainerConfig();
-		storageMap = new LRUMap<>(containerConfig.getCountLimit());
+		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
 		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
 		try {
 			this.contentSrc = ContentSourceUtil.getInstance(itemConfig.getDataConfig().getContentConfig());
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to set a content source"
+				LOG, Level.ERROR, e, "Failed to set the content source"
 			);
 			throw new IllegalStateException();
 		}
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();
-		this.sequencer = new Sequencer("storageMockSequencer", true, DEFAULT_BATCH_SIZE);
-		createContainer(getClass().getSimpleName().toLowerCase());
+		defaultContainerName = getClass().getSimpleName().toLowerCase();
+		createContainer(defaultContainerName);
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Container methods
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	public void createContainer(final String name) {
-		try {
-			sequencer.submit(new PutContainerTask(name));
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Container creation was interrupted");
-		}
+		BlockingQueueTaskSequencer.INSTANCE.submit(new PutContainerTask(name));
 	}
 
 	@Override
 	public final ObjectContainerMock<T> getContainer(final String name) {
-		ObjectContainerMock<T> c = null;
 		try {
-			c = sequencer.submit(new GetContainerTask(name)).get();
+			final Future<ObjectContainerMock<T>> future =
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetContainerTask(name));
+			if (future != null) {
+				future.get();
+			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Container getting was interrupted");
 		} catch(final ExecutionException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Container get task failure");
 		}
-		return c;
+		return null;
 	}
 
 	@Override
 	public final void deleteContainer(final String name) {
-		try {
-			sequencer.submit(new DeleteContainerTask(name));
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Container deleting was interrupted");
-		}
+		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteContainerTask(name));
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Object methods
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	protected abstract T newDataObject(final String id, final long offset, final long size);
 
@@ -120,11 +123,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		if(isCapacityExhausted.get()) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		try {
-			sequencer.submit(new PutObjectTask(container, newDataObject(oid, offset, size)));
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the create task");
-		}
+		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectTask(container, newDataObject(oid, offset, size)));
 	}
 
 	@Override
@@ -132,11 +131,15 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final T obj = sequencer.submit(new GetObjectTask(container, oid)).get();
-			if(obj == null) {
-				throw new ObjectMockNotFoundException();
+			final Future<T> future =
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(container, oid));
+			if (future != null) {
+				final T obj = future.get();
+				if(obj == null) {
+					throw new ObjectMockNotFoundException();
+				}
+				obj.update(offset, size);
 			}
-			obj.update(offset, size);
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
@@ -149,11 +152,15 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final T obj = sequencer.submit(new GetObjectTask(container, oid)).get();
-			if(obj == null) {
-				throw new ObjectMockNotFoundException();
+			final Future<T> future =
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(container, oid));
+			if (future != null) {
+				final T obj = future.get();
+				if(obj == null) {
+					throw new ObjectMockNotFoundException();
+				}
+				obj.append(offset, size);
 			}
-			obj.append(offset, size);
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
@@ -166,49 +173,50 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
-		T obj = null;
 		try {
-			obj = sequencer.submit(new GetObjectTask(container, oid)).get();
+			final Future<T> future =
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(container, oid));
+			if (future != null) {
+				return future.get();
+			}
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}
-		return obj;
+		return null;
 	}
 
 	@Override
 	public final void deleteObject(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
-		try {
-			sequencer.submit(new DeleteObjectTask(container, id));
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
-		}
+		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteObjectTask(container, id));
 	}
-	//
+
 	@Override
 	public final T listObjects(
 		final String container, final String afterOid, final Collection<T> buffDst, final int limit
 	) throws ContainerMockException {
-		T lastObj = null;
 		try {
-			lastObj = sequencer
-				.submit(new ListObjectTask(container, afterOid, buffDst, limit))
-				.get();
+			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
+				new ListObjectsTask(container, afterOid, buffDst, limit));
+			if (future != null) {
+				future.get();
+			}
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}
-		return lastObj;
+		return null;
 	}
 
 	private final Thread storageCapacityMonitorThread = new Thread("storageMockCapacityMonitor") {
 		{
 			setDaemon(true);
 		}
+		@SuppressWarnings("InfiniteLoopStatement")
 		@Override
 		public final void run() {
 			long currObjCount;
@@ -231,38 +239,32 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 	public final void start() {
 		loadPersistedDataItems();
 		ioStats.start();
-		startListening();
+		doStart();
 		storageCapacityMonitorThread.start();
-		sequencer.start();
+		BlockingQueueTaskSequencer.INSTANCE.start();
+		started.set(true);
 	}
-	//
+
+	@Override
+	public final boolean isStarted() {
+		return started.get();
+	}
+
+	protected abstract void doStart();
+
 	@Override
 	public long getSize() {
-		long size = 0;
-		for(final ObjectContainerMock<T> c : storageMap.values()) { //TODO check are values right?
-			size += c.size();
-		}
-		return size;
+		return storageMap.values().stream().mapToLong(ObjectContainerMock::size).sum();
 	}
-	//
+
 	@Override
 	public long getCapacity() {
 		return storageCapacity;
 	}
-	//
+
 	@Override
 	public final void putIntoDefaultContainer(final List<T> dataItems) {
-		final String defaultContainerName = getClass().getSimpleName().toLowerCase();
-		try {
-
-			sequencer.submit(new PutObjectsBatchTask(defaultContainerName, dataItems));
-		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"Failed to put {} objects into the default container \"{}\"",
-				dataItems.size(), defaultContainerName
-			);
-		}
+		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectsBatchTask(defaultContainerName, dataItems));
 	}
 
 	@Override
@@ -270,11 +272,10 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		return ioStats;
 	}
 
-	protected void loadPersistedDataItems() {
-		// if there is data src file path
+	@SuppressWarnings("InfiniteLoopStatement")
+	private void loadPersistedDataItems() {
 		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
 			final Path dataFilePath = Paths.get(dataSrcPath);
-			//final int dataSizeRadix = appConfig.getDataRadixSize();
 			if(!Files.exists(dataFilePath)) {
 				LOG.warn(
 					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists"
@@ -291,9 +292,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 				LOG.debug(
 					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
 				);
-				//return;
 			}
-			//
 			final AtomicLong count = new AtomicLong(0);
 			List<T> buff;
 			int n;
@@ -306,7 +305,6 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 				} catch(final InterruptedException ignored) {
 				}
 			});
-			//
 			try(
 				final CsvFileItemInput<T>
 					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, itemClass, contentSrc)
@@ -334,8 +332,6 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 			}
 		}
 	}
-	//
-	protected abstract void startListening();
 
 	private abstract class ContainerTaskBase extends FutureTaskBase<T> {
 		private final String containerName;
@@ -376,13 +372,14 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 	}
 
-	private class ListObjectTask extends ContainerTaskBase {
+	private class ListObjectsTask
+		extends ContainerTaskBase {
 
 		private final String afterObjectId;
 		private final Collection<T> outputBuffer;
 		private final int limit;
 
-		ListObjectTask(
+		ListObjectsTask(
 			final String containerName, final String afterObjectId,
 			final Collection<T> outputBuffer, final int limit
 		) {
@@ -506,7 +503,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 		private final String containerName;
 
-		public PutContainerTask(final String containerName) {
+		PutContainerTask(final String containerName) {
 			this.containerName = containerName;
 		}
 

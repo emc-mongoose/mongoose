@@ -1,10 +1,10 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.common.concurrent.LifeCycleBase;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -31,7 +31,7 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
  Created by kurila on 12.07.16.
  */
 public class BasicMonitor<I extends Item, O extends IoTask<I>>
-extends LifeCycleBase
+extends DaemonBase
 implements Monitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -260,7 +260,7 @@ implements Monitor<I, O> {
 
 	@Override
 	protected void doStart()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.start();
 		}
@@ -271,7 +271,7 @@ implements Monitor<I, O> {
 
 	@Override
 	protected void doShutdown()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.shutdown();
 		}
@@ -279,7 +279,7 @@ implements Monitor<I, O> {
 
 	@Override
 	protected void doInterrupt()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.interrupt();
 		}
@@ -316,7 +316,7 @@ implements Monitor<I, O> {
 		if(!isInterrupted()) {
 			try {
 				interrupt();
-			} catch(final UserShootItsFootException e) {
+			} catch(final UserShootHisFootException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
 			}
 		}

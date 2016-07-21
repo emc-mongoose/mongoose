@@ -38,10 +38,17 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	@Override
-	public V get(final long timeout, final TimeUnit unit)
+	public V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
-		final long timeoutInMillis = unit.toMillis(timeout);
-		final long startTime = (timeoutInMillis <= 0) ? 0 : System.currentTimeMillis();
+		final long timeoutInMillis;
+		if (timeout < 0 || unit == null) {
+			throw new IllegalArgumentException();
+		} else if (timeout == 0) {
+			timeoutInMillis = Long.MAX_VALUE;
+		} else {
+			timeoutInMillis = unit.toMillis(timeout);
+		}
+		final long startTime = System.currentTimeMillis();
 		long waitTime = timeoutInMillis;
 		if (completed.get()) {
 			return getResult();

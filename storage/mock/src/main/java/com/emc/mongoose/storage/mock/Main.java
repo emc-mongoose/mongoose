@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock;
 
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.reader.jackson.JacksonConfigLoader;
+import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
 
@@ -18,18 +18,23 @@ public class Main {
 
 	public static void main(final String... args)
 	throws IOException {
-		final Config config = JacksonConfigLoader.loadDefaultConfig();
-		final Nagaina nagaina = new Nagaina(config);
-		nagaina.start();
-		System.out.println("Nagaina started");
-		try {
-			System.out.println("Nagaina will await");
-			nagaina.await();
-		} catch(final InterruptedException e) {
-			System.out.println("Nagaina was interrupted");
+		final Config config = ConfigLoader.loadDefaultConfig();
+		if (config == null) {
+			throw new IllegalStateException();
 		}
-		nagaina.shutdown();
-		System.out.println("Nagaina shutdown");
+		final Config.StorageConfig storageConfig = config.getStorageConfig();
+		final Config.LoadConfig.MetricsConfig metricsConfig =
+			config.getLoadConfig().getMetricsConfig();
+		final Config.ItemConfig itemConfig = config.getItemConfig();
+		try(final Nagaina nagaina = new Nagaina(storageConfig, metricsConfig, itemConfig)) {
+			nagaina.start();
+			System.out.println("Nagaina started");
+			try {
+				nagaina.await();
+			} catch(final InterruptedException e) {
+				System.out.println("Nagaina was interrupted");
+			}
+		}
 	}
 
 }

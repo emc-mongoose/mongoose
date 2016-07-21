@@ -3,7 +3,7 @@ package com.emc.mongoose.ui.config.reader;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.model.util.TimeUtil;
-import com.emc.mongoose.ui.config.reader.jackson.JacksonConfigLoader;
+import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,7 +23,7 @@ public class ConfigLoaderTest {
 	@Test
 	public void shouldParseWithoutFireballsThrowing()
 	throws IOException {
-		final Config config = JacksonConfigLoader.loadDefaultConfig();
+		final Config config = ConfigLoader.loadDefaultConfig();
 		assertThat(config, notNullValue());
 		assertThat(config.getName(), equalTo("mongoose", "name"));
 		assertThat(config.getVersion(), equalTo("3.0.0-SNAPSHOT", "version"));
