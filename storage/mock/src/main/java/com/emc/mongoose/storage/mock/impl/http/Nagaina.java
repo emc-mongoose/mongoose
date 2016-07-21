@@ -61,7 +61,6 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		super.start();
 		final int portsNumber = dispatchGroups.length;
 		for (int i = 0; i < portsNumber; i++) {
 			try {

@@ -34,6 +34,8 @@ public class Main {
 			} catch(final InterruptedException e) {
 				System.out.println("Nagaina was interrupted");
 			}
+		} catch(final Throwable t) {
+			t.printStackTrace();
 		}
 	}
 
