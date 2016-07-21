@@ -8,7 +8,111 @@
 <body>
 <fieldset>
 	<legend><h2>SCENARIO ENGINE</h2></legend>
-	TODO
+	<p>
+		<fieldset>
+			<legend><h3>INTRODUCTION</h3></legend>
+			<p>The performance testing software should be able to be scripted in order to execute
+			complex tests ("weighted CRUD" or "maxtest", etc). The general way to describe the
+			actions which should be performed in the test is the organizing them to the sequences
+			and parallel sets. So does Apache JMeter, COSBench and other tools. It's decided to
+			rework the way to configure Mongoose in order to make Mongoose more human-friendly and
+			flexible.</p>
+		</fieldset>
+	</p>
+	<p>
+		<fieldset>
+			<legend><h3>LIMITATIONS</h3></legend>
+			<p>
+
+			</p>
+		</fieldset>
+	</p>
+	<p>
+		<fieldset>
+			<legend><h3>APPROACH</h3></legend>
+			<p>
+				<h4>Run a Scenario</h4>
+				<p>
+					There are two ways to feed the scenario to Mongoose:
+					<ol>
+						<li>
+							Specify the file containing the scenario:
+							<fieldset class="bash">
+								java [&lt;DEFAULTS_OVERRIDING&gt;] -jar mongoose.jar [&lt;MODE&gt;] -f &lt;PATH/TO/SCENARIO.json&gt;
+							</fieldset>
+						</li>
+						<li>
+							Provide the scenario content on the standard input of mongoose (note the "-I" argument):
+							<fieldset class="bash">
+								cat &lt;PATH/TO/SCENARIO.json&gt; | java [&lt;DEFAULTS_OVERRIDING&gt;] -jar mongoose.jar [&lt;MODE&gt;] -I
+							</fieldset>
+							<fieldset class="info">
+								Mongoose will await the scenario input from the user if there's
+								nor scenario file specified neither scenario data on the standard
+								input. Note the highlighted scenario data specified by user in this
+								semi-interactive mode.
+								<fieldset class="bash">
+									<pre>
+2016-04-14T12:24:32,705 I ScenarioRunner       main                                     Using the s&#8617;
+	cenario from the standard input
+{
+        "type" : "load",
+        "config" : { "load" : { "limit" : { "time" : "1m" } } }
+}
+2016-04-14T12:25:04,982 I HttpBucketHelper     main                                     Bucket "mongoose-2016.04.14.12.25.04.883" created
+2016-04-14T12:25:05,028 I LoadExecutorBase     main                                     0-S3-Write-1x1: will use "newDataItemSrc&lt;BasicHttpData&gt;" as an item source
+2016-04-14T12:25:05,163 I SingleJobContainer   main                                     Start the job "0-S3-Write-1x1"
+2016-04-14T12:25:05,194 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(0/0); duration[us]=(0/0/0); latency[us]=(0/0/0); TP[op/s]=(0.000/0.000); BW[MB/s]=(0.000/0.000)
+2016-04-14T12:25:15,201 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(16546/0); duration[us]=(442/370/1307); latency[us]=(136/47/916); TP[op/s]=(1827.394/1590.264); BW[MB/s]=(1827.394/1590.249)
+2016-04-14T12:25:25,201 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(38650/0); duration[us]=(418/357/1283); latency[us]=(132/47/393); TP[op/s]=(2026.467/1981.767); BW[MB/s]=(2026.467/1981.761)
+2016-04-14T12:25:35,202 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(60681/0); duration[us]=(410/357/1245); latency[us]=(131/47/546); TP[op/s]=(2085.863/2121.699); BW[MB/s]=(2085.863/2121.691)
+2016-04-14T12:25:45,204 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(82338/0); duration[us]=(407/357/1394); latency[us]=(131/47/632); TP[op/s]=(2105.416/2146.232); BW[MB/s]=(2105.416/2146.229)
+2016-04-14T12:25:55,204 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(104074/0); duration[us]=(405/357/1245); latency[us]=(130/47/632); TP[op/s]=(2118.564/2159.117); BW[MB/s]=(2118.585/2159.206)
+2016-04-14T12:26:05,205 I LoadExecutorBase     0-S3-Write-1x1-metrics                   count=(125723/0); duration[us]=(405/357/1392); latency[us]=(130/47/632); TP[op/s]=(2125.672/2162.451); BW[MB/s]=(2125.672/2162.426)
+2016-04-14T12:26:05,258 I LoadExecutorBase     main                                     "0-S3-Write-1x1" summary: count=(127782/0); duration[us]=(404/357/390/395/403/1392); latency[us]=(130/50/122/130/137/632); TP[op/s]=(2126.772/2160.124); BW[MB/s]=(2126.772/2160.102)
+2016-04-14T12:26:05,266 I JsonScenario         main                                     Scenario end
+									</pre>
+								</fieldset>
+							</fieldset>
+						</li>
+					</ol>
+				</p>
+				<h4>Scenario File Syntax</h4>
+				<h5>Job Types</h5>
+				<h5>Configuration Node</h5>
+				<h5>Sequential and Parallel Jobs</h5>
+				<h5>Execute a Shell Command</h5>
+				<h5>Using Items Lists</h5>
+				<h5>Loops</h5>
+			</p>
+		</fieldset>
+	</p>
+	<p>
+		<fieldset>
+			<legend><h3>CONFIGURATION</h3></legend>
+			<p>
+				Each next step means that the same configuration values from the previous step are
+				overriden by the values from the current step:
+				<ol>
+					<li>Configuration loaded from defaults.json</li>
+					<li>Configuration loaded from JVM arguments and environment properties</li>
+					<li>Configuration from any parent job container</li>
+					<li>Configuration from the current job container</li>
+				</ol>
+			</p>
+		</fieldset>
+	</p>
+	<p>
+		<fieldset>
+			<legend><h3>REPORTING</h3></legend>
+			<p>
+				Any "for" job logs the message for each value invocation with the following format:
+				<fieldset class="log">
+					&lt;TIMESTAMP&gt; I ForJob    main        Use next value for "&lt;ARG&gt;": &lt;VALUE&gt;
+				</fieldset>
+			</p>
+		</fieldset>
+	</p>
 </fieldset>
 </body>
 </html>
