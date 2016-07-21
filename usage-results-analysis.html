@@ -71,7 +71,7 @@
 							<li>load.limit.time: the default load job time limit, 0 means no limit</li>
 							<li>run.mode: the run mode (standalone/wsmock/server/client/webui)</li>
 							
-						<ul>
+						</ul>
 					</p>
 					<p>
 						After several initialization statements Mongoose starts reporting its progress every 10 seconds. Progress information is printed with the following layout:
@@ -79,20 +79,20 @@
 						<tr><th>Version &lt; 2.4.0</th><th>Version &ge; 2.4.0</th></tr>
 						<tr><td>
 						<pre>
-&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt; &#8617;
-count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
-duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); &#8617;
-latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); &#8617;
-TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
+&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt;&#8617;
+count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;);&#8617;
+duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;);&#8617;
+latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;);&#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;);&#8617;
 BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)
 						</pre></td><td><pre>
-&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt; &#8617;
-n=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
-t[s]=(&lt;JOB_TIME&gt;/&lt;DURATION_SUM&gt;) &#8617;
-TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
-size=(&lt;SIZE&gt); &#8617;
-BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;) &#8617;
-dur[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;); &#8617;
+&lt;TIMESTAMP&gt; &lt;LEVEL&gt; &lt;CLASS&gt; &lt;LOAD_JOB_NAME&gt;&#8617;
+n=(&lt;SUCCESS&gt;/&lt;FAIL&gt;);&#8617;
+t[s]=(&lt;JOB_TIME&gt;/&lt;DURATION_SUM&gt;)&#8617;
+size=(&lt;SIZE&gt);&#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;);&#8617;
+BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)&#8617;
+dur[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;);&#8617;
 lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;)
 						</pre></td></tr></table>
 					</p>
@@ -102,20 +102,20 @@ lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;MAX&gt;)
 							<tr><th>Version &lt; 2.4.0</th><th>Version &ge; 2.4.0</th></tr>
 							<tr><td>
 						<pre>
-count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
-duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); &#8617;
-latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); &#8617;
-TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
+count=(&lt;SUCCESS&gt;/&lt;FAIL&gt;);&#8617;
+duration[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;);&#8617;
+latency[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;);&#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;);&#8617;
 BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)
 						</pre>
 							</td><td>
 						<pre>
-n=(&lt;SUCCESS&gt;/&lt;FAIL&gt;); &#8617;
-t[s]=(&lt;JOB_TIME&gt;/&lt;DURATION_SUM&gt;) &#8617;
-TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;); &#8617;
-size=(&lt;SIZE&gt); &#8617;
-BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;) &#8617;
-dur[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;); &#8617;
+n=(&lt;SUCCESS&gt;/&lt;FAIL&gt;);&#8617;
+t[s]=(&lt;JOB_TIME&gt;/&lt;DURATION_SUM&gt;)&#8617;
+size=(&lt;SIZE&gt);&#8617;
+TP[op/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;);&#8617;
+BW[MB/s]=(&lt;AVG&gt;/&lt;AVG_LAST&gt;)&#8617;
+dur[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;);&#8617;
 lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;)
 						</pre>
 							</td></tr>
@@ -196,8 +196,8 @@ lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;
 												CountFail,<br/>
 												JobDuration[s],<br/>
 												DurationSum[s],<br/>
-												TPAvg[op/s],<br/>
 												TPLast[op/s],<br/>
+												TPAvg[op/s],<br/>
 												Size,<br/>
 												BWAvg[MB/s],<br/>
 												BWLast[MB/s],<br/>
@@ -260,9 +260,9 @@ lat[us]=(&lt;AVG&gt;/&lt;MIN&gt;/&lt;LOQ&gt;/&lt;MED&gt;/&lt;HIQ&gt;/&lt;MAX&gt;
 												CountFail,<br/>
 												JobDuration[s],<br/>
 												DurationSum[s],<br/>
+												Size,<br/>
 												TPAvg[op/s],<br/>
 												TPLast[op/s],<br/>
-												Size,<br/>
 												BWAvg[MB/s],<br/>
 												BWLast[MB/s],<br/>
 												DurationAvg[us],<br/>
