@@ -15,6 +15,7 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundExceptio
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -65,8 +66,12 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
 		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
+		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		try {
-			this.contentSrc = ContentSourceUtil.getInstance(itemConfig.getDataConfig().getContentConfig());
+			this.contentSrc = ContentSourceUtil.getInstance(
+				contentConfig.getFile(), contentConfig.getSeed(),
+				contentConfig.getRingSize().getMin()
+			);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to set the content source"

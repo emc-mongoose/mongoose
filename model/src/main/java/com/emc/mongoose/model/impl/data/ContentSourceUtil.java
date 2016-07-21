@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.impl.data;
 
 import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.ui.config.Config;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +25,10 @@ public class ContentSourceUtil {
 		}
 	}
 
-	public static ContentSource getInstance(final Config.ItemConfig.DataConfig.ContentConfig contentConfig)
-	throws IOException, IllegalStateException {
+	public static ContentSource getInstance(
+		final String contentFilePath, final String seed, final long ringSize
+	) throws IOException, IllegalStateException {
 		final ContentSource instance;
-		final String contentFilePath = contentConfig.getFile();
 		if(contentFilePath != null && !contentFilePath.isEmpty()) {
 			final Path p = Paths.get(contentFilePath);
 			if(Files.exists(p) && !Files.isDirectory(p) &&
@@ -55,10 +54,7 @@ public class ContentSourceUtil {
 				);
 			}
 		} else {
-			instance = new SeedContentSource(
-				Long.parseLong(contentConfig.getSeed(), 0x10),
-				contentConfig.getRingSize().get()
-			);
+			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSize);
 		}
 		return instance;
 	}

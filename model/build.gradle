@@ -2,5 +2,4 @@ description = 'mongoose-model'
 
 dependencies {
     compile project(':common')
-    compile project(':ui')
 }
