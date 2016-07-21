@@ -303,34 +303,95 @@ implements IoStats {
 		//
 		@Override
 		public final String toString() {
+
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
+
+			final double elapsedTime = getElapsedTime() / M;
+			final String elapsedTimeStr;
+			if(elapsedTime < 1) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
+			} else if(elapsedTime < 10 ) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
+			} else if(elapsedTime < 100) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
+			} else if(elapsedTime < 1000){
+				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
+			} else {
+				elapsedTimeStr = Long.toString((long) elapsedTime);
+			}
+
+			final double durationSum = getDurationSum() / M;
+			final String durationSumStr;
+			if(durationSum < 1) {
+				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
+			} else if(durationSum < 10 ) {
+				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
+			} else if(durationSum < 100) {
+				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
+			} else if(durationSum < 1000){
+				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
+			} else {
+				durationSumStr = Long.toString((long) durationSum);
+			}
+
 			return String.format(
 				Locale.ROOT, MSG_FMT_METRICS,
-				getSuccCount(), getFailCount(),
-				(long) (getDurationSum() / M), (long) (getElapsedTime() / M),
+				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
 				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
-				getByteRateMean(), getByteRateLast(), toDurString(), toLatString()
+				getByteRateMean() / MIB, getByteRateLast() / MIB,
+				toDurString(), toLatString()
 			);
 		}
 		//
 		@Override
 		public final String toSummaryString() {
+
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
+
+			final double elapsedTime = getElapsedTime() / M;
+			final String elapsedTimeStr;
+			if(elapsedTime < 1) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
+			} else if(elapsedTime < 10 ) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
+			} else if(elapsedTime < 100) {
+				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
+			} else if(elapsedTime < 1000){
+				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
+			} else {
+				elapsedTimeStr = Long.toString((long) elapsedTime);
+			}
+
+			final double durationSum = getDurationSum() / M;
+			final String durationSumStr;
+			if(durationSum < 1) {
+				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
+			} else if(durationSum < 10 ) {
+				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
+			} else if(durationSum < 100) {
+				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
+			} else if(durationSum < 1000){
+				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
+			} else {
+				durationSumStr = Long.toString((long) durationSum);
+			}
+
 			return String.format(
-				Locale.ROOT, MSG_FMT_METRICS, getSuccCount(), getFailCount(),
-				(long) (getDurationSum() / M), (long) (getElapsedTime() / M), getSuccRateMean(),
-				getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()), getByteRateMean(),
-				getByteRateLast(), toDurSummaryString(), toLatSummaryString()
+				Locale.ROOT, MSG_FMT_METRICS,
+				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
+				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
+				getByteRateMean() / MIB, getByteRateLast() / MIB,
+				toDurSummaryString(), toLatSummaryString()
 			);
 		}
 	}
