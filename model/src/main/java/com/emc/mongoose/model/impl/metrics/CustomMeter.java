@@ -18,7 +18,7 @@ implements Metric {
 	private final LongAdder count = new LongAdder();
 	private final Clock clock;
 	private long startTime;
-	private AtomicLong lastTick;
+	private final AtomicLong lastTick;
 	//
 	public CustomMeter(final Clock clock, final int periodSec) {
 		final double ps = periodSec > 0 ? periodSec : 10;
@@ -30,7 +30,7 @@ implements Metric {
 	//
 	public void resetStartTime() {
 		startTime = clock.getTick();
-		lastTick = new AtomicLong(startTime);
+		lastTick.set(startTime);
 	}
 	//
 	public CustomMeter(final int periodSec) {
