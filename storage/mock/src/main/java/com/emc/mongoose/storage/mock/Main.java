@@ -4,6 +4,8 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
@@ -15,6 +17,8 @@ public class Main {
 	static {
 		LogUtil.init();
 	}
+
+	private final static Logger LOG = LogManager.getLogger();
 
 	public static void main(final String[] args)
 	throws IOException {
@@ -28,11 +32,9 @@ public class Main {
 		final Config.ItemConfig itemConfig = config.getItemConfig();
 		try(final Nagaina nagaina = new Nagaina(storageConfig, metricsConfig, itemConfig)) {
 			nagaina.start();
-			System.out.println("Nagaina started");
 			try {
 				nagaina.await();
-			} catch(final InterruptedException e) {
-				System.out.println("Nagaina was interrupted");
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
