@@ -91,9 +91,9 @@ public final class LogValidator {
 				Assert.assertEquals("CountFail", nextRec.get(8));
 				Assert.assertEquals("JobDuration[s]", nextRec.get(9));
 				Assert.assertEquals("DurationSum[s]", nextRec.get(10));
-				Assert.assertEquals("TPAvg[op/s]", nextRec.get(11));
-				Assert.assertEquals("TPLast[op/s]", nextRec.get(12));
-				Assert.assertEquals("Size", nextRec.get(13));
+				Assert.assertEquals("Size", nextRec.get(11));
+				Assert.assertEquals("TPAvg[op/s]", nextRec.get(12));
+				Assert.assertEquals("TPLast[op/s]", nextRec.get(13));
 				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(14));
 				Assert.assertEquals("BWLast[MB/s]", nextRec.get(15));
 				Assert.assertEquals("DurationAvg[us]", nextRec.get(16));
@@ -185,10 +185,10 @@ public final class LogValidator {
 				);
 				//
 				Assert.assertTrue(
-					"Average TP is not correct", LogValidator.isDouble(nextRec.get(11))
+					"Average TP is not correct", LogValidator.isDouble(nextRec.get(12))
 				);
 				Assert.assertTrue(
-					"Last TP is not correct", LogValidator.isDouble(nextRec.get(12))
+					"Last TP is not correct", LogValidator.isDouble(nextRec.get(13))
 				);
 				Assert.assertTrue(
 					"Average BW is not correct", LogValidator.isDouble(nextRec.get(14))
@@ -222,9 +222,9 @@ public final class LogValidator {
 				Assert.assertEquals("CountFail", nextRec.get(8));
 				Assert.assertEquals("JobDuration[s]", nextRec.get(9));
 				Assert.assertEquals("DurationSum[s]", nextRec.get(10));
-				Assert.assertEquals("TPAvg[op/s]", nextRec.get(11));
-				Assert.assertEquals("TPLast[op/s]", nextRec.get(12));
 				Assert.assertEquals("Size", nextRec.get(13));
+				Assert.assertEquals("TPAvg[op/s]", nextRec.get(12));
+				Assert.assertEquals("TPLast[op/s]", nextRec.get(13));
 				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(14));
 				Assert.assertEquals("BWLast[MB/s]", nextRec.get(15));
 				Assert.assertEquals("DurationAvg[us]", nextRec.get(16));
@@ -293,10 +293,10 @@ public final class LogValidator {
 					"Latency max is not correct", LogValidator.isInteger(nextRec.get(21))
 				);
 				Assert.assertTrue(
-					"Average TP is not correct", LogValidator.isDouble(nextRec.get(11))
+					"Average TP is not correct", LogValidator.isDouble(nextRec.get(12))
 				);
 				Assert.assertTrue(
-					"Last TP is not correct", LogValidator.isDouble(nextRec.get(12))
+					"Last TP is not correct", LogValidator.isDouble(nextRec.get(13))
 				);
 				Assert.assertTrue(
 					"Average BW is not correct", LogValidator.isDouble(nextRec.get(14))
