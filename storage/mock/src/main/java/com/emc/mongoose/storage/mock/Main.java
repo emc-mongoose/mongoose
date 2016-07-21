@@ -16,7 +16,7 @@ public class Main {
 		LogUtil.init();
 	}
 
-	public static void main(final String... args)
+	public static void main(final String[] args)
 	throws IOException {
 		final Config config = ConfigLoader.loadDefaultConfig();
 		if (config == null) {
@@ -34,8 +34,6 @@ public class Main {
 			} catch(final InterruptedException e) {
 				System.out.println("Nagaina was interrupted");
 			}
-		} catch(final Throwable t) {
-			t.printStackTrace();
 		}
 	}
 
