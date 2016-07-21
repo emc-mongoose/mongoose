@@ -3,8 +3,8 @@ package com.emc.mongoose.monitor;
 import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.ui.config.reader.jackson.JacksonConfigLoader;
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.generator.BasicGenerator;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
@@ -32,9 +32,9 @@ public class Main {
 	}
 
 	public static <I extends DataItem, O extends DataIoTask<I>> void main(final String... args)
-	throws IOException, InterruptedException, UserShootItsFootException {
+	throws IOException, InterruptedException, UserShootHisFootException {
 
-		final Config config = JacksonConfigLoader.loadDefaultConfig();
+		final Config config = ConfigLoader.loadDefaultConfig();
 
 		final int generatorCount = Runtime.getRuntime().availableProcessors();
 		final List<Generator<I, O>> generators = new ArrayList<>(generatorCount);

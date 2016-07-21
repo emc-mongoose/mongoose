@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.fs;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.util.IoWorker;
@@ -87,7 +87,7 @@ extends DriverBase<I, O> {
 	
 	@Override
 	protected void doStart()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskExecutor.submit(new IoTaskSchedule());
 		}
@@ -95,13 +95,13 @@ extends DriverBase<I, O> {
 
 	@Override
 	protected void doShutdown()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		ioTaskExecutor.shutdown();
 	}
 
 	@Override
 	protected void doInterrupt()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		final List<Runnable> interruptedTasks = ioTaskExecutor.shutdownNow();
 		LOG.debug(Markers.MSG, "{} I/O tasks dropped", interruptedTasks.size());
 	}

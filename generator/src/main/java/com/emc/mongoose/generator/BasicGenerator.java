@@ -1,10 +1,10 @@
 package com.emc.mongoose.generator;
 
-import com.emc.mongoose.common.concurrent.LifeCycleBase;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.util.SizeInBytes;
@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,13 +37,12 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 11.07.16.
  */
 public class BasicGenerator<I extends Item, O extends IoTask<I>>
-extends LifeCycleBase
+extends DaemonBase
 implements Generator<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -138,7 +138,11 @@ implements Generator<I, O> {
 		throws IOException {
 			final O nextIoTask = ioTaskFactory.getInstance(ioType, item);
 			final Driver<I, O> nextDriver = getNextDriver();
-			nextDriver.submit(nextIoTask);
+			try {
+				nextDriver.submit(nextIoTask);
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
 		}
 
 		@Override
@@ -150,7 +154,11 @@ implements Generator<I, O> {
 					ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i)));
 				}
 				final Driver<I, O> nextDriver = getNextDriver();
-				nextDriver.submit(ioTasks, 0, ioTasks.size());
+				try {
+					nextDriver.submit(ioTasks, 0, ioTasks.size());
+				} catch(final InterruptedException e) {
+					throw new InterruptedIOException();
+				}
 			}
 			return to - from;
 		}
@@ -164,7 +172,11 @@ implements Generator<I, O> {
 				ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem));
 			}
 			final Driver<I, O> nextDriver = getNextDriver();
-			nextDriver.submit(ioTasks, 0, n);
+			try {
+				nextDriver.submit(ioTasks, 0, n);
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
 			return n;
 		}
 
@@ -183,7 +195,7 @@ implements Generator<I, O> {
 	public BasicGenerator(
 		final List<Driver<I, O>> drivers, final LoadType ioType,
 		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory
-	) throws UserShootItsFootException {
+	) throws UserShootHisFootException {
 		this.drivers = drivers;
 		if(itemFactory instanceof BasicDataItemFactory) {
 			this.itemInput = new NewDataItemInput<>(
@@ -225,11 +237,11 @@ implements Generator<I, O> {
 
 	@Override
 	protected void doStart()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		for(final Driver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.start();
-			} catch(final UserShootItsFootException e) {
+			} catch(final UserShootHisFootException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the driver \"{}\"", nextDriver.toString()
 				);
@@ -249,7 +261,7 @@ implements Generator<I, O> {
 		for(final Driver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.interrupt();
-			} catch(final UserShootItsFootException e) {
+			} catch(final UserShootHisFootException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to interrupt the driver \"{}\"",
 					nextDriver.toString()
@@ -278,7 +290,7 @@ implements Generator<I, O> {
 		if(!isInterrupted()) {
 			try {
 				interrupt();
-			} catch(final UserShootItsFootException e) {
+			} catch(final UserShootHisFootException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
 			}
 		}

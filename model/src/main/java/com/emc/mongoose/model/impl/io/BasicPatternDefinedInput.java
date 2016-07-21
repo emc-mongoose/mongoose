@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.impl.io;
 
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.PatternDefinedInput;
 import com.emc.mongoose.model.api.io.ValueInputFactory;
@@ -37,16 +37,16 @@ implements PatternDefinedInput {
 	private Input<String>[] inputs;
 
 	public BasicPatternDefinedInput(final String pattern)
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		this(pattern, StringInputFactory.getInstance());
 	}
 
 	public BasicPatternDefinedInput(
 		final String pattern,
 		final ValueInputFactory<String, ? extends Input<String>> valueInputFactory
-	) throws UserShootItsFootException {
+	) throws UserShootHisFootException {
 		if(pattern == null) {
-			throw new UserShootItsFootException("Null pattern");
+			throw new UserShootHisFootException("Null pattern");
 		}
 		this.valueInputFactory = valueInputFactory;
 		this.pattern = pattern;
@@ -75,9 +75,9 @@ implements PatternDefinedInput {
 	 */
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for getInputs[]
 	protected void initialize()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		if(pattern.charAt(0) != PATTERN_CHAR) {
-			throw new UserShootItsFootException();
+			throw new UserShootHisFootException();
 		}
 		final StringBuilder patternBuilder = new StringBuilder(pattern);
 		patternBuilder.delete(0, 1);

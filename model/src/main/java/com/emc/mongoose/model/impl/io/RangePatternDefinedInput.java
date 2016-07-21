@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.impl.io;
 
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.PatternDefinedInput;
 import com.emc.mongoose.model.api.io.ValueInputFactory;
@@ -21,14 +21,14 @@ extends BasicPatternDefinedInput {
 	private String[] segments;
 
 	public RangePatternDefinedInput(final String pattern)
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		super(pattern);
 	}
 
 	public RangePatternDefinedInput(
 		final String pattern,
 		final ValueInputFactory<String, ? extends Input<String>> valueInputFactory
-	) throws UserShootItsFootException {
+	) throws UserShootHisFootException {
 		super(pattern, valueInputFactory);
 	}
 
@@ -42,7 +42,7 @@ extends BasicPatternDefinedInput {
 	@Override
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for inputs[]
 	protected final void initialize()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		final int patternSymbolsNum = countPatternSymbols(getPattern());
 		if (patternSymbolsNum > 0) {
 			setInputs(new Input[patternSymbolsNum]);
@@ -98,7 +98,7 @@ extends BasicPatternDefinedInput {
 	 * @param index of current empty position in inputs' array ('inputs' field)
 	 */
 	private void addExpressionParams(final StringBuilder expression, final int index)
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		final char type = expression.charAt(0);
 		final String format = initParameter(expression, PatternDefinedInput.FORMAT_CHARS);
 		final String range = initParameter(expression, RANGE_SYMBOLS);

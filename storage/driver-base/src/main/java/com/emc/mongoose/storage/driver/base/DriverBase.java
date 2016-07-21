@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.common.concurrent.LifeCycleBase;
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
  This mock just passes the submitted tasks to the load monitor em
  */
 public abstract class DriverBase<I extends Item, O extends IoTask<I>>
-extends LifeCycleBase
+extends DaemonBase
 implements Driver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -48,7 +48,7 @@ implements Driver<I, O> {
 		if(!isInterrupted()) {
 			try {
 				interrupt();
-			} catch(final UserShootItsFootException e) {
+			} catch(final UserShootHisFootException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
 			}
 		}

@@ -1,14 +1,14 @@
 package com.emc.mongoose.common.concurrent;
 
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  Created on 12.07.16.
  */
-public abstract class LifeCycleBase
-implements LifeCycle {
+public abstract class DaemonBase
+implements Daemon {
 
 	private AtomicReference<State> stateRef = new AtomicReference<>(State.INITIAL);
 
@@ -17,21 +17,21 @@ implements LifeCycle {
 	}
 
 	protected abstract void doStart()
-	throws UserShootItsFootException;
+	throws UserShootHisFootException;
 
 	protected abstract void doShutdown()
-	throws UserShootItsFootException;
+	throws UserShootHisFootException;
 
 	protected abstract void doInterrupt()
-	throws UserShootItsFootException;
+	throws UserShootHisFootException;
 
 	@Override
 	public final void start()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		if(stateRef.compareAndSet(State.INITIAL, State.STARTED)) {
 			doStart();
 		} else {
-			throw new UserShootItsFootException("start failed: state is " + stateRef.get());
+			throw new UserShootHisFootException("start failed: state is " + stateRef.get());
 		}
 	}
 
@@ -42,13 +42,13 @@ implements LifeCycle {
 
 	@Override
 	public final void shutdown()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		if(stateRef.compareAndSet(State.INITIAL, State.SHUTDOWN)) {
 			doShutdown();
 		} else if(stateRef.compareAndSet(State.STARTED, State.SHUTDOWN)) {
 			doShutdown();
 		} else {
-			throw new UserShootItsFootException("shutdown failed: state is " + stateRef.get());
+			throw new UserShootHisFootException("shutdown failed: state is " + stateRef.get());
 		}
 	}
 
@@ -59,15 +59,15 @@ implements LifeCycle {
 
 	@Override
 	public final void interrupt()
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		try {
 			shutdown();
-		} catch(final UserShootItsFootException ignored) {
+		} catch(final UserShootHisFootException ignored) {
 		}
 		if(stateRef.compareAndSet(State.SHUTDOWN, State.INTERRUPTED)) {
 			doInterrupt();
 		} else {
-			throw new UserShootItsFootException("interrupt failed: state is " + stateRef.get());
+			throw new UserShootHisFootException("interrupt failed: state is " + stateRef.get());
 		}
 	}
 

@@ -68,8 +68,6 @@ subprojects {
 			"io.netty:netty-handler:${nettyVersion}",
 			"io.netty:netty-codec-http:${nettyVersion}",
 
-			"org.eclipse.jetty:jetty-util:9.4.0.M0",
-
 			"it.unimi.dsi:fastutil:7.0.12"
 		)
 

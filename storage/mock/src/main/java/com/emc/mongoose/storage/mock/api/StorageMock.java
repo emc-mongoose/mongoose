@@ -1,20 +1,20 @@
 package com.emc.mongoose.storage.mock.api;
 
-import com.emc.mongoose.common.concurrent.LifeCycle;
-import com.emc.mongoose.model.api.item.DataItem;
+import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.concurrent.Launchable;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  Created on 11.07.16. */
 public interface StorageMock<T extends MutableDataItemMock>
-extends LifeCycle {
+extends Launchable, Closeable {
 
 	void start();
 	long getSize();

@@ -13,13 +13,13 @@ import static com.emc.mongoose.common.Constants.FNAME_CONFIG;
 /**
  Created by kurila on 14.07.16.
  */
-public abstract class JacksonConfigLoader {
+public abstract class ConfigLoader {
 
-	private JacksonConfigLoader() {}
+	private ConfigLoader() {}
 
 	public static Config loadDefaultConfig()
 	throws IoFireball {
-		final URL configUrl = JacksonConfigLoader.class.getClassLoader().getResource(FNAME_CONFIG);
+		final URL configUrl = ConfigLoader.class.getClassLoader().getResource(FNAME_CONFIG);
 		if(configUrl == null) {
 			return null;
 		}

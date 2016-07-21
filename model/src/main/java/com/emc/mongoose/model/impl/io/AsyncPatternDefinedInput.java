@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.impl.io;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.PatternDefinedInput;
 
 public final class AsyncPatternDefinedInput
@@ -11,7 +11,7 @@ implements PatternDefinedInput {
 	private final PatternDefinedInput wrappedGenerator;
 	//
 	public AsyncPatternDefinedInput(final String pattern)
-	throws UserShootItsFootException {
+	throws UserShootHisFootException {
 		this(new RangePatternDefinedInput(pattern, AsyncStringInputFactory.getInstance()));
 	}
 	//
