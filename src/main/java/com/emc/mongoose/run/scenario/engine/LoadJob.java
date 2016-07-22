@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario.engine;
 
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;

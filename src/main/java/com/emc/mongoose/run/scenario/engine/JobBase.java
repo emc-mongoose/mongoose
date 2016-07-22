@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario.engine;
 
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 
 /**
  Created by kurila on 08.04.16.
@@ -28,6 +29,7 @@ implements Job {
 		if(localConfig != null) {
 			final String newRunId = localConfig.getRunId();
 			localConfig.setRunId(newRunId);
+			BasicConfig.THREAD_CONTEXT.set(localConfig);
 		}
 	}
 }

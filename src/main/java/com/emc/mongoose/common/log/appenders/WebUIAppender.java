@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.log.appenders;
 //
-import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
@@ -30,9 +29,12 @@ extends AbstractAppender {
 
 	private final static int MAX_EVENTS_IN_THE_LIST = 3000;
 	//
-	private static final List<String> markerNames = Collections.unmodifiableList(Arrays.asList(
-		Markers.MSG.getName(), Markers.ERR.getName(),
-			Markers.PERF_AVG.getName(), Markers.PERF_SUM.getName()));
+	private static final List<String> MARKER_NAMES = Collections.unmodifiableList(
+		Arrays.asList(
+			Markers.MSG.getName(), Markers.ERR.getName(), Markers.PERF_AVG.getName(),
+			Markers.PERF_SUM.getName()
+		)
+	);
 	//
 	public static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
@@ -79,7 +81,7 @@ extends AbstractAppender {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
 					final Map<String, CircularArray<ShortenedLogEvent>> markers =
 						new ConcurrentHashMap<>();
-					for (final String markerName: markerNames) {
+					for (final String markerName: MARKER_NAMES) {
 						addMarkerToMap(markers, markerName);
 					}
 					LOG_EVENTS_MAP.put(
@@ -87,7 +89,7 @@ extends AbstractAppender {
 					);
 				}
 				final String eventMarkerName = event.getMarker().getName();
-				if (markerNames.contains(eventMarkerName)) {
+				if (MARKER_NAMES.contains(eventMarkerName)) {
 					addLogEventToMap(currRunId, eventMarkerName, event);
 				}
 			} // else silently skip

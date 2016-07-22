@@ -48,6 +48,9 @@
 						},
 						"load" : {
 							"type" : "create"
+						},
+						"run" : {
+							"id" : "C${threads}_${size}"
 						}
 					}
 				}, {
@@ -60,6 +63,9 @@
 						},
 						"load" : {
 							"type" : "read"
+						},
+						"run" : {
+							"id" : "R${threads}_${size}"
 						}
 					}
 				}, {
@@ -72,6 +78,9 @@
 						},
 						"load" : {
 							"type" : "delete"
+						},
+						"run" : {
+							"id" : "D${threads}_${size}"
 						}
 					}
 				}

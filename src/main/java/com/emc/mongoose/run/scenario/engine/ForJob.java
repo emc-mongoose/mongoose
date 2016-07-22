@@ -64,6 +64,7 @@ extends SequentialJob {
 	protected void loadSubTree(final Map<String, Object> subTree) {
 
 		if(count > 0) {
+			// counter based loop, no values substitution is expected
 			super.loadSubTree(subTree);
 			return;
 		}
