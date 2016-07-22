@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 
-
 	private final static Logger LOG = LogManager.getLogger();
 
 	private final int port;

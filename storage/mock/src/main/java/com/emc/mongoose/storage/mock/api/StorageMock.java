@@ -29,23 +29,23 @@ extends Launchable, Closeable {
 	//
 	void deleteContainer(final String name);
 	//
-	void createObject(final String container, final String id, final long offset, final long size)
+	void createObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException;
 	//
-	T getObject(final String container, final String id, final long offset, final long size)
+	T getObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockException;
 	//
-	void deleteObject(final String container, final String id, final long offset, final long size)
+	void deleteObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException;
 	//
-	void updateObject(final String container, final String id, final long offset, final long size)
+	void updateObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockException, ObjectMockNotFoundException;
 	//
-	void appendObject(final String container, final String id, final long offset, final long size)
+	void appendObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockException, ObjectMockNotFoundException;
 	//
 	T listObjects(
-		final String container, final String marker, final Collection<T> buffDst, final int maxCount
+		final String containerName, final String marker, final Collection<T> outputBuffer, final int maxCount
 	) throws ContainerMockException;
 
 }

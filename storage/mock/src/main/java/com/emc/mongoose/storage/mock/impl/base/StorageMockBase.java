@@ -67,14 +67,15 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
 		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+		final String contentSourcePath = contentConfig.getFile();
 		try {
 			this.contentSrc = ContentSourceUtil.getInstance(
-				contentConfig.getFile(), contentConfig.getSeed(),
+					contentSourcePath, contentConfig.getSeed(),
 				contentConfig.getRingSize().getMin()
 			);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to set the content source"
+				LOG, Level.ERROR, e, "Failed to get content source on path {}", contentSourcePath
 			);
 			throw new IllegalStateException();
 		}
@@ -83,6 +84,10 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		this.containerCapacity = containerConfig.getCapacity();
 		defaultContainerName = getClass().getSimpleName().toLowerCase();
 		createContainer(defaultContainerName);
+	}
+
+	public ContentSource getContentSource() {
+		return contentSrc;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,21 +128,21 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 	@Override
 	public final void createObject(
-		final String container, final String oid, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException {
 		if(isCapacityExhausted.get()) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectTask(container, newDataObject(oid, offset, size)));
+		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectTask(containerName, newDataObject(id, offset, size)));
 	}
 
 	@Override
 	public final void updateObject(
-		final String container, final String oid, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
 			final Future<T> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(container, oid));
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
 			if (future != null) {
 				final T obj = future.get();
 				if(obj == null) {
@@ -154,11 +159,11 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 	//
 	@Override
 	public final void appendObject(
-		final String container, final String oid, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
 			final Future<T> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(container, oid));
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
 			if (future != null) {
 				final T obj = future.get();
 				if(obj == null) {
@@ -175,12 +180,12 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 	@Override
 	public final T getObject(
-		final String container, final String oid, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
 		try {
 			final Future<T> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(container, oid));
+				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
 			if (future != null) {
 				return future.get();
 			}
@@ -194,18 +199,18 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 	@Override
 	public final void deleteObject(
-		final String container, final String id, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
-		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteObjectTask(container, id));
+		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteObjectTask(containerName, id));
 	}
 
 	@Override
 	public final T listObjects(
-		final String container, final String afterOid, final Collection<T> buffDst, final int limit
+			final String containerName, final String afterOid, final Collection<T> outputBuffer, final int limit
 	) throws ContainerMockException {
 		try {
 			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
-				new ListObjectsTask(container, afterOid, buffDst, limit));
+				new ListObjectsTask(containerName, afterOid, outputBuffer, limit));
 			if (future != null) {
 				future.get();
 			}
