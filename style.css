@@ -22,14 +22,17 @@ fieldset {
 .bash {
 	color: #e0e0e0;
 	background: rgba(0, 0, 0, 0.6);
+	font-family: "Lucida Console", Monaco, monospace;
 }
 .json {
 	color: #000080;
 	background: rgba(255, 255, 255, 0.2);
+	font-family: "Lucida Console", Monaco, monospace;
 }
 .log {
 	color: #ffff00;
 	background: rgba(0, 0, 100, 0.6);
+	font-family: "Lucida Console", Monaco, monospace;
 }
 .note {
 	background: rgba(255, 255, 100, 0.1);

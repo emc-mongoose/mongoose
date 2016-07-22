@@ -10,6 +10,35 @@
 	<legend><h2>SCENARIO ENGINE</h2></legend>
 	<p>
 		<fieldset>
+			<legend><h3>CONTENTS</h3></legend>
+			<ul>
+				<li><a href="#introduction">Introduction</a></li>
+				<li><a href="#limitations">Limitations</a></li>
+				<li>
+					<a href="#approach">Approach</a>
+					<ul>
+						<li><a href="#run">Run a Scenario</a></li>
+						<li>
+							<a href="#syntax">Scenario File Syntax</a>
+							<ul>
+								<li><a href="#jobtypes">Job Types</a></li>
+								<li><a href="#confignode">Configuration Node</a></li>
+								<li><a href="#seqandparjobs">Sequential and Parallel Jobs</a></li>
+								<li><a href="#command">Execute a Shell Command</a></li>
+								<li><a href="#itemslists">Using Items Lists</a></li>
+								<li><a href="#loops">Loops</a></li>
+								<li><a href="#env">Parameterizing with Environment Variables</a></li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li><a href="#config">Configuration</a></li>
+				<li><a href="#reporting">Reporting</a></li>
+			</ul>
+		</fieldset>
+	</p>
+	<p>
+		<fieldset id="introduction">
 			<legend><h3>INTRODUCTION</h3></legend>
 			<p>The performance testing software should be able to be scripted in order to execute
 			complex tests ("weighted CRUD" or "maxtest", etc). The general way to describe the
@@ -20,18 +49,23 @@
 		</fieldset>
 	</p>
 	<p>
-		<fieldset>
+		<fieldset id="limitations">
 			<legend><h3>LIMITATIONS</h3></legend>
 			<p>
-
+				<ul>
+					<li>The scenario scripting feature available since v2.0.0</li>
+					<li>"Command" job feature available since v2.2.0</li>
+					<li>"For" job feature available since v2.3.0</li>
+					<li>Scenario parametrization with environment variables feature available since v2.4.0</li>
+				</ul>
 			</p>
 		</fieldset>
 	</p>
 	<p>
-		<fieldset>
+		<fieldset id="approach">
 			<legend><h3>APPROACH</h3></legend>
 			<p>
-				<h4>Run a Scenario</h4>
+				<h4 id="run">Run a Scenario</h4>
 				<p>
 					There are two ways to feed the scenario to Mongoose:
 					<ol>
@@ -105,134 +139,445 @@
 	O/SCENARIO.json&gt;</pre>
 					</fieldset>
 				</p>
-				<h4>Scenario File Syntax</h4>
-				<h5>Job Types</h5>
+				<h4 id="syntax">Scenario File Syntax</h4>
+				<h5 id="jobtypes">Job Types</h5>
 				<p>
-					Basically the scenario file describes the load jobs to execute. Load jobs are
-					aggregated to the container jobs. The root scenario node is always a job:
-					<fieldset class="json">
-						<pre>
+					Basically the scenario file describes the jobs hierarchy to execute.
+					<ul>
+						<li>The root scenario node is always a job:
+							<fieldset class="json">
+								<pre>
 {
-    "type" : &lt;ROOT_JOB_TYPE&gt;
+    "type" : <font color="blue">&lt;ROOT_JOB_TYPE&gt;</font>
     ...
 }</pre>
-					</fieldset>
+							</fieldset>
+						</li>
+						<li>Jobs may include other (children) jobs:
+							<fieldset class="json">
+								<pre>
+{
+    "type" : <font color="blue">&lt;CONTAINER_JOB_TYPE&gt;</font>
+    "jobs" : [
+        {
+            "type" : &lt;CHILD_JOB_TYPE&gt;
+            ...
+        }, {
+            "type" : &lt;CHILD_JOB_TYPE&gt;
+            ...
+        }
+    ]
+}</pre>
+							</fieldset>
+						</li>
+					</ul>
 				</p>
-				<h5>Configuration Node</h5>
+				<p>The full list of the job types is described in the table below:</p>
 				<table>
-					<tr><th>Job Type</th><th>Description</th><th>Attributes</th></tr>
+					<tr>
+						<th>Job Type</th>
+						<th>Description</th>
+						<th>Nested Jobs</th>
+						<th>Mandatory<br/>Attributes</th>
+						<th>Optional<br/>Attributes</th>
+					</tr>
 					<tr>
 						<td>load</td>
-						<td>The single load job node. Cannot include other jobs.</td>
+						<td>The single load job node.<br/></td>
+						<td>Not Allowed</td>
 						<td>
 							<ul>
-								<li><b>type</b></li>
+								<li>type</li>
+							</ul>
+						</td>
+						<td>
+							<ul>
 								<li>config</li>
 							</ul>
 						</td>
 					</tr>
 					<tr>
-						<td>precondition</td>
+						<td>precondition&nbsp;&nbsp;&nbsp;&nbsp;</td>
 						<td>
-							<p>Same as the "load", but the load job is executed in the "precondition" mode.</p>
-							<p>In the precondition mode the metrics are not persisted into the output CSV files.</p>
-							<p>Cannot include other jobs.</p>
+							Same as the "load", but the load job is executed in the "precondition" mode.
+							In the precondition mode the metrics are not persisted into the output CSV files.
+						</td>
+						<td>Required</td>
+						<td>
+							<ul>
+								<li>type</li>
+							</ul>
 						</td>
 						<td>
 							<ul>
-								<li><b>type</b></li>
 								<li>config</li>
 							</ul>
 						</td>
 					</tr>
 					<tr>
 						<td>parallel</td>
+						<td>The container job for the nested jobs which should be executed in parallel.</td>
+						<td>Required</td>
 						<td>
-							<p>The container job for the nested jobs which should be executed in parallel.</p>
-							<p>Should include other jobs.</p>
+							<ul>
+								<li>type</li>
+								<li>jobs</li>
+							</ul>
 						</td>
 						<td>
 							<ul>
-								<li><b>type</b></li>
 								<li>config</li>
-								<li><b>jobs</b></li>
 							</ul>
 						</td>
 					</tr>
 					<tr>
 						<td>sequential</td>
+						<td>The container job for the nested jobs which should be executed sequentially.</td>
+						<td>Required</td>
 						<td>
-							<p>The container job for the nested jobs which should be executed sequentially.</p>
-							<p>Should include other jobs.</p>
+							<ul>
+								<li>type</li>
+								<li>jobs</li>
+							</ul>
 						</td>
 						<td>
 							<ul>
-								<li><b>type</b></li>
 								<li>config</li>
-								<li><b>jobs</b></li>
 							</ul>
 						</td>
 					</tr>
 					<tr>
 						<td>for</td>
 						<td>
-							<p>
-								The container job which executes the nested jobs for each value
-								taken from the specified list and substituted into specified place
-								of the configuration.
-							</p>
-							<p>Should include other jobs.</p>
+							The container job which executes the nested jobs for each value
+							taken from the specified list and substituted into specified place
+							of the configuration
+						</td>
+						<td>Required</td>
+						<td>
+							<ul>
+								<li>type</li>
+								<li>value</li>
+								<li>in</li>
+								<li>jobs</li>
+							</ul>
 						</td>
 						<td>
 							<ul>
-								<li><b>type</b></li>
-								<li><b>value</b></li>
-								<li><b>in</b></li>
 								<li>config</li>
-								<li><b>jobs</b></li>
 							</ul>
 						</td>
 					</tr>
 					<tr>
 						<td>command</td>
 						<td>
-							<p>The container executes the specified shell command.</p>
-							<p>Also allows to start a command not blocking the scenario execution.</p>
-							<p>Cannot include other jobs.</p>
+							The container executes the specified shell command.
+							Also allows to start a command not blocking the scenario execution.
+						</td>
+						<td>Not Allowed</td>
+						<td>
+							<ul>
+								<li>type</li>
+								<li>value</li>
+							</ul>
 						</td>
 						<td>
 							<ul>
-								<li><b>type</b></li>
-								<li><b>value</b></li>
 								<li>blocking</li>
 							</ul>
 						</td>
 					</tr>
 				</table>
-				<h5>Sequential and Parallel Jobs</h5>
+				<h5 id="confignode">Configuration Node</h5>
 				<p>
-					TODO
+					Any job type except "command" may contain an optional "config" node:
+					<fieldset class="json">
+						<pre>
+    {
+        "type" : <font color="blue">&lt;CONFIGURABLE_JOB_TYPE&gt;</font>
+        <b>"config" : {</b>
+            <font color="darkgreen">// here are the configuration hierarchy</font>
+        <b>}</b>
+    }</pre>
+					</fieldset>
 				</p>
-				<h5>Execute a Shell Command</h5>
 				<p>
-					TODO
+					<b><font color="darkred">Note</font></b> that the configuration is inherited by the
+					nested load jobs and overrided by the child job's configuration
 				</p>
-				<h5>Using Items Lists</h5>
 				<p>
-					TODO
+					The layout of the "config" subtree is the same as for default configuration.
+					The configuration values override (see "Configuration Order" section):
+					<ul>
+						<li>Any default configuration values</li>
+						<li>Any values passed by CLI</li>
+						<li>A configuration from the parent job container</li>
+					</ul>
 				</p>
-				<h5>Loops</h5>
 				<p>
-					TODO
+					Let's realize that Mongoose is launched with the following command:
+					<fieldset class="bash">
+						java -Dstorage.addrs=A,B,C,D -jar mongoose.jar -f scenario/custom.json
+					</fieldset>
 				</p>
-				<h5>Environment Variables</h5>
 				<p>
-					TODO
+					And the scenario file "custom.json" contains the following text:
+					<fieldset class="json">
+						<pre>
+{
+    "type" : "load"
+    "config" : {
+        "storage" : {
+            "addrs" : [
+                "E", "F", "G", "H"
+            ]
+        }
+    }
+}</pre>
+					</fieldset>
+				</p>
+				<p>The effective storage address list will be "E,F,G,H" in this case.</p>
+				<p>
+					Another example demonstrates the <b>configuration inheritance</b>:
+					<fieldset class="json">
+						<pre>
+{
+    "type" : "sequential"
+    "config" : {
+        <b><font color="darkgreen">// the configuration will be inherited by nested jobs</font></b>
+        "storage" : {
+            "addrs" : [
+                "E", "F", "G", "H"
+            ]
+        }
+    },
+    "jobs" : [
+        {
+            "type" : "load",
+            "config" : {
+                <b><font color="darkgreen">// will override the parent job's configuration</font></b>
+                "storage" : {
+                    "addrs" : [
+                        "I", "J", "K"
+                    ]
+                }
+            }
+        }, {
+            "type" : "load"
+            <b><font color="darkgreen">// will inherit the parent job's configuration (storage addrs: E, F, G, H)</font></b>
+        }
+    ]
+}</pre>
+					</fieldset>
+				</p>
+				<p>
+					The effective storage address list will be "I,J,K" for the 1st load job in the
+					sequence and "E,F,G,H" in for the 2nd load job (configuration values inherited
+					from the parent job).
+				</p>
+				<h5 id="seqandparjobs">Sequential and Parallel Jobs</h5>
+				<p>
+					Any job of the type "sequential" or "parallel" should include "jobs" element
+					which behaves as the list of the children jobs.The configuration specified for a
+					sequential/parallel job is inherited by the children jobs.
+				</p>
+				<h5 id="command">Execute a Shell Command</h5>
+				<p>
+					It may be useful to insert a sleep node into the jobs list between the actual load jobs:
+					<fieldset class="json">
+						<pre>
+{
+    "type" : "sequential"
+    "config" : {
+        <font color="darkgreen">// shared configuration values inherited by the children jobs</font>
+    },
+    "jobs" : [
+        {
+            "type" : "load",
+            "config" : {
+                <font color="darkgreen">// specific configuration for the 1st load job</font>
+            }
+        }, {
+            <b>"type" : "command",
+            "value" : "sleep 5m"</b>
+        }, {
+            "type" : "load",
+            "config" : {
+                <font color="darkgreen">// specific configuration for the 2nd load job</font>
+            }
+        }
+    ]
+}</pre>
+					</fieldset>
+				</p>
+				<h5 id="itemslists">Using Items Lists</h5>
+				<p>
+					In the real world the output of a load job should be used by another load
+					job. For example, "create" load job should output the file containing the items
+					have been created. And this list should be used for "read" load job as an input.
+				</p>
+				<p>
+					The example scenario below consist of 3 sequential steps:
+					<ol>
+						<li>(Preconditon) Create some items. Save the created items info into the destination file "/tmp/items2read.csv".</li>
+						<li>Read the items specified by the list file "/tmp/items2read.csv". Save the read items info into the destination file "/tmp/items2delete.csv".</li>
+						<li>Delete the items specified by the list file "/tmp/items2delete.csv". The default items destination will be used (log file).</li>
+					</ol>
+				</p>
+				<p>
+					<fieldset class="json">
+						<pre>
+{
+    "type" : "sequential"
+    "config" : {
+        <i><font color="darkgreen">// shared configuration values inherited by the children jobs</font></i>
+    },
+    "jobs" : [
+        {
+            "type" : "precondition",
+            "config" : {
+                "item" : {
+                    "dst" : {
+                        <b>"file" : "/tmp/items2read.csv"</b>
+                    }
+                }
+        }, {
+            "type" : "load",
+            "config" : {
+                "item" : {
+                    "src" : {
+                        <b>"file" : "/tmp/items2read.csv"</b>
+                    },
+                    "dst" : {
+                        <b>"file" : "/tmp/items2delete.csv"</b>
+                    }
+                },
+                "load" : {
+                    "type" : "read"
+                }
+            }
+        }, {
+            "type" : "load",
+            "config" : {
+                "item" : {
+                    "src" : {
+                        <b>"file" : "/tmp/items2delete.csv"</b>
+                    }
+                },
+                "load" : {
+                    "type" : "delete"
+                }
+            }
+        }
+    ]
+}</pre>
+					</fieldset>
+				</p>
+				<h5 id="loops">Loops</h5>
+				<p>
+					The "for" job performs the recurrent execution of the children jobs.
+					The exact behavior depends on the "in" and "value" attributes values.
+					<table>
+						<tr>
+							<th>in</th>
+							<th>value</th>
+							<th>Resulting effect</th>
+						</tr>
+						<tr>
+							<td>Not set</td>
+							<td>Not set</td>
+							<td>Infinite loop</td>
+						</tr>
+						<tr>
+							<td>Not set</td>
+							<td>Integer &gt;0</td>
+							<td>Counter based loop</td>
+						</tr>
+						<tr>
+							<td>String identifier&nbsp;&nbsp;</td>
+							<td>Range of the values&nbsp;&nbsp;</td>
+							<td>
+								"for each" based loop
+							</td>
+						</tr>
+					</table>
+				</p>
+				<p>
+					The last case ("for each") also is capable to perform the value substitution
+					in its configuration or in the configuration of the children jobs:
+					<fieldset class="json">
+						<pre>
+{
+   "type" : <b>"for"</b>,
+   "value" : "<font color="blue">threads</font>",
+   "in" : [
+      <font color="darkviolet">1, 10, 100, 1000, 10000, 100000</font>
+   ],
+   "config" : {
+      "load" : {
+         "threads" : "<font color="darkcyan">${</font><font color="blue">threads</font><font color="darkcyan">}</font>"
+      }
+   },
+   "jobs" : [
+      {
+            "type" : "load"
+      }
+   ]
+}</pre>
+					</fieldset>
+				</p>
+				<p>
+					The example above will try to execute the load job 6 times. Each time the load
+					job will be executed for the next thread count from the list specified
+					(1, 10, 100, ...)
+				</p>
+				<h5 id="env">Parameterizing with Environment Variables</h5>
+				<p>
+					It's possible to substitute a json values in the scenario with the
+					environment variable values. This may help to keep the scenario file unchanged
+					parameterizing the behavior from the command line only.
+				</p>
+				<p>
+					Example scenario:
+					<fieldset class="json">
+						<pre>
+{
+    "type" : "load",
+    "config" : {
+        "item" : {
+            "data" : {
+                "size" : "${ITEM_DATA_SIZE}"
+            },
+            "dst" : {
+                "container" : "${ITEM_DST_CONTAINER}"
+            },
+            "src" : {
+                "file" : "${ITEM_SRC_FILE}"
+            }
+        },
+        "load" : {
+            "threads" : "${LOAD_THREADS}",
+            "type" : "${LOAD_TYPE}"
+        }
+    }
+}</pre>
+					</fieldset>
+				</p>
+				<p>
+					Example commands to run this scenario:
+					<fieldset class="bash">
+export ITEM_DST_CONTAINER=bucket1<br/>
+export ITEM_SRC_FILE=<br/>
+export LOAD_THREADS=100<br/>
+export ITEM_DATA_SIZE=1KB<br/>
+export LOAD_TYPE=create<br/>
+java -jar mongoose.jar -f &ltPATH_TO_SCENARIO&gt;.json
+					</fieldset>
 				</p>
 		</fieldset>
 	</p>
 	<p>
-		<fieldset>
+		<fieldset id="config">
 			<legend><h3>CONFIGURATION</h3></legend>
 			<p>
 				Each next step means that the same configuration values from the previous step are
@@ -247,7 +592,7 @@
 		</fieldset>
 	</p>
 	<p>
-		<fieldset>
+		<fieldset id="reporting">
 			<legend><h3>REPORTING</h3></legend>
 			<p>
 				Any "for" job logs the message for each value invocation with the following format:
