@@ -619,11 +619,11 @@
 <li>
 <h4>Custom HTTP Headers</h4>
 <p>Example scenarios location: scenario/dynamic/custom-http-headers.json</p>
-<code><fieldset class="bash">java -Dhttp.customHeaders.<strong>myOwnHeaderName=MyOwnHeaderValue</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
+<code><fieldset class="bash">java -Dstorage.http.headers.<strong>myOwnHeaderName=MyOwnHeaderValue</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Custom HTTP Headers with dynamic values</h4>
 <p>Example scenarios location: scenario/dynamic/custom-http-headers-with-dynamic-values.json</p>
-<code><fieldset class="bash">java -Dhttp.customHeaders.myOwnHeaderName=<strong>MyOwnHeaderValue\ %d[0-1000]\ %f{###.##}[-2--1]\ %D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
+<code><fieldset class="bash">java -Dstorage.http.headers.myOwnHeaderName=<strong>MyOwnHeaderValue\ %d[0-1000]\ %f{###.##}[-2--1]\ %D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Filesystem Load: dynamic target path</h4>
 <p>Example scenarios location: scenario/dynamic/write-to-variable-dir.json</p>
