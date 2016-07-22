@@ -12,7 +12,6 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -43,7 +42,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.*;
 /**
  Created on 12.07.16.
  */
-@Sharable
 public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 extends ChannelInboundHandlerAdapter {
 
@@ -52,38 +50,61 @@ extends ChannelInboundHandlerAdapter {
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
-	protected final StorageMock<T> sharedStorage;
+	private final StorageMock<T> sharedStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
 
-	protected final String requestKey = "requestKey";
-	protected final String responseStatusKey = "responseStatusKey";
-	protected final String contentLengthKey = "contentLengthKey";
-	protected final String ctxWriteFlagKey = "ctxWriteFlagKey";
-	protected final String handlerStatus = "handlerStatus";
+	private int prefixLength, idRadix;
 
-	public RequestHandlerBase(
+	static final String REQUEST_KEY = "requestKey";
+	private static final String RESPONSE_STATUS_KEY = "responseStatusKey";
+	private static final String CONTENT_LENGTH_KEY = "contentLengthKey";
+	static final String CTX_WRITE_FLAG_KEY = "ctxWriteFlagKey";
+	private static final String HANDLER_STATUS_KEY = "handlerStatus";
+
+	static final int DEFAULT_PAGE_SIZE = 0x1000;
+	static final String MARKER_KEY = "marker";
+
+	RequestHandlerBase(
 			final Config.LoadConfig.LimitConfig limitConfig,
 			final StorageMock<T> sharedStorage,
 			final ContentSource contentSource
-			) {
+	) {
 		this.rateLimit = limitConfig.getRate();
 		this.sharedStorage = sharedStorage;
 		this.contentSource = contentSource;
 		this.ioStats = sharedStorage.getStats();
-		AttributeKey.<HttpRequest>valueOf(requestKey);
-		AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey);
-		AttributeKey.<Long>valueOf(contentLengthKey);
-		AttributeKey.<Boolean>valueOf(ctxWriteFlagKey);
-		AttributeKey.<Boolean>valueOf(handlerStatus);
+		AttributeKey.<HttpRequest>valueOf(REQUEST_KEY);
+		AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY);
+		AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY);
+		AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY);
+		AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY);
 	}
 
-	protected abstract boolean checkApiMatch(final HttpRequest request);
+	void setPrefixLength(int prefixLength) {
+		this.prefixLength = prefixLength;
+	}
+
+	void setIdRadix(int idRadix) {
+		this.idRadix = idRadix;
+	}
+
+	int prefixLength() {
+		return prefixLength;
+	}
+
+	public int idRadix() {
+		return idRadix;
+	}
+
+	protected boolean checkApiMatch(final HttpRequest request) {
+		return true;
+	}
 
 	@Override
 	public void channelReadComplete(final ChannelHandlerContext ctx)
 	throws Exception {
-		if (!ctx.channel().attr(AttributeKey.<Boolean>valueOf(handlerStatus)).get()) {
+		if (!ctx.channel().attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).get()) {
 			ctx.fireChannelReadComplete();
 			return;
 		}
@@ -93,9 +114,9 @@ extends ChannelInboundHandlerAdapter {
 	private void processHttpRequest(final ChannelHandlerContext ctx, final HttpRequest request) {
 		final Channel channel = ctx.channel();
 		final HttpHeaders headers = request.headers();
-		channel.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).set(request);
+		channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).set(request);
 		if (headers.contains(CONTENT_LENGTH)) {
-			channel.attr(AttributeKey.<Long>valueOf(contentLengthKey)).set(
+			channel.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY)).set(
 				Long.parseLong(headers.get(CONTENT_LENGTH)));
 		}
 	}
@@ -104,16 +125,16 @@ extends ChannelInboundHandlerAdapter {
 		final Channel channel = ctx.channel();
 		if (msg instanceof HttpRequest) {
 			if (!checkApiMatch((HttpRequest) msg)) {
-				channel.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(false);
+				channel.attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).set(false);
 				ctx.fireChannelRead(msg);
 				return;
 			}
-			channel.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(true);
+			channel.attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).set(true);
 			processHttpRequest(ctx, (HttpRequest) msg);
 			ReferenceCountUtil.release(msg);
 			return;
 		}
-		if (!channel.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).get()) {
+		if (!channel.attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).get()) {
 			ctx.fireChannelRead(msg);
 			return;
 		}
@@ -123,7 +144,7 @@ extends ChannelInboundHandlerAdapter {
 		ReferenceCountUtil.release(msg);
 	}
 
-	public final void handle(final ChannelHandlerContext ctx) {
+	private final void handle(final ChannelHandlerContext ctx) {
 		if (rateLimit > 0) {
 			if (ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
@@ -135,12 +156,46 @@ extends ChannelInboundHandlerAdapter {
 				lastMilliDelay.decrementAndGet();
 			}
 		}
-		doHandle(ctx);
+		final Channel channel = ctx.channel();
+		final String uri = channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+				.get().uri();
+		final HttpMethod method = channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+				.get().method();
+		final Long size = channel.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY)).get();
+		doHandle(uri, method, size, ctx);
 	}
 
-	protected abstract void doHandle(final ChannelHandlerContext ctx);
+	void handleItemRequest(
+			final String uri,
+			final HttpMethod method,
+			final String containerName,
+			final String objectId,
+			final Long size,
+			final ChannelHandlerContext ctx) {
+		if (objectId != null) {
+			final long offset;
+			if (method.equals(POST) || method.equals(PUT)) {
+				if (prefixLength > 0) {
+					offset = Long.parseLong(objectId.substring(prefixLength + 1), idRadix);
+				} else {
+					offset = Long.parseLong(objectId, idRadix);
+				}
+			} else {
+				offset = -1;
+			}
+			handleObjectRequest(method, containerName, objectId, offset, size, ctx);
+		} else {
+			handleContainerRequest(uri, method, containerName, ctx);
+		}
+	}
 
-	protected final String[] getUriParameters(final String uri, final int maxNumOfParams) {
+	protected abstract void doHandle(
+			final String uri,
+			final HttpMethod method,
+			final Long size,
+			final ChannelHandlerContext ctx);
+
+	final String[] getUriParameters(final String uri, final int maxNumOfParams) {
 		final String[] result = new String[maxNumOfParams];
 		final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
 		final String[] queryStringChunks = queryStringDecoder.path().split("/");
@@ -148,16 +203,16 @@ extends ChannelInboundHandlerAdapter {
 		return result;
 	}
 
-	protected final void writeResponse(final ChannelHandlerContext ctx) {
+	final void writeResponse(final ChannelHandlerContext ctx) {
 		final HttpResponseStatus status = ctx.channel()
-				.attr(AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey)).get();
+				.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
 		final DefaultFullHttpResponse response =
 				new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
 		HttpUtil.setContentLength(response, 0);
 		ctx.write(response);
 	}
 
-	protected final void handleObjectRequest(
+	final void handleObjectRequest(
 			final HttpMethod httpMethod, final String containerName, final String id,
 			final Long offset, final Long size, final ChannelHandlerContext ctx) {
 		if (containerName != null) {
@@ -179,7 +234,7 @@ extends ChannelInboundHandlerAdapter {
 			final String containerName, final String id, final Long offset,
 			final Long size, final ChannelHandlerContext ctx) {
 		final List<String> rangeHeadersValues = ctx.channel()
-				.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get()
+				.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get()
 				.headers().getAll(RANGE);
 		try {
 			if (rangeHeadersValues.size() == 0) {
@@ -258,7 +313,7 @@ extends ChannelInboundHandlerAdapter {
 				ioStats.markRead(true, size);
 				if (LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Send data object with ID {}", id);
-					ctx.channel().attr(AttributeKey.<Boolean>valueOf(ctxWriteFlagKey)).set(false);
+					ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
 					response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 					HttpUtil.setContentLength(response, size);
 					ctx.write(response);
@@ -302,21 +357,22 @@ extends ChannelInboundHandlerAdapter {
 		}
 	}
 
-	private void setHttpResponseStatusInContext(
+	void setHttpResponseStatusInContext(
 			final ChannelHandlerContext ctx,
 			final HttpResponseStatus status) {
 		ctx.channel()
-				.attr(AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey))
+				.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
 				.set(status);
 	}
 
-	protected void handleContainerRequest(
+	void handleContainerRequest(
+			final String uri,
 			final HttpMethod httpMethod, final String name,
 			final ChannelHandlerContext ctx) {
 		if (httpMethod.equals(PUT)) {
 			handleContainerCreate(name);
 		} else if (httpMethod.equals(GET)) {
-			handleContainerList(name, ctx);
+			handleContainerList(name, new QueryStringDecoder(uri), ctx);
 		} else if (httpMethod.equals(HEAD)) {
 			handleContainerExist(name, ctx);
 		} else if (httpMethod.equals(DELETE)) {
@@ -328,9 +384,12 @@ extends ChannelInboundHandlerAdapter {
 		sharedStorage.createContainer(name);
 	}
 
-	protected abstract void handleContainerList(final String name, final ChannelHandlerContext ctx);
+	protected abstract void handleContainerList(
+			final String name,
+			final QueryStringDecoder queryStringDecoder,
+			final ChannelHandlerContext ctx);
 
-	protected final T listContainer(
+	final T listContainer(
 			final String name, final String marker,
 			final List<T> buffer, final int maxCount) {
 		try {
