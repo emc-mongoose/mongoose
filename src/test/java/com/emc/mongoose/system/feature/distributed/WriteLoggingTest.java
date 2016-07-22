@@ -241,7 +241,6 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("TPLast[op/s]", nextRec.get(13));
 					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(14));
 					Assert.assertEquals("BWLast[MB/s]", nextRec.get(15));
-					Assert.assertEquals("DurationSum[s]", nextRec.get(16));
 					Assert.assertEquals("DurationAvg[us]", nextRec.get(17));
 					Assert.assertEquals("DurationMin[us]", nextRec.get(18));
 					Assert.assertEquals("DurationLoQ[us]", nextRec.get(19));
