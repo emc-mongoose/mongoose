@@ -17,9 +17,6 @@
 		"load" : {
 			"threads" : "${LOAD_THREADS}",
 			"type" : "${LOAD_TYPE}"
-		},
-		"storage" : {
-
 		}
 	}
 }

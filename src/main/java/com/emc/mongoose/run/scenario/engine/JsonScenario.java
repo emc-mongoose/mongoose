@@ -107,7 +107,7 @@ implements Scenario {
 				while(m.find()) {
 					propertyName = m.group(1);
 					if(propertyName != null && !propertyName.isEmpty()) {
-						newValue = System.getProperty(propertyName);
+						newValue = System.getenv(propertyName);
 						if(newValue != null) {
 							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
 							alteredFlag = true;

@@ -146,6 +146,7 @@ implements HttpRequestConfig<T, C> {
 	protected HttpRequestConfigBase(final AppConfig appConfig) {
 		super(appConfig);
 		// create HTTP client
+		setAppConfig(appConfig);
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
 			.add(new HostHeaderSetter())
