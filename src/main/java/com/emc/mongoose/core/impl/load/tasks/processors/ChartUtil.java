@@ -32,10 +32,10 @@ public final class ChartUtil {
 		}
 		final MetricPolylineManager manager = managers.get(loadJobName);
 		manager.updatePolylines(metricsSnapshot);
-		loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(manager));
-		loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(manager));
-		loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(manager));
-		loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(manager));
+		loadJobCharts.put(METRIC_NAME_LAT, latencyMetrics(manager));
+		loadJobCharts.put(METRIC_NAME_DUR, durationMetrics(manager));
+		loadJobCharts.put(METRIC_NAME_TP, throughputMetrics(manager));
+		loadJobCharts.put(METRIC_NAME_BW, bandwidthMetrics(manager));
 		putCharts(runId, loadJobName, loadJobCharts);
 	}
 
