@@ -304,9 +304,13 @@ implements LoadExecutor<T> {
 			final String runId = appConfig.getRunId();
 			String loadJobName = LoadExecutorBase.this.getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
+				System.out.println("logger call...");
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
+				System.out.println("logger call done");
 				if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
+					System.out.println("addCharts invoked");
 					ChartUtil.addCharts(runId, loadJobName, lastStats);
+					System.out.println("addCharts exit");
 				}
 			} else if(Markers.PERF_MED.equals(logMarker)) {
 				LOG.info(
@@ -321,9 +325,7 @@ implements LoadExecutor<T> {
 				loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
 					loadJobName.lastIndexOf('-')
 				);
-				System.out.println("addCharts invoked");
 				ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
-				System.out.println("addCharts exit");
 			}
 		}
 		System.out.println("logMetrics exit");
