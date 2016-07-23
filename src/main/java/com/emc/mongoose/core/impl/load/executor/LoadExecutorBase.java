@@ -273,19 +273,16 @@ implements LoadExecutor<T> {
 					TimeUnit.SECONDS.sleep(metricsPeriodSec);
 				} catch(final InterruptedException e) {
 					LOG.debug(Markers.MSG, "the task was interrupted");
-					e.printStackTrace(System.out);
-					System.exit(0);
 					break;
 				}
 			}
-			LOG.error(Markers.MSG, "the task exits");
+			LOG.debug(Markers.MSG, "the task exits");
 			System.exit(0);
 		}
 	}
 	//
 	@Override
 	public void logMetrics(final Marker logMarker) {
-		System.out.println("logMetrics invoked");
 		if(preconditionFlag) {
 			if(Markers.PERF_AVG.equals(logMarker)) {
 				LOG.info(Markers.MSG, lastStats == null ? null : lastStats.toString());
@@ -304,13 +301,9 @@ implements LoadExecutor<T> {
 			final String runId = appConfig.getRunId();
 			String loadJobName = LoadExecutorBase.this.getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
-				System.out.println("logger call...");
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
-				System.out.println("logger call done");
 				if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
-					System.out.println("addCharts invoked");
 					ChartUtil.addCharts(runId, loadJobName, lastStats);
-					System.out.println("addCharts exit");
 				}
 			} else if(Markers.PERF_MED.equals(logMarker)) {
 				LOG.info(
@@ -328,7 +321,6 @@ implements LoadExecutor<T> {
 				ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 			}
 		}
-		System.out.println("logMetrics exit");
 	}
 	//
 	private final class FullThrottleMonitorTask

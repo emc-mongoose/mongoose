@@ -48,7 +48,7 @@ public final class MetricPolylineManager
 
 	private void addPoint(final Polyline polyline, final double metricValue) {
 		final double now = new Long((System.currentTimeMillis() - startTime) / 1000).doubleValue();
-		if (polyline.numberOfPoints() < MAX_NUM_OF_POINTS) {
+		if(polyline.numberOfPoints() < MAX_NUM_OF_POINTS) {
 			polyline.addPoint(new Point(now, metricValue));
 		} else {
 			polyline.simplify(MAX_NUM_OF_POINTS / 2);
