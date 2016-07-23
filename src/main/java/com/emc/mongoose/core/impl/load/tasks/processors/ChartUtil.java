@@ -27,7 +27,7 @@ public final class ChartUtil {
 	) {
 		final Map<String, List<Metric>> loadJobCharts = new LinkedHashMap<>();
 		final Map<String, MetricPolylineManager> managers = MetricPolylineManager.MANAGERS;
-		if (!managers.containsKey(loadJobName)) {
+		if(!managers.containsKey(loadJobName)) {
 			managers.put(loadJobName, new MetricPolylineManager());
 		}
 		final MetricPolylineManager manager = managers.get(loadJobName);
@@ -51,7 +51,8 @@ public final class ChartUtil {
 			metricsSnapshot.getByteCount() / metricsSnapshot.getSuccCount()
 		);
 		final Map<String, List<Metric>> loadJobCharts = new LinkedHashMap<>();
-		final Map<String, Map<String, BasicPolylineManager>> managers = BasicPolylineManager.MANAGERS;
+		final Map<String, Map<String, BasicPolylineManager>> managers = BasicPolylineManager
+			.MANAGERS;
 		if(!managers.containsKey(loadJobName)) {
 			managers.put(loadJobName, new LinkedHashMap<String, BasicPolylineManager>());
 		}
