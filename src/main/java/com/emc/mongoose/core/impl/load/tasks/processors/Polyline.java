@@ -85,9 +85,11 @@ final class Polyline {
 
 	private void removeAndWeigh(final WeightedPoint point) {
 		final int index = points.indexOf(point);
-		points.remove(index);
-		if (points.size() != 0) {
-			setWeightForPoint(index);
+		if(index >= 0) {
+			points.remove(index);
+			if(points.size() != 0) {
+				setWeightForPoint(index);
+			}
 		}
 	}
 
