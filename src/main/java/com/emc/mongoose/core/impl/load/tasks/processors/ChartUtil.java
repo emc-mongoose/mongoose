@@ -27,25 +27,16 @@ public final class ChartUtil {
 	) {
 		final Map<String, List<Metric>> loadJobCharts = new LinkedHashMap<>();
 		final Map<String, MetricPolylineManager> managers = MetricPolylineManager.MANAGERS;
-		System.out.print(0);
 		if(!managers.containsKey(loadJobName)) {
 			managers.put(loadJobName, new MetricPolylineManager());
 		}
-		System.out.print(1);
 		final MetricPolylineManager manager = managers.get(loadJobName);
-		System.out.print(2);
 		manager.updatePolylines(metricsSnapshot);
-		System.out.print(3);
 		loadJobCharts.put(METRIC_NAME_LAT, latencyMetrics(manager));
-		System.out.print(4);
 		loadJobCharts.put(METRIC_NAME_DUR, durationMetrics(manager));
-		System.out.print(5);
 		loadJobCharts.put(METRIC_NAME_TP, throughputMetrics(manager));
-		System.out.print(6);
 		loadJobCharts.put(METRIC_NAME_BW, bandwidthMetrics(manager));
-		System.out.print(7);
 		putCharts(runId, loadJobName, loadJobCharts);
-		System.out.println(8);
 	}
 
 	public static void addCharts(

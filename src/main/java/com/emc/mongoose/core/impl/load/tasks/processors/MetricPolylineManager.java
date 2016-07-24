@@ -33,16 +33,33 @@ public final class MetricPolylineManager
 	}
 
 	public final void updatePolylines(final IoStats.Snapshot metricsSnapshot) {
-		addPoint(durMin, metricsSnapshot.getDurationMin());
-		addPoint(durMax, metricsSnapshot.getDurationMax());
-		addPoint(durAvg(), metricsSnapshot.getDurationAvg());
-		addPoint(latMin, metricsSnapshot.getLatencyMin());
-		addPoint(latMax, metricsSnapshot.getLatencyMax());
-		addPoint(latAvg(), metricsSnapshot.getLatencyAvg());
-		addPoint(tpAvg(), metricsSnapshot.getSuccRateMean());
-		addPoint(tpLast, metricsSnapshot.getSuccRateLast());
-		addPoint(bwAvg(), metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE);
-		addPoint(bwLast, metricsSnapshot.getByteRateLast() / BYTES_PER_MBYTE);
+		synchronized(System.out) {
+			try {
+				System.out.print(0);
+				addPoint(durMin, metricsSnapshot.getDurationMin());
+				System.out.print(1);
+				addPoint(durMax, metricsSnapshot.getDurationMax());
+				System.out.print(2);
+				addPoint(durAvg(), metricsSnapshot.getDurationAvg());
+				System.out.print(3);
+				addPoint(latMin, metricsSnapshot.getLatencyMin());
+				System.out.print(4);
+				addPoint(latMax, metricsSnapshot.getLatencyMax());
+				System.out.print(5);
+				addPoint(latAvg(), metricsSnapshot.getLatencyAvg());
+				System.out.print(6);
+				addPoint(tpAvg(), metricsSnapshot.getSuccRateMean());
+				System.out.print(7);
+				addPoint(tpLast, metricsSnapshot.getSuccRateLast());
+				System.out.print(8);
+				addPoint(bwAvg(), metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE);
+				System.out.print(9);
+				addPoint(bwLast, metricsSnapshot.getByteRateLast() / BYTES_PER_MBYTE);
+				System.out.println("~");
+			} catch(final Throwable e) {
+				e.printStackTrace(System.out);
+			}
+		}
 	}
 
 
