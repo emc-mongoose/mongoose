@@ -302,8 +302,12 @@ implements LoadExecutor<T> {
 			String loadJobName = LoadExecutorBase.this.getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
-				if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
-					ChartUtil.addCharts(runId, loadJobName, lastStats);
+				if(!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
+					try {
+						ChartUtil.addCharts(runId, loadJobName, lastStats);
+					} catch(final Exception e) {
+						e.printStackTrace(System.out);
+					}
 				}
 			} else if(Markers.PERF_MED.equals(logMarker)) {
 				LOG.info(
@@ -315,8 +319,8 @@ implements LoadExecutor<T> {
 					logMarker, "\"{}\" summary: {}", getName(),
 					lastStats == null ? null : lastStats.toSummaryString()
 				);
-				loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
-					loadJobName.lastIndexOf('-')
+				loadJobName = loadJobName.substring(
+					loadJobName.indexOf('-') + 1, loadJobName.lastIndexOf('-')
 				);
 				ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 			}
