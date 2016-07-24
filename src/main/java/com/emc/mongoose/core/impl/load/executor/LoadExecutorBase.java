@@ -306,6 +306,7 @@ implements LoadExecutor<T> {
 					try {
 						ChartUtil.addCharts(runId, loadJobName, lastStats);
 					} catch(final Exception e) {
+						LogUtil.exception(LOG, Level.WARN, e, "ChartUtil failure");
 						e.printStackTrace(System.out);
 					}
 				}
