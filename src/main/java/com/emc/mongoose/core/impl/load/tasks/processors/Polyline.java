@@ -26,10 +26,11 @@ final class Polyline {
 	}
 
 	private List<Point> getTriangle(final int middlePointIndex) {
-		List<Point> result = new ArrayList<>();
-		for (WeightedPoint weightedPoint: points.subList(middlePointIndex - 1, middlePointIndex +
-				2)) {
-			result.add(weightedPoint.point());
+		final List<Point> result = new ArrayList<>();
+		if(middlePointIndex > 0 && points.size() > middlePointIndex + 1) {
+			for(final WeightedPoint weightedPoint : points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
+				result.add(weightedPoint.point());
+			}
 		}
 		return result;
 	}
