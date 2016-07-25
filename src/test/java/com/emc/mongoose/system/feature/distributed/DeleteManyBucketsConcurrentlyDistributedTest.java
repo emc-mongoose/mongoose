@@ -37,7 +37,7 @@ public class DeleteManyBucketsConcurrentlyDistributedTest
 extends DistributedLoadBuilderTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 100000;
+	private static final int LIMIT_COUNT = 10000;
 	private static String RUN_ID = DeleteManyBucketsConcurrentlyDistributedTest.class.getCanonicalName();
 
 	@BeforeClass

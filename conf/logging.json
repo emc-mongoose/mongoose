@@ -167,7 +167,6 @@
 					"name": "perfAvgFile",
 					"type": "runIdFile",
 					"fileName": "perf.avg.csv",
-					"immediateFlush": true,
 					"PatternLayout": {
 						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyMax[us]\n",
 						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%t}{\\w*<?([\\d]+)\\-([A-Za-z0-9]+)\\-([CreatRdUpDl]+)[\\d]*\\-([\\d]*)x?([\\d]*)x?([\\d]*)>*[\\S]*}{$1,$2,$3,$4,$5,$6},%replace{%m}{n=\\((\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+size=\\(([\\.\\d]+[KMGTPE]?B?)\\);[\\s]+t\\[s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+TP\\[op/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+dur\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\);[\\s]+lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15}%n",
@@ -182,7 +181,6 @@
 					"name": "perfMedFile",
 					"type": "runIdFile",
 					"fileName": "perf.med.csv",
-					"immediateFlush": true,
 					"PatternLayout": {
 						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%m}{\"([\\d]+)\\-([A-Za-z0-9]+)\\-([CreatRdUpDl]+)[\\d]*\\-([\\d]*)x?([\\d]*)x?([\\d]*)\"[\\s]+intermediate:[\\s]+n=\\((\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+size=\\(([\\.\\d]+[KMGTPE]?B?)\\);[\\s]+t\\[s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+TP\\[op/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+dur\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27}%n",
@@ -208,7 +206,6 @@
 					"name": "perfSumFile",
 					"type": "runIdFile",
 					"fileName": "perf.sum.csv",
-					"immediateFlush": true,
 					"PatternLayout": {
 						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%m}{\"([\\d]+)\\-([A-Za-z0-9]+)\\-([CreatRdUpDl]+)[\\d]*\\-([\\d]*)x?([\\d]*)x?([\\d]*)\"[\\s]+summary:[\\s]+n=\\((\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+size=\\(([\\.\\d]+[KMGTPE]?B?)\\);[\\s]+t\\[s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+TP\\[op/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+dur\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27}%n",
@@ -303,7 +300,6 @@
 					"type": "file",
 					"fileName": "result.xml",
 					"bufferedIO": false,
-					"immediateFlush": true,
 					"PatternLayout": {
 						"header": "<result>\n",
 						"footer": "</result>\n",

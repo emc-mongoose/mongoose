@@ -62,12 +62,12 @@ extends DistributedClientTestBase {
 					stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 			) {
 				countWritten = client.create(null, COUNT_LIMIT, 10, SizeInBytes.toFixedSize("10KB"));
-				TimeUnit.SECONDS.sleep(10);
+				TimeUnit.SECONDS.sleep(15);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
 			//
 			RunIdFileManager.flushAll();
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(15);
 		}
 	}
 	//
@@ -241,18 +241,18 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("TPLast[op/s]", nextRec.get(13));
 					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(14));
 					Assert.assertEquals("BWLast[MB/s]", nextRec.get(15));
-					Assert.assertEquals("DurationAvg[us]", nextRec.get(17));
-					Assert.assertEquals("DurationMin[us]", nextRec.get(18));
-					Assert.assertEquals("DurationLoQ[us]", nextRec.get(19));
-					Assert.assertEquals("DurationMed[us]", nextRec.get(20));
-					Assert.assertEquals("DurationHiQ[us]", nextRec.get(21));
-					Assert.assertEquals("DurationMax[us]", nextRec.get(22));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(23));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(24));
-					Assert.assertEquals("LatencyLoQ[us]", nextRec.get(25));
-					Assert.assertEquals("LatencyMed[us]", nextRec.get(26));
-					Assert.assertEquals("LatencyHiQ[us]", nextRec.get(27));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(28));
+					Assert.assertEquals("DurationAvg[us]", nextRec.get(16));
+					Assert.assertEquals("DurationMin[us]", nextRec.get(17));
+					Assert.assertEquals("DurationLoQ[us]", nextRec.get(18));
+					Assert.assertEquals("DurationMed[us]", nextRec.get(19));
+					Assert.assertEquals("DurationHiQ[us]", nextRec.get(20));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(21));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(22));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(23));
+					Assert.assertEquals("LatencyLoQ[us]", nextRec.get(24));
+					Assert.assertEquals("LatencyMed[us]", nextRec.get(25));
+					Assert.assertEquals("LatencyHiQ[us]", nextRec.get(26));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(27));
 					firstRow = false;
 				} else {
 					secondRow = true;

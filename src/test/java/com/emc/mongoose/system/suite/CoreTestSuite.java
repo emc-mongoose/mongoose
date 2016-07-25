@@ -11,6 +11,7 @@ import com.emc.mongoose.system.feature.core.ReadZeroSizeItemsTest;
 import com.emc.mongoose.system.feature.core.WriteRandomSizedItemsTest;
 import com.emc.mongoose.system.feature.core.WriteUsing100ConnTest;
 import com.emc.mongoose.system.feature.core.WriteUsing10ConnTest;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 @RunWith(Suite.class)
