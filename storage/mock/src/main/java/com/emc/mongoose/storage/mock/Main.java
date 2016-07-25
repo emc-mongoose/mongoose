@@ -18,8 +18,6 @@ public class Main {
 		LogUtil.init();
 	}
 
-	private final static Logger LOG = LogManager.getLogger();
-
 	public static void main(final String[] args)
 	throws IOException {
 		final Config config = ConfigLoader.loadDefaultConfig();
@@ -35,6 +33,8 @@ public class Main {
 				nagaina.await();
 			} catch(final InterruptedException ignored) {
 			}
+		} catch(final Throwable t) {
+			t.printStackTrace(System.out);
 		}
 	}
 

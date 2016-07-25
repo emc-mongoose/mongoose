@@ -86,7 +86,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		createContainer(defaultContainerName);
 	}
 
-	public ContentSource getContentSource() {
+	protected ContentSource getContentSource() {
 		return contentSrc;
 	}
 
@@ -251,7 +251,6 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		ioStats.start();
 		doStart();
 		storageCapacityMonitorThread.start();
-		BlockingQueueTaskSequencer.INSTANCE.start();
 		started.set(true);
 	}
 

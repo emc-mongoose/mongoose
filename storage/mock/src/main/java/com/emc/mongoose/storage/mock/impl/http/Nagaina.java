@@ -12,6 +12,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -80,7 +81,9 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 							pipeline.addLast(s3RequestHandler);
 						}
 					});
-				channels[i] = serverBootstrap.bind(port + i).sync().channel();
+				final ChannelFuture bind = serverBootstrap.bind(port + i);
+				bind.sync();
+				channels[i] = bind.sync().channel();
 			} catch(final Exception e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i
@@ -107,7 +110,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	throws InterruptedException {
 		for(final Channel channel : channels) {
 			try {
-				channel.closeFuture().await(timeout, timeUnit);
+				channel.closeFuture().sync();
 			} catch(final InterruptedException e) {
 				LOG.info(Markers.MSG, "Interrupting the Nagaina");
 			}

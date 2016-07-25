@@ -133,10 +133,6 @@ public final class Config {
 		public IoConfig() {
 		}
 
-		public IoConfig(final BufferConfig bufferConfig) {
-			this.bufferConfig = bufferConfig;
-		}
-
 		public static class BufferConfig {
 
 			static final String KEY_SIZE = "size";
@@ -145,10 +141,6 @@ public final class Config {
 			private SizeInBytes size;
 
 			public BufferConfig() {
-			}
-
-			public BufferConfig(final String size) {
-				this.size = new SizeInBytes(size);
 			}
 
 			public final SizeInBytes getSize() {
@@ -270,26 +262,6 @@ public final class Config {
 			public DataConfig() {
 			}
 
-			public DataConfig(
-				final ContentConfig contentConfig, final String ranges, final String size,
-				final boolean verify
-			) throws DataRangesConfig.InvalidRangeException {
-				this.contentConfig = contentConfig;
-				this.ranges = new DataRangesConfig(ranges);
-				this.size = new SizeInBytes(size);
-				this.verify = verify;
-			}
-
-			public DataConfig(
-				final ContentConfig contentConfig, final int ranges, final String size,
-				final boolean verify
-			) {
-				this.contentConfig = contentConfig;
-				this.ranges = new DataRangesConfig(ranges);
-				this.size = new SizeInBytes(size);
-				this.verify = verify;
-			}
-
 			public ContentConfig getContentConfig() {
 				return contentConfig;
 			}
@@ -346,11 +318,6 @@ public final class Config {
 			public InputConfig() {
 			}
 
-			public InputConfig(final String file, final String container) {
-				this.file = file;
-				this.container = container;
-			}
-
 			public final String getContainer() {
 				return container;
 			}
@@ -370,11 +337,6 @@ public final class Config {
 			@JsonProperty(KEY_FILE) private String file;
 
 			public OutputConfig() {
-			}
-			
-			public OutputConfig(final String container, final String file) {
-				this.container = container;
-				this.file = file;
 			}
 
 			public String getContainer() {
@@ -401,17 +363,6 @@ public final class Config {
 			@JsonProperty(KEY_LENGTH) private int length;
 
 			public NamingConfig() {
-			}
-
-			public NamingConfig(
-				final String type, final String prefix, final int radix, final long offset,
-				final int length
-			) {
-				this.type = type;
-				this.radix = radix;
-				this.offset = offset;
-				this.length = length;
-				this.prefix = prefix;
 			}
 
 			public final String getType() {
@@ -453,17 +404,6 @@ public final class Config {
 		public LoadConfig() {
 		}
 
-		public LoadConfig(
-			final boolean circular, final String type, final int concurrency,
-			final LimitConfig limitConfig, final MetricsConfig metricsConfig
-		) {
-			this.circular = circular;
-			this.type = type;
-			this.concurrency = concurrency;
-			this.limitConfig = limitConfig;
-			this.metricsConfig = metricsConfig;
-		}
-
 		public final String getType() {
 			return type;
 		}
@@ -501,15 +441,6 @@ public final class Config {
 			public LimitConfig() {
 			}
 
-			public LimitConfig(
-				final long count, final double rate, final int size, final String time
-			) {
-				this.count = count;
-				this.rate = rate;
-				this.size = size;
-				this.time = TimeUtil.getTimeUnit(time).toSeconds(TimeUtil.getTimeValue(time));
-			}
-
 			public final long getCount() {
 				return count;
 			}
@@ -543,14 +474,6 @@ public final class Config {
 			public MetricsConfig() {
 			}
 
-			public MetricsConfig(
-				final boolean intermediate, final String period, final boolean precondition
-			) {
-				this.intermediate = intermediate;
-				this.period = TimeUtil.getTimeUnit(period).toSeconds(TimeUtil.getTimeValue(period));
-				this.precondition = precondition;
-			}
-
 			public final boolean getIntermediate() {
 				return intermediate;
 			}
@@ -574,11 +497,6 @@ public final class Config {
 		@JsonProperty(KEY_ID) private String id;
 
 		public RunConfig() {
-		}
-
-		public RunConfig(final String file, final String id) {
-			this.file = file;
-			this.id = id;
 		}
 
 		public final String getFile() {
@@ -652,12 +570,6 @@ public final class Config {
 			public AuthConfig() {
 			}
 
-			public AuthConfig(final String id, final String secret, final String token) {
-				this.id = id;
-				this.secret = secret;
-				this.token = token;
-			}
-
 			public String getId() {
 				return id;
 			}
@@ -688,17 +600,6 @@ public final class Config {
 			@JsonProperty(KEY_HEADERS) private Map<String, String> headers;
 
 			public HttpConfig() {
-			}
-
-			public HttpConfig(
-				final String api, final boolean fsAccess, final String namespace,
-				final boolean versioning, final Map<String, String> headers
-			) {
-				this.api = api;
-				this.fsAccess = fsAccess;
-				this.namespace = namespace;
-				this.versioning = versioning;
-				this.headers = Collections.unmodifiableMap(headers);
 			}
 
 			public String getApi() {
@@ -735,14 +636,6 @@ public final class Config {
 			public MockConfig() {
 			}
 
-			public MockConfig(
-				final int headCount, final int capacity, final ContainerConfig containerConfig
-			) {
-				this.headCount = headCount;
-				this.capacity = capacity;
-				this.containerConfig = containerConfig;
-			}
-
 			public int getHeadCount() {
 				return headCount;
 			}
@@ -764,11 +657,6 @@ public final class Config {
 				@JsonProperty(KEY_COUNT_LIMIT) private int countLimit;
 
 				public ContainerConfig() {
-				}
-
-				public ContainerConfig(final int capacity, final int countLimit) {
-					this.capacity = capacity;
-					this.countLimit = countLimit;
 				}
 
 				public int getCapacity() {
