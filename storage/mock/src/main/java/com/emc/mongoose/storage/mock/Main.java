@@ -27,10 +27,9 @@ public class Main {
 			throw new IllegalStateException();
 		}
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
-		final Config.LoadConfig.MetricsConfig metricsConfig =
-			config.getLoadConfig().getMetricsConfig();
+		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		final Config.ItemConfig itemConfig = config.getItemConfig();
-		try(final Nagaina nagaina = new Nagaina(storageConfig, metricsConfig, itemConfig)) {
+		try(final Nagaina nagaina = new Nagaina(storageConfig, loadConfig, itemConfig)) {
 			nagaina.start();
 			try {
 				nagaina.await();

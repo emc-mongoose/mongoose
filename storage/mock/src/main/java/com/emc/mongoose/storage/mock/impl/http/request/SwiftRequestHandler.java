@@ -54,7 +54,7 @@ extends RequestHandlerBase<T> {
 	private static final String AUTH = "auth", API_BASE_PATH_SWIFT = "v1";
 
 
-	SwiftRequestHandler(final Config.ItemConfig.NamingConfig namingConfig,
+	public SwiftRequestHandler(final Config.ItemConfig.NamingConfig namingConfig,
                         final Config.LoadConfig.LimitConfig limitConfig,
 						final StorageMock<T> sharedStorage,
 						final ContentSource contentSource) {

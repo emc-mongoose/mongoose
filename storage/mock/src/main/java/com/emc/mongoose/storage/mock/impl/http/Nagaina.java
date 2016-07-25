@@ -43,18 +43,18 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
 		final Config.StorageConfig storageConfig,
-		final Config.LoadConfig.MetricsConfig metricsConfig,
+		final Config.LoadConfig loadConfig,
 		final Config.ItemConfig itemConfig) {
-		super(storageConfig.getMockConfig(),metricsConfig, itemConfig);
+		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
 		dispatchGroups = new NioEventLoopGroup[headCount];
 		workGroups = new NioEventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
-		s3RequestHandler = new S3RequestHandler();
-		swiftRequestHandler = new SwiftRequestHandler();
-		atmosRequestHandler = new AtmosRequestHandler();
+		s3RequestHandler = new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
+		swiftRequestHandler = new SwiftRequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
+		atmosRequestHandler = new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
 	}
 
 	@Override
