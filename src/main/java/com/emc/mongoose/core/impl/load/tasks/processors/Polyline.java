@@ -27,10 +27,11 @@ final class Polyline {
 	}
 
 	private List<Point> getTriangle(final int middlePointIndex) {
-		List<Point> result = new ArrayList<>();
-		for (WeightedPoint weightedPoint: points.subList(middlePointIndex - 1, middlePointIndex +
-				2)) {
-			result.add(weightedPoint.point());
+		final List<Point> result = new ArrayList<>();
+		if(middlePointIndex > 0 && points.size() > middlePointIndex + 1) {
+			for(final WeightedPoint weightedPoint : points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
+				result.add(weightedPoint.point());
+			}
 		}
 		return result;
 	}
@@ -85,9 +86,11 @@ final class Polyline {
 
 	private void removeAndWeigh(final WeightedPoint point) {
 		final int index = points.indexOf(point);
-		points.remove(index);
-		if (points.size() != 0) {
-			setWeightForPoint(index);
+		if(index >= 0) {
+			points.remove(index);
+			if(points.size() != 0) {
+				setWeightForPoint(index);
+			}
 		}
 	}
 

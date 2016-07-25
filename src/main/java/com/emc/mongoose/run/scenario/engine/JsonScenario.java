@@ -13,6 +13,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  Created by kurila on 02.02.16.
  */
@@ -63,7 +66,10 @@ implements Scenario {
 	//
 	public JsonScenario(final AppConfig config, final Map<String, Object> tree)
 	throws IOException, CloneNotSupportedException {
-		super(config, overrideFromEnv(tree));
+		super(config, overrideFromEnv(validateAgainstSchema(tree)));
+	}
+	//
+	private static final Map<String, Object> validateAgainstSchema(final Map<String, Object> tree) {
 		/*final Path schemaPath = Paths.get(
 			BasicConfig.getWorkingDir(), DIR_SCENARIO, FNAME_SCENARIO_SCHEMA
 		);
@@ -75,20 +81,49 @@ implements Scenario {
 		} catch(final ProcessingException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to load the scenario schema");
 		}*/
+		return tree;
 	}
 	//
-	private static final Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
+	private final static Pattern PATTERN_ENV_VAR = Pattern.compile(
+		"\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}"
+	);
+	private static Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
+
 		Object value;
 		String valueStr;
+		Matcher m;
+		String propertyName;
+		String newValue;
+		boolean alteredFlag;
+
 		for(final String key : tree.keySet()) {
 			value = tree.get(key);
 			if(value instanceof Map) {
 				overrideFromEnv((Map<String, Object>) value);
 			} else if(value instanceof String) {
 				valueStr = (String) value;
-
+				m = PATTERN_ENV_VAR.matcher(valueStr);
+				alteredFlag = false;
+				while(m.find()) {
+					propertyName = m.group(1);
+					if(propertyName != null && !propertyName.isEmpty()) {
+						newValue = System.getenv(propertyName);
+						if(newValue != null) {
+							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
+							alteredFlag = true;
+							LOG.info(
+								Markers.MSG, "Key \"{}\": replaced \"{}\" with new value \"{}\"",
+								key, propertyName, newValue
+							);
+						}
+					}
+				}
+				if(alteredFlag) {
+					tree.put(key, valueStr);
+				}
 			}
 		}
+
 		return tree;
 	}
 	//

@@ -8,19 +8,19 @@ import java.util.concurrent.TimeUnit;
  */
 public interface LifeCycle
 extends Closeable {
-	//
+
 	void start()
 	throws RemoteException, IllegalThreadStateException;
-	//
+
 	void shutdown()
 	throws RemoteException, IllegalStateException;
-	//
+
 	boolean await()
 	throws RemoteException, InterruptedException;
-	//
+
 	boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException;
-	//
+
 	void interrupt()
 	throws RemoteException;
 }

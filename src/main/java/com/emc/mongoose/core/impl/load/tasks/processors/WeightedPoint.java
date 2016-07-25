@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.load.tasks.processors;
 
-final class WeightedPoint implements Comparable<WeightedPoint> {
+final class WeightedPoint
+implements Comparable<WeightedPoint> {
 
 	private final Point point;
 	private double weight;
@@ -19,7 +20,7 @@ final class WeightedPoint implements Comparable<WeightedPoint> {
 	}
 
 	@Override
-	public int compareTo(@SuppressWarnings("NullableProblems") WeightedPoint weightedPoint) {
+	public final int compareTo(final WeightedPoint weightedPoint) {
 		return Double.compare(weight, weightedPoint.weight);
 	}
 

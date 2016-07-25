@@ -209,21 +209,24 @@ implements AppConfig {
 	@Override
 	public SizeInBytes getItemDataSize() {
 		final Object raw = getProperty(KEY_ITEM_DATA_SIZE);
+		final SizeInBytes size;
 		if(raw instanceof Long) {
-			return new SizeInBytes((long) raw);
+			size = new SizeInBytes((long) raw);
 		} else if(raw instanceof Integer) {
-			return new SizeInBytes((int) raw);
+			size = new SizeInBytes((int) raw);
 		} else if(raw instanceof Short) {
-			return new SizeInBytes((short) raw);
+			size = new SizeInBytes((short) raw);
 		} else if(raw instanceof String) {
-			return new SizeInBytes((String) raw);
+			size = new SizeInBytes((String) raw);
 		} else if(raw instanceof SizeInBytes){
-			return (SizeInBytes) raw;
+			size = (SizeInBytes) raw;
 		} else {
 			throw new ConversionException(
 				"Type of \"" + KEY_ITEM_DATA_SIZE + "\" is not supported: \"" + raw + "\""
 			);
 		}
+		ThreadContext.put(KEY_ITEM_DATA_SIZE, size.toString());
+		return size;
 	}
 	//
 	@Override

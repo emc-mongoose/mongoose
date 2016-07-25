@@ -4,7 +4,9 @@ import java.io.Serializable;
 
 import static java.lang.Math.sqrt;
 
-class Point implements Serializable {
+class Point
+implements Serializable {
+
 	private double x;
 	private double y;
 
@@ -14,7 +16,7 @@ class Point implements Serializable {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return "(" + x + ", " + y + ")";
 	}
 

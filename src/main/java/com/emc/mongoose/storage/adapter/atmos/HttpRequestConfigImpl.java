@@ -1,5 +1,4 @@
 package com.emc.mongoose.storage.adapter.atmos;
-// mongoose-core-api.jar
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
@@ -37,12 +36,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
-// mongoose-core-impl.jar
-// mongoose-common.jar
-//
-//
-//
-//
 /**
  Created by kurila on 26.03.14.
  */

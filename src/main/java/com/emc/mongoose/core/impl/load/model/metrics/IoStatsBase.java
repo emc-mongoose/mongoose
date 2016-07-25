@@ -13,6 +13,7 @@ import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 /**
@@ -70,6 +71,36 @@ implements IoStats {
 			jmxReporter.stop();
 		}
 		metrics.close();
+	}
+	//
+	private final static NumberFormat NF_0_10 = NumberFormat.getInstance(Locale.ROOT);
+	private final static NumberFormat NF_10_100 = NumberFormat.getInstance(Locale.ROOT);
+	private final static NumberFormat NF_100_AND_MORE = NumberFormat.getInstance(Locale.ROOT);
+	static {
+		NF_0_10.setGroupingUsed(false);
+		NF_0_10.setMinimumFractionDigits(3);
+		NF_0_10.setMaximumFractionDigits(3);
+		NF_10_100.setGroupingUsed(false);
+		NF_10_100.setMinimumFractionDigits(2);
+		NF_10_100.setMaximumFractionDigits(2);
+		NF_100_AND_MORE.setGroupingUsed(false);
+		NF_100_AND_MORE.setMinimumFractionDigits(1);
+		NF_100_AND_MORE.setMaximumFractionDigits(1);
+	}
+	public static String formatNumber(final double number) {
+		if(number == Math.floor(number) && !Double.isInfinite(number)) {
+			return Long.toString((long) number);
+		} else if(number < 0) {
+			return "-" + formatNumber(-number);
+		} else if(number < 10) {
+			return NF_0_10.format(number);
+		} else if(number < 100) {
+			return NF_10_100.format(number);
+		} else if(number < 1000) {
+			return NF_100_AND_MORE.format(number);
+		} else {
+			return Long.toString((long) number);
+		}
 	}
 	//
 	protected final static class BasicSnapshot
@@ -349,39 +380,12 @@ implements IoStats {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
 
-			final double elapsedTime = getElapsedTime() / M;
-			final String elapsedTimeStr;
-			if(elapsedTime < 1) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
-			} else if(elapsedTime < 10 ) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
-			} else if(elapsedTime < 100) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
-			} else if(elapsedTime < 1000){
-				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
-			} else {
-				elapsedTimeStr = Long.toString((long) elapsedTime);
-			}
-
-			final double durationSum = getDurationSum() / M;
-			final String durationSumStr;
-			if(durationSum < 1) {
-				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
-			} else if(durationSum < 10 ) {
-				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
-			} else if(durationSum < 100) {
-				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
-			} else if(durationSum < 1000){
-				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
-			} else {
-				durationSumStr = Long.toString((long) durationSum);
-			}
-
 			return String.format(
 				Locale.ROOT, MSG_FMT_METRICS,
-				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
-				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
-				getByteRateMean() / MIB, getByteRateLast() / MIB,
+				getSuccCount(), getFailCount(), SizeInBytes.formatFixedSize(getByteCount()),
+				formatNumber(getElapsedTime() / M), formatNumber(getDurationSum() / M),
+				formatNumber(getSuccRateMean()), formatNumber(getSuccRateLast()),
+				formatNumber(getByteRateMean() / MIB), formatNumber(getByteRateLast() / MIB),
 				toDurString(), toLatString()
 			);
 		}
@@ -396,39 +400,12 @@ implements IoStats {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
 
-			final double elapsedTime = getElapsedTime() / M;
-			final String elapsedTimeStr;
-			if(elapsedTime < 1) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
-			} else if(elapsedTime < 10 ) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
-			} else if(elapsedTime < 100) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
-			} else if(elapsedTime < 1000){
-				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
-			} else {
-				elapsedTimeStr = Long.toString((long) elapsedTime);
-			}
-
-			final double durationSum = getDurationSum() / M;
-			final String durationSumStr;
-			if(durationSum < 1) {
-				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
-			} else if(durationSum < 10 ) {
-				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
-			} else if(durationSum < 100) {
-				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
-			} else if(durationSum < 1000){
-				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
-			} else {
-				durationSumStr = Long.toString((long) durationSum);
-			}
-
 			return String.format(
 				Locale.ROOT, MSG_FMT_METRICS,
-				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
-				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
-				getByteRateMean() / MIB, getByteRateLast() / MIB,
+				getSuccCount(), getFailCount(), SizeInBytes.formatFixedSize(getByteCount()),
+				formatNumber(getElapsedTime() / M), formatNumber(getDurationSum() / M),
+				formatNumber(getSuccRateMean()), formatNumber(getSuccRateLast()),
+				formatNumber(getByteRateMean() / MIB), formatNumber(getByteRateLast() / MIB),
 				toDurSummaryString(), toLatSummaryString()
 			);
 		}
