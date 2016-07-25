@@ -8,6 +8,5 @@ import com.emc.mongoose.model.util.LoadType;
  */
 public interface IoTaskFactory<I extends Item, O extends IoTask<I>> {
 
-	O getInstance(final LoadType ioType, final I item);
-	
+	O getInstance(final LoadType ioType, final I item, final String dstPath);
 }

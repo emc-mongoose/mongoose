@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.DriverBase;
@@ -25,9 +26,12 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 19.07.16.
  */
 public abstract class FsDriverBase<I extends Item, O extends IoTask<I>>
-extends DriverBase<I, O> {
+extends DriverBase<I, O>
+implements Driver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int IO_TASK_QUEUE_SIZE = Short.MAX_VALUE;
+	private final static int BATCH_SIZE = 0x80;
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
@@ -46,7 +50,7 @@ extends DriverBase<I, O> {
 		if(ioBuffSizeMax < ioBuffSizeMin || ioBuffSizeMax > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException("Invalid I/O buff size max: " + ioBuffSizeMax);
 		}
-		ioTaskQueue = new ArrayBlockingQueue<>(concurrencyLevel);
+		ioTaskQueue = new ArrayBlockingQueue<>(IO_TASK_QUEUE_SIZE);
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
 		ioTaskExecutor = new ThreadPoolExecutor(ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
@@ -57,8 +61,7 @@ extends DriverBase<I, O> {
 	public final class IoTaskSchedule
 	implements Runnable {
 
-		private final int relativeIoWorkerLoad = concurrencyLevel / ioWorkerCount;
-		private final List<O> ioTaskBuff = new ArrayList<>(relativeIoWorkerLoad);
+		private final List<O> ioTaskBuff = new ArrayList<>(BATCH_SIZE);
 
 		@Override
 		public final void run() {
@@ -67,7 +70,7 @@ extends DriverBase<I, O> {
 			try {
 				while(!FsDriverBase.this.isInterrupted() && !currentThread.isInterrupted()) {
 					ioTaskBuff.clear();
-					ioTaskQueue.drainTo(ioTaskBuff, relativeIoWorkerLoad);
+					ioTaskQueue.drainTo(ioTaskBuff, BATCH_SIZE);
 					for(final O ioTask : ioTaskBuff) {
 						executeIoTask(ioTask);
 						nextStatus = ioTask.getStatus();

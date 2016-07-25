@@ -14,6 +14,7 @@ implements IoTask<I> {
 	//
 	protected final LoadType ioType;
 	protected final I item;
+	protected final String dstPath;
 	//
 	protected volatile String nodeAddr = null;
 	protected volatile Status status = Status.PENDING;
@@ -22,9 +23,10 @@ implements IoTask<I> {
 	protected volatile long respTimeStart = 0;
 	protected volatile long respTimeDone = 0;
 	//
-	public BasicIoTask(final LoadType ioType, final I item) {
+	public BasicIoTask(final LoadType ioType, final I item, final String dstPath) {
 		this.ioType = ioType;
 		this.item = item;
+		this.dstPath = dstPath;
 	}
 	//
 	@Override
@@ -65,6 +67,11 @@ implements IoTask<I> {
 	@Override
 	public final int getLatency() {
 		return (int) (respTimeStart - reqTimeDone);
+	}
+	//
+	@Override
+	public final String getDstPath() {
+		return dstPath;
 	}
 	//
 	protected final static ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {

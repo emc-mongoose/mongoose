@@ -4,8 +4,6 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,7 +15,6 @@ public class BasicMutableDataItem
 extends BasicDataItem
 implements MutableDataItem {
 
-	private static final Logger LOG = LogManager.getLogger();
 	private static final char LAYER_MASK_SEP = '/';
 
 	private static final ThreadLocal<StringBuilder> THREAD_LOCAL_CONTAINER = new ThreadLocal<>();
@@ -25,7 +22,6 @@ implements MutableDataItem {
 
 	private static final String
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
-		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 
 	protected final BitSet maskRangesRead = new BitSet(Long.SIZE);
@@ -69,16 +65,23 @@ implements MutableDataItem {
 	}
 
 	public BasicMutableDataItem(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
 
 	public BasicMutableDataItem(
-		final String name, final Long offset, final Long size, Integer layerNum,
+		final String name, final long offset, final long size, Integer layerNum,
 		final ContentSource contentSrc
 	) {
 		super(name, offset, size, layerNum, contentSrc);
+	}
+
+	public BasicMutableDataItem(
+		final String path, final String name, final long offset, final long size,
+		final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, contentSrc);
 	}
 
 	@Override

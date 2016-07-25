@@ -10,5 +10,7 @@ extends IoTask<D> {
 
 	long getCountBytesDone();
 
+	void setCountBytesDone(long n);
+
 	int getDataLatency();
 }
