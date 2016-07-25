@@ -210,8 +210,11 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected final void writeResponse(final ChannelHandlerContext ctx) {
-		final HttpResponseStatus status = ctx.channel()
+		HttpResponseStatus status = ctx.channel()
 				.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		if (status == null) {
+			status = OK;
+		}
 		final DefaultFullHttpResponse response =
 				new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
 		HttpUtil.setContentLength(response, 0);

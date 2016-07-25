@@ -7,6 +7,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -85,12 +86,14 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 		final String[] uriParams = getUriParameters(uri, 2);
 		final String containerName = uriParams[0];
 		final String objectId = uriParams[1];
+		final Channel channel = ctx.channel();
+		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
 		if (containerName != null) {
 			handleItemRequest(uri, method, containerName, objectId, size, ctx);
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
-		if (ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+		if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
 			writeResponse(ctx);
 		}
 	}
