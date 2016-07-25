@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Queue;
 
 import static com.emc.mongoose.core.impl.load.tasks.processors.Point.distance;
 import static java.lang.Math.sqrt;
@@ -11,7 +12,7 @@ final class Polyline {
 
 	private volatile Point firstPoint = null, lastPoint = null;
 	private final List<WeightedPoint> points = new ArrayList<>();
-	private final PriorityQueue<WeightedPoint> queue = new PriorityQueue<>();
+	private final Queue<WeightedPoint> queue = new PriorityQueue<>();
 
 	private double triangleArea(final Point point1, final Point point2, final Point point3) {
 		double a = distance(point1, point2);
@@ -45,7 +46,7 @@ final class Polyline {
 		} else {
 			if (pointIndex == 0 || pointIndex == 1) {
 				setWeightForSecondPoint();
-			} else if (pointIndex == size - 1 || pointIndex == size) {
+			} else if (pointIndex == size - 2 || pointIndex == size - 1 || pointIndex == size) {
 				setWeightForPenultPoint();
 			}  else {
 				setWeightForInternalPoints(pointIndex);
