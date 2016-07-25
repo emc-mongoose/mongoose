@@ -12,6 +12,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -36,12 +37,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaderNames.RANGE;
-import static io.netty.handler.codec.http.HttpMethod.*;
-import static io.netty.handler.codec.http.HttpResponseStatus.*;
+import static io.netty.handler.codec.http.HttpMethod.PUT;
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.HEAD;
+import static io.netty.handler.codec.http.HttpMethod.DELETE;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.INSUFFICIENT_STORAGE;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 /**
  Created on 12.07.16.
  */
+@SuppressWarnings("WeakerAccess")
+@Sharable
 public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 extends ChannelInboundHandlerAdapter {
 
@@ -60,12 +71,12 @@ extends ChannelInboundHandlerAdapter {
 	private static final String RESPONSE_STATUS_KEY = "responseStatusKey";
 	private static final String CONTENT_LENGTH_KEY = "contentLengthKey";
 	static final String CTX_WRITE_FLAG_KEY = "ctxWriteFlagKey";
-	private static final String HANDLER_STATUS_KEY = "handlerStatus";
+	private static final String HANDLER_KEY = "handlerKey";
 
 	static final int DEFAULT_PAGE_SIZE = 0x1000;
 	static final String MARKER_KEY = "marker";
 
-	RequestHandlerBase(
+	protected RequestHandlerBase(
 			final Config.LoadConfig.LimitConfig limitConfig,
 			final StorageMock<T> sharedStorage,
 			final ContentSource contentSource
@@ -78,23 +89,15 @@ extends ChannelInboundHandlerAdapter {
 		AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY);
 		AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY);
 		AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY);
-		AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY);
+		AttributeKey.<String>valueOf(HANDLER_KEY);
 	}
 
-	void setPrefixLength(int prefixLength) {
+	protected void setPrefixLength(int prefixLength) {
 		this.prefixLength = prefixLength;
 	}
 
-	void setIdRadix(int idRadix) {
+	protected void setIdRadix(int idRadix) {
 		this.idRadix = idRadix;
-	}
-
-	int prefixLength() {
-		return prefixLength;
-	}
-
-	public int idRadix() {
-		return idRadix;
 	}
 
 	protected boolean checkApiMatch(final HttpRequest request) {
@@ -104,7 +107,7 @@ extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelReadComplete(final ChannelHandlerContext ctx)
 	throws Exception {
-		if (!ctx.channel().attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).get()) {
+		if (!ctx.channel().attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get().equals(getClass().getSimpleName())) {
 			ctx.fireChannelReadComplete();
 			return;
 		}
@@ -121,20 +124,23 @@ extends ChannelInboundHandlerAdapter {
 		}
 	}
 
-	private void processHttpContent(final ChannelHandlerContext ctx, final Object msg) {
+	@Override
+	public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
 		final Channel channel = ctx.channel();
+		final String className = getClass().getSimpleName();
 		if (msg instanceof HttpRequest) {
 			if (!checkApiMatch((HttpRequest) msg)) {
-				channel.attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).set(false);
+				channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).set("");
 				ctx.fireChannelRead(msg);
 				return;
 			}
-			channel.attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).set(true);
+			channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).set(className);
 			processHttpRequest(ctx, (HttpRequest) msg);
 			ReferenceCountUtil.release(msg);
 			return;
 		}
-		if (!channel.attr(AttributeKey.<Boolean>valueOf(HANDLER_STATUS_KEY)).get()) {
+		if (!channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get().equals(
+			className)) {
 			ctx.fireChannelRead(msg);
 			return;
 		}
@@ -144,7 +150,7 @@ extends ChannelInboundHandlerAdapter {
 		ReferenceCountUtil.release(msg);
 	}
 
-	private final void handle(final ChannelHandlerContext ctx) {
+	private void handle(final ChannelHandlerContext ctx) {
 		if (rateLimit > 0) {
 			if (ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
@@ -165,7 +171,7 @@ extends ChannelInboundHandlerAdapter {
 		doHandle(uri, method, size, ctx);
 	}
 
-	void handleItemRequest(
+	protected void handleItemRequest(
 			final String uri,
 			final HttpMethod method,
 			final String containerName,
@@ -195,7 +201,7 @@ extends ChannelInboundHandlerAdapter {
 			final Long size,
 			final ChannelHandlerContext ctx);
 
-	final String[] getUriParameters(final String uri, final int maxNumOfParams) {
+	protected final String[] getUriParameters(final String uri, final int maxNumOfParams) {
 		final String[] result = new String[maxNumOfParams];
 		final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
 		final String[] queryStringChunks = queryStringDecoder.path().split("/");
@@ -203,16 +209,19 @@ extends ChannelInboundHandlerAdapter {
 		return result;
 	}
 
-	final void writeResponse(final ChannelHandlerContext ctx) {
-		final HttpResponseStatus status = ctx.channel()
+	protected final void writeResponse(final ChannelHandlerContext ctx) {
+		HttpResponseStatus status = ctx.channel()
 				.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		if (status == null) {
+			status = OK;
+		}
 		final DefaultFullHttpResponse response =
 				new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
 		HttpUtil.setContentLength(response, 0);
 		ctx.write(response);
 	}
 
-	final void handleObjectRequest(
+	protected final void handleObjectRequest(
 			final HttpMethod httpMethod, final String containerName, final String id,
 			final Long offset, final Long size, final ChannelHandlerContext ctx) {
 		if (containerName != null) {
@@ -357,7 +366,7 @@ extends ChannelInboundHandlerAdapter {
 		}
 	}
 
-	void setHttpResponseStatusInContext(
+	protected void setHttpResponseStatusInContext(
 			final ChannelHandlerContext ctx,
 			final HttpResponseStatus status) {
 		ctx.channel()
@@ -365,7 +374,7 @@ extends ChannelInboundHandlerAdapter {
 				.set(status);
 	}
 
-	void handleContainerRequest(
+	protected void handleContainerRequest(
 			final String uri,
 			final HttpMethod httpMethod, final String name,
 			final ChannelHandlerContext ctx) {
@@ -389,7 +398,7 @@ extends ChannelInboundHandlerAdapter {
 			final QueryStringDecoder queryStringDecoder,
 			final ChannelHandlerContext ctx);
 
-	final T listContainer(
+	protected final T listContainer(
 			final String name, final String marker,
 			final List<T> buffer, final int maxCount) {
 		try {

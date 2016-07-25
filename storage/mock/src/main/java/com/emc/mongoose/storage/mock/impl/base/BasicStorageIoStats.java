@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public final class BasicStorageIoStats
 extends Thread
@@ -23,13 +24,13 @@ implements StorageIoStats {
 
 	private final Counter countFailWrite, countFailRead, countFailDelete, countContainers;
 	private final CustomMeter tpWrite, tpRead, tpDelete, bwWrite, bwRead;
-	private final long updatePeriodMilliSec;
+	private final long updatePeriodSec;
 	private final StorageMock storage;
 
 	public BasicStorageIoStats(final StorageMock storage, final int metricsPeriodSec) {
 		super(BasicStorageIoStats.class.getSimpleName());
 		setDaemon(true);
-		this.updatePeriodMilliSec = metricsPeriodSec;
+		this.updatePeriodSec = metricsPeriodSec;
 		this.storage = storage;
 		final Clock clock = new ResumableUserTimeClock();
 		countFailWrite = new Counter();
@@ -61,15 +62,12 @@ implements StorageIoStats {
 	public void run() {
 		LOG.debug(Markers.MSG, "Running");
 		try {
-			while(updatePeriodMilliSec > 0 && !isInterrupted()) {
+			while(updatePeriodSec > 0 && !isInterrupted()) {
 				LOG.info(Markers.MSG, toString());
-				Thread.sleep(updatePeriodMilliSec);
-				close();
+				TimeUnit.SECONDS.sleep(updatePeriodSec);
 			}
 		} catch(final InterruptedException ignored) {
 			LOG.debug(Markers.MSG, "Interrupted");
-		} catch(final IOException e) {
-			LOG.debug(Markers.MSG, "Failed to close");
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failure");
 		}
