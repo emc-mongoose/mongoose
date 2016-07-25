@@ -277,7 +277,6 @@ implements LoadExecutor<T> {
 				}
 			}
 			LOG.debug(Markers.MSG, "the task exits");
-			System.exit(0);
 		}
 	}
 	//
