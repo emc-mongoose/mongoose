@@ -55,10 +55,10 @@ extends FileSystemTestBase {
 			client.create(
 				new ListItemOutput<>(itemBuff), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("8KB")
 			);
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 			countRead = client.read(new ListItemInput<>(itemBuff), null, 0, 100, true);
 			RunIdFileManager.flushAll();
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//
@@ -82,7 +82,7 @@ extends FileSystemTestBase {
 		Assert.assertTrue(countRead > COUNT_TO_WRITE);
 	}
 	//
-	@Test @Ignore
+	@Test
 	public void checkLoggedItemsCount()
 	throws Exception {
 		int itemsCount = 0;

@@ -51,11 +51,11 @@ implements AppConfig {
 	//
 	public static final ThreadLocal<AppConfig>
 		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
-		@Override
-		protected final AppConfig initialValue() {
-			return new BasicConfig();
-		}
-	};
+			@Override
+			protected final AppConfig initialValue() {
+				return new BasicConfig();
+			}
+		};
 	//
 	static {
 		setDefaultExpressionEngine(new DefaultExpressionEngine());

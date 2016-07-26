@@ -934,6 +934,7 @@ implements HttpRequestConfig<T, C> {
 		return response;
 	}
 	//
+	private final static Map<String, Input<String>> HEADER_NAME_INPUTS = new ConcurrentHashMap<>();
 	private final static Map<String, Input<String>> HEADER_VALUE_INPUTS = new ConcurrentHashMap<>();
 	/**
 	Created by kurila on 30.01.15.
@@ -941,10 +942,9 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public final void process(final HttpRequest request, final HttpContext context)
 	throws HttpException, IOException {
+
 		// add all the shared headers if missing
 		Header nextHeader;
-		String headerValue;
-		Input<String> headerValueInput;
 		if(sharedHeaders != null) {
 			for(final String nextKey : sharedHeaders.keySet()) {
 				nextHeader = sharedHeaders.get(nextKey);
@@ -953,31 +953,57 @@ implements HttpRequestConfig<T, C> {
 				}
 			}
 		}
-		//
+
 		if(dynamicHeaders != null) {
 			for(final String nextKey : dynamicHeaders.keySet()) {
+
+				String headerName;
+				String headerValue;
+				Input<String> headerNameInput;
+				Input<String> headerValueInput;
+
 				nextHeader = dynamicHeaders.get(nextKey);
-				headerValue = nextHeader.getValue();
-				if(headerValue != null) {
-					// header value is a generator pattern
-					headerValueInput = HEADER_VALUE_INPUTS.get(nextKey);
+
+				headerName = nextHeader.getName();
+				if(headerName != null) {
+					// header name is a generator pattern
+					headerNameInput = HEADER_NAME_INPUTS.get(nextKey);
 					// try to find the corresponding generator in the registry
-					if(headerValueInput == null) {
+					if(headerNameInput == null) {
 						// create new generator and put it into the registry for reuse
-						headerValueInput = new AsyncPatternDefinedInput(headerValue);
-						// spin while header value generator is not ready
-						while(null == (headerValue = headerValueInput.get())) {
+						headerNameInput = new AsyncPatternDefinedInput(headerName);
+						// spin while header name generator is not ready
+						while(null == (headerName = headerNameInput.get())) {
 							LockSupport.parkNanos(1_000_000);
 						}
-						HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
+						HEADER_NAME_INPUTS.put(nextKey, headerNameInput);
 					} else {
-						headerValue = headerValueInput.get();
+						headerName = headerNameInput.get();
 					}
-					// put the generated header value into the request
-					request.setHeader(new BasicHeader(nextKey, headerValue));
+
+					headerValue = nextHeader.getValue();
+					if(headerValue != null) {
+						// header value is a generator pattern
+						headerValueInput = HEADER_VALUE_INPUTS.get(nextKey);
+						// try to find the corresponding generator in the registry
+						if(headerValueInput == null) {
+							// create new generator and put it into the registry for reuse
+							headerValueInput = new AsyncPatternDefinedInput(headerValue);
+							// spin while header value generator is not ready
+							while(null == (headerValue = headerValueInput.get())) {
+								LockSupport.parkNanos(1_000_000);
+							}
+							HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
+						} else {
+							headerValue = headerValueInput.get();
+						}
+						// put the generated header value into the request
+						request.setHeader(new BasicHeader(headerName, headerValue));
+					}
 				}
 			}
 		}
+
 		// add all other required headers
 		applyHeadersFinally(request);
 	}

@@ -66,7 +66,6 @@ extends ScenarioTestBase {
 		try {
 			RunIdFileManager.flushAll();
 			//
-			appConfig = BasicConfig.THREAD_CONTEXT.get();
 			appConfig.setRunId(READ_RUN_ID);
 			appConfig.setProperty(AppConfig.KEY_ITEM_SRC_FILE,
 				LogValidator.getItemsListFile(CREATE_RUN_ID).getPath()
@@ -105,7 +104,7 @@ extends ScenarioTestBase {
 		final File perfSumFile = LogValidator.getPerfSumFile(READ_RUN_ID);
 
 		//  Check that file exists
-		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
+		Assert.assertTrue("file " + perfSumFile.getAbsolutePath() + " doesn't exist", perfSumFile.exists());
 
 		try(
 			final BufferedReader

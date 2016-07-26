@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.run.scenario.engine.JsonScenario;
 import com.emc.mongoose.run.scenario.engine.Scenario;
 import com.emc.mongoose.system.base.HttpStorageMockTestBase;
@@ -154,6 +155,7 @@ extends HttpStorageMockTestBase {
 			} catch(final CloneNotSupportedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the scenario");
 			}
+			RunIdFileManager.flushAll();
 			TimeUnit.SECONDS.sleep(10);
 			STD_OUTPUT = stdOutStream.toString();
 		} catch(final Exception e) {
@@ -216,7 +218,7 @@ extends HttpStorageMockTestBase {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
 				Assert.assertEquals(
-					"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 25,
+					"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 28,
 					nextRec.size()
 				);
 				if(firstRow) {

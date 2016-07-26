@@ -12,6 +12,7 @@ import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.system.base.DistributedClientTestBase;
+import com.emc.mongoose.system.tools.LogValidator;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -63,6 +64,7 @@ extends DistributedClientTestBase {
 	public static void setUpClass() {
 		try {
 			System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
+			LogValidator.removeLogDirectory(RUN_ID);
 			DistributedClientTestBase.setUpClass();
 			//
 			final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
@@ -118,7 +120,7 @@ extends DistributedClientTestBase {
 	public void checkItemsFileExistsAndCanBeReadFully()
 	throws Exception {
 		final Map<String, Long> items = new HashMap<>();
-		TimeUnit.SECONDS.sleep(10);
+		TimeUnit.SECONDS.sleep(15);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
@@ -138,7 +140,7 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@Test @Ignore
+	@Test// @Ignore
 	public void checkPerfTraceFileContainsDuplicates()
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();
@@ -164,9 +166,9 @@ extends DistributedClientTestBase {
 			}
 			//
 			for(final Map.Entry<String, Long> entry : items.entrySet()) {
-				Assert.assertEquals(
+				Assert.assertTrue(
 					"perf.trace.csv doesn't contain necessary count of duplicates for item \"" + entry.getKey() + "\"",
-					COUNT_OF_DUPLICATES, entry.getValue(), 2
+					COUNT_OF_DUPLICATES <= entry.getValue()
 				);
 			}
 		}

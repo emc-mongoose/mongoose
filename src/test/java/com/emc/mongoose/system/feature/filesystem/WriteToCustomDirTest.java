@@ -48,7 +48,7 @@ extends FileSystemTestBase {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
 			RunIdFileManager.flush(RUN_ID);
 		}
-		TimeUnit.SECONDS.sleep(10);
+		TimeUnit.SECONDS.sleep(15);
 	}
 	//
 	@AfterClass
@@ -74,7 +74,7 @@ extends FileSystemTestBase {
 		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
 	}
 	//
-	@Test @Ignore
+	@Test
 	public void checkLoggedItemsCount()
 	throws Exception {
 		int itemsCount = 0;

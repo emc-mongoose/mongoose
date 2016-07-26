@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
  * Created by olga on 10.07.15.
  * HLUC: 1.1.2.2, 1.1.4.1, 1.1.5.4, 1.3.9.1
  */
-@Ignore
 public class ReadZeroSizeItemsTest
 extends ScenarioTestBase {
 
@@ -66,7 +65,6 @@ extends ScenarioTestBase {
 		SCENARIO_RUNNER.run();
 		try {
 			RunIdFileManager.flushAll();
-			appConfig = BasicConfig.THREAD_CONTEXT.get();
 			appConfig.setRunId(READ_RUN_ID);
 			appConfig.setProperty(
 				AppConfig.KEY_ITEM_SRC_FILE, LogValidator.getItemsListFile(CREATE_RUN_ID).getPath()
@@ -82,12 +80,12 @@ extends ScenarioTestBase {
 			) {
 				SCENARIO_RUNNER.run();
 				//  Wait for "Scenario end" message
-				TimeUnit.SECONDS.sleep(15);
+				TimeUnit.SECONDS.sleep(10);
 				STD_OUTPUT_STREAM = stdOutStream;
 			}
 			//
 			RunIdFileManager.flushAll();
-			TimeUnit.SECONDS.sleep(15);
+			TimeUnit.SECONDS.sleep(10);
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
 		}
@@ -168,7 +166,7 @@ extends ScenarioTestBase {
 		}
 	}
 
-	@Test @Ignore
+	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read message file and search "Scenario End"
