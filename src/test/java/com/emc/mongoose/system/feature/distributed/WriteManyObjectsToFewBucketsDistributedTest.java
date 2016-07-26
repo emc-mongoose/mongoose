@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 23.10.15.
  */
+@Ignore
 public class WriteManyObjectsToFewBucketsDistributedTest
 extends DistributedLoadBuilderTestBase {
 	//

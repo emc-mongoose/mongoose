@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
+@Ignore
 public class WriteManyBucketsConcurrentlyDistributedTest
 extends DistributedLoadBuilderTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;

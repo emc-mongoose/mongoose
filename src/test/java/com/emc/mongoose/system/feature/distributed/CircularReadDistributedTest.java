@@ -140,7 +140,7 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@Test// @Ignore
+	@Test @Ignore
 	public void checkPerfTraceFileContainsDuplicates()
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();

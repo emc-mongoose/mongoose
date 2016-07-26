@@ -36,11 +36,11 @@ import org.junit.runners.Suite;
 	UpdateLoggingTest.class,
 	DeleteLoggingTest.class,
 	DeleteManyBucketsConcurrentlyDistributedTest.class,
-	/*ReadBucketsWithManyObjectsDistributedTest.class,
+	ReadBucketsWithManyObjectsDistributedTest.class,
 	ReadFewBucketsDistributedTest.class,
 	WriteFewBucketsDistributedTest.class,
 	WriteManyBucketsConcurrentlyDistributedTest.class,
-	WriteManyObjectsToFewBucketsDistributedTest.class,*/
+	WriteManyObjectsToFewBucketsDistributedTest.class,
 	UpdateZeroBytesDistributedTest.class,
 	WriteRikkiTikkiTaviDistributedTest.class,
 })

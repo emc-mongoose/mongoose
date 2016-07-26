@@ -419,7 +419,6 @@ implements StorageMock<T> {
 		ioStats.start();
 		startListening();
 		storageCapacityMonitorThread.start();
-		Sequencer.INSTANCE.start();
 	}
 	//
 	@Override

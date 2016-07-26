@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 23.10.15.
  */
+@Ignore
 public class ReadBucketsWithManyObjectsDistributedTest
 extends DistributedLoadBuilderTestBase {
 	//
