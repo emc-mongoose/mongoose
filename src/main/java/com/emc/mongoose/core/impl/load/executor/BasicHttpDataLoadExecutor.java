@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import static com.emc.mongoose.common.conf.enums.LoadType.DELETE;
@@ -311,7 +312,11 @@ implements HttpDataLoadExecutor<T> {
 		//
 		@Override
 		public final void failed(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Connection lease failed");
+			if(e instanceof TimeoutException | e instanceof InterruptedException) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Connection lease failed");
+			} else {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Connection lease failed");
+			}
 		}
 		//
 		@Override
@@ -411,7 +416,11 @@ implements HttpDataLoadExecutor<T> {
 		//
 		@Override
 		public final void failed(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Connection lease failed");
+			if(e instanceof TimeoutException | e instanceof InterruptedException) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Connection lease failed");
+			} else {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Connection lease failed");
+			}
 		}
 		//
 		@Override

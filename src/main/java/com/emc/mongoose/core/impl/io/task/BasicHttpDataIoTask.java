@@ -10,6 +10,7 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
@@ -172,6 +174,10 @@ implements HttpDataIoTask<T> {
 				);
 			}
 			// find next updating range
+			final ContentSource contentSrc = ioConfig.getContentSource();
+			if(contentSrc == null) {
+				throw new AsynchronousCloseException();
+			}
 			do {
 				currRangeSize = item.getRangeSize(currRangeIdx);
 				// select the current range if it's updating
