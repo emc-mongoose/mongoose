@@ -7,42 +7,41 @@ import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static com.emc.mongoose.model.impl.item.BasicMutableDataItem.getRangeCount;
-
-/**
- Created on 19.07.16.
- */
 public class BasicMutableDataItemMock
-extends BasicMutableDataItem
-implements MutableDataItemMock {
-
+	extends BasicMutableDataItem
+	implements MutableDataItemMock {
+	//
 	private final static Logger LOG = LogManager.getLogger();
-
-	public BasicMutableDataItemMock(final ContentSource contentSrc) {
-		super(contentSrc);
+	//
+	public BasicMutableDataItemMock() {
+		super();
 	}
-
-	public BasicMutableDataItemMock(
-		final String metaInfo, final ContentSource contentSrc
-	) {
-		super(metaInfo, contentSrc);
+	//
+	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
+		super(value, contentSrc);
 	}
-
+	//
 	public BasicMutableDataItemMock(
 		final Long offset, final Long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
-
+	//
+	public BasicMutableDataItemMock(
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(name, offset, size, contentSrc);
+	}
+	//
 	public BasicMutableDataItemMock(
 		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(SLASH, name, offset, size, layerNum, contentSrc);
 	}
-
-	@Override
-	public void update(final long offset, final long size) {
+	//
+	public final synchronized void update(final long offset, final long size)
+	throws IllegalArgumentException, IllegalStateException {
 		if(size < 0) {
 			throw new IllegalArgumentException("Range size should not be negative");
 		}
@@ -71,9 +70,8 @@ implements MutableDataItemMock {
 			);
 		}
 	}
-
-	@Override
-	public void append(final long offset, final long size) {
+	//
+	public final synchronized void append(final long offset, final long size) {
 		if(size < 0) {
 			throw new IllegalArgumentException(name + ": range size should not be negative");
 		}

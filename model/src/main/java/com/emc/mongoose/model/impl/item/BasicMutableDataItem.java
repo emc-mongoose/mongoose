@@ -112,7 +112,6 @@ public class BasicMutableDataItem
 			).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@SuppressWarnings("ArrayEquals")
 	@Override
 	public boolean equals(final Object o) {
 		if(o == this) {
@@ -127,12 +126,10 @@ public class BasicMutableDataItem
 		}
 	}
 	//
-	@SuppressWarnings("ArrayHashCode")
 	@Override
 	public int hashCode() {
 		return super.hashCode() ^ maskRangesRead.hashCode() ^ maskRangesWrite.hashCode();
 	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
 		int result = 0;
@@ -144,13 +141,13 @@ public class BasicMutableDataItem
 		if( value >= 0x4						) { value >>>= 2;	result += 2; }
 		return result + (int) (value >>> 1);
 	}*/
-
+	//
 	private static final double LOG2 = Math.log(2);
-
+	//
 	public static int getRangeCount(final long size) {
 		return (int) Math.ceil(Math.log(size + 1) / LOG2);
 	}
-
+	//
 	public static long getRangeOffset(final int i) {
 		return (1 << i) - 1;
 	}
@@ -159,12 +156,12 @@ public class BasicMutableDataItem
 	public final long getRangeSize(final int i) {
 		return Math.min(getRangeOffset(i + 1), size) - getRangeOffset(i);
 	}
-
+	//
 	@Override
 	public final int getCountRangesTotal() {
 		return getRangeCount(size);
 	}
-
+	//
 	@Override
 	public final int getCurrLayerIndex() {
 		return currLayerIndex;
@@ -224,7 +221,7 @@ public class BasicMutableDataItem
 			}
 		}
 	}
-
+	//
 	@Override
 	public final void scheduleRandomUpdates(final int count)
 	throws IllegalArgumentException {
@@ -239,7 +236,7 @@ public class BasicMutableDataItem
 			scheduleRandomUpdate(countRangesTotal);
 		}
 	}
-
+	//
 	@Override
 	public final long getUpdatingRangesSize() {
 		final long rangeCount = getRangeCount(size);
@@ -251,7 +248,7 @@ public class BasicMutableDataItem
 		}
 		return pendingSize;
 	}
-
+	//
 	@Override
 	public final void commitUpdatedRanges() {
 		// move pending updated ranges to history
@@ -265,14 +262,13 @@ public class BasicMutableDataItem
 		}
 		maskRangesWrite[0].clear();
 	}
-
+	//
 	@Override
 	public final void resetUpdates() {
 		maskRangesRead.clear();
 		maskRangesWrite[0].clear();
 		maskRangesWrite[1].clear();
 	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +276,7 @@ public class BasicMutableDataItem
 	public final boolean isAppending() {
 		return pendingAugmentSize > 0;
 	}
-
+	//
 	@Override
 	public void scheduleAppend(final long augmentSize)
 	throws IllegalArgumentException {
@@ -298,12 +294,12 @@ public class BasicMutableDataItem
 			);
 		}
 	}
-
+	//
 	@Override
 	public final long getAppendSize() {
 		return pendingAugmentSize;
 	}
-
+	//
 	@Override
 	public final void commitAppend() {
 		size += pendingAugmentSize;
