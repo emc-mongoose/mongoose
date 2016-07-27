@@ -17,8 +17,8 @@ implements DataIoTask<T> {
 	protected volatile int currDataLayerIdx = 0;
 	protected volatile long respDataTimeStart = 0;
 
-	public BasicDataIoTask(final LoadType ioType, final T item) {
-		super(ioType, item);
+	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath) {
+		super(ioType, item, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
@@ -45,6 +45,11 @@ implements DataIoTask<T> {
 	@Override
 	public final long getCountBytesDone() {
 		return countBytesDone;
+	}
+
+	@Override
+	public final void setCountBytesDone(final long n) {
+		this.countBytesDone = n;
 	}
 
 	@Override

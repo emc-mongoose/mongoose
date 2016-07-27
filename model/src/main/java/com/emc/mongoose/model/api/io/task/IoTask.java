@@ -46,4 +46,6 @@ public interface IoTask<I extends Item> {
 	int getDuration();
 
 	int getLatency();
+
+	String getDstPath();
 }

@@ -11,7 +11,9 @@ public final class BasicDataIoTaskFactory<D extends DataItem>
 implements IoTaskFactory<D, BasicDataIoTask<D>> {
 
 	@Override
-	public final BasicDataIoTask<D> getInstance(final LoadType ioType, final D dataItem) {
-		return new BasicDataIoTask<>(ioType, dataItem);
+	public final BasicDataIoTask<D> getInstance(
+		final LoadType ioType, final D dataItem, final String dstPath
+	) {
+		return new BasicDataIoTask<>(ioType, dataItem, dstPath);
 	}
 }

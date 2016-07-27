@@ -19,7 +19,7 @@ import com.emc.mongoose.model.api.load.Generator;
 import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.model.impl.data.SeedContentSource;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
-import com.emc.mongoose.model.impl.item.BasicDataItemFactory;
+import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.impl.item.BasicItemNameInput;
 import com.emc.mongoose.model.impl.item.NewDataItemInput;
 import org.apache.logging.log4j.Level;
@@ -59,6 +59,7 @@ implements Generator<I, O> {
 	private final boolean isCircular = false;
 	private final Throttle<I> rateThrottle = new RateThrottle<>(0);
 	private final IoTaskFactory<I, O> ioTaskFactory;
+	private final String dstContainer = "";
 
 	private long producedItemsCount = 0;
 
@@ -136,7 +137,7 @@ implements Generator<I, O> {
 		@Override
 		public void put(final I item)
 		throws IOException {
-			final O nextIoTask = ioTaskFactory.getInstance(ioType, item);
+			final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
 			final Driver<I, O> nextDriver = getNextDriver();
 			try {
 				nextDriver.submit(nextIoTask);
@@ -151,7 +152,7 @@ implements Generator<I, O> {
 			if(to > from) {
 				final List<O> ioTasks = new ArrayList<>(to - from);
 				for(int i = from; i < to; i ++) {
-					ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i)));
+					ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
 				}
 				final Driver<I, O> nextDriver = getNextDriver();
 				try {
@@ -169,7 +170,7 @@ implements Generator<I, O> {
 			final int n = buffer.size();
 			final List<O> ioTasks = new ArrayList<>(n);
 			for(final I nextItem : buffer) {
-				ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem));
+				ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
 			}
 			final Driver<I, O> nextDriver = getNextDriver();
 			try {
@@ -197,7 +198,7 @@ implements Generator<I, O> {
 		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory
 	) throws UserShootHisFootException {
 		this.drivers = drivers;
-		if(itemFactory instanceof BasicDataItemFactory) {
+		if(itemFactory instanceof BasicMutableDataItemFactory) {
 			this.itemInput = new NewDataItemInput<>(
 				(ItemFactory) itemFactory,
 				new RangePatternDefinedInput(Item.SLASH),

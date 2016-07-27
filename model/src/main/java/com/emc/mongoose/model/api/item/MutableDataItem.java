@@ -7,5 +7,4 @@ package com.emc.mongoose.model.api.item;
  */
 public interface MutableDataItem
 extends AppendableDataItem, UpdatableDataItem {
-	
 }
