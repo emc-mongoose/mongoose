@@ -1,7 +1,8 @@
 package com.emc.mongoose.model.api.item;
 
 /**
- Created on 19.07.16.
+ Created by kurila on 29.09.14.
+ A data item which supports append operation.
  */
 interface AppendableDataItem
 extends DataItem{

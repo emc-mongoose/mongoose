@@ -2,12 +2,15 @@ package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.DataItem;
+import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -18,8 +21,8 @@ import java.nio.channels.WritableByteChannel;
  Uses UniformDataSource as a ring buffer. Not thread safe.
  */
 public class BasicDataItem
-extends BasicItem
-implements DataItem {
+	extends BasicItem
+	implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -33,6 +36,10 @@ implements DataItem {
 	private int ringBuffSize;
 	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicDataItem() {
+		super();
+	}
+	//
 	public BasicDataItem(final String value) {
 		fromString(value);
 	}
@@ -47,26 +54,26 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final long offset, final long size, final ContentSource contentSrc
+		final Long offset, final Long size, final ContentSource contentSrc
 	) {
 		this(SLASH, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String name, final long offset, final long size, final ContentSource contentSrc
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
 	) {
 		this(SLASH, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final long offset, final long size,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
 		this(path, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final long offset, final long size, final int layerNum, final ContentSource contentSrc
+		final Long offset, final Long size, final Integer layerNum, final ContentSource contentSrc
 	) {
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
@@ -74,7 +81,7 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String name, final long offset, final long size, final int layerNum,
+		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {
 		super(SLASH, name);
@@ -84,8 +91,8 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final long offset, final long size,
-		final int layerNum, final ContentSource contentSrc
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
 	) {
 		super(path, name);
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
@@ -115,13 +122,13 @@ implements DataItem {
 		}
 	}
 	//
-	private final static ThreadLocal<StringBuilder> STR_BUILDER_CONTAINER = new ThreadLocal<>();
+	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
 	@Override
 	public String toString() {
-		StringBuilder strBuilder = STR_BUILDER_CONTAINER.get();
+		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
 		if(strBuilder == null) {
 			strBuilder = new StringBuilder();
-			STR_BUILDER_CONTAINER.set(strBuilder);
+			THR_LOCAL_STR_BUILDER.set(strBuilder);
 		} else {
 			strBuilder.setLength(0); // reset
 		}
@@ -244,7 +251,7 @@ implements DataItem {
 	throws IOException {
 		synchronized(ringBuff) {
 			makeCircular();
-			int n = (int) Math.min(maxCount, ringBuff.remaining());
+			int n = (int)Math.min(maxCount, ringBuff.remaining());
 			ringBuff.limit(ringBuff.position() + n);
 			return chanDst.write(ringBuff);
 		}
@@ -294,4 +301,5 @@ implements DataItem {
 	public int hashCode() {
 		return (int) (offset ^ size);
 	}
+
 }

@@ -7,45 +7,42 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- Created on 19.07.16.
- */
 public class BasicMutableDataItem
-extends BasicDataItem
-implements MutableDataItem {
-
-	private static final Logger LOG = LogManager.getLogger();
-	private static final char LAYER_MASK_SEP = '/';
-
-	private static final ThreadLocal<StringBuilder> THREAD_LOCAL_CONTAINER = new ThreadLocal<>();
-	private static final double LOG2 = Math.log(2);
-
-	private static final String
+	extends BasicDataItem
+	implements MutableDataItem {
+	//
+	private final static Logger LOG = LogManager.getLogger();
+	private final static char LAYER_MASK_SEP = '/';
+	//
+	protected final static String
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
-
-	protected final BitSet maskRangesRead = new BitSet(Long.SIZE);
-	private final BitSet[] maskRangesWrite = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE)};
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected final BitSet
+		maskRangesRead = new BitSet(Long.SIZE),
+		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE) };
 	protected int currLayerIndex = 0;
-	private long pendingAugmentSize = 0;
-
+	protected long pendingAugmentSize = 0;
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicMutableDataItem() {
+		super();
+	}
+	//
 	public BasicMutableDataItem(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 	}
-
-	public BasicMutableDataItem(final String metaInfo, final ContentSource contentSrc) {
-		super(
-			metaInfo.substring(0, metaInfo.lastIndexOf(",")),
-			contentSrc
-		);
+	//
+	public BasicMutableDataItem(final String value, final ContentSource contentSrc) {
+		super(value.substring(0, value.lastIndexOf(",")), contentSrc);
 		//
-		final String rangesInfo = metaInfo.substring(
-			metaInfo.lastIndexOf(",") + 1, metaInfo.length()
-		);
+		final String rangesInfo = value.substring(value.lastIndexOf(",") + 1, value.length());
 		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 		try {
 			// extract hexadecimal layer number
@@ -67,20 +64,55 @@ implements MutableDataItem {
 			throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 		}
 	}
-
+	//
 	public BasicMutableDataItem(
 		final Long offset, final Long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
-
+	//
 	public BasicMutableDataItem(
-		final String name, final Long offset, final Long size, Integer layerNum,
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicMutableDataItem(
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(path, name, offset, size, 0, contentSrc);
 	}
-
+	//
+	public BasicMutableDataItem(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, layerNum, contentSrc);
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Human readable "serialization" implementation ///////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	@Override
+	public synchronized String toString() {
+		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THR_LOCAL_STR_BUILDER.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // reset
+		}
+		return strBuilder
+			.append(super.toString()).append(',')
+			.append(Integer.toHexString(currLayerIndex)).append('/')
+			.append(
+				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
+					Hex.encodeHexString(maskRangesRead.toByteArray())
+			).toString();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@SuppressWarnings("ArrayEquals")
 	@Override
 	public boolean equals(final Object o) {
 		if(o == this) {
@@ -95,95 +127,77 @@ implements MutableDataItem {
 		}
 	}
 	//
+	@SuppressWarnings("ArrayHashCode")
 	@Override
 	public int hashCode() {
 		return super.hashCode() ^ maskRangesRead.hashCode() ^ maskRangesWrite.hashCode();
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	/*public static int log2(long value) {
+		int result = 0;
+		if((value &  0xffffffff00000000L ) != 0	) { value >>>= 32;	result += 32; }
+		if( value >= 0x10000					) { value >>>= 16;	result += 16; }
+		if( value >= 0x1000						) { value >>>= 12;	result += 12; }
+		if( value >= 0x100						) { value >>>= 8;	result += 8; }
+		if( value >= 0x10						) { value >>>= 4;	result += 4; }
+		if( value >= 0x4						) { value >>>= 2;	result += 2; }
+		return result + (int) (value >>> 1);
+	}*/
+
+	private static final double LOG2 = Math.log(2);
+
 	public static int getRangeCount(final long size) {
 		return (int) Math.ceil(Math.log(size + 1) / LOG2);
 	}
-	//
+
 	public static long getRangeOffset(final int i) {
 		return (1 << i) - 1;
 	}
-
+	//
 	@Override
-	public long getRangeSize(final int i) {
+	public final long getRangeSize(final int i) {
 		return Math.min(getRangeOffset(i + 1), size) - getRangeOffset(i);
 	}
 
 	@Override
-	public int getCountRangesTotal() {
+	public final int getCountRangesTotal() {
 		return getRangeCount(size);
 	}
 
 	@Override
-	public int getCurrLayerIndex() {
+	public final int getCurrLayerIndex() {
 		return currLayerIndex;
 	}
-
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void scheduleAppend(final long augmentSize)
-	throws IllegalArgumentException {
-		if(augmentSize > 0) {
-			pendingAugmentSize = augmentSize;
-			final int
-				lastCellPos = size > 0 ? getRangeCount(size) - 1 : 0,
-				nextCellPos = getRangeCount(size + augmentSize);
-			if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
-				maskRangesRead.set(lastCellPos, nextCellPos);
-			}
-		} else {
-			throw new IllegalArgumentException(
-				"Append tail size should be more than 0, but got " + augmentSize
-			);
-		}
-	}
-
-	@Override
-	public boolean isAppending() {
-		return false;
-	}
-
-	@Override
-	public long getAppendSize() {
-		return pendingAugmentSize;
-	}
-
-	@Override
-	public void commitAppend() {
-		size += pendingAugmentSize;
-		pendingAugmentSize = 0;
-	}
-
-	@Override
-	public boolean hasBeenUpdated() {
+	public final boolean hasBeenUpdated() {
 		return !maskRangesRead.isEmpty();
 	}
-
+	//
 	@Override
-	public boolean hasScheduledUpdates() {
+	public final boolean hasScheduledUpdates() {
 		return !maskRangesWrite[0].isEmpty() || !maskRangesWrite[1].isEmpty();
 	}
-
+	//
 	@Override
-	public boolean isCurrLayerRangeUpdated(final int layerNum) {
-		return maskRangesRead.get(layerNum);
+	public final boolean isCurrLayerRangeUpdated(final int i) {
+		return maskRangesRead.get(i);
 	}
-
+	//
 	@Override
-	public boolean isCurrLayerRangeUpdating(final int layerNum) {
-		return maskRangesWrite[0].get(layerNum);
+	public final boolean isCurrLayerRangeUpdating(final int i) {
+		return maskRangesWrite[0].get(i);
 	}
-
+	//
 	@Override
-	public boolean isNextLayerRangeUpdating(final int layerNum) {
-		return maskRangesWrite[1].get(layerNum);
+	public final boolean isNextLayerRangeUpdating(final int i) {
+		return maskRangesWrite[1].get(i);
 	}
-
-	private synchronized void scheduleRandomUpdate(final int countRangesTotal)
-	throws IllegalArgumentException, IllegalStateException {
+	//
+	private synchronized void scheduleRandomUpdate(final int countRangesTotal) {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
 		if(countRangesTotal > maskRangesRead.cardinality() + maskRangesWrite[0].cardinality()) {
@@ -212,8 +226,8 @@ implements MutableDataItem {
 	}
 
 	@Override
-	public void scheduleRandomUpdates(final int count)
-	throws IllegalArgumentException, IllegalStateException {
+	public final void scheduleRandomUpdates(final int count)
+	throws IllegalArgumentException {
 		final int countRangesTotal = getRangeCount(size);
 		if(count < 1 || count > countRangesTotal) {
 			throw new IllegalArgumentException(
@@ -227,7 +241,7 @@ implements MutableDataItem {
 	}
 
 	@Override
-	public long getUpdatingRangesSize() {
+	public final long getUpdatingRangesSize() {
 		final long rangeCount = getRangeCount(size);
 		long pendingSize = 0;
 		for(int i = 0; i < rangeCount; i ++) {
@@ -239,16 +253,8 @@ implements MutableDataItem {
 	}
 
 	@Override
-	public void commitUpdatedRanges() {
-		// move pending updated ranges to history TODO move logging
-//		if(LOG.isTraceEnabled(Markers.MSG)) {
-//			LOG.trace(
-//				Markers.MSG, FMT_MSG_MERGE_MASKS,
-//				Long.toHexString(offset),
-//				Hex.encodeHexString(maskRangesWrite[0].toByteArray()),
-//				Hex.encodeHexString(maskRangesRead.toByteArray())
-//			);
-//		}
+	public final void commitUpdatedRanges() {
+		// move pending updated ranges to history
 		if(maskRangesWrite[1].isEmpty()) {
 			maskRangesRead.or(maskRangesWrite[0]);
 		} else {
@@ -261,27 +267,46 @@ implements MutableDataItem {
 	}
 
 	@Override
-	public void resetUpdates() {
+	public final void resetUpdates() {
 		maskRangesRead.clear();
 		maskRangesWrite[0].clear();
 		maskRangesWrite[1].clear();
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// APPEND //////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public String toString() {
-		StringBuilder strBuilder = THREAD_LOCAL_CONTAINER.get();
-		if(strBuilder == null) {
-			strBuilder = new StringBuilder();
-			THREAD_LOCAL_CONTAINER.set(strBuilder);
+	public final boolean isAppending() {
+		return pendingAugmentSize > 0;
+	}
+
+	@Override
+	public void scheduleAppend(final long augmentSize)
+	throws IllegalArgumentException {
+		if(augmentSize > 0) {
+			pendingAugmentSize = augmentSize;
+			final int
+				lastCellPos = size > 0 ? getRangeCount(size) - 1 : 0,
+				nextCellPos = getRangeCount(size + augmentSize);
+			if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
+				maskRangesRead.set(lastCellPos, nextCellPos);
+			}
 		} else {
-			strBuilder.setLength(0); // reset
+			throw new IllegalArgumentException(
+				"Append tail size should be more than 0, but got " + augmentSize
+			);
 		}
-		return strBuilder
-			.append(super.toString()).append(',')
-			.append(Integer.toHexString(currLayerIndex)).append('/')
-			.append(
-				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
-					Hex.encodeHexString(maskRangesRead.toByteArray())
-			).toString();
+	}
+
+	@Override
+	public final long getAppendSize() {
+		return pendingAugmentSize;
+	}
+
+	@Override
+	public final void commitAppend() {
+		size += pendingAugmentSize;
+		pendingAugmentSize = 0;
 	}
 }
