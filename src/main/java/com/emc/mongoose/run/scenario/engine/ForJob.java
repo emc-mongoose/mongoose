@@ -36,8 +36,22 @@ extends SequentialJob {
 				final Object values = subTree.get(KEY_NODE_IN);
 				if(values instanceof List) {
 					this.valueSeq = (List) values;
+				} else if(values instanceof Short) {
+					final short n = (short) values;
+					valueSeq = new ArrayList(n);
+					for(short i = 0; i < n; i ++) {
+						valueSeq.add(i);
+					}
+				} else if(values instanceof Integer) {
+					final int n = (int) values;
+					valueSeq = new ArrayList(n);
+					for(int i = 0; i < n; i ++) {
+						valueSeq.add(i);
+					}
 				} else {
-					this.valueSeq = null;
+					throw new IllegalArgumentException(
+						"Unexpected \"in\" value: \"" + values + "\""
+					);
 				}
 			} else {
 				throw new IllegalArgumentException("Unexpected value: \"" + value + "\"");

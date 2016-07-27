@@ -1,6 +1,7 @@
 {
 	"type" : "for",
-	"value" : 10,
+	"value" : "i",
+	"in" : 10,
 	"config" : {
 		"load" : {
 			"limit" : {
@@ -10,6 +11,9 @@
 	},
 	"jobs" : [
 		{
+			"type" : "command",
+			"value" : "echo ${i}"
+		}, {
 			"type" : "load"
 		}
 	]
