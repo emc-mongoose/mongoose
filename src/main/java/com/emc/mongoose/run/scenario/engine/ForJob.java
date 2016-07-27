@@ -26,33 +26,23 @@ extends SequentialJob {
 
 	private final String replaceMarkerName;
 	private final List valueSeq;
-	private final long count;
 
 	public ForJob(final AppConfig appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);
 		final Object value = subTree.get(KEY_NODE_VALUE);
 		if(value != null) {
-			if(value instanceof Long) {
-				count = (Long) value;
-				replaceMarkerName = null;
-				valueSeq = null;
-			} else if(value instanceof Integer) {
-				count = (Integer) value;
-				replaceMarkerName = null;
-				valueSeq = null;
-			} else if(value instanceof Short) {
-				count = (Short) value;
-				replaceMarkerName = null;
-				valueSeq = null;
-			} else if(value instanceof String) {
-				count = 0;
+			if(value instanceof String) {
 				this.replaceMarkerName = (String) subTree.get(KEY_NODE_VALUE);
-				this.valueSeq = (List) subTree.get(KEY_NODE_IN);
+				final Object values = subTree.get(KEY_NODE_IN);
+				if(values instanceof List) {
+					this.valueSeq = (List) values;
+				} else {
+					this.valueSeq = null;
+				}
 			} else {
 				throw new IllegalArgumentException("Unexpected value: \"" + value + "\"");
 			}
 		} else {
-			count = Long.MAX_VALUE;
 			replaceMarkerName = null;
 			valueSeq = null;
 		}
@@ -63,8 +53,8 @@ extends SequentialJob {
 	@Override
 	protected void loadSubTree(final Map<String, Object> subTree) {
 
-		if(count > 0) {
-			// counter based loop, no values substitution is expected
+		if(replaceMarkerName == null) {
+			// eternal loop, no values substitution is expected
 			super.loadSubTree(subTree);
 			return;
 		}
@@ -295,9 +285,8 @@ extends SequentialJob {
 
 	@Override
 	public final void run() {
-		if(count > 0) {
-			for(long i = 0; i < count; i++) {
-				LOG.info(Markers.MSG, "{}: starting step #{}", toString(), i);
+		if(replaceMarkerName == null) {
+			while(true) {
 				super.run();
 			}
 		} else {
@@ -307,7 +296,7 @@ extends SequentialJob {
 
 	@Override
 	public final String toString() {
-		return "forJob" + (count > 0 ? (count == Long.MAX_VALUE ? "Infinite" : count) : "") + "#" +
+		return "forJob" + (replaceMarkerName == null ? "Infinite" : valueSeq.size()) + "#" +
 			hashCode();
 	}
 
