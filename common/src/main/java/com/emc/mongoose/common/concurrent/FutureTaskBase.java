@@ -29,7 +29,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	@Override
-	public V get()
+	public synchronized V get()
 	throws InterruptedException, ExecutionException {
 		while(!completed.get()) {
 			wait();
@@ -38,7 +38,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	@Override
-	public V get(long timeout, final TimeUnit unit)
+	public synchronized V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		final long timeoutInMillis;
 		if (timeout < 0 || unit == null) {
@@ -69,7 +69,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 		}
 	}
 
-	protected boolean set(final V v) {
+	protected synchronized boolean set(final V v) {
 		if (completed.get()) {
 			return false;
 		}
@@ -79,7 +79,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 		return true;
 	}
 
-	protected boolean setException(final Throwable t) {
+	protected synchronized boolean setException(final Throwable t) {
 		if (completed.get()) {
 			return false;
 		}
@@ -90,7 +90,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	@Override
-	public boolean cancel(final boolean mayInterruptIfRunning) {
+	public synchronized boolean cancel(final boolean mayInterruptIfRunning) {
 		throw new UnsupportedOperationException();
 	}
 
