@@ -122,7 +122,7 @@ public class ConfigLoaderTest {
 		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
 		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());
-		assertThat(mockConfig.getHeadCount(), equalTo(1, "storage.mock.headCount"));
+		assertThat(mockConfig.getHeadCount() == 1 || mockConfig.getHeadCount() == 5, equalTo(true, "storage.mock.headCount"));
 		assertThat(mockConfig.getCapacity(), equalTo(1_000_000, "storage.mock.capacity"));
 		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig =
 			mockConfig.getContainerConfig();

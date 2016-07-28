@@ -87,7 +87,7 @@
 		"ssl" : false,
 		"type" : "http",
 		"mock" : {
-			"headCount" : 1,
+			"headCount" : 5,
 			"capacity" : 1000000,
 			"container" : {
 				"capacity" : 1000000,

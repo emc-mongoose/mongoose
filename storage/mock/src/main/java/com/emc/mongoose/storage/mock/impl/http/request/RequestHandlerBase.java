@@ -356,9 +356,11 @@ extends ChannelInboundHandlerAdapter {
 					}
 					ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 				}
+			} else {
+				setHttpResponseStatusInContext(ctx, NOT_FOUND);
+				ioStats.markRead(false, 0);
 			}
 		} catch (final ContainerMockNotFoundException e) {
-
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LOG.trace(Markers.ERR, "No such container: {}", id);
@@ -423,20 +425,16 @@ extends ChannelInboundHandlerAdapter {
 
 	protected final T listContainer(
 			final String name, final String marker,
-			final List<T> buffer, final int maxCount) {
-		try {
-			final T lastObject = sharedStorage.listObjects(name, marker, buffer, maxCount);
-			if (LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-						Markers.MSG, "Container \"{}\": generated list of {} objects, last one is \"{}\"",
-						name, buffer.size(), lastObject
-				);
-			}
-			return lastObject;
-		} catch (final ContainerMockException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", name);
+			final List<T> buffer, final int maxCount)
+	throws ContainerMockException {
+		final T lastObject = sharedStorage.listObjects(name, marker, buffer, maxCount);
+		if (LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Container \"{}\": generated list of {} objects, last one is \"{}\"",
+				name, buffer.size(), lastObject
+			);
 		}
-		return null;
+		return lastObject;
 	}
 
 	private void handleContainerExist(final String name, final ChannelHandlerContext ctx) {

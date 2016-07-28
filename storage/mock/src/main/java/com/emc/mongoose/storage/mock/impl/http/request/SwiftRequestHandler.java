@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -33,6 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
@@ -139,8 +142,24 @@ extends RequestHandlerBase<T> {
             marker = parameters.get(MARKER_KEY).get(0);
         }
         final List<T> buffer = new ArrayList<>(maxCount);
-        listContainer(name, marker, buffer, maxCount);
-        if (buffer.size() > 0) {
+		final T lastObject;
+		try {
+			lastObject = listContainer(name, marker, buffer, maxCount);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG,
+					"Container \"{}\": generated list of {} objects, last one is \"{}\"",
+					name, buffer.size(), lastObject
+				);
+			}
+		} catch(final ContainerMockNotFoundException e) {
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
+			return;
+		} catch(final ContainerMockException e) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			return;
+		}
+		if (buffer.size() > 0) {
             final JsonNode nodeRoot = OBJ_MAPPER.createArrayNode();
             ObjectNode node;
             for(final T object : buffer) {

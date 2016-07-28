@@ -23,7 +23,7 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 	}
 
 	@Override
-	public V put(final K key, final V value) {
+	public synchronized V put(final K key, final V value) { // todo temp decision
 		final V oldValue = super.put(key, value);
 		if(null == oldValue) {
 			size.incrementAndGet();

@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -48,6 +50,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.PUT;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
@@ -268,10 +271,26 @@ extends RequestHandlerBase<T> {
 		}
 
 		final List<T> buffer = new ArrayList<>(maxCount);
-		final T lastObj = listContainer(name, objectId, buffer, maxCount);
+		final T lastObject;
+		try {
+			lastObject = listContainer(name, objectId, buffer, maxCount);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Subtenant \"{}\": generated list of {} objects, last one is \"{}\"",
+					name, buffer.size(), lastObject
+				);
+			}
+		} catch(final ContainerMockNotFoundException e) {
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
+			return;
+		} catch(final ContainerMockException e) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			LogUtil.exception(LOG, Level.WARN, e, "Subtenant \"{}\" failure", name);
+			return;
+		}
 		Map.Entry<String, String> header = null;
-		if (lastObj != null) {
-			header = new AbstractMap.SimpleEntry<>(KEY_EMC_TOKEN, lastObj.getName());
+		if (lastObject != null) {
+			header = new AbstractMap.SimpleEntry<>(KEY_EMC_TOKEN, lastObject.getName());
 		}
 		final Document xml = DOM_BUILDER.newDocument();
 		final Element rootElem = xml.createElement("ListObjectsResponse");
@@ -289,6 +308,12 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build subtenant XML listing");
 			return;
+		}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Responding the subtenant \"{}\" listing content:\n{}",
+				name, new String(stream.toByteArray())
+			);
 		}
 		final byte[] content = stream.toByteArray();
 		ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);

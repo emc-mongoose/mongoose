@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -36,6 +38,7 @@ import java.util.Map;
 import static com.emc.mongoose.storage.mock.impl.http.request.XmlShortcuts.appendElement;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -115,13 +118,26 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 			marker = parameters.get(MARKER_KEY).get(0);
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
-		final T lastObj = listContainer(name, marker, buffer, maxCount);
+		final T lastObject;
+		try {
+			lastObject = listContainer(name, marker, buffer, maxCount);
+			LOG.trace(
+				Markers.MSG, "Bucket \"{}\": generated list of {} objects, last one is \"{}\"",
+				name, buffer.size(), lastObject
+			);
+		} catch(final ContainerMockNotFoundException e) {
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
+			return;
+		} catch(final ContainerMockException e) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			return;
+		}
 		final Document xml = DOM_BUILDER.newDocument();
 		final Element rootElem =
 				xml.createElementNS(S3_NAMESPACE_URI, "ListBucketResult");
 		xml.appendChild(rootElem);
 		appendElement(xml, rootElem, "Name", name);
-		appendElement(xml, rootElem, "IsTruncated", Boolean.toString(lastObj != null));
+		appendElement(xml, rootElem, "IsTruncated", Boolean.toString(lastObject != null));
 		appendElement(xml, rootElem, "Prefix");
 		appendElement(xml, rootElem, "MaxKeys", Integer.toString(buffer.size()));
 		for (final T object: buffer) {
