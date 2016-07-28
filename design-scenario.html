@@ -495,7 +495,7 @@
 						</tr>
 						<tr>
 							<td>String identifier&nbsp;&nbsp;</td>
-							<td>Range of the values&nbsp;&nbsp;</td>
+							<td>Value list or the <i>range</i>&nbsp;&nbsp;</td>
 							<td>
 								"for each" based loop
 							</td>
@@ -530,6 +530,42 @@
 					The example above will try to execute the load job 6 times. Each time the load
 					job will be executed for the next thread count from the list specified
 					(1, 10, 100, ...)
+				</p>
+				<p>
+					The range syntax is also supported:
+<fieldset class="json">
+						<pre>
+{
+   "type" : <b>"for"</b>,
+   "value" : "<font color="blue">threads</font>",
+   "in" : <b><font color="darkviolet">"-2-7.5,0.5",</font></b>
+   "config" : {
+      "load" : {
+         "threads" : "<font color="darkcyan">${</font><font color="blue">threads</font><font color="darkcyan">}</font>"
+      }
+   },
+   "jobs" : [
+      {
+            "type" : "load"
+      }
+   ]
+}</pre>
+</fieldset>
+				</p>
+				<p>
+					The example above is equivalent to the loop defined as (i = -2.0; i &lt; 7.5; i += 0.5)
+				</p>
+				<p>
+					The exact range pattern is <b>X[-Y[,Z]]</b> where:
+					<ul>
+						<li>X is the start (1st) value, may be negative</li>
+						<li>Y is the end value (exclusive), may be negative or/and less than start value</li>
+						<li>Z is the step value, should always be a positive number</li>
+					</ul>
+					If start value is greater than end value the loop is defined as:
+				</p>
+				<p>
+					(i = X; i &gt; Y; i -= Z)
 				</p>
 				<h5 id="env">Parameterizing with Environment Variables</h5>
 				<p>

@@ -131,9 +131,10 @@
 							<li>Weighted Load</li>
 							<li><strike>Rampup</strike></li>
 							<li>Scenario Validation</li>
-							<li><a href="#foreach">Execute a Job For Each value from the list</a></li>
+							<li><a href="#foreach">Execute a job For Each value from the list</a></li>
 							<li><a href="#loopInfinite">Execute the infinite jobs loop</a></li>
 							<li><a href="#loop10times">Execute the jobs 10 times</a></li>
+							<li><a href="#loop-range">Execute a job for a specified numbers range</a></li>
 						</ol>
 					</li>
 					<li>
@@ -307,6 +308,10 @@
 <h4>EMC Atmos</h4>
 <p>Example scenarios location: scenario/ecs/write-atmos.json</p>
 <code><fieldset class="bash">java -Dauth.id=&lt;USER_ID&gt; [-Dauth.token=&lt;SUBTENANT&gt;] -Dauth.secret=&lt;SECRET&gt; -Dauth.secret=WQmcQh5UYRAWYqJGCVEueihGBZ7h6nI2vHHwYmPg -Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -Dstorage.http.api=atmos -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
+<fieldset class="note">
+	<legend><b>Note</b></legend>
+	The default value of &quot;auth.id&quot; configuration parameter (null) doesn't work in the case of Atmos API usage.
+</fieldset>
 <li>
 <h4>OpenStack Swift</h4>
 <p>Example scenarios location: scenario/ecs/write-swift.json</p>
@@ -607,6 +612,25 @@
 					</pre>
 				</fieldset>
 			</li>
+
+	<li>
+		<h4 id="loop-range">Execute a job for a specified numbers range</h4>
+		<fieldset class="json">
+					<pre>{
+    "type" : "for",
+    "value" : "i",
+    "in" : "2.71828182846-3.1415926,0.1",
+    "jobs" : [
+        {
+            "type" : "command"
+            "value" : "echo ${i}"
+        }
+    ]
+}
+					</pre>
+		</fieldset>
+	</li>
+
 		</ol>
 	</li>
 
