@@ -14,8 +14,11 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.Level;
@@ -111,20 +114,20 @@ extends RequestHandlerBase<T> {
 			final Long size,
 			final ChannelHandlerContext ctx) {
 		final Channel channel = ctx.channel();
-		final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+		FullHttpResponse response = null;
 		final HttpRequest request = channel.attr(AttributeKey.<HttpRequest>valueOf
 				(REQUEST_KEY)).get();
 		String[] metaDataList = null;
-		final HttpHeaders headers = request.headers();
-		if (headers.contains(KEY_EMC_TAGS)) {
-			metaDataList = headers.get(KEY_EMC_TAGS).split(",");
+		final HttpHeaders requestHeaders = request.headers();
+		if (requestHeaders.contains(KEY_EMC_TAGS)) {
+			metaDataList = requestHeaders.get(KEY_EMC_TAGS).split(",");
 		}
 		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
 		if (uri.startsWith(OBJ_PATH)) {
 			final String[] uriParams = getUriParameters(uri, 3);
 			String objectId = uriParams[2];
 			long offset = -1;
-			String subtenantName = getSubtenant(headers, uri);
+			String subtenantName = getSubtenant(requestHeaders, uri);
 			if (objectId == null) {
 				if (method.equals(POST)) {
 					objectId = generateId();
@@ -142,14 +145,21 @@ extends RequestHandlerBase<T> {
 						);
 					}
 					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
+					final Attribute<HttpResponseStatus> statusAttribute =
+						channel.attr(AttributeKey.valueOf(RESPONSE_STATUS_KEY));
+					if (statusAttribute.get() == null) {
+						statusAttribute.set(OK);
+					}
+					final HttpResponseStatus responseStatus = statusAttribute.get();
+					response = newEmptyResponse();
 					final int statusCode = response.status().code();
 					if (statusCode < 300 && 200 <= statusCode) {
-						headers.set(LOCATION, OBJ_PATH + "/" + objectId);
+						response.headers().set(LOCATION, OBJ_PATH + "/" + objectId);
 					}
 				} else if (method.equals(GET)) {
 					subtenantName = processMetaDataList(metaDataList, "subtenant");
-					if (headers.contains(KEY_EMC_TOKEN)) {
-						objectId = headers.get(KEY_EMC_TOKEN);
+					if (requestHeaders.contains(KEY_EMC_TOKEN)) {
+						objectId = requestHeaders.get(KEY_EMC_TOKEN);
 					}
 					handleContainerList(subtenantName, objectId, ctx);
 				}
@@ -163,14 +173,16 @@ extends RequestHandlerBase<T> {
 			if (method.equals(PUT)) {
 				subtenantName = generateSubtenant();
 			} else {
-				subtenantName = getSubtenant(headers, uri);
+				subtenantName = getSubtenant(requestHeaders, uri);
 			}
-			handleContainerRequest(uri, method, subtenantName, ctx);
+			response = newEmptyResponse();
+			handleContainerRequest(response, uri, method, subtenantName, ctx);
+
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-			writeResponse(ctx);
+			writeEmptyResponse(ctx, response);
 		}
 	}
 
@@ -195,6 +207,8 @@ extends RequestHandlerBase<T> {
 			if (uid.contains(UID_DELIMITER)) {
 				return uid.split(UID_DELIMITER)[0];
 			}
+		} else {
+			LOG.debug(Markers.MSG, "The header " + KEY_EMC_UID + " is undefined" );
 		}
 		if (headers.contains(KEY_SUBTENANT_ID)) {
 			return headers.get(KEY_SUBTENANT_ID);
@@ -206,6 +220,22 @@ extends RequestHandlerBase<T> {
 		final byte buff[] = new byte[0x10];
 		ThreadLocalRandom.current().nextBytes(buff);
 		return Hex.encodeHexString(buff);
+	}
+
+	private void handleContainerRequest(
+		final HttpResponse response, final String uri, final HttpMethod method,
+		final String name, final ChannelHandlerContext ctx
+	) {
+		if (method.equals(PUT)) {
+			handleContainerCreate(response, name);
+		} else {
+			super.handleContainerRequest(uri, method, name, ctx);
+		}
+	}
+
+	private void handleContainerCreate(final HttpResponse response, final String name) {
+		super.handleContainerCreate(name);
+		response.headers().set(KEY_SUBTENANT_ID, name);
 	}
 
 	@Override

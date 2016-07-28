@@ -11,12 +11,14 @@ import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReach
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
@@ -47,6 +49,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INSUFFICIENT_STORAGE;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  Created on 12.07.16.
@@ -68,7 +71,7 @@ extends ChannelInboundHandlerAdapter {
 	private int prefixLength, idRadix;
 
 	static final String REQUEST_KEY = "requestKey";
-	private static final String RESPONSE_STATUS_KEY = "responseStatusKey";
+	static final String RESPONSE_STATUS_KEY = "responseStatusKey";
 	private static final String CONTENT_LENGTH_KEY = "contentLengthKey";
 	static final String CTX_WRITE_FLAG_KEY = "ctxWriteFlagKey";
 	private static final String HANDLER_KEY = "handlerKey";
@@ -209,16 +212,36 @@ extends ChannelInboundHandlerAdapter {
 		return result;
 	}
 
-	protected final void writeResponse(final ChannelHandlerContext ctx) {
-		HttpResponseStatus status = ctx.channel()
-				.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+	protected final void writeEmptyResponse(final ChannelHandlerContext ctx, FullHttpResponse response) {
+		HttpResponseStatus status = ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
 		if (status == null) {
 			status = OK;
 		}
-		final DefaultFullHttpResponse response =
-				new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
-		HttpUtil.setContentLength(response, 0);
+		if (response == null) {
+			response = newEmptyResponse(status);
+		} else {
+			response.setStatus(status);
+		}
 		ctx.write(response);
+	}
+
+	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
+		final DefaultFullHttpResponse response =
+			new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.EMPTY_BUFFER, false);
+		HttpUtil.setContentLength(response, 0);
+		return response;
+	}
+
+	/**
+	 Create new response to send it with different statuses and headers and without any content
+	 @return response
+	 */
+	protected FullHttpResponse newEmptyResponse() {
+		return newEmptyResponse(OK);
+	}
+
+	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
+		writeEmptyResponse(ctx, null);
 	}
 
 	protected final void handleObjectRequest(
@@ -376,20 +399,20 @@ extends ChannelInboundHandlerAdapter {
 
 	protected void handleContainerRequest(
 			final String uri,
-			final HttpMethod httpMethod, final String name,
+			final HttpMethod method, final String name,
 			final ChannelHandlerContext ctx) {
-		if (httpMethod.equals(PUT)) {
+		if (method.equals(PUT)) {
 			handleContainerCreate(name);
-		} else if (httpMethod.equals(GET)) {
+		} else if (method.equals(GET)) {
 			handleContainerList(name, new QueryStringDecoder(uri), ctx);
-		} else if (httpMethod.equals(HEAD)) {
+		} else if (method.equals(HEAD)) {
 			handleContainerExist(name, ctx);
-		} else if (httpMethod.equals(DELETE)) {
+		} else if (method.equals(DELETE)) {
 			handleContainerDelete(name);
 		}
 	}
 
-	private void handleContainerCreate(final String name) {
+	protected void handleContainerCreate(final String name) {
 		sharedStorage.createContainer(name);
 	}
 

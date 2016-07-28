@@ -8,7 +8,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -44,10 +43,8 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 /**
  Created on 12.07.16.
  */
-@Sharable
 public class S3RequestHandler<T extends MutableDataItemMock>
 	extends RequestHandlerBase<T> {
-
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final DocumentBuilder DOM_BUILDER;
@@ -94,7 +91,7 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-			writeResponse(ctx);
+			writeEmptyResponse(ctx);
 		}
 	}
 

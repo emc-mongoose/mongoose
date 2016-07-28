@@ -105,7 +105,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 			final Future<ObjectContainerMock<T>> future =
 				BlockingQueueTaskSequencer.INSTANCE.submit(new GetContainerTask(name));
 			if (future != null) {
-				future.get();
+				return future.get();
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Container getting was interrupted");
@@ -206,13 +206,13 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 	@Override
 	public final T listObjects(
-			final String containerName, final String afterOid, final Collection<T> outputBuffer, final int limit
+			final String containerName, final String afterObjectId, final Collection<T> outputBuffer, final int limit
 	) throws ContainerMockException {
 		try {
 			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
-				new ListObjectsTask(containerName, afterOid, outputBuffer, limit));
+				new ListObjectsTask(containerName, afterObjectId, outputBuffer, limit));
 			if (future != null) {
-				future.get();
+				return future.get();
 			}
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);

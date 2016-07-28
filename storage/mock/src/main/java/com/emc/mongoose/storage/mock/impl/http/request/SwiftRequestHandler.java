@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -45,7 +44,6 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 /**
  Created on 12.07.16.
  */
-@Sharable
 public class SwiftRequestHandler<T extends MutableDataItemMock>
 extends RequestHandlerBase<T> {
 
@@ -82,7 +80,7 @@ extends RequestHandlerBase<T> {
 			final HttpMethod method,
 			final Long size,
 			final ChannelHandlerContext ctx) {
-        final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.EMPTY_BUFFER, false);
+        FullHttpResponse response = null;
         final Channel channel = ctx.channel();
         channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
         if (uri.startsWith(AUTH, 1)) {
@@ -91,6 +89,7 @@ extends RequestHandlerBase<T> {
                 if (LOG.isTraceEnabled(Markers.MSG)) {
                     LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
                 }
+	            response = newEmptyResponse();
                 response.headers().set(KEY_X_AUTH_TOKEN, authToken);
                 setHttpResponseStatusInContext(ctx, CREATED);
             } else {
@@ -110,7 +109,7 @@ extends RequestHandlerBase<T> {
             }
         }
         if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-            writeResponse(ctx);
+            writeEmptyResponse(ctx, response);
         }
     }
 
@@ -131,7 +130,7 @@ extends RequestHandlerBase<T> {
         String marker = null;
         final Map<String, List<String>> parameters = queryStringDecoder.parameters();
         if (parameters.containsKey(LIMIT_KEY)) {
-            maxCount = Integer.parseInt(parameters.get("limit").get(0));
+            maxCount = Integer.parseInt(parameters.get(LIMIT_KEY).get(0));
         } else {
             LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI: " +
                     queryStringDecoder.uri());
