@@ -1,11 +1,11 @@
 {
 	"type" : "for",
 	"value" : "i",
-	"in" : 10,
+	"in" : "${RANGE}",
 	"config" : {
 		"load" : {
 			"limit" : {
-				"time" : "5s"
+				"time" : "1s"
 			}
 		}
 	},
@@ -13,8 +13,6 @@
 		{
 			"type" : "command",
 			"value" : "echo ${i}"
-		}, {
-			"type" : "load"
 		}
 	]
 }

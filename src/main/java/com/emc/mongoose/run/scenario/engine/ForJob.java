@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.io.value.PatternDefinedInput.FORMAT_CHARS;
 /**
@@ -21,11 +23,16 @@ public final class ForJob
 extends SequentialJob {
 
 	private final static Logger LOG = LogManager.getLogger();
+	
 	public final static String KEY_NODE_IN = "in";
 	public final static char REPLACE_MARKER_CHAR = '$';
+	public final static Pattern SEQ_SPEC_PATTERN = Pattern.compile(
+		"(-?[\\d.]+)(-(-?[\\d.]+)(,([\\d.]+))?)?"
+	);
 
 	private final String replaceMarkerName;
 	private final List valueSeq;
+	private final boolean infinite;
 
 	public ForJob(final AppConfig appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);
@@ -33,32 +40,106 @@ extends SequentialJob {
 		if(value != null) {
 			if(value instanceof String) {
 				this.replaceMarkerName = (String) subTree.get(KEY_NODE_VALUE);
-				final Object values = subTree.get(KEY_NODE_IN);
-				if(values instanceof List) {
-					this.valueSeq = (List) values;
-				} else if(values instanceof Short) {
-					final short n = (short) values;
+				final Object seqSpec = subTree.get(KEY_NODE_IN);
+				if(seqSpec instanceof List) {
+					this.valueSeq = (List) seqSpec;
+				} else if(seqSpec instanceof Short) {
+					final short n = (short) seqSpec;
 					valueSeq = new ArrayList(n);
 					for(short i = 0; i < n; i ++) {
 						valueSeq.add(i);
 					}
-				} else if(values instanceof Integer) {
-					final int n = (int) values;
+				} else if(seqSpec instanceof Integer) {
+					final int n = (int) seqSpec;
 					valueSeq = new ArrayList(n);
 					for(int i = 0; i < n; i ++) {
 						valueSeq.add(i);
 					}
+				} else if(seqSpec instanceof String) {
+					final Matcher m = SEQ_SPEC_PATTERN.matcher((String) seqSpec);
+					if(!m.matches()) {
+						throw new IllegalArgumentException(
+							"String \"in\" value \"" + seqSpec + "\" should match the pattern: \"" +
+							SEQ_SPEC_PATTERN.pattern() + "\""
+						);
+					}
+					m.reset();
+					if(m.find()) {
+						valueSeq = new ArrayList();
+						double start;
+						double end = Double.NaN;
+						double step = Double.NaN;
+						String t = m.group(1);
+						if(t != null) {
+							start = Double.parseDouble(t);
+						} else {
+							throw new IllegalArgumentException("No start value in the \"in\"");
+						}
+						t = m.group(3);
+						if(t != null) {
+							end = Double.parseDouble(t);
+						}
+						t = m.group(5);
+						if(t != null) {
+							step = Double.parseDouble(t);
+						}
+						if(Double.isNaN(step)) {
+							step = 1;
+						}
+						if(Double.isNaN(end)) {
+							end = start;
+							start = 0;
+						}
+						if(start == end) {
+							if(start == (long) start) {
+								valueSeq.add((long) start);
+							} else {
+								valueSeq.add(start);
+							}
+						} else if(start < end) {
+							LOG.info(
+								Markers.MSG, "Parsed loop range: {} = {}, {} < {}, {} += {}", replaceMarkerName,
+								start, replaceMarkerName, end, replaceMarkerName, step
+							);
+							for(double i = start; i < end; i += step) {
+								if(i == (long) i) {
+									valueSeq.add((long) i);
+								} else {
+									valueSeq.add(i);
+								}
+							}
+						} else {
+							LOG.info(
+								Markers.MSG, "Parsed loop range: {} = {}, {} > {}, {} -= {}", replaceMarkerName,
+								start, replaceMarkerName, end, replaceMarkerName, step
+							);
+							for(double i = start; i > end; i -= step) {
+								if(i == (long) i) {
+									valueSeq.add((long) i);
+								} else {
+									valueSeq.add(i);
+								}
+							}
+						}
+					} else {
+						throw new IllegalArgumentException(
+							"String \"in\" value \"" + seqSpec + "\" should match the pattern: \"" +
+							SEQ_SPEC_PATTERN.pattern() + "\""
+						);
+					}
 				} else {
 					throw new IllegalArgumentException(
-						"Unexpected \"in\" value: \"" + values + "\""
+						"Unexpected \"in\" value: \"" + seqSpec + "\""
 					);
 				}
 			} else {
 				throw new IllegalArgumentException("Unexpected value: \"" + value + "\"");
 			}
+			infinite = false;
 		} else {
-			replaceMarkerName = null;
 			valueSeq = null;
+			replaceMarkerName = null;
+			infinite = true;
 		}
 		// calls "appendNewJob", invoking it manually again after "valueSeq" is initialized already
 		loadSubTree(subTree);
@@ -67,8 +148,8 @@ extends SequentialJob {
 	@Override
 	protected void loadSubTree(final Map<String, Object> subTree) {
 
-		if(replaceMarkerName == null) {
-			// eternal loop, no values substitution is expected
+		if(infinite) {
+			// no values substitution is expected
 			super.loadSubTree(subTree);
 			return;
 		}
