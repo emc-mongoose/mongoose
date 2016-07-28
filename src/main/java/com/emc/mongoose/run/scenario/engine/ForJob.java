@@ -96,28 +96,35 @@ extends SequentialJob {
 							} else {
 								valueSeq.add(start);
 							}
-						} else if(start < end) {
-							LOG.info(
-								Markers.MSG, "Parsed loop range: {} = {}, {} < {}, {} += {}", replaceMarkerName,
-								start, replaceMarkerName, end, replaceMarkerName, step
-							);
-							for(double i = start; i < end; i += step) {
-								if(i == (long) i) {
-									valueSeq.add((long) i);
-								} else {
-									valueSeq.add(i);
-								}
-							}
 						} else {
-							LOG.info(
-								Markers.MSG, "Parsed loop range: {} = {}, {} > {}, {} -= {}", replaceMarkerName,
-								start, replaceMarkerName, end, replaceMarkerName, step
-							);
-							for(double i = start; i > end; i -= step) {
-								if(i == (long) i) {
-									valueSeq.add((long) i);
-								} else {
-									valueSeq.add(i);
+							if(step <= 0) {
+								throw new IllegalArgumentException("Step value should be > 0");
+							}
+							if(start < end) {
+								LOG.info(
+									Markers.MSG, "Parsed loop range: {} = {}, {} < {}, {} += {}",
+									replaceMarkerName, start, replaceMarkerName, end,
+									replaceMarkerName, step
+								);
+								for(double i = start; i < end; i += step) {
+									if(i == (long) i) {
+										valueSeq.add((long) i);
+									} else {
+										valueSeq.add(i);
+									}
+								}
+							} else {
+								LOG.info(
+									Markers.MSG, "Parsed loop range: {} = {}, {} > {}, {} -= {}",
+									replaceMarkerName, start, replaceMarkerName, end,
+									replaceMarkerName, step
+								);
+								for(double i = start; i > end; i -= step) {
+									if(i == (long) i) {
+										valueSeq.add((long) i);
+									} else {
+										valueSeq.add(i);
+									}
 								}
 							}
 						}
