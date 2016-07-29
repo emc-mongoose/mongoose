@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
+import static java.lang.Character.MAX_RADIX;
+
 /**
  Created by kurila on 26.03.14.
  */
@@ -299,29 +301,20 @@ extends HttpRequestConfigBase<T, C> {
 		} else {
 			md.setLength(0); // reset/clear
 		}
-		//
-		if(authToken != null) {
-			final String subtenantId = authToken.toString();
-			if(subtenantId != null && subtenantId.length() > 0) {
-				md.append("subtenant=").append(authToken.toString());
-			}
+		if(md.length() > 0) {
+			request.setHeader(KEY_EMC_TAGS, md.toString());
 		}
-		// the "offset" tag is required for WS mock
+		// the "offset" header is required for WS mock
 		if(
 			LoadType.CREATE.equals(loadType) &&
 			request instanceof HttpEntityEnclosingRequest
 		) {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			if(entity != null && entity instanceof HttpDataItem) {
-				if(md.length() > 0) {
-					md.append(',');
-				}
-				md.append("offset=").append(((T) entity).getOffset());
+				request.setHeader(
+					KEY_MONGOOSE_ITEM_DATA_OFFSET, Long.toString(((T) entity).getOffset(), MAX_RADIX)
+				);
 			}
-		}
-		//
-		if(md.length() > 0) {
-			request.setHeader(KEY_EMC_TAGS, md.toString());
 		}
 	}
 	//

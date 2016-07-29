@@ -16,6 +16,7 @@ import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.commons.codec.binary.Hex;
 //
+import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -42,6 +43,10 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.KEY_MONGOOSE_ITEM_DATA_OFFSET;
+import static java.lang.Character.MAX_RADIX;
+
 /**
  Created by andrey on 13.05.15.
  */
@@ -103,21 +108,16 @@ extends HttpStorageMockRequestHandlerBase<T> {
 				if(oid == null) {
 					if(HttpRequestConfig.METHOD_POST.equalsIgnoreCase(method)) {
 						oid = generateId();
-						if(metaDataList != null) {
-							String keyValuePair[];
-							for(final String metaData : metaDataList) {
-								keyValuePair = metaData.split("=");
-								if(keyValuePair.length == 2 && "offset".equals(keyValuePair[0])) {
-									try {
-										offset = Long.parseLong(keyValuePair[1]);
-									} catch(final NumberFormatException e) {
-										LogUtil.exception(
-											LOG, Level.WARN, e,
-											"Failed to parse offset meta tag value: \"{}\"",
-											keyValuePair[1]
-										);
-									}
-								}
+						final Header offsetHeader = httpRequest.getFirstHeader(
+							KEY_MONGOOSE_ITEM_DATA_OFFSET);
+						if(offsetHeader != null) {
+							try {
+								offset = Long.parseLong(offsetHeader.getValue(), MAX_RADIX);
+							} catch(final NumberFormatException e) {
+								LOG.warn(
+									Markers.ERR, "Invalid \"{}\" header value: \"{}\"",
+									KEY_MONGOOSE_ITEM_DATA_OFFSET, offsetHeader.getValue()
+								);
 							}
 						}
 						handleGenericDataReq(

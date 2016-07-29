@@ -37,6 +37,8 @@ extends RequestConfig<T, C>, HttpRequestInterceptor {
 		KEY_EMC_TOKEN = "x-emc-token",
 		KEY_EMC_UID = "x-emc-uid",
 		//
+		KEY_MONGOOSE_ITEM_DATA_OFFSET = "x-mongoose-item-data-offset",
+		//
 		VALUE_KEEP_ALIVE = "keep-alive",
 		VALUE_RANGE_PREFIX = "bytes=",
 		VALUE_RANGE_CONCAT = "-",

@@ -30,6 +30,7 @@ import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -530,7 +531,7 @@ implements HttpRequestConfig<T, C> {
 				String nextKey, nextValue;
 				while(customHeadersIterator.hasNext()) {
 					nextKey = customHeadersIterator.next();
-					nextValue = customHeaders.getString(nextKey);
+					nextValue = StringUtils.join(customHeaders.getStringArray(nextKey), ',');
 					if(-1 < nextValue.indexOf(PATTERN_CHAR)) {
 						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
 					} else {
