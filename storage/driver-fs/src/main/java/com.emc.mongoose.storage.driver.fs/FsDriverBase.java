@@ -30,7 +30,6 @@ extends DriverBase<I, O>
 implements Driver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int IO_TASK_QUEUE_SIZE = Short.MAX_VALUE;
 	private final static int BATCH_SIZE = 0x80;
 
 	private final ThreadPoolExecutor ioTaskExecutor;
@@ -50,7 +49,7 @@ implements Driver<I, O> {
 		if(ioBuffSizeMax < ioBuffSizeMin || ioBuffSizeMax > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException("Invalid I/O buff size max: " + ioBuffSizeMax);
 		}
-		ioTaskQueue = new ArrayBlockingQueue<>(IO_TASK_QUEUE_SIZE);
+		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
 		ioTaskExecutor = new ThreadPoolExecutor(ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),

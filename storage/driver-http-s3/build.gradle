@@ -1,0 +1,9 @@
+description = 'mongoose-storage-driver-http-s3'
+
+dependencies {
+	compile project(':common')
+	compile project(':model')
+	compile project(':ui')
+	compile project(':storage:driver-base')
+	compile project(':storage:driver-http-base')
+}

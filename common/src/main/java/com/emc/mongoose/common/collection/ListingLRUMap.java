@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.collection;
 
-import org.apache.commons.collections4.map.AbstractLinkedMap;
 import org.apache.commons.collections4.map.LRUMap;
 
 import java.util.Collection;
@@ -40,7 +39,7 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 		return value;
 	}
 
-	public V list(final String afterObjectId, final Collection<V> outputBuffer, final int limit) {
+	public final V list(final String afterObjectId, final Collection<V> outputBuffer, final int limit) {
 		if (isEmpty()) {
 			return null;
 		}
@@ -60,9 +59,7 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 	}
 
 	@Override
-	protected void moveToMRU(
-		final LinkEntry<K, V> entry
-	) {
+	protected final void moveToMRU(final LinkEntry<K, V> entry) {
 		// disable entry moving to MRU in case of access
 		// it's required to make list method (right below) working (keeping the linked list order)
 	}

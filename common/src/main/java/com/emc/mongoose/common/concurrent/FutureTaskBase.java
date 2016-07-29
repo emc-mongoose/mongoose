@@ -21,8 +21,9 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 		return this.completed.get();
 	}
 
-	private V getResult() throws ExecutionException {
-		if (throwable != null) {
+	private V getResult()
+	throws ExecutionException {
+		if(throwable != null) {
 			throw new ExecutionException(throwable);
 		}
 		return result;
@@ -70,7 +71,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	protected synchronized boolean set(final V v) {
-		if (completed.get()) {
+		if(completed.get()) {
 			return false;
 		}
 		completed.set(true);
@@ -80,7 +81,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	protected synchronized boolean setException(final Throwable t) {
-		if (completed.get()) {
+		if(completed.get()) {
 			return false;
 		}
 		completed.set(true);

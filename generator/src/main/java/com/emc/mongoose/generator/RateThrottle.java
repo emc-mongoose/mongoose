@@ -12,8 +12,8 @@ implements Throttle<T> {
 	//
 	private final long tgtNanoTime;
 	//
-	public RateThrottle(final float rateLimit) {
-		this.tgtNanoTime = rateLimit > 0 && !Float.isInfinite(rateLimit) && !Float.isNaN(rateLimit) ?
+	public RateThrottle(final double rateLimit) {
+		this.tgtNanoTime = rateLimit > 0 && Double.isFinite(rateLimit) ?
 			(long) (TimeUnit.SECONDS.toNanos(1) / rateLimit) :
 			0;
 	}

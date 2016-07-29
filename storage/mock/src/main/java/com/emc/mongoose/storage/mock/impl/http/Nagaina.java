@@ -16,14 +16,12 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -31,8 +29,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -57,8 +53,8 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
-		dispatchGroups = new NioEventLoopGroup[headCount];
-		workGroups = new NioEventLoopGroup[headCount];
+		dispatchGroups = new EventLoopGroup[headCount];
+		workGroups = new EventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		s3RequestHandler = new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
@@ -72,9 +68,8 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		final int portsNumber = dispatchGroups.length;
 		for (int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroups[i] =
-					new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
-				workGroups[i] = new NioEventLoopGroup();
+				dispatchGroups[i] = new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
+				workGroups[i] = new EpollEventLoopGroup();
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
 				serverBootstrap.group(dispatchGroups[i], workGroups[i])

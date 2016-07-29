@@ -2,12 +2,14 @@ package com.emc.mongoose.generator;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
+import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -17,7 +19,6 @@ import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.api.load.Generator;
 import com.emc.mongoose.model.api.load.Monitor;
-import com.emc.mongoose.model.impl.data.SeedContentSource;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.impl.item.BasicItemNameInput;
@@ -54,12 +55,12 @@ implements Generator<I, O> {
 	private final Output<I> itemOutput;
 	private final Thread worker;
 	private final int batchSize = 0x1000;
-	private final int maxItemQueueSize = 0x100000;
+	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
-	private final boolean isCircular = false;
-	private final Throttle<I> rateThrottle = new RateThrottle<>(0);
+	private final boolean isCircular;
+	private final Throttle<I> rateThrottle;
 	private final IoTaskFactory<I, O> ioTaskFactory;
-	private final String dstContainer = "";
+	private final String dstContainer;
 
 	private long producedItemsCount = 0;
 
@@ -194,27 +195,54 @@ implements Generator<I, O> {
 	}
 
 	public BasicGenerator(
-		final List<Driver<I, O>> drivers, final LoadType ioType,
-		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory
+		final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
+		final IoTaskFactory<I, O> ioTaskFactory, final Config.ItemConfig itemConfig,
+		final Config.LoadConfig loadConfig
 	) throws UserShootHisFootException {
+		
 		this.drivers = drivers;
-		if(itemFactory instanceof BasicMutableDataItemFactory) {
-			this.itemInput = new NewDataItemInput<>(
-				(ItemFactory) itemFactory,
-				new RangePatternDefinedInput(Item.SLASH),
-				new BasicItemNameInput(ItemNamingType.RANDOM, null, 13, 36, 0),
-				new SeedContentSource(
-					Long.valueOf("7a42d9c483244167", 16), SizeInBytes.toFixedSize("4MB")
-				),
-				new SizeInBytes("1MB")
+		
+		try {
+			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
+			this.isCircular = loadConfig.getCircular();
+			this.rateThrottle = new RateThrottle<>(loadConfig.getLimitConfig().getRate());
+			this.dstContainer = itemConfig.getOutputConfig().getContainer();
+			
+			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
+			
+			final Config.ItemConfig.DataConfig.ContentConfig contentConfig = itemConfig
+				.getDataConfig().getContentConfig();
+			final ContentSource contentSrc = ContentSourceUtil.getInstance(
+				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
 			);
-		} else {
-			// TODO
-			this.itemInput = null;
+			
+			final Config.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
+			final ItemNamingType namingType = ItemNamingType.valueOf(namingConfig.getType().toUpperCase());
+			final String namingPrefix = namingConfig.getPrefix();
+			final int namingLength = namingConfig.getLength();
+			final int namingRadix = namingConfig.getRadix();
+			final long namingOffset = namingConfig.getOffset();
+			final BasicItemNameInput namingInput = new BasicItemNameInput(
+				namingType, namingPrefix, namingLength, namingRadix, namingOffset
+			);
+			
+			if(itemFactory instanceof BasicMutableDataItemFactory) {
+				this.itemInput = new NewDataItemInput<>(
+					(ItemFactory) itemFactory, pathInput, namingInput, contentSrc,
+					itemConfig.getDataConfig().getSize()
+				);
+			} else {
+				this.itemInput = null;
+			}
+			
+			this.ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
+		} catch(final Exception e) {
+			throw new UserShootHisFootException(e);
 		}
-		this.ioType = ioType;
+		
 		this.ioTaskFactory = ioTaskFactory;
 		this.itemOutput = new IoTaskSubmitOutput();
+		
 		worker = new Thread(new GeneratorTask(), "generator");
 		worker.setDaemon(true);
 	}

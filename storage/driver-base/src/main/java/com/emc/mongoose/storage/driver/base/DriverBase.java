@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -28,7 +28,7 @@ implements Driver<I, O> {
 	protected final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	protected final int concurrencyLevel;
 
-	protected DriverBase(final Config.LoadConfig loadConfig) {
+	protected DriverBase(final LoadConfig loadConfig) {
 		concurrencyLevel = loadConfig.getConcurrency();
 	}
 

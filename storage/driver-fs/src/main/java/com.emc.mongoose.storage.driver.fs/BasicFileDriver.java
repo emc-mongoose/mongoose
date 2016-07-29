@@ -51,22 +51,27 @@ implements Driver<I, O> {
 
 	private FileChannel getSrcChannel(final I fileItem, final O ioTask)
 	throws IOException {
-		final Path srcPath = Paths.get(fileItem.getPath());
 		final Map<DataIoTask, FileChannel> srcOpenFiles = SRC_OPEN_FILES.get();
 		FileChannel srcChannel = srcOpenFiles.get(ioTask);
 		if(srcChannel == null) {
-			srcChannel  = FileChannel.open(srcPath, StandardOpenOption.READ);
-			srcOpenFiles.put(ioTask, srcChannel);
+			final String srcPath = fileItem.getPath();
+			if(srcPath != null && !srcPath.isEmpty()) {
+				srcChannel = FileChannel.open(
+					Paths.get(srcPath, fileItem.getName()), StandardOpenOption.READ
+				);
+				srcOpenFiles.put(ioTask, srcChannel);
+			}
 		}
 		return srcChannel;
 	}
 
-	private FileChannel getDstChannel(final O ioTask, final LoadType ioType)
+	private FileChannel getDstChannel(final I fileItem, final O ioTask, final LoadType ioType)
 	throws IOException {
-		final Path dstPath = Paths.get(ioTask.getDstPath());
+		Path dstPath = Paths.get(ioTask.getDstPath());
 		if(!Files.exists(dstPath)) {
 			Files.createDirectories(dstPath);
 		}
+		dstPath = Paths.get(dstPath.toString(), fileItem.getName());
 		final Map<DataIoTask, FileChannel> dstOpenFiles = DST_OPEN_FILES.get();
 		FileChannel dstChannel = dstOpenFiles.get(ioTask);
 		if(dstChannel == null) {
@@ -92,14 +97,14 @@ implements Driver<I, O> {
 				case CREATE:
 					createFile(
 						fileItem, ioTask, getSrcChannel(fileItem, ioTask),
-						getDstChannel(ioTask, ioType)
+						getDstChannel(fileItem, ioTask, ioType)
 					);
 					break;
 				case READ:
 					readFile(fileItem, ioTask, getSrcChannel(fileItem, ioTask));
 					break;
 				case UPDATE:
-					updateFile(fileItem, ioTask, getDstChannel(ioTask, ioType));
+					updateFile(fileItem, ioTask, getDstChannel(fileItem, ioTask, ioType));
 					break;
 				case DELETE:
 					deleteFile(fileItem, ioTask);
@@ -123,7 +128,7 @@ implements Driver<I, O> {
 	) throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.getSize();
-		if(countBytesDone < contentSize) {
+		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
 			if(srcChannel == null) {
 				countBytesDone += dstChannel.transferFrom(
 					fileItem, countBytesDone, contentSize - countBytesDone
