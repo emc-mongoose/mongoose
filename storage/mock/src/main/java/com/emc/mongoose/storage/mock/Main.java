@@ -4,6 +4,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,6 +18,9 @@ public class Main {
 	static {
 		LogUtil.init();
 	}
+
+	private final static Logger LOG = LogManager.getLogger();
+
 
 	public static void main(final String[] args)
 	throws IOException {
@@ -34,7 +38,10 @@ public class Main {
 			} catch(final InterruptedException ignored) {
 			}
 		} catch(final Throwable t) {
-			t.printStackTrace(System.out);
+			LogUtil.exception(
+				LOG, Level.ERROR, t,
+				"Failed to run Nagaina"
+			);
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.concurrent;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressWarnings("Duplicates")
 public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 
+	private final CountDownLatch latch = new CountDownLatch(1);
 	private AtomicBoolean completed = new AtomicBoolean(false);
 	private volatile V result;
 	private volatile Throwable throwable;
@@ -21,25 +23,22 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 		return this.completed.get();
 	}
 
-	private V getResult()
-	throws ExecutionException {
-		if(throwable != null) {
+	private V getResult() throws ExecutionException {
+		if (throwable != null) {
 			throw new ExecutionException(throwable);
 		}
 		return result;
 	}
 
 	@Override
-	public synchronized V get()
+	public V get()
 	throws InterruptedException, ExecutionException {
-		while(!completed.get()) {
-			wait();
-		}
-		return getResult();
+		latch.await();
+		return result;
 	}
 
 	@Override
-	public synchronized V get(long timeout, final TimeUnit unit)
+	public V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		final long timeoutInMillis;
 		if (timeout < 0 || unit == null) {
@@ -57,7 +56,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 			throw new TimeoutException();
 		} else {
 			while(true) {
-				wait(waitTime);
+				latch.await(waitTime, TimeUnit.MILLISECONDS);
 				if (completed.get()) {
 					return getResult();
 				} else {
@@ -70,28 +69,26 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 		}
 	}
 
-	protected synchronized boolean set(final V v) {
-		if(completed.get()) {
-			return false;
+	protected boolean set(final V v) {
+		if (!completed.get() && completed.compareAndSet(false, true)) {
+			result = v;
+			latch.countDown();
+			return true;
 		}
-		completed.set(true);
-		result = v;
-		notifyAll();
-		return true;
+		return false;
 	}
 
-	protected synchronized boolean setException(final Throwable t) {
-		if(completed.get()) {
-			return false;
+	protected boolean setException(final Throwable t) {
+		if (completed.compareAndSet(false, true)) {
+			throwable = t;
+			latch.countDown();
+			return true;
 		}
-		completed.set(true);
-		this.throwable = t;
-		notifyAll();
-		return true;
+		return false;
 	}
 
 	@Override
-	public synchronized boolean cancel(final boolean mayInterruptIfRunning) {
+	public boolean cancel(final boolean mayInterruptIfRunning) {
 		throw new UnsupportedOperationException();
 	}
 

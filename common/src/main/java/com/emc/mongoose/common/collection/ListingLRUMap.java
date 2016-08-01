@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created on 20.07.16.
  */
-public class ListingLRUMap<K, V> extends LRUMap<K, V> {
+public class ListingLRUMap<K, V> extends LRUMap<K, V> implements Listable<V> {
 
 	private final AtomicInteger size = new AtomicInteger(0);
 
@@ -22,7 +22,7 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 	}
 
 	@Override
-	public synchronized V put(final K key, final V value) { // todo temp decision
+	public V put(final K key, final V value) {
 		final V oldValue = super.put(key, value);
 		if(null == oldValue) {
 			size.incrementAndGet();
@@ -39,7 +39,8 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 		return value;
 	}
 
-	public final V list(final String afterObjectId, final Collection<V> outputBuffer, final int limit) {
+	@Override
+	public V list(final String afterObjectId, final Collection<V> outputBuffer, final int limit) {
 		if (isEmpty()) {
 			return null;
 		}
@@ -59,13 +60,19 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 	}
 
 	@Override
-	protected final void moveToMRU(final LinkEntry<K, V> entry) {
+	protected void moveToMRU(
+		final LinkEntry<K, V> entry
+	) {
 		// disable entry moving to MRU in case of access
 		// it's required to make list method (right below) working (keeping the linked list order)
 	}
 
+	protected void decrementSize() {
+		size.decrementAndGet();
+	}
+
 	@Override
-	protected final boolean removeLRU(final LinkEntry<K, V> entry) {
+	protected boolean removeLRU(final LinkEntry<K, V> entry) {
 		return super.removeLRU(entry);
 	}
 }

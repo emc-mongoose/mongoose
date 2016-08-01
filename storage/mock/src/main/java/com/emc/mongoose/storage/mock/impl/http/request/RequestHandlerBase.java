@@ -223,6 +223,7 @@ extends ChannelInboundHandlerAdapter {
 			response.setStatus(status);
 		}
 		ctx.write(response);
+//		ctx.alloc().buffer().release();
 	}
 
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {

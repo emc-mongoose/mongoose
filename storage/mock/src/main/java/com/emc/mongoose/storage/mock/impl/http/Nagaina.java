@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
@@ -17,13 +18,10 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -73,22 +71,14 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
 				serverBootstrap.group(dispatchGroups[i], workGroups[i])
-					.channel(NioServerSocketChannel.class)
+					.channel(EpollServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						protected void initChannel(final SocketChannel socketChannel)
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
 							if (currentIndex % 2 == 1) {
-								final SelfSignedCertificate selfSignedCertificate =
-									new SelfSignedCertificate();
-								final SslContext sslCtx = SslContextBuilder
-									.forServer(
-										selfSignedCertificate.certificate(),
-										selfSignedCertificate.privateKey())
-									.trustManager(InsecureTrustManagerFactory.INSTANCE)
-									.build();
-								pipeline.addLast(sslCtx.newHandler(socketChannel.alloc()));
+								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
 							}
 							pipeline.addLast(new HttpServerCodec());
 							pipeline.addLast(swiftRequestHandler);

@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.mock.impl.base;
 import com.emc.mongoose.common.collection.ListingLRUMap;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
+import org.apache.commons.collections4.map.AbstractLinkedMap;
 
 import java.util.Collection;
 
@@ -15,7 +16,20 @@ implements ObjectContainerMock<T> {
 	private final ListingLRUMap<String, T> containerMap;
 
 	BasicObjectContainerMock(final int capacity) {
-		this.containerMap = new ListingLRUMap<>(capacity);
+		this.containerMap = new ListingLRUMap<String, T>(capacity) {
+			@SuppressWarnings("unchecked")
+			@Override
+			protected boolean removeLRU(
+				final LinkEntry entry
+			) {
+				if(super.removeLRU(entry)) {
+					decrementSize();
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
 	}
 
 	@Override
