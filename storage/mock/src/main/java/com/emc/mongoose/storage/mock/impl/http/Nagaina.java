@@ -18,8 +18,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -71,7 +71,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
 				serverBootstrap.group(dispatchGroups[i], workGroups[i])
-					.channel(NioServerSocketChannel.class)
+					.channel(EpollServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						protected void initChannel(final SocketChannel socketChannel)

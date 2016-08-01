@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.api;
 
+import com.emc.mongoose.common.collection.Listable;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 
@@ -9,7 +10,7 @@ import java.util.Map;
 /**
  Created on 19.07.16.
  */
-public interface ObjectContainerMock<T extends MutableDataItem> {
+public interface ObjectContainerMock<T extends MutableDataItem> extends Listable<T> {
 
 	T get (final String key);
 
@@ -18,8 +19,6 @@ public interface ObjectContainerMock<T extends MutableDataItem> {
 	T remove(final String key);
 
 	int size();
-
-	T list(final String afterObjectId, final Collection<T> outputBuffer, final int limit);
 
 	Collection<T> values();
 }
