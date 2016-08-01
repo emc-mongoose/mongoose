@@ -40,4 +40,14 @@ extends HttpDriverBase<I, O> {
 	protected SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler() {
 		return new HttpS3Handler();
 	}
+	
+	@Override
+	protected HttpRequest getDataRequest(final O ioTask) {
+		return null;
+	}
+	
+	@Override
+	protected HttpRequest getRequest(final O ioTask) {
+		return null;
+	}
 }
