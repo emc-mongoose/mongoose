@@ -1,10 +1,11 @@
-description = 'mongoose-storage-mock'
+description = 'mongoose-storage-driver-http-base'
 
 dependencies {
 
 	compile project(':common')
 	compile project(':model')
 	compile project(':ui')
+	compile project(':storage:driver-base')
 
 	compile(
 		"io.netty:netty-common:${nettyVersion}",

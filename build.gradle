@@ -1,6 +1,9 @@
 import groovy.json.JsonSlurper
 
-description = 'Mongoose - high-load storage performance testing automation tool'
+description = "Mongoose - high-load storage performance testing automation tool"
+project.ext.log4jVersion = "2.6.2";
+project.ext.nettyVersion = "4.1.2.Final";
+project.ext.jacksonVersion = "2.8.0";
 
 def loadProjectVersionFrom(String sourceFileName) {
 	def inputFile = new File(sourceFileName)
@@ -18,11 +21,21 @@ def collectFilePath(String... pathChunks) {
 	pathBuilder.toString()
 }
 
-def configFilePath = "." + collectFilePath('ui', 'src', 'main', 'resources', 'defaults.json');
+def configFilePath = "." + collectFilePath("ui", "src", "main", "resources", "defaults.json");
 version = loadProjectVersionFrom configFilePath
+
+buildscript {
+	dependencies {
+		classpath "com.google.gradle:osdetector-gradle-plugin:1.4.0"
+	}
+	repositories {
+		mavenCentral()
+	}
+}
 
 subprojects {
 	apply plugin: "java"
+	apply plugin: "com.google.osdetector"
 
 	version = super.version
 
@@ -39,10 +52,6 @@ subprojects {
 	repositories {
 		mavenCentral()
 	}
-
-	def log4jVersion = '2.6.2';
-	def nettyVersion = '4.1.2.Final';
-	def jacksonVersion = '2.8.0';
 
 	dependencies {
 
@@ -61,12 +70,6 @@ subprojects {
 
 			"com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
 			"com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
-
-			"io.netty:netty-common:${nettyVersion}",
-			"io.netty:netty-buffer:${nettyVersion}",
-			"io.netty:netty-transport:${nettyVersion}",
-			"io.netty:netty-handler:${nettyVersion}",
-			"io.netty:netty-codec-http:${nettyVersion}",
 
 			"it.unimi.dsi:fastutil:7.0.12"
 		)

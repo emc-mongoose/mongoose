@@ -34,8 +34,8 @@ public class ConfigLoaderTest {
 		assertThat(bufferConfig.getSize(), equalTo(new SizeInBytes("4KB-1MB"), "io.buffer.size"));
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertThat(socketConfig, notNullValue());
-		assertThat(socketConfig.getTimeoutInMilliseconds(), equalTo(1_000_000, "socket.timeoutMilliSec"));
-		assertThat(socketConfig.getReusableAddress(), equalTo(true, "socket.reuseAddr"));
+		assertThat(socketConfig.getTimeoutMillisec(), equalTo(1_000_000, "socket.timeoutMilliSec"));
+		assertThat(socketConfig.getReuseAddr(), equalTo(true, "socket.reuseAddr"));
 		assertThat(socketConfig.getKeepAlive(), equalTo(true, "socket.keepAlive"));
 		assertThat(socketConfig.getTcpNoDelay(), equalTo(true, "socket.tcpNoDelay"));
 		assertThat(socketConfig.getLinger(), equalTo(0, "socket.linger"));

@@ -43,7 +43,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private AtomicBoolean started = new AtomicBoolean(false);
+	private final AtomicBoolean started = new AtomicBoolean(false);
 
 	private final String dataSrcPath;
 	private final StorageIoStats ioStats;
@@ -54,7 +54,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 	private final ListingLRUMap<String, ObjectContainerMock<T>> storageMap;
 	private final String defaultContainerName;
 
-	private AtomicBoolean isCapacityExhausted = new AtomicBoolean(false);
+	private final AtomicBoolean isCapacityExhausted = new AtomicBoolean(false);
 
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
@@ -70,8 +70,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		final String contentSourcePath = contentConfig.getFile();
 		try {
 			this.contentSrc = ContentSourceUtil.getInstance(
-					contentSourcePath, contentConfig.getSeed(),
-				contentConfig.getRingSize().getMin()
+				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
 			);
 		} catch(final IOException e) {
 			LogUtil.exception(
@@ -86,7 +85,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		createContainer(defaultContainerName);
 	}
 
-	protected ContentSource getContentSource() {
+	protected final ContentSource getContentSource() {
 		return contentSrc;
 	}
 

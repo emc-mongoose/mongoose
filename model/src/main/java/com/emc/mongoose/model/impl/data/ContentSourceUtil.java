@@ -1,6 +1,7 @@
 package com.emc.mongoose.model.impl.data;
 
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.util.SizeInBytes;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class ContentSourceUtil {
 	}
 
 	public static ContentSource getInstance(
-		final String contentFilePath, final String seed, final long ringSize
+		final String contentFilePath, final String seed, final SizeInBytes ringSize
 	) throws IOException, IllegalStateException {
 		final ContentSource instance;
 		if(contentFilePath != null && !contentFilePath.isEmpty()) {
@@ -54,7 +55,7 @@ public class ContentSourceUtil {
 				);
 			}
 		} else {
-			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSize);
+			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSize.get());
 		}
 		return instance;
 	}

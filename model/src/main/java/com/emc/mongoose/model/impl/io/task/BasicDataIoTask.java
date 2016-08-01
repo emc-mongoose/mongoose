@@ -50,6 +50,9 @@ implements DataIoTask<T> {
 	@Override
 	public final void setCountBytesDone(final long n) {
 		this.countBytesDone = n;
+		if(contentSize == countBytesDone) {
+			status = Status.SUCC;
+		}
 	}
 
 	@Override

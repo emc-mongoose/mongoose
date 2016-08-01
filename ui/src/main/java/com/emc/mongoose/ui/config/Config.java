@@ -1,6 +1,5 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.model.util.TimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,7 +10,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +23,6 @@ public final class Config {
 	private static final class TimeStrToLongDeserializer
 	extends JsonDeserializer<Long> {
 
-		@SuppressWarnings("DuplicateThrows")
 		@Override
 		public final Long deserialize(final JsonParser p, final DeserializationContext ctx)
 		throws JsonProcessingException, IOException {
@@ -41,7 +38,6 @@ public final class Config {
 
 	private static final class SizeInBytesDeserializer
 	extends JsonDeserializer<SizeInBytes> {
-		@SuppressWarnings("DuplicateThrows")
 		@Override
 		public final SizeInBytes deserialize(final JsonParser p, final DeserializationContext ctx)
 		throws JsonProcessingException, IOException{
@@ -50,8 +46,7 @@ public final class Config {
 	}
 
 	private static final class DataRangesConfigDeserializer
-		extends JsonDeserializer<DataRangesConfig> {
-		@SuppressWarnings("DuplicateThrows")
+	extends JsonDeserializer<DataRangesConfig> {
 		@Override
 		public final DataRangesConfig deserialize(final JsonParser p, final DeserializationContext ctx)
 		throws JsonProcessingException, IOException{
@@ -175,11 +170,11 @@ public final class Config {
 
 		public SocketConfig() {}
 
-		public final int getTimeoutInMilliseconds() {
+		public final int getTimeoutMillisec() {
 			return timeoutMilliSec;
 		}
 
-		public final boolean getReusableAddress() {
+		public final boolean getReuseAddr() {
 			return reuseAddr;
 		}
 
@@ -390,17 +385,19 @@ public final class Config {
 	public final static class LoadConfig {
 
 		static final String KEY_CIRCULAR = "circular";
-		static final String KEY_TYPE = "type";
 		static final String KEY_CONCURRENCY = "concurrency";
 		static final String KEY_LIMIT = "limit";
 		static final String KEY_METRICS = "metrics";
+		static final String KEY_QUEUE = "queue";
+		static final String KEY_TYPE = "type";
 		
 		@JsonProperty(KEY_CIRCULAR) private boolean circular;
-		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_CONCURRENCY) private int concurrency;
 		@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
 		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
-
+		@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
+		@JsonProperty(KEY_TYPE) private String type;
+		
 		public LoadConfig() {
 		}
 
@@ -422,6 +419,10 @@ public final class Config {
 
 		public final MetricsConfig getMetricsConfig() {
 			return metricsConfig;
+		}
+		
+		public final QueueConfig getQueueConfig() {
+			return queueConfig;
 		}
 
 		public final static class LimitConfig {
@@ -484,6 +485,20 @@ public final class Config {
 
 			public final boolean getPrecondition() {
 				return precondition;
+			}
+		}
+		
+		public final static class QueueConfig {
+			
+			static final String KEY_SIZE = "size";
+			
+			@JsonProperty(KEY_SIZE) private int size;
+			
+			public QueueConfig() {
+			}
+			
+			public final int getSize() {
+				return size;
 			}
 		}
 	}
