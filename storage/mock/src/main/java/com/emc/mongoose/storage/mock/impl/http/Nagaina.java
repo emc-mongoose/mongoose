@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
@@ -20,19 +21,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslProvider;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -85,15 +79,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
 							if (currentIndex % 2 == 1) {
-								final SelfSignedCertificate selfSignedCertificate =
-									new SelfSignedCertificate();
-								final SslContext sslCtx = SslContextBuilder
-									.forServer(
-										selfSignedCertificate.certificate(),
-										selfSignedCertificate.privateKey())
-									.trustManager(InsecureTrustManagerFactory.INSTANCE)
-									.build();
-								pipeline.addLast(sslCtx.newHandler(socketChannel.alloc()));
+								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
 							}
 							pipeline.addLast(new HttpServerCodec());
 							pipeline.addLast(swiftRequestHandler);

@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.collection;
 
-import org.apache.commons.collections4.map.AbstractLinkedMap;
 import org.apache.commons.collections4.map.LRUMap;
 
 import java.util.Collection;
@@ -9,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created on 20.07.16.
  */
-public class ListingLRUMap<K, V> extends LRUMap<K, V> {
+public class ListingLRUMap<K, V> extends LRUMap<K, V> implements Listable<V> {
 
 	private final AtomicInteger size = new AtomicInteger(0);
 
@@ -23,7 +22,7 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 	}
 
 	@Override
-	public synchronized V put(final K key, final V value) { // todo temp decision
+	public V put(final K key, final V value) {
 		final V oldValue = super.put(key, value);
 		if(null == oldValue) {
 			size.incrementAndGet();
@@ -40,6 +39,7 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> {
 		return value;
 	}
 
+	@Override
 	public V list(final String afterObjectId, final Collection<V> outputBuffer, final int limit) {
 		if (isEmpty()) {
 			return null;
