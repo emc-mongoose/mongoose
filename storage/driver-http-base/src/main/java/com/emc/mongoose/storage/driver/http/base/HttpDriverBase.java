@@ -1,8 +1,9 @@
 package com.emc.mongoose.storage.driver.http.base;
 
+import com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
-import com.emc.mongoose.common.exception.IoFireball;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Driver;
@@ -12,10 +13,14 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.util.concurrent.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,15 +44,18 @@ implements Driver<I, O> {
 	private final int storageNodePort;
 	
 	private final Map<String, EventLoopGroup> workerGroupMap = new HashMap<>();
-	private final Map<String, Bootstrap> bootstrapMap = new HashMap<>();
+	protected final Map<String, Bootstrap> bootstrapMap = new HashMap<>();
 	
 	protected HttpDriverBase(
 		final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig
 	) throws UserShootHisFootException {
+		
 		super(loadConfig);
 		storageNodeAddrs = (String[]) storageConfig.getAddresses().toArray();
 		storageNodePort = storageConfig.getPort();
+		
+		final SimpleChannelInboundHandler<HttpObject> apiSpecificHandler = getApiSpecificHandler();
 		
 		for(final String storageNodeAddr : storageNodeAddrs) {
 			final EpollEventLoopGroup workerGroup = new EpollEventLoopGroup(
@@ -72,7 +80,36 @@ implements Driver<I, O> {
 			bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
 			bootstrap.option(ChannelOption.SO_TIMEOUT, socketConfig.getTimeoutMillisec());
 			bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
+			bootstrap.handler(
+				new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
+			);
 		}
+	}
+	
+	protected abstract SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler();
+	
+	protected abstract HttpRequest getDataRequest(final O ioTask);
+	
+	protected abstract HttpRequest getRequest(final O ioTask);
+	
+	@Override
+	public void submit(final O task)
+	throws InterruptedException {
+		
+		final HttpRequest httpRequest;
+		if(task instanceof DataIoTask) {
+			httpRequest = getDataRequest(task);
+		} else {
+			httpRequest = getRequest(task);
+		}
+		
+		
+	}
+	
+	@Override
+	public int submit(final List<O> tasks, final int from, final int to)
+	throws InterruptedException {
+		return 0;
 	}
 	
 	@Override
@@ -95,17 +132,6 @@ implements Driver<I, O> {
 	@Override
 	public boolean isFullThrottleExited() {
 		return false;
-	}
-	
-	@Override
-	public void submit(final O task)
-	throws InterruptedException {
-	}
-	
-	@Override
-	public int submit(final List<O> tasks, final int from, final int to)
-	throws InterruptedException {
-		return 0;
 	}
 	
 	@Override

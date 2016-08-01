@@ -560,7 +560,7 @@ public final class Config {
 			return port;
 		}
 
-		public boolean isSsl() {
+		public boolean getSsl() {
 			return ssl;
 		}
 

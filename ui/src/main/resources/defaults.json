@@ -59,7 +59,7 @@
 			"precondition" : false
 		},
 		"queue" : {
-			"size" : 1000000,
+			"size" : 1000000
 		},
 		"type" : "create"
 	},
