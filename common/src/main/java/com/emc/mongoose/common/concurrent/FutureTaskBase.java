@@ -79,7 +79,7 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 	}
 
 	protected boolean setException(final Throwable t) {
-		if (!completed.get() && completed.compareAndSet(false, true)) {
+		if (completed.compareAndSet(false, true)) {
 			throwable = t;
 			latch.countDown();
 			return true;
