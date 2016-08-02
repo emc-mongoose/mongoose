@@ -4,9 +4,9 @@ import com.emc.mongoose.model.api.load.Balancer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,7 +30,7 @@ implements Balancer<S> {
 		if(options == null) {
 			this.leaseMap = null;
 		} else {
-			this.leaseMap = new ConcurrentHashMap<>(options.length);
+			this.leaseMap = new HashMap<>(options.length);
 			for(final S node : options) {
 				leaseMap.put(node, new AtomicInteger(0));
 			}
@@ -66,6 +66,9 @@ implements Balancer<S> {
 		if(nodes == null) {
 			return null;
 		}
+		if(nodes.length == 1) {
+			return nodes[0];
+		}
 		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
 		bestChoices.clear();
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
@@ -80,15 +83,17 @@ implements Balancer<S> {
 			}
 		}
 		// round robin counter
-		rrc.compareAndSet(Short.MAX_VALUE)
-		rrc = rrc == Short.MAX_VALUE ? 0 : rrc + 1;
+		if(!rrc.compareAndSet(Short.MAX_VALUE, 0)) {
+			rrc.incrementAndGet();
+		}
 		// select using round robin counter if there are more than 1 best nodes
-		return bestChoices.get(rrc % bestChoices.size());
+		return bestChoices.get(rrc.get() % bestChoices.size());
 	}
 	
 	@Override
 	public int get(final List<S> buffer, final int limit)
 	throws IOException {
+		
 		return 0;
 	}
 	
