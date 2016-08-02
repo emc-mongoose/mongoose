@@ -118,7 +118,7 @@ public class ConfigLoaderTest {
 		assertThat(httpConfig.getNamespace(), nullValue("storage.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.http.versioning"));
 		assertThat(storageConfig.getPort(), equalTo(9020, "storage.port"));
-		assertThat(storageConfig.isSsl(), equalTo(false, "storage.ssl"));
+		assertThat(storageConfig.getSsl(), equalTo(false, "storage.ssl"));
 		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
 		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());

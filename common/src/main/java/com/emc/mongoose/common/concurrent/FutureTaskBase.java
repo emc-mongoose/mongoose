@@ -11,34 +11,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
  Created on 20.07.16.
  */
 @SuppressWarnings("Duplicates")
-public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
+public abstract class FutureTaskBase<V>
+implements RunnableFuture<V> {
 
 	private final CountDownLatch latch = new CountDownLatch(1);
 	private final AtomicBoolean completed = new AtomicBoolean(false);
+
 	private volatile V result;
-	private volatile Throwable throwable;
+	private volatile Throwable cause;
 
 	@Override
-	public boolean isDone() {
+	public final boolean isDone() {
 		return this.completed.get();
 	}
 
-	private V getResult() throws ExecutionException {
-		if (throwable != null) {
-			throw new ExecutionException(throwable);
+	private V getResult()
+	throws ExecutionException {
+		if(cause != null) {
+			throw new ExecutionException(cause);
 		}
 		return result;
 	}
 
 	@Override
-	public V get()
+	public final V get()
 	throws InterruptedException, ExecutionException {
 		latch.await();
 		return result;
 	}
 
 	@Override
-	public V get(long timeout, final TimeUnit unit)
+	public final V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		final long timeoutInMillis;
 		if (timeout < 0 || unit == null) {
@@ -78,9 +81,9 @@ public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 		return false;
 	}
 
-	protected boolean setException(final Throwable t) {
-		if (completed.compareAndSet(false, true)) {
-			throwable = t;
+	protected boolean setException(final Throwable cause) {
+		if(completed.compareAndSet(false, true)) {
+			this.cause = cause;
 			latch.countDown();
 			return true;
 		}
