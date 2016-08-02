@@ -16,7 +16,7 @@ implements RunnableFuture<V> {
 
 	private final CountDownLatch latch = new CountDownLatch(1);
 	private final AtomicBoolean completed = new AtomicBoolean(false);
-	
+
 	private volatile V result;
 	private volatile Throwable cause;
 

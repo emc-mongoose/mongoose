@@ -208,6 +208,8 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 	//
+
+	//
 	public static boolean isConsoleColoringEnabled() {
 		return STDOUT_COLORING_ENABLED;
 	}
