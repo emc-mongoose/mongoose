@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class FutureTaskBase<V> implements RunnableFuture<V> {
 
 	private final CountDownLatch latch = new CountDownLatch(1);
-	private AtomicBoolean completed = new AtomicBoolean(false);
+	private final AtomicBoolean completed = new AtomicBoolean(false);
 	private volatile V result;
 	private volatile Throwable throwable;
 
