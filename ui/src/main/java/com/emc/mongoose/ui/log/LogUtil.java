@@ -8,7 +8,10 @@ import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
@@ -17,6 +20,7 @@ import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.io.IoBuilder;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.DriverManager;
@@ -30,6 +34,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
+import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
+
 /**
  Created by kurila on 06.05.14.
  */
@@ -106,9 +112,6 @@ implements ShutdownCallbackRegistry {
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
-	static {
-		init();
-	}
 	//
 	public static String newRunId() {
 		return LogUtil.FMT_DT.format(
@@ -209,7 +212,6 @@ implements ShutdownCallbackRegistry {
 	}
 	//
 
-	//
 	public static boolean isConsoleColoringEnabled() {
 		return STDOUT_COLORING_ENABLED;
 	}

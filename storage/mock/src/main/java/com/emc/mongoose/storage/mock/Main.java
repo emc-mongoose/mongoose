@@ -19,8 +19,7 @@ public class Main {
 		LogUtil.init();
 	}
 
-	private final static Logger LOG = LogManager.getLogger();
-
+	private static final Logger LOG = LogManager.getLogger();
 
 	public static void main(final String[] args)
 	throws IOException {
