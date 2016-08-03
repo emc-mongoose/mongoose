@@ -16,11 +16,12 @@ dependencies {
 		"io.netty:netty-codec-http:${nettyVersion}",
 		"io.netty:netty-transport-native-epoll:${nettyVersion}:${osdetector.classifier}"
 	)
+}
 
-	jar {
-		from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-		manifest {
-			attributes 'Main-Class': 'com.emc.mongoose.storage.mock.Main'
-		}
+
+jar {
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	manifest {
+		attributes 'Main-Class': 'com.emc.mongoose.storage.mock.Main'
 	}
 }

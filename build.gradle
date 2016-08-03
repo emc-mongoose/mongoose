@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 
 description = "Mongoose - high-load storage performance testing automation tool"
-project.ext.log4jVersion = "2.6.2";
+project.ext.log4jVersion = "2.6.1";
 project.ext.nettyVersion = "4.1.2.Final";
 project.ext.jacksonVersion = "2.8.0";
 
@@ -57,19 +57,21 @@ subprojects {
 
 		compile(
 
+			"org.apache.logging.log4j:log4j-core:${log4jVersion}",
+			"org.apache.logging.log4j:log4j-api:${log4jVersion}",
+			"org.apache.logging.log4j:log4j-iostreams:${log4jVersion}",
+			"org.apache.logging.log4j:log4j-jul:${log4jVersion}",
+
 			"commons-lang:commons-lang:2.6",
 			"org.apache.commons:commons-collections4:4.1",
 			"commons-codec:commons-codec:1.10",
 			"io.dropwizard.metrics:metrics-core:3.1.2",
 
-			"org.apache.logging.log4j:log4j-core:${log4jVersion}",
-			"org.apache.logging.log4j:log4j-iostreams:${log4jVersion}",
-			"org.apache.logging.log4j:log4j-jul:${log4jVersion}",
-
 			"com.lmax:disruptor:3.3.4",
 
 			"com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
 			"com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
+			"com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}",
 
 			"it.unimi.dsi:fastutil:7.0.12"
 		)
