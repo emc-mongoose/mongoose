@@ -165,7 +165,7 @@ extends RequestHandlerBase<T> {
             for(final T object : buffer) {
                 node = OBJ_MAPPER.createObjectNode();
                 node.put("name", object.getName());
-                node.put("bytes", object.getSize());
+                node.put("bytes", object.size());
                 ((ArrayNode) nodeRoot).add(node);
             }
             try {

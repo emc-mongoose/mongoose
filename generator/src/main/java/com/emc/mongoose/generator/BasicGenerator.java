@@ -8,6 +8,8 @@ import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.api.io.Input;
@@ -210,13 +212,12 @@ implements Generator<I, O> {
 			
 			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
 			
-			final Config.ItemConfig.DataConfig.ContentConfig contentConfig = itemConfig
-				.getDataConfig().getContentConfig();
+			final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 			final ContentSource contentSrc = ContentSourceUtil.getInstance(
 				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
 			);
 			
-			final Config.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
+			final NamingConfig namingConfig = itemConfig.getNamingConfig();
 			final ItemNamingType namingType = ItemNamingType.valueOf(namingConfig.getType().toUpperCase());
 			final String namingPrefix = namingConfig.getPrefix();
 			final int namingLength = namingConfig.getLength();

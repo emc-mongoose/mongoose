@@ -1,16 +1,14 @@
 package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.api.io.PatternDefinedInput;
 import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -21,8 +19,8 @@ import java.nio.channels.WritableByteChannel;
  Uses UniformDataSource as a ring buffer. Not thread safe.
  */
 public class BasicDataItem
-	extends BasicItem
-	implements DataItem {
+extends BasicItem
+implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -32,20 +30,19 @@ public class BasicDataItem
 	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
-	private ByteBuffer ringBuff;
-	private int ringBuffSize;
-	protected long offset = 0, size = 0;
+	private final ContentSource contentSrc;
+	private final int ringBuffSize;
+	//
+	private int layerNum = 0;
+	//
+	protected long offset = 0;
+	protected long position = 0;
+	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public BasicDataItem() {
-		super();
-	}
-	//
-	public BasicDataItem(final String value) {
-		fromString(value);
-	}
-	//
 	public BasicDataItem(final ContentSource contentSrc) {
-		setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
+		this.contentSrc = contentSrc;
+		this.ringBuffSize = contentSrc.getSize();
+		//setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
 	}
 	//
 	public BasicDataItem(final String value, final ContentSource contentSrc) {
@@ -54,50 +51,66 @@ public class BasicDataItem
 	}
 	//
 	public BasicDataItem(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final long offset, final long size, final ContentSource contentSrc
 	) {
 		this(SLASH, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
+		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		this(SLASH, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final Long offset, final Long size,
+		final String path, final String name, final long offset, final long size,
 		final ContentSource contentSrc
 	) {
 		this(path, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final Long offset, final Long size, final Integer layerNum, final ContentSource contentSrc
+		final long offset, final long size, final int layerNum, final ContentSource contentSrc
 	) {
-		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
-		setOffset(offset);
+		this(contentSrc);
+		this.layerNum = layerNum;
+		this.offset = offset;
 		this.size = size;
 	}
 	//
 	public BasicDataItem(
-		final String name, final Long offset, final Long size, final Integer layerNum,
+		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
 		super(SLASH, name);
-		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
-		setOffset(offset);
+		this.contentSrc = contentSrc;
+		this.ringBuffSize = contentSrc.getSize();
+		this.layerNum = layerNum;
+		this.offset = offset;
 		this.size = size;
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final Long offset, final Long size,
-		final Integer layerNum, final ContentSource contentSrc
+		final String path, final String name, final long offset, final long size,
+		final int layerNum, final ContentSource contentSrc
 	) {
 		super(path, name);
-		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
-		setOffset(offset);
+		this.contentSrc = contentSrc;
+		this.ringBuffSize = contentSrc.getSize();
+		this.layerNum = layerNum;
+		this.offset = offset;
 		this.size = size;
+	}
+	//
+	public BasicDataItem(
+		final BasicDataItem baseDataItem, final long internalOffset, final long size,
+		final boolean nextLayer
+	) {
+		this.contentSrc = baseDataItem.contentSrc;
+		this.ringBuffSize = baseDataItem.ringBuffSize;
+		this.offset = baseDataItem.offset + internalOffset;
+		this.size = size;
+		this.layerNum = nextLayer ? baseDataItem.layerNum : baseDataItem.layerNum;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -113,7 +126,7 @@ public class BasicDataItem
 				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
 			}
 			try {
-				setSize(Long.parseLong(tokens[2], 10));
+				truncate(Long.parseLong(tokens[2], 10));
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
 			}
@@ -138,27 +151,20 @@ public class BasicDataItem
 			.append(size).toString();
 	}
 	//
-	private void setRingBuffer(final ByteBuffer ringBuff) {
-		synchronized(ringBuff) {
-			this.ringBuff = ringBuff;
-			ringBuffSize = ringBuff.capacity();
-		}
-	}
-	//
-	private void makeCircular() {
-		final int currPos = ringBuff.position();
+	private ByteBuffer circular(final ByteBuffer bb0) {
+		final ByteBuffer bb1 = bb0 == null ? contentSrc.getLayer(layerNum) : bb0;
+		final int currPos = bb1.position();
 		if(currPos == ringBuffSize) {
-			ringBuff.clear();
-		} else if(currPos == ringBuff.limit()) {
-			ringBuff.limit(ringBuffSize);
+			bb1.clear();
+		} else if(currPos == bb1.limit()) {
+			bb1.limit(ringBuffSize);
 		}
+		return bb1;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void reset() {
-		synchronized(ringBuff) {
-			ringBuff.limit(ringBuffSize).position((int)(offset % ringBuffSize));
-		}
+		position = 0;
 	}
 	//
 	@Override
@@ -172,27 +178,25 @@ public class BasicDataItem
 		reset();
 	}
 	//
-	public final int getRelativeOffset() {
-		return ringBuff.position();
-	}
-	//
-	public final void setRelativeOffset(final long relOffset) {
-		ringBuff.limit(ringBuffSize).position((int) ((offset + relOffset) % ringBuffSize));
+	public long position() {
+		return position;
 	}
 	//
 	@Override
-	public long getSize() {
+	public final BasicDataItem position(final long position) {
+		this.position = position;
+		return this;
+	}
+	//
+	@Override
+	public long size() {
 		return size;
 	}
 	//
 	@Override
-	public void setSize(final long size) {
+	public BasicDataItem truncate(final long size) {
 		this.size = size;
-	}
-	//
-	@Override
-	public final void setContentSource(final ContentSource dataSrc, final int overlayIndex) {
-		setRingBuffer(dataSrc.getLayer(overlayIndex).asReadOnlyBuffer());
+		return this;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// ByteChannels implementation
@@ -203,20 +207,20 @@ public class BasicDataItem
 	//
 	@Override
 	public final boolean isOpen() {
-		return true;
+		return false;
 	}
 	//
 	@Override
 	public final int read(final ByteBuffer dst) {
 		final int n;
-		synchronized(ringBuff) {
-			makeCircular();
-			// bytes count to transfer
-			n = Math.min(dst.remaining(), ringBuff.remaining());
-			ringBuff.limit(ringBuff.position() + n);
-			// do the transfer
-			dst.put(ringBuff);
-		}
+		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) (offset + position) % ringBuffSize);
+		// bytes count to transfer
+		n = Math.min(dst.remaining(), ringBuff.remaining());
+		ringBuff.limit(ringBuff.position() + n);
+		// do the transfer
+		dst.put(ringBuff);
+		position += n;
 		return n;
 	}
 	//
@@ -227,21 +231,21 @@ public class BasicDataItem
 			return 0;
 		}
 		int m;
-		synchronized(ringBuff) {
-			makeCircular();
-			final int n = Math.min(src.remaining(), ringBuff.remaining());
-			if(n > 0) {
-				byte bs, bi;
-				for(m = 0; m < n; m ++) {
-					bs = ringBuff.get();
-					bi = src.get();
-					if(bs != bi) {
-						throw new DataCorruptionException(m, bs, bi);
-					}
+		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) (offset + position) % ringBuffSize);
+		final int n = Math.min(src.remaining(), ringBuff.remaining());
+		if(n > 0) {
+			byte bs, bi;
+			for(m = 0; m < n; m ++) {
+				bs = ringBuff.get();
+				bi = src.get();
+				if(bs != bi) {
+					throw new DataCorruptionException(m, bs, bi);
 				}
-			} else {
-				return n;
 			}
+			position += n;
+		} else {
+			return n;
 		}
 		return m;
 	}
@@ -249,38 +253,39 @@ public class BasicDataItem
 	@Override
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
-		synchronized(ringBuff) {
-			makeCircular();
-			int n = (int)Math.min(maxCount, ringBuff.remaining());
-			ringBuff.limit(ringBuff.position() + n);
-			return chanDst.write(ringBuff);
-		}
+		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) (offset + position) % ringBuffSize);
+		int n = (int) Math.min(maxCount, ringBuff.remaining());
+		ringBuff.limit(ringBuff.position() + n);
+		n = chanDst.write(ringBuff);
+		position += n;
+		return n;
 	}
 	//
 	@Override
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {
 		int n;
-		synchronized(ringBuff) {
-			makeCircular();
-			n = ringBuff.remaining();
-			if(buff.limit() > n) {
-				buff.limit(n);
-			}
-			//
-			n = chanSrc.read(buff);
-			//
-			if(n > 0) {
-				byte bs, bi;
-				buff.flip();
-				for(int m = 0; m < n; m++) {
-					bs = ringBuff.get();
-					bi = buff.get();
-					if(bs != bi) {
-						throw new DataCorruptionException(m, bs, bi);
-					}
+		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) (offset + position) % ringBuffSize);
+		n = ringBuff.remaining();
+		if(buff.limit() > n) {
+			buff.limit(n);
+		}
+		//
+		n = chanSrc.read(buff);
+		//
+		if(n > 0) {
+			byte bs, bi;
+			buff.flip();
+			for(int m = 0; m < n; m++) {
+				bs = ringBuff.get();
+				bi = buff.get();
+				if(bs != bi) {
+					throw new DataCorruptionException(m, bs, bi);
 				}
 			}
+			position += n;
 		}
 		return n;
 	}
@@ -301,5 +306,4 @@ public class BasicDataItem
 	public int hashCode() {
 		return (int) (offset ^ size);
 	}
-
 }

@@ -1,5 +1,0 @@
-description = 'mongoose-storage'
-
-dependencies {
-	compile project(':common')
-}

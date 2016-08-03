@@ -1,25 +1,21 @@
 package com.emc.mongoose.storage.driver.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.http.base.HttpDriverBase;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.LogUtil;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.LastHttpContent;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  Created by kurila on 01.08.16.
@@ -37,17 +33,36 @@ extends HttpDriverBase<I, O> {
 	}
 	
 	@Override
-	protected SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler() {
+	protected final SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler() {
 		return new HttpS3Handler();
 	}
 	
 	@Override
-	protected HttpRequest getDataRequest(final O ioTask) {
-		return null;
+	protected final HttpRequest getHttpRequest(final O ioTask) {
+		
+		final I item = ioTask.getItem();
+		final LoadType ioType = ioTask.getLoadType();
+		final HttpMethod httpMethod = getHttpMethod(ioType);
+		
+		return applyHeaders(new DefaultHttpRequest(HTTP_1_1, httpMethod, getPath(item)));
 	}
 	
-	@Override
-	protected HttpRequest getRequest(final O ioTask) {
-		return null;
+	private String getPath(final I item) {
+		return item.getPath();
+	}
+	
+	private HttpMethod getHttpMethod(final LoadType loadType) {
+		switch(loadType) {
+			case READ:
+				return HttpMethod.GET;
+			case DELETE:
+				return HttpMethod.DELETE;
+			default:
+				return HttpMethod.PUT;
+		}
+	}
+	
+	private HttpRequest applyHeaders(final HttpRequest httpRequest) {
+		return httpRequest;
 	}
 }

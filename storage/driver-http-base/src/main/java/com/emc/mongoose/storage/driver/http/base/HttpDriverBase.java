@@ -1,22 +1,27 @@
 package com.emc.mongoose.storage.driver.http.base;
 
-import com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer;
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
 import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.impl.item.BasicDataItem;
+import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
+import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.base.DriverBase;
 
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static io.netty.handler.codec.http.LastHttpContent.EMPTY_LAST_CONTENT;
 
+import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
@@ -90,17 +95,15 @@ implements Driver<I, O> {
 	
 	protected abstract SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler();
 	
-	protected abstract HttpRequest getDataRequest(final O ioTask);
-	
-	protected abstract HttpRequest getRequest(final O ioTask);
+	protected abstract HttpRequest getHttpRequest(final O ioTask);
 	
 	private final class HttpRequestFuture
 	extends FutureTaskBase {
 		
-		private final HttpRequest httpRequest;
+		private final O ioTask;
 		
-		public HttpRequestFuture(final HttpRequest httpRequest) {
-			this.httpRequest = httpRequest;
+		public HttpRequestFuture(final O ioTask) {
+			this.ioTask = ioTask;
 		}
 		
 		@Override
@@ -128,7 +131,40 @@ implements Driver<I, O> {
 				return;
 			}
 			
-			c.writeAndFlush(httpRequest);
+			c.write(getHttpRequest(ioTask));
+			
+			final LoadType ioType = ioTask.getLoadType();
+			final I item = ioTask.getItem();
+			
+			try {
+				if(LoadType.CREATE.equals(ioType)) {
+					if(item instanceof DataItem) {
+						c.write(new DataItemFileRegion<>((DataItem) item));
+					}
+				} else if(LoadType.UPDATE.equals(ioType)) {
+					if(item instanceof MutableDataItem) {
+						final MutableDataItem mdi = (MutableDataItem) item;
+						if(mdi.hasScheduledUpdates()) {
+							long nextRangeOffset, nextRangeSize;
+							BasicDataItem nextUpdatedRange;
+							for(int i = 0; i < mdi.getCountRangesTotal(); i ++) {
+								if(mdi.isCurrLayerRangeUpdating(i)) {
+									nextRangeOffset = BasicMutableDataItem.getRangeOffset(i);
+									nextRangeSize = mdi.getRangeSize(i);
+									nextUpdatedRange = new BasicDataItem(
+										(BasicDataItem) mdi, nextRangeOffset, nextRangeSize, true
+									);
+									c.write(new DataItemFileRegion<>(nextUpdatedRange));
+								}
+							}
+						}
+					}
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+			}
+			
+			c.writeAndFlush(EMPTY_LAST_CONTENT);
 		}
 	}
 	
@@ -136,21 +172,16 @@ implements Driver<I, O> {
 	@Override
 	public void submit(final O task)
 	throws InterruptedException {
-		
-		final HttpRequest httpRequest;
-		if(task instanceof DataIoTask) {
-			httpRequest = getDataRequest(task);
-		} else {
-			httpRequest = getRequest(task);
-		}
-		
-		INSTANCE.submit(new HttpRequestFuture(httpRequest));
+		INSTANCE.submit(new HttpRequestFuture(task));
 	}
 	
 	@Override
 	public int submit(final List<O> tasks, final int from, final int to)
 	throws InterruptedException {
-		return 0;
+		for(int i = from; i < to; i ++) {
+			INSTANCE.submit(new HttpRequestFuture(tasks.get(i)));
+		}
+		return to - from;
 	}
 	
 	@Override

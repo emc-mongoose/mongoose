@@ -4,15 +4,12 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.model.util.SizeInBytes;
 import org.apache.commons.collections4.map.LRUMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Map;
+
 /**
  Created by kurila on 16.10.15.
  */
@@ -72,59 +69,26 @@ implements ContentSource {
 		return zeroByteLayer.capacity();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Binary serialization implementation /////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		out.writeLong(seed);
-		final byte buff[] = new byte[zeroByteLayer.capacity()];
-		zeroByteLayer.clear(); // reset
-		zeroByteLayer.get(buff);
-		out.writeInt(buff.length);
-		out.write(buff);
-	}
-	//
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		seed = in.readLong();
-		int size = in.readInt();
-		final byte buff[] = new byte[size];
-		for(int i, j = 0; j < size;) {
-			i = in.read(buff, j, size - j);
-			if(i == -1) {
-				break;
-			} else {
-				j += i;
-			}
-		}
-		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final ByteBuffer getLayer(final int layerIndex) {
 		// zero layer always exists so it may be useful to do it very simply and fast
 		if(layerIndex == 0) {
 			return zeroByteLayer;
 		}
-		// else
-		long nextSeed;
-		final int size = zeroByteLayer.capacity();
-		final ByteBuffer layer;
-		synchronized(byteLayersMap) {
-			if(byteLayersMap.containsKey(layerIndex)) {
+		// else fast check if layer exists
+		ByteBuffer layer = byteLayersMap.get(layerIndex);
+		if(layer == null) {
+			// else lock, recheck and (possibly) generate
+			synchronized(byteLayersMap) {
 				layer = byteLayersMap.get(layerIndex);
-			} else {
-				layer = ByteBuffer.allocateDirect(size);
-				nextSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
-				generateData(layer, nextSeed);
-				byteLayersMap.put(layerIndex, layer);
+				if(layer == null) {
+					long nextSeed;
+					final int size = zeroByteLayer.capacity();
+					layer = ByteBuffer.allocateDirect(size);
+					nextSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
+					generateData(layer, nextSeed);
+					byteLayersMap.put(layerIndex, layer);
+				}
 			}
 		}
 		return layer;
@@ -138,20 +102,20 @@ implements ContentSource {
 			countTailBytes = ringBuffSize % countWordBytes;
 		long word = seed;
 		int i;
-		double d = System.nanoTime();
 		// 64-bit words
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {
 			byteLayer.putLong(word);
 			word = MathUtil.xorShift(word);
 		}
-		// tail bytes\
+		// tail bytes
 		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
 	}
+	
 	//
 	@Override
 	public final void close()

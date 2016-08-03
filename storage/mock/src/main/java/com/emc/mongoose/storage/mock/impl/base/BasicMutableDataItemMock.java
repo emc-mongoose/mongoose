@@ -8,33 +8,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class BasicMutableDataItemMock
-	extends BasicMutableDataItem
-	implements MutableDataItemMock {
+extends BasicMutableDataItem
+implements MutableDataItemMock {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	public BasicMutableDataItemMock() {
-		super();
-	}
 	//
 	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
 		super(value, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
+		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(
-		final String name, final Long offset, final Long size, final Integer layerNum,
+		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
 		super(SLASH, name, offset, size, layerNum, contentSrc);

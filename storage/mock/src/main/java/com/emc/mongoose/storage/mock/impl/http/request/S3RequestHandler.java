@@ -143,7 +143,7 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 		for (final T object: buffer) {
 			final Element elem = xml.createElement("Contents");
 			appendElement(xml, elem, "Key", object.getName());
-			appendElement(xml, elem, "Size", Long.toString(object.getSize()));
+			appendElement(xml, elem, "Size", Long.toString(object.size()));
 			appendElement(rootElem, elem);
 		}
 		final ByteArrayOutputStream stream = new ByteArrayOutputStream();

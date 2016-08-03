@@ -22,11 +22,11 @@ implements Balancer<S> {
 		}
 	};
 	private AtomicInteger rrc = new AtomicInteger(0);
-	private final S nodes[];
+	private final S options[];
 	private final Map<S, AtomicInteger> leaseMap;
 	
 	public BasicBalancer(final S options[]) {
-		this.nodes = options;
+		this.options = options;
 		if(options == null) {
 			this.leaseMap = null;
 		} else {
@@ -63,38 +63,63 @@ implements Balancer<S> {
 	
 	@Override
 	public final S get() {
-		if(nodes == null) {
+		if(options == null) {
 			return null;
 		}
-		if(nodes.length == 1) {
-			return nodes[0];
+		if(options.length == 1) {
+			return options[0];
 		}
 		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
 		bestChoices.clear();
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
-		for(final S nextNode : nodes) {
-			nextLeaseCount = leaseMap.get(nextNode).get();
+		for(final S nextChoice : options) {
+			nextLeaseCount = leaseMap.get(nextChoice).get();
 			if(nextLeaseCount < minLeaseCount) {
 				minLeaseCount = nextLeaseCount;
 				bestChoices.clear();
-				bestChoices.add(nextNode);
+				bestChoices.add(nextChoice);
 			} else if(nextLeaseCount == minLeaseCount) {
-				bestChoices.add(nextNode);
+				bestChoices.add(nextChoice);
 			}
 		}
 		// round robin counter
 		if(!rrc.compareAndSet(Short.MAX_VALUE, 0)) {
 			rrc.incrementAndGet();
 		}
-		// select using round robin counter if there are more than 1 best nodes
+		// select using round robin counter if there are more than 1 best options
 		return bestChoices.get(rrc.get() % bestChoices.size());
 	}
 	
 	@Override
 	public int get(final List<S> buffer, final int limit)
 	throws IOException {
-		
-		return 0;
+		if(options == null) {
+			return 0;
+		}
+		if(options.length == 1) {
+			final S choice = options[0];
+			for(int i = 0; i < limit; i ++) {
+				buffer.set(0, choice);
+			}
+		}
+		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
+		bestChoices.clear();
+		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
+		for(final S nextChoice : options) {
+			nextLeaseCount = leaseMap.get(nextChoice).get();
+			if(nextLeaseCount < minLeaseCount) {
+				minLeaseCount = nextLeaseCount;
+				bestChoices.clear();
+				bestChoices.add(nextChoice);
+			} else if(nextLeaseCount == minLeaseCount) {
+				bestChoices.add(nextChoice);
+			}
+		}
+		final int bestChoicesCount = bestChoices.size();
+		for(int i = 0; i < limit; i ++) {
+			buffer.add(bestChoices.get(i % bestChoicesCount));
+		}
+		return limit;
 	}
 	
 	@Override

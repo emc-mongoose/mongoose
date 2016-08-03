@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
+import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -342,7 +344,7 @@ extends ChannelInboundHandlerAdapter {
 		try {
 			final T object = sharedStorage.getObject(containerName, id, offset, 0);
 			if (object != null) {
-				final long size = object.getSize();
+				final long size = object.size();
 				ioStats.markRead(true, size);
 				if (LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Send data object with ID {}", id);
@@ -351,7 +353,7 @@ extends ChannelInboundHandlerAdapter {
 					HttpUtil.setContentLength(response, size);
 					ctx.write(response);
 					if (object.hasBeenUpdated()) {
-						ctx.write(new UpdatedDataItemFileRegion<>(object, contentSource));
+						ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
 					} else {
 						ctx.write(new DataItemFileRegion<>(object));
 					}

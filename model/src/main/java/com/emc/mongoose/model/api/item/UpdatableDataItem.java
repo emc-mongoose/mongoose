@@ -10,11 +10,11 @@ extends DataItem {
 
 	boolean hasScheduledUpdates();
 
-	boolean isCurrLayerRangeUpdated(final int layerNum);
+	boolean isCurrLayerRangeUpdated(final int rangeNum);
 
-	boolean isCurrLayerRangeUpdating(final int layerNum);
+	boolean isCurrLayerRangeUpdating(final int rangeNum);
 
-	boolean isNextLayerRangeUpdating(final int layerNum);
+	boolean isNextLayerRangeUpdating(final int rangeNum);
 
 	void scheduleRandomUpdates(final int count)
 	throws IllegalArgumentException, IllegalStateException;

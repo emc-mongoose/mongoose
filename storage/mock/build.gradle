@@ -4,6 +4,8 @@ dependencies {
 
 	compile project(':common')
 	compile project(':model')
+	compile project(':storage:driver-http-base')
+	compile project(':storage:driver-http-s3')
 	compile project(':ui')
 
 	compile(

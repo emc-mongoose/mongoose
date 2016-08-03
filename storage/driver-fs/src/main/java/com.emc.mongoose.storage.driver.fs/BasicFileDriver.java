@@ -127,7 +127,7 @@ implements Driver<I, O> {
 		final I fileItem, final O ioTask, final FileChannel srcChannel, final FileChannel dstChannel
 	) throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
-		final long contentSize = fileItem.getSize();
+		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
 			if(srcChannel == null) {
 				countBytesDone += dstChannel.transferFrom(
@@ -148,12 +148,12 @@ implements Driver<I, O> {
 	private void readFile(final I fileItem, final O ioTask, final FileChannel srcChannel)
 	throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
-		final long contentSize = fileItem.getSize();
+		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize) {
 			final ByteBuffer buffIn = ((IoWorker) Thread.currentThread())
 				.getThreadLocalBuff(contentSize - countBytesDone);
 			countBytesDone += srcChannel.read(buffIn);
-			// TODO verification
+			// TODO verification fileItem.readAndVerify(srcChannel, buffIn);
 			ioTask.setCountBytesDone(countBytesDone);
 		} else {
 			ioTask.setStatus(Status.SUCC);

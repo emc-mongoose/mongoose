@@ -7,15 +7,12 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BasicMutableDataItem
-	extends BasicDataItem
-	implements MutableDataItem {
+extends BasicDataItem
+implements MutableDataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static char LAYER_MASK_SEP = '/';
@@ -31,10 +28,6 @@ public class BasicMutableDataItem
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public BasicMutableDataItem() {
-		super();
-	}
-	//
 	public BasicMutableDataItem(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 	}
@@ -47,7 +40,6 @@ public class BasicMutableDataItem
 		try {
 			// extract hexadecimal layer number
 			currLayerIndex = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
-			setContentSource(contentSrc, currLayerIndex);
 			// extract hexadecimal mask, convert into bit set and add to the existing mask
 			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 			final char rangesMaskChars[];
@@ -66,27 +58,27 @@ public class BasicMutableDataItem
 	}
 	//
 	public BasicMutableDataItem(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItem(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
+		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicMutableDataItem(
-		final String path, final String name, final Long offset, final Long size,
+		final String path, final String name, final long offset, final long size,
 		final ContentSource contentSrc
 	) {
 		super(path, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicMutableDataItem(
-		final String path, final String name, final Long offset, final Long size,
-		final Integer layerNum, final ContentSource contentSrc
+		final String path, final String name, final long offset, final long size,
+		final int layerNum, final ContentSource contentSrc
 	) {
 		super(path, name, offset, size, layerNum, contentSrc);
 	}

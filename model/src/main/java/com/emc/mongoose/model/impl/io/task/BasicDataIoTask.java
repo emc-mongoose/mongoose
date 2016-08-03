@@ -25,7 +25,7 @@ implements DataIoTask<T> {
 			case CREATE:
 			case READ:
 				// TODO partial read support
-				contentSize = item.getSize();
+				contentSize = item.size();
 				break;
 			/*case UPDATE:
 				if(item.hasScheduledUpdates()) {
@@ -33,7 +33,7 @@ implements DataIoTask<T> {
 				} else if(item.isAppending()) {
 					contentSize = item.getAppendSize();
 				} else {
-					contentSize = item.getSize();
+					contentSize = item.size();
 				}
 				break;*/
 			default:

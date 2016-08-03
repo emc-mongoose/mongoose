@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.fs;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Driver;
@@ -36,9 +37,7 @@ implements Driver<I, O> {
 	private final int ioWorkerCount;
 	private final BlockingQueue<O> ioTaskQueue;
 
-	public FsDriverBase(
-		final LoadConfig loadConfig, final BufferConfig ioBufferConfig
-	) {
+	public FsDriverBase(final LoadConfig loadConfig, final BufferConfig ioBufferConfig) {
 		super(loadConfig);
 		final SizeInBytes ioBuffSize = ioBufferConfig.getSize();
 		final long ioBuffSizeMin = ioBuffSize.getMin();
