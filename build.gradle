@@ -53,21 +53,14 @@ subprojects {
 		mavenCentral()
 	}
 
-	configurations {
-		provided
-		compile.extendsFrom provided
-	}
-
 	dependencies {
 
-		provided(
+		compile(
+
 			"org.apache.logging.log4j:log4j-core:${log4jVersion}",
 			"org.apache.logging.log4j:log4j-api:${log4jVersion}",
 			"org.apache.logging.log4j:log4j-iostreams:${log4jVersion}",
-			"org.apache.logging.log4j:log4j-jul:${log4jVersion}"
-		)
-
-		compile(
+			"org.apache.logging.log4j:log4j-jul:${log4jVersion}",
 
 			"commons-lang:commons-lang:2.6",
 			"org.apache.commons:commons-collections4:4.1",
@@ -84,19 +77,6 @@ subprojects {
 		)
 
 		testCompile "junit:junit:4.12"
-	}
-
-	jar {
-		dependsOn configurations.runtime
-		from {
-			(configurations.runtime - configurations.provided).collect {
-				it.isDirectory() ? it : zipTree(it)
-			}
-		} {
-			exclude "META-INF/*.SF"
-			exclude "META-INF/*.DSA"
-			exclude "META-INF/*.RSA"
-		}
 	}
 }
 
