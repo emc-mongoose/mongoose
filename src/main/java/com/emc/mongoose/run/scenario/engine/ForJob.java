@@ -333,23 +333,30 @@ extends SequentialJob {
 	) {
 		final Map<String, Object> dstTree = new LinkedHashMap<>();
 		Object treeNode;
-		String t;
+		String t, newKey;
 		for(final String key : srcTree.keySet()) {
+
+			if(key.contains(replacePattern)) {
+				newKey = key.replace(replacePattern, newValue.toString());
+			} else {
+				newKey = key;
+			}
+
 			treeNode = srcTree.get(key);
 			if(treeNode instanceof Map) {
 				dstTree.put(
-					key,
+					newKey,
 					findAndSubstituteWith((Map<String, Object>) treeNode, replacePattern, newValue)
 				);
 			} else if(treeNode instanceof String) {
 				if(treeNode.equals(replacePattern)) {
-					dstTree.put(key, newValue);
+					dstTree.put(newKey, newValue);
 				} else {
 					t = (String) treeNode;
 					if(t.contains(replacePattern)) {
-						dstTree.put(key, t.replace(replacePattern, newValue.toString()));
+						dstTree.put(newKey, t.replace(replacePattern, newValue.toString()));
 					} else {
-						dstTree.put(key, treeNode);
+						dstTree.put(newKey, treeNode);
 					}
 				}
 			} else if(treeNode instanceof List) {
@@ -377,9 +384,9 @@ extends SequentialJob {
 						dstListNode.add(element);
 					}
 				}
-				dstTree.put(key, dstListNode);
+				dstTree.put(newKey, dstListNode);
 			} else {
-				dstTree.put(key, treeNode);
+				dstTree.put(newKey, treeNode);
 			}
 		}
 		return dstTree;

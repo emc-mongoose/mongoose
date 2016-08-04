@@ -635,14 +635,27 @@ implements AppConfig {
 	private <T> void findAndSubstituteWith(
 		final String key, final Object oldValue, final String pattern, final T newValue
 	) {
+		final String newKey;
+		if(key.contains(pattern)) {
+			newKey = key.replace(pattern, newValue.toString());
+		} else {
+			newKey = key;
+		}
+
 		String t;
 		if(oldValue instanceof String) {
 			if(oldValue.equals(pattern)) {
-				setProperty(key, newValue);
+				if(!key.equals(newKey)) {
+					clearProperty(key);
+				}
+				setProperty(newKey, newValue);
 			} else {
 				t = (String) oldValue;
 				if(t.contains(pattern)) {
-					setProperty(key, t.replace(pattern, newValue.toString()));
+					if(!key.equals(newKey)) {
+						clearProperty(key);
+					}
+					setProperty(newKey, t.replace(pattern, newValue.toString()));
 				}
 			}
 		} else if(oldValue instanceof List) {
@@ -652,7 +665,7 @@ implements AppConfig {
 					if(oldValueElement.equals(pattern)) {
 						newValueList.add(newValue);
 					} else {
-						t = (String)oldValueElement;
+						t = (String) oldValueElement;
 						if(t.contains(pattern)) {
 							newValueList.add(t.replace(pattern, newValue.toString()));
 						} else {
@@ -664,7 +677,7 @@ implements AppConfig {
 				}
 			}
 			clearProperty(key);
-			setProperty(key, newValueList);
+			setProperty(newKey, newValueList);
 		}
 	}
 	//

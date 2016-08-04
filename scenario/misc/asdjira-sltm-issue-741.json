@@ -1,0 +1,26 @@
+{
+	"type" : "for",
+	"value" : "i",
+	"in" : [
+		5, 10, 15, 20, 25, 30
+	],
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : 1
+					}
+				},
+				"storage" : {
+					"http" : {
+						"headers" : {
+							"x-amz-meta-var-%d[0-${i}]" : "%d[0-500]"
+						}
+					}
+				}
+			}
+		}
+	]
+}
