@@ -17,10 +17,3 @@ void renameBuildFiles(def project) {
 }
 
 renameBuildFiles(rootProject)
-
-//rootProject.children.each { subproject ->
-//	subproject.buildFileName = subproject.name + '.gradle'
-//	subproject.children.each { subsubproject ->
-//		subsubproject.buildFileName = subsubproject.name + '.gradle'
-//	}
-//}
