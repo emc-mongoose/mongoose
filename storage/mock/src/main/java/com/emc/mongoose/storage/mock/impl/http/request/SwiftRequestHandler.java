@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -165,8 +166,12 @@ extends RequestHandlerBase<T> {
             for(final T object : buffer) {
                 node = OBJ_MAPPER.createObjectNode();
                 node.put("name", object.getName());
-                node.put("bytes", object.size());
-                ((ArrayNode) nodeRoot).add(node);
+	            try {
+		            node.put("bytes", object.size());
+	            } catch(final IOException e) {
+		            throw new IllegalArgumentException();
+	            }
+	            ((ArrayNode) nodeRoot).add(node);
             }
             try {
                 final byte[] content = OBJ_MAPPER.writeValueAsBytes(nodeRoot);

@@ -1,5 +1,3 @@
-rootProject.name = 'mongoose'
-
 include 'common', 'model', 'ui'
 include 'generator', 'monitor'
 
@@ -8,3 +6,21 @@ include 'storage:driver-fs'
 include 'storage:driver-http-base'
 include 'storage:driver-http-s3'
 include 'storage:mock'
+
+rootProject.name = 'mongoose'
+
+void renameBuildFiles(def project) {
+	project.children.each { subproject ->
+		renameBuildFiles(subproject)
+		subproject.buildFileName = subproject.name + '.gradle'
+	}
+}
+
+renameBuildFiles(rootProject)
+
+//rootProject.children.each { subproject ->
+//	subproject.buildFileName = subproject.name + '.gradle'
+//	subproject.children.each { subsubproject ->
+//		subsubproject.buildFileName = subsubproject.name + '.gradle'
+//	}
+//}

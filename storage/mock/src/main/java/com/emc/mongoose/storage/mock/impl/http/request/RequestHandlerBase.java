@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -369,7 +370,7 @@ extends ChannelInboundHandlerAdapter {
 				LOG.trace(Markers.ERR, "No such container: {}", id);
 			}
 			ioStats.markRead(false, 0);
-		} catch (final ContainerMockException e) {
+		} catch (final ContainerMockException | IOException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);

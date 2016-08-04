@@ -4,6 +4,8 @@ import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
 
+import java.io.IOException;
+
 public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
@@ -25,7 +27,11 @@ implements DataIoTask<T> {
 			case CREATE:
 			case READ:
 				// TODO partial read support
-				contentSize = item.size();
+				try {
+					contentSize = item.size();
+				} catch(IOException e) {
+					throw new IllegalStateException();
+				}
 				break;
 			/*case UPDATE:
 				if(item.hasScheduledUpdates()) {

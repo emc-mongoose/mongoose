@@ -1,29 +1,5 @@
 import groovy.json.JsonSlurper
 
-description = "Mongoose - high-load storage performance testing automation tool"
-project.ext.log4jVersion = "2.6.1";
-project.ext.nettyVersion = "4.1.2.Final";
-project.ext.jacksonVersion = "2.8.0";
-
-def loadProjectVersionFrom(String sourceFileName) {
-	def inputFile = new File(sourceFileName)
-	def json = new JsonSlurper().parseText(inputFile.text)
-	json.version
-}
-
-def collectFilePath(String... pathChunks) {
-	def pathBuilder = new StringBuilder()
-	def separator = File.separator
-	pathChunks.each {
-		pathBuilder.append(separator)
-		pathBuilder.append(it)
-	}
-	pathBuilder.toString()
-}
-
-def configFilePath = "." + collectFilePath("ui", "src", "main", "resources", "defaults.json");
-version = loadProjectVersionFrom configFilePath
-
 buildscript {
 	dependencies {
 		classpath "com.google.gradle:osdetector-gradle-plugin:1.4.0"
@@ -31,6 +7,19 @@ buildscript {
 	repositories {
 		mavenCentral()
 	}
+}
+ext {
+	depVersion = [
+		log4j: "2.6.2",
+		netty: "4.1.4.Final",
+		jackson: "2.8.1"
+	]
+}
+
+description = "Mongoose - high-load storage performance testing automation tool"
+
+allprojects {
+	version = defineVersion()
 }
 
 subprojects {
@@ -57,10 +46,10 @@ subprojects {
 
 		compile(
 
-			"org.apache.logging.log4j:log4j-core:${log4jVersion}",
-			"org.apache.logging.log4j:log4j-api:${log4jVersion}",
-			"org.apache.logging.log4j:log4j-iostreams:${log4jVersion}",
-			"org.apache.logging.log4j:log4j-jul:${log4jVersion}",
+			"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+			"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+			"org.apache.logging.log4j:log4j-iostreams:${depVersion.log4j}",
+			"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 
 			"commons-lang:commons-lang:2.6",
 			"org.apache.commons:commons-collections4:4.1",
@@ -69,9 +58,9 @@ subprojects {
 
 			"com.lmax:disruptor:3.3.4",
 
-			"com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
-			"com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
-			"com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}",
+			"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
+			"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
+			"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
 
 			"it.unimi.dsi:fastutil:7.0.12"
 		)
@@ -80,6 +69,48 @@ subprojects {
 	}
 }
 
+task printVersion {
+	group = 'versioning'
+	description = 'Prints Mongoose version.'
+	doLast { logger.quiet "Mongoose version: $version" }
+}
+
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.14"
+}
+
+final class ProjectVersion {
+	private final Integer major
+	private final Integer feature
+	private final Integer bugfix
+	private final Boolean release
+
+	public final static String SNAPSHOT = 'SNAPSHOT'
+
+	ProjectVersion(
+		final Integer major,
+		final Integer feature, final Integer bugfix, final Boolean release) {
+		this.major = major
+		this.feature = feature
+		this.bugfix = bugfix
+		this.release = release
+	}
+
+	@Override
+	String toString() {
+		"$major.$feature.$bugfix${release ? '' : "-$SNAPSHOT"}"
+	}
+}
+
+
+String defineVersion(final Integer major,
+                final Integer feature, final Integer bugfix, final Boolean release) {
+	new ProjectVersion(major, feature, bugfix, release).toString()
+}
+
+String defineVersion() {
+	def configFilePath = [rootDir, "ui", "src", "main", "resources", "defaults.json"].join(File.separator);
+	def inputFile = new File(configFilePath)
+	def json = new JsonSlurper().parseText(inputFile.text)
+	json.version
 }
