@@ -1,0 +1,24 @@
+{
+	"type" : "sequential",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "${MONGOOSE_DIR}/log/INIT/items.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "${MONGOOSE_DIR}/log/INIT/items.csv"
+					}
+				}
+			}
+		}
+	]
+}

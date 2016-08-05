@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,7 +86,7 @@ implements Scenario {
 	}
 	//
 	private final static Pattern PATTERN_ENV_VAR = Pattern.compile(
-		"\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}"
+		".*\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}.*"
 	);
 	private static Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
 
@@ -100,6 +101,8 @@ implements Scenario {
 			value = tree.get(key);
 			if(value instanceof Map) {
 				overrideFromEnv((Map<String, Object>) value);
+			} else if(value instanceof List) {
+				overrideFromEnv((List<Object>) value);
 			} else if(value instanceof String) {
 				valueStr = (String) value;
 				m = PATTERN_ENV_VAR.matcher(valueStr);
@@ -125,6 +128,47 @@ implements Scenario {
 		}
 
 		return tree;
+	}
+	//
+	private static List<Object> overrideFromEnv(final List<Object> values) {
+
+		Object value;
+		String valueStr;
+		Matcher m;
+		String propertyName;
+		String newValue;
+		boolean alteredFlag;
+
+		for(int i = 0; i < values.size(); i ++) {
+			value = values.get(i);
+			if(value instanceof Map) {
+				overrideFromEnv((Map<String, Object>) value);
+			} else if(value instanceof List) {
+				overrideFromEnv((List) value);
+			} else if(value instanceof String) {
+				valueStr = (String) value;
+				m = PATTERN_ENV_VAR.matcher(valueStr);
+				alteredFlag = false;
+				while(m.find()) {
+					propertyName = m.group(1);
+					if(propertyName != null && !propertyName.isEmpty()) {
+						newValue = System.getenv(propertyName);
+						if(newValue != null) {
+							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
+							alteredFlag = true;
+							LOG.info(
+								Markers.MSG, "Value #{}: replaced \"{}\" with new value \"{}\"",
+								i, propertyName, newValue
+							);
+						}
+					}
+				}
+				if(alteredFlag) {
+					values.set(i, valueStr);
+				}
+			}
+		}
+		return values;
 	}
 	//
 	@Override
