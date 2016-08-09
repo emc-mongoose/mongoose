@@ -31,6 +31,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -102,9 +103,8 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 
 	@Override
 	protected void handleContainerList(
-			final String name,
-			final QueryStringDecoder queryStringDecoder,
-			final ChannelHandlerContext ctx) {
+		final String name, final QueryStringDecoder queryStringDecoder, final ChannelHandlerContext ctx
+	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
@@ -143,7 +143,10 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 		for (final T object: buffer) {
 			final Element elem = xml.createElement("Contents");
 			appendElement(xml, elem, "Key", object.getName());
-			appendElement(xml, elem, "Size", Long.toString(object.size()));
+			try {
+				appendElement(xml, elem, "Size", Long.toString(object.size()));
+			} catch(final IOException ignored) {
+			}
 			appendElement(rootElem, elem);
 		}
 		final ByteArrayOutputStream stream = new ByteArrayOutputStream();

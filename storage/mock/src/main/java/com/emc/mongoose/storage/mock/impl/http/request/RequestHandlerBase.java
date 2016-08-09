@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -343,16 +344,16 @@ extends ChannelInboundHandlerAdapter {
 		final HttpResponse response;
 		try {
 			final T object = sharedStorage.getObject(containerName, id, offset, 0);
-			if (object != null) {
+			if(object != null) {
 				final long size = object.size();
 				ioStats.markRead(true, size);
-				if (LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Send data object with ID {}", id);
 					ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
 					response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 					HttpUtil.setContentLength(response, size);
 					ctx.write(response);
-					if (object.hasBeenUpdated()) {
+					if(object.hasBeenUpdated()) {
 						ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
 					} else {
 						ctx.write(new DataItemFileRegion<>(object));
@@ -363,13 +364,13 @@ extends ChannelInboundHandlerAdapter {
 				setHttpResponseStatusInContext(ctx, NOT_FOUND);
 				ioStats.markRead(false, 0);
 			}
-		} catch (final ContainerMockNotFoundException e) {
+		} catch(final ContainerMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LOG.trace(Markers.ERR, "No such container: {}", id);
 			}
 			ioStats.markRead(false, 0);
-		} catch (final ContainerMockException e) {
+		} catch(final ContainerMockException | IOException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);

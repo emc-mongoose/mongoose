@@ -4,6 +4,8 @@ import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
 
+import java.io.IOException;
+
 public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
@@ -17,7 +19,8 @@ implements DataIoTask<T> {
 	protected volatile int currDataLayerIdx = 0;
 	protected volatile long respDataTimeStart = 0;
 
-	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath) {
+	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
+	throws IOException {
 		super(ioType, item, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
