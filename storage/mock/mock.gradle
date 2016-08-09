@@ -7,14 +7,13 @@ dependencies {
 	compile project(':storage:driver-http-base')
 	compile project(':storage:driver-http-s3')
 	compile project(':ui')
-
 	compile(
-		"io.netty:netty-common:${nettyVersion}",
-		"io.netty:netty-buffer:${nettyVersion}",
-		"io.netty:netty-transport:${nettyVersion}",
-		"io.netty:netty-handler:${nettyVersion}",
-		"io.netty:netty-codec-http:${nettyVersion}",
-		"io.netty:netty-transport-native-epoll:${nettyVersion}:${osdetector.classifier}"
+		"io.netty:netty-common:${depVersion.netty}",
+		"io.netty:netty-buffer:${depVersion.netty}",
+		"io.netty:netty-transport:${depVersion.netty}",
+		"io.netty:netty-handler:${depVersion.netty}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
 	)
 }
 

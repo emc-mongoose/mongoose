@@ -1,0 +1,18 @@
+description = 'mongoose-storage-driver-http-base'
+
+dependencies {
+
+	compile project(':common')
+	compile project(':model')
+	compile project(':ui')
+	compile project(':storage:driver-base')
+
+	compile(
+		"io.netty:netty-common:${depVersion.netty}",
+		"io.netty:netty-buffer:${depVersion.netty}",
+		"io.netty:netty-transport:${depVersion.netty}",
+		"io.netty:netty-handler:${depVersion.netty}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
+	)
+}

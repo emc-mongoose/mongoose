@@ -31,6 +31,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +144,11 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 		for (final T object: buffer) {
 			final Element elem = xml.createElement("Contents");
 			appendElement(xml, elem, "Key", object.getName());
-			appendElement(xml, elem, "Size", Long.toString(object.size()));
+			try {
+				appendElement(xml, elem, "Size", Long.toString(object.size()));
+			} catch(final IOException e) {
+				throw new IllegalArgumentException();
+			}
 			appendElement(rootElem, elem);
 		}
 		final ByteArrayOutputStream stream = new ByteArrayOutputStream();
