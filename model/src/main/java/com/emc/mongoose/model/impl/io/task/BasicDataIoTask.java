@@ -28,7 +28,11 @@ implements DataIoTask<T> {
 			case CREATE:
 			case READ:
 				// TODO partial read support
-				contentSize = item.size();
+				try {
+					contentSize = item.size();
+				} catch(IOException e) {
+					throw new IllegalStateException();
+				}
 				break;
 			/*case UPDATE:
 				if(item.hasScheduledUpdates()) {
