@@ -28,8 +28,10 @@ implements Driver<I, O> {
 
 	protected final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	protected final int concurrencyLevel;
+	protected final String runId;
 
-	protected DriverBase(final LoadConfig loadConfig) {
+	protected DriverBase(final String runId, final LoadConfig loadConfig) {
+		this.runId = runId;
 		concurrencyLevel = loadConfig.getConcurrency();
 	}
 

@@ -5,6 +5,6 @@ dependencies {
 	compile project(':model')
 	compile project(':ui')
 	compile project(':generator')
-	compile project(':storage:driver-base')
 	compile project(':storage:driver-fs')
+	compile project(':storage:driver-http-s3')
 }

@@ -37,8 +37,10 @@ implements Driver<I, O> {
 	private final int ioWorkerCount;
 	private final BlockingQueue<O> ioTaskQueue;
 
-	public FsDriverBase(final LoadConfig loadConfig, final BufferConfig ioBufferConfig) {
-		super(loadConfig);
+	public FsDriverBase(
+		final String runId, final LoadConfig loadConfig, final BufferConfig ioBufferConfig
+	) {
+		super(runId, loadConfig);
 		final SizeInBytes ioBuffSize = ioBufferConfig.getSize();
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
@@ -52,7 +54,9 @@ implements Driver<I, O> {
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
 		ioTaskExecutor = new ThreadPoolExecutor(ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new IoWorker.Factory("ioWorker", (int) ioBuffSize.getMin(), (int) ioBuffSize.getMax())
+			new IoWorker.Factory(
+				this.runId + "-ioWorker", (int) ioBuffSize.getMin(), (int) ioBuffSize.getMax()
+			)
 		);
 	}
 

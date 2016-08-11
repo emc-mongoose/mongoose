@@ -2,11 +2,12 @@ package com.emc.mongoose.storage.driver.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.http.base.HttpDriverBase;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.SocketConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -25,11 +26,11 @@ extends HttpDriverBase<I, O> {
 	
 	private final static Logger LOG = LogManager.getLogger();
 	
-	protected HttpS3Driver(
-		final Config.LoadConfig loadConfig, final Config.StorageConfig storageConfig,
-		final Config.SocketConfig socketConfig
+	public HttpS3Driver(
+		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(loadConfig, storageConfig, socketConfig);
+		super(runId, loadConfig, storageConfig, socketConfig);
 	}
 	
 	@Override
@@ -44,11 +45,7 @@ extends HttpDriverBase<I, O> {
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 		
-		return applyHeaders(new DefaultHttpRequest(HTTP_1_1, httpMethod, getPath(item)));
-	}
-	
-	private String getPath(final I item) {
-		return item.getPath();
+		return applyHeaders(new DefaultHttpRequest(HTTP_1_1, httpMethod, ioTask.getDstPath()));
 	}
 	
 	private HttpMethod getHttpMethod(final LoadType loadType) {

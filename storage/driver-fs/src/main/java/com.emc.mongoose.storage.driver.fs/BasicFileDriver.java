@@ -45,8 +45,10 @@ implements Driver<I, O> {
 			}
 		};
 
-	public BasicFileDriver(final LoadConfig loadConfig, final BufferConfig ioBufferConfig) {
-		super(loadConfig, ioBufferConfig);
+	public BasicFileDriver(
+		final String runId, final LoadConfig loadConfig, final BufferConfig ioBufferConfig
+	) {
+		super(runId, loadConfig, ioBufferConfig);
 	}
 
 	private FileChannel getSrcChannel(final I fileItem, final O ioTask)
@@ -119,6 +121,7 @@ implements Driver<I, O> {
 		} catch(final IOException e) {
 			ioTask.setStatus(Status.FAIL_IO);
 		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
 			ioTask.setStatus(Status.FAIL_UNKNOWN);
 		}
 	}

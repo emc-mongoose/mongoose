@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.http.s3;
 
 import com.emc.mongoose.ui.log.LogUtil;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpContent;
@@ -14,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 01.08.16.
  */
+@ChannelHandler.Sharable
 public final class HttpS3Handler
 extends SimpleChannelInboundHandler<HttpObject> {
 	
