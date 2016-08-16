@@ -8,13 +8,6 @@ buildscript {
 		mavenCentral()
 	}
 }
-ext {
-	depVersion = [
-		log4j: "2.6.2",
-		netty: "4.1.4.Final",
-		jackson: "2.8.1"
-	]
-}
 
 description = "Mongoose - high-load storage performance testing automation tool"
 
@@ -22,8 +15,19 @@ allprojects {
 	version = defineVersion()
 }
 
+ext {
+	depVersion = [
+		log4j: "2.6.2",
+		netty: "4.1.4.Final",
+		jackson: "2.8.1",
+	]
+	projectName = "mongoose"
+
+}
+
 subprojects {
 	apply plugin: "java"
+	apply plugin: "java-library-distribution"
 	apply plugin: "com.google.osdetector"
 
 	version = super.version
@@ -68,6 +72,21 @@ subprojects {
 		testCompile "junit:junit:4.12"
 	}
 }
+
+project(':storage:mock') {
+
+	jar {
+		classifier "wsmock"
+		archiveName "${projectName}-${classifier}.${extension}"
+		from { configurations.compile.collect { file ->
+			file.isDirectory() ? file : zipTree(file) } }
+		manifest {
+			attributes 'Main-Class': 'com.emc.mongoose.storage.mock.Main'
+		}
+	}
+
+}
+
 
 task printVersion {
 	group = 'versioning'
