@@ -1,1 +1,20 @@
 description = 'mongoose-storage-mock'
+
+dependencies {
+	compile project(':common')
+	compile project(':model')
+	compile project(':storage:driver-http-base')
+	compile project(':ui')
+}
+
+jar {
+	archiveName "nagaina.$extension"
+	manifest {
+		attributes (
+			"Class-Path": configurations.runtime.collect {file ->
+				libDirName + File.separator + file.name
+			}.join(' '),
+			"Main-Class": "com.emc.mongoose.storage.mock.Main"
+		)
+	}
+}

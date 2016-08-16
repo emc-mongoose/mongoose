@@ -8,3 +8,14 @@ dependencies {
 	compile project(':storage:driver-base')
 	compile project(':storage:driver-fs')
 }
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": configurations.runtime.collect {file ->
+				libDirName + File.separator + file.name
+			}.join(' '),
+			"Main-Class": "com.emc.mongoose.monitor.Main"
+		)
+	}
+}

@@ -14,7 +14,6 @@ description = "Mongoose - high-load storage performance testing automation tool"
 allprojects {
 	version = defineVersion()
 	apply plugin: "java"
-//	apply plugin: "java-library-distribution"
 }
 
 ext {
@@ -46,7 +45,6 @@ subprojects {
 	dependencies {
 
 		compile(
-
 			"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 			"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 			"org.apache.logging.log4j:log4j-iostreams:${depVersion.log4j}",
@@ -70,46 +68,16 @@ subprojects {
 	}
 
 	jar {
-		archiveName "$rootProject.name-$project.name.$extension"
+		def rootName = rootProject.name
+		def name = project.name
+		archiveName "$rootName-$name.$extension"
 		manifest {
 			attributes (
 				"Implementation-Version": version,
-				"Implementation-Title": "$rootProject.name-$project.name"
+				"Implementation-Title": "$rootName-$name"
 			)
 		}
 	}
-}
-
-project(":storage:mock") {
-
-	dependencies {
-		compile project(':common')
-		compile project(':model')
-		compile project(':storage:driver-http-base')
-		compile project(':storage:driver-http-s3')
-		compile project(':ui')
-		compile(
-			"io.netty:netty-common:${depVersion.netty}",
-			"io.netty:netty-buffer:${depVersion.netty}",
-			"io.netty:netty-transport:${depVersion.netty}",
-			"io.netty:netty-handler:${depVersion.netty}",
-			"io.netty:netty-codec-http:${depVersion.netty}",
-			"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
-		)
-	}
-
-	jar {
-		archiveName "nagaina.$extension"
-		manifest {
-			attributes (
-				"Class-Path": configurations.runtime.collect {file ->
-					libDirName + File.separator + file.name
-				}.join(' '),
-				"Main-Class": "com.emc.mongoose.storage.mock.Main"
-			)
-		}
-	}
-
 }
 
 task dist(type: Tar) {
@@ -119,11 +87,15 @@ task dist(type: Tar) {
 	baseName = rootProject.name
 	compression = Compression.GZIP
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	into("$rootProject.name-$rootProject.version") {
+	def mock = project("storage:mock")
+	def monitor = project("monitor")
+	into("$baseName-$rootProject.version") {
 		into("lib") {
-			from { project("storage:mock").configurations.compile }
+			from { mock.configurations.compile }
+			from { monitor.configurations.compile }
 		}
-		from project("storage:mock").jar.outputs.files
+		from mock.jar.outputs.files
+		from monitor.jar.outputs.files
 	}
 }
 
@@ -136,35 +108,6 @@ task printVersion {
 
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.14.1"
-}
-
-final class ProjectVersion {
-	private final Integer major
-	private final Integer feature
-	private final Integer bugfix
-	private final Boolean release
-
-	public final static String SNAPSHOT = "SNAPSHOT"
-
-	ProjectVersion(
-		final Integer major,
-		final Integer feature, final Integer bugfix, final Boolean release) {
-		this.major = major
-		this.feature = feature
-		this.bugfix = bugfix
-		this.release = release
-	}
-
-	@Override
-	String toString() {
-		"$major.$feature.$bugfix${release ? '' : "-$SNAPSHOT"}"
-	}
-}
-
-
-String defineVersion(final Integer major,
-                final Integer feature, final Integer bugfix, final Boolean release) {
-	new ProjectVersion(major, feature, bugfix, release).toString()
 }
 
 String defineVersion() {
