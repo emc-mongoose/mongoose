@@ -13,6 +13,8 @@ description = "Mongoose - high-load storage performance testing automation tool"
 
 allprojects {
 	version = defineVersion()
+	apply plugin: "java"
+//	apply plugin: "java-library-distribution"
 }
 
 ext {
@@ -21,13 +23,10 @@ ext {
 		netty: "4.1.4.Final",
 		jackson: "2.8.1",
 	]
-	projectName = "mongoose"
-
+	libsDirName = "lib"
 }
 
 subprojects {
-	apply plugin: "java"
-	apply plugin: "java-library-distribution"
 	apply plugin: "com.google.osdetector"
 
 	version = super.version
@@ -73,29 +72,52 @@ subprojects {
 	}
 }
 
-project(':storage:mock') {
+project(":storage:mock") {
 
 	jar {
 		classifier "wsmock"
-		archiveName "${projectName}-${classifier}.${extension}"
+		archiveName "$rootProject.name-$classifier.$extension"
 		from { configurations.compile.collect { file ->
 			file.isDirectory() ? file : zipTree(file) } }
 		manifest {
-			attributes 'Main-Class': 'com.emc.mongoose.storage.mock.Main'
+			attributes (
+				"Implementation-Version": version,
+				"Implementation-Title": "$rootProject.name-$classifier",
+				"Class-Path": configurations.runtime.collect {file ->
+					libsDirName + File.separator + file.name
+				}.join(' '),
+				"Main-Class": "com.emc.mongoose.storage.mock.Main"
+			)
 		}
 	}
 
 }
 
+task dist(type: Tar) {
+	group = "distribution"
+	description = "Collect Mongoose as an archive"
+	dependsOn tasks.withType(Jar)
+	baseName = rootProject.name
+	compression = Compression.GZIP
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	println "DestDir: $destinationDir"
+	into("$rootProject.name-$rootProject.version") {
+//		into("lib") {
+//			from { configurations.runtime }
+//		}
+		from project("storage:mock").jar.outputs.files
+	}
+}
+
 
 task printVersion {
-	group = 'versioning'
-	description = 'Prints Mongoose version.'
+	group = "versioning"
+	description = "Prints Mongoose version."
 	doLast { logger.quiet "Mongoose version: $version" }
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "2.14"
+	gradleVersion = "2.14.1"
 }
 
 final class ProjectVersion {
@@ -104,7 +126,7 @@ final class ProjectVersion {
 	private final Integer bugfix
 	private final Boolean release
 
-	public final static String SNAPSHOT = 'SNAPSHOT'
+	public final static String SNAPSHOT = "SNAPSHOT"
 
 	ProjectVersion(
 		final Integer major,
