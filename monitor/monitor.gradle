@@ -8,3 +8,14 @@ dependencies {
 	compile project(':storage:driver-fs')
 	compile project(':storage:driver-http-s3')
 }
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": configurations.runtime.collect {file ->
+				libDirName + File.separator + file.name
+			}.join(' '),
+			"Main-Class": "com.emc.mongoose.monitor.Main"
+		)
+	}
+}

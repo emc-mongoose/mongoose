@@ -8,25 +8,25 @@ buildscript {
 		mavenCentral()
 	}
 }
-ext {
-	depVersion = [
-		log4j: "2.6.2",
-		netty: "4.1.4.Final",
-		jackson: "2.8.1"
-	]
-}
 
 description = "Mongoose - high-load storage performance testing automation tool"
 
 allprojects {
 	version = defineVersion()
+	apply plugin: "java"
+}
+
+ext {
+	depVersion = [
+		log4j: "2.6.2",
+		netty: "4.1.4.Final",
+		jackson: "2.8.1",
+	]
+	libDirName = "lib"
 }
 
 subprojects {
-	apply plugin: "java"
 	apply plugin: "com.google.osdetector"
-
-	version = super.version
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -45,7 +45,6 @@ subprojects {
 	dependencies {
 
 		compile(
-
 			"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 			"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 			"org.apache.logging.log4j:log4j-iostreams:${depVersion.log4j}",
@@ -67,45 +66,48 @@ subprojects {
 
 		testCompile "junit:junit:4.12"
 	}
+
+	jar {
+		def rootName = rootProject.name
+		def name = project.name
+		archiveName "$rootName-$name.$extension"
+		manifest {
+			attributes (
+				"Implementation-Version": version,
+				"Implementation-Title": "$rootName-$name"
+			)
+		}
+	}
 }
 
+task dist(type: Tar) {
+	group = "distribution"
+	description = "Collect Mongoose as an archive"
+	dependsOn tasks.withType(Jar)
+	baseName = rootProject.name
+	compression = Compression.GZIP
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	def mock = project("storage:mock")
+	def monitor = project("monitor")
+	into("$baseName-$rootProject.version") {
+		into("lib") {
+			from { mock.configurations.compile }
+			from { monitor.configurations.compile }
+		}
+		from mock.jar.outputs.files
+		from monitor.jar.outputs.files
+	}
+}
+
+
 task printVersion {
-	group = 'versioning'
-	description = 'Prints Mongoose version.'
+	group = "versioning"
+	description = "Prints Mongoose version."
 	doLast { logger.quiet "Mongoose version: $version" }
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "2.14"
-}
-
-final class ProjectVersion {
-	private final Integer major
-	private final Integer feature
-	private final Integer bugfix
-	private final Boolean release
-
-	public final static String SNAPSHOT = 'SNAPSHOT'
-
-	ProjectVersion(
-		final Integer major,
-		final Integer feature, final Integer bugfix, final Boolean release) {
-		this.major = major
-		this.feature = feature
-		this.bugfix = bugfix
-		this.release = release
-	}
-
-	@Override
-	String toString() {
-		"$major.$feature.$bugfix${release ? '' : "-$SNAPSHOT"}"
-	}
-}
-
-
-String defineVersion(final Integer major,
-                final Integer feature, final Integer bugfix, final Boolean release) {
-	new ProjectVersion(major, feature, bugfix, release).toString()
+	gradleVersion = "2.14.1"
 }
 
 String defineVersion() {
