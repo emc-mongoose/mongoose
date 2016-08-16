@@ -1,0 +1,34 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "10KB"
+			},
+			"dst" : {
+				"file" : "${MONGOOSE_DIR}/log/MAXT-W10KB/items.csv"
+			}
+		},
+		"run" : {
+			"id" : "MAXT-W10KB"
+		},
+		"storage" : {
+			"addrs" : [
+				"${DATA_NODE}"
+			]
+		},
+		"server" : {
+			"addrs" : [
+				"${CLIENT}"
+			]
+		},
+		"load" : {
+			"threads" : 1
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load"
+		}
+	]
+}
