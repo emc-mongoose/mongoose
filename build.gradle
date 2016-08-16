@@ -23,13 +23,11 @@ ext {
 		netty: "4.1.4.Final",
 		jackson: "2.8.1",
 	]
-	libsDirName = "lib"
+	libDirName = "lib"
 }
 
 subprojects {
 	apply plugin: "com.google.osdetector"
-
-	version = super.version
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -70,6 +68,16 @@ subprojects {
 
 		testCompile "junit:junit:4.12"
 	}
+
+	jar {
+		archiveName "$rootProject.name-$project.name.$extension"
+		manifest {
+			attributes (
+				"Implementation-Version": version,
+				"Implementation-Title": "$rootProject.name-$classifier"
+			)
+		}
+	}
 }
 
 project(":storage:mock") {
@@ -91,16 +99,11 @@ project(":storage:mock") {
 	}
 
 	jar {
-		classifier "wsmock"
-		archiveName "$rootProject.name-$classifier.$extension"
-		from { configurations.compile.collect { file ->
-			file.isDirectory() ? file : zipTree(file) } }
+		archiveName "nagaina.$extension"
 		manifest {
 			attributes (
-				"Implementation-Version": version,
-				"Implementation-Title": "$rootProject.name-$classifier",
 				"Class-Path": configurations.runtime.collect {file ->
-					libsDirName + File.separator + file.name
+					libDirName + File.separator + file.name
 				}.join(' '),
 				"Main-Class": "com.emc.mongoose.storage.mock.Main"
 			)
@@ -116,11 +119,10 @@ task dist(type: Tar) {
 	baseName = rootProject.name
 	compression = Compression.GZIP
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	println "DestDir: $destinationDir"
 	into("$rootProject.name-$rootProject.version") {
-//		into("lib") {
-//			from { configurations.runtime }
-//		}
+		into("lib") {
+			from { project("storage:mock").configurations.compile }
+		}
 		from project("storage:mock").jar.outputs.files
 	}
 }
