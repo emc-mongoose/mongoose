@@ -4,16 +4,12 @@
 		"item" : {
 			"dst" : {
 				"container" : "partial-append"
-			},
-			"data" : {
-				"size" : "1KB"
 			}
 		},
 		"load" : {
 			"limit" : {
-				"count" : 100
-			},
-			"threads" : 2
+				"count" : 1
+			}
 		}
 	},
 	"jobs": [
