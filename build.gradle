@@ -74,7 +74,7 @@ subprojects {
 		manifest {
 			attributes (
 				"Implementation-Version": version,
-				"Implementation-Title": "$rootProject.name-$classifier"
+				"Implementation-Title": "$rootProject.name-$project.name"
 			)
 		}
 	}
