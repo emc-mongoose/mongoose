@@ -18,6 +18,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -638,8 +639,7 @@ implements LoadClient<T, W> {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 				} finally {
 					LOG.debug(
-						Markers.MSG, "Submitted {} items to the load servers",
-						remotePutExecutor.getCompletedTaskCount()
+						Markers.MSG, "Submitted {} items to the load servers", counterSubm.get()
 					);
 					for(final String addr : remoteLoadMap.keySet()) {
 						try {
