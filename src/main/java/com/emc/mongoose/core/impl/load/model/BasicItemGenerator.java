@@ -36,7 +36,7 @@ implements ItemProducer<T> {
 	//
 	protected final ConcurrentMap<String, T> uniqueItems;
 	protected final Input<T> itemInput;
-	//protected final long countLimit;
+	protected final long countLimit;
 	protected final boolean isCircular;
 	protected final boolean isShuffling;
 	protected final Throttle<T> rateThrottle;
@@ -66,7 +66,7 @@ implements ItemProducer<T> {
 		final float rateLimit, final long skipCount, final T lastItem
 	) {
 		this.itemInput = itemInput;
-		//this.countLimit = maxCount - skipCount;
+		this.countLimit = maxCount - skipCount;
 		this.batchSize = batchSize;
 		this.skipCount = skipCount;
 		this.lastItem = lastItem;
