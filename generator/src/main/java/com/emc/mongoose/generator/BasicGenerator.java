@@ -7,9 +7,10 @@ import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.api.io.Input;
@@ -63,6 +64,7 @@ implements Generator<I, O> {
 	private final Throttle<I> rateThrottle;
 	private final IoTaskFactory<I, O> ioTaskFactory;
 	private final String dstContainer;
+	private final String runId;
 
 	private long producedItemsCount = 0;
 
@@ -197,19 +199,24 @@ implements Generator<I, O> {
 	}
 
 	public BasicGenerator(
-		final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
-		final IoTaskFactory<I, O> ioTaskFactory, final Config.ItemConfig itemConfig,
-		final Config.LoadConfig loadConfig
+		final String runId, final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
+		final IoTaskFactory<I, O> ioTaskFactory, final ItemConfig itemConfig,
+		final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 		
+		this.runId = runId;
 		this.drivers = drivers;
 		
 		try {
 			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 			this.isCircular = loadConfig.getCircular();
 			this.rateThrottle = new RateThrottle<>(loadConfig.getLimitConfig().getRate());
-			this.dstContainer = itemConfig.getOutputConfig().getContainer();
-			
+			final String t = itemConfig.getOutputConfig().getContainer();
+			if(t == null || t.isEmpty()) {
+				dstContainer = runId;
+			} else {
+				dstContainer = t;
+			}
 			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
 			
 			final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();

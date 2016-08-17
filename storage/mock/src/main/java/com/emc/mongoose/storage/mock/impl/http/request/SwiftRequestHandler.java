@@ -166,12 +166,11 @@ extends RequestHandlerBase<T> {
             for(final T object : buffer) {
                 node = OBJ_MAPPER.createObjectNode();
                 node.put("name", object.getName());
-	            try {
-		            node.put("bytes", object.size());
-	            } catch(final IOException e) {
-		            throw new IllegalArgumentException();
-	            }
-	            ((ArrayNode) nodeRoot).add(node);
+                try {
+                	node.put("bytes", object.size());
+                } catch(final IOException ignored) {
+                }
+                ((ArrayNode) nodeRoot).add(node);
             }
             try {
                 final byte[] content = OBJ_MAPPER.writeValueAsBytes(nodeRoot);

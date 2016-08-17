@@ -103,9 +103,8 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 
 	@Override
 	protected void handleContainerList(
-			final String name,
-			final QueryStringDecoder queryStringDecoder,
-			final ChannelHandlerContext ctx) {
+		final String name, final QueryStringDecoder queryStringDecoder, final ChannelHandlerContext ctx
+	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
@@ -146,8 +145,7 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 			appendElement(xml, elem, "Key", object.getName());
 			try {
 				appendElement(xml, elem, "Size", Long.toString(object.size()));
-			} catch(final IOException e) {
-				throw new IllegalArgumentException();
+			} catch(final IOException ignored) {
 			}
 			appendElement(rootElem, elem);
 		}

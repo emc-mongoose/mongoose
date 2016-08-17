@@ -59,12 +59,12 @@ implements Driver<I, O> {
 	protected final Bootstrap bootstrap;
 	
 	protected HttpDriverBase(
-		final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig
 	) throws UserShootHisFootException {
 		
-		super(loadConfig);
-		storageNodeAddrs = (String[]) storageConfig.getAddresses().toArray();
+		super(runId, loadConfig);
+		storageNodeAddrs = storageConfig.getAddresses().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
 		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
 		
@@ -82,11 +82,11 @@ implements Driver<I, O> {
 		//bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS)
 		//bootstrap.option(ChannelOption.SO_RCVBUF);
 		//bootstrap.option(ChannelOption.SO_SNDBUF);
-		bootstrap.option(ChannelOption.SO_BACKLOG, socketConfig.getBindBackLogSize());
+		//bootstrap.option(ChannelOption.SO_BACKLOG, socketConfig.getBindBackLogSize());
 		bootstrap.option(ChannelOption.SO_KEEPALIVE, socketConfig.getKeepAlive());
 		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
-		bootstrap.option(ChannelOption.SO_TIMEOUT, socketConfig.getTimeoutMillisec());
+		//bootstrap.option(ChannelOption.SO_TIMEOUT, socketConfig.getTimeoutMillisec());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
 		bootstrap.handler(
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)

@@ -19,7 +19,8 @@ implements DataIoTask<T> {
 	protected volatile int currDataLayerIdx = 0;
 	protected volatile long respDataTimeStart = 0;
 
-	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath) {
+	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
+	throws IOException {
 		super(ioType, item, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();

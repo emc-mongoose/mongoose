@@ -4,6 +4,8 @@ import com.emc.mongoose.model.api.io.task.IoTaskFactory;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
 
+import java.io.IOException;
+
 /**
  Created by kurila on 14.07.16.
  */
@@ -14,6 +16,10 @@ implements IoTaskFactory<D, BasicDataIoTask<D>> {
 	public final BasicDataIoTask<D> getInstance(
 		final LoadType ioType, final D dataItem, final String dstPath
 	) {
-		return new BasicDataIoTask<>(ioType, dataItem, dstPath);
+		try {
+			return new BasicDataIoTask<>(ioType, dataItem, dstPath);
+		} catch(final IOException ignored) {
+			return null;
+		}
 	}
 }
