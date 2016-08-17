@@ -18,7 +18,6 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -31,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +56,7 @@ implements LoadClient<T, W> {
 	protected final Map<String, W> remoteLoadMap;
 	private final ThreadPoolExecutor remotePutExecutor;
 	private final String loadSvcAddrs[];
+	private final Map<String, AtomicLong> counterSubmPerSvc = new HashMap<>();
 	//
 	protected volatile Output<T> consumer = null;
 	//
@@ -210,6 +211,9 @@ implements LoadClient<T, W> {
 		this.remoteLoadMap = remoteLoadMap;
 		this.loadSvcAddrs = new String[remoteLoadMap.size()];
 		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
+		for(final String loadSvcAddr : loadSvcAddrs) {
+			counterSubmPerSvc.put(loadSvcAddr, new AtomicLong(0));
+		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
@@ -509,6 +513,7 @@ implements LoadClient<T, W> {
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
 					m += loadSvc.put(items, from + m, to);
 					counterSubm.addAndGet(m);
+					counterSubmPerSvc.get(loadSvcAddr).addAndGet(m);
 				} catch(final Exception e) {
 					break;
 				}
@@ -638,9 +643,12 @@ implements LoadClient<T, W> {
 				} catch(final InterruptedException e) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 				} finally {
-					LOG.debug(
-						Markers.MSG, "Submitted {} items to the load servers", counterSubm.get()
-					);
+					for(final String svcAddr : loadSvcAddrs) {
+						LOG.debug(
+							Markers.MSG, "Submitted {} items to the load server {}",
+							counterSubmPerSvc.get(svcAddr).get(), svcAddr
+						);
+					}
 					for(final String addr : remoteLoadMap.keySet()) {
 						try {
 							remoteLoadMap.get(addr).shutdown();
