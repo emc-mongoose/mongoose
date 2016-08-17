@@ -1030,7 +1030,10 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected final boolean isDoneCountLimit() {
-		return countLimit > 0 && counterResults.get() >= countLimit;
+		return countLimit > 0 && (
+			counterResults.get() + countRej.get() >= countLimit ||
+			lastStats.getSuccCount() + lastStats.getFailCount() + countRej.get() >= countLimit
+		);
 	}
 	//
 	protected final boolean isDoneSizeLimit() {
