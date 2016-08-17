@@ -126,10 +126,10 @@ implements ItemProducer<T> {
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(/*countLimit > producedItemsCount && */!isInterrupted) {
+			while(countLimit > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
-					n = /*(int) Math.min(*/itemInput.get(buff, batchSize)/*, countLimit - producedItemsCount)*/;
+					n = (int) Math.min(itemInput.get(buff, batchSize), countLimit - producedItemsCount);
 					if(isShuffling) {
 						Collections.shuffle(buff, rnd);
 					}
