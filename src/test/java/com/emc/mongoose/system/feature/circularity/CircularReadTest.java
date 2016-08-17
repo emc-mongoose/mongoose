@@ -139,7 +139,7 @@ extends StandaloneClientTestBase {
 				items.put(id, count);
 			}
 			//
-			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
+			Assert.assertEquals("Data haven't been read fully", items.size(), COUNT_WRITTEN);
 		}
 	}
 	//
@@ -168,7 +168,7 @@ extends StandaloneClientTestBase {
 				}
 			}
 			//
-			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
+			Assert.assertEquals("Data haven't been read fully", items.size(), COUNT_WRITTEN);
 			for(final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
 					"perf.trace.csv doesn't contain necessary count of duplicated items" ,

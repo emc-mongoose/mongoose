@@ -118,7 +118,7 @@ extends StandaloneClientTestBase {
 	@Test
 	public void checkUpdatedCount()
 	throws Exception {
-		Assert.assertEquals(COUNT_WRITTEN * COUNT_OF_UPDATES, COUNT_UPDATED);
+		Assert.assertEquals(WRITE_COUNT * COUNT_OF_UPDATES, COUNT_UPDATED);
 	}
 	//
 	@Test
