@@ -1,6 +1,14 @@
 description = 'mongoose-ui'
 
 dependencies {
-	compile project(':common')
-	compile project(':model')
+	compileOnly(project(':common')) { transitive = false }
+	compileOnly(project(':model')) { transitive = false }
+}
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
 }

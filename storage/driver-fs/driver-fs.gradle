@@ -1,8 +1,16 @@
 description = 'mongoose-storage-driver-fs'
 
 dependencies {
-	compile project(':common')
-	compile project(':model')
-	compile project(':ui')
-	compile project(':storage:driver-base')
+	compileOnly(project(':common')) { transitive = false }
+	compileOnly(project(':model')) { transitive = false }
+	compileOnly(project(':ui')) { transitive = false }
+	compileOnly(project(':storage:driver-base')) { transitive = false }
+}
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
 }
