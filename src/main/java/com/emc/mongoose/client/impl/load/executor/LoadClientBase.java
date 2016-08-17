@@ -56,7 +56,6 @@ implements LoadClient<T, W> {
 	protected final Map<String, W> remoteLoadMap;
 	private final ThreadPoolExecutor remotePutExecutor;
 	private final String loadSvcAddrs[];
-	private final Map<String, AtomicLong> counterSubmPerSvc = new HashMap<>();
 	//
 	protected volatile Output<T> consumer = null;
 	//
@@ -211,9 +210,6 @@ implements LoadClient<T, W> {
 		this.remoteLoadMap = remoteLoadMap;
 		this.loadSvcAddrs = new String[remoteLoadMap.size()];
 		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
-		for(final String loadSvcAddr : loadSvcAddrs) {
-			counterSubmPerSvc.put(loadSvcAddr, new AtomicLong(0));
-		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
@@ -513,7 +509,6 @@ implements LoadClient<T, W> {
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
 					m += loadSvc.put(items, from + m, to);
 					counterSubm.addAndGet(m);
-					counterSubmPerSvc.get(loadSvcAddr).addAndGet(m);
 				} catch(final Exception e) {
 					break;
 				}
@@ -643,12 +638,9 @@ implements LoadClient<T, W> {
 				} catch(final InterruptedException e) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 				} finally {
-					for(final String svcAddr : loadSvcAddrs) {
-						LOG.debug(
-							Markers.MSG, "Submitted {} items to the load server {}",
-							counterSubmPerSvc.get(svcAddr).get(), svcAddr
-						);
-					}
+					LOG.debug(
+						Markers.MSG, "Submitted {} items to the load servers", counterSubm.get()
+					);
 					for(final String addr : remoteLoadMap.keySet()) {
 						try {
 							remoteLoadMap.get(addr).shutdown();
