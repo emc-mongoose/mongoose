@@ -17,11 +17,11 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	CircularReadFromCustomDirTest.class,
 	OverwriteCircularlyTest.class,
-	ReadDirsWithFilesTest.class,
+	/*ReadDirsWithFilesTest.class,
 	ReadFromCustomDirTest.class,
 	UpdateAndVerifyTest.class,
 	WriteDirsToCustomDirTest.class,
-	WriteToCustomDirTest.class,
+	WriteToCustomDirTest.class,*/
 })
 public class FileSystemTestSuite {
 	// files

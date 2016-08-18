@@ -40,7 +40,6 @@ extends FileSystemTestBase {
 	throws Exception {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
-		System.setProperty(AppConfig.KEY_LOAD_CIRCULAR, "true");
 		FileSystemTestBase.setUpClass();
 		final List<FileItem> itemBuff = new ArrayList<>(COUNT_TO_WRITE);
 		try(
@@ -53,11 +52,12 @@ extends FileSystemTestBase {
 			countWritten = client.create(
 				new ListItemOutput<>(itemBuff), COUNT_TO_WRITE, 100, 4096
 			);
+			System.setProperty(AppConfig.KEY_LOAD_CIRCULAR, "true");
 			countOverwritten = client.write(
 				new ListItemInput<>(itemBuff), null, COUNT_TO_OVERWRITE, 100
 			);
 			RunIdFileManager.flushAll();
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(15);
 		}
 	}
 	//
@@ -77,7 +77,7 @@ extends FileSystemTestBase {
 	@Test
 	public void checkReturnedCount() {
 		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
-		Assert.assertEquals(COUNT_TO_OVERWRITE, countOverwritten);
+		Assert.assertEquals(COUNT_TO_WRITE, countOverwritten);
 	}
 	//
 	@Test

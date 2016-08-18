@@ -45,13 +45,12 @@ extends StandaloneClientTestBase {
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	private static final int BATCH_SIZE = 100;
-	private static final String DATA_SIZE = "128B";
+	private static final String DATA_SIZE = "1KB";
 	//
-	private static final int WRITE_COUNT = 1234;
-	private static final int UPDATE_COUNT = 24680;
+	private static final int WRITE_COUNT = 100;
+	private static final int UPDATE_COUNT = 10000;
 	//
-	private static final int COUNT_OF_UPDATES = 20;
-	private static final int LAYER_NUMBER_INDEX = 2;
+	private static final int LAYER_NUMBER_INDEX = 9;
 	//
 	private static long COUNT_WRITTEN, COUNT_UPDATED;
 	private static byte[] STD_OUT_CONTENT;
@@ -90,7 +89,9 @@ extends StandaloneClientTestBase {
 				) {
 					stdOutInterceptorStream.reset();
 					if (COUNT_WRITTEN > 0) {
-						COUNT_UPDATED = client.update(writeOutput.getInput(), null, UPDATE_COUNT, 10, 1);
+						COUNT_UPDATED = client.update(
+							writeOutput.getInput(), null, UPDATE_COUNT, 10, 1
+						);
 					} else {
 						throw new IllegalStateException("Failed to update");
 					}
@@ -118,7 +119,7 @@ extends StandaloneClientTestBase {
 	@Test
 	public void checkUpdatedCount()
 	throws Exception {
-		Assert.assertEquals(WRITE_COUNT * COUNT_OF_UPDATES, COUNT_UPDATED);
+		Assert.assertEquals(UPDATE_COUNT, COUNT_UPDATED);
 	}
 	//
 	@Test
@@ -129,9 +130,10 @@ extends StandaloneClientTestBase {
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
+			for(final CSVRecord nextRec : recIter) {
 				Assert.assertEquals(
-					LAYER_NUMBER_INDEX, Integer.parseInt(nextRec.get(3).split("/")[0])
+					nextRec.toString(), LAYER_NUMBER_INDEX,
+					Integer.parseInt(nextRec.get(3).split("/")[0], 0x10), 1
 				);
 			}
 		}

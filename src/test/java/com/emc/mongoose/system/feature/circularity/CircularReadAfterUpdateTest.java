@@ -66,7 +66,6 @@ extends StandaloneClientTestBase {
 			StandaloneClientTestBase.setUpClass();
 			//
 			final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
-			rtConfig.setProperty(AppConfig.KEY_LOAD_CIRCULAR, true);
 			rtConfig.setProperty(AppConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 			//
 			try (
@@ -85,6 +84,7 @@ extends StandaloneClientTestBase {
 				TimeUnit.SECONDS.sleep(10);
 				RunIdFileManager.flushAll();
 				//
+				rtConfig.setProperty(AppConfig.KEY_LOAD_CIRCULAR, true);
 				final Output<HttpDataItem> updateOutput = new CsvFileItemOutput<HttpDataItem>(
 					BasicHttpData.class, ContentSourceUtil.getDefaultInstance()
 				);
@@ -136,6 +136,7 @@ extends StandaloneClientTestBase {
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();
 		boolean firstRow = true;
+		TimeUnit.SECONDS.sleep(10);
 		try (
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_PERF_TRACE.toPath(), StandardCharsets.UTF_8)
@@ -235,8 +236,7 @@ extends StandaloneClientTestBase {
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Read items count " + countSucc +
-								" is not equal to the limit: " + countLimit,
+							"Read items count " + countSucc + " is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);
 						Assert.assertTrue("There are failures reported", countFail == 0);

@@ -684,7 +684,7 @@ implements LoadExecutor<T> {
 	@Override
 	public int put(final List<T> srcBuff, final int from, final int to)
 	throws IOException {
-		final long dstLimit = countLimit - counterSubm.get() - countRej.get();
+		final long dstLimit = countLimit - counterSubm.get()/* - countRej.get()*/;
 		final int srcLimit = to - from;
 		int n = 0, m;
 		if(dstLimit > 0) {

@@ -28,7 +28,7 @@ public interface StorageClient<T extends Item>
 extends Closeable {
 
 	/**
-	 Create<b><i>new</i></b> items of the specified size infinitely, do not store the written data items info
+	 Create <b><i>new</i></b> items of the specified size infinitely, do not store the written data items info
 	 @param size the size of the data items to write.
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
