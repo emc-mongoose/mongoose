@@ -22,7 +22,14 @@ ext {
 		netty: "4.1.4.Final",
 		jackson: "2.8.1",
 	]
-	libDirName = "lib"
+	setClassPath = { configurations ->
+		[configurations.compile.collect {file ->
+			["lib", file.name].join(File.separator)
+		}.join(' '),
+		 (configurations.compileOnly - configurations.compile).collect {file ->
+			 file.name
+		 }.join(' ')].join(' ')
+	}
 }
 
 subprojects {
@@ -74,7 +81,7 @@ subprojects {
 		manifest {
 			attributes (
 				"Implementation-Version": version,
-				"Implementation-Title": "$rootName-$name"
+				"Implementation-Title": "$rootName-$name",
 			)
 		}
 	}
@@ -89,13 +96,20 @@ task dist(type: Tar) {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	def mock = project("storage:mock")
 	def monitor = project("monitor")
+	def generator = project("generator")
+	def driverFs = project("storage:driver-fs")
+	def driverHttpS3 = project("storage:driver-http-s3")
 	into("$baseName-$rootProject.version") {
 		into("lib") {
 			from { mock.configurations.compile }
 			from { monitor.configurations.compile }
 		}
 		from mock.jar.outputs.files
+		from mock.configurations.compileOnly - mock.configurations.compile
 		from monitor.jar.outputs.files
+		from generator.jar.outputs.files
+		from driverFs.jar.outputs.files
+		from driverHttpS3.jar.outputs.files
 	}
 }
 

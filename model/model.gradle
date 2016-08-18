@@ -1,5 +1,13 @@
 description = 'mongoose-model'
 
 dependencies {
-    compile project(':common')
+    compileOnly(project(':common')) { transitive = false }
+}
+
+jar {
+    manifest {
+        attributes (
+            "Class-Path": setClassPath(configurations)
+        )
+    }
 }

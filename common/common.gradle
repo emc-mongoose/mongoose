@@ -1,1 +1,9 @@
 description = 'mongoose-common'
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
+}
