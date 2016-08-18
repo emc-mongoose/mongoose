@@ -1,9 +1,7 @@
 {
 	"type" : "for",
 	"value" : "i",
-	"in" : [
-		5, 10, 15, 20, 25, 30
-	],
+	"in" : "1-4",
 	"jobs" : [
 		{
 			"type" : "load",
@@ -13,11 +11,10 @@
 						"size" : 1
 					}
 				},
-				"storage" : {
-					"http" : {
-						"headers" : {
-							"x-amz-meta-var-%d[0-${i}]" : "%d[0-500]"
-						}
+				"load" : {
+					"threads" : "${i}",
+					"limit" : {
+						"time" : "15s"
 					}
 				}
 			}

@@ -16,7 +16,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.Map;
 
 import static com.emc.mongoose.common.conf.Constants.RUN_MODE_CINDERELLA;
