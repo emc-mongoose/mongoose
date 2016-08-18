@@ -22,14 +22,25 @@ ext {
 		netty: "4.1.4.Final",
 		jackson: "2.8.1",
 	]
-	setClassPath = { configurations ->
-		[configurations.compile.collect {file ->
-			["lib", file.name].join(File.separator)
-		}.join(' '),
-		 (configurations.compileOnly - configurations.compile).collect {file ->
-			 file.name
-		 }.join(' ')].join(' ')
+	setClassPath = {
+		configurations -> [
+			configurations.compile.collect {
+				file -> [
+					"lib", file.name
+				].join(File.separator)
+			}.join(' '),
+			(configurations.compileOnly - configurations.compile).collect {
+				file -> file.name
+			}.join(' ')
+		].join(' ')
 	}
+	mutualProjects = [
+		project("storage:mock"),
+		project("monitor"),
+		project("generator"),
+		project("storage:driver-fs"),
+		project("storage:driver-http-s3")
+	]
 }
 
 subprojects {
@@ -67,8 +78,6 @@ subprojects {
 			"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
 			"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
 			"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
-
-			"it.unimi.dsi:fastutil:7.0.12"
 		)
 
 		testCompile "junit:junit:4.12"
@@ -94,22 +103,16 @@ task dist(type: Tar) {
 	baseName = rootProject.name
 	compression = Compression.GZIP
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	def mock = project("storage:mock")
-	def monitor = project("monitor")
-	def generator = project("generator")
-	def driverFs = project("storage:driver-fs")
-	def driverHttpS3 = project("storage:driver-http-s3")
 	into("$baseName-$rootProject.version") {
 		into("lib") {
-			from { mock.configurations.compile }
-			from { monitor.configurations.compile }
+			for (Project p: mutualProjects) {
+				from p.configurations.compile
+			}
 		}
-		from mock.jar.outputs.files
-		from mock.configurations.compileOnly - mock.configurations.compile
-		from monitor.jar.outputs.files
-		from generator.jar.outputs.files
-		from driverFs.jar.outputs.files
-		from driverHttpS3.jar.outputs.files
+		for (Project p: mutualProjects) {
+			from p.jar.outputs.files
+			from p.configurations.compileOnly - p.configurations.compile
+		}
 	}
 }
 

@@ -1,13 +1,19 @@
 description = 'mongoose-monitor'
 
 dependencies {
-	compileOnly(project(':common')) { transitive = false }
-	compileOnly(project(':ui')) { transitive = false }
-	compileOnly(project(':model')) { transitive = false }
-	compileOnly(project(':generator')) { transitive = false }
-	compileOnly(project(':storage:driver-base')) { transitive = false }
-	compileOnly(project(':storage:driver-fs')) { transitive = false }
+	compileOnly(
+		project(':common'),
+		project(':ui'),
+		project(':model'),
+		project(':generator'),
+		project(':storage:driver-base'),
+		project(':storage:driver-fs'),
+		project(':storage:driver-http-base'),
+		project(':storage:driver-http-s3')
+	)
 }
+
+configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {
