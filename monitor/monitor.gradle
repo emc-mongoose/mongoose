@@ -7,6 +7,8 @@ dependencies {
 	compileOnly(project(':generator')) { transitive = false }
 	compileOnly(project(':storage:driver-base')) { transitive = false }
 	compileOnly(project(':storage:driver-fs')) { transitive = false }
+	compileOnly(project(':storage:driver-http-base')) { transitive = false }
+	compileOnly(project(':storage:driver-http-s3')) { transitive = false }
 }
 
 jar {
