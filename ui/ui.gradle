@@ -2,7 +2,6 @@ description = 'mongoose-ui'
 
 dependencies {
 	compile(
-
 		"commons-lang:commons-lang:2.6",
 
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
@@ -11,8 +10,7 @@ dependencies {
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 
 		"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
-		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
-		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}"
+		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}"
 	)
 
 	compileOnly(

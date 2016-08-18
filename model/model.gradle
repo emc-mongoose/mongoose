@@ -5,7 +5,7 @@ dependencies {
 		"org.apache.commons:commons-collections4:4.1",
 		"commons-codec:commons-codec:1.10",
 		"commons-lang:commons-lang:2.6",
-		"io.dropwizard.metrics:metrics-core:3.1.2",
+		"io.dropwizard.metrics:metrics-core:3.1.2"
 	)
 
 	compileOnly(project(':common'))
