@@ -1,12 +1,9 @@
 package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.api.io.PatternDefinedInput;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,8 +18,6 @@ import java.nio.channels.WritableByteChannel;
 public class BasicDataItem
 extends BasicItem
 implements DataItem {
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
