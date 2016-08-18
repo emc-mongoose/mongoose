@@ -460,7 +460,7 @@ implements LoadClient<T, W> {
 	@Override
 	public void put(final T item)
 	throws IOException {
-		if(counterSubm.get() + countRej.get() >= countLimit) {
+		if(counterSubm.get() >= countLimit) {
 			LOG.debug(
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.get(), countRej.get()
@@ -519,7 +519,7 @@ implements LoadClient<T, W> {
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
-		final long dstLimit = countLimit - counterSubm.get() - countRej.get();
+		final long dstLimit = countLimit - counterSubm.get();
 		final int srcLimit = to - from;
 		if(dstLimit > 0) {
 			if(dstLimit < srcLimit) {
@@ -544,6 +544,7 @@ implements LoadClient<T, W> {
 						Thread.yield();
 					}
 				}
+				return to - from;
 			}
 		} else {
 			if(isShutdown.compareAndSet(false, true)) {
@@ -553,8 +554,8 @@ implements LoadClient<T, W> {
 				countRej.addAndGet(srcLimit);
 				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", srcLimit);
 			}
+			return 0;
 		}
-		return to - from;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

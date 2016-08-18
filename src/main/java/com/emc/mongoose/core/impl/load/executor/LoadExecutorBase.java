@@ -650,7 +650,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void put(final T item)
 	throws IOException {
-		if(counterSubm.get() + countRej.get() >= countLimit) {
+		if(counterSubm.get() >= countLimit) {
 			LOG.debug(
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.get(), countRej.get()
@@ -732,6 +732,7 @@ implements LoadExecutor<T> {
 				countRej.addAndGet(srcLimit);
 				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", srcLimit);
 			}
+			n = 0;
 		}
 		return n;
 	}
@@ -1031,7 +1032,7 @@ implements LoadExecutor<T> {
 	//
 	protected final boolean isDoneCountLimit() {
 		return countLimit > 0 && (
-			counterResults.get() + countRej.get() >= countLimit ||
+			counterResults.get() >= countLimit ||
 			lastStats.getSuccCount() + lastStats.getFailCount() >= countLimit
 		);
 	}

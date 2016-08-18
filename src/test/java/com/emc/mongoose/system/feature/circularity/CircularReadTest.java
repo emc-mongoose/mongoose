@@ -68,7 +68,6 @@ extends StandaloneClientTestBase {
 			StandaloneClientTestBase.setUpClass();
 			//
 			final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
-			rtConfig.setProperty(AppConfig.KEY_LOAD_CIRCULAR, true);
 			rtConfig.setProperty(AppConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 			//
 			try (
@@ -87,6 +86,7 @@ extends StandaloneClientTestBase {
 				);
 				TimeUnit.SECONDS.sleep(10);
 				RunIdFileManager.flushAll();
+				rtConfig.setProperty(AppConfig.KEY_LOAD_CIRCULAR, true);
 				//
 				try (
 					final BufferingOutputStream
@@ -170,9 +170,10 @@ extends StandaloneClientTestBase {
 			//
 			Assert.assertEquals("Data haven't been read fully", items.size(), COUNT_WRITTEN);
 			for(final Map.Entry<String, Long> entry : items.entrySet()) {
-				Assert.assertEquals(
-					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
-					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
+				Assert.assertTrue(
+					entry.getKey() + " has " + entry.getValue() + " duplicates while should be " + COUNT_OF_DUPLICATES,
+					entry.getValue() >= COUNT_OF_DUPLICATES - COUNT_OF_DUPLICATES / 5
+				);
 			}
 		}
 	}
