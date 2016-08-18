@@ -1,12 +1,11 @@
 description = 'mongoose-storage-mock'
 
 dependencies {
+	compileOnly (project(':common')) { transitive = false }
+	compileOnly (project(':model')) { transitive = false }
+	compileOnly (project(':storage:driver-http-base')) { transitive = false }
+	compileOnly (project(':ui')) { transitive = false }
 
-	compile project(':common')
-	compile project(':model')
-	compile project(':storage:driver-http-base')
-	compile project(':storage:driver-http-s3')
-	compile project(':ui')
 	compile(
 		"io.netty:netty-common:${depVersion.netty}",
 		"io.netty:netty-buffer:${depVersion.netty}",
@@ -17,10 +16,12 @@ dependencies {
 	)
 }
 
-
 jar {
-	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	archiveName "nagaina.$extension"
 	manifest {
-		attributes 'Main-Class': 'com.emc.mongoose.storage.mock.Main'
+		attributes(
+			"Class-Path": setClassPath(configurations),
+			"Main-Class": "com.emc.mongoose.storage.mock.Main"
+		)
 	}
 }
