@@ -1,6 +1,7 @@
 description = 'mongoose-storage-mock'
 
 dependencies {
+
 	compileOnly (project(':common')) { transitive = false }
 	compileOnly (project(':model')) { transitive = false }
 	compileOnly (project(':storage:driver-http-base')) { transitive = false }
