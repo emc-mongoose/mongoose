@@ -367,7 +367,6 @@ implements HttpDataLoadExecutor<T> {
 		} else {
 			for(int i = from; i < to; i ++) {
 				if(null != submitTask(ioTasks.get(i))) {
-					h ++;
 					n ++;
 				} else {
 					break;
