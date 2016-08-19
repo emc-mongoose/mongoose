@@ -102,11 +102,11 @@ extends SequentialJob {
 							}
 							if(start < end) {
 								LOG.info(
-									Markers.MSG, "Parsed loop range: {} = {}, {} < {}, {} += {}",
+									Markers.MSG, "Parsed loop range: {} = {}, {} <= {}, {} += {}",
 									replaceMarkerName, start, replaceMarkerName, end,
 									replaceMarkerName, step
 								);
-								for(double i = start; i < end; i += step) {
+								for(double i = start; i <= end; i += step) {
 									if(i == (long) i) {
 										valueSeq.add((long) i);
 									} else {
@@ -115,11 +115,11 @@ extends SequentialJob {
 								}
 							} else {
 								LOG.info(
-									Markers.MSG, "Parsed loop range: {} = {}, {} > {}, {} -= {}",
+									Markers.MSG, "Parsed loop range: {} = {}, {} => {}, {} -= {}",
 									replaceMarkerName, start, replaceMarkerName, end,
 									replaceMarkerName, step
 								);
-								for(double i = start; i > end; i -= step) {
+								for(double i = start; i >= end; i -= step) {
 									if(i == (long) i) {
 										valueSeq.add((long) i);
 									} else {
