@@ -300,6 +300,7 @@ implements LoadExecutor<T> {
 			final String runId = appConfig.getRunId();
 			String loadJobName = LoadExecutorBase.this.getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
+				System.out.println(counterSubm.get() + ", " + counterResults.get());
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
 				if(!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
 					try {
