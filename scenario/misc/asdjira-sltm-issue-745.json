@@ -10,7 +10,12 @@
 			}
 		},
 		"item" : {
-			"data" : { "size" : "10KB" }
+			"data" : {
+				"size" : "10KB"
+			},
+			"dst" : {
+				"container" : "issue-745"
+			}
 		},
 		
 		"storage" : {
