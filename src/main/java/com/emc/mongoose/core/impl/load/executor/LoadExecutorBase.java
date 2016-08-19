@@ -280,6 +280,8 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	protected long i = 0;
+	//
 	@Override
 	public void logMetrics(final Marker logMarker) {
 		if(preconditionFlag) {
@@ -300,7 +302,7 @@ implements LoadExecutor<T> {
 			final String runId = appConfig.getRunId();
 			String loadJobName = LoadExecutorBase.this.getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
-				System.out.println(counterSubm.get() + ", " + counterResults.get());
+				System.out.println(i);
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
 				if(!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
 					try {
