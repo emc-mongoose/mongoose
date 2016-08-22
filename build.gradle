@@ -24,23 +24,17 @@ ext {
 	]
 	setClassPath = {
 		configurations -> [
-			configurations.compile.collect {
+			configurations.runtime.collect {
 				file -> [
 					"lib", file.name
 				].join(File.separator)
 			}.join(' '),
-			(configurations.compileOnly - configurations.compile).collect {
+			(configurations.compileOnly - configurations.runtime).collect {
 				file -> file.name
 			}.join(' ')
 		].join(' ')
 	}
-	mutualProjects = [
-		project("storage:mock"),
-		project("monitor"),
-		project("generator"),
-		project("storage:driver-fs"),
-		project("storage:driver-http-s3")
-	]
+	mutualProjects = subprojects.findAll {it != project('storage')}
 }
 
 subprojects {
@@ -65,13 +59,14 @@ subprojects {
 	}
 
 	jar {
-		def rootName = rootProject.name
-		def name = project.name
-		archiveName "$rootName-$name.$extension"
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join('-')
+		archiveName "$name.$extension"
 		manifest {
 			attributes (
 				"Implementation-Version": version,
-				"Implementation-Title": "$rootName-$name"
+				"Implementation-Title": "$name"
 			)
 		}
 	}
@@ -92,7 +87,6 @@ task dist(type: Tar) {
 		}
 		for (Project p: mutualProjects) {
 			from p.jar.outputs.files
-			from p.configurations.compileOnly - p.configurations.compile
 		}
 	}
 }
@@ -106,6 +100,13 @@ task printVersion {
 
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.14.1"
+}
+
+void collectName(Project p, LinkedList<String> names) {
+	names.addFirst p.name
+	if (p.parent != null) {
+		collectName(p.parent, names)
+	}
 }
 
 String defineVersion() {
