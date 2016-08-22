@@ -2,10 +2,12 @@ description = 'mongoose-storage-driver-http-base'
 
 dependencies {
 
-	compileOnly(project(':common')) { transitive = false }
-	compileOnly(project(':model')) { transitive = false }
-	compileOnly(project(':ui')) { transitive = false }
-	compileOnly(project(':storage:driver-base')) { transitive = false }
+	compileOnly(
+		project(':common'),
+		project(':model'),
+		project(':ui'),
+		project(':storage:driver-base')
+	)
 
 	compile(
 		"io.netty:netty-common:${depVersion.netty}",
@@ -16,6 +18,8 @@ dependencies {
 		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
 	)
 }
+
+configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {

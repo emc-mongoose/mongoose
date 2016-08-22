@@ -1,11 +1,18 @@
 description = 'mongoose-ui'
 
 dependencies {
-	compileOnly(project(':common')) { transitive = false }
-	compileOnly(project(':model')) { transitive = false }
-	testCompile(project(':common')) { transitive = false }
-	testCompile(project(':model')) { transitive = false }
+	compileOnly(
+		project(':common'),
+		project(':model')
+	)
+
+	testCompile(
+		project(':common'),
+		project(':model')
+	)
 }
+
+configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {
