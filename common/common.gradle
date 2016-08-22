@@ -1,5 +1,9 @@
 description = 'mongoose-common'
 
+dependencies {
+	compile "org.apache.commons:commons-collections4:4.1"
+}
+
 jar {
 	manifest {
 		attributes (

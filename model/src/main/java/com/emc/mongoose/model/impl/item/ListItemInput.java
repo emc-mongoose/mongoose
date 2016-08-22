@@ -2,8 +2,6 @@ package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.item.Item;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -15,7 +13,6 @@ import java.util.List;
 public class ListItemInput<T extends Item>
 implements Input<T> {
 	//
-	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected final List<T> items;
 	protected volatile int i = 0;

@@ -4,8 +4,6 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
@@ -14,7 +12,6 @@ public class BasicMutableDataItem
 extends BasicDataItem
 implements MutableDataItem {
 	//
-	private final static Logger LOG = LogManager.getLogger();
 	private final static char LAYER_MASK_SEP = '/';
 	//
 	protected final static String

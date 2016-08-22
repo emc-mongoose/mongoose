@@ -1,7 +1,7 @@
 package com.emc.mongoose.ui.config.reader.jackson;
 
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.common.exception.IoFireball;
+import com.emc.mongoose.ui.config.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.WordUtils;
 
