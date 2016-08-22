@@ -4,9 +4,9 @@
 	"in" : "1-10",
 	"config" : {
 		"load" : {
-			"threads" : 1500,
+			"threads" : 1000,
 			"limit" : {
-				"count" : 10000
+				"count" : 100000
 			}
 		},
 		"item" : {
