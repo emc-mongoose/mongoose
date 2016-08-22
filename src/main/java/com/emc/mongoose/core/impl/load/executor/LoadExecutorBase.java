@@ -100,7 +100,7 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
-	private final AtomicInteger currConcurrencyLevel = new AtomicInteger(0);
+	private final AtomicInteger currConcurrency = new AtomicInteger(0);
 	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
@@ -360,13 +360,12 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public boolean isFullThrottleEntered() {
-		return totalThreadCount - currConcurrencyLevel.get() < totalThreadCount * fullLoadThreshold;
+		return currConcurrency.get() > totalThreadCount * fullLoadThreshold;
 	}
 	//
 	@Override
 	public boolean isFullThrottleExited() {
-		return isShutdown.get() &&
-			totalThreadCount - currConcurrencyLevel.get() > totalThreadCount * fullLoadThreshold;
+		return isShutdown.get() && currConcurrency.get() < totalThreadCount * fullLoadThreshold;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
@@ -813,7 +812,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected final void incrementBusyThreadCount() {
-		currConcurrencyLevel.incrementAndGet();
+		currConcurrency.incrementAndGet();
 	}
 	//
 	@Override
@@ -843,7 +842,7 @@ implements LoadExecutor<T> {
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
-		currConcurrencyLevel.decrementAndGet();
+		currConcurrency.decrementAndGet();
 		//
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
@@ -894,7 +893,7 @@ implements LoadExecutor<T> {
 		//
 		final int n = to - from;
 		if(n > 0) {
-			currConcurrencyLevel.addAndGet(-n);
+			currConcurrency.addAndGet(-n);
 			if(storageNodeAddrs != null) {
 				final String nodeAddr = ioTasks.get(from).getNodeAddr();
 				nodeBalancer.markTasksFinish(nodeAddr, n);
@@ -970,7 +969,7 @@ implements LoadExecutor<T> {
 	//
 	protected void ioTaskCancelled(final int n) {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
-		currConcurrencyLevel.decrementAndGet();
+		currConcurrency.decrementAndGet();
 		ioStats.markFail(n);
 		if(medIoStats != null && medIoStats.isStarted()) {
 			medIoStats.markFail(n);
@@ -979,7 +978,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void ioTaskFailed(final int n, final Throwable e) {
-		currConcurrencyLevel.decrementAndGet();
+		currConcurrency.decrementAndGet();
 		ioStats.markFail(n);
 		if(medIoStats != null && medIoStats.isStarted()) {
 			medIoStats.markFail();
