@@ -27,12 +27,14 @@
 	<fieldset>
 		<legend><h3>LIMITATIONS</h3></legend>
 		<ol>
-			<li>The functionality is available since v2.3.0</li>
+			<li>The basic (flag) functionality is available since v2.3.0</li>
+			<li>The enhanced (threshold) functionality is available since v2.5.0</li>
 		</ol>
 	</fieldset>
 	<fieldset>
 		<legend><h3>APPROACH</h3></legend>
-		<h4>Standalone Steps</h4>
+		<h4>Version 2.3.0</h4>
+		<h5>Standalone Steps</h5>
 		<ol>
 			<li>Wait until the count of busy threads/connections is equal to the configured concurrency level</li>
 			<li>Create separate metrics instance and start the metrics gathering</li>
@@ -40,7 +42,7 @@
 			<li>Stop the separate metrics gathering</li>
 			<li>Output the summary for the separate metrics</li>
 		</ol>
-		<h4>Distributed Mode Steps</h4>
+		<h5>Distributed Mode Steps</h5>
 		<ol>
 			<li>Wait until all the load servers are in the "full throttle" state</li>
 			<li>Create separate metrics instance and start the distributed metrics gathering</li>
@@ -48,12 +50,31 @@
 			<li>Stop the separate metrics gathering</li>
 			<li>Output the summary for the separate metrics</li>
 		</ol>
+		<h4>Version 2.5.0</h4>
+		<p>
+			The new version introduces the full load threshold (P) which value may be from 0 to 1 (inclusive).
+			Let configured concurrency level be C and current busy connections/threads count be N.
+		</p>
+		<h5>Standalone Steps</h5>
+		<ol>
+			<li>Wait while not N &gt; C * P</li>
+			<li>Create separate metrics instance and start the metrics gathering</li>
+			<li>Wait while not N &lt; C * P</li>
+			<li>Stop the separate metrics gathering</li>
+			<li>Output the summary for the separate metrics</li>
+		</ol>
+		<h5>Distributed Mode Steps</h5>
+		<p>The same as for version 2.3.0</p>
 	</fieldset>
 	<fieldset>
 		<legend><h3>CONFIGURATION</h3></legend>
-		New configuration parameter is "<b>load.metrics.intermediate</b>". Boolean values are acceptable.
+		<h4>Version 2.3.0</h4>
+		<p>New configuration parameter is "<b>load.metrics.intermediate</b>". Boolean values are acceptable.
 		The default is <i>false</i>. When set to <i>true</i> the intermediate statistics calculation
-		occurs and doesn't occurs otherwise.
+		occurs and doesn't occurs otherwise.</p>
+		<h4>Version 2.5.0</h4>
+		<p>New configuration parameter is "<b>load.metrics.threshold</b>". The value should be in the range of [0, 1].
+		The default is 0.</p>
 	</fieldset>
 	<fieldset>
 		<legend><h3>REPORTING</h3></legend>
