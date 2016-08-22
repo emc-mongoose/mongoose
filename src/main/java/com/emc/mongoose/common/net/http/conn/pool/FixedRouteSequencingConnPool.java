@@ -30,7 +30,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HttpHost route;
-	public final AtomicLong leaseCount = new AtomicLong(0);
+	public final AtomicLong releaseScheduleCount = new AtomicLong(0);
 	public final AtomicLong releaseCount = new AtomicLong(0);
 	//
 	public FixedRouteSequencingConnPool(
@@ -72,7 +72,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		public void run() {
 			try {
 				FixedRouteSequencingConnPool.super.lease(route, state, callback);
-				leaseCount.incrementAndGet();
 			} catch(final Exception e) {
 				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
@@ -122,6 +121,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	@Override
 	public final void release(final BasicNIOPoolEntry entry, final boolean reusable) {
+		releaseScheduleCount.incrementAndGet();
 		try {
 			Sequencer.INSTANCE.submit(new ConnReleaseTask(entry, reusable));
 		} catch(final InterruptedException e) {

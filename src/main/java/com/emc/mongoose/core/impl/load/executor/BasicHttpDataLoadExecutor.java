@@ -272,7 +272,6 @@ implements HttpDataLoadExecutor<T> {
 		}
 	}
 	//
-	private final AtomicLong connLeaseCount = new AtomicLong(0);
 	@Override @SuppressWarnings("unchecked")
 	public <A extends IoTask<T>> Future submitTask(final A ioTask)
 	throws RejectedExecutionException {
@@ -302,7 +301,6 @@ implements HttpDataLoadExecutor<T> {
 		//
 		@Override
 		public final void completed(final BasicNIOPoolEntry connPoolEntry) {
-			connLeaseCount.incrementAndGet();
 			incrementBusyThreadCount();
 			client.execute(
 				wsIoTask, wsIoTask, connPoolEntry, connPool, wsIoTask, ioTaskFutureCallback
@@ -508,8 +506,7 @@ implements HttpDataLoadExecutor<T> {
 	public void logMetrics(final Marker logMarker) {
 		for(final HttpConnPool connPool : connPoolMap.values()) {
 			System.out.println(
-				connLeaseCount.get() + ", " +
-				((FixedRouteSequencingConnPool) connPool).leaseCount.get() + ", " +
+				((FixedRouteSequencingConnPool) connPool).releaseScheduleCount.get() + ", " +
 				((FixedRouteSequencingConnPool) connPool).releaseCount.get()
 			);
 		}
