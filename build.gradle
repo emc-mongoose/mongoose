@@ -87,7 +87,7 @@ task dist(type: Tar) {
 	into("$baseName-$rootProject.version") {
 		into("lib") {
 			for (Project p: mutualProjects) {
-				from p.configurations.compile
+				from p.configurations.runtime
 			}
 		}
 		for (Project p: mutualProjects) {
