@@ -68,6 +68,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import static com.emc.mongoose.common.conf.enums.LoadType.DELETE;
@@ -271,6 +272,7 @@ implements HttpDataLoadExecutor<T> {
 		}
 	}
 	//
+	private final AtomicLong connLeaseCount = new AtomicLong(0);
 	@Override @SuppressWarnings("unchecked")
 	public <A extends IoTask<T>> Future submitTask(final A ioTask)
 	throws RejectedExecutionException {
@@ -300,6 +302,7 @@ implements HttpDataLoadExecutor<T> {
 		//
 		@Override
 		public final void completed(final BasicNIOPoolEntry connPoolEntry) {
+			connLeaseCount.incrementAndGet();
 			incrementBusyThreadCount();
 			client.execute(
 				wsIoTask, wsIoTask, connPoolEntry, connPool, wsIoTask, ioTaskFutureCallback
@@ -315,15 +318,15 @@ implements HttpDataLoadExecutor<T> {
 		@Override
 		public final void failed(final Exception e) {
 			if(e instanceof TimeoutException | e instanceof InterruptedException) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Connection lease failed");
+				LogUtil.exception(LOG, Level.ERROR, e, "Connection lease failed");
 			} else {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Connection lease failed");
+				LogUtil.exception(LOG, Level.ERROR, e, "Connection lease failed");
 			}
 		}
 		//
 		@Override
 		public final void cancelled() {
-			LOG.debug(Markers.MSG, "Connection lease cancelled");
+			LOG.error(Markers.MSG, "Connection lease cancelled");
 		}
 	}
 	//
@@ -503,10 +506,12 @@ implements HttpDataLoadExecutor<T> {
 	
 	@Override
 	public void logMetrics(final Marker logMarker) {
-		PoolStats nextPoolStats;
 		for(final HttpConnPool connPool : connPoolMap.values()) {
-			nextPoolStats = connPool.getTotalStats();
-			System.out.println(nextPoolStats.toString());
+			System.out.println(
+				connLeaseCount.get() + ", " +
+				((FixedRouteSequencingConnPool) connPool).leaseCount.get() + ", " +
+				((FixedRouteSequencingConnPool) connPool).releaseCount.get()
+			);
 		}
 		super.logMetrics(logMarker);
 	}
