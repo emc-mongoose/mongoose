@@ -8,7 +8,517 @@
 <body>
 <fieldset>
 	<legend><h2>COMPONENTS</h2></legend>
-	TODO
+	<h4>Mutual dependency table</h4>
+	<fieldset>
+		<legend>Note</legend>
+		<p>Dependencies are marked with "+"</p>
+	</fieldset>
+	<table class="table-center-align">
+		<tbody>
+		<tr>
+			<th>
+				<em>depends on</em>
+			</th>
+			<th>common</th>
+			<th>generator</th>
+			<th>model</th>
+			<th>monitor</th>
+			<th>storage-driver-base</th>
+			<th>storage-driver-fs</th>
+			<th>storage-driver-http-base</th>
+			<th>storage-driver-http-s3</th>
+			<th>storage-mock (nagaina)</th>
+			<th>ui</th>
+		</tr>
+		<tr>
+			<td>common</td>
+			<td> </td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+		</tr>
+		<tr>
+			<td>generator</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>model</td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+		</tr>
+		<tr>
+			<td>monitor</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>storage-driver-base</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>storage-driver-fs</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>storage-driver-http-base</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td>+</td>
+			<td>+</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>storage-driver-http-s3</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>storage-mock (nagaina)</td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>ui</td>
+			<td> </td>
+			<td>+</td>
+			<td> </td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td>+</td>
+			<td> </td>
+		</tr>
+		</tbody>
+	</table>
+<h4>External dependency table</h4>
+<fieldset>
+	<legend>Note</legend>
+	<ul>
+		<li>"C" means compile time dependency</li>
+		<li>"R" means runtime dependency</li>
+		<li>Empty cell means no dependency at all</li>
+	</ul>
+</fieldset>
+<table class="table-center-align">
+	<tbody>
+	<tr>
+		<th colspan="4"><em>depends on</em></th>
+
+		<th rowspan="2">common</th>
+		<th rowspan="2">generator</th>
+		<th rowspan="2">model</th>
+		<th rowspan="2">monitor</th>
+		<th rowspan="2">storage-driver-base</th>
+		<th rowspan="2">storage-driver-fs</th>
+		<th rowspan="2">storage-driver-http-base</th>
+		<th rowspan="2">storage-driver-http-s3</th>
+		<th rowspan="2">storage-mock (nagaina)</th>
+		<th rowspan="2">ui</th>
+	</tr>
+	<tr>
+		<th>group</th>
+		<th>name</th>
+		<th>version</th>
+		<th>license</th>
+	</tr>
+	<tr>
+		<td rowspan="3">com.fasterxml.jackson.core</td>
+		<td>jackson-annotations</td>
+		<td>2.8.0</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+	</tr>
+	<tr>
+		<td>jackson-core</td>
+		<td>2.8.1</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td>R</td>
+		<td> </td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>C</td>
+		<td>C</td>
+	</tr>
+	<tr>
+		<td>jackson-databind</td>
+		<td>2.8.1</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+	</tr>
+	<tr>
+		<td>com.lmax</td>
+		<td>disruptor</td>
+		<td>3.3.4</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td>R</td>
+		<td> </td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+	</tr>
+	<tr>
+		<td>commons-codec</td>
+		<td>commons-codec</td>
+		<td>1.10</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>commons-lang</td>
+		<td>commons-lang</td>
+		<td>2.6</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+	</tr>
+	<tr>
+		<td>io.dropwizard.metrics</td>
+		<td>metrics-core</td>
+		<td>3.1.2</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td rowspan="8">io.netty</td>
+		<td>netty-buffer</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-codec</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-codec-http</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-common</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-handler</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-resolver</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-transport</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>netty-transport-native-epoll</td>
+		<td>4.1.4.Final</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td>org.apache.commons</td>
+		<td>commons-collections4</td>
+		<td>4.1</td>
+		<td>Apache 2.0</td>
+		<td>C</td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+	</tr>
+	<tr>
+		<td rowspan="4">org.apache.logging</td>
+		<td>log4j-core</td>
+		<td>2.6.2</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td>C</td>
+		<td> </td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+		<td>C</td>
+	</tr>
+	<tr>
+		<td>log4j-api</td>
+		<td>2.6.2</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td>R</td>
+		<td> </td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+	</tr>
+	<tr>
+		<td>log4j-iostreams</td>
+		<td>2.6.2</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>C</td>
+	</tr>
+	<tr>
+		<td>log4j-jul</td>
+		<td>2.6.2</td>
+		<td>Apache 2.0</td>
+		<td> </td>
+		<td>R</td>
+		<td> </td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+		<td>R</td>
+	</tr>
+	<tr>
+		<td>org.slf4j</td>
+		<td>slf4j-api</td>
+		<td>1.7.7</td>
+		<td>MIT</td>
+		<td> </td>
+		<td> </td>
+		<td>R</td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td> </td>
+		<td>R</td>
+		<td> </td>
+	</tr>
+	</tbody>
+</table>
 </fieldset>
 </body>
 </html>

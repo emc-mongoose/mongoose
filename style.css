@@ -72,9 +72,17 @@ table {
 	background: rgba(255,255,255,0.2);
 }
 table, td, th, tbody {
-	border: 1;
-	border-color: gray;
+	border: 1px solid gray;
 	border-collapse: collapse;
+}
+.table-center-align {
+	width: 100%;
+	margin-top: 10px;
+}
+.table-center-align td, .table-center-align th {
+	text-align: center;
+	padding: 10px;
+	min-width: 50px;
 }
 /*ul {
 	margin-top: 0;
