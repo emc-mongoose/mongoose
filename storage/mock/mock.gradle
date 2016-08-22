@@ -14,8 +14,6 @@ dependencies {
 		"io.dropwizard.metrics:metrics-core:3.1.2",
 
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 
 		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
 
@@ -28,7 +26,9 @@ dependencies {
 	)
 
 	runtime(
-		"com.lmax:disruptor:3.3.4"
+		"com.lmax:disruptor:3.3.4",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
 	)
 }
 
