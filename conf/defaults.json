@@ -136,9 +136,9 @@
 				"time" : "0s"
 			},
 			"metrics" : {
-				"intermediate" : false,
 				"period" : "10s",
-				"precondition" : false
+				"precondition" : false,
+				"threshold" : 0
 			},
 			"server" : {
 				"addrs" : [
@@ -169,7 +169,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "2.4.3"
+			"version" : "2.5.0"
 		},
 		"storage" : {
 			"type" : "http",
@@ -182,7 +182,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/2.4.2"
+					"User-Agent" : "mongoose/2.5.0"
 				},
 				"namespace" : null,
 				"versioning" : false

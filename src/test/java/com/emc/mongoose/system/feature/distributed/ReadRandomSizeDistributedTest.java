@@ -45,7 +45,7 @@ extends StandaloneClientTestBase {
 	@BeforeClass
 	public static void setUpClass() {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(AppConfig.KEY_LOAD_METRICS_INTERMEDIATE, "true");
+		System.setProperty(AppConfig.KEY_LOAD_METRICS_THRESHOLD, "true");
 		try {
 			StandaloneClientTestBase.setUpClass();
 		} catch(final Exception e) {

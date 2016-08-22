@@ -346,8 +346,10 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"intermediate" : {
-									"type" : "boolean"
+								"threshold" : {
+									"type" : "number",
+									"minimum" : 0,
+									"maximum" : 1
 								},
 								"period" : {
 									"oneOf" : [

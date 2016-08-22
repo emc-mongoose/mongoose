@@ -448,10 +448,12 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"intermediate" : {
+								"threshold" : {
 									"oneOf" : [
 										{
-											"type": "boolean"
+											"type" : "number",
+											"minimum" : 0,
+											"maximum" : 1
 										}, {
 											"type" : "string",
 											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"

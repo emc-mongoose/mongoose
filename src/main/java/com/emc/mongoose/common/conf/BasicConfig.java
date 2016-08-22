@@ -346,8 +346,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public boolean getLoadMetricsIntermediate() {
-		return getBoolean(KEY_LOAD_METRICS_INTERMEDIATE);
+	public double getLoadMetricsThreshold() {
+		return getDouble(KEY_LOAD_METRICS_THRESHOLD);
 	}
 	//
 	@Override

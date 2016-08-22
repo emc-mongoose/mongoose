@@ -3,7 +3,6 @@ package com.emc.mongoose.system.feature.reporting;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.log.appenders.RunIdFileAppender;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.system.base.StandaloneClientTestBase;
@@ -43,7 +42,7 @@ extends StandaloneClientTestBase {
 	@BeforeClass
 	public static void setUpClass() {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(AppConfig.KEY_LOAD_METRICS_INTERMEDIATE, "true");
+		System.setProperty(AppConfig.KEY_LOAD_METRICS_THRESHOLD, "true");
 		try {
 			StandaloneClientTestBase.setUpClass();
 		} catch(final Exception e) {

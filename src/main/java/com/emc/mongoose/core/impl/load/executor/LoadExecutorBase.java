@@ -81,6 +81,7 @@ implements LoadExecutor<T> {
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected final boolean preconditionFlag;
+	protected final double fullLoadThreshold;
 	protected IoStats ioStats;
 	protected volatile IoStats.Snapshot lastStats = null;
 	protected volatile IoStats medIoStats = null;
@@ -359,12 +360,13 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public boolean isFullThrottleEntered() {
-		return currConcurrencyLevel.get() >= totalThreadCount;
+		return totalThreadCount - currConcurrencyLevel.get() < totalThreadCount * fullLoadThreshold;
 	}
 	//
 	@Override
 	public boolean isFullThrottleExited() {
-		return isShutdown.get() && currConcurrencyLevel.get() < totalThreadCount;
+		return isShutdown.get() &&
+			totalThreadCount - currConcurrencyLevel.get() > totalThreadCount * fullLoadThreshold;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
@@ -427,7 +429,13 @@ implements LoadExecutor<T> {
 		}
 		mgmtTasks.add(new StatsRefreshTask());
 		mgmtTasks.add(new ResultsDispatcher());
-		if(appConfig.getLoadMetricsIntermediate()) {
+		fullLoadThreshold = appConfig.getLoadMetricsThreshold();
+		if(fullLoadThreshold > 0) {
+			if(fullLoadThreshold > 1) {
+				throw new IllegalArgumentException(
+					"Full load threshold should be in the range of [0, 1]"
+				);
+			}
 			mgmtTasks.add(new FullThrottleMonitorTask());
 		}
 		//
