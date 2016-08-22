@@ -33,6 +33,7 @@ import org.apache.http.impl.nio.DefaultNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.SSLNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.nio.NHttpConnectionFactory;
+import org.apache.http.pool.PoolStats;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -56,6 +57,7 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -498,4 +500,14 @@ implements HttpDataLoadExecutor<T> {
 		}
 		return nodeAddr;
 	}*/
+	
+	@Override
+	public void logMetrics(final Marker logMarker) {
+		PoolStats nextPoolStats;
+		for(final HttpConnPool connPool : connPoolMap.values()) {
+			nextPoolStats = connPool.getTotalStats();
+			System.out.println(nextPoolStats.toString());
+		}
+		super.logMetrics(logMarker);
+	}
 }
