@@ -33,7 +33,6 @@ import org.apache.http.impl.nio.DefaultNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.SSLNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.pool.PoolStats;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -57,7 +56,6 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -68,7 +66,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import static com.emc.mongoose.common.conf.enums.LoadType.DELETE;
@@ -501,15 +498,4 @@ implements HttpDataLoadExecutor<T> {
 		}
 		return nodeAddr;
 	}*/
-	
-	@Override
-	public void logMetrics(final Marker logMarker) {
-		for(final HttpConnPool connPool : connPoolMap.values()) {
-			System.out.println(
-				((FixedRouteSequencingConnPool) connPool).releaseScheduleCount.get() + ", " +
-				((FixedRouteSequencingConnPool) connPool).releaseCount.get()
-			);
-		}
-		super.logMetrics(logMarker);
-	}
 }

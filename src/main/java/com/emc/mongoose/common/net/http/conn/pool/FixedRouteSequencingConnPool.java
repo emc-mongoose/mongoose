@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by kurila on 15.10.15.
@@ -30,8 +29,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HttpHost route;
-	public final AtomicLong releaseScheduleCount = new AtomicLong(0);
-	public final AtomicLong releaseCount = new AtomicLong(0);
 	//
 	public FixedRouteSequencingConnPool(
 		final ConnectingIOReactor ioReactor, final HttpHost route,
@@ -110,7 +107,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		public void run() {
 			try {
 				FixedRouteSequencingConnPool.super.release(entry, reusable);
-				releaseCount.incrementAndGet();
 			} catch(final IllegalStateException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to release the connection");
 			} catch(final Exception e) {
@@ -121,7 +117,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	@Override
 	public final void release(final BasicNIOPoolEntry entry, final boolean reusable) {
-		releaseScheduleCount.incrementAndGet();
 		try {
 			Sequencer.INSTANCE.submit(new ConnReleaseTask(entry, reusable));
 		} catch(final InterruptedException e) {

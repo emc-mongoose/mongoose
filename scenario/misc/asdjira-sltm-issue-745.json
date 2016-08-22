@@ -4,7 +4,7 @@
 	"in" : "1-10",
 	"config" : {
 		"load" : {
-			"threads" : 100,
+			"threads" : 1500,
 			"limit" : {
 				"count" : 10000
 			}
