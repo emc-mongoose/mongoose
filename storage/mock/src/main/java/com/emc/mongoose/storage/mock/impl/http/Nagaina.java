@@ -27,6 +27,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +60,15 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		s3RequestHandler = new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
 		swiftRequestHandler = new SwiftRequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
 		atmosRequestHandler = new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
+		try {
+			final ServiceInfo serviceInfo =
+				ServiceInfo.create("_http._tcp.local.", "nagaina", port, "storage mock");
+			final JmDNS jmDns = JmDNS.create();
+			jmDns.registerService(serviceInfo);
+			LOG.info("Nagaina registered as service");
+		} catch(final IOException e) {
+			e.printStackTrace(System.err);
+		}
 	}
 
 	@Override
