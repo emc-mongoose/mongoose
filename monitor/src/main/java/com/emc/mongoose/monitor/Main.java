@@ -7,6 +7,7 @@ import com.emc.mongoose.model.api.item.ItemType;
 import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3Driver;
+import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -49,6 +50,7 @@ public class Main {
 			throw new UserShootHisFootException("Config is null");
 		}
 		log.info(Markers.MSG, "Configuration defaults loaded");
+		config.apply(CliArgParser.parseArgs(args));
 		
 		final StorageConfig storageConfig = config.getStorageConfig();
 		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,6 @@ public final class Config {
 
 	private static final class TimeStrToLongDeserializer
 	extends JsonDeserializer<Long> {
-
 		@Override
 		public final Long deserialize(final JsonParser p, final DeserializationContext ctx)
 		throws JsonProcessingException, IOException {
@@ -40,7 +40,7 @@ public final class Config {
 	extends JsonDeserializer<SizeInBytes> {
 		@Override
 		public final SizeInBytes deserialize(final JsonParser p, final DeserializationContext ctx)
-		throws JsonProcessingException, IOException{
+		throws JsonProcessingException, IOException {
 			return new SizeInBytes(p.getValueAsString());
 		}
 	}
@@ -49,7 +49,7 @@ public final class Config {
 	extends JsonDeserializer<DataRangesConfig> {
 		@Override
 		public final DataRangesConfig deserialize(final JsonParser p, final DeserializationContext ctx)
-		throws JsonProcessingException, IOException{
+		throws JsonProcessingException, IOException {
 			try {
 				return new DataRangesConfig(p.getValueAsInt());
 			} catch(final IOException ignored) {
@@ -990,5 +990,23 @@ public final class Config {
 
 		}
 
+	}
+	
+	public void apply(final Map<String, Object> tree) {
+		
+		Map<String, Object> branch = tree;
+		Object subConfig = this;
+		
+		for(final String key : branch.keySet()) {
+			for(final Field field : subConfig.getClass().getFields()) {
+				try {
+					if(key.equals(field.get(subConfig))) {
+						System.out.println();
+					}
+				} catch(final IllegalAccessException e) {
+					e.printStackTrace(System.out);
+				}
+			}
+		}
 	}
 }

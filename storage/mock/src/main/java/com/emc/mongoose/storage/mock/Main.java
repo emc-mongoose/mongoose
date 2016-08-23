@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock;
 
+import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.storage.mock.impl.http.Nagaina;
@@ -24,9 +25,10 @@ public class Main {
 	public static void main(final String[] args)
 	throws IOException {
 		final Config config = ConfigLoader.loadDefaultConfig();
-		if (config == null) {
+		if(config == null) {
 			throw new IllegalStateException();
 		}
+		config.apply(CliArgParser.parseArgs(args));
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		final Config.ItemConfig itemConfig = config.getItemConfig();
@@ -36,11 +38,8 @@ public class Main {
 				nagaina.await();
 			} catch(final InterruptedException ignored) {
 			}
-		} catch(final Throwable t) {
-			LogUtil.exception(
-				LOG, Level.ERROR, t,
-				"Failed to run Nagaina"
-			);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to run Nagaina");
 		}
 	}
 
