@@ -1,13 +1,22 @@
 description = 'mongoose-model'
 
 dependencies {
-    compileOnly(project(':common')) { transitive = false }
+	compile(
+		"org.apache.commons:commons-collections4:4.1",
+		"commons-codec:commons-codec:1.10",
+		"commons-lang:commons-lang:2.6",
+		"io.dropwizard.metrics:metrics-core:3.1.2"
+	)
+
+	compileOnly(project(':common'))
 }
 
+configurations.compileOnly.dependencies.each { it.transitive = false }
+
 jar {
-    manifest {
-        attributes (
-            "Class-Path": setClassPath(configurations)
-        )
-    }
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
 }

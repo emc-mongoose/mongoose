@@ -1,12 +1,22 @@
 description = 'mongoose-storage-mock'
 
 dependencies {
-	compileOnly (project(':common')) { transitive = false }
-	compileOnly (project(':model')) { transitive = false }
-	compileOnly (project(':storage:driver-http-base')) { transitive = false }
-	compileOnly (project(':ui')) { transitive = false }
+	compileOnly(
+		project(':common'),
+		project(':model'),
+		project(':storage:driver-http-base'),
+		project(':ui')
+	)
 
 	compile(
+		"org.apache.commons:commons-collections4:4.1",
+		"commons-codec:commons-codec:1.10",
+		"io.dropwizard.metrics:metrics-core:3.1.2",
+
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+
+		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
+
 		"io.netty:netty-common:${depVersion.netty}",
 		"io.netty:netty-buffer:${depVersion.netty}",
 		"io.netty:netty-transport:${depVersion.netty}",
@@ -14,7 +24,14 @@ dependencies {
 		"io.netty:netty-codec-http:${depVersion.netty}",
 		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
 	)
+
+	runtime(
+		"com.lmax:disruptor:3.3.4",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
+	)
 }
+
 
 jar {
 	archiveName "nagaina.$extension"

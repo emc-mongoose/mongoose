@@ -2,8 +2,6 @@ package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.item.FileItemInput;
 import com.emc.mongoose.model.api.item.Item;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -17,8 +15,6 @@ import java.nio.file.StandardOpenOption;
 public class BinFileItemInput<T extends Item>
 extends BinItemInput<T>
 implements FileItemInput<T> {
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final Path itemsSrcPath;
 	/**

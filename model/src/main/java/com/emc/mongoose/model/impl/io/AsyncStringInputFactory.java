@@ -3,22 +3,18 @@ package com.emc.mongoose.model.impl.io;
 import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.ValueInputFactory;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.emc.mongoose.model.impl.io.RangePatternDefinedInput.RANGE_DELIMITER;
 import static com.emc.mongoose.model.impl.io.AsyncDateInput.INPUT_DATE_FMT_STRINGS;
+import static com.emc.mongoose.model.impl.io.RangePatternDefinedInput.RANGE_DELIMITER;
 import static org.apache.commons.lang.time.DateUtils.parseDate;
 
 public final class AsyncStringInputFactory<G extends Input<String>>
 implements ValueInputFactory<String, G> {
 
-	private static final Logger LOG = LogManager.getLogger();
 	// pay attention to the matcher groups
 	public static final String DOUBLE_REG_EXP = "([-+]?\\d*\\.?\\d+)";
 	public static final String LONG_REG_EXP = "([-+]?\\d+)";
