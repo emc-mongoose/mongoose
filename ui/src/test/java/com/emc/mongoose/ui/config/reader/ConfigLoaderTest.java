@@ -95,7 +95,7 @@ public class ConfigLoaderTest {
 		assertThat(runConfig.getFile(), nullValue("run.file"));
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		assertThat(storageConfig, notNullValue());
-		assertThat(storageConfig.getAddresses().get(0), equalTo("127.0.0.1", "storage.address"));
+		assertThat(storageConfig.getAddrs().get(0), equalTo("127.0.0.1", "storage.address"));
 		final Config.StorageConfig.AuthConfig authConfig = storageConfig.getAuthConfig();
 		assertThat(authConfig, notNullValue());
 		assertThat(authConfig.getId(), nullValue("storage.auth.id"));

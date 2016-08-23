@@ -10,11 +10,17 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
+import static com.emc.mongoose.ui.cli.CliArgParser.ARG_SEP;
+import static org.apache.commons.lang.WordUtils.capitalize;
 /**
  Created on 11.07.16.
  */
@@ -795,7 +801,7 @@ public final class Config {
 		public StorageConfig() {
 		}
 
-		public List<String> getAddresses() {
+		public List<String> getAddrs() {
 			return addrs;
 		}
 
@@ -992,21 +998,97 @@ public final class Config {
 
 	}
 	
-	public void apply(final Map<String, Object> tree) {
-		
-		Map<String, Object> branch = tree;
-		Object subConfig = this;
-		
+	public void apply(final Map<String, Object> tree)
+	throws InvocationTargetException, IllegalAccessException, IllegalStateException {
+		try {
+			applyRecursively(this, tree);
+		} catch(final IllegalArgumentException e) {
+			System.out.println("Invalid argument: " + ARG_PREFIX + e.getMessage());
+			throw e;
+		}
+	}
+
+	private static void applyRecursively(final Object config, final Map<String, Object> branch)
+	throws InvocationTargetException, IllegalAccessException {
+		final Class configCls = config.getClass();
 		for(final String key : branch.keySet()) {
-			for(final Field field : subConfig.getClass().getFields()) {
+			final Object node = branch.get(key);
+			if(node instanceof Map) {
+				final Map<String, Object> childBranch = (Map<String, Object>) node;
 				try {
-					if(key.equals(field.get(subConfig))) {
-						System.out.println();
+					final Method subConfigGetter = configCls.getMethod(
+						"get" + capitalize(key) + "Config"
+					);
+					final Object subConfig = subConfigGetter.invoke(config);
+					try {
+						applyRecursively(subConfig, childBranch);
+					} catch(final IllegalArgumentException e) {
+						throw new IllegalArgumentException(key + ARG_SEP + e.getMessage());
 					}
-				} catch(final IllegalAccessException e) {
-					e.printStackTrace(System.out);
+				} catch(final NoSuchMethodException e) {
+					throw new IllegalArgumentException(key);
 				}
+			} else if(node instanceof String) {
+				applyField(config, key, (String) node);
+			} else {
+				throw new IllegalStateException();
 			}
+		}
+	}
+
+	private static void applyField(final Object config, final String key, final String value)
+	throws InvocationTargetException, IllegalAccessException {
+		final Class configCls = config.getClass();
+		try {
+			final Method fieldGetter = configCls.getMethod("get" + capitalize(key));
+			final Class fieldType = fieldGetter.getReturnType();
+			if(fieldType.equals(String.class)) {
+				configCls
+					.getMethod("set" + capitalize(key), String.class)
+					.invoke(config, value);
+			} else if(fieldType.equals(List.class)) {
+				final List<String> listValue = Arrays.asList(value.split(","));
+				configCls
+					.getMethod("set" + capitalize(key), List.class)
+					.invoke(config, listValue);
+			} else if(fieldType.equals(Map.class)) {
+				final Map<String, String> field = (Map<String, String>) fieldGetter.invoke(config);
+				final String keyValuePair[] = value.split(":", 2);
+				if(keyValuePair.length == 1) {
+					field.remove(keyValuePair[0]);
+				} else if(keyValuePair.length == 2) {
+					field.put(keyValuePair[0], keyValuePair[1]);
+				}
+			} else if(fieldType.equals(Integer.TYPE)) {
+				final int intValue = Integer.parseInt(value);
+				configCls
+					.getMethod("set" + capitalize(key), Integer.TYPE)
+					.invoke(config, intValue);
+			} else if(fieldType.equals(Long.TYPE)) {
+				final long longValue = Long.parseLong(value);
+				configCls
+					.getMethod("set" + capitalize(key), Long.TYPE)
+					.invoke(config, longValue);
+			} else if(fieldType.equals(Boolean.TYPE)) {
+				final boolean flagValue = Boolean.parseBoolean(value);
+				configCls
+					.getMethod("set" + capitalize(key), Boolean.TYPE)
+					.invoke(config, flagValue);
+			} else if(fieldType.equals(SizeInBytes.class)) {
+				final SizeInBytes sizeValue = new SizeInBytes(value);
+				configCls
+					.getMethod("set" + capitalize(key), SizeInBytes.class)
+					.invoke(config, sizeValue);
+			} else if(fieldType.equals(DataRangesConfig.class)) {
+				final DataRangesConfig rangesValue = new DataRangesConfig(value);
+				configCls
+					.getMethod("set" + capitalize(key), DataRangesConfig.class)
+					.invoke(config, rangesValue);
+			} else {
+				throw new IllegalStateException();
+			}
+		} catch(final NoSuchMethodException e) {
+			throw new IllegalArgumentException(key);
 		}
 	}
 }

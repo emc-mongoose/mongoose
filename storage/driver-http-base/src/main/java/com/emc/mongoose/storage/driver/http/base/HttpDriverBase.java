@@ -64,7 +64,7 @@ implements Driver<I, O> {
 	) throws UserShootHisFootException {
 		
 		super(runId, loadConfig);
-		storageNodeAddrs = storageConfig.getAddresses().toArray(new String[]{});
+		storageNodeAddrs = storageConfig.getAddrs().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
 		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
 		

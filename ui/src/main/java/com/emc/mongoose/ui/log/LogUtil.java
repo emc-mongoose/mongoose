@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -156,9 +157,9 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "run.id" property with timestamp value if not set before
-				final String runId = System.getProperty(KEY_RUN_ID);
+				final String runId = ThreadContext.get(KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
-					System.setProperty(KEY_RUN_ID, newRunId());
+					ThreadContext.put(KEY_RUN_ID, newRunId());
 				}
 				try {
 					final String log4jConfigurationFile = System.getProperty("log4j.configurationFile");
