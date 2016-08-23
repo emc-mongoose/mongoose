@@ -22,7 +22,7 @@ public class NagainaMainTest {
 	throws Exception {
 		try(final NagainaListener listener = new NagainaListener(JmDNS.create(), MDns.Type.HTTP)) {
 			listener.open();
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			assertThat(listener.isNagainaDetected(), is(true));
 		}
 	}

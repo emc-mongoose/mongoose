@@ -44,6 +44,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	private final EventLoopGroup[] workGroups;
 	private final Channel[] channels;
 	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
+	private JmDNS jmDns;
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
@@ -63,7 +64,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		try {
 			final ServiceInfo serviceInfo =
 				ServiceInfo.create("_http._tcp.local.", "nagaina", port, "storage mock");
-			final JmDNS jmDns = JmDNS.create();
+			jmDns = JmDNS.create();
 			jmDns.registerService(serviceInfo);
 			LOG.info("Nagaina registered as service");
 		} catch(final IOException e) {
@@ -137,6 +138,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	public void close()
 	throws IOException {
+		jmDns.unregisterAllServices();
 		for (final Channel channel: channels) {
 			channel.close();
 		}
