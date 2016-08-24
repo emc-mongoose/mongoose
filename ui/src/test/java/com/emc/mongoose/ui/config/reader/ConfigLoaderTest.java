@@ -34,7 +34,7 @@ public class ConfigLoaderTest {
 		assertThat(bufferConfig.getSize(), equalTo(new SizeInBytes("4KB-1MB"), "io.buffer.size"));
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertThat(socketConfig, notNullValue());
-		assertThat(socketConfig.getTimeoutMillisec(), equalTo(1_000_000, "socket.timeoutMilliSec"));
+		assertThat(socketConfig.getTimeoutMilliSec(), equalTo(1_000_000, "socket.timeoutMilliSec"));
 		assertThat(socketConfig.getReuseAddr(), equalTo(true, "socket.reuseAddr"));
 		assertThat(socketConfig.getKeepAlive(), equalTo(true, "socket.keepAlive"));
 		assertThat(socketConfig.getTcpNoDelay(), equalTo(true, "socket.tcpNoDelay"));
@@ -80,7 +80,7 @@ public class ConfigLoaderTest {
 		assertThat(limitConfig, notNullValue());
 		assertThat(limitConfig.getCount(), equalTo(0L, "load.limit.count"));
 		assertThat(limitConfig.getRate(), equalTo(0.0, "load.limit.rate"));
-		assertThat(limitConfig.getSize(), equalTo(0, "load.limit.size"));
+		assertThat(limitConfig.getSize(), equalTo(new SizeInBytes(0), "load.limit.size"));
 		final String timeTestValue = "0s";
 		assertThat(limitConfig.getTime(), equalTo(TimeUtil.getTimeUnit(timeTestValue).toSeconds(TimeUtil.getTimeValue(timeTestValue)), "load.limit.time"));
 		final Config.LoadConfig.MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
