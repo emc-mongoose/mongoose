@@ -22,14 +22,19 @@ ext {
 		netty: "4.1.4.Final",
 		jackson: "2.8.1",
 	]
-	setClassPath = { configurations ->
-		[configurations.compile.collect {file ->
-			["lib", file.name].join(File.separator)
-		}.join(' '),
-		 (configurations.compileOnly - configurations.compile).collect {file ->
-			 file.name
-		 }.join(' ')].join(' ')
+	setClassPath = {
+		configurations -> [
+			configurations.runtime.collect {
+				file -> [
+					"lib", file.name
+				].join(File.separator)
+			}.join(' '),
+			(configurations.compileOnly - configurations.runtime).collect {
+				file -> file.name
+			}.join(' ')
+		].join(' ')
 	}
+	mutualProjects = subprojects.findAll {it != project('storage')}
 }
 
 subprojects {
@@ -50,39 +55,18 @@ subprojects {
 	}
 
 	dependencies {
-
-		compile(
-			"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
-			"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-			"org.apache.logging.log4j:log4j-iostreams:${depVersion.log4j}",
-			"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
-
-			"commons-lang:commons-lang:2.6",
-			"org.apache.commons:commons-collections4:4.1",
-			"commons-codec:commons-codec:1.10",
-			"io.dropwizard.metrics:metrics-core:3.1.2",
-			"commons-cli:commons-cli:1.3.1",
-
-			"com.lmax:disruptor:3.3.4",
-
-			"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
-			"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
-			"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
-
-			"it.unimi.dsi:fastutil:7.0.12"
-		)
-
 		testCompile "junit:junit:4.12"
 	}
 
 	jar {
-		def rootName = rootProject.name
-		def name = project.name
-		archiveName "$rootName-$name.$extension"
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join('-')
+		archiveName "$name.$extension"
 		manifest {
 			attributes (
 				"Implementation-Version": version,
-				"Implementation-Title": "$rootName-$name",
+				"Implementation-Title": "$name"
 			)
 		}
 	}
@@ -95,22 +79,15 @@ task dist(type: Tar) {
 	baseName = rootProject.name
 	compression = Compression.GZIP
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	def mock = project("storage:mock")
-	def monitor = project("monitor")
-	def generator = project("generator")
-	def driverFs = project("storage:driver-fs")
-	def driverHttpS3 = project("storage:driver-http-s3")
 	into("$baseName-$rootProject.version") {
 		into("lib") {
-			from { mock.configurations.compile }
-			from { monitor.configurations.compile }
+			for (Project p: mutualProjects) {
+				from p.configurations.runtime
+			}
 		}
-		from mock.jar.outputs.files
-		from mock.configurations.compileOnly - mock.configurations.compile
-		from monitor.jar.outputs.files
-		from generator.jar.outputs.files
-		from driverFs.jar.outputs.files
-		from driverHttpS3.jar.outputs.files
+		for (Project p: mutualProjects) {
+			from p.jar.outputs.files
+		}
 	}
 }
 
@@ -123,6 +100,13 @@ task printVersion {
 
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.14.1"
+}
+
+void collectName(Project p, LinkedList<String> names) {
+	names.addFirst p.name
+	if (p.parent != null) {
+		collectName(p.parent, names)
+	}
 }
 
 String defineVersion() {

@@ -3,8 +3,6 @@ package com.emc.mongoose.model.impl.item;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.FileItemInput;
 import com.emc.mongoose.model.api.item.Item;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,8 +15,6 @@ import java.nio.file.StandardOpenOption;
 public class CsvFileItemInput<T extends Item>
 extends CsvItemInput<T>
 implements FileItemInput<T> {
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final Path itemsFilePath;
 	/**
