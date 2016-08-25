@@ -39,7 +39,8 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created on 19.07.16.
  */
-public abstract class StorageMockBase<T extends MutableDataItemMock> implements StorageMock<T> {
+public abstract class StorageMockBase<T extends MutableDataItemMock>
+implements StorageMock<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -59,10 +60,10 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
 		final Config.StorageConfig.MockConfig mockConfig,
-		final Config.LoadConfig.MetricsConfig metricsConfig,
-		final Config.ItemConfig itemConfig) {
-		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig =
-			mockConfig.getContainerConfig();
+		final Config.LoadConfig.MetricsConfig metricsConfig, final Config.ItemConfig itemConfig
+	) {
+		final Config.StorageConfig.MockConfig.ContainerConfig
+			containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
 		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
@@ -103,7 +104,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		try {
 			final Future<ObjectContainerMock<T>> future =
 				BlockingQueueTaskSequencer.INSTANCE.submit(new GetContainerTask(name));
-			if (future != null) {
+			if(future != null) {
 				return future.get();
 			}
 		} catch(final InterruptedException e) {
@@ -142,7 +143,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		try {
 			final Future<T> future =
 				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
-			if (future != null) {
+			if(future != null) {
 				final T obj = future.get();
 				if(obj == null) {
 					throw new ObjectMockNotFoundException();
@@ -163,7 +164,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		try {
 			final Future<T> future =
 				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
-			if (future != null) {
+			if(future != null) {
 				final T obj = future.get();
 				if(obj == null) {
 					throw new ObjectMockNotFoundException();
@@ -185,7 +186,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		try {
 			final Future<T> future =
 				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
-			if (future != null) {
+			if(future != null) {
 				return future.get();
 			}
 		} catch(final ExecutionException e) {
@@ -210,7 +211,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		try {
 			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
 				new ListObjectsTask(containerName, afterObjectId, outputBuffer, limit));
-			if (future != null) {
+			if(future != null) {
 				return future.get();
 			}
 		} catch(final ExecutionException e) {
@@ -370,7 +371,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 		@Override
 		public void run() {
 			final ObjectContainerMock<T> container = storageMap.get(containerName);
-			if (container != null) {
+			if(container != null) {
 				objects.forEach(object -> container.put(object.getName(), object));
 				set(new ArrayList<>(container.values()));
 			} else {
@@ -479,7 +480,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 		@Override
 		public void run() {
-			if (storageMap.containsKey(containerName)) {
+			if(storageMap.containsKey(containerName)) {
 				set(storageMap.remove(containerName));
 			} else {
 				setException(new ContainerMockNotFoundException(containerName));
@@ -498,7 +499,7 @@ public abstract class StorageMockBase<T extends MutableDataItemMock> implements 
 
 		@Override
 		public void run() {
-			if (storageMap.containsKey(containerName)) {
+			if(storageMap.containsKey(containerName)) {
 				set(storageMap.get(containerName));
 			} else {
 				setException(new ContainerMockNotFoundException(containerName));

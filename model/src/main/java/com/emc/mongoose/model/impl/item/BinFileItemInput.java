@@ -57,7 +57,7 @@ implements FileItemInput<T> {
 	@Override
 	public void reset()
 	throws IOException {
-		if (itemsSrc != null) {
+		if(itemsSrc != null) {
 			itemsSrc.close();
 		}
 		setItemsSrc(buildObjectInputStream(itemsSrcPath));

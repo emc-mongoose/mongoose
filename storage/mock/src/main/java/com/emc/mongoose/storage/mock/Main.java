@@ -26,21 +26,32 @@ public class Main {
 
 	public static void main(final String[] args)
 	throws IOException, InvocationTargetException, IllegalAccessException {
+		
 		final Config config = ConfigLoader.loadDefaultConfig();
 		if(config == null) {
 			throw new IllegalStateException();
 		}
 		config.apply(CliArgParser.parseArgs(args));
-		final String newRunId = config.getRunConfig().getId();
-		if(newRunId != null) {
-			ThreadContext.put(KEY_RUN_ID, newRunId);
+		
+		final Config.RunConfig runConfig = config.getRunConfig();
+		String runId = runConfig.getId();
+		if(runId == null) {
+			runId = ThreadContext.get(KEY_RUN_ID);
+			runConfig.setId(runId);
+		} else {
+			ThreadContext.put(KEY_RUN_ID, runId);
 		}
+		if(runId == null) {
+			throw new IllegalStateException("Run id is not set");
+		}
+		
 		final Logger log = LogManager.getLogger();
 		log.info(Markers.MSG, "Configuration loaded");
-		//
+		
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		final Config.ItemConfig itemConfig = config.getItemConfig();
+		
 		try(final Nagaina nagaina = new Nagaina(storageConfig, loadConfig, itemConfig)) {
 			nagaina.start();
 			try {

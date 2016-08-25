@@ -5,7 +5,8 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -48,7 +49,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  Created on 12.07.16.
  */
 public class S3RequestHandler<T extends MutableDataItemMock>
-	extends RequestHandlerBase<T> {
+extends RequestHandlerBase<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final DocumentBuilder DOM_BUILDER;
@@ -64,37 +65,27 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 	}
 
 	public S3RequestHandler(
-			final Config.ItemConfig.NamingConfig namingConfig,
-			final Config.LoadConfig.LimitConfig limitConfig,
-			final StorageMock<T> sharedStorage,
-			final ContentSource contentSource) {
-		super(limitConfig, sharedStorage, contentSource);
-		final String prefix = namingConfig.getPrefix();
-		if (prefix != null) {
-			setPrefixLength(prefix.length());
-		} else {
-			setPrefixLength(0);
-		}
-		setIdRadix(namingConfig.getRadix());
+		final LimitConfig limitConfig, final NamingConfig namingConfig,
+		final StorageMock<T> sharedStorage, final ContentSource contentSource
+	) {
+		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
 	@Override
 	protected void doHandle(
-			final String uri,
-			final HttpMethod method,
-			final Long size,
-			final ChannelHandlerContext ctx) {
+		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+	) {
 		final String[] uriParams = getUriParameters(uri, 2);
 		final String containerName = uriParams[0];
 		final String objectId = uriParams[1];
 		final Channel channel = ctx.channel();
 		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
-		if (containerName != null) {
+		if(containerName != null) {
 			handleItemRequest(uri, method, containerName, objectId, size, ctx);
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
-		if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
 			writeEmptyResponse(ctx);
 		}
 	}
@@ -103,18 +94,19 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 
 	@Override
 	protected void handleContainerList(
-		final String name, final QueryStringDecoder queryStringDecoder, final ChannelHandlerContext ctx
+		final String name, final QueryStringDecoder queryStringDecoder,
+		final ChannelHandlerContext ctx
 	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
-		if (parameters.containsKey(MAX_COUNT_KEY)) {
+		if(parameters.containsKey(MAX_COUNT_KEY)) {
 			maxCount = Integer.parseInt(parameters.get(MAX_COUNT_KEY).get(0));
 		} else {
 			LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI {}",
 					queryStringDecoder.uri());
 		}
-		if (parameters.containsKey(MARKER_KEY)) {
+		if(parameters.containsKey(MARKER_KEY)) {
 			marker = parameters.get(MARKER_KEY).get(0);
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
@@ -133,14 +125,13 @@ public class S3RequestHandler<T extends MutableDataItemMock>
 			return;
 		}
 		final Document xml = DOM_BUILDER.newDocument();
-		final Element rootElem =
-				xml.createElementNS(S3_NAMESPACE_URI, "ListBucketResult");
+		final Element rootElem = xml.createElementNS(S3_NAMESPACE_URI, "ListBucketResult");
 		xml.appendChild(rootElem);
 		appendElement(xml, rootElem, "Name", name);
 		appendElement(xml, rootElem, "IsTruncated", Boolean.toString(lastObject != null));
 		appendElement(xml, rootElem, "Prefix");
 		appendElement(xml, rootElem, "MaxKeys", Integer.toString(buffer.size()));
-		for (final T object: buffer) {
+		for(final T object: buffer) {
 			final Element elem = xml.createElement("Contents");
 			appendElement(xml, elem, "Key", object.getName());
 			try {
