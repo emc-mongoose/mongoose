@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  Created by kurila on 08.05.14.
  */
@@ -85,7 +87,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
 		final LoadType loadType = ioConfigCopy.getLoadType();
 		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
-		final Map<String, W> remoteLoadMap = new HashMap<>();
+		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {

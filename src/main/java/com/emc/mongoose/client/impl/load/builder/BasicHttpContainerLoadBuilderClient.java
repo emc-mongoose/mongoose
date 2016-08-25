@@ -6,7 +6,6 @@ import com.emc.mongoose.client.api.load.executor.HttpContainerLoadClient;
 import com.emc.mongoose.client.impl.load.executor.BasicHttpContainerLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;

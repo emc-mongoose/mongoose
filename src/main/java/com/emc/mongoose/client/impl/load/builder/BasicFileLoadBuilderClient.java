@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  Created by kurila on 26.11.15.
@@ -91,7 +92,7 @@ implements FileLoadBuilderClient<T, W, U> {
 		final FileIoConfig ioConfigCopy = (FileIoConfig) ioConfig.clone();
 		final LoadType loadType = ioConfigCopy.getLoadType();
 		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
-		final Map<String, W> remoteLoadMap = new HashMap<>();
+		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		FileLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {

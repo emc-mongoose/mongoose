@@ -30,7 +30,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -576,37 +575,38 @@ implements LoadClient<T, W> {
 				interruptActually();
 			}
 		} finally {
-			if(!remoteLoadMap.isEmpty()) {
-				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
-				W nextLoadSvc;
-				for(final String addr : remoteLoadMap.keySet()) {
-					//
-					try {
-						nextLoadSvc = remoteLoadMap.get(addr);
-						nextLoadSvc.close();
-						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
-					} catch(final NoSuchElementException e) {
-						if(!remotePutExecutor.isTerminated()) {
-							LOG.debug(
-								Markers.ERR, "Looks like the remote load service is already closed"
-							);
+			synchronized(remoteLoadMap) {
+				if(!remoteLoadMap.isEmpty()) {
+					LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
+					W nextLoadSvc;
+					for(final String addr : remoteLoadMap.keySet()) {
+						//
+						try {
+							nextLoadSvc = remoteLoadMap.get(addr);
+							nextLoadSvc.close();
+							LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+						} catch(final NoSuchElementException e) {
+							if(!remotePutExecutor.isTerminated()) {
+								LOG.debug(
+									Markers.ERR,
+									"Looks like the remote load service is already closed"
+								);
+							}
+						} catch(final NoSuchObjectException e) {
+							LogUtil.exception(
+								LOG, Level.DEBUG, e, "No remote service found for closing");
+						} catch(final IOException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to close remote load executor service");
 						}
-					} catch(final NoSuchObjectException e) {
-						LogUtil.exception(
-							LOG, Level.DEBUG, e, "No remote service found for closing"
-						);
-					} catch(final IOException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to close remote load executor service"
-						);
 					}
+					//
+					super.closeActually(); // requires the remoteLoadMap to be not empty yet
+					LOG.debug(Markers.MSG, "Clear the servers map");
+					remoteLoadMap.clear();
+				} else {
+					LOG.debug(Markers.MSG, "{}: closed already", getName());
 				}
-				//
-				super.closeActually(); // requires the remoteLoadMap to be not empty yet
-				LOG.debug(Markers.MSG, "Clear the servers map");
-				remoteLoadMap.clear();
-			} else {
-				LOG.debug(Markers.MSG, "{}: closed already", getName());
 			}
 		}
 	}
