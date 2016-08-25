@@ -3,6 +3,7 @@ package com.emc.mongoose.ui.config;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -84,5 +85,91 @@ public class ConfigTest {
 			config.getStorageConfig().getHttpConfig().getHeaders().get("customHeaderName")
 		);
 		assertEquals(2, config.getStorageConfig().getMockConfig().getHeadCount());
+	}
+	
+	@Test
+	public void testInvalidSizeValue()
+	throws Exception {
+		final Config config = ConfigLoader.loadDefaultConfig();
+		try {
+			config.apply(new HashMap<String, Object>() {{
+				put("io", new HashMap<String, Object>() {{
+					put("buffer", new HashMap<String, Object>() {{
+						put("size", "invalidSizeValue");
+					}});
+				}});
+			}});
+			Assert.fail("No exception thrown");
+		} catch(final IllegalArgumentException e) {
+		}
+	}
+	
+	@Test
+	public void testInvalidTimeValue()
+	throws Exception {
+		final Config config = ConfigLoader.loadDefaultConfig();
+		try {
+			config.apply(new HashMap<String, Object>() {{
+				put("load", new HashMap<String, Object>() {{
+					put("limit", new HashMap<String, Object>() {{
+						put("time", "100500y");
+					}});
+				}});
+			}});
+			Assert.fail("No exception thrown");
+		} catch(final IllegalArgumentException e) {
+		}
+	}
+	
+	@Test
+	public void testInvalidRangesValue()
+	throws Exception {
+		final Config config = ConfigLoader.loadDefaultConfig();
+		try {
+			config.apply(new HashMap<String, Object>() {{
+				put("item", new HashMap<String, Object>() {{
+					put("data", new HashMap<String, Object>() {{
+						put("ranges", "nope");
+					}});
+				}});
+			}});
+			Assert.fail("No exception thrown");
+		} catch(final IllegalArgumentException e) {
+		}
+	}
+	
+	@Test
+	public void testInvalidInteger()
+	throws Exception {
+		final Config config = ConfigLoader.loadDefaultConfig();
+		try {
+			config.apply(new HashMap<String, Object>() {{
+				put("load", new HashMap<String, Object>() {{
+					put("limit", new HashMap<String, Object>() {{
+						put("count", "nope");
+					}});
+				}});
+			}});
+			Assert.fail("No exception thrown");
+		} catch(final IllegalArgumentException e) {
+		}
+	}
+	
+	@Test
+	public void testNoSuchArgName()
+	throws Exception {
+		final Config config = ConfigLoader.loadDefaultConfig();
+		try {
+			config.apply(new HashMap<String, Object>() {{
+				put("load", new HashMap<String, Object>() {{
+					put("limit", new HashMap<String, Object>() {{
+						put("blabla", "123");
+					}});
+				}});
+			}});
+			Assert.fail("No exception thrown");
+		} catch(final IllegalArgumentNameException e) {
+			Assert.assertEquals("--load-limit-blabla", e.getMessage());
+		}
 	}
 }
