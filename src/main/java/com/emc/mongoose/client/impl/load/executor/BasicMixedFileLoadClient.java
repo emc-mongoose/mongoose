@@ -24,8 +24,8 @@ import org.apache.logging.log4j.Marker;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +38,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Map<LoadType, FileLoadClient<F, FileLoadSvc<F>>>
-		loadClientMap = new HashMap<>();
+		loadClientMap = new ConcurrentHashMap<>();
 	private final Map<LoadType, Integer>
 		loadTypeWeightMap;
 	//
@@ -65,7 +65,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 				throw new IllegalStateException(e);
 			}
 			//
-			nextRemoteLoadMap = new HashMap<>();
+			nextRemoteLoadMap = new ConcurrentHashMap<>();
 			W nextMixedLoadSvc;
 			String nextWrappedLoadSvcName;
 			FileLoadSvc<F> nextWrappedLoadSvc;
@@ -258,6 +258,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 				);
 			}
 		}
+		loadClientMap.clear();
 		super.closeActually();
 	}
 }

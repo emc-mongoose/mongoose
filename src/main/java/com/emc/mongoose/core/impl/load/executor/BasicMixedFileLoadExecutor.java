@@ -24,9 +24,9 @@ import org.apache.logging.log4j.Marker;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -44,9 +44,9 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	private final WeightThrottle<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, FileIoConfig<F, ? extends Directory<F>>>
-		reqConfigMap = new HashMap<>();
+		reqConfigMap = new ConcurrentHashMap<>();
 	protected final Map<LoadType, FileLoadExecutor<F>>
-		loadExecutorMap = new HashMap<>();
+		loadExecutorMap = new ConcurrentHashMap<>();
 	//
 	public BasicMixedFileLoadExecutor(
 		final AppConfig appConfig, final FileIoConfig<F, ? extends Directory<F>> reqConfig,
@@ -311,6 +311,8 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 				);
 			}
 		}
+		loadExecutorMap.clear();
+		reqConfigMap.clear();
 		super.closeActually();
 	}
 }

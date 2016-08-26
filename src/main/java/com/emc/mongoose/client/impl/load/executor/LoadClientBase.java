@@ -587,7 +587,9 @@ implements LoadClient<T, W> {
 						//
 						try {
 							nextLoadSvc = remoteLoadMap.get(addr);
-							nextLoadSvc.close();
+							if(nextLoadSvc != null) {
+								nextLoadSvc.close();
+							}
 							LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
 						} catch(final NoSuchElementException e) {
 							if(!remotePutExecutor.isTerminated()) {

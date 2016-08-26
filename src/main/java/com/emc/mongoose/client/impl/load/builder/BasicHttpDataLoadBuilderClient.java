@@ -170,7 +170,6 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 				loadTypeWeightMap
 			);
 		} else {
-			//
 			return (U) new BasicHttpDataLoadClient<>(
 				appConfig, ioConfigCopy, storageNodeAddrs, threadCount, itemInput, countLimit,
 				sizeLimit, rateLimit, remoteLoadMap
