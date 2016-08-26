@@ -20,8 +20,7 @@ public final class BasicStorageIoStats
 extends Thread
 implements StorageIoStats {
 
-	private final static Logger LOG = LogManager.getLogger();
-
+	private static final Logger LOG = LogManager.getLogger();
 	private final Counter countFailWrite, countFailRead, countFailDelete, countContainers;
 	private final CustomMeter tpWrite, tpRead, tpDelete, bwWrite, bwRead;
 	private final long updatePeriodSec;
@@ -44,13 +43,13 @@ implements StorageIoStats {
 		bwRead = new CustomMeter(clock, metricsPeriodSec);
 	}
 
-	private final static String
-		MSG_FMT_METRICS = "Capacity used: %d (%.1f%%), containers count: %d\n" +
-		"\tOperation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last\n" +
-		"\t----------|------------|------------|------------|------------|------------|------------\n" +
-		"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
-		"\tRead      |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
-		"\tDelete    |%12d|%12d|%12.3f|%12.3f|            |";
+	private final static String MSG_FMT_METRICS =
+		"Capacity used: %d (%.1f%%), containers count: %d\n" +
+			"\tOperation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last\n" +
+			"\t----------|------------|------------|------------|------------|------------|------------\n" +
+			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tRead      |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tDelete    |%12d|%12d|%12.3f|%12.3f|            |";
 
 	@Override
 	public synchronized void start() {
@@ -148,21 +147,19 @@ implements StorageIoStats {
 	@Override
 	public final String toString() {
 		final long countTotal = storage.getSize();
-		return String.format(
-			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+		return String.format(LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
 			countTotal, 100.0 * countTotal / storage.getCapacity(), countContainers.getCount(),
 			//
-			tpWrite.getCount(), countFailWrite.getCount(),
-			tpWrite.getMeanRate(), tpWrite.getLastRate(),
-			bwWrite.getMeanRate() / IoStats.MIB, bwWrite.getLastRate() / IoStats.MIB,
+			tpWrite.getCount(), countFailWrite.getCount(), tpWrite.getMeanRate(),
+			tpWrite.getLastRate(), bwWrite.getMeanRate() / IoStats.MIB,
+			bwWrite.getLastRate() / IoStats.MIB,
 			//
-			tpRead.getCount(), countFailRead.getCount(),
-			tpRead.getMeanRate(), tpRead.getLastRate(),
+			tpRead.getCount(), countFailRead.getCount(), tpRead.getMeanRate(), tpRead.getLastRate(),
 			bwRead.getMeanRate() / IoStats.MIB, bwRead.getLastRate() / IoStats.MIB,
 			//
-			tpDelete.getCount(), countFailDelete.getCount(),
-			tpDelete.getMeanRate(), tpDelete.getLastRate()
+			tpDelete.getCount(), countFailDelete.getCount(), tpDelete.getMeanRate(),
+			tpDelete.getLastRate()
 		);
 	}
 }

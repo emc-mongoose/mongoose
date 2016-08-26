@@ -33,10 +33,10 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 11.07.16.
  */
-public class Nagaina extends StorageMockBase<MutableDataItemMock>{
+public class Nagaina
+	extends StorageMockBase<MutableDataItemMock> {
 
 	private final static Logger LOG = LogManager.getLogger();
-
 	private final int port;
 	private final EventLoopGroup[] dispatchGroups;
 	private final EventLoopGroup[] workGroups;
@@ -45,9 +45,9 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
-		final Config.StorageConfig storageConfig,
-		final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig) {
+		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
+		final Config.ItemConfig itemConfig
+	) {
 		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
@@ -55,30 +55,39 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		workGroups = new EventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
-		s3RequestHandler = new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
-		swiftRequestHandler = new SwiftRequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
-		atmosRequestHandler = new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
+		s3RequestHandler =
+			new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this,
+				getContentSource()
+			);
+		swiftRequestHandler =
+			new SwiftRequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(),
+				this, getContentSource()
+			);
+		atmosRequestHandler =
+			new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
 	}
 
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
 		final int portsNumber = dispatchGroups.length;
-		for (int i = 0; i < portsNumber; i++) {
+		for(int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroups[i] = new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
+				dispatchGroups[i] =
+					new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
 				workGroups[i] = new EpollEventLoopGroup();
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
-				serverBootstrap.group(dispatchGroups[i], workGroups[i])
-					.channel(EpollServerSocketChannel.class)
-					.childHandler(new ChannelInitializer<SocketChannel>() {
+				serverBootstrap.group(dispatchGroups[i], workGroups[i]).channel(
+					EpollServerSocketChannel.class).childHandler(
+					new ChannelInitializer<SocketChannel>() {
 						@Override
 						protected void initChannel(final SocketChannel socketChannel)
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
-							if (currentIndex % 2 == 1) {
-								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
+							if(currentIndex % 2 == 1) {
+								pipeline.addLast(
+									new SslHandler(SslContext.INSTANCE.createSSLEngine()));
 							}
 							pipeline.addLast(new HttpServerCodec());
 							pipeline.addLast(swiftRequestHandler);
@@ -91,14 +100,12 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 				channels[i] = bind.sync().channel();
 			} catch(final Exception e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i
-				);
+					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i);
 				throw new IllegalStateException();
 			}
 		}
 		if(portsNumber > 1) {
-			LOG.info(Markers.MSG, "Listening the ports {} .. {}",
-				port, port + portsNumber - 1);
+			LOG.info(Markers.MSG, "Listening the ports {} .. {}", port, port + portsNumber - 1);
 		} else {
 			LOG.info(Markers.MSG, "Listening the port {}", port);
 		}
@@ -126,13 +133,15 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	public void close()
 	throws IOException {
-		for (final Channel channel: channels) {
+		for(final Channel channel : channels) {
 			channel.close();
 		}
 	}
 
 	@Override
-	protected MutableDataItemMock newDataObject(final String id, final long offset, final long size) {
+	protected MutableDataItemMock newDataObject(
+		final String id, final long offset, final long size
+	) {
 		return new BasicMutableDataItemMock(id, offset, size, 0, contentSrc);
 	}
 }
