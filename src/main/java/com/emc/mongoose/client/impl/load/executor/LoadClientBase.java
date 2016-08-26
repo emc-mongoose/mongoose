@@ -274,7 +274,7 @@ implements LoadClient<T, W> {
 	protected void startActually() {
 		//
 		W nextLoadSvc;
-		for(final String addr : loadSvcAddrs) {
+		for(final String addr : remoteLoadMap.keySet()) {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {
 				nextLoadSvc.start();
@@ -358,11 +358,15 @@ implements LoadClient<T, W> {
 				remoteLoadMap.size(),
 				new NamingThreadFactory(String.format("interrupt<%s>", getName()), true)
 			);
-			for(final String addr : loadSvcAddrs) {
-				try {
-					interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
-				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the load service name");
+			synchronized(remoteLoadMap) {
+				for(final String addr : remoteLoadMap.keySet()) {
+					try {
+						interruptExecutor.submit(
+							new InterruptSvcTask(remoteLoadMap.get(addr), addr)
+						);
+					} catch(final RemoteException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to get the load service name");
+					}
 				}
 			}
 			interruptExecutor.shutdown();
@@ -408,7 +412,7 @@ implements LoadClient<T, W> {
 			// single consumer for all these producers
 			final W loadSvc = (W)itemOutput;
 			LOG.debug(Markers.MSG, "Consumer is a load service");
-			for(final String addr : loadSvcAddrs) {
+			for(final String addr : remoteLoadMap.keySet()) {
 				remoteLoadMap.get(addr).setOutput(loadSvc);
 			}
 		} else {
