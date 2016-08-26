@@ -99,7 +99,7 @@ implements ItemBuffer<T> {
 			T item;
 			for(int i = 0; i < itemsCount; i++) {
 				item = queue.take();
-				if (item.equals(lastItem)) {
+				if(item.equals(lastItem)) {
 					return;
 				}
 			}

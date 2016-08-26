@@ -188,7 +188,7 @@ implements ShutdownCallbackRegistry {
 							}
 						);
 					}
-					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
+					/*final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
 						logStreamBuilder
 							.setLevel(Level.DEBUG)
@@ -196,7 +196,7 @@ implements ShutdownCallbackRegistry {
 							.setAutoFlush(true)
 							.setBuffered(true)
 							.buildPrintStream()
-					);
+					);*/
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

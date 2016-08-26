@@ -41,7 +41,7 @@ implements Input<String> {
 	public FilePathInput(int width, int depth) {
 		this.width = width;
 		this.depth = depth;
-		if (width <= 0 || depth <= 0) {
+		if(width <= 0 || depth <= 0) {
 			throw new IllegalArgumentException();
 		}
 	}

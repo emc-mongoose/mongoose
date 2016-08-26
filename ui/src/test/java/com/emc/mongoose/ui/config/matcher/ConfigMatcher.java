@@ -19,7 +19,7 @@ public class ConfigMatcher<T> extends TypeSafeMatcher<T> {
 	}
 
 	private static <T> boolean areEqual(T actual, T expected) {
-		if (actual == null) {
+		if(actual == null) {
 			return expected == null;
 		}
 		return actual.equals(expected);

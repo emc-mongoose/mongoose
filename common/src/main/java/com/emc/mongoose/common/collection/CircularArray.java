@@ -27,18 +27,18 @@ public class CircularArray<T> implements Iterable<T> {
 	}
 
 	public void addItem(final T item) {
-		if (pointer == length) {
+		if(pointer == length) {
 			pointer = 0;
 		}
 		array[pointer++] = item;
-		if (size < length) {
+		if(size < length) {
 			size++;
 		}
 	}
 
 	public int searchItem(final T item) {
 		int index = binarySearch(array, pointer, size, item, arrayComparator);
-		if (index < 0) {
+		if(index < 0) {
 			index = binarySearch(array, 0, pointer, item, arrayComparator);
 		}
 		return index;
@@ -103,8 +103,8 @@ public class CircularArray<T> implements Iterable<T> {
 
 		public LastItemsIterator(final int startIndex) {
 			final int arrayPrePointerIndex = CircularArray.this.pointer - 1;
-			if (size < length) {
-				if (startIndex < 0) {
+			if(size < length) {
+				if(startIndex < 0) {
 					this.pointer = -1;
 				} else {
 					this.pointer = startIndex;
@@ -112,21 +112,21 @@ public class CircularArray<T> implements Iterable<T> {
 				finishIndex = size - 1;
 				return;
 			}
-			if (startIndex < 0) {
+			if(startIndex < 0) {
 				this.pointer = arrayPrePointerIndex;
 			} else {
 				this.pointer = startIndex;
 			}
 			finishIndex = arrayPrePointerIndex;
-			if (this.pointer >= finishIndex && startIndex != arrayPrePointerIndex) {
+			if(this.pointer >= finishIndex && startIndex != arrayPrePointerIndex) {
 				circularity = true;
 			}
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (circularity) {
-				if (pointer == (CircularArray.this.length - 1)) {
+			if(circularity) {
+				if(pointer == (CircularArray.this.length - 1)) {
 					pointer = -1;
 					circularity = false;
 				}
@@ -151,8 +151,8 @@ public class CircularArray<T> implements Iterable<T> {
 	public String toString() {
 		final StringBuilder valuesBuilder = new StringBuilder();
 		valuesBuilder.append('[');
-		if (size > 0) {
-			for (int i = 0; i < size; i++) {
+		if(size > 0) {
+			for(int i = 0; i < size; i++) {
 				valuesBuilder.append(' ').append(this.array[i].toString()).append(", ");
 			}
 			valuesBuilder.delete(valuesBuilder.length() - 2, valuesBuilder.length() - 1);

@@ -44,13 +44,13 @@ extends BasicPatternDefinedInput {
 	protected final void initialize()
 	throws UserShootHisFootException {
 		final int patternSymbolsNum = countPatternSymbols(getPattern());
-		if (patternSymbolsNum > 0) {
+		if(patternSymbolsNum > 0) {
 			setInputs(new Input[patternSymbolsNum]);
 			setSegments(new String[patternSymbolsNum + 1]);
 			final StringBuilder segmentsBuilder = new StringBuilder();
 			final StringBuilder patternBuilder = new StringBuilder(getPattern());
 			int segmentCounter = 0;
-			for (int j = 0; j < patternSymbolsNum; j++) {
+			for(int j = 0; j < patternSymbolsNum; j++) {
 				int i = 0;
 				while (patternBuilder.charAt(i) != PatternDefinedInput.PATTERN_CHAR) {
 					segmentsBuilder.append(patternBuilder.charAt(i)); // building of the segment by character
@@ -114,15 +114,15 @@ extends BasicPatternDefinedInput {
 	public String toString() {
 		final StringBuilder result = new StringBuilder();
 		result.append("Generators: ");
-		if (getInputs() != null) {
-			for (final Input<String> input : getInputs()) {
+		if(getInputs() != null) {
+			for(final Input<String> input : getInputs()) {
 				result.append(input.getClass().getName()).append(";");
 			}
 		}
 		result.append("\n");
 		result.append("Segments: ");
-		if (segments != null) {
-			for (final String segment : segments) {
+		if(segments != null) {
+			for(final String segment : segments) {
 				result.append(segment).append(";");
 			}
 		}

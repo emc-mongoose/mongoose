@@ -44,27 +44,27 @@ implements RunnableFuture<V> {
 	public final V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		final long timeoutInMillis;
-		if (timeout < 0 || unit == null) {
+		if(timeout < 0 || unit == null) {
 			throw new IllegalArgumentException();
-		} else if (timeout == 0) {
+		} else if(timeout == 0) {
 			timeoutInMillis = Long.MAX_VALUE;
 		} else {
 			timeoutInMillis = unit.toMillis(timeout);
 		}
 		final long startTime = System.currentTimeMillis();
 		long waitTime = timeoutInMillis;
-		if (completed.get()) {
+		if(completed.get()) {
 			return getResult();
-		} else if (waitTime <= 0) {
+		} else if(waitTime <= 0) {
 			throw new TimeoutException();
 		} else {
 			while(true) {
 				latch.await(waitTime, TimeUnit.MILLISECONDS);
-				if (completed.get()) {
+				if(completed.get()) {
 					return getResult();
 				} else {
 					waitTime = timeoutInMillis - (System.currentTimeMillis() - startTime);
-					if (waitTime <= 0) {
+					if(waitTime <= 0) {
 						throw new TimeoutException();
 					}
 				}
@@ -73,7 +73,7 @@ implements RunnableFuture<V> {
 	}
 
 	protected boolean set(final V v) {
-		if (!completed.get() && completed.compareAndSet(false, true)) {
+		if(!completed.get() && completed.compareAndSet(false, true)) {
 			result = v;
 			latch.countDown();
 			return true;

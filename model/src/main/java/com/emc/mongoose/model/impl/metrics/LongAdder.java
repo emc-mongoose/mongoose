@@ -32,10 +32,10 @@ private static final long serialVersionUID = 7249069246863182397L;
 		HashCode hc;
 		Cell a;
 		int n;
-		if ((as = cells) != null || !casBase(b = base, b + x)) {
+		if((as = cells) != null || !casBase(b = base, b + x)) {
 			boolean uncontended = true;
 			int h = (hc = threadHashCode.get()).code;
-			if (as == null || (n = as.length) < 1 ||
+			if(as == null || (n = as.length) < 1 ||
 				(a = as[(n - 1) & h]) == null ||
 				!(uncontended = a.cas(v = a.value, v + x)))
 				retryUpdate(x, hc, uncontended);
@@ -66,11 +66,11 @@ private static final long serialVersionUID = 7249069246863182397L;
 	public long sum() {
 		long sum = base;
 		Cell[] as = cells;
-		if (as != null) {
+		if(as != null) {
 			int n = as.length;
-			for (int i = 0; i < n; ++i) {
+			for(int i = 0; i < n; ++i) {
 				Cell a = as[i];
-				if (a != null)
+				if(a != null)
 					sum += a.value;
 			}
 		}
@@ -99,11 +99,11 @@ private static final long serialVersionUID = 7249069246863182397L;
 		long sum = base;
 		Cell[] as = cells;
 		base = 0L;
-		if (as != null) {
+		if(as != null) {
 			int n = as.length;
-			for (int i = 0; i < n; ++i) {
+			for(int i = 0; i < n; ++i) {
 				Cell a = as[i];
-				if (a != null) {
+				if(a != null) {
 					sum += a.value;
 					a.value = 0L;
 				}

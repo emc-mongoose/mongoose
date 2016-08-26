@@ -5,6 +5,8 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.http.base.HttpDriverBase;
+
+import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -45,7 +47,11 @@ extends HttpDriverBase<I, O> {
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 		
-		return applyHeaders(new DefaultHttpRequest(HTTP_1_1, httpMethod, ioTask.getDstPath()));
+		return applyHeaders(
+			new DefaultHttpRequest(
+				HTTP_1_1, httpMethod, SLASH + ioTask.getDstPath() + SLASH + item.getName()
+			)
+		);
 	}
 	
 	private HttpMethod getHttpMethod(final LoadType loadType) {

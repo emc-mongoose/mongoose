@@ -53,13 +53,7 @@ public class Main {
 			throw new UserShootHisFootException("Config is null");
 		}
 		config.apply(CliArgParser.parseArgs(args));
-		final String newRunId = config.getRunConfig().getId();
-		if(newRunId != null) {
-			ThreadContext.put(KEY_RUN_ID, newRunId);
-		}
-		final Logger log = LogManager.getLogger();
-		log.info(Markers.MSG, "Configuration loaded");
-
+		
 		final StorageConfig storageConfig = config.getStorageConfig();
 		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
 		final ItemConfig itemConfig = config.getItemConfig();
@@ -67,7 +61,19 @@ public class Main {
 		final LoadConfig loadConfig = config.getLoadConfig();
 		final RunConfig runConfig = config.getRunConfig();
 		
-		final String runId = runConfig.getId();
+		String runId = runConfig.getId();
+		if(runId == null) {
+			runId = ThreadContext.get(KEY_RUN_ID);
+			runConfig.setId(runId);
+		} else {
+			ThreadContext.put(KEY_RUN_ID, runId);
+		}
+		if(runId == null) {
+			throw new IllegalStateException("Run id is not set");
+		}
+		
+		final Logger log = LogManager.getLogger();
+		log.info(Markers.MSG, "Configuration loaded");
 		
 		final List<Driver<? extends Item, ? extends IoTask<? extends Item>>>
 			drivers = new ArrayList<>();

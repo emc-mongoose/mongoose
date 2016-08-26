@@ -5,7 +5,8 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -54,20 +55,12 @@ extends RequestHandlerBase<T> {
 	private static final Logger LOG = LogManager.getLogger();
 	private static final ObjectMapper OBJ_MAPPER = new ObjectMapper();
 	private static final String AUTH = "auth", API_BASE_PATH_SWIFT = "v1";
-
-
-	public SwiftRequestHandler(final Config.ItemConfig.NamingConfig namingConfig,
-                        final Config.LoadConfig.LimitConfig limitConfig,
-						final StorageMock<T> sharedStorage,
-						final ContentSource contentSource) {
-		super(limitConfig, sharedStorage, contentSource);
-		final String prefix = namingConfig.getPrefix();
-		if (prefix != null) {
-			setPrefixLength(prefix.length());
-		} else {
-			setPrefixLength(0);
-		}
-		setIdRadix(namingConfig.getRadix());
+	
+	public SwiftRequestHandler(
+		final LimitConfig limitConfig, final NamingConfig namingConfig,
+		final StorageMock<T> sharedStorage, final ContentSource contentSource
+	) {
+		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
 	@Override
@@ -80,17 +73,15 @@ extends RequestHandlerBase<T> {
 
     @Override
 	protected void doHandle(
-			final String uri,
-			final HttpMethod method,
-			final Long size,
-			final ChannelHandlerContext ctx) {
+		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+    ) {
         FullHttpResponse response = null;
         final Channel channel = ctx.channel();
         channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
-        if (uri.startsWith(AUTH, 1)) {
-            if (method.equals(GET)) {
+        if(uri.startsWith(AUTH, 1)) {
+            if(method.equals(GET)) {
                 final String authToken = randomString(0x10);
-                if (LOG.isTraceEnabled(Markers.MSG)) {
+                if(LOG.isTraceEnabled(Markers.MSG)) {
                     LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
                 }
 	            response = newEmptyResponse();
@@ -104,20 +95,20 @@ extends RequestHandlerBase<T> {
             final String account = uriParams[1];
             final String containerName = uriParams[2];
             final String objectId = uriParams[3];
-            if (containerName != null) {
+            if(containerName != null) {
                 handleItemRequest(uri, method, containerName, objectId, size, ctx);
-            } else if (account != null) {
+            } else if(account != null) {
                 setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
             } else {
                 setHttpResponseStatusInContext(ctx, BAD_REQUEST);
             }
         }
-        if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+        if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
             writeEmptyResponse(ctx, response);
         }
     }
 
-    private static String randomString(int len) {
+    private static String randomString(final int len) {
         final byte buff[] = new byte[len];
         ThreadLocalRandom.current().nextBytes(buff);
         return Hex.encodeHexString(buff);
@@ -133,13 +124,13 @@ extends RequestHandlerBase<T> {
         int maxCount = DEFAULT_PAGE_SIZE;
         String marker = null;
         final Map<String, List<String>> parameters = queryStringDecoder.parameters();
-        if (parameters.containsKey(LIMIT_KEY)) {
+        if(parameters.containsKey(LIMIT_KEY)) {
             maxCount = Integer.parseInt(parameters.get(LIMIT_KEY).get(0));
         } else {
             LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI: " +
                     queryStringDecoder.uri());
         }
-        if (parameters.containsKey(MARKER_KEY)) {
+        if(parameters.containsKey(MARKER_KEY)) {
             marker = parameters.get(MARKER_KEY).get(0);
         }
         final List<T> buffer = new ArrayList<>(maxCount);
@@ -160,7 +151,7 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			return;
 		}
-		if (buffer.size() > 0) {
+		if(buffer.size() > 0) {
             final JsonNode nodeRoot = OBJ_MAPPER.createArrayNode();
             ObjectNode node;
             for(final T object : buffer) {
