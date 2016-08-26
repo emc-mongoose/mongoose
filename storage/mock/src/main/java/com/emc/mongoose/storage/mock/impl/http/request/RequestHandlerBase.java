@@ -237,8 +237,8 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
-		final DefaultFullHttpResponse response =
-			new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.EMPTY_BUFFER, false);
+		final DefaultFullHttpResponse
+			response = new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.EMPTY_BUFFER, false);
 		HttpUtil.setContentLength(response, 0);
 		return response;
 	}
@@ -304,8 +304,7 @@ extends ChannelInboundHandlerAdapter {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			ioStats.markWrite(false, 0);
 			LogUtil.exception(
-					LOG, Level.ERROR, e,
-					"Failed to perform a range update/append for \"{}\"", id
+				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", id
 			);
 		}
 	}
