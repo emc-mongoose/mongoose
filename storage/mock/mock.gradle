@@ -35,6 +35,7 @@ dependencies {
 	)
 
 	testCompile(
+		project(':common'),
 		'org.jmdns:jmdns:3.5.1'
 	)
 

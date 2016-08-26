@@ -1,7 +1,13 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
+import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
+import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.distribution.MDns;
+import com.emc.mongoose.storage.mock.distribution.NodeListener;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
@@ -37,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final int port;
 	private final EventLoopGroup[] dispatchGroups;
@@ -45,6 +51,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	private final Channel[] channels;
 	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
 	private JmDNS jmDns;
+	private NodeListener nodeListener;
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
@@ -63,12 +70,15 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		atmosRequestHandler = new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
 		try {
 			final ServiceInfo serviceInfo =
-				ServiceInfo.create("_http._tcp.local.", "nagaina", port, "storage mock");
-			jmDns = JmDNS.create();
+				ServiceInfo.create("_http._tcp.local.", "nagaina", port - 1, "storage mock");
+			jmDns = JmDNS.create(NetUtil.getHostAddr());
+			LOG.info("JmDNS address: " + jmDns.getInetAddress());
 			jmDns.registerService(serviceInfo);
 			LOG.info("Nagaina registered as service");
-		} catch(final IOException e) {
-			e.printStackTrace(System.err);
+		} catch(final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to register Nagaina as service"
+			);
 		}
 	}
 
@@ -114,6 +124,15 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		} else {
 			LOG.info(Markers.MSG, "Listening the port {}", port);
 		}
+		try {
+			nodeListener = new NodeListener(jmDns, MDns.Type.HTTP);
+			nodeListener.open();
+			LOG.info(Markers.MSG, "Discover nodes");
+		} catch(final IOException e) {
+			LogUtil.exception(
+			LOG, Level.ERROR, e, "Failed to start node discovering"
+			);
+		}
 	}
 
 	@Override
@@ -138,7 +157,9 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	public void close()
 	throws IOException {
+		nodeListener.close();
 		jmDns.unregisterAllServices();
+		jmDns.close();
 		for (final Channel channel: channels) {
 			channel.close();
 		}
