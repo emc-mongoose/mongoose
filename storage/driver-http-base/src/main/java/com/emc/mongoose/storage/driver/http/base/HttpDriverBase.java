@@ -9,6 +9,7 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
 import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
@@ -16,9 +17,11 @@ import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.base.DriverBase;
 
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
+import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static io.netty.handler.codec.http.LastHttpContent.EMPTY_LAST_CONTENT;
 
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
@@ -31,6 +34,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.util.concurrent.Future;
@@ -62,7 +70,6 @@ implements Driver<I, O> {
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		
 		super(runId, loadConfig);
 		storageNodeAddrs = storageConfig.getAddrs().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
@@ -95,7 +102,65 @@ implements Driver<I, O> {
 	
 	protected abstract SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler();
 	
-	protected abstract HttpRequest getHttpRequest(final O ioTask);
+	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr) {
+		final I item = ioTask.getItem();
+		final LoadType ioType = ioTask.getLoadType();
+		final HttpMethod httpMethod = getHttpMethod(ioType);
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final HttpRequest httpRequest = new DefaultHttpRequest(
+			HTTP_1_1, httpMethod, getUriPath(item, ioTask), httpHeaders
+		);
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		switch(ioType) {
+			case CREATE:
+				//if(srcContainer == null) {
+				//	httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, item.)
+				//} else {
+				//	applyCopyHeaders(httpHeaders);
+				//}
+				break;
+			case READ:
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				break;
+			case UPDATE:
+				// TODO if data item set ranges headers conditionally
+				break;
+			case DELETE:
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				break;
+		}
+		applyMetaDataHeaders(httpHeaders);
+		applyAuthHeaders(httpHeaders);
+		return httpRequest;
+	}
+	
+	protected HttpMethod getHttpMethod(final LoadType loadType) {
+		switch(loadType) {
+			case READ:
+				return HttpMethod.GET;
+			case DELETE:
+				return HttpMethod.DELETE;
+			default:
+				return HttpMethod.PUT;
+		}
+	}
+	
+	protected String getUriPath(final I item, final O ioTask) {
+		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
+	}
+	
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj);
+	
+	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
+		// TODO apply dynamic headers also
+	}
+	
+	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
+	}
+	
+	protected void applyAuthHeaders(final HttpHeaders httpHeaders) {
+	}
 	
 	private final class HttpRequestFuture
 	extends FutureTaskBase {
@@ -131,7 +196,7 @@ implements Driver<I, O> {
 				return;
 			}
 			
-			c.write(getHttpRequest(ioTask));
+			c.write(getHttpRequest(ioTask, bestNode));
 			
 			final LoadType ioType = ioTask.getLoadType();
 			final I item = ioTask.getItem();

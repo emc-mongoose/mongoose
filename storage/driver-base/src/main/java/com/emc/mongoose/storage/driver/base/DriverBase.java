@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 
+import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -27,8 +28,8 @@ implements Driver<I, O> {
 	private final static Logger LOG = LogManager.getLogger();
 
 	protected final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
-	protected final int concurrencyLevel;
 	protected final String runId;
+	protected final int concurrencyLevel;
 
 	protected DriverBase(final String runId, final LoadConfig loadConfig) {
 		this.runId = runId;

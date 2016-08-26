@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.mock.api;
 
-import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.Launchable;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;

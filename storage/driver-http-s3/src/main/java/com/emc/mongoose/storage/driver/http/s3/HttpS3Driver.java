@@ -40,32 +40,4 @@ extends HttpDriverBase<I, O> {
 		return new HttpS3Handler();
 	}
 	
-	@Override
-	protected final HttpRequest getHttpRequest(final O ioTask) {
-		
-		final I item = ioTask.getItem();
-		final LoadType ioType = ioTask.getLoadType();
-		final HttpMethod httpMethod = getHttpMethod(ioType);
-		
-		return applyHeaders(
-			new DefaultHttpRequest(
-				HTTP_1_1, httpMethod, SLASH + ioTask.getDstPath() + SLASH + item.getName()
-			)
-		);
-	}
-	
-	private HttpMethod getHttpMethod(final LoadType loadType) {
-		switch(loadType) {
-			case READ:
-				return HttpMethod.GET;
-			case DELETE:
-				return HttpMethod.DELETE;
-			default:
-				return HttpMethod.PUT;
-		}
-	}
-	
-	private HttpRequest applyHeaders(final HttpRequest httpRequest) {
-		return httpRequest;
-	}
 }
