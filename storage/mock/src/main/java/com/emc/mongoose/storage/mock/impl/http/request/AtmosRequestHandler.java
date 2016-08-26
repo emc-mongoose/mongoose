@@ -6,6 +6,8 @@ import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -36,6 +38,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import java.io.ByteArrayOutputStream;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -63,25 +66,29 @@ public class AtmosRequestHandler<T extends MutableDataItemMock>
 extends RequestHandlerBase<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final String URI_BASE_PATH = "/rest", OBJ_PATH = URI_BASE_PATH + "/objects",
-		NS_PATH = URI_BASE_PATH + "/namespace", AT_PATH = URI_BASE_PATH + "/accesstokens", ST_PATH =
-		URI_BASE_PATH + "/subtenant", STS_PATH = ST_PATH + "s/";
+	private static final String
+			URI_BASE_PATH = "/rest",
+			OBJ_PATH = URI_BASE_PATH + "/objects",
+			NS_PATH = URI_BASE_PATH + "/namespace",
+			AT_PATH = URI_BASE_PATH + "/accesstokens",
+			ST_PATH = URI_BASE_PATH + "/subtenant",
+			STS_PATH = ST_PATH + "s/";
 	private static final DocumentBuilder DOM_BUILDER;
 	private static final TransformerFactory TRANSFORMER_FACTORY = TransformerFactory.newInstance();
 
 	static {
 		try {
 			DOM_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-		} catch(final ParserConfigurationException e) {
+		} catch (final ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public AtmosRequestHandler(
-		final Config.LoadConfig.LimitConfig limitConfig, final StorageMock<T> sharedStorage,
-		final ContentSource contentSource
+		final LimitConfig limitConfig, final NamingConfig namingConfig,
+		final StorageMock<T> sharedStorage, final ContentSource contentSource
 	) {
-		super(limitConfig, sharedStorage, contentSource);
+		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
 	@Override
@@ -107,12 +114,12 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected void doHandle(
-		final String uri, final HttpMethod method, final Long size, final ChannelHandlerContext ctx
+		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
 	) {
 		final Channel channel = ctx.channel();
 		FullHttpResponse response = null;
-		final HttpRequest request =
-			channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get();
+		final HttpRequest request = channel.attr(AttributeKey.<HttpRequest>valueOf
+				(REQUEST_KEY)).get();
 		String[] metaDataList = null;
 		final HttpHeaders requestHeaders = request.headers();
 		if(requestHeaders.contains(KEY_EMC_TAGS)) {
@@ -132,9 +139,10 @@ extends RequestHandlerBase<T> {
 						if(processResult != null) {
 							offset = Long.parseLong(processResult);
 						}
-					} catch(final NumberFormatException e) {
-						LogUtil.exception(LOG, Level.WARN, e,
-							"Failed to parse offset meta tag value: \"{}\"", processResult
+					} catch (final NumberFormatException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to parse offset meta tag value: \"{}\"",
+							processResult
 						);
 					}
 					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
@@ -143,7 +151,6 @@ extends RequestHandlerBase<T> {
 					if(statusAttribute.get() == null) {
 						statusAttribute.set(OK);
 					}
-					final HttpResponseStatus responseStatus = statusAttribute.get();
 					response = newEmptyResponse();
 					final int statusCode = response.status().code();
 					if(statusCode < 300 && 200 <= statusCode) {
@@ -174,10 +181,10 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-			writeResponse(ctx, response);
+			writeEmptyResponse(ctx, response);
 		}
 	}
-
+	
 	private static String generateId() {
 		final byte buff[] = new byte[22];
 		ThreadLocalRandom.current().nextBytes(buff);
@@ -198,7 +205,7 @@ extends RequestHandlerBase<T> {
 				return uid.split(UID_DELIMITER)[0];
 			}
 		} else {
-			LOG.debug(Markers.MSG, "The header " + KEY_EMC_UID + " is undefined");
+			LOG.debug(Markers.MSG, "The header " + KEY_EMC_UID + " is undefined" );
 		}
 		if(headers.contains(KEY_SUBTENANT_ID)) {
 			return headers.get(KEY_SUBTENANT_ID);
@@ -213,8 +220,8 @@ extends RequestHandlerBase<T> {
 	}
 
 	private void handleContainerRequest(
-		final HttpResponse response, final String uri, final HttpMethod method, final String name,
-		final ChannelHandlerContext ctx
+		final HttpResponse response, final String uri, final HttpMethod method,
+		final String name, final ChannelHandlerContext ctx
 	) {
 		if(method.equals(PUT)) {
 			handleContainerCreate(response, name);
@@ -230,37 +237,41 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected void handleContainerList(
-		final String name, final QueryStringDecoder queryStringDecoder,
-		final ChannelHandlerContext ctx
-	) {
+			final String name,
+			final QueryStringDecoder queryStringDecoder,
+			final ChannelHandlerContext ctx) {
 		// there is a distinguish behavior for Atmos Protocol
 	}
 
 	private static final String KEY_EMC_LIMIT = "x-emc-limit";
 
 	private void handleContainerList(
-		final String name, final String objectId, final ChannelHandlerContext ctx
+			final String name,
+			final String objectId,
+			final ChannelHandlerContext ctx
 	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
-		final HttpHeaders headers =
-			ctx.channel().attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().headers();
+		final HttpHeaders headers = ctx.channel()
+				.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().headers();
 		if(headers.contains(KEY_EMC_LIMIT)) {
 			try {
 				maxCount = Integer.parseInt(headers.get(KEY_EMC_LIMIT));
-			} catch(final NumberFormatException e) {
-				LOG.warn(Markers.ERR, "Limit header value is not a valid integer: {}",
-					headers.get(KEY_EMC_LIMIT)
+			} catch (final NumberFormatException e) {
+				LOG.warn(
+						Markers.ERR, "Limit header value is not a valid integer: {}",
+						headers.get(KEY_EMC_LIMIT)
 				);
 			}
 		}
+
 		final List<T> buffer = new ArrayList<>(maxCount);
 		final T lastObject;
 		try {
 			lastObject = listContainer(name, objectId, buffer, maxCount);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG,
-					"Subtenant \"{}\": generated list of {} objects, last one is \"{}\"", name,
-					buffer.size(), lastObject
+				LOG.trace(
+					Markers.MSG, "Subtenant \"{}\": generated list of {} objects, last one is \"{}\"",
+					name, buffer.size(), lastObject
 				);
 			}
 		} catch(final ContainerMockNotFoundException e) {
@@ -278,7 +289,7 @@ extends RequestHandlerBase<T> {
 		final Document xml = DOM_BUILDER.newDocument();
 		final Element rootElem = xml.createElement("ListObjectsResponse");
 		xml.appendChild(rootElem);
-		for(final T object : buffer) {
+		for(final T object: buffer) {
 			final Element elem = xml.createElement("Object");
 			appendElement(xml, elem, "ObjectID", object.getName());
 			appendElement(rootElem, elem);
@@ -287,20 +298,21 @@ extends RequestHandlerBase<T> {
 		final StreamResult streamResult = new StreamResult(stream);
 		try {
 			TRANSFORMER_FACTORY.newTransformer().transform(new DOMSource(xml), streamResult);
-		} catch(final TransformerException e) {
+		} catch (final TransformerException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build subtenant XML listing");
 			return;
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Responding the subtenant \"{}\" listing content:\n{}", name,
-				new String(stream.toByteArray())
+			LOG.trace(
+				Markers.MSG, "Responding the subtenant \"{}\" listing content:\n{}",
+				name, new String(stream.toByteArray())
 			);
 		}
 		final byte[] content = stream.toByteArray();
 		ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
-		final FullHttpResponse response =
-			new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+		final FullHttpResponse
+				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");
 		if(header != null) {
 			response.headers().set(header.getKey(), header.getValue());

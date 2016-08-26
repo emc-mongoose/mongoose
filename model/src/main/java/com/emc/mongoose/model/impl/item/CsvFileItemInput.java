@@ -48,7 +48,7 @@ implements FileItemInput<T> {
 	@Override
 	public void reset()
 	throws IOException {
-		if (itemsSrc != null) {
+		if(itemsSrc != null) {
 			itemsSrc.close();
 		}
 		setItemsSrc(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8));

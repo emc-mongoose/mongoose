@@ -52,14 +52,14 @@ implements ValueInputFactory<String, G> {
 	 */
 	@Override
 	public Enum defineState(final String... parameters) {
-		if (parameters[0] == null) {
-			if (parameters[1] == null) {
+		if(parameters[0] == null) {
+			if(parameters[1] == null) {
 				return State.EMPTY;
 			} else {
 				return State.RANGE;
 			}
 		} else {
-			if (parameters[1] == null) {
+			if(parameters[1] == null) {
 				return State.FORMAT;
 			} else {
 				return State.FORMAT_RANGE;
@@ -119,7 +119,7 @@ implements ValueInputFactory<String, G> {
 				switch (type) {
 					case 'f':
 						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
-						if (matcher.find()) {
+						if(matcher.find()) {
 							return (G) new AsyncDoubleInput(
 								Double.valueOf(matcher.group(1)), Double.valueOf(matcher.group(2)),
 								parameters[0]
@@ -129,7 +129,7 @@ implements ValueInputFactory<String, G> {
 						}
 					case 'D':
 						matcher = DATE_PATTERN.matcher(parameters[1]);
-						if (matcher.find()) {
+						if(matcher.find()) {
 							try {
 								return (G) new AsyncDateInput(
 									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),

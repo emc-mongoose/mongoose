@@ -43,14 +43,18 @@ public abstract class StorageMockBase<T extends MutableDataItemMock>
 implements StorageMock<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
+
 	private final AtomicBoolean started = new AtomicBoolean(false);
+
 	private final String dataSrcPath;
 	private final StorageIoStats ioStats;
 	private final Class<T> itemClass;
 	protected final ContentSource contentSrc;
 	private final int storageCapacity, containerCapacity;
+
 	private final ListingLRUMap<String, ObjectContainerMock<T>> storageMap;
 	private final String defaultContainerName;
+
 	private final AtomicBoolean isCapacityExhausted = new AtomicBoolean(false);
 
 	@SuppressWarnings("unchecked")
@@ -58,21 +62,21 @@ implements StorageMock<T> {
 		final Config.StorageConfig.MockConfig mockConfig,
 		final Config.LoadConfig.MetricsConfig metricsConfig, final Config.ItemConfig itemConfig
 	) {
-		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig =
-			mockConfig.getContainerConfig();
+		final Config.StorageConfig.MockConfig.ContainerConfig
+			containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
 		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
 		try {
-			this.contentSrc =
-				ContentSourceUtil.getInstance(contentSourcePath, contentConfig.getSeed(),
-					contentConfig.getRingSize()
-				);
+			this.contentSrc = ContentSourceUtil.getInstance(
+				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
+			);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to get content source on path {}", contentSourcePath);
+				LOG, Level.ERROR, e, "Failed to get content source on path {}", contentSourcePath
+			);
 			throw new IllegalStateException();
 		}
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
@@ -85,6 +89,7 @@ implements StorageMock<T> {
 	protected final ContentSource getContentSource() {
 		return contentSrc;
 	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Container methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,6 +119,7 @@ implements StorageMock<T> {
 	public final void deleteContainer(final String name) {
 		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteContainerTask(name));
 	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Object methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,18 +128,17 @@ implements StorageMock<T> {
 
 	@Override
 	public final void createObject(
-		final String containerName, final String id, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException {
 		if(isCapacityExhausted.get()) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		BlockingQueueTaskSequencer.INSTANCE.submit(
-			new PutObjectTask(containerName, newDataObject(id, offset, size)));
+		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectTask(containerName, newDataObject(id, offset, size)));
 	}
 
 	@Override
 	public final void updateObject(
-		final String containerName, final String id, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
 			final Future<T> future =
@@ -151,11 +156,10 @@ implements StorageMock<T> {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the update task");
 		}
 	}
-
 	//
 	@Override
 	public final void appendObject(
-		final String containerName, final String id, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
 			final Future<T> future =
@@ -176,7 +180,7 @@ implements StorageMock<T> {
 
 	@Override
 	public final T getObject(
-		final String containerName, final String id, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
 		try {
@@ -195,15 +199,14 @@ implements StorageMock<T> {
 
 	@Override
 	public final void deleteObject(
-		final String containerName, final String id, final long offset, final long size
+			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
 		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteObjectTask(containerName, id));
 	}
 
 	@Override
 	public final T listObjects(
-		final String containerName, final String afterObjectId, final Collection<T> outputBuffer,
-		final int limit
+			final String containerName, final String afterObjectId, final Collection<T> outputBuffer, final int limit
 	) throws ContainerMockException {
 		try {
 			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
@@ -223,7 +226,6 @@ implements StorageMock<T> {
 		{
 			setDaemon(true);
 		}
-
 		@SuppressWarnings("InfiniteLoopStatement")
 		@Override
 		public final void run() {
@@ -261,7 +263,7 @@ implements StorageMock<T> {
 
 	@Override
 	public long getSize() {
-		return storageMap.values().stream().mapToLong(ObjectContainerMock:: size).sum();
+		return storageMap.values().stream().mapToLong(ObjectContainerMock::size).sum();
 	}
 
 	@Override
@@ -271,8 +273,7 @@ implements StorageMock<T> {
 
 	@Override
 	public final void putIntoDefaultContainer(final List<T> dataItems) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(
-			new PutObjectsBatchTask(defaultContainerName, dataItems));
+		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectsBatchTask(defaultContainerName, dataItems));
 	}
 
 	@Override
@@ -286,17 +287,20 @@ implements StorageMock<T> {
 			final Path dataFilePath = Paths.get(dataSrcPath);
 			if(!Files.exists(dataFilePath)) {
 				LOG.warn(
-					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists");
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists"
+				);
 				return;
 			}
 			if(Files.isDirectory(dataFilePath)) {
 				LOG.warn(
-					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is a directory");
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is a directory"
+				);
 				return;
 			}
 			if(Files.isReadable(dataFilePath)) {
 				LOG.debug(
-					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable");
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
+				);
 			}
 			final AtomicLong count = new AtomicLong(0);
 			List<T> buff;
@@ -311,8 +315,8 @@ implements StorageMock<T> {
 				}
 			});
 			try(
-				final CsvFileItemInput<T> csvFileItemInput = new CsvFileItemInput<>(
-					dataFilePath, itemClass, contentSrc)
+				final CsvFileItemInput<T>
+					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, itemClass, contentSrc)
 			) {
 				displayProgressThread.start();
 				do {
@@ -328,8 +332,9 @@ implements StorageMock<T> {
 			} catch(final EOFException e) {
 				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
 			} catch(final IOException | NoSuchMethodException e) {
-				LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to load the data items from file \"{}\"", dataFilePath
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to load the data items from file \"{}\"",
+					dataFilePath
 				);
 			} finally {
 				displayProgressThread.interrupt();
@@ -337,9 +342,7 @@ implements StorageMock<T> {
 		}
 	}
 
-	private abstract class ContainerTaskBase
-		extends FutureTaskBase<T> {
-
+	private abstract class ContainerTaskBase extends FutureTaskBase<T> {
 		private final String containerName;
 
 		ContainerTaskBase(final String containerName) {
@@ -355,8 +358,7 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class PutObjectsBatchTask
-		extends FutureTaskBase<List<T>> {
+	private class PutObjectsBatchTask extends FutureTaskBase<List<T>> {
 
 		private final String containerName;
 		private final List<T> objects;
@@ -376,6 +378,7 @@ implements StorageMock<T> {
 				setException(new ContainerMockNotFoundException(containerName));
 			}
 		}
+
 	}
 
 	private class ListObjectsTask
@@ -406,8 +409,7 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class DeleteObjectTask
-		extends ContainerTaskBase {
+	private class DeleteObjectTask extends ContainerTaskBase {
 
 		private final String objectId;
 
@@ -427,8 +429,7 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class GetObjectTask
-		extends ContainerTaskBase {
+	private class GetObjectTask extends ContainerTaskBase {
 
 		private final String objectId;
 
@@ -448,8 +449,7 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class PutObjectTask
-		extends ContainerTaskBase {
+	private class PutObjectTask extends ContainerTaskBase {
 
 		private T object;
 
@@ -460,7 +460,8 @@ implements StorageMock<T> {
 
 		@Override
 		public void run() {
-			final ObjectContainerMock<T> container = getContainer();
+			final ObjectContainerMock<T> container =
+				getContainer();
 			if(container != null) {
 				set(container.put(object.getName(), object));
 			} else {
@@ -469,8 +470,7 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class DeleteContainerTask
-		extends FutureTaskBase<ObjectContainerMock<T>> {
+	private class DeleteContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
@@ -486,10 +486,10 @@ implements StorageMock<T> {
 				setException(new ContainerMockNotFoundException(containerName));
 			}
 		}
+
 	}
 
-	private class GetContainerTask
-		extends FutureTaskBase<ObjectContainerMock<T>> {
+	private class GetContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
@@ -505,10 +505,10 @@ implements StorageMock<T> {
 				setException(new ContainerMockNotFoundException(containerName));
 			}
 		}
+
 	}
 
-	private class PutContainerTask
-		extends FutureTaskBase<ObjectContainerMock<T>> {
+	private class PutContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 

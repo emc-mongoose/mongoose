@@ -75,7 +75,7 @@ implements Metric {
 	}
 
 	public double getMeanRate() {
-		if (getCount() == 0) {
+		if(getCount() == 0) {
 			return 0.0;
 		} else {
 			final double elapsed = (clock.getTick() - startTime);

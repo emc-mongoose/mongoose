@@ -81,7 +81,7 @@ extends AbstractAppender {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
 					final Map<String, CircularArray<ShortenedLogEvent>> markers =
 						new ConcurrentHashMap<>();
-					for (final String markerName: markerNames) {
+					for(final String markerName: markerNames) {
 						addMarkerToMap(markers, markerName);
 					}
 					LOG_EVENTS_MAP.put(
@@ -89,7 +89,7 @@ extends AbstractAppender {
 					);
 				}
 				final String eventMarkerName = event.getMarker().getName();
-				if (markerNames.contains(eventMarkerName)) {
+				if(markerNames.contains(eventMarkerName)) {
 					addLogEventToMap(currRunId, eventMarkerName, event);
 				}
 			} // else silently skip
@@ -115,18 +115,18 @@ extends AbstractAppender {
 				new ConcurrentHashMap<>();
 		final Map<String, CircularArray<ShortenedLogEvent>> testLogs = LOG_EVENTS_MAP.get(runId);
 		List<ShortenedLogEvent> lastLogEventsForMarker = null;
-		if (testLogs != null && testLogs.containsKey(markerName)) {
+		if(testLogs != null && testLogs.containsKey(markerName)) {
 			lastLogEventsForMarker = testLogs.get(markerName).getLastItems(new ShortenedLogEvent
 					(timeStamp));
 		}
-		if (lastLogEventsForMarker != null) {
+		if(lastLogEventsForMarker != null) {
 			lastLogEventsWithMarker.put(markerName, lastLogEventsForMarker);
 		}
 		return lastLogEventsWithMarker;
 	}
 	//
 	public static void removeRunId(final String runId) {
-		if (ENABLED_FLAG) {
+		if(ENABLED_FLAG) {
 			LOG_EVENTS_MAP.remove(runId);
 		}
 	}

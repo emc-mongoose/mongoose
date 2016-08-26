@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
 import com.emc.mongoose.common.net.ssl.SslContext;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
@@ -9,6 +10,8 @@ import com.emc.mongoose.storage.mock.impl.http.request.RequestHandlerBase;
 import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.ServerBootstrap;
@@ -33,10 +36,11 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 11.07.16.
  */
-public class Nagaina
-	extends StorageMockBase<MutableDataItemMock> {
+public final class Nagaina
+extends StorageMockBase<MutableDataItemMock>{
 
 	private final static Logger LOG = LogManager.getLogger();
+
 	private final int port;
 	private final EventLoopGroup[] dispatchGroups;
 	private final EventLoopGroup[] workGroups;
@@ -55,16 +59,18 @@ public class Nagaina
 		workGroups = new EventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
-		s3RequestHandler =
-			new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this,
-				getContentSource()
-			);
-		swiftRequestHandler =
-			new SwiftRequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(),
-				this, getContentSource()
-			);
-		atmosRequestHandler =
-			new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		final NamingConfig namingConfig = itemConfig.getNamingConfig();
+		final ContentSource contentSource = getContentSource();
+		s3RequestHandler = new S3RequestHandler<>(
+			limitConfig, namingConfig, this, contentSource
+		);
+		swiftRequestHandler = new SwiftRequestHandler<>(
+			limitConfig, namingConfig, this, contentSource
+		);
+		atmosRequestHandler = new AtmosRequestHandler<>(
+			limitConfig, namingConfig, this, contentSource
+		);
 	}
 
 	@Override
@@ -73,21 +79,19 @@ public class Nagaina
 		final int portsNumber = dispatchGroups.length;
 		for(int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroups[i] =
-					new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
+				dispatchGroups[i] = new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
 				workGroups[i] = new EpollEventLoopGroup();
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
-				serverBootstrap.group(dispatchGroups[i], workGroups[i]).channel(
-					EpollServerSocketChannel.class).childHandler(
-					new ChannelInitializer<SocketChannel>() {
+				serverBootstrap.group(dispatchGroups[i], workGroups[i])
+					.channel(EpollServerSocketChannel.class)
+					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						protected void initChannel(final SocketChannel socketChannel)
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
 							if(currentIndex % 2 == 1) {
-								pipeline.addLast(
-									new SslHandler(SslContext.INSTANCE.createSSLEngine()));
+								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
 							}
 							pipeline.addLast(new HttpServerCodec());
 							pipeline.addLast(swiftRequestHandler);
@@ -100,12 +104,14 @@ public class Nagaina
 				channels[i] = bind.sync().channel();
 			} catch(final Exception e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i);
+					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i
+				);
 				throw new IllegalStateException();
 			}
 		}
 		if(portsNumber > 1) {
-			LOG.info(Markers.MSG, "Listening the ports {} .. {}", port, port + portsNumber - 1);
+			LOG.info(Markers.MSG, "Listening the ports {} .. {}",
+				port, port + portsNumber - 1);
 		} else {
 			LOG.info(Markers.MSG, "Listening the port {}", port);
 		}
@@ -133,15 +139,13 @@ public class Nagaina
 	@Override
 	public void close()
 	throws IOException {
-		for(final Channel channel : channels) {
+		for(final Channel channel: channels) {
 			channel.close();
 		}
 	}
 
 	@Override
-	protected MutableDataItemMock newDataObject(
-		final String id, final long offset, final long size
-	) {
+	protected MutableDataItemMock newDataObject(final String id, final long offset, final long size) {
 		return new BasicMutableDataItemMock(id, offset, size, 0, contentSrc);
 	}
 }

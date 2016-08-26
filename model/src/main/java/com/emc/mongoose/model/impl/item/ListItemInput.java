@@ -70,7 +70,7 @@ implements Input<T> {
 	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		if (items.size() < itemsCount)
+		if(items.size() < itemsCount)
 			throw new IOException();
 		i = (int) itemsCount;
 	}

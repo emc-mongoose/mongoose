@@ -54,7 +54,7 @@ extends AbstractAppender {
 		final Advertiser advertiser
 	) {
 		super(name, filter, layout);
-		if (advertiser != null) {
+		if(advertiser != null) {
 			final Map<String, String> configuration = new HashMap<>(layout.getContentFormat());
 			configuration.putAll(manager.getContentFormat());
 			configuration.put("contentType", layout.getContentType());

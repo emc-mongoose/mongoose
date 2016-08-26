@@ -10,7 +10,8 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -60,46 +61,46 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 @SuppressWarnings("WeakerAccess")
 @Sharable
 public abstract class RequestHandlerBase<T extends MutableDataItemMock>
-	extends ChannelInboundHandlerAdapter {
+extends ChannelInboundHandlerAdapter {
 
-	private static final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
+
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
+
 	private final StorageMock<T> sharedStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
-	private int prefixLength, idRadix;
+	private final String apiClsName;
+	
+	private final int prefixLength, idRadix;
+
 	static final String REQUEST_KEY = "requestKey";
 	static final String RESPONSE_STATUS_KEY = "responseStatusKey";
 	private static final String CONTENT_LENGTH_KEY = "contentLengthKey";
 	static final String CTX_WRITE_FLAG_KEY = "ctxWriteFlagKey";
 	private static final String HANDLER_KEY = "handlerKey";
+
 	static final int DEFAULT_PAGE_SIZE = 0x1000;
 	static final String MARKER_KEY = "marker";
-	private final String className;
 
 	protected RequestHandlerBase(
-		final Config.LoadConfig.LimitConfig limitConfig, final StorageMock<T> sharedStorage,
-		final ContentSource contentSource
+		final LimitConfig limitConfig, final NamingConfig namingConfig,
+		final StorageMock<T> sharedStorage, final ContentSource contentSource
 	) {
 		this.rateLimit = limitConfig.getRate();
+		final String t = namingConfig.getPrefix();
+		this.prefixLength = t == null ? 0 : t.length();
+		this.idRadix = namingConfig.getRadix();
 		this.sharedStorage = sharedStorage;
 		this.contentSource = contentSource;
 		this.ioStats = sharedStorage.getStats();
+		apiClsName = getClass().getSimpleName();
 		AttributeKey.<HttpRequest>valueOf(REQUEST_KEY);
 		AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY);
 		AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY);
 		AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY);
 		AttributeKey.<String>valueOf(HANDLER_KEY);
-		this.className = getClass().getSimpleName();
-	}
-
-	protected void setPrefixLength(int prefixLength) {
-		this.prefixLength = prefixLength;
-	}
-
-	protected void setIdRadix(int idRadix) {
-		this.idRadix = idRadix;
 	}
 
 	protected boolean checkApiMatch(final HttpRequest request) {
@@ -109,8 +110,8 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	@Override
 	public void channelReadComplete(final ChannelHandlerContext ctx)
 	throws Exception {
-		if(!ctx.channel().attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get().equals(
-			className)) {
+		final String ctxName = ctx.channel().attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get();
+		if(!apiClsName.equals(ctxName)) {
 			ctx.fireChannelReadComplete();
 			return;
 		}
@@ -130,6 +131,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
 		final Channel channel = ctx.channel();
+		final String className = getClass().getSimpleName();
 		if(msg instanceof HttpRequest) {
 			if(!checkApiMatch((HttpRequest) msg)) {
 				channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).set("");
@@ -141,7 +143,8 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 			ReferenceCountUtil.release(msg);
 			return;
 		}
-		if(!channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get().equals(className)) {
+		if(!channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get().equals(
+			className)) {
 			ctx.fireChannelRead(msg);
 			return;
 		}
@@ -153,11 +156,10 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 
 	private void handle(final ChannelHandlerContext ctx) {
 		if(rateLimit > 0) {
-			if(ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() >
-				rateLimit) {
+			if(ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
-				} catch(InterruptedException e) {
+				} catch (InterruptedException e) {
 					return;
 				}
 			} else if(lastMilliDelay.get() > 0) {
@@ -165,17 +167,26 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 			}
 		}
 		final Channel channel = ctx.channel();
-		final String uri = channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().uri();
-		final HttpMethod method =
-			channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().method();
-		final Long size = channel.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY)).get();
-		channel.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).set(OK);
+		final String uri = channel
+			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.get()
+			.uri();
+		final HttpMethod method = channel
+			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.get()
+			.method();
+		final long size;
+		if(channel.hasAttr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY))) {
+			size = channel.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY)).get();
+		} else {
+			size = 0;
+		}
 		doHandle(uri, method, size, ctx);
 	}
 
 	protected void handleItemRequest(
 		final String uri, final HttpMethod method, final String containerName,
-		final String objectId, final Long size, final ChannelHandlerContext ctx
+		final String objectId, final long size, final ChannelHandlerContext ctx
 	) {
 		if(objectId != null) {
 			final long offset;
@@ -195,7 +206,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	}
 
 	protected abstract void doHandle(
-		final String uri, final HttpMethod method, final Long size, final ChannelHandlerContext ctx
+		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
 	);
 
 	protected final String[] getUriParameters(final String uri, final int maxNumOfParams) {
@@ -206,29 +217,23 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 		return result;
 	}
 
-	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
-		HttpResponseStatus status =
-			ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
-		if(status == null) {
-			status = OK;
-		}
-		final FullHttpResponse response = newEmptyResponse(status);
-		response.setStatus(status);
-		ctx.write(response);
-		//		ctx.alloc().buffer().release();
-	}
-
-	protected final void writeResponse(
-		final ChannelHandlerContext ctx, final FullHttpResponse response
+	protected final void writeEmptyResponse(
+		final ChannelHandlerContext ctx, FullHttpResponse response
 	) {
-		HttpResponseStatus status =
-			ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		HttpResponseStatus status = ctx
+			.channel()
+			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.get();
+		
 		if(status == null) {
 			status = OK;
 		}
-		response.setStatus(status);
+		if(response == null) {
+			response = newEmptyResponse(status);
+		} else {
+			response.setStatus(status);
+		}
 		ctx.write(response);
-		//		ctx.alloc().buffer().release();
 	}
 
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
@@ -240,16 +245,19 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 
 	/**
 	 Create new response to send it with different statuses and headers and without any content
-
 	 @return response
 	 */
 	protected FullHttpResponse newEmptyResponse() {
 		return newEmptyResponse(OK);
 	}
 
+	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
+		writeEmptyResponse(ctx, null);
+	}
+
 	protected final void handleObjectRequest(
-		final HttpMethod httpMethod, final String containerName, final String id, final Long offset,
-		final Long size, final ChannelHandlerContext ctx
+		final HttpMethod httpMethod, final String containerName, final String id, final long offset,
+		final long size, final ChannelHandlerContext ctx
 	) {
 		if(containerName != null) {
 			if(httpMethod.equals(POST) || httpMethod.equals(PUT)) {
@@ -257,7 +265,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 			} else if(httpMethod.equals(GET)) {
 				handleObjectRead(containerName, id, offset, ctx);
 			} else if(httpMethod.equals(HEAD)) {
-//				setHttpResponseStatusInContext(ctx, OK); // by default
+				setHttpResponseStatusInContext(ctx, OK);
 			} else if(httpMethod.equals(DELETE)) {
 				handleObjectDelete(containerName, id, offset, ctx);
 			}
@@ -267,34 +275,37 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	}
 
 	private void handleObjectCreate(
-		final String containerName, final String id, final Long offset, final Long size,
+		final String containerName, final String id, final long offset, final long size,
 		final ChannelHandlerContext ctx
 	) {
-		final List<String> rangeHeadersValues = ctx.channel().attr(
-			AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().headers().getAll(RANGE);
+		final List<String> rangeHeadersValues = ctx.channel()
+				.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get()
+				.headers().getAll(RANGE);
 		try {
 			if(rangeHeadersValues.size() == 0) {
 				sharedStorage.createObject(containerName, id, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
-				final boolean success =
-					handlePartialCreate(containerName, id, rangeHeadersValues, size);
+				final boolean success = handlePartialCreate(
+					containerName, id, rangeHeadersValues, size
+				);
 				ioStats.markWrite(success, size);
 			}
-		} catch(final StorageMockCapacityLimitReachedException e) {
+		} catch (final StorageMockCapacityLimitReachedException e) {
 			setHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
 			ioStats.markWrite(false, size);
-		} catch(final ContainerMockNotFoundException e) {
+		} catch (final ContainerMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, size);
-		} catch(final ObjectMockNotFoundException e) {
+		} catch (final ObjectMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, 0);
-		} catch(final ContainerMockException | NumberFormatException e) {
+		} catch (final ContainerMockException | NumberFormatException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			ioStats.markWrite(false, 0);
-			LogUtil.exception(LOG, Level.ERROR, e,
-				"Failed to perform a range update/append for \"{}\"", id
+			LogUtil.exception(
+					LOG, Level.ERROR, e,
+					"Failed to perform a range update/append for \"{}\"", id
 			);
 		}
 	}
@@ -304,24 +315,27 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 
 	private boolean handlePartialCreate(
 		final String containerName, final String id, final List<String> rangeHeadersValues,
-		final Long size
+		final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
-		for(final String rangeValues : rangeHeadersValues) {
+		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
 				final String rangeValueWithoutPrefix =
-					rangeValues.substring(VALUE_RANGE_PREFIX.length(), rangeValues.length());
+						rangeValues.substring(VALUE_RANGE_PREFIX.length(), rangeValues.length());
 				final String[] ranges = rangeValueWithoutPrefix.split(",");
-				for(final String range : ranges) {
+				for(final String range: ranges) {
 					final String[] rangeBorders = range.split(VALUE_RANGE_CONCAT);
 					final int rangeBordersNum = rangeBorders.length;
 					final long offset = Long.parseLong(rangeBorders[0]);
 					if(rangeBordersNum == 1) {
-						sharedStorage.appendObject(containerName, id, offset, size);
+						sharedStorage.appendObject(containerName, id,
+								offset, size);
 					} else if(rangeBordersNum == 2) {
 						final long dynSize = Long.parseLong(rangeBorders[1]) - offset + 1;
 						sharedStorage.updateObject(containerName, id, offset, dynSize);
 					} else {
-						LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
+						LOG.warn(
+								Markers.ERR, "Invalid range header value: \"{}\"", rangeValues
+						);
 						return false;
 					}
 				}
@@ -334,7 +348,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	}
 
 	private void handleObjectRead(
-		final String containerName, final String id, final Long offset,
+		final String containerName, final String id, final long offset,
 		final ChannelHandlerContext ctx
 	) {
 		final HttpResponse response;
@@ -345,8 +359,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 				ioStats.markRead(true, size);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Send data object with ID {}", id);
-					ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(
-						false);
+					ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
 					response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 					HttpUtil.setContentLength(response, size);
 					ctx.write(response);
@@ -375,7 +388,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	}
 
 	private void handleObjectDelete(
-		final String containerName, final String id, final Long offset,
+		final String containerName, final String id, final long offset,
 		final ChannelHandlerContext ctx
 	) {
 		try {
@@ -384,7 +397,7 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 				LOG.trace(Markers.MSG, "Delete data object with ID: {}", id);
 			}
 			ioStats.markDelete(true);
-		} catch(final ContainerMockNotFoundException e) {
+		} catch (final ContainerMockNotFoundException e) {
 			ioStats.markDelete(false);
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -396,8 +409,10 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	protected void setHttpResponseStatusInContext(
 		final ChannelHandlerContext ctx, final HttpResponseStatus status
 	) {
-		ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).set(
-			status);
+		ctx
+			.channel()
+			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.set(status);
 	}
 
 	protected void handleContainerRequest(
@@ -429,9 +444,9 @@ public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 	) throws ContainerMockException {
 		final T lastObject = sharedStorage.listObjects(name, marker, buffer, maxCount);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG,
-				"Container \"{}\": generated list of {} objects, last one is \"{}\"", name,
-				buffer.size(), lastObject
+			LOG.trace(
+				Markers.MSG, "Container \"{}\": generated list of {} objects, last one is \"{}\"",
+				name, buffer.size(), lastObject
 			);
 		}
 		return lastObject;

@@ -58,11 +58,11 @@ implements Input<T> {
 	public void skip(final long itemsCount)
 	throws IOException {
 		String item;
-		for (int i = 0; i < itemsCount; i++) {
+		for(int i = 0; i < itemsCount; i++) {
 			item = itemsSrc.readLine();
-			if (item == null) {
+			if(item == null) {
 				throw new IOException("Couldn't skip such amount of data items");
-			} else if (item.equals(lastItem.toString())) {
+			} else if(item.equals(lastItem.toString())) {
 				return;
 			}
 		}

@@ -41,12 +41,12 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> implements Listable<V> {
 
 	@Override
 	public V list(final String afterObjectId, final Collection<V> outputBuffer, final int limit) {
-		if (isEmpty()) {
+		if(isEmpty()) {
 			return null;
 		}
 		LinkEntry<K, V> nextEntry = getEntry(afterObjectId);
-		for (int i = 0; i < limit; i++) {
-			if (nextEntry == null) {
+		for(int i = 0; i < limit; i++) {
+			if(nextEntry == null) {
 				nextEntry = getEntry(firstKey());
 			} else {
 				nextEntry = entryAfter(nextEntry);

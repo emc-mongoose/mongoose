@@ -81,11 +81,11 @@ task dist(type: Tar) {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	into("$baseName-$rootProject.version") {
 		into("lib") {
-			for (Project p: mutualProjects) {
+			for(Project p: mutualProjects) {
 				from p.configurations.runtime
 			}
 		}
-		for (Project p: mutualProjects) {
+		for(Project p: mutualProjects) {
 			from p.jar.outputs.files
 		}
 	}
@@ -104,7 +104,7 @@ task wrapper(type: Wrapper) {
 
 void collectName(Project p, LinkedList<String> names) {
 	names.addFirst p.name
-	if (p.parent != null) {
+	if(p.parent != null) {
 		collectName(p.parent, names)
 	}
 }

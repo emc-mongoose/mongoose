@@ -5,7 +5,8 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -58,29 +59,21 @@ extends RequestHandlerBase<T> {
 	static {
 		try {
 			DOM_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-		} catch(final ParserConfigurationException e) {
+		} catch (final ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public S3RequestHandler(
-		final Config.ItemConfig.NamingConfig namingConfig,
-		final Config.LoadConfig.LimitConfig limitConfig, final StorageMock<T> sharedStorage,
-		final ContentSource contentSource
+		final LimitConfig limitConfig, final NamingConfig namingConfig,
+		final StorageMock<T> sharedStorage, final ContentSource contentSource
 	) {
-		super(limitConfig, sharedStorage, contentSource);
-		final String prefix = namingConfig.getPrefix();
-		if(prefix != null) {
-			setPrefixLength(prefix.length());
-		} else {
-			setPrefixLength(0);
-		}
-		setIdRadix(namingConfig.getRadix());
+		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
 	@Override
 	protected void doHandle(
-		final String uri, final HttpMethod method, final Long size, final ChannelHandlerContext ctx
+		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
 	) {
 		final String[] uriParams = getUriParameters(uri, 2);
 		final String containerName = uriParams[0];
@@ -111,8 +104,7 @@ extends RequestHandlerBase<T> {
 			maxCount = Integer.parseInt(parameters.get(MAX_COUNT_KEY).get(0));
 		} else {
 			LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI {}",
-				queryStringDecoder.uri()
-			);
+					queryStringDecoder.uri());
 		}
 		if(parameters.containsKey(MARKER_KEY)) {
 			marker = parameters.get(MARKER_KEY).get(0);
@@ -121,9 +113,9 @@ extends RequestHandlerBase<T> {
 		final T lastObject;
 		try {
 			lastObject = listContainer(name, marker, buffer, maxCount);
-			LOG.trace(Markers.MSG,
-				"Bucket \"{}\": generated list of {} objects, last one is \"{}\"", name,
-				buffer.size(), lastObject
+			LOG.trace(
+				Markers.MSG, "Bucket \"{}\": generated list of {} objects, last one is \"{}\"",
+				name, buffer.size(), lastObject
 			);
 		} catch(final ContainerMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
@@ -139,7 +131,7 @@ extends RequestHandlerBase<T> {
 		appendElement(xml, rootElem, "IsTruncated", Boolean.toString(lastObject != null));
 		appendElement(xml, rootElem, "Prefix");
 		appendElement(xml, rootElem, "MaxKeys", Integer.toString(buffer.size()));
-		for(final T object : buffer) {
+		for(final T object: buffer) {
 			final Element elem = xml.createElement("Contents");
 			appendElement(xml, elem, "Key", object.getName());
 			try {
@@ -152,17 +144,19 @@ extends RequestHandlerBase<T> {
 		final StreamResult streamResult = new StreamResult(stream);
 		try {
 			TRANSFORMER_FACTORY.newTransformer().transform(new DOMSource(xml), streamResult);
-		} catch(final TransformerException e) {
+		} catch (final TransformerException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build bucket XML listing");
 			return;
 		}
 		final byte[] content = stream.toByteArray();
 		ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
-		final FullHttpResponse response =
-			new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+		final FullHttpResponse
+				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");
 		HttpUtil.setContentLength(response, content.length);
 		ctx.write(response);
 	}
+
+
 }

@@ -41,8 +41,8 @@ implements Closeable, MetricSet {
 	public static String name(final String name, final String... names) {
 		final StringBuilder builder = new StringBuilder();
 		append(builder, name);
-		if (names != null) {
-			for (String s : names) {
+		if(names != null) {
+			for(String s : names) {
 				append(builder, s);
 			}
 		}
@@ -62,8 +62,8 @@ implements Closeable, MetricSet {
 	}
 
 	private static void append(StringBuilder builder, String part) {
-		if (part != null && !part.isEmpty()) {
-			if (builder.length() > 0) {
+		if(part != null && !part.isEmpty()) {
+			if(builder.length() > 0) {
 				builder.append('.');
 			}
 			builder.append(part);
@@ -104,11 +104,11 @@ implements Closeable, MetricSet {
 	@SuppressWarnings("unchecked")
 	public final <T extends Metric> T register(final String name, final T metric)
 	throws IllegalArgumentException {
-		if (metric instanceof MetricSet) {
+		if(metric instanceof MetricSet) {
 			registerAll(name, (MetricSet) metric);
 		} else {
 			final Metric existing = metrics.putIfAbsent(name, metric);
-			if (existing == null) {
+			if(existing == null) {
 				onMetricAdded(name, metric);
 			} else {
 				throw new IllegalArgumentException("A metric named " + name + " already exists");
@@ -179,7 +179,7 @@ implements Closeable, MetricSet {
 	 */
 	public final boolean remove(final String name) {
 		final Metric metric = metrics.remove(name);
-		if (metric != null) {
+		if(metric != null) {
 			onMetricRemoved(name, metric);
 			return true;
 		}
@@ -192,8 +192,8 @@ implements Closeable, MetricSet {
 	 * @param filter a filter
 	 */
 	public final void removeMatching(final MetricFilter filter) {
-		for (Map.Entry<String, Metric> entry : metrics.entrySet()) {
-			if (filter.matches(entry.getKey(), entry.getValue())) {
+		for(Map.Entry<String, Metric> entry : metrics.entrySet()) {
+			if(filter.matches(entry.getKey(), entry.getValue())) {
 				remove(entry.getKey());
 			}
 		}
@@ -210,7 +210,7 @@ implements Closeable, MetricSet {
 	public final void addListener(final MetricRegistryListener listener) {
 		listeners.add(listener);
 
-		for (Map.Entry<String, Metric> entry : metrics.entrySet()) {
+		for(Map.Entry<String, Metric> entry : metrics.entrySet()) {
 			notifyListenerOfAddedMetric(listener, entry.getValue(), entry.getKey());
 		}
 	}
@@ -333,14 +333,14 @@ implements Closeable, MetricSet {
 	@SuppressWarnings("unchecked")
 	private <T extends Metric> T getOrAdd(final String name, final MetricBuilder<T> builder) {
 		final Metric metric = metrics.get(name);
-		if (builder.isInstance(metric)) {
+		if(builder.isInstance(metric)) {
 			return (T) metric;
-		} else if (metric == null) {
+		} else if(metric == null) {
 			try {
 				return register(name, builder.newMetric());
 			} catch (IllegalArgumentException e) {
 				final Metric added = metrics.get(name);
-				if (builder.isInstance(added)) {
+				if(builder.isInstance(added)) {
 					return (T) added;
 				}
 			}
@@ -353,8 +353,8 @@ implements Closeable, MetricSet {
 		final Class<T> klass, final MetricFilter filter
 	) {
 		final TreeMap<String, T> timers = new TreeMap<String, T>();
-		for (final Map.Entry<String, Metric> entry : metrics.entrySet()) {
-			if (klass.isInstance(entry.getValue()) && filter.matches(entry.getKey(),
+		for(final Map.Entry<String, Metric> entry : metrics.entrySet()) {
+			if(klass.isInstance(entry.getValue()) && filter.matches(entry.getKey(),
 				entry.getValue())) {
 				timers.put(entry.getKey(), (T) entry.getValue());
 			}
@@ -363,7 +363,7 @@ implements Closeable, MetricSet {
 	}
 
 	private void onMetricAdded(final String name, final Metric metric) {
-		for (final MetricRegistryListener listener : listeners) {
+		for(final MetricRegistryListener listener : listeners) {
 			notifyListenerOfAddedMetric(listener, metric, name);
 		}
 	}
@@ -371,15 +371,15 @@ implements Closeable, MetricSet {
 	private void notifyListenerOfAddedMetric(
 		final MetricRegistryListener listener, final Metric metric, final String name
 	) {
-		if (metric instanceof Gauge) {
+		if(metric instanceof Gauge) {
 			listener.onGaugeAdded(name, (Gauge<?>) metric);
-		} else if (metric instanceof Counter) {
+		} else if(metric instanceof Counter) {
 			listener.onCounterAdded(name, (Counter) metric);
-		} else if (metric instanceof Histogram) {
+		} else if(metric instanceof Histogram) {
 			listener.onHistogramAdded(name, (Histogram) metric);
-		} else if (metric instanceof Meter) {
+		} else if(metric instanceof Meter) {
 			listener.onMeterAdded(name, (Meter) metric);
-		} else if (metric instanceof Timer) {
+		} else if(metric instanceof Timer) {
 			listener.onTimerAdded(name, (Timer) metric);
 		} else {
 			throw new IllegalArgumentException("Unsupported metric type: " + metric.getClass());
@@ -387,7 +387,7 @@ implements Closeable, MetricSet {
 	}
 
 	private void onMetricRemoved(final String name, final Metric metric) {
-		for (final MetricRegistryListener listener : listeners) {
+		for(final MetricRegistryListener listener : listeners) {
 			notifyListenerOfRemovedMetric(name, metric, listener);
 		}
 	}
@@ -395,15 +395,15 @@ implements Closeable, MetricSet {
 	private void notifyListenerOfRemovedMetric(
 		final String name, final Metric metric, final MetricRegistryListener listener
 	) {
-		if (metric instanceof Gauge) {
+		if(metric instanceof Gauge) {
 			listener.onGaugeRemoved(name);
-		} else if (metric instanceof Counter) {
+		} else if(metric instanceof Counter) {
 			listener.onCounterRemoved(name);
-		} else if (metric instanceof Histogram) {
+		} else if(metric instanceof Histogram) {
 			listener.onHistogramRemoved(name);
-		} else if (metric instanceof Meter) {
+		} else if(metric instanceof Meter) {
 			listener.onMeterRemoved(name);
-		} else if (metric instanceof Timer) {
+		} else if(metric instanceof Timer) {
 			listener.onTimerRemoved(name);
 		} else {
 			throw new IllegalArgumentException("Unsupported metric type: " + metric.getClass());
@@ -412,8 +412,8 @@ implements Closeable, MetricSet {
 
 	private void registerAll(final String prefix, final MetricSet metrics)
 	throws IllegalArgumentException {
-		for (final Map.Entry<String, Metric> entry : metrics.getMetrics().entrySet()) {
-			if (entry.getValue() instanceof MetricSet) {
+		for(final Map.Entry<String, Metric> entry : metrics.getMetrics().entrySet()) {
+			if(entry.getValue() instanceof MetricSet) {
 				registerAll(name(prefix, entry.getKey()), (MetricSet) entry.getValue());
 			} else {
 				register(name(prefix, entry.getKey()), entry.getValue());
