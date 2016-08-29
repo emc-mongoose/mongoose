@@ -148,10 +148,7 @@ extends RequestHandlerBase<T> {
 					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
 					final Attribute<HttpResponseStatus> statusAttribute =
 						channel.attr(AttributeKey.valueOf(RESPONSE_STATUS_KEY));
-					if(statusAttribute.get() == null) {
-						statusAttribute.set(OK);
-					}
-					response = newEmptyResponse();
+					response = newEmptyResponse(statusAttribute.get());
 					final int statusCode = response.status().code();
 					if(statusCode < 300 && 200 <= statusCode) {
 						response.headers().set(LOCATION, OBJ_PATH + "/" + objectId);
@@ -181,7 +178,7 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-			writeEmptyResponse(ctx, response);
+			writeResponse(ctx, response);
 		}
 	}
 	

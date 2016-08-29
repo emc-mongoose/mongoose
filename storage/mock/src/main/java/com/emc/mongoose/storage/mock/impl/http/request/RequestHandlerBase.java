@@ -181,6 +181,7 @@ extends ChannelInboundHandlerAdapter {
 		} else {
 			size = 0;
 		}
+		setHttpResponseStatusInContext(ctx, OK); // OK response assumption
 		doHandle(uri, method, size, ctx);
 	}
 
@@ -217,25 +218,6 @@ extends ChannelInboundHandlerAdapter {
 		return result;
 	}
 
-	protected final void writeEmptyResponse(
-		final ChannelHandlerContext ctx, FullHttpResponse response
-	) {
-		HttpResponseStatus status = ctx
-			.channel()
-			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
-			.get();
-		
-		if(status == null) {
-			status = OK;
-		}
-		if(response == null) {
-			response = newEmptyResponse(status);
-		} else {
-			response.setStatus(status);
-		}
-		ctx.write(response);
-	}
-
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
 		final DefaultFullHttpResponse response =
 			new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.EMPTY_BUFFER, false);
@@ -243,16 +225,24 @@ extends ChannelInboundHandlerAdapter {
 		return response;
 	}
 
-	/**
-	 Create new response to send it with different statuses and headers and without any content
-	 @return response
-	 */
 	protected FullHttpResponse newEmptyResponse() {
 		return newEmptyResponse(OK);
 	}
 
+	protected final void writeResponse(
+		final ChannelHandlerContext ctx, final FullHttpResponse response
+	) {
+		final HttpResponseStatus status =
+			ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		response.setStatus(status);
+		ctx.write(response);
+	}
+
 	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
-		writeEmptyResponse(ctx, null);
+		final HttpResponseStatus status =
+			ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		final FullHttpResponse response = newEmptyResponse(status);
+		ctx.write(response);
 	}
 
 	protected final void handleObjectRequest(
@@ -265,7 +255,7 @@ extends ChannelInboundHandlerAdapter {
 			} else if(httpMethod.equals(GET)) {
 				handleObjectRead(containerName, id, offset, ctx);
 			} else if(httpMethod.equals(HEAD)) {
-				setHttpResponseStatusInContext(ctx, OK);
+//				setHttpResponseStatusInContext(ctx, OK); by default
 			} else if(httpMethod.equals(DELETE)) {
 				handleObjectDelete(containerName, id, offset, ctx);
 			}
