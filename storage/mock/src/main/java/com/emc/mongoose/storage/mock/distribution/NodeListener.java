@@ -13,11 +13,17 @@ import javax.jmdns.ServiceListener;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static com.emc.mongoose.storage.mock.distribution.Conversation.SERVICE_NAME;
 
 /**
  Created on 23.08.16.
@@ -62,11 +68,14 @@ public class NodeListener
 				try {
 					if (!address.equals(jmDns.getInetAddress())) {
 						consumer.accept(address);
+						callRmiMethod(address);
 						LOG.info(Markers.MSG, actionMsg + ":" + event.getName());
 						printNodeList();
 					}
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to get own host address");
+				} catch(final NotBoundException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use RMI");
 				}
 			}
 		}
@@ -76,6 +85,13 @@ public class NodeListener
 		final String nodeListString = nodesAddresses.stream().map(InetAddress:: getHostAddress).collect(
 			Collectors.joining("\n"));
 		LOG.info(Markers.MSG, "Detected nodes: \n" + nodeListString);
+	}
+
+	public void callRmiMethod(final InetAddress address)
+	throws RemoteException, NotBoundException, MalformedURLException {
+		final String rmiUrl = UrlStrings.get("rmi", address.getHostAddress(), SERVICE_NAME);
+		final Conversation conversation = (Conversation) Naming.lookup(rmiUrl);
+		LOG.info("RMI Greeting: " + conversation.getGreeting());
 	}
 
 

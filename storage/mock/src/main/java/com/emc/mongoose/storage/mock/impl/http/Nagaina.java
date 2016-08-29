@@ -7,8 +7,10 @@ import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.distribution.Conversation;
 import com.emc.mongoose.storage.mock.distribution.MDns;
 import com.emc.mongoose.storage.mock.distribution.NodeListener;
+import com.emc.mongoose.storage.mock.distribution.RemoteConversation;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
@@ -39,7 +41,12 @@ import org.apache.logging.log4j.Logger;
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.concurrent.TimeUnit;
+
+import static com.emc.mongoose.storage.mock.distribution.Conversation.SERVICE_NAME;
+import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  Created on 11.07.16.
@@ -138,6 +145,10 @@ extends StorageMockBase<MutableDataItemMock>{
 			LOG.info(Markers.MSG, "Listening the port {}", port);
 		}
 		try {
+			LOG.info(Markers.MSG, "Register RMI method");
+			final Conversation conversation = new RemoteConversation();
+			final Registry registry = LocateRegistry.createRegistry(REGISTRY_PORT);
+			registry.rebind(SERVICE_NAME, conversation);
 			nodeListener = new NodeListener(jmDns, MDns.Type.HTTP);
 			nodeListener.open();
 			LOG.info(Markers.MSG, "Discover nodes");
