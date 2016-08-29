@@ -30,11 +30,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  Created on 19.07.16.
@@ -263,7 +266,14 @@ implements StorageMock<T> {
 
 	@Override
 	public long getSize() {
-		return storageMap.values().stream().mapToLong(ObjectContainerMock::size).sum();
+		final int[] sizes = new int[storageMap.size()];
+		for (int i = 0; i < sizes.length; i++) {
+			final ObjectContainerMock<T> container = storageMap.getOrDefault(i, null);
+			if (container != null) {
+				sizes[i] = container.size();
+			}
+		}
+		return IntStream.of(sizes).sum();
 	}
 
 	@Override
