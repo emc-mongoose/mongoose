@@ -6,6 +6,8 @@ import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -83,10 +85,10 @@ extends RequestHandlerBase<T> {
 	}
 
 	public AtmosRequestHandler(
-			final Config.LoadConfig.LimitConfig limitConfig,
-			final StorageMock<T> sharedStorage,
-			final ContentSource contentSource) {
-		super(limitConfig, sharedStorage, contentSource);
+		final LimitConfig limitConfig, final NamingConfig namingConfig,
+		final StorageMock<T> sharedStorage, final ContentSource contentSource
+	) {
+		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
 	@Override
@@ -95,11 +97,11 @@ extends RequestHandlerBase<T> {
 	}
 
 	private String processMetaDataList(final String[] metaDataList, final String key) {
-		if (metaDataList != null) {
+		if(metaDataList != null) {
 			String entry[];
-			for (final String metaData : metaDataList) {
+			for(final String metaData : metaDataList) {
 				entry = metaData.split("=");
-				if (entry.length == 2 && entry[0].equals(key)) {
+				if(entry.length == 2 && entry[0].equals(key)) {
 					return entry[1];
 				}
 			}
@@ -112,56 +114,51 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected void doHandle(
-			final String uri,
-			final HttpMethod method,
-			final Long size,
-			final ChannelHandlerContext ctx) {
+		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+	) {
 		final Channel channel = ctx.channel();
 		FullHttpResponse response = null;
 		final HttpRequest request = channel.attr(AttributeKey.<HttpRequest>valueOf
 				(REQUEST_KEY)).get();
 		String[] metaDataList = null;
 		final HttpHeaders requestHeaders = request.headers();
-		if (requestHeaders.contains(KEY_EMC_TAGS)) {
+		if(requestHeaders.contains(KEY_EMC_TAGS)) {
 			metaDataList = requestHeaders.get(KEY_EMC_TAGS).split(",");
 		}
 		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
-		if (uri.startsWith(OBJ_PATH)) {
+		if(uri.startsWith(OBJ_PATH)) {
 			final String[] uriParams = getUriParameters(uri, 3);
 			String objectId = uriParams[2];
 			long offset = -1;
 			String subtenantName = getSubtenant(requestHeaders, uri);
-			if (objectId == null) {
-				if (method.equals(POST)) {
+			if(objectId == null) {
+				if(method.equals(POST)) {
 					objectId = generateId();
-					final String processResult =
-							processMetaDataList(metaDataList, "offset");
+					final String processResult = processMetaDataList(metaDataList, "offset");
 					try {
-						if (processResult != null) {
+						if(processResult != null) {
 							offset = Long.parseLong(processResult);
 						}
 					} catch (final NumberFormatException e) {
 						LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to parse offset meta tag value: \"{}\"",
-								processResult
+							LOG, Level.WARN, e, "Failed to parse offset meta tag value: \"{}\"",
+							processResult
 						);
 					}
 					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
 					final Attribute<HttpResponseStatus> statusAttribute =
 						channel.attr(AttributeKey.valueOf(RESPONSE_STATUS_KEY));
-					if (statusAttribute.get() == null) {
+					if(statusAttribute.get() == null) {
 						statusAttribute.set(OK);
 					}
-					final HttpResponseStatus responseStatus = statusAttribute.get();
 					response = newEmptyResponse();
 					final int statusCode = response.status().code();
-					if (statusCode < 300 && 200 <= statusCode) {
+					if(statusCode < 300 && 200 <= statusCode) {
 						response.headers().set(LOCATION, OBJ_PATH + "/" + objectId);
 					}
-				} else if (method.equals(GET)) {
+				} else if(method.equals(GET)) {
 					subtenantName = processMetaDataList(metaDataList, "subtenant");
-					if (requestHeaders.contains(KEY_EMC_TOKEN)) {
+					if(requestHeaders.contains(KEY_EMC_TOKEN)) {
 						objectId = requestHeaders.get(KEY_EMC_TOKEN);
 					}
 					handleContainerList(subtenantName, objectId, ctx);
@@ -169,28 +166,25 @@ extends RequestHandlerBase<T> {
 			} else {
 				handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
 			}
-		} else if (uri.startsWith(NS_PATH) || (uri.startsWith(AT_PATH))) {
+		} else if(uri.startsWith(NS_PATH) || (uri.startsWith(AT_PATH))) {
 			setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
-		} else if (uri.startsWith(ST_PATH)) {
+		} else if(uri.startsWith(ST_PATH)) {
 			final String subtenantName;
-			if (method.equals(PUT)) {
+			if(method.equals(PUT)) {
 				subtenantName = generateSubtenant();
 			} else {
 				subtenantName = getSubtenant(requestHeaders, uri);
 			}
 			response = newEmptyResponse();
 			handleContainerRequest(response, uri, method, subtenantName, ctx);
-
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
-		if (channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
 			writeEmptyResponse(ctx, response);
 		}
 	}
-
-
-
+	
 	private static String generateId() {
 		final byte buff[] = new byte[22];
 		ThreadLocalRandom.current().nextBytes(buff);
@@ -202,18 +196,18 @@ extends RequestHandlerBase<T> {
 	private static final String KEY_SUBTENANT_ID = "subtenantID";
 
 	private static String getSubtenant(final HttpHeaders headers, final String uri) {
-		if (uri.startsWith(STS_PATH) && uri.length() > STS_PATH.length()) {
+		if(uri.startsWith(STS_PATH) && uri.length() > STS_PATH.length()) {
 			return uri.substring(STS_PATH.length());
 		}
-		if (headers.contains(KEY_EMC_UID)) {
+		if(headers.contains(KEY_EMC_UID)) {
 			String uid = headers.get(KEY_EMC_UID);
-			if (uid.contains(UID_DELIMITER)) {
+			if(uid.contains(UID_DELIMITER)) {
 				return uid.split(UID_DELIMITER)[0];
 			}
 		} else {
 			LOG.debug(Markers.MSG, "The header " + KEY_EMC_UID + " is undefined" );
 		}
-		if (headers.contains(KEY_SUBTENANT_ID)) {
+		if(headers.contains(KEY_SUBTENANT_ID)) {
 			return headers.get(KEY_SUBTENANT_ID);
 		}
 		return null;
@@ -229,7 +223,7 @@ extends RequestHandlerBase<T> {
 		final HttpResponse response, final String uri, final HttpMethod method,
 		final String name, final ChannelHandlerContext ctx
 	) {
-		if (method.equals(PUT)) {
+		if(method.equals(PUT)) {
 			handleContainerCreate(response, name);
 		} else {
 			super.handleContainerRequest(uri, method, name, ctx);
@@ -259,7 +253,7 @@ extends RequestHandlerBase<T> {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		final HttpHeaders headers = ctx.channel()
 				.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().headers();
-		if (headers.contains(KEY_EMC_LIMIT)) {
+		if(headers.contains(KEY_EMC_LIMIT)) {
 			try {
 				maxCount = Integer.parseInt(headers.get(KEY_EMC_LIMIT));
 			} catch (final NumberFormatException e) {
@@ -289,13 +283,13 @@ extends RequestHandlerBase<T> {
 			return;
 		}
 		Map.Entry<String, String> header = null;
-		if (lastObject != null) {
+		if(lastObject != null) {
 			header = new AbstractMap.SimpleEntry<>(KEY_EMC_TOKEN, lastObject.getName());
 		}
 		final Document xml = DOM_BUILDER.newDocument();
 		final Element rootElem = xml.createElement("ListObjectsResponse");
 		xml.appendChild(rootElem);
-		for (final T object: buffer) {
+		for(final T object: buffer) {
 			final Element elem = xml.createElement("Object");
 			appendElement(xml, elem, "ObjectID", object.getName());
 			appendElement(rootElem, elem);
@@ -320,7 +314,7 @@ extends RequestHandlerBase<T> {
 		final FullHttpResponse
 				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");
-		if (header != null) {
+		if(header != null) {
 			response.headers().set(header.getKey(), header.getValue());
 		}
 		HttpUtil.setContentLength(response, content.length);

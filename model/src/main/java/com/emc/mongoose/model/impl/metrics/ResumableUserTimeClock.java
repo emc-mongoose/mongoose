@@ -26,8 +26,8 @@ extends Clock.UserTimeClock {
 		//  This Clock's implementation provides correct time for calculating different metrics
 		//  after resumption Mongoose's run w/ SIGCONT signal.
 		/*final long currTime = System.nanoTime();
-		if (lastTimeBeforeTermination > 0) {
-			if (currTime - lastTimeBeforeTermination > TICK_INTERVAL) {
+		if(lastTimeBeforeTermination > 0) {
+			if(currTime - lastTimeBeforeTermination > TICK_INTERVAL) {
 				elapsedTimeInPause += currTime - lastTimeBeforeTermination;
 				lastTimeBeforeTermination = currTime;
 				return currTime - elapsedTimeInPause;

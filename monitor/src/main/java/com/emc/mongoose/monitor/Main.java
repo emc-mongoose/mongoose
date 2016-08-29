@@ -1,5 +1,6 @@
 package com.emc.mongoose.monitor;
 
+import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.model.api.StorageType;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -9,6 +10,8 @@ import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3Driver;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
+
+import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -26,8 +29,10 @@ import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,15 +46,12 @@ public class Main {
 	}
 
 	public static void main(final String... args)
-	throws IOException, InterruptedException, UserShootHisFootException {
+	throws IOException, InterruptedException, UserShootHisFootException, InvocationTargetException, IllegalAccessException {
 
-		final Logger log = LogManager.getLogger();
-		
 		final Config config = ConfigLoader.loadDefaultConfig();
 		if(config == null) {
 			throw new UserShootHisFootException("Config is null");
 		}
-		log.info(Markers.MSG, "Configuration defaults loaded");
 		config.apply(CliArgParser.parseArgs(args));
 		
 		final StorageConfig storageConfig = config.getStorageConfig();
@@ -59,7 +61,19 @@ public class Main {
 		final LoadConfig loadConfig = config.getLoadConfig();
 		final RunConfig runConfig = config.getRunConfig();
 		
-		final String runId = runConfig.getId();
+		String runId = runConfig.getId();
+		if(runId == null) {
+			runId = ThreadContext.get(KEY_RUN_ID);
+			runConfig.setId(runId);
+		} else {
+			ThreadContext.put(KEY_RUN_ID, runId);
+		}
+		if(runId == null) {
+			throw new IllegalStateException("Run id is not set");
+		}
+		
+		final Logger log = LogManager.getLogger();
+		log.info(Markers.MSG, "Configuration loaded");
 		
 		final List<Driver<? extends Item, ? extends IoTask<? extends Item>>>
 			drivers = new ArrayList<>();

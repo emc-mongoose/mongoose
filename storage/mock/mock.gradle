@@ -1,6 +1,7 @@
 description = 'mongoose-storage-mock'
 
 dependencies {
+
 	compileOnly(
 		project(':common'),
 		project(':model'),
@@ -43,7 +44,6 @@ dependencies {
 		'org.slf4j:slf4j-simple:1.7.16'
 	)
 }
-
 
 jar {
 	archiveName "nagaina.$extension"

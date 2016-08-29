@@ -25,7 +25,7 @@ public interface Decoder<T> {
 
 	default String getString(final JsonObject jsonObject, final String key)
 	throws DecodeException {
-		if (jsonObject.isNull(key)) {
+		if(jsonObject.isNull(key)) {
 			throw new DecodeException("", "The property '" + key + "' cannot be null");
 		} else {
 			return jsonObject.getString(key);

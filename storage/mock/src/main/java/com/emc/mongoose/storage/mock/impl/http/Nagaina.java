@@ -4,6 +4,7 @@ import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.distribution.MDns;
@@ -15,6 +16,8 @@ import com.emc.mongoose.storage.mock.impl.http.request.RequestHandlerBase;
 import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.ServerBootstrap;
@@ -41,7 +44,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 11.07.16.
  */
-public class Nagaina extends StorageMockBase<MutableDataItemMock>{
+public final class Nagaina
+extends StorageMockBase<MutableDataItemMock>{
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -55,9 +59,9 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
-		final Config.StorageConfig storageConfig,
-		final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig) {
+		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
+		final Config.ItemConfig itemConfig
+	) {
 		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
@@ -65,9 +69,18 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		workGroups = new EventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
-		s3RequestHandler = new S3RequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
-		swiftRequestHandler = new SwiftRequestHandler<>(itemConfig.getNamingConfig(), loadConfig.getLimitConfig(), this, getContentSource());
-		atmosRequestHandler = new AtmosRequestHandler<>(loadConfig.getLimitConfig(), this, getContentSource());
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		final NamingConfig namingConfig = itemConfig.getNamingConfig();
+		final ContentSource contentSource = getContentSource();
+		s3RequestHandler = new S3RequestHandler<>(
+			limitConfig, namingConfig, this, contentSource
+		);
+		swiftRequestHandler = new SwiftRequestHandler<>(
+			limitConfig, namingConfig, this, contentSource
+		);
+		atmosRequestHandler = new AtmosRequestHandler<>(
+			limitConfig, namingConfig, this, contentSource
+		);
 		try {
 			final ServiceInfo serviceInfo =
 				ServiceInfo.create("_http._tcp.local.", "nagaina", port - 1, "storage mock");
@@ -86,7 +99,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 	protected void doStart()
 	throws IllegalStateException {
 		final int portsNumber = dispatchGroups.length;
-		for (int i = 0; i < portsNumber; i++) {
+		for(int i = 0; i < portsNumber; i++) {
 			try {
 				dispatchGroups[i] = new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
 				workGroups[i] = new EpollEventLoopGroup();
@@ -99,7 +112,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 						protected void initChannel(final SocketChannel socketChannel)
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
-							if (currentIndex % 2 == 1) {
+							if(currentIndex % 2 == 1) {
 								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
 							}
 							pipeline.addLast(new HttpServerCodec());
@@ -160,7 +173,7 @@ public class Nagaina extends StorageMockBase<MutableDataItemMock>{
 		nodeListener.close();
 		jmDns.unregisterAllServices();
 		jmDns.close();
-		for (final Channel channel: channels) {
+		for(final Channel channel: channels) {
 			channel.close();
 		}
 	}

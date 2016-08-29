@@ -43,7 +43,7 @@ public class UnsafeButFasterUniformReservoir implements Reservoir {
 	 */
 	public UnsafeButFasterUniformReservoir(int size) {
 		this.values = new AtomicLongArray(size);
-		for (int i = 0; i < values.length(); i++) {
+		for(int i = 0; i < values.length(); i++) {
 			values.set(i, 0);
 		}
 		count.set(0);
@@ -52,7 +52,7 @@ public class UnsafeButFasterUniformReservoir implements Reservoir {
 	@Override
 	public int size() {
 		final long c = count.get();
-		if (c > values.length()) {
+		if(c > values.length()) {
 			return values.length();
 		}
 		return (int) c;
@@ -61,11 +61,11 @@ public class UnsafeButFasterUniformReservoir implements Reservoir {
 	@Override
 	public void update(long value) {
 		final long c = count.incrementAndGet();
-		if (c <= values.length()) {
+		if(c <= values.length()) {
 			values.set((int) c - 1, value);
 		} else {
 			final long r = nextLong(c);
-			if (r < values.length()) {
+			if(r < values.length()) {
 				values.set((int) r, value);
 			}
 		}
@@ -91,7 +91,7 @@ public class UnsafeButFasterUniformReservoir implements Reservoir {
 	public Snapshot getSnapshot() {
 		final int s = size();
 		final List<Long> copy = new ArrayList<Long>(s);
-		for (int i = 0; i < s; i++) {
+		for(int i = 0; i < s; i++) {
 			copy.add(values.get(i));
 		}
 		return new UniformSnapshot(copy);
