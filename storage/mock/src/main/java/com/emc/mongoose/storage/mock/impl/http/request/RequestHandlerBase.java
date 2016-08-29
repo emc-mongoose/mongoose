@@ -217,23 +217,23 @@ extends ChannelInboundHandlerAdapter {
 		return result;
 	}
 
-	protected final void writeEmptyResponse(
-		final ChannelHandlerContext ctx, FullHttpResponse response
-	) {
-		HttpResponseStatus status = ctx
-			.channel()
-			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
-			.get();
-		
-		if(status == null) {
-			status = OK;
-		}
-		if(response == null) {
-			response = newEmptyResponse(status);
-		} else {
-			response.setStatus(status);
-		}
+	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
+		HttpResponseStatus status =
+			ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		final FullHttpResponse response = newEmptyResponse(status);
+		response.setStatus(status);
 		ctx.write(response);
+		//		ctx.alloc().buffer().release();
+	}
+
+	protected final void writeResponse(
+		final ChannelHandlerContext ctx, final FullHttpResponse response
+	) {
+		HttpResponseStatus status =
+			ctx.channel().attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY)).get();
+		response.setStatus(status);
+		ctx.write(response);
+		//		ctx.alloc().buffer().release();
 	}
 
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
@@ -245,14 +245,11 @@ extends ChannelInboundHandlerAdapter {
 
 	/**
 	 Create new response to send it with different statuses and headers and without any content
+
 	 @return response
 	 */
 	protected FullHttpResponse newEmptyResponse() {
 		return newEmptyResponse(OK);
-	}
-
-	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
-		writeEmptyResponse(ctx, null);
 	}
 
 	protected final void handleObjectRequest(
