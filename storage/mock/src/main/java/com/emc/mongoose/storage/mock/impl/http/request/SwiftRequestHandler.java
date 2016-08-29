@@ -104,7 +104,7 @@ extends RequestHandlerBase<T> {
             }
         }
         if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-            writeEmptyResponse(ctx, response);
+            writeResponse(ctx, response);
         }
     }
 

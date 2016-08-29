@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  Created on 20.07.16.
  */
-class BasicObjectContainerMock<T extends MutableDataItemMock>
+public class BasicObjectContainerMock<T extends MutableDataItemMock>
 implements ObjectContainerMock<T> {
 
 	private final ListingLRUMap<String, T> containerMap;
@@ -61,6 +61,4 @@ implements ObjectContainerMock<T> {
 	public T remove(final String key) {
 		return containerMap.remove(key);
 	}
-
-
 }

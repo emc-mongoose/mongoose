@@ -10,24 +10,29 @@ import org.apache.logging.log4j.Logger;
 public class BasicMutableDataItemMock
 extends BasicMutableDataItem
 implements MutableDataItemMock {
+
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
+
 	//
 	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
 		super(value, contentSrc);
 	}
+
 	//
 	public BasicMutableDataItemMock(
 		final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
+
 	//
 	public BasicMutableDataItemMock(
 		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, contentSrc);
 	}
+
 	//
 	public BasicMutableDataItemMock(
 		final String name, final long offset, final long size, final int layerNum,
@@ -35,37 +40,37 @@ implements MutableDataItemMock {
 	) {
 		super(SLASH, name, offset, size, layerNum, contentSrc);
 	}
+
 	//
 	public final synchronized void update(final long offset, final long size)
 	throws IllegalArgumentException, IllegalStateException {
 		if(size < 0) {
 			throw new IllegalArgumentException("Range size should not be negative");
 		}
-		final int
-			countRangesTotal = getRangeCount(this.size),
+		final int countRangesTotal = getRangeCount(this.size),
 			maskIndexStart = getRangeCount(offset),
 			maskIndexEnd = getRangeCount(offset + size);
-		for(int i = maskIndexStart; i < maskIndexEnd; i ++) {
+		for(int i = maskIndexStart; i < maskIndexEnd; i++) {
 			if(countRangesTotal > 0 && countRangesTotal == maskRangesRead.cardinality()) {
 				// mask is full, switch to the next layer
-				currLayerIndex ++;
+				currLayerIndex++;
 				maskRangesRead.clear();
 			}
 			if(maskRangesRead.get(i)) {
 				throw new IllegalStateException(
-					"Range " + i + " is already updated, but mask is: " + maskRangesRead.toString()
-				);
+					"Range " + i + " is already updated, but mask is: " +
+						maskRangesRead.toString());
 			} else {
 				maskRangesRead.set(i);
 			}
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "{}: byte range {}-{} updated, mask range {}-{} is set",
-				name, offset, offset + size, maskIndexStart, maskIndexEnd
+			LOG.trace(Markers.MSG, "{}: byte range {}-{} updated, mask range {}-{} is set", name,
+				offset, offset + size, maskIndexStart, maskIndexEnd
 			);
 		}
 	}
+
 	//
 	public final synchronized void append(final long offset, final long size) {
 		if(size < 0) {
@@ -73,11 +78,10 @@ implements MutableDataItemMock {
 		}
 		if(this.size != offset) {
 			throw new IllegalArgumentException(
-				name + ": append offset " + offset + " should be equal to the current size " + this.size
-			);
+				name + ": append offset " + offset + " should be equal to the current size " +
+					this.size);
 		}
-		final int
-			lastCellPos = this.size > 0 ? getRangeCount(this.size) - 1 : 0,
+		final int lastCellPos = this.size > 0 ? getRangeCount(this.size) - 1 : 0,
 			nextCellPos = getRangeCount(this.size + size);
 		if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
 			maskRangesRead.set(lastCellPos, nextCellPos);
