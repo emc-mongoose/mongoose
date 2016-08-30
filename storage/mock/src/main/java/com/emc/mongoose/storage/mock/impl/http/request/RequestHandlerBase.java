@@ -4,14 +4,19 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.ObjectHolder;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
+
+import static com.emc.mongoose.storage.mock.api.ObjectHolder.SERVICE_NAME;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+
+import com.emc.mongoose.storage.mock.impl.distribution.UrlStrings;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -38,6 +43,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -355,46 +363,66 @@ extends ChannelInboundHandlerAdapter {
 		return true;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void handleObjectRead(
 		final String containerName, final String id, final long offset,
 		final ChannelHandlerContext ctx
 	) {
 		final HttpResponse response;
 		try {
-			final T object = sharedStorage.getObject(containerName, id, offset, 0);
+			T object = sharedStorage.getObject(containerName, id, offset, 0);
 			if(object != null) {
-				final long size = object.size();
-				ioStats.markRead(true, size);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "Send data object with ID {}", id);
-					ctx
-						.channel()
-						.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
-						.set(false);
-					response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
-					HttpUtil.setContentLength(response, size);
-					ctx.write(response);
-					if(object.hasBeenUpdated()) {
-						ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
-					} else {
-						ctx.write(new DataItemFileRegion<>(object));
-					}
-					ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-				}
+				handleObjectReadSuccess(object, ctx);
 			} else {
-				setHttpResponseStatusInContext(ctx, NOT_FOUND);
-				ioStats.markRead(false, 0);
+				setHttpResponseStatusInContext(ctx, NOT_FOUND); // TODO add RMI here
+				final List<InetAddress> nodesAddresses = sharedStorage.getNodesAddresses();
+				for (final InetAddress address: nodesAddresses) {
+					final String rmiUrl = UrlStrings.get("rmi", address.getHostAddress(), SERVICE_NAME);
+					final ObjectHolder<MutableDataItemMock> objectHolder =
+						(ObjectHolder<MutableDataItemMock>) Naming.lookup(rmiUrl);
+					object = (T) objectHolder.getObject(containerName, id, offset, 0);
+					if (object != null) {
+						break;
+					}
+				}
+				if(object == null) {
+					setHttpResponseStatusInContext(ctx, NOT_FOUND);
+					if(LOG.isTraceEnabled(Markers.ERR)) {
+						LOG.trace(Markers.ERR, "No such container: {}", id);
+					}
+					ioStats.markRead(false, 0);
+				} else {
+					handleObjectReadSuccess(object, ctx);
+				}
 			}
-		} catch(final ContainerMockNotFoundException e) {
-			setHttpResponseStatusInContext(ctx, NOT_FOUND);
-			if(LOG.isTraceEnabled(Markers.ERR)) {
-				LOG.trace(Markers.ERR, "No such container: {}", id);
-			}
-			ioStats.markRead(false, 0);
-		} catch(final ContainerMockException | IOException e) {
+		} catch(final IOException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);
+		} catch(final NotBoundException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Remote call failure", containerName);
+		}
+	}
+
+	private void handleObjectReadSuccess(final T object, final ChannelHandlerContext ctx)
+	throws IOException {
+		final long size = object.size();
+		ioStats.markRead(true, size);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
+			ctx
+				.channel()
+				.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+				.set(false);
+			final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
+			HttpUtil.setContentLength(response, size);
+			ctx.write(response);
+			if(object.hasBeenUpdated()) {
+				ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
+			} else {
+				ctx.write(new DataItemFileRegion<>(object));
+			}
+			ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		}
 	}
 

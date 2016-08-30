@@ -14,7 +14,7 @@ import java.util.List;
 /**
  Created on 11.07.16. */
 public interface StorageMock<T extends MutableDataItemMock>
-extends Launchable, Closeable {
+extends Launchable, Closeable, ObjectHolder<T>, NodeAggregator {
 
 	void start();
 	long getSize();
@@ -31,9 +31,6 @@ extends Launchable, Closeable {
 	//
 	void createObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException;
-	//
-	T getObject(final String containerName, final String id, final long offset, final long size)
-	throws ContainerMockException;
 	//
 	void deleteObject(final String containerName, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException;

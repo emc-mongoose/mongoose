@@ -6,13 +6,11 @@ import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.StorageMock;
-import com.emc.mongoose.storage.mock.distribution.Conversation;
-import com.emc.mongoose.storage.mock.distribution.MDns;
-import com.emc.mongoose.storage.mock.distribution.NodeListener;
-import com.emc.mongoose.storage.mock.distribution.RemoteConversation;
+import com.emc.mongoose.storage.mock.api.ObjectHolder;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
+import com.emc.mongoose.storage.mock.impl.distribution.MDns;
+import com.emc.mongoose.storage.mock.impl.distribution.NodeListener;
 import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.RequestHandlerBase;
 import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
@@ -41,11 +39,12 @@ import org.apache.logging.log4j.Logger;
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.storage.mock.distribution.Conversation.SERVICE_NAME;
 import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
@@ -146,9 +145,9 @@ extends StorageMockBase<MutableDataItemMock>{
 		}
 		try {
 			LOG.info(Markers.MSG, "Register RMI method");
-			final Conversation conversation = new RemoteConversation();
+			final ObjectHolder<MutableDataItemMock> objectHolder = this;
 			final Registry registry = LocateRegistry.createRegistry(REGISTRY_PORT);
-			registry.rebind(SERVICE_NAME, conversation);
+			registry.rebind(SERVICE_NAME, objectHolder);
 			nodeListener = new NodeListener(jmDns, MDns.Type.HTTP);
 			nodeListener.open();
 			LOG.info(Markers.MSG, "Discover nodes");
@@ -192,5 +191,10 @@ extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	protected MutableDataItemMock newDataObject(final String id, final long offset, final long size) {
 		return new BasicMutableDataItemMock(id, offset, size, 0, contentSrc);
+	}
+
+	@Override
+	public List<InetAddress> getNodesAddresses() {
+		return nodeListener.getNodesAddresses();
 	}
 }

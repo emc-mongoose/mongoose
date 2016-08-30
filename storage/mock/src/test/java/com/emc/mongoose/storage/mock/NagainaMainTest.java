@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.mock;
 
 import com.emc.mongoose.common.net.NetUtil;
-import com.emc.mongoose.storage.mock.distribution.MDns;
-import com.emc.mongoose.storage.mock.distribution.NodeListener;
+import com.emc.mongoose.storage.mock.impl.distribution.MDns;
+import com.emc.mongoose.storage.mock.impl.distribution.NodeListener;
 import org.junit.Ignore;
 import org.junit.Test;
 

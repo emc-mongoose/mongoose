@@ -8,6 +8,7 @@ import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
+import com.emc.mongoose.storage.mock.api.ObjectHolder;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -184,7 +186,7 @@ implements StorageMock<T> {
 	@Override
 	public final T getObject(
 			final String containerName, final String id, final long offset, final long size
-	) throws ContainerMockException {
+	) throws RemoteException {
 		// TODO partial read using offset and size args
 		try {
 			final Future<T> future =
@@ -193,7 +195,7 @@ implements StorageMock<T> {
 				return future.get();
 			}
 		} catch(final ExecutionException e) {
-			throw new ContainerMockException(e);
+			throw new RemoteException("", e);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}

@@ -1,9 +1,12 @@
 package com.emc.mongoose.model.api.item;
 
+import java.io.Serializable;
+
 /**
  Created by kurila on 11.07.16.
  */
-public interface Item {
+public interface Item
+extends Serializable {
 
 	String SLASH = "/";
 
