@@ -78,6 +78,7 @@ task dist(type: Tar) {
 	dependsOn tasks.withType(Jar)
 	baseName = rootProject.name
 	compression = Compression.GZIP
+	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	into("$baseName-$rootProject.version") {
 		into("lib") {
