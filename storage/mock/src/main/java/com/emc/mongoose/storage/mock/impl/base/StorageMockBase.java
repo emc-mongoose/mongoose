@@ -267,8 +267,9 @@ implements StorageMock<T> {
 	@Override
 	public long getSize() {
 		final int[] sizes = new int[storageMap.size()];
+		ObjectContainerMock<T> container;
 		for (int i = 0; i < sizes.length; i++) {
-			final ObjectContainerMock<T> container = storageMap.getOrDefault(i, null);
+			container = storageMap.getOrDefault(i, null);
 			if (container != null) {
 				sizes[i] = container.size();
 			}

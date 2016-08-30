@@ -70,9 +70,4 @@ public class ListingLRUMap<K, V> extends LRUMap<K, V> implements Listable<V> {
 	protected void decrementSize() {
 		size.decrementAndGet();
 	}
-
-	@Override
-	protected boolean removeLRU(final LinkEntry<K, V> entry) {
-		return super.removeLRU(entry);
-	}
 }

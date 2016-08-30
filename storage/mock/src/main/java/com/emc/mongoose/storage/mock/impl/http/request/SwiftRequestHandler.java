@@ -74,70 +74,70 @@ extends RequestHandlerBase<T> {
     @Override
 	protected void doHandle(
 		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
-    ) {
-        FullHttpResponse response = null;
-        final Channel channel = ctx.channel();
-        channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
-        if(uri.startsWith(AUTH, 1)) {
-            if(method.equals(GET)) {
-                final String authToken = randomString(0x10);
-                if(LOG.isTraceEnabled(Markers.MSG)) {
-                    LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
-                }
-	            response = newEmptyResponse();
-                response.headers().set(KEY_X_AUTH_TOKEN, authToken);
-                setHttpResponseStatusInContext(ctx, CREATED);
-            } else {
-                setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
-            }
-        } else {
-            final String[] uriParams = getUriParameters(uri, 4);
-            final String account = uriParams[1];
-            final String containerName = uriParams[2];
-            final String objectId = uriParams[3];
-            if(containerName != null) {
-                handleItemRequest(uri, method, containerName, objectId, size, ctx);
-            } else if(account != null) {
-                setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
-            } else {
-                setHttpResponseStatusInContext(ctx, BAD_REQUEST);
-            }
-        }
-        if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-	        if (response == null) {
-		        writeEmptyResponse(ctx);
-	        } else {
-		        writeResponse(ctx, response);
-	        }
-        }
-    }
+	) {
+		FullHttpResponse response = null;
+		final Channel channel = ctx.channel();
+		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
+		if(uri.startsWith(AUTH, 1)) {
+			if(method.equals(GET)) {
+				final String authToken = randomString(0x10);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
+				}
+				response = newEmptyResponse();
+				response.headers().set(KEY_X_AUTH_TOKEN, authToken);
+				setHttpResponseStatusInContext(ctx, CREATED);
+			} else {
+				setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
+			}
+		} else {
+			final String[] uriParams = getUriParameters(uri, 4);
+			final String account = uriParams[1];
+			final String containerName = uriParams[2];
+			final String objectId = uriParams[3];
+			if(containerName != null) {
+				handleItemRequest(uri, method, containerName, objectId, size, ctx);
+			} else if(account != null) {
+				setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
+			} else {
+				setHttpResponseStatusInContext(ctx, BAD_REQUEST);
+			}
+		}
+	    if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+			if (response == null) {
+				writeEmptyResponse(ctx);
+			} else {
+				writeResponse(ctx, response);
+			}
+	    }
+	}
 
-    private static String randomString(final int len) {
-        final byte buff[] = new byte[len];
-        ThreadLocalRandom.current().nextBytes(buff);
-        return Hex.encodeHexString(buff);
-    }
+	private static String randomString(final int len) {
+		final byte buff[] = new byte[len];
+		ThreadLocalRandom.current().nextBytes(buff);
+		return Hex.encodeHexString(buff);
+	}
 
-    private static final String LIMIT_KEY = "limit";
+	private static final String LIMIT_KEY = "limit";
 
 	@Override
 	protected void handleContainerList(
-            final String name,
-            final QueryStringDecoder queryStringDecoder,
-            final ChannelHandlerContext ctx) {
-        int maxCount = DEFAULT_PAGE_SIZE;
-        String marker = null;
-        final Map<String, List<String>> parameters = queryStringDecoder.parameters();
-        if(parameters.containsKey(LIMIT_KEY)) {
-            maxCount = Integer.parseInt(parameters.get(LIMIT_KEY).get(0));
-        } else {
-            LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI: " +
-                    queryStringDecoder.uri());
-        }
-        if(parameters.containsKey(MARKER_KEY)) {
-            marker = parameters.get(MARKER_KEY).get(0);
-        }
-        final List<T> buffer = new ArrayList<>(maxCount);
+			final String name,
+			final QueryStringDecoder queryStringDecoder,
+			final ChannelHandlerContext ctx) {
+		int maxCount = DEFAULT_PAGE_SIZE;
+		String marker = null;
+		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
+		if(parameters.containsKey(LIMIT_KEY)) {
+			maxCount = Integer.parseInt(parameters.get(LIMIT_KEY).get(0));
+		} else {
+			LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI: " +
+				queryStringDecoder.uri());
+		}
+		if(parameters.containsKey(MARKER_KEY)) {
+			marker = parameters.get(MARKER_KEY).get(0);
+		}
+		final List<T> buffer = new ArrayList<>(maxCount);
 		final T lastObject;
 		try {
 			lastObject = listContainer(name, marker, buffer, maxCount);
@@ -156,30 +156,33 @@ extends RequestHandlerBase<T> {
 			return;
 		}
 		if(buffer.size() > 0) {
-            final JsonNode nodeRoot = OBJ_MAPPER.createArrayNode();
-            ObjectNode node;
-            for(final T object : buffer) {
-                node = OBJ_MAPPER.createObjectNode();
-                node.put("name", object.getName());
-                try {
-                	node.put("bytes", object.size());
-                } catch(final IOException ignored) {
-                }
-                ((ArrayNode) nodeRoot).add(node);
-            }
-            try {
-                final byte[] content = OBJ_MAPPER.writeValueAsBytes(nodeRoot);
-                ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
-                FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
-                response.headers().set(CONTENT_TYPE, "application/json");
-                HttpUtil.setContentLength(response, content.length);
-                ctx.write(response);
-            } catch (final JsonProcessingException e) {
-                setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
-                LogUtil.exception(LOG, Level.WARN, e, "Failed to write the json response content");
-            }
-        } else {
-            setHttpResponseStatusInContext(ctx, NO_CONTENT);
-        }
-    }
+			final JsonNode nodeRoot = OBJ_MAPPER.createArrayNode();
+			ObjectNode node;
+			for(final T object : buffer) {
+				node = OBJ_MAPPER.createObjectNode();
+				node.put("name", object.getName());
+				try {
+					node.put("bytes", object.size());
+				} catch(final IOException ignored) {
+				}
+				((ArrayNode) nodeRoot).add(node);
+			}
+			try {
+				final byte[] content = OBJ_MAPPER.writeValueAsBytes(nodeRoot);
+				ctx
+					.channel()
+					.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+					.set(false);
+				final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+				response.headers().set(CONTENT_TYPE, "application/json");
+				HttpUtil.setContentLength(response, content.length);
+				ctx.write(response);
+			} catch (final JsonProcessingException e) {
+				setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to write the json response content");
+			}
+		} else {
+			setHttpResponseStatusInContext(ctx, NO_CONTENT);
+		}
+	}
 }

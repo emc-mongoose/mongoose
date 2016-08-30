@@ -311,7 +311,10 @@ extends RequestHandlerBase<T> {
 			);
 		}
 		final byte[] content = stream.toByteArray();
-		ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
+		ctx
+			.channel()
+			.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+			.set(false);
 		final FullHttpResponse
 				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");
