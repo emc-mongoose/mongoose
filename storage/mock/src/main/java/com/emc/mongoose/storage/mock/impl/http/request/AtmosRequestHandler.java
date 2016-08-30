@@ -148,10 +148,7 @@ extends RequestHandlerBase<T> {
 					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
 					final Attribute<HttpResponseStatus> statusAttribute =
 						channel.attr(AttributeKey.valueOf(RESPONSE_STATUS_KEY));
-					if(statusAttribute.get() == null) {
-						statusAttribute.set(OK);
-					}
-					response = newEmptyResponse();
+					response = newEmptyResponse(statusAttribute.get());
 					final int statusCode = response.status().code();
 					if(statusCode < 300 && 200 <= statusCode) {
 						response.headers().set(LOCATION, OBJ_PATH + "/" + objectId);
@@ -181,7 +178,11 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
-			writeEmptyResponse(ctx, response);
+			if (response == null) {
+				writeEmptyResponse(ctx);
+			} else {
+				writeResponse(ctx, response);
+			}
 		}
 	}
 	
@@ -310,7 +311,10 @@ extends RequestHandlerBase<T> {
 			);
 		}
 		final byte[] content = stream.toByteArray();
-		ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
+		ctx
+			.channel()
+			.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+			.set(false);
 		final FullHttpResponse
 				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");

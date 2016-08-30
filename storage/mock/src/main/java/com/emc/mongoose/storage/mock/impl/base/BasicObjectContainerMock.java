@@ -19,9 +19,7 @@ implements ObjectContainerMock<T> {
 		this.containerMap = new ListingLRUMap<String, T>(capacity) {
 			@SuppressWarnings("unchecked")
 			@Override
-			protected boolean removeLRU(
-				final LinkEntry entry
-			) {
+			protected boolean removeLRU(final LinkEntry entry) {
 				if(super.removeLRU(entry)) {
 					decrementSize();
 					return true;

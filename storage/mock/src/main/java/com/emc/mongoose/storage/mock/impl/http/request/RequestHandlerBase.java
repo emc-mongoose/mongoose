@@ -110,7 +110,10 @@ extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelReadComplete(final ChannelHandlerContext ctx)
 	throws Exception {
-		final String ctxName = ctx.channel().attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get();
+		final String ctxName = ctx
+			.channel()
+			.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
+			.get();
 		if(!apiClsName.equals(ctxName)) {
 			ctx.fireChannelReadComplete();
 			return;
@@ -121,30 +124,38 @@ extends ChannelInboundHandlerAdapter {
 	private void processHttpRequest(final ChannelHandlerContext ctx, final HttpRequest request) {
 		final Channel channel = ctx.channel();
 		final HttpHeaders headers = request.headers();
-		channel.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).set(request);
+		channel
+			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.set(request);
 		if(headers.contains(CONTENT_LENGTH)) {
-			channel.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY)).set(
-				Long.parseLong(headers.get(CONTENT_LENGTH)));
+			channel
+				.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY))
+				.set(Long.parseLong(headers.get(CONTENT_LENGTH)));
 		}
 	}
 
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
 		final Channel channel = ctx.channel();
-		final String className = getClass().getSimpleName();
 		if(msg instanceof HttpRequest) {
 			if(!checkApiMatch((HttpRequest) msg)) {
-				channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).set("");
+				channel
+					.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
+					.set("");
 				ctx.fireChannelRead(msg);
 				return;
 			}
-			channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).set(className);
+			channel
+				.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
+				.set(apiClsName);
 			processHttpRequest(ctx, (HttpRequest) msg);
 			ReferenceCountUtil.release(msg);
 			return;
 		}
-		if(!channel.attr(AttributeKey.<String>valueOf(HANDLER_KEY)).get().equals(
-			className)) {
+		if(!channel
+			.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
+			.get()
+			.equals(apiClsName)) {
 			ctx.fireChannelRead(msg);
 			return;
 		}
@@ -181,6 +192,7 @@ extends ChannelInboundHandlerAdapter {
 		} else {
 			size = 0;
 		}
+		setHttpResponseStatusInContext(ctx, OK); // OK response assumption
 		doHandle(uri, method, size, ctx);
 	}
 
@@ -217,25 +229,6 @@ extends ChannelInboundHandlerAdapter {
 		return result;
 	}
 
-	protected final void writeEmptyResponse(
-		final ChannelHandlerContext ctx, FullHttpResponse response
-	) {
-		HttpResponseStatus status = ctx
-			.channel()
-			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
-			.get();
-		
-		if(status == null) {
-			status = OK;
-		}
-		if(response == null) {
-			response = newEmptyResponse(status);
-		} else {
-			response.setStatus(status);
-		}
-		ctx.write(response);
-	}
-
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
 		final DefaultFullHttpResponse response =
 			new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.EMPTY_BUFFER, false);
@@ -243,16 +236,28 @@ extends ChannelInboundHandlerAdapter {
 		return response;
 	}
 
-	/**
-	 Create new response to send it with different statuses and headers and without any content
-	 @return response
-	 */
 	protected FullHttpResponse newEmptyResponse() {
 		return newEmptyResponse(OK);
 	}
 
+	protected final void writeResponse(
+		final ChannelHandlerContext ctx, final FullHttpResponse response
+	) {
+		final HttpResponseStatus status = ctx
+			.channel()
+			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.get();
+		response.setStatus(status);
+		ctx.write(response);
+	}
+
 	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
-		writeEmptyResponse(ctx, null);
+		final HttpResponseStatus status = ctx
+			.channel()
+			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.get();
+		final FullHttpResponse response = newEmptyResponse(status);
+		ctx.write(response);
 	}
 
 	protected final void handleObjectRequest(
@@ -265,7 +270,7 @@ extends ChannelInboundHandlerAdapter {
 			} else if(httpMethod.equals(GET)) {
 				handleObjectRead(containerName, id, offset, ctx);
 			} else if(httpMethod.equals(HEAD)) {
-				setHttpResponseStatusInContext(ctx, OK);
+//				setHttpResponseStatusInContext(ctx, OK); by default
 			} else if(httpMethod.equals(DELETE)) {
 				handleObjectDelete(containerName, id, offset, ctx);
 			}
@@ -278,9 +283,12 @@ extends ChannelInboundHandlerAdapter {
 		final String containerName, final String id, final long offset, final long size,
 		final ChannelHandlerContext ctx
 	) {
-		final List<String> rangeHeadersValues = ctx.channel()
-				.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get()
-				.headers().getAll(RANGE);
+		final List<String> rangeHeadersValues = ctx
+			.channel()
+			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.get()
+			.headers()
+			.getAll(RANGE);
 		try {
 			if(rangeHeadersValues.size() == 0) {
 				sharedStorage.createObject(containerName, id, offset, size);
@@ -359,7 +367,10 @@ extends ChannelInboundHandlerAdapter {
 				ioStats.markRead(true, size);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Send data object with ID {}", id);
-					ctx.channel().attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(false);
+					ctx
+						.channel()
+						.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+						.set(false);
 					response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 					HttpUtil.setContentLength(response, size);
 					ctx.write(response);
