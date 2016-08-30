@@ -47,6 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -150,7 +151,11 @@ implements Driver<I, O> {
 		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
 	}
 	
-	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj);
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
+	throws URISyntaxException;
+	
+	protected abstract String getObjectSrcPath(final I object)
+	throws URISyntaxException;
 	
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
 		// TODO apply dynamic headers also
