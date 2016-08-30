@@ -8,14 +8,12 @@ import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
-import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.base.DriverBase;
-
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -23,6 +21,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static io.netty.handler.codec.http.LastHttpContent.EMPTY_LAST_CONTENT;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -46,7 +45,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -56,14 +57,16 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class HttpDriverBase<I extends Item, O extends IoTask<I>>
 extends DriverBase<I, O>
-implements Driver<I, O> {
+implements HttpDriver<I, O> {
 	
 	private final static Logger LOG = LogManager.getLogger();
 	
 	private final String storageNodeAddrs[];
 	private final int storageNodePort;
-	private final Balancer<String> storageNodeBalancer;
+	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
+	protected final SecretKeySpec secretKey;
 	
+	private final Balancer<String> storageNodeBalancer;
 	private final EventLoopGroup workerGroup;
 	protected final Bootstrap bootstrap;
 	
@@ -71,7 +74,12 @@ implements Driver<I, O> {
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(runId, loadConfig);
+		super(runId, storageConfig.getAuthConfig(), loadConfig);
+		try {
+			secretKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
+		} catch(final UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
 		storageNodeAddrs = storageConfig.getAddrs().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
 		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
@@ -103,29 +111,44 @@ implements Driver<I, O> {
 	
 	protected abstract SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler();
 	
-	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr) {
+	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	throws URISyntaxException {
 		final I item = ioTask.getItem();
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, getUriPath(item, ioTask), httpHeaders
+			HTTP_1_1, httpMethod, getDstUriPath(item, ioTask), httpHeaders
 		);
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		switch(ioType) {
 			case CREATE:
-				//if(srcContainer == null) {
-				//	httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, item.)
-				//} else {
-				//	applyCopyHeaders(httpHeaders);
-				//}
+				final String objSrcPath = item.getPath();
+				if(objSrcPath == null) {
+					if(item instanceof DataItem) {
+						try {
+							httpHeaders.set(
+								HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size()
+							);
+						} catch(final IOException ignored) {
+						}
+					} else {
+						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+					}
+				} else {
+					applyCopyHeaders(httpHeaders, item);
+				}
 				break;
 			case READ:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				break;
 			case UPDATE:
-				// TODO if data item set ranges headers conditionally
+				if(item instanceof MutableDataItem) {
+					// TODO set ranges headers conditionally
+				} else {
+					throw new IllegalStateException();
+				}
 				break;
 			case DELETE:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -147,14 +170,24 @@ implements Driver<I, O> {
 		}
 	}
 	
-	protected String getUriPath(final I item, final O ioTask) {
+	protected String getDstUriPath(final I item, final O ioTask) {
 		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
 	}
 	
-	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
-	throws URISyntaxException;
+	protected String getSrcUriPath(final I object)
+	throws URISyntaxException {
+		if(object == null) {
+			throw new IllegalArgumentException("No object");
+		}
+		final String objPath = object.getPath();
+		if(objPath.endsWith(SLASH)) {
+			return objPath + object.getName();
+		} else {
+			return objPath + SLASH + object.getName();
+		}
+	}
 	
-	protected abstract String getObjectSrcPath(final I object)
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
 	throws URISyntaxException;
 	
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
@@ -164,8 +197,7 @@ implements Driver<I, O> {
 	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
 	}
 	
-	protected void applyAuthHeaders(final HttpHeaders httpHeaders) {
-	}
+	protected abstract void applyAuthHeaders(final HttpHeaders httpHeaders);
 	
 	private final class HttpRequestFuture
 	extends FutureTaskBase {
@@ -201,12 +233,12 @@ implements Driver<I, O> {
 				return;
 			}
 			
-			c.write(getHttpRequest(ioTask, bestNode));
-			
 			final LoadType ioType = ioTask.getLoadType();
 			final I item = ioTask.getItem();
 			
 			try {
+				c.write(getHttpRequest(ioTask, bestNode));
+				
 				if(LoadType.CREATE.equals(ioType)) {
 					if(item instanceof DataItem) {
 						c.write(new DataItemFileRegion<>((DataItem) item));
@@ -232,6 +264,8 @@ implements Driver<I, O> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+			} catch(final URISyntaxException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 			}
 			
 			c.writeAndFlush(EMPTY_LAST_CONTENT);

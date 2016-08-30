@@ -3,8 +3,7 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-
-import com.emc.mongoose.model.util.LoadType;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -30,9 +29,15 @@ implements Driver<I, O> {
 	protected final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	protected final String runId;
 	protected final int concurrencyLevel;
+	protected final String userName;
+	protected final String secret;
 
-	protected DriverBase(final String runId, final LoadConfig loadConfig) {
+	protected DriverBase(
+		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig
+	) {
 		this.runId = runId;
+		this.userName = authConfig.getId();
+		secret = authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
 	}
 
