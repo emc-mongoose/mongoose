@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
 public final class BasicStorageIoStats
@@ -147,22 +148,27 @@ implements StorageIoStats {
 
 	@Override
 	public final String toString() {
-		final long countTotal = storage.getSize();
-		return String.format(
-			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-			//
-			countTotal, 100.0 * countTotal / storage.getCapacity(), countContainers.getCount(),
-			//
-			tpWrite.getCount(), countFailWrite.getCount(),
-			tpWrite.getMeanRate(), tpWrite.getLastRate(),
-			bwWrite.getMeanRate() / IoStats.MIB, bwWrite.getLastRate() / IoStats.MIB,
-			//
-			tpRead.getCount(), countFailRead.getCount(),
-			tpRead.getMeanRate(), tpRead.getLastRate(),
-			bwRead.getMeanRate() / IoStats.MIB, bwRead.getLastRate() / IoStats.MIB,
-			//
-			tpDelete.getCount(), countFailDelete.getCount(),
-			tpDelete.getMeanRate(), tpDelete.getLastRate()
-		);
+		try {
+			long countTotal = storage.getSize();
+			return String.format(
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				//
+				countTotal, 100.0 * countTotal / storage.getCapacity(), countContainers.getCount(),
+				//
+				tpWrite.getCount(), countFailWrite.getCount(),
+				tpWrite.getMeanRate(), tpWrite.getLastRate(),
+				bwWrite.getMeanRate() / IoStats.MIB, bwWrite.getLastRate() / IoStats.MIB,
+				//
+				tpRead.getCount(), countFailRead.getCount(),
+				tpRead.getMeanRate(), tpRead.getLastRate(),
+				bwRead.getMeanRate() / IoStats.MIB, bwRead.getLastRate() / IoStats.MIB,
+				//
+				tpDelete.getCount(), countFailDelete.getCount(),
+				tpDelete.getMeanRate(), tpDelete.getLastRate()
+			);
+		} catch(final RemoteException e) {
+			e.printStackTrace();
+		}
+		return "";
 	}
 }

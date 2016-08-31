@@ -8,17 +8,18 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 21.07.16.
  */
-public interface Launchable {
+public interface RemoteLaunchable {
 
 	void start()
-	throws UserShootHisFootException;
+	throws UserShootHisFootException, RemoteException;
 
-	boolean isStarted();
+	boolean isStarted()
+	throws RemoteException;
 
 	boolean await()
-	throws InterruptedException;
+	throws InterruptedException, RemoteException;
 
 	boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException;
+	throws InterruptedException, RemoteException;
 
 }

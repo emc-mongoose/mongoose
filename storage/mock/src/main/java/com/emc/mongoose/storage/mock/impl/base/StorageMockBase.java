@@ -8,7 +8,6 @@ import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
-import com.emc.mongoose.storage.mock.api.ObjectHolder;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -29,22 +28,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  Created on 19.07.16.
  */
 public abstract class StorageMockBase<T extends MutableDataItemMock>
+extends UnicastRemoteObject
 implements StorageMock<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -66,7 +65,9 @@ implements StorageMock<T> {
 	public StorageMockBase(
 		final Config.StorageConfig.MockConfig mockConfig,
 		final Config.LoadConfig.MetricsConfig metricsConfig, final Config.ItemConfig itemConfig
-	) {
+	)
+	throws RemoteException {
+		super();
 		final Config.StorageConfig.MockConfig.ContainerConfig
 			containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());

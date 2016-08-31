@@ -1,5 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.distribution;
 
+import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -13,10 +15,21 @@ import javax.jmdns.ServiceListener;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  Created on 23.08.16.
@@ -24,18 +37,19 @@ import java.util.stream.Collectors;
 public class NodeListener
 	implements ServiceListener, Closeable {
 
-	private static final String NODE_IDENTIFIER = "nagaina";
 	private static final Logger LOG = LogManager.getLogger();
 
+	private final String id;
 	private final JmDNS jmDns;
 	private final String type;
-	private final List<InetAddress> nodesAddresses;
+	private final Map<String, StorageMock<MutableDataItemMock>> remoteNodes;
 
-	public NodeListener(final JmDNS jmDns, final MDns.Type type)
+	public NodeListener(final String id, final JmDNS jmDns, final MDns.Type type)
 	throws IOException {
+		this.id = id;
 		this.jmDns = jmDns;
 		this.type = type.toString();
-		this.nodesAddresses = new ArrayList<>();
+		this.remoteNodes = new HashMap<>();
 	}
 
 	@Override
@@ -45,22 +59,34 @@ public class NodeListener
 
 	@Override
 	public void serviceRemoved(final ServiceEvent event) {
-		handleServiceEvent(event, nodesAddresses::remove, "Node removed");
+		handleServiceEvent(event, remoteNodes::remove, "Node removed");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void serviceResolved(final ServiceEvent event) {
-		handleServiceEvent(event, nodesAddresses::add, "Node added");
+		handleServiceEvent(event, (hostAddress) -> {
+			final String rmiUrl =
+				UrlStrings.get("rmi", hostAddress, REGISTRY_PORT, id);
+			try {
+				final StorageMock<MutableDataItemMock> mock =
+					(StorageMock<MutableDataItemMock>) Naming.lookup(rmiUrl);
+				remoteNodes.put(hostAddress, mock);
+			} catch(final NotBoundException | MalformedURLException | RemoteException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
+			}
+
+		}, "Node added");
 	}
 
 	private void handleServiceEvent(
-		final ServiceEvent event, final Consumer<InetAddress> consumer, final String actionMsg) {
+		final ServiceEvent event, final Consumer<String> consumer, final String actionMsg) {
 		final ServiceInfo eventInfo = event.getInfo();
-		if (eventInfo.getQualifiedName().contains(NODE_IDENTIFIER)) {
+		if (eventInfo.getQualifiedName().contains(id)) {
 			for (final InetAddress address: eventInfo.getInet4Addresses()) {
 				try {
 					if (!address.equals(jmDns.getInetAddress())) {
-						consumer.accept(address);
+						consumer.accept(address.getHostAddress());
 						LOG.info(Markers.MSG, actionMsg + ":" + event.getName());
 						printNodeList();
 					}
@@ -71,24 +97,15 @@ public class NodeListener
 		}
 	}
 
-	public List<InetAddress> getNodesAddresses() {
-		return nodesAddresses;
+	public Collection<StorageMock<MutableDataItemMock>> getNodes() {
+		return remoteNodes.values();
 	}
 
 	public void printNodeList() {
-		final String nodeListString = nodesAddresses.stream().map(InetAddress:: getHostAddress).collect(
-			Collectors.joining("\n"));
-		LOG.info(Markers.MSG, "Detected nodes: \n" + nodeListString);
+		StringJoiner joiner = new StringJoiner("\n");
+		remoteNodes.keySet().forEach(joiner::add);
+		LOG.info(Markers.MSG, "Detected nodes: \n" + joiner.toString());
 	}
-
-//	@SuppressWarnings("unchecked")
-//	public void callRmiMethod(final InetAddress address)
-//	throws RemoteException, NotBoundException, MalformedURLException {
-//		final String rmiUrl = UrlStrings.get("rmi", address.getHostAddress(), SERVICE_NAME);
-//		final ObjectHolder<MutableDataItemMock> objectHolder = (ObjectHolder<MutableDataItemMock>) Naming.lookup(rmiUrl);
-//		LOG.info("RMI Greeting: " + objectHolder.getObject("", "", 0, 0));
-//	}
-
 
 	public void open() {
 		jmDns.addServiceListener(type, this);

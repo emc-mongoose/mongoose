@@ -5,7 +5,10 @@ import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.model.util.SizeInBytes;
 import org.apache.commons.collections4.map.LRUMap;
 //
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Map;
@@ -16,7 +19,7 @@ import java.util.Map;
 public abstract class ContentSourceBase
 implements ContentSource {
 	//
-	protected ByteBuffer zeroByteLayer = null;
+	protected transient ByteBuffer zeroByteLayer = null;
 	protected long seed = 0;
 	//
 	protected transient Map<Integer, ByteBuffer> byteLayersMap = null;
@@ -115,7 +118,45 @@ implements ContentSource {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
 	}
-	
+
+	private void writeObject(final ObjectOutputStream out)
+	throws IOException {
+		// write default properties
+		out.defaultWriteObject();
+		// write buffer capacity and data
+		final byte buff[] = new byte[zeroByteLayer.capacity()];
+		zeroByteLayer.clear(); // reset
+		zeroByteLayer.get(buff);
+		out.writeInt(buff.length);
+		out.write(buff);
+	}
+
+	private void readObject(final ObjectInputStream in)
+	throws IOException, ClassNotFoundException {
+		try {
+			//read default properties
+			in.defaultReadObject();
+			//read buffer data and wrap with ByteBuffer
+			int size = in.readInt();
+			final byte buff[] = new byte[size];
+			for(int i, j = 0; j < size;) {
+				i = in.read(buff, j, size - j);
+				if(i == -1) {
+					break;
+				} else {
+					j += i;
+				}
+			}
+			zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
+			byteLayersMap = new LRUMap<>(
+				(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
+			);
+			byteLayersMap.put(0, zeroByteLayer);
+		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
+		}
+	}
+
 	//
 	@Override
 	public final void close()

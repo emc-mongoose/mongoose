@@ -40,6 +40,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import java.io.ByteArrayOutputStream;
+import java.rmi.RemoteException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +88,8 @@ extends RequestHandlerBase<T> {
 	public AtmosRequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
 		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	) {
+	)
+	throws RemoteException {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
@@ -266,7 +268,7 @@ extends RequestHandlerBase<T> {
 		}
 
 		final List<T> buffer = new ArrayList<>(maxCount);
-		final T lastObject;
+		T lastObject = null;
 		try {
 			lastObject = listContainer(name, objectId, buffer, maxCount);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -282,6 +284,8 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Subtenant \"{}\" failure", name);
 			return;
+		} catch(final RemoteException e) {
+			e.printStackTrace();
 		}
 		Map.Entry<String, String> header = null;
 		if(lastObject != null) {

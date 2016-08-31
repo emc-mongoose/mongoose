@@ -4,7 +4,6 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.ObjectHolder;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -12,11 +11,10 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundExceptio
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 
-import static com.emc.mongoose.storage.mock.api.ObjectHolder.SERVICE_NAME;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 
-import com.emc.mongoose.storage.mock.impl.distribution.UrlStrings;
+import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -46,6 +44,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -76,7 +75,7 @@ extends ChannelInboundHandlerAdapter {
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
-	private final StorageMock<T> sharedStorage;
+	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
 	private final String apiClsName;
@@ -94,15 +93,16 @@ extends ChannelInboundHandlerAdapter {
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	) {
+		final StorageMock<T> localStorage, final ContentSource contentSource
+	)
+	throws RemoteException {
 		this.rateLimit = limitConfig.getRate();
 		final String t = namingConfig.getPrefix();
 		this.prefixLength = t == null ? 0 : t.length();
 		this.idRadix = namingConfig.getRadix();
-		this.sharedStorage = sharedStorage;
+		this.localStorage = localStorage;
 		this.contentSource = contentSource;
-		this.ioStats = sharedStorage.getStats();
+		this.ioStats = localStorage.getStats();
 		apiClsName = getClass().getSimpleName();
 		AttributeKey.<HttpRequest>valueOf(REQUEST_KEY);
 		AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY);
@@ -299,7 +299,7 @@ extends ChannelInboundHandlerAdapter {
 			.getAll(RANGE);
 		try {
 			if(rangeHeadersValues.size() == 0) {
-				sharedStorage.createObject(containerName, id, offset, size);
+				localStorage.createObject(containerName, id, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
 				final boolean success = handlePartialCreate(
@@ -323,6 +323,8 @@ extends ChannelInboundHandlerAdapter {
 					LOG, Level.ERROR, e,
 					"Failed to perform a range update/append for \"{}\"", id
 			);
+		} catch(final RemoteException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -332,7 +334,8 @@ extends ChannelInboundHandlerAdapter {
 	private boolean handlePartialCreate(
 		final String containerName, final String id, final List<String> rangeHeadersValues,
 		final long size
-	) throws ContainerMockException, ObjectMockNotFoundException {
+	)
+	throws ContainerMockException, ObjectMockNotFoundException, RemoteException {
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
 				final String rangeValueWithoutPrefix =
@@ -343,11 +346,11 @@ extends ChannelInboundHandlerAdapter {
 					final int rangeBordersNum = rangeBorders.length;
 					final long offset = Long.parseLong(rangeBorders[0]);
 					if(rangeBordersNum == 1) {
-						sharedStorage.appendObject(containerName, id,
+						localStorage.appendObject(containerName, id,
 								offset, size);
 					} else if(rangeBordersNum == 2) {
 						final long dynSize = Long.parseLong(rangeBorders[1]) - offset + 1;
-						sharedStorage.updateObject(containerName, id, offset, dynSize);
+						localStorage.updateObject(containerName, id, offset, dynSize);
 					} else {
 						LOG.warn(
 								Markers.ERR, "Invalid range header value: \"{}\"", rangeValues
@@ -368,19 +371,14 @@ extends ChannelInboundHandlerAdapter {
 		final String containerName, final String id, final long offset,
 		final ChannelHandlerContext ctx
 	) {
-		final HttpResponse response;
 		try {
-			T object = sharedStorage.getObject(containerName, id, offset, 0);
+			T object = localStorage.getObject(containerName, id, offset, 0);
 			if(object != null) {
 				handleObjectReadSuccess(object, ctx);
 			} else {
-				setHttpResponseStatusInContext(ctx, NOT_FOUND); // TODO add RMI here
-				final List<InetAddress> nodesAddresses = sharedStorage.getNodesAddresses();
-				for (final InetAddress address: nodesAddresses) {
-					final String rmiUrl = UrlStrings.get("rmi", address.getHostAddress(), SERVICE_NAME);
-					final ObjectHolder<MutableDataItemMock> objectHolder =
-						(ObjectHolder<MutableDataItemMock>) Naming.lookup(rmiUrl);
-					object = (T) objectHolder.getObject(containerName, id, offset, 0);
+				;
+				for (final StorageMock<T> node: localStorage.getNodes()) {
+					object = node.getObject(containerName, id, offset, 0);
 					if (object != null) {
 						break;
 					}
@@ -399,8 +397,6 @@ extends ChannelInboundHandlerAdapter {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);
-		} catch(final NotBoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Remote call failure", containerName);
 		}
 	}
 
@@ -431,7 +427,7 @@ extends ChannelInboundHandlerAdapter {
 		final ChannelHandlerContext ctx
 	) {
 		try {
-			sharedStorage.deleteObject(containerName, id, offset, -1);
+			localStorage.deleteObject(containerName, id, offset, -1);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Delete data object with ID: {}", id);
 			}
@@ -442,6 +438,8 @@ extends ChannelInboundHandlerAdapter {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.ERR, "No such container: {}", id);
 			}
+		} catch(final RemoteException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -470,7 +468,11 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected void handleContainerCreate(final String name) {
-		sharedStorage.createContainer(name);
+		try {
+			localStorage.createContainer(name);
+		} catch(final RemoteException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected abstract void handleContainerList(
@@ -480,8 +482,9 @@ extends ChannelInboundHandlerAdapter {
 
 	protected final T listContainer(
 		final String name, final String marker, final List<T> buffer, final int maxCount
-	) throws ContainerMockException {
-		final T lastObject = sharedStorage.listObjects(name, marker, buffer, maxCount);
+	)
+	throws ContainerMockException, RemoteException {
+		final T lastObject = localStorage.listObjects(name, marker, buffer, maxCount);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Container \"{}\": generated list of {} objects, last one is \"{}\"",
@@ -492,13 +495,21 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	private void handleContainerExist(final String name, final ChannelHandlerContext ctx) {
-		if(sharedStorage.getContainer(name) == null) {
-			setHttpResponseStatusInContext(ctx, NOT_FOUND);
+		try {
+			if(localStorage.getContainer(name) == null) {
+				setHttpResponseStatusInContext(ctx, NOT_FOUND);
+			}
+		} catch(final RemoteException e) {
+			e.printStackTrace();
 		}
 	}
 
 	private void handleContainerDelete(final String name) {
-		sharedStorage.deleteContainer(name);
+		try {
+			localStorage.deleteContainer(name);
+		} catch(final RemoteException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

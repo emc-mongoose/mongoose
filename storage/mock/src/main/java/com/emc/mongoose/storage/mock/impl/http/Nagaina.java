@@ -6,7 +6,7 @@ import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.ObjectHolder;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.distribution.MDns;
@@ -40,8 +40,10 @@ import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +54,8 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
  */
 public final class Nagaina
 extends StorageMockBase<MutableDataItemMock>{
+
+	public static final String IDENTIFIER = Nagaina.class.getSimpleName().toLowerCase();
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -67,7 +71,8 @@ extends StorageMockBase<MutableDataItemMock>{
 	public Nagaina(
 		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
 		final Config.ItemConfig itemConfig
-	) {
+	)
+	throws RemoteException {
 		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
@@ -88,12 +93,10 @@ extends StorageMockBase<MutableDataItemMock>{
 			limitConfig, namingConfig, this, contentSource
 		);
 		try {
-			final ServiceInfo serviceInfo =
-				ServiceInfo.create("_http._tcp.local.", "nagaina", port - 1, "storage mock");
+//			System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
 			jmDns = JmDNS.create(NetUtil.getHostAddr());
-			LOG.info("JmDNS address: " + jmDns.getInetAddress());
-			jmDns.registerService(serviceInfo);
-			LOG.info("Nagaina registered as service");
+			LOG.info("mDNS address: " + jmDns.getInetAddress());
+
 		} catch(final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to register Nagaina as service"
@@ -145,10 +148,26 @@ extends StorageMockBase<MutableDataItemMock>{
 		}
 		try {
 			LOG.info(Markers.MSG, "Register RMI method");
-			final ObjectHolder<MutableDataItemMock> objectHolder = this;
-			final Registry registry = LocateRegistry.createRegistry(REGISTRY_PORT);
-			registry.rebind(SERVICE_NAME, objectHolder);
-			nodeListener = new NodeListener(jmDns, MDns.Type.HTTP);
+			Registry registry = null;
+			try {
+				registry = LocateRegistry.createRegistry(REGISTRY_PORT);
+			} catch(final RemoteException e) {
+				try {
+					registry = LocateRegistry.getRegistry(REGISTRY_PORT);
+				} catch(final RemoteException ie) {
+					LogUtil.exception(
+						LOG, Level.ERROR, ie, "Failed to obtain RMI registry"
+					);
+				}
+			}
+			if (registry != null) {
+				registry.rebind(IDENTIFIER, this);
+			}
+			final ServiceInfo serviceInfo =
+				ServiceInfo.create("_http._tcp.local.", IDENTIFIER, port - 1, "storage mock");
+			jmDns.registerService(serviceInfo);
+			LOG.info("Nagaina registered as service");
+			nodeListener = new NodeListener(IDENTIFIER, jmDns, MDns.Type.HTTP);
 			nodeListener.open();
 			LOG.info(Markers.MSG, "Discover nodes");
 		} catch(final IOException e) {
@@ -194,7 +213,7 @@ extends StorageMockBase<MutableDataItemMock>{
 	}
 
 	@Override
-	public List<InetAddress> getNodesAddresses() {
-		return nodeListener.getNodesAddresses();
+	public Collection<StorageMock<MutableDataItemMock>> getNodes() {
+		return nodeListener.getNodes();
 	}
 }
