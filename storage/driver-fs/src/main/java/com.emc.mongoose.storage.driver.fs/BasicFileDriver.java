@@ -6,6 +6,7 @@ import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,9 +47,10 @@ implements Driver<I, O> {
 		};
 
 	public BasicFileDriver(
-		final String runId, final LoadConfig loadConfig, final BufferConfig ioBufferConfig
+		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final BufferConfig ioBufferConfig
 	) {
-		super(runId, loadConfig, ioBufferConfig);
+		super(runId, authConfig, loadConfig, ioBufferConfig);
 	}
 
 	private FileChannel getSrcChannel(final I fileItem, final O ioTask)

@@ -76,7 +76,11 @@ implements HttpDriver<I, O> {
 	) throws UserShootHisFootException {
 		super(runId, storageConfig.getAuthConfig(), loadConfig);
 		try {
-			secretKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
+			if(secret == null) {
+				secretKey = null;
+			} else {
+				secretKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
+			}
 		} catch(final UnsupportedEncodingException e) {
 			throw new IllegalStateException(e);
 		}
@@ -117,8 +121,9 @@ implements HttpDriver<I, O> {
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final String dstUriPath = getDstUriPath(item, ioTask);
 		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, getDstUriPath(item, ioTask), httpHeaders
+			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
 		);
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
@@ -155,7 +160,7 @@ implements HttpDriver<I, O> {
 				break;
 		}
 		applyMetaDataHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
 		return httpRequest;
 	}
 	
@@ -197,7 +202,9 @@ implements HttpDriver<I, O> {
 	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
 	}
 	
-	protected abstract void applyAuthHeaders(final HttpHeaders httpHeaders);
+	protected abstract void applyAuthHeaders(
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+	);
 	
 	private final class HttpRequestFuture
 	extends FutureTaskBase {
