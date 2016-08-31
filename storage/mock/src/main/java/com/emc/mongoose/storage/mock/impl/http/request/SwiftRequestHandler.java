@@ -60,8 +60,7 @@ extends RequestHandlerBase<T> {
 	public SwiftRequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
 		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	)
-	throws RemoteException {
+	) {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 

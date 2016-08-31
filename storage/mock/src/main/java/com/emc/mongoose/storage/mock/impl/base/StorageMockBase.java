@@ -43,7 +43,6 @@ import java.util.stream.IntStream;
  Created on 19.07.16.
  */
 public abstract class StorageMockBase<T extends MutableDataItemMock>
-extends UnicastRemoteObject
 implements StorageMock<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -52,7 +51,6 @@ implements StorageMock<T> {
 
 	private final String dataSrcPath;
 	private final StorageIoStats ioStats;
-	private final Class<T> itemClass;
 	protected final ContentSource contentSrc;
 	private final int storageCapacity, containerCapacity;
 
@@ -65,14 +63,12 @@ implements StorageMock<T> {
 	public StorageMockBase(
 		final Config.StorageConfig.MockConfig mockConfig,
 		final Config.LoadConfig.MetricsConfig metricsConfig, final Config.ItemConfig itemConfig
-	)
-	throws RemoteException {
+	) {
 		super();
 		final Config.StorageConfig.MockConfig.ContainerConfig
 			containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
-		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
 		try {
@@ -187,7 +183,7 @@ implements StorageMock<T> {
 	@Override
 	public final T getObject(
 			final String containerName, final String id, final long offset, final long size
-	) throws RemoteException {
+	) throws ContainerMockException {
 		// TODO partial read using offset and size args
 		try {
 			final Future<T> future =
@@ -196,7 +192,7 @@ implements StorageMock<T> {
 				return future.get();
 			}
 		} catch(final ExecutionException e) {
-			throw new RemoteException("", e);
+			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}
@@ -295,7 +291,7 @@ implements StorageMock<T> {
 		return ioStats;
 	}
 
-	@SuppressWarnings("InfiniteLoopStatement")
+	@SuppressWarnings({"InfiniteLoopStatement", "unchecked"})
 	private void loadPersistedDataItems() {
 		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
 			final Path dataFilePath = Paths.get(dataSrcPath);
@@ -330,7 +326,7 @@ implements StorageMock<T> {
 			});
 			try(
 				final CsvFileItemInput<T>
-					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, itemClass, contentSrc)
+					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc)
 			) {
 				displayProgressThread.start();
 				do {

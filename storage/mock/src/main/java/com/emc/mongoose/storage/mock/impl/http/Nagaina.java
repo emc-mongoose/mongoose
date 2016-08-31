@@ -64,15 +64,12 @@ extends StorageMockBase<MutableDataItemMock>{
 	private final EventLoopGroup[] workGroups;
 	private final Channel[] channels;
 	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
-	private JmDNS jmDns;
-	private NodeListener nodeListener;
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
 		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
 		final Config.ItemConfig itemConfig
-	)
-	throws RemoteException {
+	) {
 		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
@@ -92,16 +89,6 @@ extends StorageMockBase<MutableDataItemMock>{
 		atmosRequestHandler = new AtmosRequestHandler<>(
 			limitConfig, namingConfig, this, contentSource
 		);
-		try {
-//			System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
-			jmDns = JmDNS.create(NetUtil.getHostAddr());
-			LOG.info("mDNS address: " + jmDns.getInetAddress());
-
-		} catch(final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to register Nagaina as service"
-			);
-		}
 	}
 
 	@Override
@@ -146,35 +133,6 @@ extends StorageMockBase<MutableDataItemMock>{
 		} else {
 			LOG.info(Markers.MSG, "Listening the port {}", port);
 		}
-		try {
-			LOG.info(Markers.MSG, "Register RMI method");
-			Registry registry = null;
-			try {
-				registry = LocateRegistry.createRegistry(REGISTRY_PORT);
-			} catch(final RemoteException e) {
-				try {
-					registry = LocateRegistry.getRegistry(REGISTRY_PORT);
-				} catch(final RemoteException ie) {
-					LogUtil.exception(
-						LOG, Level.ERROR, ie, "Failed to obtain RMI registry"
-					);
-				}
-			}
-			if (registry != null) {
-				registry.rebind(IDENTIFIER, this);
-			}
-			final ServiceInfo serviceInfo =
-				ServiceInfo.create("_http._tcp.local.", IDENTIFIER, port - 1, "storage mock");
-			jmDns.registerService(serviceInfo);
-			LOG.info("Nagaina registered as service");
-			nodeListener = new NodeListener(IDENTIFIER, jmDns, MDns.Type.HTTP);
-			nodeListener.open();
-			LOG.info(Markers.MSG, "Discover nodes");
-		} catch(final IOException e) {
-			LogUtil.exception(
-			LOG, Level.ERROR, e, "Failed to start node discovering"
-			);
-		}
 	}
 
 	@Override
@@ -199,9 +157,6 @@ extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	public void close()
 	throws IOException {
-		nodeListener.close();
-		jmDns.unregisterAllServices();
-		jmDns.close();
 		for(final Channel channel: channels) {
 			channel.close();
 		}
@@ -212,8 +167,4 @@ extends StorageMockBase<MutableDataItemMock>{
 		return new BasicMutableDataItemMock(id, offset, size, 0, contentSrc);
 	}
 
-	@Override
-	public Collection<StorageMock<MutableDataItemMock>> getNodes() {
-		return nodeListener.getNodes();
-	}
 }

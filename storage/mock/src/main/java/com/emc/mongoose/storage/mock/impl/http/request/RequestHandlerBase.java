@@ -94,8 +94,7 @@ extends ChannelInboundHandlerAdapter {
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
 		final StorageMock<T> localStorage, final ContentSource contentSource
-	)
-	throws RemoteException {
+	) {
 		this.rateLimit = limitConfig.getRate();
 		final String t = namingConfig.getPrefix();
 		this.prefixLength = t == null ? 0 : t.length();
@@ -376,7 +375,6 @@ extends ChannelInboundHandlerAdapter {
 			if(object != null) {
 				handleObjectReadSuccess(object, ctx);
 			} else {
-				;
 				for (final StorageMock<T> node: localStorage.getNodes()) {
 					object = node.getObject(containerName, id, offset, 0);
 					if (object != null) {
@@ -393,7 +391,7 @@ extends ChannelInboundHandlerAdapter {
 					handleObjectReadSuccess(object, ctx);
 				}
 			}
-		} catch(final IOException e) {
+		} catch(final IOException | ContainerMockException  e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);

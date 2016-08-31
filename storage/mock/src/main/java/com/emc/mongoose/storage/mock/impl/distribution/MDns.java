@@ -5,6 +5,8 @@ package com.emc.mongoose.storage.mock.impl.distribution;
  */
 public class MDns {
 
+	public static final int DEFAULT_PORT = 9019;
+
 	private static final String PREFIX = "_";
 	private static final String SUFFIX = "._tcp.local.";
 

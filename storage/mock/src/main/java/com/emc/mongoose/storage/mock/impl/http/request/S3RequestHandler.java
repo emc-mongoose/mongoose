@@ -68,8 +68,7 @@ extends RequestHandlerBase<T> {
 	public S3RequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
 		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	)
-	throws RemoteException {
+	) {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
