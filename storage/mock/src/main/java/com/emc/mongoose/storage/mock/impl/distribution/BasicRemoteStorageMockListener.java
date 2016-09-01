@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.distribution;
 
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMockListener;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -34,17 +36,17 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
 /**
  Created on 23.08.16.
  */
-public class NodeListener
-	implements ServiceListener, Closeable {
+public class BasicRemoteStorageMockListener
+implements RemoteStorageMockListener<MutableDataItemMock, RemoteStorageMock<MutableDataItemMock>> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final String id;
 	private final JmDNS jmDns;
 	private final String type;
-	private final Map<String, StorageMock<MutableDataItemMock>> remoteNodes;
+	private final Map<String, RemoteStorageMock<MutableDataItemMock>> remoteNodes;
 
-	public NodeListener(final String id, final JmDNS jmDns, final MDns.Type type)
+	public BasicRemoteStorageMockListener(final String id, final JmDNS jmDns, final MDns.Type type)
 	throws IOException {
 		this.id = id;
 		this.jmDns = jmDns;
@@ -65,18 +67,21 @@ public class NodeListener
 	@SuppressWarnings("unchecked")
 	@Override
 	public void serviceResolved(final ServiceEvent event) {
-		handleServiceEvent(event, (hostAddress) -> {
-			final String rmiUrl =
-				UrlStrings.get("rmi", hostAddress, REGISTRY_PORT, id);
-			try {
-				final StorageMock<MutableDataItemMock> mock =
-					(StorageMock<MutableDataItemMock>) Naming.lookup(rmiUrl);
-				remoteNodes.put(hostAddress, mock);
-			} catch(final NotBoundException | MalformedURLException | RemoteException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
-			}
-
-		}, "Node added");
+		handleServiceEvent(
+			event,
+			(hostAddress) -> {
+				final String rmiUrl =
+					UrlStrings.get("rmi", hostAddress, REGISTRY_PORT, id);
+				try {
+					final RemoteStorageMock<MutableDataItemMock> mock =
+						(RemoteStorageMock<MutableDataItemMock>) Naming.lookup(rmiUrl);
+					remoteNodes.put(hostAddress, mock);
+				} catch(final NotBoundException | MalformedURLException | RemoteException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
+				}
+			},
+			"Node added"
+		);
 	}
 
 	private void handleServiceEvent(
@@ -97,12 +102,12 @@ public class NodeListener
 		}
 	}
 
-	public Collection<StorageMock<MutableDataItemMock>> getNodes() {
+	public Collection<RemoteStorageMock<MutableDataItemMock>> getNodes() {
 		return remoteNodes.values();
 	}
 
 	public void printNodeList() {
-		StringJoiner joiner = new StringJoiner("\n");
+		final StringJoiner joiner = new StringJoiner("\n");
 		remoteNodes.keySet().forEach(joiner::add);
 		LOG.info(Markers.MSG, "Detected nodes: \n" + joiner.toString());
 	}

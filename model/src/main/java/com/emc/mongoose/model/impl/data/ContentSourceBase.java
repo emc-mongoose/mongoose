@@ -133,28 +133,24 @@ implements ContentSource {
 
 	private void readObject(final ObjectInputStream in)
 	throws IOException, ClassNotFoundException {
-		try {
-			//read default properties
-			in.defaultReadObject();
-			//read buffer data and wrap with ByteBuffer
-			int size = in.readInt();
-			final byte buff[] = new byte[size];
-			for(int i, j = 0; j < size;) {
-				i = in.read(buff, j, size - j);
-				if(i == -1) {
-					break;
-				} else {
-					j += i;
-				}
+		//read default properties
+		in.defaultReadObject();
+		//read buffer data and wrap with ByteBuffer
+		int size = in.readInt();
+		final byte buff[] = new byte[size];
+		for(int i, j = 0; j < size;) {
+			i = in.read(buff, j, size - j);
+			if(i == -1) {
+				break;
+			} else {
+				j += i;
 			}
-			zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
-			byteLayersMap = new LRUMap<>(
-				(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-			);
-			byteLayersMap.put(0, zeroByteLayer);
-		} catch(final Throwable e) {
-			e.printStackTrace(System.out);
 		}
+		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
+		byteLayersMap = new LRUMap<>(
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
+		);
+		byteLayersMap.put(0, zeroByteLayer);
 	}
 
 	//

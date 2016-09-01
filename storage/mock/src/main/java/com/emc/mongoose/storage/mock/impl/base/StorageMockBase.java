@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -62,25 +60,16 @@ implements StorageMock<T> {
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
 		final Config.StorageConfig.MockConfig mockConfig,
-		final Config.LoadConfig.MetricsConfig metricsConfig, final Config.ItemConfig itemConfig
+		final Config.LoadConfig.MetricsConfig metricsConfig,
+		final Config.ItemConfig itemConfig,
+		final ContentSource contentSrc
 	) {
 		super();
 		final Config.StorageConfig.MockConfig.ContainerConfig
 			containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
-		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
-		final String contentSourcePath = contentConfig.getFile();
-		try {
-			this.contentSrc = ContentSourceUtil.getInstance(
-				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
-			);
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to get content source on path {}", contentSourcePath
-			);
-			throw new IllegalStateException();
-		}
+		this.contentSrc = contentSrc;
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();

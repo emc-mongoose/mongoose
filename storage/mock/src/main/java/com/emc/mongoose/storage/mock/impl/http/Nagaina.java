@@ -1,28 +1,17 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
-import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
-import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
-import com.emc.mongoose.storage.mock.impl.distribution.MDns;
-import com.emc.mongoose.storage.mock.impl.distribution.NodeListener;
-import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
-import com.emc.mongoose.storage.mock.impl.http.request.RequestHandlerBase;
-import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
-import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -36,18 +25,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceInfo;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  Created on 11.07.16.
@@ -63,32 +43,22 @@ extends StorageMockBase<MutableDataItemMock>{
 	private final EventLoopGroup[] dispatchGroups;
 	private final EventLoopGroup[] workGroups;
 	private final Channel[] channels;
-	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
+	private final List<ChannelInboundHandler> handlers;
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
 		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig
+		final Config.ItemConfig itemConfig, final ContentSource contentSource,
+		final List<ChannelInboundHandler> handlers
 	) {
-		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig);
+		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
 		dispatchGroups = new EventLoopGroup[headCount];
 		workGroups = new EventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-		final NamingConfig namingConfig = itemConfig.getNamingConfig();
-		final ContentSource contentSource = getContentSource();
-		s3RequestHandler = new S3RequestHandler<>(
-			limitConfig, namingConfig, this, contentSource
-		);
-		swiftRequestHandler = new SwiftRequestHandler<>(
-			limitConfig, namingConfig, this, contentSource
-		);
-		atmosRequestHandler = new AtmosRequestHandler<>(
-			limitConfig, namingConfig, this, contentSource
-		);
+		this.handlers = handlers;
 	}
 
 	@Override
@@ -112,9 +82,9 @@ extends StorageMockBase<MutableDataItemMock>{
 								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
 							}
 							pipeline.addLast(new HttpServerCodec());
-							pipeline.addLast(swiftRequestHandler);
-							pipeline.addLast(atmosRequestHandler);
-							pipeline.addLast(s3RequestHandler);
+							for (final ChannelInboundHandler handler: handlers) {
+								pipeline.addLast(handler);
+							}
 						}
 					});
 				final ChannelFuture bind = serverBootstrap.bind(port + i);

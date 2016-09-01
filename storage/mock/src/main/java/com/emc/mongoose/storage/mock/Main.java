@@ -1,5 +1,9 @@
 package com.emc.mongoose.storage.mock;
 
+import com.emc.mongoose.model.api.item.MutableDataItem;
+import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
+import com.emc.mongoose.storage.mock.impl.http.RemoteNagaina;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
@@ -53,7 +57,8 @@ public class Main {
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		final Config.ItemConfig itemConfig = config.getItemConfig();
 		
-		try(final Nagaina nagaina = new Nagaina(storageConfig, loadConfig, itemConfig)) {
+		try(final RemoteStorageMock<MutableDataItemMock> nagaina =
+			    new RemoteNagaina(storageConfig, loadConfig, itemConfig)) {
 			nagaina.start();
 			try {
 				nagaina.await();

@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
@@ -67,8 +68,8 @@ extends RequestHandlerBase<T> {
 
 	public S3RequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	) {
+		final RemoteStorageMock<T> sharedStorage, final ContentSource contentSource
+	) throws RemoteException {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 

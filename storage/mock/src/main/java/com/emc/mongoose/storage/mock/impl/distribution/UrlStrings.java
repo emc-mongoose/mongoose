@@ -15,29 +15,31 @@ public class UrlStrings {
 		}
 	};
 
-	public static String get(final String protocol, final String host, final Integer port, final String file) {
+	public static String get(final String protocol, final String host,
+		final int port, final String file
+	) {
 		final StringBuilder builder = SB_TL.get();
 		builder.setLength(0);
 		builder.append(protocol).append(PROTOCOL_DELIMITER).append(host);
-		if (port != null) {
+		if(port > 0) {
 			builder.append(PORT_DELIMITER).append(port);
 		}
-		if (file != null) {
+		if(file != null) {
 			builder.append(FILE_DELIMITER).append(file);
 		}
 		return builder.toString();
 	}
 
-	public static String get(final String protocol, final String host, final Integer port) {
+	public static String get(final String protocol, final String host, final int port) {
 		return get(protocol, host, port, null);
 	}
 
 	public static String get(final String protocol, final String host, final String file) {
-		return get(protocol, host, null, file);
+		return get(protocol, host, 0, file);
 	}
 
 	public static String get(final String protocol, final String host) {
-		return get(protocol, host, null, null);
+		return get(protocol, host, 0, null);
 	}
 
 }

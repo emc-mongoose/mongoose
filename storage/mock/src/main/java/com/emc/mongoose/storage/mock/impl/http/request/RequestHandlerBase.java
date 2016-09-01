@@ -4,6 +4,7 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -75,6 +76,7 @@ extends ChannelInboundHandlerAdapter {
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
+	private final RemoteStorageMock<T> remoteStorage;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
@@ -93,13 +95,14 @@ extends ChannelInboundHandlerAdapter {
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> localStorage, final ContentSource contentSource
-	) {
+		final RemoteStorageMock<T> remoteStorage, final ContentSource contentSource
+	) throws RemoteException {
 		this.rateLimit = limitConfig.getRate();
 		final String t = namingConfig.getPrefix();
 		this.prefixLength = t == null ? 0 : t.length();
 		this.idRadix = namingConfig.getRadix();
-		this.localStorage = localStorage;
+		this.remoteStorage = remoteStorage;
+		this.localStorage = remoteStorage.getLocalStorage();
 		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
 		apiClsName = getClass().getSimpleName();
@@ -375,8 +378,8 @@ extends ChannelInboundHandlerAdapter {
 			if(object != null) {
 				handleObjectReadSuccess(object, ctx);
 			} else {
-				for (final StorageMock<T> node: localStorage.getNodes()) {
-					object = node.getObject(containerName, id, offset, 0);
+				for (final RemoteStorageMock<T> node: remoteStorage.getNodes()) {
+					object = node.getObjectRemotely(containerName, id, offset, 0);
 					if (object != null) {
 						break;
 					}
@@ -436,8 +439,6 @@ extends ChannelInboundHandlerAdapter {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.ERR, "No such container: {}", id);
 			}
-		} catch(final RemoteException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -466,11 +467,7 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected void handleContainerCreate(final String name) {
-		try {
-			localStorage.createContainer(name);
-		} catch(final RemoteException e) {
-			e.printStackTrace();
-		}
+		localStorage.createContainer(name);
 	}
 
 	protected abstract void handleContainerList(
@@ -493,21 +490,13 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	private void handleContainerExist(final String name, final ChannelHandlerContext ctx) {
-		try {
-			if(localStorage.getContainer(name) == null) {
-				setHttpResponseStatusInContext(ctx, NOT_FOUND);
-			}
-		} catch(final RemoteException e) {
-			e.printStackTrace();
+		if(localStorage.getContainer(name) == null) {
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 		}
 	}
 
 	private void handleContainerDelete(final String name) {
-		try {
-			localStorage.deleteContainer(name);
-		} catch(final RemoteException e) {
-			e.printStackTrace();
-		}
+		localStorage.deleteContainer(name);
 	}
 
 	@Override
