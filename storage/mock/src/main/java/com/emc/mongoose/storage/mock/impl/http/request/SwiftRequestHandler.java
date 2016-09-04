@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
@@ -30,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +60,8 @@ extends RequestHandlerBase<T> {
 	
 	public SwiftRequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	) {
+		final RemoteStorageMock<T> sharedStorage, final ContentSource contentSource
+	) throws RemoteException {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
@@ -154,6 +156,8 @@ extends RequestHandlerBase<T> {
 		} catch(final ContainerMockException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			return;
+		} catch(final RemoteException e) {
+			e.printStackTrace();
 		}
 		if(buffer.size() > 0) {
 			final JsonNode nodeRoot = OBJ_MAPPER.createArrayNode();

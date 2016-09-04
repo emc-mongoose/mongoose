@@ -12,10 +12,7 @@ import java.util.Enumeration;
 /**
  Created by kurila on 11.07.16.
  */
-public abstract class NetUtil {
-
-	private NetUtil() {
-	}
+public interface NetUtil {
 
 	/**
 	 Tries to resolve 1st enabled external network interface IP address.
@@ -24,12 +21,12 @@ public abstract class NetUtil {
 	 @throws OmgLookAtMyConsoleException if failed to resolve an interface address
 	 @throws OmgDoesNotPerformException
 	 */
-	public static String getHostAddr()
-	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
+	static InetAddress getHostAddr()
+	throws OmgLookAtMyConsoleException, OmgDoesNotPerformException {
 		InetAddress addr = null;
 		final Enumeration<NetworkInterface> netIfaces;
 		try {
-			 netIfaces = NetworkInterface.getNetworkInterfaces();
+			netIfaces = NetworkInterface.getNetworkInterfaces();
 		} catch(final SocketException e) {
 			throw new OmgLookAtMyConsoleException(e);
 		}
@@ -59,12 +56,17 @@ public abstract class NetUtil {
 		if(addr == null) {
 			throw new OmgDoesNotPerformException("");
 		}
-
-		return addr.getHostAddress();
+		return addr;
 	}
 
-	public static long getHostAddrCode()
+
+	static String getHostAddrString()
 	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
-		return getHostAddr().hashCode();
+		return getHostAddr().getHostAddress();
+	}
+
+	static long getHostAddrCode()
+	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
+		return getHostAddrString().hashCode();
 	}
 }

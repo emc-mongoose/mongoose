@@ -23,13 +23,25 @@ dependencies {
 		"io.netty:netty-transport:${depVersion.netty}",
 		"io.netty:netty-handler:${depVersion.netty}",
 		"io.netty:netty-codec-http:${depVersion.netty}",
-		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}",
+
+		'org.jmdns:jmdns:3.5.1'
 	)
 
 	runtime(
 		"com.lmax:disruptor:3.3.4",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		'org.slf4j:slf4j-simple:1.7.16'
+	)
+
+	testCompile(
+		project(':common'),
+		'org.jmdns:jmdns:3.5.1'
+	)
+
+	testRuntime(
+		'org.slf4j:slf4j-simple:1.7.16'
 	)
 }
 

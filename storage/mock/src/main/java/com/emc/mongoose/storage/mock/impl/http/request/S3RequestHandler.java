@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
@@ -33,6 +34,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,8 +68,8 @@ extends RequestHandlerBase<T> {
 
 	public S3RequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> sharedStorage, final ContentSource contentSource
-	) {
+		final RemoteStorageMock<T> sharedStorage, final ContentSource contentSource
+	) throws RemoteException {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
 
@@ -110,7 +112,7 @@ extends RequestHandlerBase<T> {
 			marker = parameters.get(MARKER_KEY).get(0);
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
-		final T lastObject;
+		T lastObject = null;
 		try {
 			lastObject = listContainer(name, marker, buffer, maxCount);
 			LOG.trace(
@@ -123,6 +125,8 @@ extends RequestHandlerBase<T> {
 		} catch(final ContainerMockException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			return;
+		} catch(final RemoteException e) {
+			e.printStackTrace();
 		}
 		final Document xml = DOM_BUILDER.newDocument();
 		final Element rootElem = xml.createElementNS(S3_NAMESPACE_URI, "ListBucketResult");
