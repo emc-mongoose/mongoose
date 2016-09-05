@@ -30,14 +30,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  Created on 19.07.16.
@@ -51,7 +49,6 @@ implements StorageMock<T> {
 
 	private final String dataSrcPath;
 	private final StorageIoStats ioStats;
-	private final Class<T> itemClass;
 	protected final ContentSource contentSrc;
 	private final int storageCapacity, containerCapacity;
 
@@ -63,25 +60,16 @@ implements StorageMock<T> {
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
 		final Config.StorageConfig.MockConfig mockConfig,
-		final Config.LoadConfig.MetricsConfig metricsConfig, final Config.ItemConfig itemConfig
+		final Config.LoadConfig.MetricsConfig metricsConfig,
+		final Config.ItemConfig itemConfig,
+		final ContentSource contentSrc
 	) {
+		super();
 		final Config.StorageConfig.MockConfig.ContainerConfig
 			containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.dataSrcPath = itemConfig.getInputConfig().getFile();
-		this.itemClass = (Class<T>) BasicMutableDataItemMock.class;
-		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
-		final String contentSourcePath = contentConfig.getFile();
-		try {
-			this.contentSrc = ContentSourceUtil.getInstance(
-				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
-			);
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to get content source on path {}", contentSourcePath
-			);
-			throw new IllegalStateException();
-		}
+		this.contentSrc = contentSrc;
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();
@@ -292,7 +280,7 @@ implements StorageMock<T> {
 		return ioStats;
 	}
 
-	@SuppressWarnings("InfiniteLoopStatement")
+	@SuppressWarnings({"InfiniteLoopStatement", "unchecked"})
 	private void loadPersistedDataItems() {
 		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
 			final Path dataFilePath = Paths.get(dataSrcPath);
@@ -327,7 +315,7 @@ implements StorageMock<T> {
 			});
 			try(
 				final CsvFileItemInput<T>
-					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, itemClass, contentSrc)
+					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc)
 			) {
 				displayProgressThread.start();
 				do {

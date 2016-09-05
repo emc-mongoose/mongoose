@@ -2,6 +2,7 @@ package com.emc.mongoose.common.concurrent;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 
+import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
 /**

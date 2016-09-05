@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
 public final class BasicStorageIoStats
@@ -147,7 +148,7 @@ implements StorageIoStats {
 
 	@Override
 	public final String toString() {
-		final long countTotal = storage.getSize();
+		long countTotal = storage.getSize();
 		return String.format(
 			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
