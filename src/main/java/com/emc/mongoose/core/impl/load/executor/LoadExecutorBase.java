@@ -241,10 +241,8 @@ implements LoadExecutor<T> {
 				);
 			}
 			try {
-				if(!items.isEmpty()) {
-					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
-						LockSupport.parkNanos(1);
-					}
+				for(int m = 0; m < n; m += consumer.put(items, m, n)) {
+					LockSupport.parkNanos(1);
 				}
 				items.clear();
 			} catch(final IOException e) {
@@ -622,7 +620,9 @@ implements LoadExecutor<T> {
 		//
 		if(isCircular) {
 			final List<T> items = Collections.list(Collections.enumeration(uniqueItems.values()));
-			postProcessUniqueItemsFinally(items);
+			if(!items.isEmpty()) {
+				postProcessUniqueItemsFinally(items);
+			}
 		}
 		uniqueItems.clear();
 		//
@@ -1130,7 +1130,7 @@ implements LoadExecutor<T> {
 		//
 		LOG.debug(
 			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutMilliSec)
+			getName(), TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {

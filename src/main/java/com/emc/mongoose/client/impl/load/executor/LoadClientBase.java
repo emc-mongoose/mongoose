@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -689,8 +690,9 @@ implements LoadClient<T, W> {
 		}
 		final long ts = System.currentTimeMillis();
 		final long timeOutMilliSec = timeUnit.toMillis(timeOut == 0 ? Long.MAX_VALUE : timeOut);
-
-		final Set<String> loadSvcAddrs = remoteLoadMap.keySet();
+		
+		// issue #794: copy the key set to avoid the side effects
+		final Set<String> loadSvcAddrs = new HashSet<>(remoteLoadMap.keySet());
 		String loadSvcAddr;
 
 		while(System.currentTimeMillis() - ts < timeOutMilliSec) {
