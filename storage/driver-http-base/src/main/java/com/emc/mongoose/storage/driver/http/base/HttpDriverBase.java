@@ -30,7 +30,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -38,7 +37,6 @@ import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.util.concurrent.Future;
 import org.apache.logging.log4j.Level;
@@ -88,7 +86,7 @@ implements HttpDriver<I, O> {
 		storageNodePort = storageConfig.getPort();
 		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
 		
-		final SimpleChannelInboundHandler<HttpObject> apiSpecificHandler = getApiSpecificHandler();
+		final HttpClientHandlerBase<I, O> apiSpecificHandler = getApiSpecificHandler();
 		
 		workerGroup = new EpollEventLoopGroup(0, new NamingThreadFactory("test"));
 		bootstrap = new Bootstrap();
@@ -113,7 +111,7 @@ implements HttpDriver<I, O> {
 		);
 	}
 	
-	protected abstract SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler();
+	protected abstract HttpClientHandlerBase<I, O> getApiSpecificHandler();
 	
 	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
@@ -240,6 +238,7 @@ implements HttpDriver<I, O> {
 				return;
 			}
 			
+			c.attr(ATTR_KEY_IOTASK).set(ioTask);
 			final LoadType ioType = ioTask.getLoadType();
 			final I item = ioTask.getItem();
 			
