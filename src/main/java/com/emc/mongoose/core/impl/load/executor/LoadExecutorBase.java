@@ -680,7 +680,7 @@ implements LoadExecutor<T> {
 			if(nodeBalancer != null) {
 				nodeBalancer.markTaskStart(nextNodeAddr);
 			}
-		} catch(final InterruptedException | RejectedExecutionException e) {
+		} catch(final InterruptedException e) {
 			if(!isInterrupted.get()) {
 				countRej.incrementAndGet();
 				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
@@ -738,6 +738,7 @@ implements LoadExecutor<T> {
 			if(srcLimit > 0) {
 				countRej.addAndGet(srcLimit);
 				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", srcLimit);
+				throw new RejectedExecutionException();
 			}
 			n = 0;
 		}
