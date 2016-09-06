@@ -162,10 +162,12 @@ extends ChannelInboundHandlerAdapter {
 			ReferenceCountUtil.release(msg);
 			return;
 		}
-		if(!channel
-			.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
-			.get()
-			.equals(apiClsName)) {
+		if(
+			!channel
+				.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
+				.get()
+				.equals(apiClsName)
+		) {
 			ctx.fireChannelRead(msg);
 			return;
 		}

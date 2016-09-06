@@ -62,7 +62,7 @@ extends HttpDriverBase<I, O> {
 	
 	@Override
 	protected final HttpS3ClientHandler<I, O> getApiSpecificHandler() {
-		return new HttpS3ClientHandler<>(this);
+		return new HttpS3ClientHandler<>(monitorRef);
 	}
 	
 	@Override

@@ -7,7 +7,9 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.stream.ChunkedWriteHandler;
 
 import javax.net.ssl.SSLEngine;
 
@@ -40,6 +42,7 @@ extends ChannelInitializer<SocketChannel> {
 		}
 		
 		pipeline.addLast(new HttpClientCodec());
+		pipeline.addLast(new ChunkedWriteHandler());
 		pipeline.addLast(httpClientHandler);
 	}
 }

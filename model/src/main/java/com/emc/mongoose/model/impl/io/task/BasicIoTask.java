@@ -29,6 +29,8 @@ implements IoTask<I> {
 		this.dstPath = dstPath;
 	}
 	//
+	
+	//
 	@Override
 	public final I getItem() {
 		return item;
@@ -45,6 +47,11 @@ implements IoTask<I> {
 	}
 	//
 	@Override
+	public final void setNodeAddr(final String nodeAddr) {
+		this.nodeAddr = nodeAddr;
+	}
+	//
+	@Override
 	public final Status getStatus() {
 		return status;
 	}
@@ -57,6 +64,26 @@ implements IoTask<I> {
 	@Override
 	public final long getReqTimeStart() {
 		return reqTimeStart;
+	}
+	//
+	@Override
+	public final void setReqTimeStart(final long reqTimeStart) {
+		this.reqTimeStart = reqTimeStart;
+	}
+	//
+	@Override
+	public final void setReqTimeDone(final long reqTimeDone) {
+		this.reqTimeDone = reqTimeDone;
+	}
+	//
+	@Override
+	public final void setRespTimeStart(final long respTimeStart) {
+		this.respTimeStart = respTimeStart;
+	}
+	//
+	@Override
+	public final void setRespTimeDone(final long respTimeDone) {
+		this.respTimeDone = respTimeDone;
 	}
 	//
 	@Override

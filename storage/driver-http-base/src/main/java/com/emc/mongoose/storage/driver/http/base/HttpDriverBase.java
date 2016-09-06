@@ -29,16 +29,19 @@ import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,10 +91,10 @@ implements HttpDriver<I, O> {
 		
 		final HttpClientHandlerBase<I, O> apiSpecificHandler = getApiSpecificHandler();
 		
-		workerGroup = new EpollEventLoopGroup(0, new NamingThreadFactory("test"));
+		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("test"));
 		bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
-		bootstrap.channel(EpollSocketChannel.class);
+		bootstrap.channel(NioSocketChannel.class);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
@@ -205,7 +208,8 @@ implements HttpDriver<I, O> {
 	);
 	
 	private final class HttpRequestFuture
-	extends FutureTaskBase {
+	extends FutureTaskBase
+	implements GenericFutureListener<Future<Void>> {
 		
 		private final O ioTask;
 		
@@ -227,7 +231,10 @@ implements HttpDriver<I, O> {
 					return;
 				}
 			}
+			ioTask.setNodeAddr(bestNode);
 			
+			final LoadType ioType = ioTask.getLoadType();
+			final I item = ioTask.getItem();
 			final Channel c;
 			try {
 				c = bootstrap.connect(bestNode, storageNodePort).sync().channel();
@@ -239,12 +246,10 @@ implements HttpDriver<I, O> {
 			}
 			
 			c.attr(ATTR_KEY_IOTASK).set(ioTask);
-			final LoadType ioType = ioTask.getLoadType();
-			final I item = ioTask.getItem();
 			
 			try {
 				c.write(getHttpRequest(ioTask, bestNode));
-				
+				ioTask.setReqTimeStart(System.nanoTime() / 1000);
 				if(LoadType.CREATE.equals(ioType)) {
 					if(item instanceof DataItem) {
 						c.write(new DataItemFileRegion<>((DataItem) item));
@@ -274,7 +279,13 @@ implements HttpDriver<I, O> {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 			}
 			
-			c.writeAndFlush(EMPTY_LAST_CONTENT);
+			c.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(this);
+		}
+		
+		@Override
+		public void operationComplete(final Future<Void> future)
+		throws Exception {
+			monitorRef.get().ioTaskCompleted(ioTask);
 		}
 	}
 	
