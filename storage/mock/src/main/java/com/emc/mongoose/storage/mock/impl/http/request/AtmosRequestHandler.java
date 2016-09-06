@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
+import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -85,7 +85,7 @@ extends RequestHandlerBase<T> {
 
 	public AtmosRequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final RemoteStorageMock<T> sharedStorage, final ContentSource contentSource
+		final StorageMockServer<T> sharedStorage, final ContentSource contentSource
 	) throws RemoteException {
 		super(limitConfig, namingConfig, sharedStorage, contentSource);
 	}
@@ -279,8 +279,6 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Subtenant \"{}\" failure", name);
 			return;
-		} catch(final RemoteException e) {
-			e.printStackTrace();
 		}
 		Map.Entry<String, String> header = null;
 		if(lastObject != null) {

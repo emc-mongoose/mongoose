@@ -4,7 +4,7 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
+import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -72,7 +72,7 @@ extends ChannelInboundHandlerAdapter {
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
-	private final RemoteStorageMock<T> remoteStorage;
+	private final StorageMockServer<T> remoteStorage;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
@@ -96,7 +96,7 @@ extends ChannelInboundHandlerAdapter {
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final RemoteStorageMock<T> remoteStorage, final ContentSource contentSource
+		final StorageMockServer<T> remoteStorage, final ContentSource contentSource
 	) throws RemoteException {
 		this.rateLimit = limitConfig.getRate();
 		final String t = namingConfig.getPrefix();
@@ -116,10 +116,7 @@ extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelReadComplete(final ChannelHandlerContext ctx)
 	throws Exception {
-		final String ctxName = ctx
-			.channel()
-			.attr(ATTR_KEY_HANDLER)
-			.get();
+		final String ctxName = ctx.channel().attr(ATTR_KEY_HANDLER).get();
 		if(!apiClsName.equals(ctxName)) {
 			ctx.fireChannelReadComplete();
 			return;
@@ -130,9 +127,7 @@ extends ChannelInboundHandlerAdapter {
 	private void processHttpRequest(final ChannelHandlerContext ctx, final HttpRequest request) {
 		final Channel channel = ctx.channel();
 		final HttpHeaders headers = request.headers();
-		channel
-			.attr(ATTR_KEY_REQUEST)
-			.set(request);
+		channel.attr(ATTR_KEY_REQUEST).set(request);
 		if(headers.contains(CONTENT_LENGTH)) {
 			channel
 				.attr(ATTR_KEY_CONTENT_LENGTH)
@@ -177,14 +172,8 @@ extends ChannelInboundHandlerAdapter {
 			}
 		}
 		final Channel channel = ctx.channel();
-		final String uri = channel
-			.attr(ATTR_KEY_REQUEST)
-			.get()
-			.uri();
-		final HttpMethod method = channel
-			.attr(ATTR_KEY_REQUEST)
-			.get()
-			.method();
+		final String uri = channel.attr(ATTR_KEY_REQUEST).get().uri();
+		final HttpMethod method = channel.attr(ATTR_KEY_REQUEST).get().method();
 		final long size;
 		if(channel.hasAttr(ATTR_KEY_CONTENT_LENGTH)) {
 			size = channel.attr(ATTR_KEY_CONTENT_LENGTH).get();
@@ -251,10 +240,7 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
-		final HttpResponseStatus status = ctx
-			.channel()
-			.attr(ATTR_KEY_RESPONSE_STATUS)
-			.get();
+		final HttpResponseStatus status = ctx.channel().attr(ATTR_KEY_RESPONSE_STATUS).get();
 		final FullHttpResponse response = newEmptyResponse(status);
 		ctx.write(response);
 	}
@@ -367,11 +353,15 @@ extends ChannelInboundHandlerAdapter {
 			if(object != null) {
 				handleObjectReadSuccess(object, ctx);
 			} else {
-				for (final RemoteStorageMock<T> node: remoteStorage.getNodes()) {
-					object = node.getObjectRemotely(containerName, id, offset, 0);
-					if (object != null) {
-						break;
+				try {
+					for (final StorageMockServer<T> node: remoteStorage.getNodes()) {
+						object = node.getObjectRemotely(containerName, id, offset, 0);
+						if (object != null) {
+							break;
+						}
 					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Remote Nagaina failure");
 				}
 				if(object == null) {
 					setHttpResponseStatusInContext(ctx, NOT_FOUND);
@@ -396,10 +386,7 @@ extends ChannelInboundHandlerAdapter {
 		ioStats.markRead(true, size);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
-			ctx
-				.channel()
-				.attr(ATTR_KEY_CTX_WRITE_FLAG)
-				.set(false);
+			ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 			final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 			HttpUtil.setContentLength(response, size);
 			ctx.write(response);
@@ -434,10 +421,7 @@ extends ChannelInboundHandlerAdapter {
 	protected void setHttpResponseStatusInContext(
 		final ChannelHandlerContext ctx, final HttpResponseStatus status
 	) {
-		ctx
-			.channel()
-			.attr(ATTR_KEY_RESPONSE_STATUS)
-			.set(status);
+		ctx.channel().attr(ATTR_KEY_RESPONSE_STATUS).set(status);
 	}
 
 	protected void handleContainerRequest(
@@ -467,7 +451,7 @@ extends ChannelInboundHandlerAdapter {
 	protected final T listContainer(
 		final String name, final String marker, final List<T> buffer, final int maxCount
 	)
-	throws ContainerMockException, RemoteException {
+	throws ContainerMockException {
 		final T lastObject = localStorage.listObjects(name, marker, buffer, maxCount);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
