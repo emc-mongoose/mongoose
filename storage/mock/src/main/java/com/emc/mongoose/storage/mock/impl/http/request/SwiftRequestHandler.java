@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
-import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -24,7 +23,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.util.AttributeKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -79,7 +77,7 @@ extends RequestHandlerBase<T> {
 	) {
 		FullHttpResponse response = null;
 		final Channel channel = ctx.channel();
-		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
+		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(uri.startsWith(AUTH, 1)) {
 			if(method.equals(GET)) {
 				final String authToken = randomString(0x10);
@@ -105,7 +103,7 @@ extends RequestHandlerBase<T> {
 				setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 			}
 		}
-	    if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+	    if(channel.attr(ATTR_KEY_CTX_WRITE_FLAG).get()) {
 			if (response == null) {
 				writeEmptyResponse(ctx);
 			} else {
@@ -173,10 +171,7 @@ extends RequestHandlerBase<T> {
 			}
 			try {
 				final byte[] content = OBJ_MAPPER.writeValueAsBytes(nodeRoot);
-				ctx
-					.channel()
-					.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
-					.set(false);
+				ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 				final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 				response.headers().set(CONTENT_TYPE, "application/json");
 				HttpUtil.setContentLength(response, content.length);

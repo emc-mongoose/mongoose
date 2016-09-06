@@ -3,10 +3,8 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
-import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -24,7 +22,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -120,14 +117,13 @@ extends RequestHandlerBase<T> {
 	) {
 		final Channel channel = ctx.channel();
 		FullHttpResponse response = null;
-		final HttpRequest request = channel.attr(AttributeKey.<HttpRequest>valueOf
-				(REQUEST_KEY)).get();
+		final HttpRequest request = channel.attr(ATTR_KEY_REQUEST).get();
 		String[] metaDataList = null;
 		final HttpHeaders requestHeaders = request.headers();
 		if(requestHeaders.contains(KEY_EMC_TAGS)) {
 			metaDataList = requestHeaders.get(KEY_EMC_TAGS).split(",");
 		}
-		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
+		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(uri.startsWith(OBJ_PATH)) {
 			final String[] uriParams = getUriParameters(uri, 3);
 			String objectId = uriParams[2];
@@ -149,7 +145,7 @@ extends RequestHandlerBase<T> {
 					}
 					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
 					final Attribute<HttpResponseStatus> statusAttribute =
-						channel.attr(AttributeKey.valueOf(RESPONSE_STATUS_KEY));
+						channel.attr(ATTR_KEY_RESPONSE_STATUS);
 					response = newEmptyResponse(statusAttribute.get());
 					final int statusCode = response.status().code();
 					if(statusCode < 300 && 200 <= statusCode) {
@@ -179,7 +175,7 @@ extends RequestHandlerBase<T> {
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
-		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+		if(channel.attr(ATTR_KEY_CTX_WRITE_FLAG).get()) {
 			if (response == null) {
 				writeEmptyResponse(ctx);
 			} else {
@@ -254,8 +250,7 @@ extends RequestHandlerBase<T> {
 			final ChannelHandlerContext ctx
 	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
-		final HttpHeaders headers = ctx.channel()
-				.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY)).get().headers();
+		final HttpHeaders headers = ctx.channel().attr(ATTR_KEY_REQUEST).get().headers();
 		if(headers.contains(KEY_EMC_LIMIT)) {
 			try {
 				maxCount = Integer.parseInt(headers.get(KEY_EMC_LIMIT));
@@ -315,10 +310,7 @@ extends RequestHandlerBase<T> {
 			);
 		}
 		final byte[] content = stream.toByteArray();
-		ctx
-			.channel()
-			.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
-			.set(false);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final FullHttpResponse
 				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");

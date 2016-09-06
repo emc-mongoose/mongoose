@@ -15,7 +15,6 @@ import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReach
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 
-import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -42,9 +41,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -84,11 +80,16 @@ extends ChannelInboundHandlerAdapter {
 	
 	private final int prefixLength, idRadix;
 
-	static final String REQUEST_KEY = "requestKey";
-	static final String RESPONSE_STATUS_KEY = "responseStatusKey";
-	private static final String CONTENT_LENGTH_KEY = "contentLengthKey";
-	static final String CTX_WRITE_FLAG_KEY = "ctxWriteFlagKey";
-	private static final String HANDLER_KEY = "handlerKey";
+	protected static final AttributeKey<HttpRequest> ATTR_KEY_REQUEST = AttributeKey
+		.newInstance("requestKey");
+	protected static final AttributeKey<HttpResponseStatus> ATTR_KEY_RESPONSE_STATUS = AttributeKey
+		.newInstance("responseStatusKey");
+	protected static final AttributeKey<Long> ATTR_KEY_CONTENT_LENGTH = AttributeKey
+		.newInstance("contentLengthKey");
+	protected static final AttributeKey<Boolean> ATTR_KEY_CTX_WRITE_FLAG = AttributeKey
+		.newInstance("ctxWriteFlagKey");
+	protected static final AttributeKey<String> ATTR_KEY_HANDLER = AttributeKey
+		.newInstance("handlerKey");
 
 	static final int DEFAULT_PAGE_SIZE = 0x1000;
 	static final String MARKER_KEY = "marker";
@@ -106,11 +107,6 @@ extends ChannelInboundHandlerAdapter {
 		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
 		apiClsName = getClass().getSimpleName();
-		AttributeKey.<HttpRequest>valueOf(REQUEST_KEY);
-		AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY);
-		AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY);
-		AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY);
-		AttributeKey.<String>valueOf(HANDLER_KEY);
 	}
 
 	protected boolean checkApiMatch(final HttpRequest request) {
@@ -122,7 +118,7 @@ extends ChannelInboundHandlerAdapter {
 	throws Exception {
 		final String ctxName = ctx
 			.channel()
-			.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
+			.attr(ATTR_KEY_HANDLER)
 			.get();
 		if(!apiClsName.equals(ctxName)) {
 			ctx.fireChannelReadComplete();
@@ -135,11 +131,11 @@ extends ChannelInboundHandlerAdapter {
 		final Channel channel = ctx.channel();
 		final HttpHeaders headers = request.headers();
 		channel
-			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.attr(ATTR_KEY_REQUEST)
 			.set(request);
 		if(headers.contains(CONTENT_LENGTH)) {
 			channel
-				.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY))
+				.attr(ATTR_KEY_CONTENT_LENGTH)
 				.set(Long.parseLong(headers.get(CONTENT_LENGTH)));
 		}
 	}
@@ -149,23 +145,16 @@ extends ChannelInboundHandlerAdapter {
 		final Channel channel = ctx.channel();
 		if(msg instanceof HttpRequest) {
 			if(!checkApiMatch((HttpRequest) msg)) {
-				channel
-					.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
-					.set("");
+				channel.attr(ATTR_KEY_HANDLER).set("");
 				ctx.fireChannelRead(msg);
 				return;
 			}
-			channel
-				.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
-				.set(apiClsName);
+			channel.attr(ATTR_KEY_HANDLER).set(apiClsName);
 			processHttpRequest(ctx, (HttpRequest) msg);
 			ReferenceCountUtil.release(msg);
 			return;
 		}
-		if(!channel
-			.attr(AttributeKey.<String>valueOf(HANDLER_KEY))
-			.get()
-			.equals(apiClsName)) {
+		if(!channel.attr(ATTR_KEY_HANDLER).get().equals(apiClsName)) {
 			ctx.fireChannelRead(msg);
 			return;
 		}
@@ -189,16 +178,16 @@ extends ChannelInboundHandlerAdapter {
 		}
 		final Channel channel = ctx.channel();
 		final String uri = channel
-			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.attr(ATTR_KEY_REQUEST)
 			.get()
 			.uri();
 		final HttpMethod method = channel
-			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.attr(ATTR_KEY_REQUEST)
 			.get()
 			.method();
 		final long size;
-		if(channel.hasAttr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY))) {
-			size = channel.attr(AttributeKey.<Long>valueOf(CONTENT_LENGTH_KEY)).get();
+		if(channel.hasAttr(ATTR_KEY_CONTENT_LENGTH)) {
+			size = channel.attr(ATTR_KEY_CONTENT_LENGTH).get();
 		} else {
 			size = 0;
 		}
@@ -255,7 +244,7 @@ extends ChannelInboundHandlerAdapter {
 	) {
 		final HttpResponseStatus status = ctx
 			.channel()
-			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.attr(ATTR_KEY_RESPONSE_STATUS)
 			.get();
 		response.setStatus(status);
 		ctx.write(response);
@@ -264,7 +253,7 @@ extends ChannelInboundHandlerAdapter {
 	protected final void writeEmptyResponse(final ChannelHandlerContext ctx) {
 		final HttpResponseStatus status = ctx
 			.channel()
-			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.attr(ATTR_KEY_RESPONSE_STATUS)
 			.get();
 		final FullHttpResponse response = newEmptyResponse(status);
 		ctx.write(response);
@@ -295,7 +284,7 @@ extends ChannelInboundHandlerAdapter {
 	) {
 		final List<String> rangeHeadersValues = ctx
 			.channel()
-			.attr(AttributeKey.<HttpRequest>valueOf(REQUEST_KEY))
+			.attr(ATTR_KEY_REQUEST)
 			.get()
 			.headers()
 			.getAll(RANGE);
@@ -409,7 +398,7 @@ extends ChannelInboundHandlerAdapter {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
 			ctx
 				.channel()
-				.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+				.attr(ATTR_KEY_CTX_WRITE_FLAG)
 				.set(false);
 			final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 			HttpUtil.setContentLength(response, size);
@@ -447,7 +436,7 @@ extends ChannelInboundHandlerAdapter {
 	) {
 		ctx
 			.channel()
-			.attr(AttributeKey.<HttpResponseStatus>valueOf(RESPONSE_STATUS_KEY))
+			.attr(ATTR_KEY_RESPONSE_STATUS)
 			.set(status);
 	}
 
