@@ -43,7 +43,15 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
@@ -68,17 +76,18 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 extends ChannelInboundHandlerAdapter {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
 	private final StorageMockClient<T, StorageMockServer<T>> remoteStorage;
+	private final ExecutorService storagePoller;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
 	private final String apiClsName;
-	
+
 	private final int prefixLength, idRadix;
 
 	protected static final AttributeKey<HttpRequest> ATTR_KEY_REQUEST = AttributeKey
@@ -92,8 +101,8 @@ extends ChannelInboundHandlerAdapter {
 	protected static final AttributeKey<String> ATTR_KEY_HANDLER = AttributeKey
 		.newInstance("handlerKey");
 
-	static final int DEFAULT_PAGE_SIZE = 0x1000;
-	static final String MARKER_KEY = "marker";
+	protected static final int DEFAULT_PAGE_SIZE = 0x1000;
+	protected static final String MARKER_KEY = "marker";
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
@@ -109,7 +118,8 @@ extends ChannelInboundHandlerAdapter {
 		this.localStorage = localStorage;
 		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
-		apiClsName = getClass().getSimpleName();
+		this.apiClsName = getClass().getSimpleName();
+		storagePoller = Executors.newCachedThreadPool();
 	}
 
 	protected boolean checkApiMatch(final HttpRequest request) {
@@ -357,15 +367,20 @@ extends ChannelInboundHandlerAdapter {
 				handleObjectReadSuccess(object, ctx);
 			} else {
 				if (remoteStorage != null) {
-					try {
-						for(final StorageMockServer<T> node : remoteStorage.getNodes()) {
-							object = node.getObjectRemotely(containerName, id, offset, 0);
-							if(object != null) {
-								break;
-							}
+					final List<Future<T>> objFutures = new ArrayList<>();
+					for(final StorageMockServer<T> node : remoteStorage.getNodes()) {
+						objFutures.add(
+							storagePoller.submit(
+								() -> node.getObjectRemotely(containerName, id, offset, 0)
+							)
+						);
+					}
+					for (final Future<T> objFuture: objFutures) {
+						final Optional<T> objOpt = Optional.ofNullable(objFuture.get());
+						if (objOpt.isPresent()) {
+							object = objOpt.get();
+							break;
 						}
-					} catch(final RemoteException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Remote Nagaina failure");
 					}
 				}
 				if(object == null) {
@@ -382,6 +397,8 @@ extends ChannelInboundHandlerAdapter {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);
+		} catch(final InterruptedException | ExecutionException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Remote call failure", containerName);
 		}
 	}
 
