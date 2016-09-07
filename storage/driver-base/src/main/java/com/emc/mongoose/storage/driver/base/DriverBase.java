@@ -31,14 +31,17 @@ implements Driver<I, O> {
 	protected final int concurrencyLevel;
 	protected final String userName;
 	protected final String secret;
+	protected final String srcContainer;
 
 	protected DriverBase(
-		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig
+		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final String srcContainer
 	) {
 		this.runId = runId;
 		this.userName = authConfig.getId();
 		secret = authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
+		this.srcContainer = srcContainer;
 	}
 
 	@Override

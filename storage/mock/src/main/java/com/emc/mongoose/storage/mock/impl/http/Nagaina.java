@@ -127,7 +127,7 @@ extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	public void close()
 	throws IOException {
-		for(final Channel channel: channels) {
+		for(final Channel channel : channels) {
 			channel.close();
 		}
 	}

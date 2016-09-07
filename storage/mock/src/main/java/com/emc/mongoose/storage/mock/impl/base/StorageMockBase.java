@@ -4,7 +4,6 @@ import com.emc.mongoose.common.collection.ListingLRUMap;
 import com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer;
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
@@ -15,7 +14,6 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundExceptio
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -77,10 +75,6 @@ implements StorageMock<T> {
 		createContainer(defaultContainerName);
 	}
 
-	protected final ContentSource getContentSource() {
-		return contentSrc;
-	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Container methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,8 +87,8 @@ implements StorageMock<T> {
 	@Override
 	public final ObjectContainerMock<T> getContainer(final String name) {
 		try {
-			final Future<ObjectContainerMock<T>> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetContainerTask(name));
+			final Future<ObjectContainerMock<T>> future = BlockingQueueTaskSequencer
+				.INSTANCE.submit(new GetContainerTask(name));
 			if(future != null) {
 				return future.get();
 			}
@@ -119,21 +113,24 @@ implements StorageMock<T> {
 
 	@Override
 	public final void createObject(
-			final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException {
 		if(isCapacityExhausted.get()) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectTask(containerName, newDataObject(id, offset, size)));
+		BlockingQueueTaskSequencer.INSTANCE.submit(
+			new PutObjectTask(containerName, newDataObject(id, offset, size))
+		);
 	}
 
 	@Override
 	public final void updateObject(
-			final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final Future<T> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
+			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
+				new GetObjectTask(containerName, id)
+			);
 			if(future != null) {
 				final T obj = future.get();
 				if(obj == null) {
@@ -153,8 +150,9 @@ implements StorageMock<T> {
 			final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final Future<T> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
+			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
+				new GetObjectTask(containerName, id)
+			);
 			if(future != null) {
 				final T obj = future.get();
 				if(obj == null) {
@@ -197,7 +195,8 @@ implements StorageMock<T> {
 
 	@Override
 	public final T listObjects(
-			final String containerName, final String afterObjectId, final Collection<T> outputBuffer, final int limit
+		final String containerName, final String afterObjectId, final Collection<T> outputBuffer,
+		final int limit
 	) throws ContainerMockException {
 		try {
 			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(

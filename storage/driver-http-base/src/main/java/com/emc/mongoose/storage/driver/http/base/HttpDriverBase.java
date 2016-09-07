@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.http.base;
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
@@ -71,9 +72,9 @@ implements HttpDriver<I, O> {
 	
 	protected HttpDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final SocketConfig socketConfig
+		final String srcContainer, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(runId, storageConfig.getAuthConfig(), loadConfig);
+		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer);
 		try {
 			if(secret == null) {
 				secretKey = null;
@@ -128,8 +129,7 @@ implements HttpDriver<I, O> {
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		switch(ioType) {
 			case CREATE:
-				final String objSrcPath = item.getPath();
-				if(objSrcPath == null) {
+				if(srcContainer == null) {
 					if(item instanceof DataItem) {
 						try {
 							httpHeaders.set(
@@ -142,6 +142,7 @@ implements HttpDriver<I, O> {
 					}
 				} else {
 					applyCopyHeaders(httpHeaders, item);
+					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				}
 				break;
 			case READ:
@@ -246,15 +247,20 @@ implements HttpDriver<I, O> {
 			c.attr(ATTR_KEY_IOTASK).set(ioTask);
 			
 			try {
-				c.write(getHttpRequest(ioTask, bestNode));
 				ioTask.setReqTimeStart(System.nanoTime() / 1000);
+				c.write(getHttpRequest(ioTask, bestNode));
 				if(LoadType.CREATE.equals(ioType)) {
 					if(item instanceof DataItem) {
-						c.write(new DataItemFileRegion<>((DataItem) item));
+						final DataItem dataItem = (DataItem) item;
+						c
+							.write(new DataItemFileRegion<>(dataItem))
+							.addListener(this);
+						((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
 					}
 				} else if(LoadType.UPDATE.equals(ioType)) {
 					if(item instanceof MutableDataItem) {
 						final MutableDataItem mdi = (MutableDataItem) item;
+						final DataIoTask dataIoTask = (DataIoTask) ioTask;
 						if(mdi.hasScheduledUpdates()) {
 							long nextRangeOffset, nextRangeSize;
 							BasicDataItem nextUpdatedRange;
@@ -265,7 +271,12 @@ implements HttpDriver<I, O> {
 									nextUpdatedRange = new BasicDataItem(
 										(BasicDataItem) mdi, nextRangeOffset, nextRangeSize, true
 									);
-									c.write(new DataItemFileRegion<>(nextUpdatedRange));
+									c
+										.write(new DataItemFileRegion<>(nextUpdatedRange))
+										.addListener(this);
+									dataIoTask.setCountBytesDone(
+										dataIoTask.getCountBytesDone() + nextRangeSize
+									);
 								}
 							}
 						}
@@ -277,7 +288,7 @@ implements HttpDriver<I, O> {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 			}
 			
-			c.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(this);
+			c.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		}
 		
 		@Override

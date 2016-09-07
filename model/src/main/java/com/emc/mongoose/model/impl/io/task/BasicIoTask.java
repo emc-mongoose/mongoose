@@ -29,8 +29,6 @@ implements IoTask<I> {
 		this.dstPath = dstPath;
 	}
 	//
-	
-	//
 	@Override
 	public final I getItem() {
 		return item;

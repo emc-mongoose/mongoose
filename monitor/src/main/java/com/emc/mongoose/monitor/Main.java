@@ -84,8 +84,9 @@ public class Main {
 				log.info(Markers.MSG, "Work on the files");
 				drivers.add(
 					new BasicFileDriver<>(
-						runId, storageConfig.getAuthConfig(),  loadConfig,
-						config.getIoConfig().getBufferConfig()
+						runId, storageConfig.getAuthConfig(), loadConfig,
+						itemConfig.getInputConfig().getContainer(),
+						config.getIoConfig().getBufferConfig().getSize()
 					)
 				);
 			}
@@ -99,7 +100,8 @@ public class Main {
 					case "s3" :
 						drivers.add(
 							new HttpS3Driver<>(
-								runId, loadConfig, storageConfig, config.getSocketConfig()
+								runId, loadConfig, storageConfig,
+								itemConfig.getInputConfig().getContainer(), config.getSocketConfig()
 							)
 						);
 						break;

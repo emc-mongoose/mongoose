@@ -4,6 +4,7 @@ import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -116,15 +117,17 @@ extends SimpleChannelInboundHandler<HttpObject> {
 		}
 		
 		if(msg instanceof HttpContent) {
-			if(ioTask instanceof DataIoTask) {
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				if(dataIoTask.getDataLatency() == -1) { // if not set yet - 1st time
-					dataIoTask.setRespDataTimeStart(System.nanoTime() / 1000);
+			if(LoadType.READ.equals(ioTask.getLoadType())) {
+				if(ioTask instanceof DataIoTask) {
+					final DataIoTask dataIoTask = (DataIoTask) ioTask;
+					if(dataIoTask.getDataLatency() == -1) { // if not set yet - 1st time
+						dataIoTask.setRespDataTimeStart(System.nanoTime() / 1000);
+					}
+					final ByteBuf content = ((HttpContent) msg).content();
+					dataIoTask.setCountBytesDone(
+						dataIoTask.getCountBytesDone() + content.readableBytes()
+					);
 				}
-				final ByteBuf content = ((HttpContent) msg).content();
-				dataIoTask.setCountBytesDone(
-					dataIoTask.getCountBytesDone() + content.readableBytes()
-				);
 			}
 			if(msg instanceof LastHttpContent) {
 				ioTask.setRespTimeDone(System.nanoTime() / 1000);

@@ -2,13 +2,15 @@ package com.emc.mongoose.common.concurrent;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 
+import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
 /**
  Created on 21.07.16.
  */
-public interface Launchable {
+public interface Launchable
+extends Closeable {
 
 	void start()
 	throws UserShootHisFootException;

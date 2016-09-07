@@ -8,7 +8,6 @@ import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.DriverBase;
-import static com.emc.mongoose.ui.config.Config.IoConfig.BufferConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.Markers;
@@ -39,10 +38,9 @@ implements Driver<I, O> {
 
 	public FsDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final BufferConfig ioBufferConfig
+		final String srcContainer, final SizeInBytes ioBuffSize
 	) {
-		super(runId, storageConfig, loadConfig);
-		final SizeInBytes ioBuffSize = ioBufferConfig.getSize();
+		super(runId, storageConfig, loadConfig, srcContainer);
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
 		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {
