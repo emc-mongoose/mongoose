@@ -1,8 +1,7 @@
 package com.emc.mongoose.storage.mock;
 
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.StorageMockServer;
-import com.emc.mongoose.storage.mock.impl.http.BasicStorageMockNode;
+import com.emc.mongoose.storage.mock.api.StorageMockNode;
+import com.emc.mongoose.storage.mock.impl.http.StorageMockNodeFactory;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
@@ -53,12 +52,12 @@ public class Main {
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		final Config.ItemConfig itemConfig = config.getItemConfig();
-		
-		try(final StorageMockServer<MutableDataItemMock> nagaina =
-			    new BasicStorageMockNode(storageConfig, loadConfig, itemConfig)) {
-			nagaina.start();
+		;
+		try(final StorageMockNode storageMockNode =
+			    StorageMockNodeFactory.newNagainaNode(storageConfig, loadConfig, itemConfig)) {
+			storageMockNode.start();
 			try {
-				nagaina.await();
+				storageMockNode.await();
 			} catch(final InterruptedException ignored) {
 			}
 		} catch(final Exception e) {

@@ -2,6 +2,8 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
@@ -58,9 +60,11 @@ extends RequestHandlerBase<T> {
 	
 	public SwiftRequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMockServer<T> sharedStorage, final ContentSource contentSource
+		final StorageMock<T> localStorage,
+		final StorageMockClient<T, StorageMockServer<T>> remoteStorage,
+		final ContentSource contentSource
 	) throws RemoteException {
-		super(limitConfig, namingConfig, sharedStorage, contentSource);
+		super(limitConfig, namingConfig, localStorage, remoteStorage, contentSource);
 	}
 
 	@Override

@@ -48,7 +48,7 @@ implements StorageMockClient<T, O>{
 	}
 
 	@Override
-	public void open() {
+	public void start() {
 		jmDns.addServiceListener(MDns.Type.HTTP.toString(), this);
 	}
 

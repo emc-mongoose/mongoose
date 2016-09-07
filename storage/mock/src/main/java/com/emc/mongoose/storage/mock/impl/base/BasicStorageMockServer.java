@@ -36,7 +36,7 @@ implements StorageMockServer<T> {
 	private final StorageMock<T> storage;
 	private final JmDNS jmDns;
 
-	protected BasicStorageMockServer(final StorageMock<T> storage, final JmDNS jmDns)
+	public BasicStorageMockServer(final StorageMock<T> storage, final JmDNS jmDns)
 	throws RemoteException {
 		this.storage = storage;
 		this.jmDns = jmDns;
@@ -71,6 +71,7 @@ implements StorageMockServer<T> {
 				LOG, Level.ERROR, e, "Failed to register as service"
 			);
 		}
+		storage.start();
 	}
 
 	@Override

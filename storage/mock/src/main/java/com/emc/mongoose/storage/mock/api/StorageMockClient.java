@@ -12,7 +12,7 @@ public interface StorageMockClient<T extends MutableDataItemMock,
 	O extends StorageMockServer<T>>
 extends ServiceListener, Closeable {
 
-	void open();
+	void start();
 
 	Collection<O> getNodes();
 

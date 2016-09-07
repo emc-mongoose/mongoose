@@ -4,6 +4,7 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -72,7 +73,7 @@ extends ChannelInboundHandlerAdapter {
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
-	private final StorageMockServer<T> remoteStorage;
+	private final StorageMockClient<T, StorageMockServer<T>> remoteStorage;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
@@ -96,7 +97,9 @@ extends ChannelInboundHandlerAdapter {
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMockServer<T> remoteStorage, final ContentSource contentSource
+		final StorageMock<T> localStorage,
+		final StorageMockClient<T, StorageMockServer<T>> remoteStorage,
+		final ContentSource contentSource
 	) throws RemoteException {
 		this.rateLimit = limitConfig.getRate();
 		final String t = namingConfig.getPrefix();
@@ -386,17 +389,17 @@ extends ChannelInboundHandlerAdapter {
 		ioStats.markRead(true, size);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
-			ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
-			final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
-			HttpUtil.setContentLength(response, size);
-			ctx.write(response);
-			if(object.hasBeenUpdated()) {
-				ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
-			} else {
-				ctx.write(new DataItemFileRegion<>(object));
-			}
-			ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		}
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
+		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
+		HttpUtil.setContentLength(response, size);
+		ctx.write(response);
+		if(object.hasBeenUpdated()) {
+			ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
+		} else {
+			ctx.write(new DataItemFileRegion<>(object));
+		}
+		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}
 
 	private void handleObjectDelete(
