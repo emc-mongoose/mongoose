@@ -51,7 +51,10 @@ extends StorageMockBase<MutableDataItemMock>{
 		final Config.ItemConfig itemConfig, final ContentSource contentSource,
 		final List<ChannelInboundHandler> handlers
 	) {
-		super(storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource);
+		super(
+			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(),
+			itemConfig, contentSource
+		);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
 		dispatchGroups = new EventLoopGroup[headCount];
@@ -67,7 +70,9 @@ extends StorageMockBase<MutableDataItemMock>{
 		final int portsNumber = dispatchGroups.length;
 		for(int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroups[i] = new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
+				dispatchGroups[i] = new NioEventLoopGroup(
+					0, new DefaultThreadFactory("dispatcher-" + i)
+				);
 				workGroups[i] = new NioEventLoopGroup();
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
@@ -79,7 +84,9 @@ extends StorageMockBase<MutableDataItemMock>{
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
 							if(currentIndex % 2 == 1) {
-								pipeline.addLast(new SslHandler(SslContext.INSTANCE.createSSLEngine()));
+								pipeline.addLast(
+									new SslHandler(SslContext.INSTANCE.createSSLEngine())
+								);
 							}
 							pipeline.addLast(new HttpServerCodec());
 							for (final ChannelInboundHandler handler: handlers) {
@@ -133,7 +140,9 @@ extends StorageMockBase<MutableDataItemMock>{
 	}
 
 	@Override
-	protected MutableDataItemMock newDataObject(final String id, final long offset, final long size) {
+	protected MutableDataItemMock newDataObject(
+		final String id, final long offset, final long size
+	) {
 		return new BasicMutableDataItemMock(id, offset, size, 0, contentSrc);
 	}
 

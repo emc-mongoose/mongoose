@@ -35,7 +35,7 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
  Created on 06.09.16.
  */
 public class BasicStorageMockClient<T extends MutableDataItemMock, O extends StorageMockServer<T>>
-implements StorageMockClient<T, O>{
+implements StorageMockClient<T, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 

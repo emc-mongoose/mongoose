@@ -272,7 +272,8 @@ extends RequestHandlerBase<T> {
 			lastObject = listContainer(name, objectId, buffer, maxCount);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Subtenant \"{}\": generated list of {} objects, last one is \"{}\"",
+					Markers.MSG,
+					"Subtenant \"{}\": generated list of {} objects, last one is \"{}\"",
 					name, buffer.size(), lastObject
 				);
 			}
@@ -313,8 +314,9 @@ extends RequestHandlerBase<T> {
 		}
 		final byte[] content = stream.toByteArray();
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
-		final FullHttpResponse
-				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+		final FullHttpResponse response = new DefaultFullHttpResponse(
+			HTTP_1_1, OK, Unpooled.copiedBuffer(content)
+		);
 		response.headers().set(CONTENT_TYPE, "application/xml");
 		if(header != null) {
 			response.headers().set(header.getKey(), header.getValue());

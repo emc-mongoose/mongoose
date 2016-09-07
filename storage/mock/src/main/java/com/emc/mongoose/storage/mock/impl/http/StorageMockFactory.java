@@ -44,15 +44,19 @@ public class StorageMockFactory {
 	private final Config.ItemConfig.NamingConfig namingConfig;
 	private ContentSource contentSource;
 
-	public StorageMockFactory(final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig) {
+	public StorageMockFactory(
+		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
+		final Config.ItemConfig itemConfig
+	) {
 		this.storageConfig = storageConfig;
 		this.loadConfig = loadConfig;
 		this.itemConfig = itemConfig;
 		this.limitConfig = loadConfig.getLimitConfig();
 		this.namingConfig = itemConfig.getNamingConfig();
 		final Config.ItemConfig.DataConfig.ContentConfig contentConfig =
-			itemConfig.getDataConfig().getContentConfig();
+			itemConfig
+				.getDataConfig()
+				.getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
 		try {
 			this.contentSource = ContentSourceUtil.getInstance(
@@ -69,12 +73,15 @@ public class StorageMockFactory {
 	public StorageMockNode newNagainaNode()
 	throws RemoteException {
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
-		final StorageMock<MutableDataItemMock> storage =
-			new Nagaina(storageConfig, loadConfig, itemConfig, contentSource, handlers);
-		final StorageMockNode<MutableDataItemMock, StorageMockServer<MutableDataItemMock>>
-			storageMockNode = new BasicStorageMockNode(storage);
-		final StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>>
-			client = storageMockNode.client();
+		final StorageMock<MutableDataItemMock> storage = new Nagaina(
+			storageConfig, loadConfig, itemConfig, contentSource, handlers
+		);
+		final StorageMockNode<
+			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
+			> storageMockNode = new BasicStorageMockNode(storage);
+		final StorageMockClient<
+			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
+			> client = storageMockNode.client();
 		handlers.add(
 			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client, contentSource)
 		);
@@ -89,8 +96,9 @@ public class StorageMockFactory {
 
 	public StorageMock newNagaina() {
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
-		final StorageMock<MutableDataItemMock> storage =
-			new Nagaina(storageConfig, loadConfig, itemConfig, contentSource, handlers);
+		final StorageMock<MutableDataItemMock> storage = new Nagaina(
+			storageConfig, loadConfig, itemConfig, contentSource, handlers
+		);
 		try {
 			handlers.add(
 				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
@@ -112,7 +120,9 @@ public class StorageMockFactory {
 		private static final Logger LOG = LogManager.getLogger();
 
 		private JmDNS jmDns;
-		private StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> client;
+		private StorageMockClient<
+			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
+			> client;
 		private StorageMockServer<MutableDataItemMock> server;
 
 		public BasicStorageMockNode(final StorageMock<MutableDataItemMock> storage) {
@@ -122,15 +132,17 @@ public class StorageMockFactory {
 				LOG.info("mDNS address: " + jmDns.getInetAddress());
 				server = new BasicStorageMockServer<>(storage, jmDns);
 				client = new BasicStorageMockClient<>(jmDns);
-			} catch(final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to create storage mock node"
-				);
+			} catch(
+				final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e
+				) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to create storage mock node");
 			}
 		}
 
 		@Override
-		public StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> client() {
+		public StorageMockClient<
+			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
+			> client() {
 			return client;
 		}
 
@@ -140,13 +152,12 @@ public class StorageMockFactory {
 		}
 
 		@Override
-		public void start() throws UserShootHisFootException {
+		public void start()
+		throws UserShootHisFootException {
 			try {
 				server.start();
 			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start storage mock server"
-				);
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to start storage mock server");
 			}
 			client.start();
 		}

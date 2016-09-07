@@ -11,7 +11,7 @@ import java.util.List;
  Created on 11.07.16.
  */
 public interface Driver<I extends Item, O extends IoTask<I>>
-extends Closeable, InterruptableDaemon {
+extends InterruptableDaemon {
 
 	boolean isFullThrottleEntered();
 

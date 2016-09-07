@@ -755,7 +755,8 @@ public final class Config {
 		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
-		
+		public static final String KEY_NODE = "node";
+
 		public final void setAddrs(final List<String> addrs) {
 			this.addrs = addrs;
 		}
@@ -783,7 +784,12 @@ public final class Config {
 		public final void setMockConfig(final MockConfig mockConfig) {
 			this.mockConfig = mockConfig;
 		}
-		
+
+		public final void setNode(final boolean node) {
+			this.node = node;
+		}
+
+
 		@JsonProperty(KEY_ADDRS) private List<String> addrs;
 		@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
 		@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
@@ -791,6 +797,7 @@ public final class Config {
 		@JsonProperty(KEY_SSL) private boolean ssl;
 		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
+		@JsonProperty(KEY_NODE) private boolean node;
 
 		public StorageConfig() {
 		}
@@ -821,6 +828,10 @@ public final class Config {
 
 		public MockConfig getMockConfig() {
 			return mockConfig;
+		}
+
+		public boolean getNode() {
+			return node;
 		}
 
 		public final static class AuthConfig {
