@@ -15,9 +15,9 @@ import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -67,12 +67,12 @@ extends StorageMockBase<MutableDataItemMock>{
 		final int portsNumber = dispatchGroups.length;
 		for(int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroups[i] = new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
-				workGroups[i] = new EpollEventLoopGroup();
+				dispatchGroups[i] = new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
+				workGroups[i] = new NioEventLoopGroup();
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
 				serverBootstrap.group(dispatchGroups[i], workGroups[i])
-					.channel(EpollServerSocketChannel.class)
+					.channel(NioServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						protected void initChannel(final SocketChannel socketChannel)

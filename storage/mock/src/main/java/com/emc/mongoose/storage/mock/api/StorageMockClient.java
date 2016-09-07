@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.mock.api;
 
 import javax.jmdns.ServiceListener;
 import java.io.Closeable;
-import java.rmi.RemoteException;
 import java.util.Collection;
 
 /**
@@ -17,7 +16,5 @@ extends ServiceListener, Closeable {
 	Collection<O> getNodes();
 
 	void printNodeList();
-
-	StorageMock<T> getLocalStorage() throws RemoteException;
 
 }

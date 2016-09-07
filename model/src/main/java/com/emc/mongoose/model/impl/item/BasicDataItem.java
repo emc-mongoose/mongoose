@@ -249,7 +249,11 @@ implements DataItem {
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) (offset + position) % ringBuffSize);
+		try {
+			ringBuff.position((int) ((offset + position) % ringBuffSize));
+		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
+		}
 		int n = (int) Math.min(maxCount, ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
 		n = chanDst.write(ringBuff);

@@ -106,7 +106,7 @@ extends ChannelInboundHandlerAdapter {
 		this.prefixLength = t == null ? 0 : t.length();
 		this.idRadix = namingConfig.getRadix();
 		this.remoteStorage = remoteStorage;
-		this.localStorage = remoteStorage.getLocalStorage();
+		this.localStorage = localStorage;
 		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
 		apiClsName = getClass().getSimpleName();
@@ -356,15 +356,17 @@ extends ChannelInboundHandlerAdapter {
 			if(object != null) {
 				handleObjectReadSuccess(object, ctx);
 			} else {
-				try {
-					for (final StorageMockServer<T> node: remoteStorage.getNodes()) {
-						object = node.getObjectRemotely(containerName, id, offset, 0);
-						if (object != null) {
-							break;
+				if (remoteStorage != null) {
+					try {
+						for(final StorageMockServer<T> node : remoteStorage.getNodes()) {
+							object = node.getObjectRemotely(containerName, id, offset, 0);
+							if(object != null) {
+								break;
+							}
 						}
+					} catch(final RemoteException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Remote Nagaina failure");
 					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Remote Nagaina failure");
 				}
 				if(object == null) {
 					setHttpResponseStatusInContext(ctx, NOT_FOUND);

@@ -33,24 +33,29 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 07.09.16.
  */
-public class StorageMockNodeFactory {
+public class StorageMockFactory {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public static StorageMockNode newNagainaNode(
-		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig
-	) throws RemoteException {
-		final List<ChannelInboundHandler> handlers = new ArrayList<>();
-		final Config.LoadConfig.LimitConfig limitConfig = loadConfig.getLimitConfig();
-		final Config.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
-		final Config.ItemConfig.DataConfig.ContentConfig contentConfig = itemConfig
-			.getDataConfig()
-			.getContentConfig();
+	private final Config.StorageConfig storageConfig;
+	private final Config.LoadConfig loadConfig;
+	private final Config.ItemConfig itemConfig;
+	private final Config.LoadConfig.LimitConfig limitConfig;
+	private final Config.ItemConfig.NamingConfig namingConfig;
+	private ContentSource contentSource;
+
+	public StorageMockFactory(final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
+		final Config.ItemConfig itemConfig) {
+		this.storageConfig = storageConfig;
+		this.loadConfig = loadConfig;
+		this.itemConfig = itemConfig;
+		this.limitConfig = loadConfig.getLimitConfig();
+		this.namingConfig = itemConfig.getNamingConfig();
+		final Config.ItemConfig.DataConfig.ContentConfig contentConfig =
+			itemConfig.getDataConfig().getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
-		final ContentSource contentSource;
 		try {
-			contentSource = ContentSourceUtil.getInstance(
+			this.contentSource = ContentSourceUtil.getInstance(
 				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
 			);
 		} catch(final IOException e) {
@@ -59,6 +64,11 @@ public class StorageMockNodeFactory {
 			);
 			throw new IllegalStateException();
 		}
+	}
+
+	public StorageMockNode newNagainaNode()
+	throws RemoteException {
+		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<MutableDataItemMock> storage =
 			new Nagaina(storageConfig, loadConfig, itemConfig, contentSource, handlers);
 		final StorageMockNode<MutableDataItemMock, StorageMockServer<MutableDataItemMock>>
@@ -75,6 +85,25 @@ public class StorageMockNodeFactory {
 			new S3RequestHandler<>(limitConfig, namingConfig, storage, client, contentSource)
 		);
 		return storageMockNode;
+	}
+
+	public StorageMock newNagaina() {
+		final List<ChannelInboundHandler> handlers = new ArrayList<>();
+		final StorageMock<MutableDataItemMock> storage =
+			new Nagaina(storageConfig, loadConfig, itemConfig, contentSource, handlers);
+		try {
+			handlers.add(
+				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
+			);
+			handlers.add(
+				new AtmosRequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
+			);
+			handlers.add(
+				new S3RequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
+			);
+		} catch(final RemoteException ignore) {
+		}
+		return storage;
 	}
 
 	private static class BasicStorageMockNode
@@ -111,25 +140,44 @@ public class StorageMockNodeFactory {
 		}
 
 		@Override
-		public void start() throws UserShootHisFootException, RemoteException {
-			server.start();
+		public void start() throws UserShootHisFootException {
+			try {
+				server.start();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to start storage mock server"
+				);
+			}
 			client.start();
 		}
 
 		@Override
-		public boolean isStarted() throws RemoteException {
-			return server.isStarted();
+		public boolean isStarted() {
+			try {
+				return server.isStarted();
+			} catch(final RemoteException ignore) {
+			}
+			return false;
 		}
 
 		@Override
-		public boolean await() throws InterruptedException, RemoteException {
-			return server.await();
+		public boolean await()
+		throws InterruptedException {
+			try {
+				return server.await();
+			} catch(final RemoteException ignore) {
+			}
+			return false;
 		}
 
 		@Override
 		public boolean await(final long timeout, final TimeUnit timeUnit)
-		throws InterruptedException, RemoteException {
-			return server.await(timeout, timeUnit);
+		throws InterruptedException {
+			try {
+				return server.await(timeout, timeUnit);
+			} catch(final RemoteException ignore) {
+			}
+			return false;
 		}
 
 		@Override

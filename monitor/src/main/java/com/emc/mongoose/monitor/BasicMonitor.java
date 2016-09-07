@@ -1,6 +1,6 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.InterruptableDaemonBase;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.LoadType;
@@ -31,7 +31,7 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
  Created by kurila on 12.07.16.
  */
 public class BasicMonitor<I extends Item, O extends IoTask<I>>
-extends DaemonBase
+extends InterruptableDaemonBase
 implements Monitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();

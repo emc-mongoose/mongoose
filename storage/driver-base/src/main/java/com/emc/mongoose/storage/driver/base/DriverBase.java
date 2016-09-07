@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.InterruptableDaemonBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
  This mock just passes the submitted tasks to the load monitor em
  */
 public abstract class DriverBase<I extends Item, O extends IoTask<I>>
-extends DaemonBase
+extends InterruptableDaemonBase
 implements Driver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();

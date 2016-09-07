@@ -71,14 +71,6 @@ implements StorageMockClient<T, O>{
 	}
 
 	@Override
-	public StorageMock<T> getLocalStorage()
-	throws RemoteException {
-		return null;
-	}
-
-
-
-	@Override
 	public void serviceAdded(final ServiceEvent event) {
 		jmDns.requestServiceInfo(event.getType(), event.getName(), 10);
 	}
