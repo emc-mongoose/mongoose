@@ -20,7 +20,6 @@ import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import static io.netty.handler.codec.http.LastHttpContent.EMPTY_LAST_CONTENT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
@@ -29,7 +28,6 @@ import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -285,10 +283,9 @@ implements HttpDriver<I, O> {
 		@Override
 		public void operationComplete(final Future<Void> future)
 		throws Exception {
-			monitorRef.get().ioTaskCompleted(ioTask);
+			ioTask.setReqTimeDone(System.nanoTime() / 1000);
 		}
 	}
-	
 	
 	@Override
 	public void submit(final O task)

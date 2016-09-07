@@ -408,20 +408,20 @@ extends ChannelInboundHandlerAdapter {
 		ioStats.markRead(true, size);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
-			ctx
-				.channel()
-				.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
-				.set(false);
-			final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
-			HttpUtil.setContentLength(response, size);
-			ctx.write(response);
-			if(object.hasBeenUpdated()) {
-				ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
-			} else {
-				ctx.write(new DataItemFileRegion<>(object));
-			}
-			ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		}
+		ctx
+			.channel()
+			.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
+			.set(false);
+		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
+		HttpUtil.setContentLength(response, size);
+		ctx.write(response);
+		if(object.hasBeenUpdated()) {
+			ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
+		} else {
+			ctx.write(new DataItemFileRegion<>(object));
+		}
+		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}
 
 	private void handleObjectDelete(

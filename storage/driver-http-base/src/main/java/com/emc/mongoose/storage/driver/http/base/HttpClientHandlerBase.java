@@ -9,6 +9,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -91,6 +92,26 @@ extends SimpleChannelInboundHandler<HttpObject> {
 					ioTask.setStatus(FAIL_UNKNOWN);
 					break;
 			}
+			
+			/*final String cl = httpResponse.headers().get(HttpHeaderNames.CONTENT_LENGTH);
+			if(cl != null) {
+				try {
+					final int contentLength = Integer.parseInt(cl);
+					if(contentLength < 1) {
+						if(ioTask instanceof DataIoTask) {
+							final DataIoTask dataIoTask = (DataIoTask) ioTask;
+							dataIoTask.setRespDataTimeStart(System.nanoTime() / 1000);
+						}
+						ioTask.setRespTimeDone(System.nanoTime() / 1000);
+						ctx.close();
+						monitorRef.get().ioTaskCompleted((O) ioTask);
+					}
+				} catch(final NumberFormatException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Invalid response content length value");
+					ioTask.setStatus(RESP_FAIL_SVC);
+				}
+			}*/
+			
 			return;
 		}
 		
