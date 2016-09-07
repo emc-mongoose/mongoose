@@ -1,13 +1,10 @@
 package com.emc.mongoose.storage.mock;
 
-import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
-import com.emc.mongoose.storage.mock.impl.http.RemoteNagaina;
+import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
-import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -15,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
-import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
@@ -56,12 +52,12 @@ public class Main {
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		final Config.ItemConfig itemConfig = config.getItemConfig();
-		
-		try(final RemoteStorageMock<MutableDataItemMock> nagaina =
-			    new RemoteNagaina(storageConfig, loadConfig, itemConfig)) {
-			nagaina.start();
+		final StorageMockFactory storageMockFactory =
+			new StorageMockFactory(storageConfig, loadConfig, itemConfig);
+		try(final Daemon storageMock = storageMockFactory.newNagaina()) {
+			storageMock.start();
 			try {
-				nagaina.await();
+				storageMock.await();
 			} catch(final InterruptedException ignored) {
 			}
 		} catch(final Exception e) {

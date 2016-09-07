@@ -6,13 +6,12 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import java.io.Closeable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
  Created on 31.08.16.
  */
-public interface RemoteStorageMock<T extends MutableDataItemMock>
+public interface StorageMockServer<T extends MutableDataItemMock>
 extends Remote, Closeable {
 
 	void start()
@@ -28,11 +27,6 @@ extends Remote, Closeable {
 
 	T getObjectRemotely(
 		final String containerName, final String id, final long offset, final long size
-	)
-	throws RemoteException, ContainerMockException;
-
-	StorageMock<T> getLocalStorage() throws RemoteException;
-
-	Collection<RemoteStorageMock<T>> getNodes() throws RemoteException;
+	) throws RemoteException, ContainerMockException;
 
 }

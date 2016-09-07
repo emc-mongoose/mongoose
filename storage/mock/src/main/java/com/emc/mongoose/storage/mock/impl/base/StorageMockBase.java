@@ -77,10 +77,6 @@ implements StorageMock<T> {
 		createContainer(defaultContainerName);
 	}
 
-	protected final ContentSource getContentSource() {
-		return contentSrc;
-	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Container methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +120,9 @@ implements StorageMock<T> {
 		if(isCapacityExhausted.get()) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectTask(containerName, newDataObject(id, offset, size)));
+		BlockingQueueTaskSequencer.INSTANCE.submit(
+			new PutObjectTask(containerName, newDataObject(id, offset, size))
+		);
 	}
 
 	@Override
@@ -197,7 +195,8 @@ implements StorageMock<T> {
 
 	@Override
 	public final T listObjects(
-			final String containerName, final String afterObjectId, final Collection<T> outputBuffer, final int limit
+		final String containerName, final String afterObjectId, final Collection<T> outputBuffer,
+		final int limit
 	) throws ContainerMockException {
 		try {
 			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
@@ -272,7 +271,9 @@ implements StorageMock<T> {
 
 	@Override
 	public final void putIntoDefaultContainer(final List<T> dataItems) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectsBatchTask(defaultContainerName, dataItems));
+		BlockingQueueTaskSequencer.INSTANCE.submit(
+			new PutObjectsBatchTask(defaultContainerName, dataItems)
+		);
 	}
 
 	@Override
@@ -315,7 +316,9 @@ implements StorageMock<T> {
 			});
 			try(
 				final CsvFileItemInput<T>
-					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc)
+					csvFileItemInput = new CsvFileItemInput<>(
+					dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc
+				)
 			) {
 				displayProgressThread.start();
 				do {
@@ -353,7 +356,9 @@ implements StorageMock<T> {
 		}
 
 		boolean setException() {
-			return setException(new ContainerMockNotFoundException(containerName));
+			return setException(
+				new ContainerMockNotFoundException(containerName)
+			);
 		}
 	}
 

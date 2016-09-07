@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.api.load;
 
-import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.concurrent.InterruptableDaemon;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.metrics.IoStats;
@@ -12,7 +12,7 @@ import java.util.List;
  Created on 11.07.16.
  */
 public interface Monitor<I extends Item, O extends IoTask<I>>
-extends Closeable, Daemon {
+extends Closeable, InterruptableDaemon {
 
 	void ioTaskCompleted(final O ioTask);
 
