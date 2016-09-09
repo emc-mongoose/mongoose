@@ -25,7 +25,7 @@ implements DataItem {
 	protected static final String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
-	private final ContentSource contentSrc;
+	private transient final ContentSource contentSrc;
 	private final int ringBuffSize;
 	//
 	private int layerNum = 0;
