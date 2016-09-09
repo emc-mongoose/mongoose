@@ -54,7 +54,7 @@ public class Main {
 		final Config.ItemConfig itemConfig = config.getItemConfig();
 		final StorageMockFactory storageMockFactory =
 			new StorageMockFactory(storageConfig, loadConfig, itemConfig);
-		if(storageConfig.getNode()) {
+		if(storageConfig.getMockConfig().getNode()) {
 			try(final Daemon storageMock = storageMockFactory.newNagainaNode()) {
 				storageMock.start();
 				try {
