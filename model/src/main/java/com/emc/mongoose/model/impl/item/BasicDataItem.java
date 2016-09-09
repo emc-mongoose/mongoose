@@ -19,10 +19,10 @@ public class BasicDataItem
 extends BasicItem
 implements DataItem {
 	//
-	private final static String
+	private static final String
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
-	protected final static String
+	protected static final String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
 	private final ContentSource contentSrc;
@@ -107,6 +107,7 @@ implements DataItem {
 		this.size = size;
 		this.layerNum = nextLayer ? baseDataItem.layerNum : baseDataItem.layerNum;
 	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////

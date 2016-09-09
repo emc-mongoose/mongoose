@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
-import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
@@ -8,7 +7,6 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
-import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
@@ -73,7 +71,7 @@ extends ChannelInboundHandlerAdapter {
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
-	private final StorageMockClient<T, StorageMockServer<T>> remoteStorage;
+	private final StorageMockClient<T> remoteStorage;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
@@ -98,7 +96,7 @@ extends ChannelInboundHandlerAdapter {
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
 		final StorageMock<T> localStorage,
-		final StorageMockClient<T, StorageMockServer<T>> remoteStorage,
+		final StorageMockClient<T> remoteStorage,
 		final ContentSource contentSource
 	) throws RemoteException {
 		this.rateLimit = limitConfig.getRate();
@@ -351,7 +349,7 @@ extends ChannelInboundHandlerAdapter {
 				handleObjectReadSuccess(object, ctx);
 			} else {
 				if (remoteStorage != null) {
-					object = remoteStorage.readObject(containerName, id, offset, 0);
+					object = remoteStorage.getObject(containerName, id, offset, 0);
 				}
 				if(object == null) {
 					setHttpResponseStatusInContext(ctx, NOT_FOUND);
@@ -386,7 +384,7 @@ extends ChannelInboundHandlerAdapter {
 		if(object.hasBeenUpdated()) {
 			ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
 		} else {
-			ctx.write(new DataItemFileRegion<>(object));
+			ctx.write(new DataItemFileRegion<>(object, contentSource));
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}

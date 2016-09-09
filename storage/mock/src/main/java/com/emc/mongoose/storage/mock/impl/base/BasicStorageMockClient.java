@@ -41,7 +41,7 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
  Created on 06.09.16.
  */
 public class BasicStorageMockClient<T extends MutableDataItemMock, O extends StorageMockServer<T>>
-implements StorageMockClient<T, O> {
+implements StorageMockClient<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -90,7 +90,7 @@ implements StorageMockClient<T, O> {
 	}
 
 	@Override
-	public T readObject(
+	public T getObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ExecutionException, InterruptedException {
 		T object;

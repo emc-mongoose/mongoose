@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.driver.http.base.data;
 
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.DataItem;
+import com.emc.mongoose.model.impl.item.BasicDataItem;
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
@@ -15,9 +17,12 @@ implements FileRegion {
 	protected final long baseItemSize;
 	protected long doneByteCount = 0;
 
-	public DataItemFileRegion(final T dataObject)
+	@SuppressWarnings("unchecked")
+	public DataItemFileRegion(final DataItem dataObject, final ContentSource contentSrc)
 	throws IOException {
-		this.dataObject = dataObject;
+		this.dataObject = (T) new BasicDataItem(
+			dataObject.getOffset(), dataObject.size(), contentSrc
+		);
 		this.baseItemSize = dataObject.size();
 	}
 	
