@@ -143,12 +143,13 @@ implements StorageMockClient<T, O> {
 	}
 
 	private void handleServiceEvent(
-		final ServiceEvent event, final Consumer<String> consumer, final String actionMsg) {
+		final ServiceEvent event, final Consumer<String> consumer, final String actionMsg
+	) {
 		final ServiceInfo eventInfo = event.getInfo();
-		if (eventInfo.getQualifiedName().contains(IDENTIFIER)) {
+		if(eventInfo.getQualifiedName().contains(IDENTIFIER)) {
 			for (final InetAddress address: eventInfo.getInet4Addresses()) {
 				try {
-					if (!address.equals(jmDns.getInetAddress())) {
+					if(!address.equals(jmDns.getInetAddress())) {
 						consumer.accept(address.getHostAddress());
 						LOG.info(Markers.MSG, actionMsg + ":" + event.getName());
 						printNodeList();
