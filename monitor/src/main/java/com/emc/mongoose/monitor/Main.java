@@ -1,6 +1,5 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.model.api.StorageType;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -10,7 +9,6 @@ import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3Driver;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
-
 import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -85,7 +83,11 @@ public class Main {
 			} else {
 				log.info(Markers.MSG, "Work on the files");
 				drivers.add(
-					new BasicFileDriver<>(runId, loadConfig, config.getIoConfig().getBufferConfig())
+					new BasicFileDriver<>(
+						runId, storageConfig.getAuthConfig(), loadConfig,
+						itemConfig.getInputConfig().getContainer(),
+						config.getIoConfig().getBufferConfig().getSize()
+					)
 				);
 			}
 		} else if(StorageType.HTTP.equals(storageType)){
@@ -98,7 +100,8 @@ public class Main {
 					case "s3" :
 						drivers.add(
 							new HttpS3Driver<>(
-								runId, loadConfig, storageConfig, config.getSocketConfig()
+								runId, loadConfig, storageConfig,
+								itemConfig.getInputConfig().getContainer(), config.getSocketConfig()
 							)
 						);
 						break;
@@ -136,7 +139,9 @@ public class Main {
 
 		try(
 			final Monitor<? extends Item, ? extends IoTask<? extends Item>>
-				monitor = new BasicMonitor(runId, generators, loadConfig.getMetricsConfig())
+				monitor = new BasicMonitor(
+					runId, generators, loadConfig.getMetricsConfig(), loadConfig.getLimitConfig()
+				)
 		) {
 			monitor.start();
 			log.info(Markers.MSG, "Load monitor start");

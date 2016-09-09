@@ -44,7 +44,7 @@ implements StorageMockServer<T> {
 
 	@Override
 	public void start()
-	throws UserShootHisFootException, RemoteException {
+	throws UserShootHisFootException {
 		try {
 			LOG.info(Markers.MSG, "Register RMI method");
 			Registry registry = null;
@@ -75,27 +75,26 @@ implements StorageMockServer<T> {
 	}
 
 	@Override
-	public boolean isStarted()
-	throws RemoteException {
+	public boolean isStarted() {
 		return storage.isStarted();
 	}
 
 	@Override
 	public boolean await()
-	throws InterruptedException, RemoteException {
+	throws InterruptedException {
 		return storage.await();
 	}
 
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException {
+	throws InterruptedException {
 		return storage.await(timeout, timeUnit);
 	}
 
 	@Override
 	public T getObjectRemotely(
 		final String containerName, final String id, final long offset, final long size
-	) throws RemoteException, ContainerMockException {
+	) throws ContainerMockException {
 		return storage.getObject(containerName, id, offset, size);
 	}
 

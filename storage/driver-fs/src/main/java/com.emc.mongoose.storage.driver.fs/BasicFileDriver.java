@@ -2,10 +2,14 @@ package com.emc.mongoose.storage.driver.fs;
 
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
+
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.util.SizeInBytes;
+
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,8 +24,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.emc.mongoose.ui.config.Config.IoConfig.BufferConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static java.io.File.pathSeparatorChar;
 
 /**
  Created by kurila on 19.07.16.
@@ -46,9 +50,10 @@ implements Driver<I, O> {
 		};
 
 	public BasicFileDriver(
-		final String runId, final LoadConfig loadConfig, final BufferConfig ioBufferConfig
+		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final String srcContainer, final SizeInBytes ioBuffSize
 	) {
-		super(runId, loadConfig, ioBufferConfig);
+		super(runId, authConfig, loadConfig, srcContainer, ioBuffSize);
 	}
 
 	private FileChannel getSrcChannel(final I fileItem, final O ioTask)
@@ -56,10 +61,12 @@ implements Driver<I, O> {
 		final Map<DataIoTask, FileChannel> srcOpenFiles = SRC_OPEN_FILES.get();
 		FileChannel srcChannel = srcOpenFiles.get(ioTask);
 		if(srcChannel == null) {
-			final String srcPath = fileItem.getPath();
-			if(srcPath != null && !srcPath.isEmpty()) {
+			if(srcContainer != null && !srcContainer.isEmpty()) {
 				srcChannel = FileChannel.open(
-					Paths.get(srcPath, fileItem.getName()), StandardOpenOption.READ
+					Paths.get(
+						srcContainer, fileItem.getPath() + pathSeparatorChar + fileItem.getName()
+					),
+					StandardOpenOption.READ
 				);
 				srcOpenFiles.put(ioTask, srcChannel);
 			}
@@ -91,7 +98,6 @@ implements Driver<I, O> {
 
 	@Override
 	protected void executeIoTask(final O ioTask) {
-
 		try {
 			final LoadType ioType = ioTask.getLoadType();
 			final I fileItem = ioTask.getItem();

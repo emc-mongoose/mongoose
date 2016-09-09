@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  Created on 12.07.16.
  */
-public abstract class InterruptableDaemonBase
-implements InterruptableDaemon {
+public abstract class InterruptibleDaemonBase
+implements InterruptibleDaemon {
 
 	private AtomicReference<State> stateRef = new AtomicReference<>(State.INITIAL);
 

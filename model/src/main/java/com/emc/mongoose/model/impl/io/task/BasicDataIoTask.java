@@ -63,8 +63,17 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public int getDataLatency() {
-		return respDataTimeStart > reqTimeDone ? (int) (respDataTimeStart - reqTimeDone) : -1;
+	public final void setRespDataTimeStart(final long respDataTimeStart) {
+		this.respDataTimeStart = respDataTimeStart;
+	}
+	
+	@Override
+	public final int getDataLatency() {
+		if(respDataTimeStart > respTimeDone) {
+			return (int) (respDataTimeStart - reqTimeDone);
+		} else {
+			return -1;
+		}
 	}
 
 	@Override @SuppressWarnings("ResultOfMethodCallIgnored")
