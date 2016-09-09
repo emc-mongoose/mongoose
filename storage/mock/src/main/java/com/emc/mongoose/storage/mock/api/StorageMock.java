@@ -27,29 +27,29 @@ extends Daemon {
 	//
 	void deleteContainer(final String name);
 	//
-	T getObject(final String containerName, final String id, final long offset, final long size
+	T getObject(
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException;
 	//
-	void createObject(final String containerName, final String id,
-		final long offset,
-		final long size
+	void createObject(
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException;
 	//
-	void deleteObject(final String containerName, final String id,
-		final long offset, final long size
+	void deleteObject(
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException;
 	//
-	void updateObject(final String containerName, final String id,
-		final long offset, final long size
+	void updateObject(
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException;
 	//
-	void appendObject(final String containerName, final String id,
-		final long offset, final long size
+	void appendObject(
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException;
 	//
 	T listObjects(
-		final String containerName, final String marker, final Collection<T> outputBuffer,
-		final int maxCount
+		final String containerName, final String marker,
+		final Collection<T> outputBuffer, final int maxCount
 	) throws ContainerMockException;
 
 }

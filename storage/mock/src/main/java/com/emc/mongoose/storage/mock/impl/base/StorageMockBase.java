@@ -345,7 +345,8 @@ implements StorageMock<T> {
 		}
 	}
 
-	private abstract class ContainerTaskBase extends FutureTaskBase<T> {
+	private abstract class ContainerTaskBase
+	extends FutureTaskBase<T> {
 		private final String containerName;
 
 		ContainerTaskBase(final String containerName) {
@@ -387,7 +388,7 @@ implements StorageMock<T> {
 	}
 
 	private class ListObjectsTask
-		extends ContainerTaskBase {
+	extends ContainerTaskBase {
 
 		private final String afterObjectId;
 		private final Collection<T> outputBuffer;
@@ -414,7 +415,8 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class DeleteObjectTask extends ContainerTaskBase {
+	private class DeleteObjectTask
+	extends ContainerTaskBase {
 
 		private final String objectId;
 
@@ -434,7 +436,8 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class GetObjectTask extends ContainerTaskBase {
+	private class GetObjectTask
+	extends ContainerTaskBase {
 
 		private final String objectId;
 
@@ -454,7 +457,8 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class PutObjectTask extends ContainerTaskBase {
+	private class PutObjectTask
+	extends ContainerTaskBase {
 
 		private T object;
 
@@ -475,7 +479,8 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class DeleteContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
+	private class DeleteContainerTask
+	extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
@@ -494,7 +499,8 @@ implements StorageMock<T> {
 
 	}
 
-	private class GetContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
+	private class GetContainerTask
+	extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
@@ -513,7 +519,8 @@ implements StorageMock<T> {
 
 	}
 
-	private class PutContainerTask extends FutureTaskBase<ObjectContainerMock<T>> {
+	private class PutContainerTask
+	extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 

@@ -54,14 +54,26 @@ public class Main {
 		final Config.ItemConfig itemConfig = config.getItemConfig();
 		final StorageMockFactory storageMockFactory =
 			new StorageMockFactory(storageConfig, loadConfig, itemConfig);
-		try(final Daemon storageMock = storageMockFactory.newNagaina()) {
-			storageMock.start();
-			try {
-				storageMock.await();
-			} catch(final InterruptedException ignored) {
+		if(storageConfig.getMockConfig().getNode()) {
+			try(final Daemon storageMock = storageMockFactory.newNagainaNode()) {
+				storageMock.start();
+				try {
+					storageMock.await();
+				} catch(final InterruptedException ignored) {
+				}
+			} catch(final Exception e) {
+				LogUtil.exception(log, Level.ERROR, e, "Failed to run Nagaina node");
 			}
-		} catch(final Exception e) {
-			LogUtil.exception(log, Level.ERROR, e, "Failed to run Nagaina");
+		} else {
+			try(final Daemon storageMock = storageMockFactory.newNagaina()) {
+				storageMock.start();
+				try {
+					storageMock.await();
+				} catch(final InterruptedException ignored) {
+				}
+			} catch(final Exception e) {
+				LogUtil.exception(log, Level.ERROR, e, "Failed to run Nagaina");
+			}
 		}
 	}
 

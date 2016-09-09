@@ -1,21 +1,18 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
+import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.StorageMockClient;
-import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.api.StorageMockClient;
+import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
-
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.Unpooled;
@@ -43,21 +40,33 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaderNames.RANGE;
-import static io.netty.handler.codec.http.HttpMethod.PUT;
-import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.DELETE;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.HEAD;
-import static io.netty.handler.codec.http.HttpMethod.DELETE;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.PUT;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INSUFFICIENT_STORAGE;
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
@@ -68,7 +77,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public abstract class RequestHandlerBase<T extends MutableDataItemMock>
 extends ChannelInboundHandlerAdapter {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final double rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
@@ -78,7 +87,7 @@ extends ChannelInboundHandlerAdapter {
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
 	private final String apiClsName;
-	
+
 	private final int prefixLength, idRadix;
 
 	protected static final AttributeKey<HttpRequest> ATTR_KEY_REQUEST = AttributeKey
@@ -92,8 +101,8 @@ extends ChannelInboundHandlerAdapter {
 	protected static final AttributeKey<String> ATTR_KEY_HANDLER = AttributeKey
 		.newInstance("handlerKey");
 
-	static final int DEFAULT_PAGE_SIZE = 0x1000;
-	static final String MARKER_KEY = "marker";
+	protected static final int DEFAULT_PAGE_SIZE = 0x1000;
+	protected static final String MARKER_KEY = "marker";
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
@@ -109,7 +118,7 @@ extends ChannelInboundHandlerAdapter {
 		this.localStorage = localStorage;
 		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
-		apiClsName = getClass().getSimpleName();
+		this.apiClsName = getClass().getSimpleName();
 	}
 
 	protected boolean checkApiMatch(final HttpRequest request) {
@@ -356,16 +365,7 @@ extends ChannelInboundHandlerAdapter {
 				handleObjectReadSuccess(object, ctx);
 			} else {
 				if (remoteStorage != null) {
-					try {
-						for(final StorageMockServer<T> node : remoteStorage.getNodes()) {
-							object = node.getObjectRemotely(containerName, id, offset, 0);
-							if(object != null) {
-								break;
-							}
-						}
-					} catch(final RemoteException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Remote Nagaina failure");
-					}
+					object = remoteStorage.readObject(containerName, id, offset, 0);
 				}
 				if(object == null) {
 					setHttpResponseStatusInContext(ctx, NOT_FOUND);
@@ -381,6 +381,8 @@ extends ChannelInboundHandlerAdapter {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
 			ioStats.markRead(false, 0);
+		} catch(final InterruptedException | ExecutionException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Remote call failure", containerName);
 		}
 	}
 

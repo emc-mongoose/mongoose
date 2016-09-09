@@ -9,7 +9,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 21.07.16.
  */
-public interface Daemon extends Closeable {
+public interface Daemon
+extends Closeable {
 
 	void start()
 	throws UserShootHisFootException;

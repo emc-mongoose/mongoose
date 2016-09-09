@@ -95,7 +95,8 @@
 			"container" : {
 				"capacity" : 1000000,
 				"countLimit" : 1000000
-			}
+			},
+			"node": false
 		}
 	},
 	"aliasing" : {
