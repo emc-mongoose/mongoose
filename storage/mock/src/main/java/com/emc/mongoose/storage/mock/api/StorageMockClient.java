@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.mock.api;
 import javax.jmdns.ServiceListener;
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 
 /**
  Created on 01.09.16.
@@ -12,8 +13,8 @@ extends ServiceListener, Closeable {
 
 	void start();
 
-	Collection<O> getNodes();
-
-	void printNodeList();
+	T readObject(
+		final String containerName, final String id, final long offset, final long size
+	) throws ExecutionException, InterruptedException;
 
 }

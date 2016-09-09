@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
+import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
@@ -22,10 +23,17 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static com.emc.mongoose.storage.mock.impl.http.Nagaina.IDENTIFIER;
@@ -41,10 +49,20 @@ implements StorageMockClient<T, O> {
 
 	private final JmDNS jmDns;
 	private final Map<String, O> remoteNodes;
+	private final ThreadPoolExecutor storagePoller;
 
 	public BasicStorageMockClient(final JmDNS jmDns) {
 		this.jmDns = jmDns;
 		this.remoteNodes = new HashMap<>();
+		this.storagePoller = new ThreadPoolExecutor(
+			1, 1, 0, TimeUnit.MILLISECONDS,
+			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT)
+		);
+	}
+
+	private void setStoragePollSize(final int size) {
+		storagePoller.setCorePoolSize(size);
+		storagePoller.setMaximumPoolSize(size);
 	}
 
 	@Override
@@ -59,18 +77,6 @@ implements StorageMockClient<T, O> {
 	}
 
 	@Override
-	public Collection<O> getNodes() {
-		return remoteNodes.values();
-	}
-
-	@Override
-	public void printNodeList() {
-		final StringJoiner joiner = new StringJoiner("\n");
-		remoteNodes.keySet().forEach(joiner::add);
-		LOG.info(Markers.MSG, "Detected nodes: \n" + joiner.toString());
-	}
-
-	@Override
 	public void serviceAdded(final ServiceEvent event) {
 		jmDns.requestServiceInfo(event.getType(), event.getName(), 10);
 	}
@@ -78,6 +84,31 @@ implements StorageMockClient<T, O> {
 	@Override
 	public void serviceRemoved(final ServiceEvent event) {
 		handleServiceEvent(event, remoteNodes::remove, "Node removed");
+		setStoragePollSize(remoteNodes.size());
+	}
+
+	@Override
+	public T readObject(
+		final String containerName, final String id, final long offset, final long size
+	) throws ExecutionException, InterruptedException {
+		T object;
+		final List<Future<T>> objFutures = new ArrayList<>(remoteNodes.size());
+		for(final StorageMockServer<T> node : remoteNodes.values()) {
+			objFutures.add(
+				storagePoller.submit(
+					() -> {
+						return node.getObjectRemotely(containerName, id, offset, size);
+					}
+				)
+			);
+		}
+		for (final Future<T> objFuture: objFutures) {
+			object = objFuture.get();
+			if (object != null) {
+				return object;
+			}
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -97,6 +128,13 @@ implements StorageMockClient<T, O> {
 			},
 			"Node added"
 		);
+		setStoragePollSize(remoteNodes.size());
+	}
+
+	private void printNodeList() {
+		final StringJoiner joiner = new StringJoiner("\n");
+		remoteNodes.keySet().forEach(joiner::add);
+		LOG.info(Markers.MSG, "Detected nodes: \n" + joiner.toString());
 	}
 
 	private void handleServiceEvent(

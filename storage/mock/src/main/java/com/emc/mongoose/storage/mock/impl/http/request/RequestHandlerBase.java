@@ -83,7 +83,6 @@ extends ChannelInboundHandlerAdapter {
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
 	private final StorageMockClient<T, StorageMockServer<T>> remoteStorage;
-	private final ThreadPoolExecutor storagePoller;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final ContentSource contentSource;
@@ -120,10 +119,6 @@ extends ChannelInboundHandlerAdapter {
 		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
 		this.apiClsName = getClass().getSimpleName();
-		storagePoller = new ThreadPoolExecutor(
-			1, 1, 0, TimeUnit.MILLISECONDS,
-			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT)
-		);
 	}
 
 	protected boolean checkApiMatch(final HttpRequest request) {
@@ -371,26 +366,7 @@ extends ChannelInboundHandlerAdapter {
 				handleObjectReadSuccess(object, ctx);
 			} else {
 				if (remoteStorage != null) {
-					final Collection<StorageMockServer<T>> nodes = remoteStorage.getNodes();
-					final int nodesNum = nodes.size();
-					storagePoller.setCorePoolSize(nodesNum);
-					storagePoller.setMaximumPoolSize(nodesNum);
-					final List<Future<T>> objFutures = new ArrayList<>(nodesNum);
-					for(final StorageMockServer<T> node : nodes) {
-						objFutures.add(
-							storagePoller.submit(
-								() -> {
-									return node.getObjectRemotely(containerName, id, offset, 0);
-								}
-							)
-						);
-					}
-					for (final Future<T> objFuture: objFutures) {
-						object = objFuture.get();
-						if (object != null) {
-							break;
-						}
-					}
+					object = remoteStorage.readObject(containerName, id, offset, 0);
 				}
 				if(object == null) {
 					setHttpResponseStatusInContext(ctx, NOT_FOUND);
