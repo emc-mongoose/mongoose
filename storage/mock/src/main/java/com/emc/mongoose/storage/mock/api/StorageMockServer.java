@@ -17,7 +17,8 @@ extends Remote, Closeable {
 	void start()
 	throws UserShootHisFootException, RemoteException;
 
-	boolean isStarted() throws RemoteException;
+	boolean isStarted()
+	throws RemoteException;
 
 	boolean await()
 	throws InterruptedException, RemoteException;

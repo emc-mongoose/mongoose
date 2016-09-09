@@ -10,7 +10,7 @@ import java.io.Closeable;
  Created on 11.07.16.
  */
 public interface Generator<I extends Item, O extends IoTask<I>>
-extends Closeable, InterruptableDaemon {
+extends InterruptableDaemon {
 
 	void registerMonitor(final Monitor<I, O> monitor)
 	throws IllegalStateException;

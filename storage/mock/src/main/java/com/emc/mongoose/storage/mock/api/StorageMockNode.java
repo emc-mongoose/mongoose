@@ -8,7 +8,7 @@ import java.io.Closeable;
  Created on 07.09.16.
  */
 public interface StorageMockNode<T extends MutableDataItemMock, O extends StorageMockServer<T>>
-extends Daemon, Closeable {
+extends Daemon {
 
 	StorageMockClient<T, O> client();
 

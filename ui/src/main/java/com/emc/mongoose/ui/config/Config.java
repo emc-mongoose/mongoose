@@ -755,7 +755,7 @@ public final class Config {
 		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
-		
+
 		public final void setAddrs(final List<String> addrs) {
 			this.addrs = addrs;
 		}
@@ -783,7 +783,7 @@ public final class Config {
 		public final void setMockConfig(final MockConfig mockConfig) {
 			this.mockConfig = mockConfig;
 		}
-		
+
 		@JsonProperty(KEY_ADDRS) private List<String> addrs;
 		@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
 		@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
@@ -791,6 +791,7 @@ public final class Config {
 		@JsonProperty(KEY_SSL) private boolean ssl;
 		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
+
 
 		public StorageConfig() {
 		}
@@ -926,6 +927,7 @@ public final class Config {
 			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_CAPACITY = "capacity";
 			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_NODE = "node";
 			
 			public final void setHeadCount(final int headCount) {
 				this.headCount = headCount;
@@ -940,10 +942,15 @@ public final class Config {
 			) {
 				this.containerConfig = containerConfig;
 			}
+
+			public final void setNode(final boolean node) {
+				this.node = node;
+			}
 			
 			@JsonProperty(KEY_HEAD_COUNT) private int headCount;
 			@JsonProperty(KEY_CAPACITY) private int capacity;
 			@JsonProperty(KEY_CONTAINER) private ContainerConfig containerConfig;
+			@JsonProperty(KEY_NODE) private boolean node;
 
 			public MockConfig() {
 			}
@@ -958,6 +965,10 @@ public final class Config {
 
 			public ContainerConfig getContainerConfig() {
 				return containerConfig;
+			}
+
+			public boolean getNode() {
+				return node;
 			}
 
 			public final static class ContainerConfig {

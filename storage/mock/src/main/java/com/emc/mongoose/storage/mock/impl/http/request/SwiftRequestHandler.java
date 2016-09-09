@@ -128,7 +128,8 @@ extends RequestHandlerBase<T> {
 	protected void handleContainerList(
 			final String name,
 			final QueryStringDecoder queryStringDecoder,
-			final ChannelHandlerContext ctx) {
+			final ChannelHandlerContext ctx
+	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
@@ -174,7 +175,9 @@ extends RequestHandlerBase<T> {
 			try {
 				final byte[] content = OBJ_MAPPER.writeValueAsBytes(nodeRoot);
 				ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
-				final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+				final FullHttpResponse response = new DefaultFullHttpResponse(
+					HTTP_1_1, OK, Unpooled.copiedBuffer(content)
+				);
 				response.headers().set(CONTENT_TYPE, "application/json");
 				HttpUtil.setContentLength(response, content.length);
 				ctx.write(response);

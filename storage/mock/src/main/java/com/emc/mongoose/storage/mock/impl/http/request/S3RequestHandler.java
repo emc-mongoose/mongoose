@@ -156,7 +156,9 @@ extends RequestHandlerBase<T> {
 		final byte[] content = stream.toByteArray();
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final FullHttpResponse
-				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+				response = new DefaultFullHttpResponse(
+			HTTP_1_1, OK, Unpooled.copiedBuffer(content)
+		);
 		response.headers().set(CONTENT_TYPE, "application/xml");
 		HttpUtil.setContentLength(response, content.length);
 		ctx.write(response);
