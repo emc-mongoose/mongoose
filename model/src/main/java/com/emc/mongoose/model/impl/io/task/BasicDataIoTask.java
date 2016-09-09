@@ -69,7 +69,11 @@ implements DataIoTask<T> {
 	
 	@Override
 	public final int getDataLatency() {
-		return respDataTimeStart > reqTimeDone ? (int) (respDataTimeStart - reqTimeDone) : -1;
+		if(respDataTimeStart > respTimeDone) {
+			return (int) (respDataTimeStart - reqTimeDone);
+		} else {
+			return -1;
+		}
 	}
 
 	@Override @SuppressWarnings("ResultOfMethodCallIgnored")
