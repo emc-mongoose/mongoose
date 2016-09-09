@@ -13,9 +13,8 @@ public final class BlockingQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
-	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
 	public final static BlockingQueueTaskSequencer INSTANCE = new BlockingQueueTaskSequencer(
-		"blockingQueueTaskSequencer", true, DEFAULT_TASK_QUEUE_SIZE
+		"blockingQueueTaskSequencer", true, DEFAULT_TASK_QUEUE_SIZE_LIMIT
 	);
 	static {
 		INSTANCE.start();
@@ -28,7 +27,7 @@ implements TaskSequencer {
 	protected BlockingQueueTaskSequencer(final String name, boolean daemonFlag, final int batchSize) {
 		super(name);
 		setDaemon(daemonFlag);
-		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE, false);
+		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE_LIMIT, false);
 		this.batchSize = batchSize;
 		buff = new ArrayList<>(batchSize);
 	}

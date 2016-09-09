@@ -98,6 +98,7 @@ implements Monitor<I, O> {
 			respDataLatency = 0;
 			countBytesDone = 0;
 		}
+		
 		/* perf trace logging
 		if(!metricsConfig.getPrecondition()) {
 			logTrace(
@@ -105,6 +106,7 @@ implements Monitor<I, O> {
 				respLatency, countBytesDone, respDataLatency
 			);
 		}*/
+		
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
@@ -267,6 +269,9 @@ implements Monitor<I, O> {
 		LOG_METRICS_SERVICE.scheduleAtFixedRate(
 			logMetricsTask, 0, metricsConfig.getPeriod(), TimeUnit.SECONDS
 		);
+		if(ioStats != null) {
+			ioStats.start();
+		}
 	}
 
 	@Override
@@ -322,5 +327,11 @@ implements Monitor<I, O> {
 		}
 		generators.clear();
 		drivers.clear();
+		if(ioStats != null) {
+			ioStats.close();
+		}
+		if(medIoStats != null) {
+			medIoStats.close();
+		}
 	}
 }
