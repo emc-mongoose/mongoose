@@ -87,8 +87,8 @@ implements StorageMock<T> {
 	@Override
 	public final ObjectContainerMock<T> getContainer(final String name) {
 		try {
-			final Future<ObjectContainerMock<T>> future = BlockingQueueTaskSequencer
-				.INSTANCE.submit(new GetContainerTask(name));
+			final Future<ObjectContainerMock<T>>
+				future = BlockingQueueTaskSequencer.INSTANCE.submit(new GetContainerTask(name));
 			if(future != null) {
 				return future.get();
 			}

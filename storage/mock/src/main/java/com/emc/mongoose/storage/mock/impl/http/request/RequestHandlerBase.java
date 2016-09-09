@@ -40,17 +40,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -243,10 +234,7 @@ extends ChannelInboundHandlerAdapter {
 	protected final void writeResponse(
 		final ChannelHandlerContext ctx, final FullHttpResponse response
 	) {
-		final HttpResponseStatus status = ctx
-			.channel()
-			.attr(ATTR_KEY_RESPONSE_STATUS)
-			.get();
+		final HttpResponseStatus status = ctx.channel().attr(ATTR_KEY_RESPONSE_STATUS).get();
 		response.setStatus(status);
 		ctx.write(response);
 	}
@@ -311,8 +299,6 @@ extends ChannelInboundHandlerAdapter {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", id
 			);
-		} catch(final RemoteException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -322,12 +308,12 @@ extends ChannelInboundHandlerAdapter {
 	private boolean handlePartialCreate(
 		final String containerName, final String id, final List<String> rangeHeadersValues,
 		final long size
-	)
-	throws ContainerMockException, ObjectMockNotFoundException, RemoteException {
+	) throws ContainerMockException, ObjectMockNotFoundException {
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
-				final String rangeValueWithoutPrefix =
-						rangeValues.substring(VALUE_RANGE_PREFIX.length(), rangeValues.length());
+				final String rangeValueWithoutPrefix = rangeValues.substring(
+					VALUE_RANGE_PREFIX.length(), rangeValues.length()
+				);
 				final String[] ranges = rangeValueWithoutPrefix.split(",");
 				for(final String range: ranges) {
 					final String[] rangeBorders = range.split(VALUE_RANGE_CONCAT);
