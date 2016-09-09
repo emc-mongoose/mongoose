@@ -313,7 +313,7 @@ implements IoStats {
 
 			final double elapsedTime = getElapsedTime() / M;
 			final String elapsedTimeStr;
-			if(elapsedTime < 1) {
+			if(0 < elapsedTime && elapsedTime < 1) {
 				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
 			} else if(elapsedTime < 10 ) {
 				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
@@ -327,7 +327,7 @@ implements IoStats {
 
 			final double durationSum = getDurationSum() / M;
 			final String durationSumStr;
-			if(durationSum < 1) {
+			if(0 < durationSum && durationSum < 1) {
 				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
 			} else if(durationSum < 10 ) {
 				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);

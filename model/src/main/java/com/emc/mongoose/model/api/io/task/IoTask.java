@@ -30,18 +30,28 @@ public interface IoTask<I extends Item> {
 			this.description = description;
 		}
 	}
-
+	
 	LoadType getLoadType();
 
 	I getItem();
 
 	String getNodeAddr();
+	
+	void setNodeAddr(final String nodeAddr);
 
 	Status getStatus();
 
 	void setStatus(final Status status);
 
 	long getReqTimeStart();
+	
+	void setReqTimeStart(final long reqTimeStart);
+	
+	void setReqTimeDone(final long reqTimeDone);
+	
+	void setRespTimeStart(final long respTimeStart);
+	
+	void setRespTimeDone(final long respTimeDone);
 
 	int getDuration();
 

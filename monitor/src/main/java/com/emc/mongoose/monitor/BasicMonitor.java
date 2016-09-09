@@ -1,10 +1,11 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.common.concurrent.InterruptableDaemonBase;
+import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -31,7 +32,7 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
  Created by kurila on 12.07.16.
  */
 public class BasicMonitor<I extends Item, O extends IoTask<I>>
-extends InterruptableDaemonBase
+extends InterruptibleDaemonBase
 implements Monitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -42,7 +43,8 @@ implements Monitor<I, O> {
 	private final String name;
 	private final List<Generator<I, O>> generators;
 	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
-	private final Config.LoadConfig.MetricsConfig metricsConfig;
+	private final MetricsConfig metricsConfig;
+	private final LimitConfig limitConfig;
 	private final IoStats ioStats, medIoStats;
 
 	private final static class LogMetricsTask
@@ -64,7 +66,7 @@ implements Monitor<I, O> {
 
 	public BasicMonitor(
 		final String name, final List<Generator<I, O>> generators,
-		final Config.LoadConfig.MetricsConfig metricsConfig
+		final MetricsConfig metricsConfig, final LimitConfig limitConfig
 	) {
 		this.name = name;
 		this.generators = generators;
@@ -76,6 +78,7 @@ implements Monitor<I, O> {
 		this.ioStats = new BasicIoStats(name, metricsPeriosSec);
 		this.medIoStats = new BasicIoStats(name, metricsPeriosSec);
 		this.logMetricsTask = new LogMetricsTask(this);
+		this.limitConfig = limitConfig;
 	}
 
 	@Override
@@ -98,6 +101,7 @@ implements Monitor<I, O> {
 			respDataLatency = 0;
 			countBytesDone = 0;
 		}
+		
 		/* perf trace logging
 		if(!metricsConfig.getPrecondition()) {
 			logTrace(
@@ -105,6 +109,7 @@ implements Monitor<I, O> {
 				respLatency, countBytesDone, respDataLatency
 			);
 		}*/
+		
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
@@ -267,6 +272,9 @@ implements Monitor<I, O> {
 		LOG_METRICS_SERVICE.scheduleAtFixedRate(
 			logMetricsTask, 0, metricsConfig.getPeriod(), TimeUnit.SECONDS
 		);
+		if(ioStats != null) {
+			ioStats.start();
+		}
 	}
 
 	@Override
@@ -322,5 +330,11 @@ implements Monitor<I, O> {
 		}
 		generators.clear();
 		drivers.clear();
+		if(ioStats != null) {
+			ioStats.close();
+		}
+		if(medIoStats != null) {
+			medIoStats.close();
+		}
 	}
 }

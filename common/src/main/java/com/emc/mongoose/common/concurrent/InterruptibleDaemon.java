@@ -5,7 +5,7 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 /**
  Created by kurila on 23.09.15.
  */
-public interface InterruptableDaemon
+public interface InterruptibleDaemon
 extends Daemon {
 
 	void shutdown()

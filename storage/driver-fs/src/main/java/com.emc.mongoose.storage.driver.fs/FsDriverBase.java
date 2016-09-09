@@ -2,15 +2,14 @@ package com.emc.mongoose.storage.driver.fs;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.DriverBase;
-import static com.emc.mongoose.ui.config.Config.IoConfig.BufferConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,10 +37,10 @@ implements Driver<I, O> {
 	private final BlockingQueue<O> ioTaskQueue;
 
 	public FsDriverBase(
-		final String runId, final LoadConfig loadConfig, final BufferConfig ioBufferConfig
+		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
+		final String srcContainer, final SizeInBytes ioBuffSize
 	) {
-		super(runId, loadConfig);
-		final SizeInBytes ioBuffSize = ioBufferConfig.getSize();
+		super(runId, storageConfig, loadConfig, srcContainer);
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
 		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {

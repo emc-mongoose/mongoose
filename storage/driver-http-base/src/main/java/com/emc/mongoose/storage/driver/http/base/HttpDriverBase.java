@@ -3,23 +3,25 @@ package com.emc.mongoose.storage.driver.http.base;
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
-import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.base.DriverBase;
-
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
+import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static io.netty.handler.codec.http.LastHttpContent.EMPTY_LAST_CONTENT;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -28,17 +30,25 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.handler.codec.http.HttpObject;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -47,33 +57,43 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class HttpDriverBase<I extends Item, O extends IoTask<I>>
 extends DriverBase<I, O>
-implements Driver<I, O> {
+implements HttpDriver<I, O> {
 	
 	private final static Logger LOG = LogManager.getLogger();
 	
 	private final String storageNodeAddrs[];
 	private final int storageNodePort;
-	private final Balancer<String> storageNodeBalancer;
+	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
+	protected final SecretKeySpec secretKey;
 	
+	private final Balancer<String> storageNodeBalancer;
 	private final EventLoopGroup workerGroup;
 	protected final Bootstrap bootstrap;
 	
 	protected HttpDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final SocketConfig socketConfig
+		final String srcContainer, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		
-		super(runId, loadConfig);
+		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer);
+		try {
+			if(secret == null) {
+				secretKey = null;
+			} else {
+				secretKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
+			}
+		} catch(final UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
 		storageNodeAddrs = storageConfig.getAddrs().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
 		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
 		
-		final SimpleChannelInboundHandler<HttpObject> apiSpecificHandler = getApiSpecificHandler();
+		final HttpClientHandlerBase<I, O> apiSpecificHandler = getApiSpecificHandler();
 		
-		workerGroup = new EpollEventLoopGroup(0, new NamingThreadFactory("test"));
+		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("test"));
 		bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
-		bootstrap.channel(EpollSocketChannel.class);
+		bootstrap.channel(NioSocketChannel.class);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
@@ -93,12 +113,102 @@ implements Driver<I, O> {
 		);
 	}
 	
-	protected abstract SimpleChannelInboundHandler<HttpObject> getApiSpecificHandler();
+	protected abstract HttpClientHandlerBase<I, O> getApiSpecificHandler();
 	
-	protected abstract HttpRequest getHttpRequest(final O ioTask);
+	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	throws URISyntaxException {
+		final I item = ioTask.getItem();
+		final LoadType ioType = ioTask.getLoadType();
+		final HttpMethod httpMethod = getHttpMethod(ioType);
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final String dstUriPath = getDstUriPath(item, ioTask);
+		final HttpRequest httpRequest = new DefaultHttpRequest(
+			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
+		);
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		switch(ioType) {
+			case CREATE:
+				if(srcContainer == null) {
+					if(item instanceof DataItem) {
+						try {
+							httpHeaders.set(
+								HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size()
+							);
+						} catch(final IOException ignored) {
+						}
+					} else {
+						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+					}
+				} else {
+					applyCopyHeaders(httpHeaders, item);
+					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				}
+				break;
+			case READ:
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				break;
+			case UPDATE:
+				if(item instanceof MutableDataItem) {
+					// TODO set ranges headers conditionally
+				} else {
+					throw new IllegalStateException();
+				}
+				break;
+			case DELETE:
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				break;
+		}
+		applyMetaDataHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
+		return httpRequest;
+	}
+	
+	protected HttpMethod getHttpMethod(final LoadType loadType) {
+		switch(loadType) {
+			case READ:
+				return HttpMethod.GET;
+			case DELETE:
+				return HttpMethod.DELETE;
+			default:
+				return HttpMethod.PUT;
+		}
+	}
+	
+	protected String getDstUriPath(final I item, final O ioTask) {
+		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
+	}
+	
+	protected String getSrcUriPath(final I object)
+	throws URISyntaxException {
+		if(object == null) {
+			throw new IllegalArgumentException("No object");
+		}
+		final String objPath = object.getPath();
+		if(objPath.endsWith(SLASH)) {
+			return objPath + object.getName();
+		} else {
+			return objPath + SLASH + object.getName();
+		}
+	}
+	
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
+	throws URISyntaxException;
+	
+	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
+		// TODO apply dynamic headers also
+	}
+	
+	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
+	}
+	
+	protected abstract void applyAuthHeaders(
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+	);
 	
 	private final class HttpRequestFuture
-	extends FutureTaskBase {
+	extends FutureTaskBase
+	implements GenericFutureListener<Future<Void>> {
 		
 		private final O ioTask;
 		
@@ -120,10 +230,13 @@ implements Driver<I, O> {
 					return;
 				}
 			}
+			ioTask.setNodeAddr(bestNode);
 			
-			final Channel c;
+			final LoadType ioType = ioTask.getLoadType();
+			final I item = ioTask.getItem();
+			final Channel channel;
 			try {
-				c = bootstrap.connect(bestNode, storageNodePort).sync().channel();
+				channel = bootstrap.connect(bestNode, storageNodePort).sync().channel();
 			} catch(final InterruptedException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to get the connection to \"{}\"", bestNode
@@ -131,19 +244,23 @@ implements Driver<I, O> {
 				return;
 			}
 			
-			c.write(getHttpRequest(ioTask));
-			
-			final LoadType ioType = ioTask.getLoadType();
-			final I item = ioTask.getItem();
+			channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 			
 			try {
+				ioTask.setReqTimeStart(System.nanoTime() / 1000);
+				channel.write(getHttpRequest(ioTask, bestNode));
 				if(LoadType.CREATE.equals(ioType)) {
 					if(item instanceof DataItem) {
-						c.write(new DataItemFileRegion<>((DataItem) item));
+						final DataItem dataItem = (DataItem) item;
+						channel
+							.write(new DataItemFileRegion<>(dataItem))
+							.addListener(this);
+						((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
 					}
 				} else if(LoadType.UPDATE.equals(ioType)) {
 					if(item instanceof MutableDataItem) {
 						final MutableDataItem mdi = (MutableDataItem) item;
+						final DataIoTask dataIoTask = (DataIoTask) ioTask;
 						if(mdi.hasScheduledUpdates()) {
 							long nextRangeOffset, nextRangeSize;
 							BasicDataItem nextUpdatedRange;
@@ -154,7 +271,12 @@ implements Driver<I, O> {
 									nextUpdatedRange = new BasicDataItem(
 										(BasicDataItem) mdi, nextRangeOffset, nextRangeSize, true
 									);
-									c.write(new DataItemFileRegion<>(nextUpdatedRange));
+									channel
+										.write(new DataItemFileRegion<>(nextUpdatedRange))
+										.addListener(this);
+									dataIoTask.setCountBytesDone(
+										dataIoTask.getCountBytesDone() + nextRangeSize
+									);
 								}
 							}
 						}
@@ -162,12 +284,19 @@ implements Driver<I, O> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+			} catch(final URISyntaxException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 			}
 			
-			c.writeAndFlush(EMPTY_LAST_CONTENT);
+			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		}
+		
+		@Override
+		public void operationComplete(final Future<Void> future)
+		throws Exception {
+			ioTask.setReqTimeDone(System.nanoTime() / 1000);
 		}
 	}
-	
 	
 	@Override
 	public void submit(final O task)
