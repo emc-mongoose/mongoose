@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.concurrent.TaskSequencer;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
@@ -54,9 +55,13 @@ implements StorageMockClient<T, O> {
 	public BasicStorageMockClient(final JmDNS jmDns) {
 		this.jmDns = jmDns;
 		this.remoteNodes = new HashMap<>();
+		final int concurrencyLevel = ThreadUtil.getAvailableConcurrencyLevel();
 		this.storagePoller = new ThreadPoolExecutor(
-			1, 1, 0, TimeUnit.MILLISECONDS,
-			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT)
+			concurrencyLevel, concurrencyLevel, 0, TimeUnit.MILLISECONDS,
+			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
+			(task, poller) -> {
+				LOG.error("Task {} rejected", task.toString());
+			}
 		);
 	}
 
