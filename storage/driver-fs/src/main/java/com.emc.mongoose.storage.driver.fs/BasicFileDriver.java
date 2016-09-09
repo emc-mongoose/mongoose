@@ -3,17 +3,14 @@ package com.emc.mongoose.storage.driver.fs;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 
-import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
 
-import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -101,7 +98,6 @@ implements Driver<I, O> {
 
 	@Override
 	protected void executeIoTask(final O ioTask) {
-
 		try {
 			final LoadType ioType = ioTask.getLoadType();
 			final I fileItem = ioTask.getItem();

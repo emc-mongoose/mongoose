@@ -173,8 +173,9 @@ implements StorageMock<T> {
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
 		try {
-			final Future<T> future =
-				BlockingQueueTaskSequencer.INSTANCE.submit(new GetObjectTask(containerName, id));
+			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
+				new GetObjectTask(containerName, id)
+			);
 			if(future != null) {
 				return future.get();
 			}

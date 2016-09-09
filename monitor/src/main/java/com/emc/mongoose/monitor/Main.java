@@ -139,7 +139,9 @@ public class Main {
 
 		try(
 			final Monitor<? extends Item, ? extends IoTask<? extends Item>>
-				monitor = new BasicMonitor(runId, generators, loadConfig.getMetricsConfig())
+				monitor = new BasicMonitor(
+					runId, generators, loadConfig.getMetricsConfig(), loadConfig.getLimitConfig()
+				)
 		) {
 			monitor.start();
 			log.info(Markers.MSG, "Load monitor start");
