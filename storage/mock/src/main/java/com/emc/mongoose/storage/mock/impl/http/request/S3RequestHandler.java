@@ -2,8 +2,9 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.api.RemoteStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.storage.mock.api.StorageMockClient;
+import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -18,7 +19,6 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.util.AttributeKey;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,9 +68,11 @@ extends RequestHandlerBase<T> {
 
 	public S3RequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final RemoteStorageMock<T> sharedStorage, final ContentSource contentSource
+		final StorageMock<T> localStorage,
+		final StorageMockClient<T, StorageMockServer<T>> remoteStorage,
+		final ContentSource contentSource
 	) throws RemoteException {
-		super(limitConfig, namingConfig, sharedStorage, contentSource);
+		super(limitConfig, namingConfig, localStorage, remoteStorage, contentSource);
 	}
 
 	@Override
@@ -81,13 +83,13 @@ extends RequestHandlerBase<T> {
 		final String containerName = uriParams[0];
 		final String objectId = uriParams[1];
 		final Channel channel = ctx.channel();
-		channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).set(true);
+		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(containerName != null) {
 			handleItemRequest(uri, method, containerName, objectId, size, ctx);
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
-		if(channel.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY)).get()) {
+		if(channel.attr(ATTR_KEY_CTX_WRITE_FLAG).get()) {
 			writeEmptyResponse(ctx);
 		}
 	}
@@ -112,7 +114,7 @@ extends RequestHandlerBase<T> {
 			marker = parameters.get(MARKER_KEY).get(0);
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
-		T lastObject = null;
+		T lastObject;
 		try {
 			lastObject = listContainer(name, marker, buffer, maxCount);
 			LOG.trace(
@@ -125,8 +127,6 @@ extends RequestHandlerBase<T> {
 		} catch(final ContainerMockException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			return;
-		} catch(final RemoteException e) {
-			e.printStackTrace();
 		}
 		final Document xml = DOM_BUILDER.newDocument();
 		final Element rootElem = xml.createElementNS(S3_NAMESPACE_URI, "ListBucketResult");
@@ -154,10 +154,7 @@ extends RequestHandlerBase<T> {
 			return;
 		}
 		final byte[] content = stream.toByteArray();
-		ctx
-			.channel()
-			.attr(AttributeKey.<Boolean>valueOf(CTX_WRITE_FLAG_KEY))
-			.set(false);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final FullHttpResponse
 				response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
 		response.headers().set(CONTENT_TYPE, "application/xml");

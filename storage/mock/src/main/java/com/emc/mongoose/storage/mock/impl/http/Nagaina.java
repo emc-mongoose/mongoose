@@ -112,7 +112,7 @@ extends StorageMockBase<MutableDataItemMock>{
 	}
 
 	@Override
-	public boolean await(long timeout, final TimeUnit timeUnit)
+	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		for(final Channel channel : channels) {
 			try {

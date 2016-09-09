@@ -1,6 +1,6 @@
 package com.emc.mongoose.generator;
 
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.InterruptableDaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
  Created by kurila on 11.07.16.
  */
 public class BasicGenerator<I extends Item, O extends IoTask<I>>
-extends DaemonBase
+extends InterruptableDaemonBase
 implements Generator<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();

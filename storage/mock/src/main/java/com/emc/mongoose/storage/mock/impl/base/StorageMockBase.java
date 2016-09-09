@@ -271,7 +271,9 @@ implements StorageMock<T> {
 
 	@Override
 	public final void putIntoDefaultContainer(final List<T> dataItems) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(new PutObjectsBatchTask(defaultContainerName, dataItems));
+		BlockingQueueTaskSequencer.INSTANCE.submit(
+			new PutObjectsBatchTask(defaultContainerName, dataItems)
+		);
 	}
 
 	@Override
@@ -314,7 +316,9 @@ implements StorageMock<T> {
 			});
 			try(
 				final CsvFileItemInput<T>
-					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc)
+					csvFileItemInput = new CsvFileItemInput<>(
+					dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc
+				)
 			) {
 				displayProgressThread.start();
 				do {
@@ -352,7 +356,9 @@ implements StorageMock<T> {
 		}
 
 		boolean setException() {
-			return setException(new ContainerMockNotFoundException(containerName));
+			return setException(
+				new ContainerMockNotFoundException(containerName)
+			);
 		}
 	}
 
