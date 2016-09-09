@@ -234,9 +234,9 @@ implements HttpDriver<I, O> {
 			
 			final LoadType ioType = ioTask.getLoadType();
 			final I item = ioTask.getItem();
-			final Channel c;
+			final Channel channel;
 			try {
-				c = bootstrap.connect(bestNode, storageNodePort).sync().channel();
+				channel = bootstrap.connect(bestNode, storageNodePort).sync().channel();
 			} catch(final InterruptedException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to get the connection to \"{}\"", bestNode
@@ -244,15 +244,15 @@ implements HttpDriver<I, O> {
 				return;
 			}
 			
-			c.attr(ATTR_KEY_IOTASK).set(ioTask);
+			channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 			
 			try {
 				ioTask.setReqTimeStart(System.nanoTime() / 1000);
-				c.write(getHttpRequest(ioTask, bestNode));
+				channel.write(getHttpRequest(ioTask, bestNode));
 				if(LoadType.CREATE.equals(ioType)) {
 					if(item instanceof DataItem) {
 						final DataItem dataItem = (DataItem) item;
-						c
+						channel
 							.write(new DataItemFileRegion<>(dataItem))
 							.addListener(this);
 						((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
@@ -271,7 +271,7 @@ implements HttpDriver<I, O> {
 									nextUpdatedRange = new BasicDataItem(
 										(BasicDataItem) mdi, nextRangeOffset, nextRangeSize, true
 									);
-									c
+									channel
 										.write(new DataItemFileRegion<>(nextUpdatedRange))
 										.addListener(this);
 									dataIoTask.setCountBytesDone(
@@ -288,7 +288,7 @@ implements HttpDriver<I, O> {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 			}
 			
-			c.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		}
 		
 		@Override
