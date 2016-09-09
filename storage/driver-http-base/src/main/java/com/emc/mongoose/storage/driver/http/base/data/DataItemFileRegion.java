@@ -17,13 +17,18 @@ implements FileRegion {
 	protected final long baseItemSize;
 	protected long doneByteCount = 0;
 
-	@SuppressWarnings("unchecked")
-	public DataItemFileRegion(final DataItem dataObject, final ContentSource contentSrc)
+	public DataItemFileRegion(final T dataObject)
 	throws IOException {
-		this.dataObject = (T) new BasicDataItem(
-			dataObject.getOffset(), dataObject.size(), contentSrc
-		);
+		this.dataObject = dataObject;
 		this.baseItemSize = dataObject.size();
+	}
+
+	@SuppressWarnings("unchecked")
+	public DataItemFileRegion(final T dataObject, final ContentSource contentSrc)
+	throws IOException {
+		this(
+			(T) new BasicDataItem(dataObject.getOffset(), dataObject.size(), contentSrc)
+		);
 	}
 	
 	@Override

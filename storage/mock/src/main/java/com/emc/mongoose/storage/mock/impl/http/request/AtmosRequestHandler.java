@@ -88,7 +88,7 @@ extends RequestHandlerBase<T> {
 	public AtmosRequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
 		final StorageMock<T> localStorage,
-		final StorageMockClient<T, StorageMockServer<T>> remoteStorage,
+		final StorageMockClient<T> remoteStorage,
 		final ContentSource contentSource
 	) throws RemoteException {
 		super(limitConfig, namingConfig, localStorage, remoteStorage, contentSource);

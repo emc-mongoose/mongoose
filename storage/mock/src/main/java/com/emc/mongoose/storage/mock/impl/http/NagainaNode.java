@@ -25,15 +25,15 @@ import java.util.concurrent.TimeUnit;
  Created on 09.09.16.
  */
 class NagainaNode
-	implements StorageMockNode<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> {
+	implements StorageMockNode<MutableDataItemMock> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private JmDNS jmDns;
-	private StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> client;
+	private StorageMockClient<MutableDataItemMock> client;
 	private StorageMockServer<MutableDataItemMock> server;
 
 	public NagainaNode(final StorageMock<MutableDataItemMock> storage) {
-		//			System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
+//		System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
 		try {
 			jmDns = JmDNS.create(NetUtil.getHostAddr());
 			LOG.info("mDNS address: " + jmDns.getInetAddress());
@@ -45,7 +45,7 @@ class NagainaNode
 	}
 
 	@Override
-	public StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> client() {
+	public StorageMockClient<MutableDataItemMock> client() {
 		return client;
 	}
 

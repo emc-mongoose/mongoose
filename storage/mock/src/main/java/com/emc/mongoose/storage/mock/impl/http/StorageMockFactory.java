@@ -6,7 +6,6 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockNode;
-import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
@@ -68,12 +67,8 @@ public class StorageMockFactory {
 		final StorageMock<MutableDataItemMock> storage = new Nagaina(
 			storageConfig, loadConfig, itemConfig, contentSource, handlers
 		);
-		final StorageMockNode<
-			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
-			> storageMockNode = new NagainaNode(storage);
-		final StorageMockClient<
-			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
-			> client = storageMockNode.client();
+		final StorageMockNode<MutableDataItemMock> storageMockNode = new NagainaNode(storage);
+		final StorageMockClient<MutableDataItemMock> client = storageMockNode.client();
 		handlers.add(
 			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client, contentSource)
 		);
