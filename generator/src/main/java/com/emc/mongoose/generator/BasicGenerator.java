@@ -53,7 +53,7 @@ implements Generator<I, O> {
 
 	private final List<Driver<I, O>> drivers;
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
-	private final LoadType ioType; // job.type
+	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Output<I> itemOutput;
 	private final Thread worker;
@@ -103,8 +103,8 @@ implements Generator<I, O> {
 							}
 						}
 						// CIRCULARITY FEATURE:
-						// produce only <maxItemQueueSize> items in order to make it possible to enqueue
-						// them infinitely
+						// produce only <maxItemQueueSize> items in order to make it possible to
+						// enqueue them infinitely
 						if(isCircular && producedItemsCount >= maxItemQueueSize) {
 							break;
 						}

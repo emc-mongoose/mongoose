@@ -15,12 +15,10 @@ import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
-import org.apache.logging.log4j.io.IoBuilder;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.sql.DriverManager;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -167,7 +165,9 @@ implements ShutdownCallbackRegistry {
 						final ClassLoader classloader = LogUtil.class.getClassLoader();
 						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
 						if(bundleLogConfURL != null) {
-							LOG_CTX = Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI());
+							LOG_CTX = Configurator.initialize(
+								MONGOOSE, classloader, bundleLogConfURL.toURI()
+							);
 						}
 					} else {
 						LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigurationFile);
