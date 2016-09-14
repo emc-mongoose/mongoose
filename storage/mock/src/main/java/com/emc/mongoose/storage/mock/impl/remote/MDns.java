@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.distribution;
+package com.emc.mongoose.storage.mock.impl.remote;
 
 /**
  Created on 23.08.16.
