@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  Created on 09.09.16.
  */
 class NagainaNode
-	implements StorageMockNode<MutableDataItemMock> {
+implements StorageMockNode<MutableDataItemMock> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private JmDNS jmDns;
