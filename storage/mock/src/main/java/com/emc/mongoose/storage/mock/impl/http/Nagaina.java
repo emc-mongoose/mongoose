@@ -1,5 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
@@ -20,7 +22,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,9 +72,12 @@ extends StorageMockBase<MutableDataItemMock>{
 		for(int i = 0; i < portsNumber; i++) {
 			try {
 				dispatchGroups[i] = new NioEventLoopGroup(
-					0, new DefaultThreadFactory("dispatcher-" + i)
+					1, new NamingThreadFactory("dispatcher@port#" + port + i + "-", true)
 				);
-				workGroups[i] = new NioEventLoopGroup();
+				workGroups[i] = new NioEventLoopGroup(
+					Math.min(1, ThreadUtil.getAvailableConcurrencyLevel() - 1),
+					new NamingThreadFactory("ioworker@port#" + port + i + "-", true)
+				);
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
 				serverBootstrap.group(dispatchGroups[i], workGroups[i])
