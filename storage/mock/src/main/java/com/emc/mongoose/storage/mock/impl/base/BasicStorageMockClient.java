@@ -126,7 +126,7 @@ implements StorageMockClient<T> {
 		}
 		T result;
 		while(null == (result = resultRef.get()) && sharedCountDown.getCount() > 0) {
-			LockSupport.parkNanos(1_000_000);
+			LockSupport.parkNanos(1);
 		}
 		return result;
 	}
