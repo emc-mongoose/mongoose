@@ -29,32 +29,34 @@ implements ObjectContainerMock<T> {
 	}
 
 	@Override
-	public int size() {
+	public synchronized int size() {
 		return containerMap.size();
 	}
 
 	@Override
-	public T list(final String afterObjectId, final Collection<T> outputBuffer, final int limit) {
+	public synchronized T list(
+		final String afterObjectId, final Collection<T> outputBuffer, final int limit
+	) {
 		return containerMap.list(afterObjectId, outputBuffer, limit);
 	}
 
 	@Override
-	public Collection<T> values() {
+	public synchronized Collection<T> values() {
 		return containerMap.values();
 	}
 
 	@Override
-	public T get(final String key) {
+	public synchronized T get(final String key) {
 		return containerMap.get(key);
 	}
 
 	@Override
-	public T put(final String key, final T value) {
+	public synchronized T put(final String key, final T value) {
 		return containerMap.put(key, value);
 	}
 
 	@Override
-	public T remove(final String key) {
+	public synchronized T remove(final String key) {
 		return containerMap.remove(key);
 	}
 

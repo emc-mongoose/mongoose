@@ -4,4 +4,7 @@ package com.emc.mongoose.storage.mock.api.exception;
  */
 public class ObjectMockNotFoundException
 extends Exception {
+	public ObjectMockNotFoundException(final String name) {
+		super(name);
+	}
 }

@@ -28,12 +28,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.IntStream;
 
 /**
  Created on 19.07.16.
@@ -51,9 +48,9 @@ implements StorageMock<T> {
 	private final int storageCapacity, containerCapacity;
 
 	private final ListingLRUMap<String, ObjectContainerMock<T>> storageMap;
-	private final String defaultContainerName;
+	private final ObjectContainerMock<T> defaultContainer;
 
-	private final AtomicBoolean isCapacityExhausted = new AtomicBoolean(false);
+	private volatile boolean isCapacityExhausted = false;
 
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
@@ -71,8 +68,8 @@ implements StorageMock<T> {
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();
-		defaultContainerName = getClass().getSimpleName().toLowerCase();
-		createContainer(defaultContainerName);
+		this.defaultContainer = new BasicObjectContainerMock<>(containerCapacity);
+		storageMap.put(getClass().getSimpleName().toLowerCase(), defaultContainer);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,29 +77,24 @@ implements StorageMock<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
-	public void createContainer(final String name) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(new PutContainerTask(name));
+	public final void createContainer(final String name) {
+		synchronized(storageMap) {
+			storageMap.put(name, new BasicObjectContainerMock<>(containerCapacity));
+		}
 	}
 
 	@Override
 	public final ObjectContainerMock<T> getContainer(final String name) {
-		try {
-			final Future<ObjectContainerMock<T>>
-				future = BlockingQueueTaskSequencer.INSTANCE.submit(new GetContainerTask(name));
-			if(future != null) {
-				return future.get();
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Container getting was interrupted");
-		} catch(final ExecutionException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Container get task failure");
+		synchronized(storageMap) {
+			return storageMap.get(name);
 		}
-		return null;
 	}
 
 	@Override
 	public final void deleteContainer(final String name) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteContainerTask(name));
+		synchronized(storageMap) {
+			storageMap.remove(name);
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,83 +107,74 @@ implements StorageMock<T> {
 	public final void createObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException {
-		if(isCapacityExhausted.get()) {
+		if(isCapacityExhausted) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		BlockingQueueTaskSequencer.INSTANCE.submit(
-			new PutObjectTask(containerName, newDataObject(id, offset, size))
-		);
+		final ObjectContainerMock<T> c = getContainer(containerName);
+		if(c != null) {
+			c.put(id, newDataObject(id, offset, size));
+		} else {
+			throw new ContainerMockNotFoundException(containerName);
+		}
 	}
 
 	@Override
 	public final void updateObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
-		try {
-			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
-				new GetObjectTask(containerName, id)
-			);
-			if(future != null) {
-				final T obj = future.get();
-				if(obj == null) {
-					throw new ObjectMockNotFoundException();
-				}
+		final ObjectContainerMock<T> c = getContainer(containerName);
+		if(c != null) {
+			final T obj = c.get(id);
+			if(obj != null) {
 				obj.update(offset, size);
+			} else {
+				throw new ObjectMockNotFoundException(id);
 			}
-		} catch(final ExecutionException e) {
-			throw new ContainerMockException(e);
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the update task");
+		} else {
+			throw new ContainerMockNotFoundException(containerName);
 		}
 	}
 	//
 	@Override
 	public final void appendObject(
-			final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
-		try {
-			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
-				new GetObjectTask(containerName, id)
-			);
-			if(future != null) {
-				final T obj = future.get();
-				if(obj == null) {
-					throw new ObjectMockNotFoundException();
-				}
+		final ObjectContainerMock<T> c = getContainer(containerName);
+		if(c != null) {
+			final T obj = c.get(id);
+			if(obj != null) {
 				obj.append(offset, size);
+			} else {
+				throw new ObjectMockNotFoundException(id);
 			}
-		} catch(final ExecutionException e) {
-			throw new ContainerMockException(e);
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the append task");
+		} else {
+			throw new ContainerMockNotFoundException(containerName);
 		}
 	}
 
 	@Override
 	public final T getObject(
-			final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
-		try {
-			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
-				new GetObjectTask(containerName, id)
-			);
-			if(future != null) {
-				return future.get();
-			}
-		} catch(final ExecutionException e) {
-			throw new ContainerMockException(e);
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
+		final ObjectContainerMock<T> c = getContainer(containerName);
+		if(c != null) {
+			return c.get(id);
+		} else {
+			throw new ContainerMockNotFoundException(containerName);
 		}
-		return null;
 	}
 
 	@Override
 	public final void deleteObject(
-			final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
-		BlockingQueueTaskSequencer.INSTANCE.submit(new DeleteObjectTask(containerName, id));
+		final ObjectContainerMock<T> c = getContainer(containerName);
+		if(c != null) {
+			c.remove(id);
+		} else {
+			throw new ContainerMockNotFoundException(containerName);
+		}
 	}
 
 	@Override
@@ -199,18 +182,12 @@ implements StorageMock<T> {
 		final String containerName, final String afterObjectId, final Collection<T> outputBuffer,
 		final int limit
 	) throws ContainerMockException {
-		try {
-			final Future<T> future = BlockingQueueTaskSequencer.INSTANCE.submit(
-				new ListObjectsTask(containerName, afterObjectId, outputBuffer, limit));
-			if(future != null) {
-				return future.get();
-			}
-		} catch(final ExecutionException e) {
-			throw new ContainerMockException(e);
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
+		final ObjectContainerMock<T> container = getContainer(containerName);
+		if(container != null) {
+			return container.list(afterObjectId, outputBuffer, limit);
+		} else {
+			throw new ContainerMockNotFoundException(containerName);
 		}
-		return null;
 	}
 
 	private final Thread storageCapacityMonitorThread = new Thread("storageMockCapacityMonitor") {
@@ -225,10 +202,10 @@ implements StorageMock<T> {
 				while(true) {
 					TimeUnit.SECONDS.sleep(1);
 					currObjCount = getSize();
-					if(!isCapacityExhausted.get() && currObjCount > storageCapacity) {
-						isCapacityExhausted.set(true);
-					} else if(isCapacityExhausted.get() && currObjCount <= storageCapacity) {
-						isCapacityExhausted.set(false);
+					if(!isCapacityExhausted && currObjCount > storageCapacity) {
+						isCapacityExhausted = true;
+					} else if(isCapacityExhausted && currObjCount <= storageCapacity) {
+						isCapacityExhausted = false;
 					}
 				}
 			} catch(final InterruptedException ignored) {
@@ -254,15 +231,13 @@ implements StorageMock<T> {
 
 	@Override
 	public long getSize() {
-		final int[] sizes = new int[storageMap.size()];
-		ObjectContainerMock<T> container;
-		for (int i = 0; i < sizes.length; i++) {
-			container = storageMap.getOrDefault(i, null);
-			if (container != null) {
-				sizes[i] = container.size();
+		long size = 0;
+		synchronized(storageMap) {
+			for(final ObjectContainerMock<T> container : storageMap.values()) {
+				size += container.size();
 			}
 		}
-		return IntStream.of(sizes).sum();
+		return size;
 	}
 
 	@Override
@@ -272,9 +247,9 @@ implements StorageMock<T> {
 
 	@Override
 	public final void putIntoDefaultContainer(final List<T> dataItems) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(
-			new PutObjectsBatchTask(defaultContainerName, dataItems)
-		);
+		for(final T object : dataItems) {
+			defaultContainer.put(object.getName(), object);
+		}
 	}
 
 	@Override

@@ -1,11 +1,9 @@
 package com.emc.mongoose.storage.mock.api;
 
 import com.emc.mongoose.common.collection.Listable;
-import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  Created on 19.07.16.
