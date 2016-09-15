@@ -128,8 +128,8 @@ implements StorageMockClient<T> {
 				)
 			);
 		}
-		T result = null;
-		while(sharedCountDown.getCount() > 0) {
+		T result;
+		do {
 			result = resultRef.get();
 			if(result == null) {
 				LockSupport.parkNanos(1);
@@ -137,7 +137,7 @@ implements StorageMockClient<T> {
 				result.setContentSrc(contentSrc);
 				break;
 			}
-		}
+		} while(sharedCountDown.getCount() > 0);
 		return result;
 	}
 	
