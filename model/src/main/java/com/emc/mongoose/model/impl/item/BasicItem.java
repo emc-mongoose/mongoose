@@ -98,17 +98,14 @@ implements Item {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		final byte buff[] = toString().getBytes();
-		out.writeInt(buff.length);
-		out.write(buff);
+		out.writeObject(path);
+		out.writeObject(name);
 	}
 	
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		final int len = in.readInt();
-		final byte buff[] = new byte[len];
-		in.readFully(buff);
-		fromString(new String(buff));
+		path = (String) in.readObject();
+		name = (String) in.readObject();
 	}
 }
