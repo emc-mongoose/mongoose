@@ -347,35 +347,37 @@ implements StorageMock<T> {
 
 	private abstract class ContainerTaskBase
 	extends FutureTaskBase<T> {
+		
 		private final String containerName;
 
-		ContainerTaskBase(final String containerName) {
+		public ContainerTaskBase(final String containerName) {
 			this.containerName = containerName;
 		}
 
-		ObjectContainerMock<T> getContainer() {
+		public ObjectContainerMock<T> getContainer() {
 			return storageMap.get(containerName);
 		}
 
-		boolean setException() {
+		protected final boolean setException() {
 			return setException(
 				new ContainerMockNotFoundException(containerName)
 			);
 		}
 	}
 
-	private class PutObjectsBatchTask extends FutureTaskBase<List<T>> {
+	private final class PutObjectsBatchTask
+	extends FutureTaskBase<List<T>> {
 
 		private final String containerName;
 		private final List<T> objects;
 
-		PutObjectsBatchTask(final String containerName, final List<T> objects) {
+		public PutObjectsBatchTask(final String containerName, final List<T> objects) {
 			this.containerName = containerName;
 			this.objects = objects;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			final ObjectContainerMock<T> container = storageMap.get(containerName);
 			if(container != null) {
 				objects.forEach(object -> container.put(object.getName(), object));
@@ -387,14 +389,14 @@ implements StorageMock<T> {
 
 	}
 
-	private class ListObjectsTask
+	private final class ListObjectsTask
 	extends ContainerTaskBase {
 
 		private final String afterObjectId;
 		private final Collection<T> outputBuffer;
 		private final int limit;
 
-		ListObjectsTask(
+		public ListObjectsTask(
 			final String containerName, final String afterObjectId,
 			final Collection<T> outputBuffer, final int limit
 		) {
@@ -405,7 +407,7 @@ implements StorageMock<T> {
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			final ObjectContainerMock<T> container = getContainer();
 			if(container != null) {
 				set(container.list(afterObjectId, outputBuffer, limit));
@@ -415,18 +417,18 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class DeleteObjectTask
+	private final class DeleteObjectTask
 	extends ContainerTaskBase {
 
 		private final String objectId;
 
-		DeleteObjectTask(final String containerName, final String objectId) {
+		public DeleteObjectTask(final String containerName, final String objectId) {
 			super(containerName);
 			this.objectId = objectId;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			final ObjectContainerMock<T> container = getContainer();
 			if(container != null) {
 				set(container.remove(objectId));
@@ -436,18 +438,18 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class GetObjectTask
+	private final class GetObjectTask
 	extends ContainerTaskBase {
 
 		private final String objectId;
 
-		GetObjectTask(final String containerName, final String objectId) {
+		public GetObjectTask(final String containerName, final String objectId) {
 			super(containerName);
 			this.objectId = objectId;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			final ObjectContainerMock<T> container = getContainer();
 			if(container != null) {
 				set(container.get(objectId));
@@ -457,18 +459,18 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class PutObjectTask
+	private final class PutObjectTask
 	extends ContainerTaskBase {
 
 		private T object;
 
-		PutObjectTask(final String containerName, final T object) {
+		public PutObjectTask(final String containerName, final T object) {
 			super(containerName);
 			this.object = object;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			final ObjectContainerMock<T> container =
 				getContainer();
 			if(container != null) {
@@ -479,17 +481,17 @@ implements StorageMock<T> {
 		}
 	}
 
-	private class DeleteContainerTask
+	private final class DeleteContainerTask
 	extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
-		DeleteContainerTask(final String containerName) {
+		public DeleteContainerTask(final String containerName) {
 			this.containerName = containerName;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			if(storageMap.containsKey(containerName)) {
 				set(storageMap.remove(containerName));
 			} else {
@@ -499,17 +501,17 @@ implements StorageMock<T> {
 
 	}
 
-	private class GetContainerTask
+	private final class GetContainerTask
 	extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
-		GetContainerTask(final String containerName) {
+		public GetContainerTask(final String containerName) {
 			this.containerName = containerName;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			if(storageMap.containsKey(containerName)) {
 				set(storageMap.get(containerName));
 			} else {
@@ -519,17 +521,17 @@ implements StorageMock<T> {
 
 	}
 
-	private class PutContainerTask
+	private final class PutContainerTask
 	extends FutureTaskBase<ObjectContainerMock<T>> {
 
 		private final String containerName;
 
-		PutContainerTask(final String containerName) {
+		public PutContainerTask(final String containerName) {
 			this.containerName = containerName;
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			set(storageMap.put(containerName, new BasicObjectContainerMock<>(containerCapacity)));
 			ioStats.containerCreate();
 		}

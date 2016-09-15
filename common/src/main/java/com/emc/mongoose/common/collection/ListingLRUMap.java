@@ -8,7 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created on 20.07.16.
  */
-public class ListingLRUMap<K, V> extends LRUMap<K, V> implements Listable<V> {
+public class ListingLRUMap<K, V>
+extends LRUMap<K, V> implements Listable<V> {
 
 	private final AtomicInteger size = new AtomicInteger(0);
 
