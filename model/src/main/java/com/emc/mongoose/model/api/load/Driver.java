@@ -10,7 +10,7 @@ import java.util.List;
  Created on 11.07.16.
  */
 public interface Driver<I extends Item, O extends IoTask<I>>
-extends InterruptibleDaemon {
+extends InterruptibleDaemon, IoTaskCallback<I, O>, Registry<Monitor<I, O>> {
 
 	boolean isFullThrottleEntered();
 
@@ -21,7 +21,4 @@ extends InterruptibleDaemon {
 
 	int submit(final List<O> tasks, final int from, final int to)
 	throws InterruptedException;
-
-	void registerMonitor(final Monitor<I, O> monitor)
-	throws IllegalStateException;
 }

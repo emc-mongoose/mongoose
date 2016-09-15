@@ -58,4 +58,6 @@ public interface IoTask<I extends Item> {
 	int getLatency();
 
 	String getDstPath();
+	
+	void reset();
 }

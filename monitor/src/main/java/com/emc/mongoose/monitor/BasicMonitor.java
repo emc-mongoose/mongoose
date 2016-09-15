@@ -1,6 +1,7 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
+import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemBuffer;
 import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.emc.mongoose.model.api.item.Item.SLASH;
@@ -48,12 +50,13 @@ implements Monitor<I, O> {
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final boolean isCircular;
 	private final int batchSize = 0x1000;
 	private final ItemBuffer<I> itemOutBuff;
 	private final IoStats ioStats, medIoStats;
 	private volatile IoStats.Snapshot lastStats = null;
 	private final Thread worker;
+	private final AtomicLong counterResults = new AtomicLong(0);
+	private volatile Output<I> itemOutput;
 	
 	public BasicMonitor(
 		final String name, final List<Generator<I, O>> generators, final LoadConfig loadConfig
@@ -61,7 +64,7 @@ implements Monitor<I, O> {
 		this.name = name;
 		this.generators = generators;
 		for(final Generator<I, O> generator : generators) {
-			generator.registerMonitor(this);
+			generator.register(this);
 		}
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
@@ -78,20 +81,22 @@ implements Monitor<I, O> {
 		} else {
 			sizeLimit = Long.MAX_VALUE;
 		}
-		this.worker = new Thread(new ServiceTask(), name);
+		this.worker = new Thread(new ServiceTask(metricsPeriosSec), name);
 		this.worker.setDaemon(true);
-		this.isCircular = loadConfig.getCircular();
-		this.itemOutBuff = new LimitedQueueItemBuffer<>(
-			new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
-		);
+		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
+		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
 	}
 	
 	private final class ServiceTask
 	implements Runnable {
 
+		private final long metricsPeriodNanoSec;
 		private long prevNanoTimeStamp;
 
-		public ServiceTask() {
+		private ServiceTask(final int metricsPeriodSec) {
+			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
+				metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
+			);
 			this.prevNanoTimeStamp = -1;
 		}
 
@@ -100,109 +105,44 @@ implements Monitor<I, O> {
 			
 			long nextNanoTimeStamp;
 			
-			boolean allGeneratorsDoneFlag;
-			
 			while(!isInterrupted()) {
 				nextNanoTimeStamp = System.nanoTime();
-				
 				// refresh the stats
 				lastStats = ioStats.getSnapshot();
-				
-				// output the current measurements every 10 sec
-				if(nextNanoTimeStamp - prevNanoTimeStamp > 1e10) {
+				// output the current measurements periodically
+				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 					LOG.info(Markers.PERF_AVG, lastStats.toString());
+					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
-				
-				//
-				allGeneratorsDoneFlag = true;
-				for(final Generator<I, O> nextGenerator : generators) {
-					if(!nextGenerator.isInterrupted()) {
-						allGeneratorsDoneFlag = false;
-						break;
-					}
-				}
-				if(!isCircular || allGeneratorsDoneFlag) {
-					postProcessItems();
-				}
-				
-				prevNanoTimeStamp = nextNanoTimeStamp;
+				postProcessItems();
 			}
 		}
 	}
 	
 	protected void postProcessItems() {
+		final List<I> items = new ArrayList<>(batchSize);
 		try {
-			final List<I> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
 			if(n > 0) {
-				if(isCircular) {
-					int m = 0, k;
-					while(m < n) {
-						k = put(items, m, n);
-						if(k > 0) {
-							m += k;
-						} else {
-							break;
+				if(itemOutput != null) {
+					try {
+						for(int m = 0; m < n; m += itemOutput.put(items, m, n)) {
+							LockSupport.parkNanos(1);
 						}
-						LockSupport.parkNanos(1_000);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput
+						);
+					} finally {
+						items.clear();
 					}
-				} else {
-					postProcessUniqueItemsFinally(items);
 				}
-			} else if(isDone()) {
-				isPostProcessDone = true;
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer);
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput);
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
-				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", consumer);
-			}
-		}
-	}
-	//
-	protected void postProcessUniqueItemsFinally(final List<I> items) {
-		// is this an end of consumer-producer chain?
-		if(consumer == null) {
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
-			}
-			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-				try {
-					for(final Item item : items) {
-						LOG.info(Markers.ITEM_LIST, item.toString());
-					}
-				} catch(final Throwable e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "{}: failed to dump out {} items",
-						getName(), items.size()
-					);
-				}
-			}
-		} else { // put to the consumer
-			int n = items.size();
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "Going to put {} items to the consumer {}",
-					n, consumer
-				);
-			}
-			try {
-				for(int m = 0; m < n; m += consumer.put(items, m, n)) {
-					LockSupport.parkNanos(1);
-				}
-				items.clear();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
-				);
-			}
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG,
-					"{} items were passed to the consumer {} successfully",
-					n, consumer
-				);
+				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", itemOutput);
 			}
 		}
 	}
@@ -210,7 +150,7 @@ implements Monitor<I, O> {
 	protected final boolean isDoneCountLimit() {
 		return countLimit > 0 && (
 			counterResults.get() >= countLimit ||
-				lastStats.getSuccCount() + lastStats.getFailCount() >= countLimit
+			lastStats.getSuccCount() + lastStats.getFailCount() >= countLimit
 		);
 	}
 	//
@@ -218,36 +158,13 @@ implements Monitor<I, O> {
 		return sizeLimit > 0 && lastStats.getByteCount() >= sizeLimit;
 	}
 	//
-	protected boolean isDoneAllSubm() {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
-				getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
-			);
-		}
-		return isShutdown.get() && counterResults.get() >= counterSubm.get();
-	}
-	//
 	private boolean isDone() {
-		if(isDoneAllSubm()) {
-			if(!isCircular) {
-				LOG.debug(
-					Markers.MSG, "{}: done due to \"done all submitted\" state",
-					getName()
-				);
-				return true;
-			}
-		}
 		if(isDoneCountLimit()) {
 			LOG.debug(Markers.MSG, "{}: done due to max count done state", getName());
 			return true;
 		}
 		if(isDoneSizeLimit()) {
 			LOG.debug(Markers.MSG, "{}: done due to max size done state", getName());
-			return true;
-		}
-		if(isLimitReached) {
-			LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 			return true;
 		}
 		return false;
@@ -295,12 +212,23 @@ implements Monitor<I, O> {
 			if(medIoStats != null && medIoStats.isStarted()) {
 				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
 			}
+			// put into the output buffer
+			try {
+				itemOutBuff.put(item);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
+					getName()
+				);
+			}
 		} else {
 			ioStats.markFail();
 			if(medIoStats != null && medIoStats.isStarted()) {
 				medIoStats.markFail();
 			}
 		}
+		
+		counterResults.incrementAndGet();
 	}
 
 	@Override
@@ -415,7 +343,7 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	public final void registerDriver(final Driver<I, O> driver)
+	public final void register(final Driver<I, O> driver)
 	throws IllegalStateException {
 		if(null == drivers.putIfAbsent(driver.toString(), driver)) {
 			LOG.info(
@@ -434,6 +362,11 @@ implements Monitor<I, O> {
 	@Override
 	public final String getName() {
 		return name;
+	}
+	
+	@Override
+	public final void setItemOutput(final Output<I> itemOutput) {
+		this.itemOutput = itemOutput;
 	}
 
 	@Override

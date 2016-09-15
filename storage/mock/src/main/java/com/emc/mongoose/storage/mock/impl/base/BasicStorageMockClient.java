@@ -139,7 +139,7 @@ implements StorageMockClient<T> {
 				submit(new GetRemoteObjectTask<>(node, containerName, id, offset, size))
 			);
 		}
-		for (final Future<T> objFuture: objFutures) {
+		for(final Future<T> objFuture: objFutures) {
 			object = objFuture.get();
 			if (object != null) {
 				return object;

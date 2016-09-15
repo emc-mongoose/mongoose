@@ -44,7 +44,7 @@ implements RunnableFuture<V> {
 	public final V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		final long timeoutInMillis;
-		if(timeout < 0 || unit == null) {
+		if(timeout < 0) {
 			throw new IllegalArgumentException();
 		} else if(timeout == 0) {
 			timeoutInMillis = Long.MAX_VALUE;

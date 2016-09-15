@@ -14,7 +14,6 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.io.task.IoTaskFactory;
 import com.emc.mongoose.model.api.item.Item;
@@ -55,7 +54,6 @@ implements Generator<I, O> {
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType;
 	private final Input<I> itemInput;
-	private final Output<I> itemOutput;
 	private final Thread worker;
 	private final int batchSize = 0x1000;
 	private final int maxItemQueueSize;
@@ -67,7 +65,60 @@ implements Generator<I, O> {
 	private final String runId;
 
 	private long producedItemsCount = 0;
-
+	
+	@Override
+	public final void put(final I item)
+	throws IOException {
+		final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
+		final Driver<I, O> nextDriver = getNextDriver();
+		try {
+			nextDriver.submit(nextIoTask);
+		} catch(final InterruptedException e) {
+			throw new InterruptedIOException();
+		}
+	}
+	
+	@Override
+	public final int put(final List<I> buffer, final int from, final int to)
+	throws IOException {
+		if(to > from) {
+			final List<O> ioTasks = new ArrayList<>(to - from);
+			for(int i = from; i < to; i ++) {
+				ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
+			}
+			final Driver<I, O> nextDriver = getNextDriver();
+			try {
+				nextDriver.submit(ioTasks, 0, ioTasks.size());
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
+		}
+		return to - from;
+	}
+	
+	@Override
+	public final int put(final List<I> buffer)
+	throws IOException {
+		final int n = buffer.size();
+		final List<O> ioTasks = new ArrayList<>(n);
+		for(final I nextItem : buffer) {
+			ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
+		}
+		final Driver<I, O> nextDriver = getNextDriver();
+		try {
+			nextDriver.submit(ioTasks, 0, n);
+		} catch(final InterruptedException e) {
+			throw new InterruptedIOException();
+		}
+		return n;
+	}
+	
+	@Override
+	public final Input<I> getInput()
+	throws IOException {
+		return itemInput;
+	}
+	
 	private final class GeneratorTask
 	implements Runnable {
 
@@ -94,7 +145,7 @@ implements Generator<I, O> {
 						}
 						if(n > 0 && rateThrottle.requestContinueFor(null, n)) {
 							for(m = 0; m < n && !isInterrupted(); ) {
-								m += itemOutput.put(buff, m, n);
+								m += put(buff, m, n);
 							}
 							producedItemsCount += n;
 						} else {
@@ -123,7 +174,7 @@ implements Generator<I, O> {
 			} finally {
 				LOG.debug(
 					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					Thread.currentThread().getName(), producedItemsCount, itemInput, itemOutput
+					Thread.currentThread().getName(), producedItemsCount, itemInput, this
 				);
 				try {
 					itemInput.close();
@@ -133,68 +184,6 @@ implements Generator<I, O> {
 					);
 				}
 			}
-		}
-	}
-
-	private final class IoTaskSubmitOutput
-	implements Output<I> {
-
-		@Override
-		public void put(final I item)
-		throws IOException {
-			final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
-			final Driver<I, O> nextDriver = getNextDriver();
-			try {
-				nextDriver.submit(nextIoTask);
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException();
-			}
-		}
-
-		@Override
-		public int put(final List<I> buffer, final int from, final int to)
-		throws IOException {
-			if(to > from) {
-				final List<O> ioTasks = new ArrayList<>(to - from);
-				for(int i = from; i < to; i ++) {
-					ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
-				}
-				final Driver<I, O> nextDriver = getNextDriver();
-				try {
-					nextDriver.submit(ioTasks, 0, ioTasks.size());
-				} catch(final InterruptedException e) {
-					throw new InterruptedIOException();
-				}
-			}
-			return to - from;
-		}
-
-		@Override
-		public int put(final List<I> buffer)
-		throws IOException {
-			final int n = buffer.size();
-			final List<O> ioTasks = new ArrayList<>(n);
-			for(final I nextItem : buffer) {
-				ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
-			}
-			final Driver<I, O> nextDriver = getNextDriver();
-			try {
-				nextDriver.submit(ioTasks, 0, n);
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException();
-			}
-			return n;
-		}
-
-		@Override
-		public Input<I> getInput()
-		throws IOException {
-			return itemInput;
-		}
-
-		@Override
-		public void close()
-		throws IOException {
 		}
 	}
 
@@ -249,18 +238,17 @@ implements Generator<I, O> {
 		}
 		
 		this.ioTaskFactory = ioTaskFactory;
-		this.itemOutput = new IoTaskSubmitOutput();
 		
 		worker = new Thread(new GeneratorTask(), "generator");
 		worker.setDaemon(true);
 	}
 
 	@Override
-	public final void registerMonitor(final Monitor<I, O> monitor)
+	public final void register(final Monitor<I, O> monitor)
 	throws IllegalStateException {
 		if(monitorRef.compareAndSet(null, monitor)) {
 			for(final Driver<I, O> driver : drivers) {
-				driver.registerMonitor(monitor);
+				driver.register(monitor);
 			}
 		} else {
 			throw new IllegalStateException("Generator is already used by another monitor");
@@ -333,9 +321,6 @@ implements Generator<I, O> {
 		}
 		if(itemInput != null) {
 			itemInput.close();
-		}
-		if(itemOutput != null) {
-			itemOutput.close();
 		}
 		for(final Driver<I, O> nextDriver : drivers) {
 			nextDriver.close();

@@ -56,17 +56,21 @@ implements Item {
 	public final void setName(final String name) {
 		this.name = name;
 	}
-	//
+	
+	@Override
+	public void reset() {
+	}
+	
 	@Override
 	public final String getPath() {
 		return path;
 	}
-	//
+	
 	@Override
 	public final void setPath(final String path) {
 		this.path = path;
 	}
-	//
+	
 	@Override
 	public boolean equals(final Object o) {
 		if(o == this) {

@@ -15,4 +15,6 @@ extends Serializable {
 
 	String getName();
 	void setName(final String name);
+	
+	void reset();
 }

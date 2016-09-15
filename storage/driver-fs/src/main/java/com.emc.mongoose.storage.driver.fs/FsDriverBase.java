@@ -51,7 +51,8 @@ implements Driver<I, O> {
 		}
 		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
-		ioTaskExecutor = new ThreadPoolExecutor(ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
+		ioTaskExecutor = new ThreadPoolExecutor(
+			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
 			new IoWorker.Factory(
 				this.runId + "-ioWorker", (int) ioBuffSize.getMin(), (int) ioBuffSize.getMax()
@@ -59,7 +60,7 @@ implements Driver<I, O> {
 		);
 	}
 
-	public final class IoTaskSchedule
+	private final class IoTaskSchedule
 	implements Runnable {
 
 		private final List<O> ioTaskBuff = new ArrayList<>(BATCH_SIZE);
@@ -86,7 +87,13 @@ implements Driver<I, O> {
 			}
 		}
 	}
-
+	
+	/**
+	 Reentrant method which performs create/read/etc I/O operation.
+	 May change the task status or not change if the I/O operation is not completed during this
+	 particular invocation
+	 @param ioTask
+	 */
 	protected abstract void executeIoTask(final O ioTask);
 	
 	@Override
