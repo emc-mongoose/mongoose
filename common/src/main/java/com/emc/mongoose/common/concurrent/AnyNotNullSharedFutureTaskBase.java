@@ -6,22 +6,25 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- Created on 20.07.16.
+ Created by kurila on 15.09.16.
  */
-@SuppressWarnings("Duplicates")
-public abstract class FutureTaskBase<V>
+public abstract class AnyNotNullSharedFutureTaskBase<V>
 implements RunnableFuture<V> {
-
-	private final CountDownLatch latch;
+	
+	private final CountDownLatch sharedLatch;
 	private final AtomicBoolean completed;
-
-	private volatile V result;
+	
+	private final AtomicReference<V> resultRef;
 	private volatile Throwable cause;
 	
-	protected FutureTaskBase() {
-		latch = new CountDownLatch(1);
+	protected AnyNotNullSharedFutureTaskBase(
+		final AtomicReference<V> resultRef, final CountDownLatch sharedLatch
+	) {
+		this.resultRef = resultRef;
+		this.sharedLatch = sharedLatch;
 		completed = new AtomicBoolean(false);
 	}
 	
@@ -29,22 +32,22 @@ implements RunnableFuture<V> {
 	public final boolean isDone() {
 		return this.completed.get();
 	}
-
+	
 	private V getResult()
 	throws ExecutionException {
 		if(cause != null) {
 			throw new ExecutionException(cause);
 		}
-		return result;
+		return resultRef.get();
 	}
-
+	
 	@Override
 	public final V get()
 	throws InterruptedException, ExecutionException {
-		latch.await();
-		return result;
+		sharedLatch.await();
+		return resultRef.get();
 	}
-
+	
 	@Override
 	public final V get(long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
@@ -64,7 +67,7 @@ implements RunnableFuture<V> {
 			throw new TimeoutException();
 		} else {
 			while(true) {
-				latch.await(waitTime, TimeUnit.MILLISECONDS);
+				sharedLatch.await(waitTime, TimeUnit.MILLISECONDS);
 				if(completed.get()) {
 					return getResult();
 				} else {
@@ -76,30 +79,30 @@ implements RunnableFuture<V> {
 			}
 		}
 	}
-
+	
 	protected boolean set(final V v) {
 		if(!completed.get() && completed.compareAndSet(false, true)) {
-			result = v;
-			latch.countDown();
+			resultRef.compareAndSet(null, v);
+			sharedLatch.countDown();
 			return true;
 		}
 		return false;
 	}
-
+	
 	protected boolean setException(final Throwable cause) {
 		if(completed.compareAndSet(false, true)) {
 			this.cause = cause;
-			latch.countDown();
+			sharedLatch.countDown();
 			return true;
 		}
 		return false;
 	}
-
+	
 	@Override
 	public boolean cancel(final boolean mayInterruptIfRunning) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	@Override
 	public boolean isCancelled() {
 		return false;

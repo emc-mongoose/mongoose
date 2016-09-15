@@ -11,13 +11,13 @@ extends BasicIoTask<T>
 implements DataIoTask<T> {
 
 	protected final long contentSize;
-	protected volatile long countBytesDone = 0;
-	protected volatile DataItem currRange = null;
-	protected volatile long currRangeSize = 0;
-	protected volatile long nextRangeOffset = 0;
-	protected volatile int currRangeIdx = 0;
-	protected volatile int currDataLayerIdx = 0;
-	protected volatile long respDataTimeStart = 0;
+	protected volatile long countBytesDone;
+	protected volatile DataItem currRange;
+	protected volatile long currRangeSize;
+	protected volatile long nextRangeOffset;
+	protected volatile int currRangeIdx;
+	protected volatile int currDataLayerIdx;
+	protected volatile long respDataTimeStart;
 
 	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
 	throws IOException {
@@ -47,6 +47,14 @@ implements DataIoTask<T> {
 				contentSize = 0;
 				break;
 		}
+	}
+	
+	@Override
+	public void reset() {
+		super.reset();
+		currRange = null;
+		countBytesDone = currRangeSize = nextRangeOffset = currRangeIdx = 0;
+		respDataTimeStart = currDataLayerIdx = 0;
 	}
 
 	@Override

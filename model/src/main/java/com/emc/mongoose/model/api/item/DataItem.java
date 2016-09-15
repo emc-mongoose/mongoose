@@ -16,6 +16,10 @@ import java.nio.channels.WritableByteChannel;
 public interface DataItem
 extends Item, SeekableByteChannel {
 	//
+	ContentSource getContentSrc();
+	//
+	void setContentSrc(final ContentSource contentSrc);
+	//
 	void reset();
 	//
 	long getOffset();

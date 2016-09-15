@@ -5,6 +5,9 @@ import com.emc.mongoose.model.api.item.MutableDataItem;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -16,15 +19,18 @@ implements MutableDataItem {
 	//
 	protected final static String
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
-		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final BitSet
-		maskRangesRead = new BitSet(Long.SIZE),
-		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE) };
-	protected int currLayerIndex = 0;
-	protected long pendingAugmentSize = 0;
+	protected final BitSet maskRangesRead = new BitSet(Long.SIZE);
+	protected transient final BitSet maskRangesWrite[] = new BitSet[] {
+		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
+	};
+	protected transient long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicMutableDataItem() {
+		super();
+	}
+	//
 	public BasicMutableDataItem(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 	}
@@ -36,7 +42,7 @@ implements MutableDataItem {
 		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 		try {
 			// extract hexadecimal layer number
-			currLayerIndex = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
+			layerNum = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
 			// extract hexadecimal mask, convert into bit set and add to the existing mask
 			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 			final char rangesMaskChars[];
@@ -94,7 +100,7 @@ implements MutableDataItem {
 		}
 		return strBuilder
 			.append(super.toString()).append(',')
-			.append(Integer.toHexString(currLayerIndex)).append('/')
+			.append(Integer.toHexString(layerNum)).append('/')
 			.append(
 				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
 					Hex.encodeHexString(maskRangesRead.toByteArray())
@@ -153,7 +159,7 @@ implements MutableDataItem {
 	//
 	@Override
 	public final int getCurrLayerIndex() {
-		return currLayerIndex;
+		return layerNum;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +253,7 @@ implements MutableDataItem {
 			maskRangesRead.clear();
 			maskRangesRead.or(maskRangesWrite[1]);
 			maskRangesWrite[1].clear();
-			currLayerIndex ++;
+			layerNum ++;
 		}
 		maskRangesWrite[0].clear();
 	}
@@ -293,5 +299,24 @@ implements MutableDataItem {
 	public final void commitAppend() {
 		size += pendingAugmentSize;
 		pendingAugmentSize = 0;
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		final byte buff[] = maskRangesRead.toByteArray();
+		out.writeInt(buff.length);
+		out.write(buff);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		final int len = in.readInt();
+		final byte buff[] = new byte[len];
+		in.readFully(buff);
+		maskRangesRead.or(BitSet.valueOf(buff));
 	}
 }

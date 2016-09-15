@@ -8,12 +8,12 @@ import java.util.concurrent.ExecutionException;
 /**
  Created on 01.09.16.
  */
-public interface StorageMockClient<T extends MutableDataItemMock, O extends StorageMockServer<T>>
+public interface StorageMockClient<T extends MutableDataItemMock>
 extends ServiceListener, Closeable {
 
 	void start();
 
-	T readObject(
+	T getObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ExecutionException, InterruptedException;
 

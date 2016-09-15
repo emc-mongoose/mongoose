@@ -6,8 +6,8 @@ import com.emc.mongoose.model.api.io.Output;
 /**
  Created by kurila on 30.09.15.
  */
-public interface ItemBuffer<T extends Item>
-extends Input<T>, Output<T> {
+public interface ItemBuffer<I extends Item>
+extends Input<I>, Output<I> {
 	//
 	boolean isEmpty();
 	//

@@ -16,17 +16,26 @@ implements IoTask<I> {
 	protected final I item;
 	protected final String dstPath;
 	//
-	protected volatile String nodeAddr = null;
-	protected volatile Status status = Status.PENDING;
-	protected volatile long reqTimeStart = 0;
-	protected volatile long reqTimeDone = 0;
-	protected volatile long respTimeStart = 0;
-	protected volatile long respTimeDone = 0;
+	protected volatile String nodeAddr;
+	protected volatile Status status;
+	protected volatile long reqTimeStart;
+	protected volatile long reqTimeDone;
+	protected volatile long respTimeStart;
+	protected volatile long respTimeDone;
 	//
 	public BasicIoTask(final LoadType ioType, final I item, final String dstPath) {
 		this.ioType = ioType;
 		this.item = item;
 		this.dstPath = dstPath;
+		reset();
+	}
+	//
+	@Override
+	public void reset() {
+		item.reset();
+		nodeAddr = null;
+		status = Status.PENDING;
+		reqTimeStart = reqTimeDone = respTimeStart = reqTimeDone = 0;
 	}
 	//
 	@Override

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.NetUtil;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
@@ -24,28 +25,30 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 09.09.16.
  */
-class NagainaNode
-	implements StorageMockNode<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> {
+public class NagainaNode
+implements StorageMockNode<MutableDataItemMock> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private JmDNS jmDns;
-	private StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> client;
+	private StorageMockClient<MutableDataItemMock> client;
 	private StorageMockServer<MutableDataItemMock> server;
 
-	public NagainaNode(final StorageMock<MutableDataItemMock> storage) {
-		//			System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
+	public NagainaNode(
+		final StorageMock<MutableDataItemMock> storage, final ContentSource contentSrc
+	) {
+//		System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
 		try {
 			jmDns = JmDNS.create(NetUtil.getHostAddr());
 			LOG.info("mDNS address: " + jmDns.getInetAddress());
 			server = new BasicStorageMockServer<>(storage, jmDns);
-			client = new BasicStorageMockClient<>(jmDns);
+			client = new BasicStorageMockClient<>(contentSrc, jmDns);
 		} catch(final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create storage mock node");
 		}
 	}
 
 	@Override
-	public StorageMockClient<MutableDataItemMock, StorageMockServer<MutableDataItemMock>> client() {
+	public StorageMockClient<MutableDataItemMock> client() {
 		return client;
 	}
 

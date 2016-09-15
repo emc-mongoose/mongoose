@@ -6,7 +6,6 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockNode;
-import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
@@ -34,7 +33,7 @@ public class StorageMockFactory {
 	private final Config.ItemConfig itemConfig;
 	private final Config.LoadConfig.LimitConfig limitConfig;
 	private final Config.ItemConfig.NamingConfig namingConfig;
-	private ContentSource contentSource;
+	private ContentSource contentSrc;
 
 	public StorageMockFactory(
 		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
@@ -51,7 +50,7 @@ public class StorageMockFactory {
 				.getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
 		try {
-			this.contentSource = ContentSourceUtil.getInstance(
+			this.contentSrc = ContentSourceUtil.getInstance(
 				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
 			);
 		} catch(final IOException e) {
@@ -66,22 +65,20 @@ public class StorageMockFactory {
 	throws RemoteException {
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<MutableDataItemMock> storage = new Nagaina(
-			storageConfig, loadConfig, itemConfig, contentSource, handlers
+			storageConfig, loadConfig, itemConfig, contentSrc, handlers
 		);
-		final StorageMockNode<
-			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
-			> storageMockNode = new NagainaNode(storage);
-		final StorageMockClient<
-			MutableDataItemMock, StorageMockServer<MutableDataItemMock>
-			> client = storageMockNode.client();
+		final StorageMockNode<MutableDataItemMock> storageMockNode = new NagainaNode(
+			storage, contentSrc
+		);
+		final StorageMockClient<MutableDataItemMock> client = storageMockNode.client();
 		handlers.add(
-			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client, contentSource)
+			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client, contentSrc)
 		);
 		handlers.add(
-			new AtmosRequestHandler<>(limitConfig, namingConfig, storage, client, contentSource)
+			new AtmosRequestHandler<>(limitConfig, namingConfig, storage, client, contentSrc)
 		);
 		handlers.add(
-			new S3RequestHandler<>(limitConfig, namingConfig, storage, client, contentSource)
+			new S3RequestHandler<>(limitConfig, namingConfig, storage, client, contentSrc)
 		);
 		return storageMockNode;
 	}
@@ -89,17 +86,17 @@ public class StorageMockFactory {
 	public StorageMock newNagaina() {
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<MutableDataItemMock> storage = new Nagaina(
-			storageConfig, loadConfig, itemConfig, contentSource, handlers
+			storageConfig, loadConfig, itemConfig, contentSrc, handlers
 		);
 		try {
 			handlers.add(
-				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
+				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null, contentSrc)
 			);
 			handlers.add(
-				new AtmosRequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
+				new AtmosRequestHandler<>(limitConfig, namingConfig, storage, null, contentSrc)
 			);
 			handlers.add(
-				new S3RequestHandler<>(limitConfig, namingConfig, storage, null, contentSource)
+				new S3RequestHandler<>(limitConfig, namingConfig, storage, null, contentSrc)
 			);
 		} catch(final RemoteException ignore) {
 		}

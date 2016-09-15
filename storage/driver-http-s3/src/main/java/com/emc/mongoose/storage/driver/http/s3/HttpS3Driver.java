@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.http.s3;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.storage.driver.http.base.HttpDriverBase;
 
 import static com.emc.mongoose.storage.driver.http.s3.S3Constants.AUTH_PREFIX;

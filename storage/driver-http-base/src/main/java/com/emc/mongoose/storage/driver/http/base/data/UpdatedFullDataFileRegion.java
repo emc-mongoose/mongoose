@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.http.base.data;
 
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 
@@ -12,14 +13,14 @@ import static com.emc.mongoose.model.impl.item.BasicMutableDataItem.getRangeOffs
 public class UpdatedFullDataFileRegion<T extends MutableDataItem>
 extends DataItemFileRegion<T> {
 
-	private BasicDataItem currRange;
+	private DataItem currRange;
 	private long currRangeSize, nextRangeOffset;
 	private int currRangeIdx, currDataLayerIdx;
 	private ContentSource contentSource;
 	
 	public UpdatedFullDataFileRegion(final T dataItem, final ContentSource contentSource)
 	throws IOException {
-		super(dataItem);
+		super(dataItem, contentSource);
 		this.contentSource = contentSource;
 		currDataLayerIdx = dataObject.getCurrLayerIndex();
 	}

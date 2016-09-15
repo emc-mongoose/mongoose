@@ -7,7 +7,7 @@ import java.util.List;
 /**
  Created by andrey on 06.04.16.
  */
-public interface Input<T>
+public interface Input<I>
 extends Closeable {
 
 	String DELIMITER = ";";
@@ -20,7 +20,7 @@ extends Closeable {
 	 @throws java.io.EOFException if no item available more
 	 @throws java.io.IOException if failed to get some-why
 	 */
-	T get()
+	I get()
 	throws EOFException, IOException;
 
 	/**
@@ -31,7 +31,7 @@ extends Closeable {
 	 @throws java.io.EOFException if no item available more
 	 @throws java.io.IOException if failed to get some-why
 	 */
-	int get(final List<T> buffer, final int limit)
+	int get(final List<I> buffer, final int limit)
 	throws IOException;
 
 	/**

@@ -13,6 +13,10 @@ implements MutableDataItemMock {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicMutableDataItemMock() {
+		super();
+	}
+	//
 	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
 		super(value, contentSrc);
 	}
@@ -48,7 +52,7 @@ implements MutableDataItemMock {
 		for(int i = maskIndexStart; i < maskIndexEnd; i ++) {
 			if(countRangesTotal > 0 && countRangesTotal == maskRangesRead.cardinality()) {
 				// mask is full, switch to the next layer
-				currLayerIndex ++;
+				layerNum ++;
 				maskRangesRead.clear();
 			}
 			if(maskRangesRead.get(i)) {

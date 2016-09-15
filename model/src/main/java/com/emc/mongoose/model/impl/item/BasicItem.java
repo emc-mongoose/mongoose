@@ -2,6 +2,10 @@ package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.item.Item;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  Created by kurila on 27.10.15.
  */
@@ -56,17 +60,21 @@ implements Item {
 	public final void setName(final String name) {
 		this.name = name;
 	}
-	//
+	
+	@Override
+	public void reset() {
+	}
+	
 	@Override
 	public final String getPath() {
 		return path;
 	}
-	//
+	
 	@Override
 	public final void setPath(final String path) {
 		this.path = path;
 	}
-	//
+	
 	@Override
 	public boolean equals(final Object o) {
 		if(o == this) {
@@ -85,5 +93,19 @@ implements Item {
 	@Override
 	public int hashCode() {
 		return (name == null ? 0 : name.hashCode()) ^ (path == null ? 0 : path.hashCode());
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		out.writeObject(path);
+		out.writeObject(name);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		path = (String) in.readObject();
+		name = (String) in.readObject();
 	}
 }

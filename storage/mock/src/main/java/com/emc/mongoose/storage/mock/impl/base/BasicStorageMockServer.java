@@ -5,7 +5,7 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
-import com.emc.mongoose.storage.mock.impl.distribution.MDns;
+import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -62,8 +62,10 @@ implements StorageMockServer<T> {
 			if (registry != null) {
 				registry.rebind(IDENTIFIER, this);
 			}
-			final ServiceInfo serviceInfo = ServiceInfo.create(MDns.Type.HTTP.toString(), IDENTIFIER,
-				MDns.DEFAULT_PORT, "storage mock");
+			final ServiceInfo serviceInfo = ServiceInfo.create(
+				MDns.Type.HTTP.toString(), IDENTIFIER,
+				MDns.DEFAULT_PORT, "storage mock"
+			);
 			jmDns.registerService(serviceInfo);
 			LOG.info("Nagaina registered as service");
 		} catch(final IOException e) {

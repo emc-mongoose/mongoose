@@ -6,7 +6,7 @@ import java.util.List;
 /**
  Created by andrey on 06.04.16.
  */
-public interface Output<T>
+public interface Output<I>
 extends Closeable {
 
 	/**
@@ -14,7 +14,7 @@ extends Closeable {
 	 @param item the item to put
 	 @throws IOException if fails some-why
 	 */
-	void put(final T item)
+	void put(final I item)
 	throws IOException;
 
 	/**
@@ -23,10 +23,10 @@ extends Closeable {
 	 @return the count of the items successfully written
 	 @throws IOException
 	 */
-	int put(final List<T> buffer, final int from, final int to)
+	int put(final List<I> buffer, final int from, final int to)
 	throws IOException;
 
-	int put(final List<T> buffer)
+	int put(final List<I> buffer)
 	throws IOException;
 
 	/**
@@ -34,6 +34,6 @@ extends Closeable {
 	 @return {@link Input} instance containing the items which had been written to this output.
 	 @throws IOException
 	 */
-	Input<T> getInput()
+	Input<I> getInput()
 	throws IOException;
 }

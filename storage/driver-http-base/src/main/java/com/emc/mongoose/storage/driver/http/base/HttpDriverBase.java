@@ -9,6 +9,7 @@ import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
+import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
@@ -206,13 +207,13 @@ implements HttpDriver<I, O> {
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	);
 	
-	private final class HttpRequestFuture
+	private final class HttpRequestFutureTask
 	extends FutureTaskBase
 	implements GenericFutureListener<Future<Void>> {
 		
 		private final O ioTask;
 		
-		public HttpRequestFuture(final O ioTask) {
+		public HttpRequestFutureTask(final O ioTask) {
 			this.ioTask = ioTask;
 		}
 		
@@ -292,7 +293,7 @@ implements HttpDriver<I, O> {
 		}
 		
 		@Override
-		public void operationComplete(final Future<Void> future)
+		public final void operationComplete(final Future<Void> future)
 		throws Exception {
 			ioTask.setReqTimeDone(System.nanoTime() / 1000);
 		}
@@ -301,14 +302,14 @@ implements HttpDriver<I, O> {
 	@Override
 	public void submit(final O task)
 	throws InterruptedException {
-		INSTANCE.submit(new HttpRequestFuture(task));
+		INSTANCE.submit(new HttpRequestFutureTask(task));
 	}
 	
 	@Override
 	public int submit(final List<O> tasks, final int from, final int to)
 	throws InterruptedException {
 		for(int i = from; i < to; i ++) {
-			INSTANCE.submit(new HttpRequestFuture(tasks.get(i)));
+			INSTANCE.submit(new HttpRequestFutureTask(tasks.get(i)));
 		}
 		return to - from;
 	}
