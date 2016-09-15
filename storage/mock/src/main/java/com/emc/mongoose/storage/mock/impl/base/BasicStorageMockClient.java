@@ -38,6 +38,7 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 import static com.emc.mongoose.storage.mock.impl.http.Nagaina.IDENTIFIER;
@@ -125,7 +126,7 @@ implements StorageMockClient<T> {
 		}
 		T result;
 		while(null == (result = resultRef.get()) && sharedCountDown.getCount() > 0) {
-			Thread.yield();
+			LockSupport.parkNanos(1_000_000);
 		}
 		return result;
 	}
