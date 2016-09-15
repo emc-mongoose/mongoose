@@ -48,7 +48,7 @@ implements MutableDataItemMock {
 		for(int i = maskIndexStart; i < maskIndexEnd; i ++) {
 			if(countRangesTotal > 0 && countRangesTotal == maskRangesRead.cardinality()) {
 				// mask is full, switch to the next layer
-				currLayerIndex ++;
+				layerNum ++;
 				maskRangesRead.clear();
 			}
 			if(maskRangesRead.get(i)) {

@@ -6,6 +6,8 @@ import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -26,9 +28,9 @@ implements DataItem {
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
 	private transient final ContentSource contentSrc;
-	private final int ringBuffSize;
+	private transient final int ringBuffSize;
 	//
-	private int layerNum = 0;
+	protected int layerNum = 0;
 	//
 	protected long offset = 0;
 	protected long position = 0;
@@ -145,17 +147,6 @@ implements DataItem {
 			.append(super.toString()).append(",")
 			.append(Long.toString(offset, 0x10)).append(",")
 			.append(size).toString();
-	}
-	//
-	private ByteBuffer circular(final ByteBuffer bb0) {
-		final ByteBuffer bb1 = bb0 == null ? contentSrc.getLayer(layerNum) : bb0;
-		final int currPos = bb1.position();
-		if(currPos == ringBuffSize) {
-			bb1.clear();
-		} else if(currPos == bb1.limit()) {
-			bb1.limit(ringBuffSize);
-		}
-		return bb1;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -302,5 +293,25 @@ implements DataItem {
 	@Override
 	public int hashCode() {
 		return (int) (offset ^ size);
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeInt(layerNum);
+		out.writeLong(offset);
+		out.writeLong(position);
+		out.writeLong(size);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		layerNum = in.readInt();
+		offset = in.readLong();
+		position = in.readLong();
+		size = in.readLong();
 	}
 }

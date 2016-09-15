@@ -2,6 +2,10 @@ package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.item.Item;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  Created by kurila on 27.10.15.
  */
@@ -89,5 +93,22 @@ implements Item {
 	@Override
 	public int hashCode() {
 		return (name == null ? 0 : name.hashCode()) ^ (path == null ? 0 : path.hashCode());
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		final byte buff[] = toString().getBytes();
+		out.writeInt(buff.length);
+		out.write(buff);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		final int len = in.readInt();
+		final byte buff[] = new byte[len];
+		in.readFully(buff);
+		fromString(new String(buff));
 	}
 }
