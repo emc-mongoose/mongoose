@@ -7,8 +7,8 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
-import com.emc.mongoose.storage.mock.impl.distribution.MDns;
-import com.emc.mongoose.storage.mock.impl.distribution.UrlStrings;
+import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -21,6 +21,8 @@ import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -33,6 +35,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -154,13 +157,17 @@ implements StorageMockClient<T> {
 		handleServiceEvent(
 			event,
 			(hostAddress) -> {
-				final String rmiUrl =
-					UrlStrings.get("rmi", hostAddress, REGISTRY_PORT, IDENTIFIER);
 				try {
+				final String rmiUrl = new URI(
+					"rmi", null, hostAddress,
+					REGISTRY_PORT, "/" + IDENTIFIER, null, null
+				).toString();
 					final O mock = (O) Naming.lookup(rmiUrl);
 					remoteNodes.put(hostAddress, mock);
 				} catch(final NotBoundException | MalformedURLException | RemoteException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
+				} catch(final URISyntaxException e) {
+					LOG.debug(Markers.ERR, "RMI URL syntax error {}", e);
 				}
 			},
 			"Node added"
