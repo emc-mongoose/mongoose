@@ -129,15 +129,12 @@ implements StorageMockClient<T> {
 			);
 		}
 		T result;
-		do {
-			result = resultRef.get();
-			if(result == null) {
-				LockSupport.parkNanos(1);
-			} else {
-				result.setContentSrc(contentSrc);
-				break;
-			}
-		} while(sharedCountDown.getCount() > 0);
+		while(null == (result = resultRef.get()) && sharedCountDown.getCount() > 0) {
+			LockSupport.parkNanos(1);
+		}
+		if(result != null) {
+			result.setContentSrc(contentSrc);
+		}
 		return result;
 	}
 	

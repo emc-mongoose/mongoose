@@ -317,7 +317,6 @@ implements MutableDataItem {
 		final int len = in.readInt();
 		final byte buff[] = new byte[len];
 		in.readFully(buff);
-		maskRangesRead.clear();
 		maskRangesRead.or(BitSet.valueOf(buff));
 	}
 }
