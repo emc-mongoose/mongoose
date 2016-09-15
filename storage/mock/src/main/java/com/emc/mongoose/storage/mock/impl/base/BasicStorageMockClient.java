@@ -1,12 +1,11 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
-import com.emc.mongoose.common.concurrent.FutureTaskBase;
+import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
-import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -26,19 +25,19 @@ import java.net.URISyntaxException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 import java.util.StringJoiner;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.emc.mongoose.storage.mock.impl.http.Nagaina.IDENTIFIER;
@@ -54,7 +53,7 @@ implements StorageMockClient<T> {
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final JmDNS jmDns;
-	private final Map<String, O> remoteNodes;
+	private final ConcurrentMap<String, O> remoteNodeMap = new ConcurrentHashMap<>();
 
 	public BasicStorageMockClient(final JmDNS jmDns) {
 		super(ThreadUtil.getAvailableConcurrencyLevel(), ThreadUtil.getAvailableConcurrencyLevel(),
@@ -68,8 +67,6 @@ implements StorageMockClient<T> {
 			}
 		);
 		this.jmDns = jmDns;
-		this.remoteNodes = new HashMap<>();
-		final int concurrencyLevel = ThreadUtil.getAvailableConcurrencyLevel();
 	}
 	
 	@Override
@@ -80,7 +77,7 @@ implements StorageMockClient<T> {
 	}
 	
 	private final static class GetRemoteObjectTask<T extends MutableDataItemMock>
-	extends FutureTaskBase<T> {
+	extends AnyNotNullSharedFutureTaskBase<T> {
 		
 		private final StorageMockServer<T> node;
 		private final String containerName;
@@ -89,9 +86,11 @@ implements StorageMockClient<T> {
 		private final long size;
 		
 		public GetRemoteObjectTask(
+			final AtomicReference<T> resultRef, final CountDownLatch sharedLatch,
 			final StorageMockServer<T> node, final String containerName, final String id,
 			final long offset, final long size
 		) {
+			super(resultRef, sharedLatch);
 			this.node = node;
 			this.containerName = containerName;
 			this.id = id;
@@ -102,13 +101,35 @@ implements StorageMockClient<T> {
 		@Override
 		public final void run() {
 			try {
-				set(node.getObjectRemotely(containerName, id, offset, size));
+				final T remoteObject = node.getObjectRemotely(containerName, id, offset, size);
+				set(remoteObject);
 			} catch(final ContainerMockException | RemoteException e) {
 				setException(e);
 			}
 		}
 	}
-
+	
+	@Override
+	public T getObject(
+		final String containerName, final String id, final long offset, final long size
+	) throws ExecutionException, InterruptedException {
+		final Collection<O> remoteNodes = remoteNodeMap.values();
+		final CountDownLatch sharedCountDown = new CountDownLatch(remoteNodes.size());
+		final AtomicReference<T> resultRef = new AtomicReference<>(null);
+		for(final O node : remoteNodes) {
+			submit(
+				new GetRemoteObjectTask<>(
+					resultRef, sharedCountDown, node, containerName, id, offset, size
+				)
+			);
+		}
+		T result;
+		while(null == (result = resultRef.get()) && sharedCountDown.getCount() > 0) {
+			Thread.yield();
+		}
+		return result;
+	}
+	
 	@Override
 	public void start() {
 		jmDns.addServiceListener(MDns.Type.HTTP.toString(), this);
@@ -128,55 +149,34 @@ implements StorageMockClient<T> {
 
 	@Override
 	public void serviceRemoved(final ServiceEvent event) {
-		handleServiceEvent(event, remoteNodes::remove, "Node removed");
-	}
-
-	@Override
-	public T getObject(
-		final String containerName, final String id, final long offset, final long size
-	) throws ExecutionException, InterruptedException {
-		T object;
-		final List<Future<T>> objFutures = new ArrayList<>(remoteNodes.size());
-		for(final StorageMockServer<T> node : remoteNodes.values()) {
-			objFutures.add(
-				submit(new GetRemoteObjectTask<>(node, containerName, id, offset, size))
-			);
-		}
-		for(final Future<T> objFuture: objFutures) {
-			object = objFuture.get();
-			if (object != null) {
-				return object;
-			}
-		}
-		return null;
+		handleServiceEvent(event, remoteNodeMap::remove, "Node removed");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void serviceResolved(final ServiceEvent event) {
-		handleServiceEvent(
-			event,
-			(hostAddress) -> {
+		final Consumer<String> c = new Consumer<String>() {
+			@Override
+			public final void accept(final String hostAddress) {
 				try {
-				final String rmiUrl = new URI(
-					"rmi", null, hostAddress,
-					REGISTRY_PORT, "/" + IDENTIFIER, null, null
-				).toString();
-					final O mock = (O) Naming.lookup(rmiUrl);
-					remoteNodes.put(hostAddress, mock);
+					final URI rmiUrl = new URI(
+						"rmi", null, hostAddress, REGISTRY_PORT, "/" + IDENTIFIER, null, null
+					);
+					final O mock = (O) Naming.lookup(rmiUrl.toString());
+					remoteNodeMap.putIfAbsent(hostAddress, mock);
 				} catch(final NotBoundException | MalformedURLException | RemoteException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
 				} catch(final URISyntaxException e) {
 					LOG.debug(Markers.ERR, "RMI URL syntax error {}", e);
 				}
-			},
-			"Node added"
-		);
+			}
+		};
+		handleServiceEvent(event, c, "Node added");
 	}
 
 	private void printNodeList() {
 		final StringJoiner joiner = new StringJoiner("\n");
-		remoteNodes.keySet().forEach(joiner::add);
+		remoteNodeMap.keySet().forEach(joiner::add);
 		LOG.info(Markers.MSG, "Detected nodes: \n" + joiner.toString());
 	}
 

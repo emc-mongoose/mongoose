@@ -14,12 +14,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class FutureTaskBase<V>
 implements RunnableFuture<V> {
 
-	private final CountDownLatch latch = new CountDownLatch(1);
-	private final AtomicBoolean completed = new AtomicBoolean(false);
+	private final CountDownLatch latch;
+	private final AtomicBoolean completed;
 
 	private volatile V result;
 	private volatile Throwable cause;
-
+	
+	protected FutureTaskBase() {
+		latch = new CountDownLatch(1);
+		completed = new AtomicBoolean(false);
+	}
+	
 	@Override
 	public final boolean isDone() {
 		return this.completed.get();
