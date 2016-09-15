@@ -13,6 +13,10 @@ implements MutableDataItemMock {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicMutableDataItemMock() {
+		super();
+	}
+	//
 	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
 		super(value, contentSrc);
 	}

@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.mock.impl.base;
 import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
@@ -53,11 +54,13 @@ implements StorageMockClient<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
+	private final ContentSource contentSrc;
 	private final JmDNS jmDns;
 	private final ConcurrentMap<String, O> remoteNodeMap = new ConcurrentHashMap<>();
 
-	public BasicStorageMockClient(final JmDNS jmDns) {
-		super(ThreadUtil.getAvailableConcurrencyLevel(), ThreadUtil.getAvailableConcurrencyLevel(),
+	public BasicStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
+		super(
+			ThreadUtil.getAvailableConcurrencyLevel(), ThreadUtil.getAvailableConcurrencyLevel(),
 			0, TimeUnit.DAYS,
 			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
 			new RejectedExecutionHandler() {
@@ -67,6 +70,7 @@ implements StorageMockClient<T> {
 				}
 			}
 		);
+		this.contentSrc = contentSrc;
 		this.jmDns = jmDns;
 	}
 	
@@ -124,9 +128,15 @@ implements StorageMockClient<T> {
 				)
 			);
 		}
-		T result;
-		while(null == (result = resultRef.get()) && sharedCountDown.getCount() > 0) {
-			LockSupport.parkNanos(1);
+		T result = null;
+		while(sharedCountDown.getCount() > 0) {
+			result = resultRef.get();
+			if(result == null) {
+				LockSupport.parkNanos(1);
+			} else {
+				result.setContentSrc(contentSrc);
+				break;
+			}
 		}
 		return result;
 	}

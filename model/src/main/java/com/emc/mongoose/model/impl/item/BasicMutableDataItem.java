@@ -27,6 +27,10 @@ implements MutableDataItem {
 	};
 	protected transient long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicMutableDataItem() {
+		super();
+	}
+	//
 	public BasicMutableDataItem(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 	}

@@ -27,8 +27,8 @@ implements DataItem {
 	protected static final String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
-	private transient final ContentSource contentSrc;
-	private transient final int ringBuffSize;
+	private transient ContentSource contentSrc;
+	private transient int ringBuffSize;
 	//
 	protected int layerNum = 0;
 	//
@@ -36,6 +36,10 @@ implements DataItem {
 	protected long position = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicDataItem() {
+		super();
+	}
+	//
 	public BasicDataItem(final ContentSource contentSrc) {
 		this.contentSrc = contentSrc;
 		this.ringBuffSize = contentSrc.getSize();
@@ -149,6 +153,17 @@ implements DataItem {
 			.append(size).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final ContentSource getContentSrc() {
+		return contentSrc;
+	}
+	//
+	@Override
+	public final void setContentSrc(final ContentSource contentSrc) {
+		this.contentSrc = contentSrc;
+		this.ringBuffSize = contentSrc.getSize();
+	}
+	//
 	@Override
 	public void reset() {
 		layerNum = 0;
