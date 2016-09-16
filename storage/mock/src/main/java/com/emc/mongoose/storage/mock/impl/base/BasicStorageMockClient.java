@@ -48,7 +48,7 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
 /**
  Created on 06.09.16.
  */
-public final class BasicStorageMockClient<T extends MutableDataItemMock, O extends StorageMockServer<T>>
+public final class BasicStorageMockClient<T extends MutableDataItemMock>
 extends ThreadPoolExecutor
 implements StorageMockClient<T> {
 
@@ -56,7 +56,8 @@ implements StorageMockClient<T> {
 
 	private final ContentSource contentSrc;
 	private final JmDNS jmDns;
-	private final ConcurrentMap<String, O> remoteNodeMap = new ConcurrentHashMap<>();
+	private final ConcurrentMap<String, StorageMockServer<T>> remoteNodeMap =
+		new ConcurrentHashMap<>();
 
 	public BasicStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
 		super(
@@ -118,10 +119,10 @@ implements StorageMockClient<T> {
 	public T getObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ExecutionException, InterruptedException {
-		final Collection<O> remoteNodes = remoteNodeMap.values();
+		final Collection<StorageMockServer<T>> remoteNodes = remoteNodeMap.values();
 		final CountDownLatch sharedCountDown = new CountDownLatch(remoteNodes.size());
 		final AtomicReference<T> resultRef = new AtomicReference<>(null);
-		for(final O node : remoteNodes) {
+		for(final StorageMockServer<T> node : remoteNodes) {
 			submit(
 				new GetRemoteObjectTask<>(
 					resultRef, sharedCountDown, node, containerName, id, offset, size
@@ -170,7 +171,9 @@ implements StorageMockClient<T> {
 					final URI rmiUrl = new URI(
 						"rmi", null, hostAddress, REGISTRY_PORT, "/" + IDENTIFIER, null, null
 					);
-					final O mock = (O) Naming.lookup(rmiUrl.toString());
+					final StorageMockServer<T> mock = (StorageMockServer<T>) Naming.lookup(
+						rmiUrl.toString()
+					);
 					remoteNodeMap.putIfAbsent(hostAddress, mock);
 				} catch(final NotBoundException | MalformedURLException | RemoteException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
