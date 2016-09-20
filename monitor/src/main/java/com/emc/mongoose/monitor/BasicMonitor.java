@@ -453,5 +453,10 @@ implements Monitor<I, O> {
 		if(medIoStats != null) {
 			medIoStats.close();
 		}
+		if(itemOutput != null) {
+			itemOutput.close();
+		}
+		itemOutBuff.close();
+		lastStats = null;
 	}
 }

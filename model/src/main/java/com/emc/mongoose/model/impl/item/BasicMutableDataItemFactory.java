@@ -10,10 +10,15 @@ public final class BasicMutableDataItemFactory
 implements ItemFactory<BasicMutableDataItem> {
 	
 	@Override
-	public final BasicMutableDataItem getInstance(
+	public final BasicMutableDataItem getItem(
 		final String path, final String name, final long id, final long size,
 		final ContentSource contentSrc
 	) {
 		return new BasicMutableDataItem(path, name, id, size, contentSrc);
+	}
+	
+	@Override
+	public final Class<BasicMutableDataItem> getItemClass() {
+		return BasicMutableDataItem.class;
 	}
 }
