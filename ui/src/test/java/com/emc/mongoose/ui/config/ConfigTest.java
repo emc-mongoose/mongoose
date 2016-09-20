@@ -36,7 +36,7 @@ public class ConfigTest {
 		argsMap.put("--load-limit-rate", "12.345");
 		argsMap.put("--load-limit-size", "321KB");
 		argsMap.put("--load-limit-time", "5m");
-		argsMap.put("--storage-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
+		argsMap.put("--storage-node-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
 		argsMap.put("--storage-http-fsAccess", "true");
 		argsMap.put("--storage-http-headers", "customHeaderName:customHeaderValue");
 		argsMap.put("--storage-mock-headCount", "2");
