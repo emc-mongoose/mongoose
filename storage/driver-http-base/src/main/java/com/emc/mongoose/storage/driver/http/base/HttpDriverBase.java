@@ -85,7 +85,7 @@ implements HttpDriver<I, O> {
 		} catch(final UnsupportedEncodingException e) {
 			throw new IllegalStateException(e);
 		}
-		storageNodeAddrs = storageConfig.getAddrs().toArray(new String[]{});
+		storageNodeAddrs = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
 		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
 		
