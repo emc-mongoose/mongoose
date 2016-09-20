@@ -35,6 +35,7 @@ implements StorageMockServer<T> {
 
 	private final StorageMock<T> storage;
 	private final JmDNS jmDns;
+	private ServiceInfo serviceInfo;
 
 	public BasicStorageMockServer(final StorageMock<T> storage, final JmDNS jmDns)
 	throws RemoteException {
@@ -46,7 +47,7 @@ implements StorageMockServer<T> {
 	public void start()
 	throws UserShootHisFootException {
 		try {
-			LOG.info(Markers.MSG, "Register RMI method");
+			LOG.info(Markers.MSG, "Register RMI service");
 			Registry registry = null;
 			try {
 				registry = LocateRegistry.createRegistry(REGISTRY_PORT);
@@ -62,7 +63,7 @@ implements StorageMockServer<T> {
 			if (registry != null) {
 				registry.rebind(IDENTIFIER, this);
 			}
-			final ServiceInfo serviceInfo = ServiceInfo.create(
+			serviceInfo = ServiceInfo.create(
 				MDns.Type.HTTP.toString(), IDENTIFIER,
 				MDns.DEFAULT_PORT, "storage mock"
 			);
@@ -103,5 +104,10 @@ implements StorageMockServer<T> {
 	@Override
 	public void close()
 	throws IOException {
+		jmDns.unregisterService(serviceInfo);
+		storage.close();
+		// Server is the wrapper for StorageMock, but not jmDns.
+		// That's why jmDns object should be closed outside this object (Since it may be used
+		// by different objects.
 	}
 }

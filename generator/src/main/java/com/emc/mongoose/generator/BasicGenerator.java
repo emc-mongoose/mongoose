@@ -3,6 +3,7 @@ package com.emc.mongoose.generator;
 import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
@@ -31,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class BasicGenerator<I extends Item, O extends IoTask<I>>
 extends InterruptibleDaemonBase
-implements Generator<I, O> {
+implements Generator<I, O>, Output<I> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -71,11 +71,7 @@ implements Generator<I, O> {
 	throws IOException {
 		final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
 		final Driver<I, O> nextDriver = getNextDriver();
-		try {
-			nextDriver.submit(nextIoTask);
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
-		}
+		nextDriver.put(nextIoTask);
 	}
 	
 	@Override
@@ -87,11 +83,7 @@ implements Generator<I, O> {
 				ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
 			}
 			final Driver<I, O> nextDriver = getNextDriver();
-			try {
-				nextDriver.submit(ioTasks, 0, ioTasks.size());
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException();
-			}
+			nextDriver.put(ioTasks, 0, ioTasks.size());
 		}
 		return to - from;
 	}
@@ -105,11 +97,7 @@ implements Generator<I, O> {
 			ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
 		}
 		final Driver<I, O> nextDriver = getNextDriver();
-		try {
-			nextDriver.submit(ioTasks, 0, n);
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
-		}
+		nextDriver.put(ioTasks, 0, n);
 		return n;
 	}
 	

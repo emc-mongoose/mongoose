@@ -4,6 +4,8 @@ import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
+
+import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -14,7 +16,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -58,34 +59,29 @@ implements Driver<I, O> {
 		}
 	}
 	
-	@Override
-	public final void ioTaskCompleted(final O ioTask) {
+	public final void ioTaskCompleted(final O ioTask)
+	throws IOException {
 		if(isCircular) {
 			ioTask.reset();
-			try {
-				submit(ioTask);
-			} catch(final InterruptedException | RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to re submit the I/O task");
-			}
+			put(ioTask);
 		}
-		monitorRef.get().ioTaskCompleted(ioTask);
+		monitorRef.get().put(ioTask);
 	}
 	
-	@Override
-	public final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
+	public final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to)
+	throws IOException {
 		if(isCircular) {
 			for(int i = from; i < to; i ++) {
 				ioTasks.get(i).reset();
 			}
-			try {
-				submit(ioTasks, from, to);
-			} catch(final InterruptedException | RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to re submit {} I/O tasks", to - from
-				);
-			}
+			put(ioTasks, from, to);
 		}
-		return monitorRef.get().ioTaskCompletedBatch(ioTasks, from, to);
+		return monitorRef.get().put(ioTasks, from, to);
+	}
+	
+	@Override
+	public Input<O> getInput() {
+		return null;
 	}
 	
 	@Override
