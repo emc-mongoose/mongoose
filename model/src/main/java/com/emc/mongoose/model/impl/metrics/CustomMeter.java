@@ -22,7 +22,8 @@ implements Metric {
 	//
 	public CustomMeter(final Clock clock, final int periodSec) {
 		final double ps = periodSec > 0 ? periodSec : 10;
-		rateAvg = new EWMA(1 - exp(-5 / ps), 5, TimeUnit.SECONDS);
+		final int intervalSecs = 1;
+		rateAvg = new EWMA(1 - exp(-intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
 		this.clock = clock;
 		startTime = clock.getTick();
 		lastTick = new AtomicLong(startTime);

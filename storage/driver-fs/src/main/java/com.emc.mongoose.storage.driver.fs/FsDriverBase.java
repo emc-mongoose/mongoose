@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -79,11 +80,11 @@ implements Driver<I, O> {
 						if(nextStatus.equals(IoTask.Status.ACTIVE)) {
 							ioTaskQueue.put(ioTask);
 						} else {
-							monitorRef.get().ioTaskCompleted(ioTask);
+							ioTaskCompleted(ioTask);
 						}
 					}
 				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException | IOException ignored) {
 			}
 		}
 	}
@@ -128,18 +129,32 @@ implements Driver<I, O> {
 	}
 
 	@Override
-	public void submit(final O ioTask)
-	throws InterruptedException {
-		ioTaskQueue.put(ioTask);
+	public void put(final O ioTask)
+	throws InterruptedIOException {
+		try {
+			ioTaskQueue.put(ioTask);
+		} catch(final InterruptedException e) {
+			throw new InterruptedIOException();
+		}
 	}
 
 	@Override
-	public int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
-		for(int i = from; i < to; i ++) {
-			ioTaskQueue.put(ioTasks.get(i));
+	public int put(final List<O> ioTasks, final int from, final int to)
+	throws InterruptedIOException {
+		try {
+			for(int i = from; i < to; i ++) {
+				ioTaskQueue.put(ioTasks.get(i));
+			}
+		} catch(final InterruptedException e) {
+			throw new InterruptedIOException();
 		}
 		return to - from;
+	}
+	
+	@Override
+	public int put(final List<O> ioTasks)
+	throws InterruptedIOException {
+		return put(ioTasks, 0, ioTasks.size());
 	}
 
 	@Override

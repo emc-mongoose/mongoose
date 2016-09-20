@@ -1,6 +1,7 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
+import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemBuffer;
 import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
@@ -172,7 +173,7 @@ implements Monitor<I, O> {
 	
 	
 	@Override
-	public void ioTaskCompleted(final O ioTask) {
+	public void put(final O ioTask) {
 		if(isInterrupted()) {
 			return;
 		}
@@ -232,7 +233,7 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	public int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
+	public int put(final List<O> ioTasks, final int from, final int to) {
 
 		final int n;
 		if(isInterrupted()) {
@@ -301,7 +302,19 @@ implements Monitor<I, O> {
 
 		return n;
 	}
-
+	
+	@Override
+	public int put(final List<O> buffer)
+	throws IOException {
+		return put(buffer, 0, buffer.size());
+	}
+	
+	@Override
+	public Input<O> getInput()
+	throws IOException {
+		return null;
+	}
+	
 	protected final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
 		@Override

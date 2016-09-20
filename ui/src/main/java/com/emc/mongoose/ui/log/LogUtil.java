@@ -207,7 +207,6 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 	//
-
 	public static boolean isConsoleColoringEnabled() {
 		return STDOUT_COLORING_ENABLED;
 	}
@@ -216,22 +215,28 @@ implements ShutdownCallbackRegistry {
 		final Logger LOG = LogManager.getLogger();
 		try {
 			if(LOAD_HOOKS_COUNT.get() != 0) {
-				LOG.debug(Markers.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
+				LOG.debug(
+					Markers.MSG, "Not all load jobs are closed, blocking the loggers shutdown"
+				);
 				if(HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 					try {
 						if(HOOKS_COND.await(10, TimeUnit.SECONDS)) {
-							LOG.debug(Markers.MSG, "All load executors are closed");
+							LOG.debug(Markers.MSG, "All load jobs are closed");
 						} else {
-							LOG.debug(Markers.ERR, "Timeout while waiting the load executors to be closed");
+							LOG.debug(
+								Markers.ERR, "Timeout while waiting the load jobs to be closed"
+							);
 						}
 					} finally {
 						HOOKS_LOCK.unlock();
 					}
 				} else {
-					LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
+					LOG.debug(Markers.ERR, "Failed to acquire the lock for deletion");
 				}
 			} else {
-				LOG.debug(Markers.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");
+				LOG.debug(
+					Markers.MSG, "There's no unclosed load jobs, forcing logging subsystem shutdown"
+				);
 			}
 		} catch (final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");

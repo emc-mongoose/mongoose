@@ -22,7 +22,7 @@ extends Daemon {
 	//
 	void createContainer(final String name);
 	//
-	ObjectContainerMock<? extends MutableDataItemMock> getContainer(final String name);
+	ObjectContainerMock<T> getContainer(final String name);
 	//
 	void deleteContainer(final String name);
 	//
