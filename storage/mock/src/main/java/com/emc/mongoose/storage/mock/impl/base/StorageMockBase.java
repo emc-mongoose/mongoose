@@ -80,8 +80,8 @@ implements StorageMock<T> {
 	public final void createContainer(final String name) {
 		synchronized(storageMap) {
 			storageMap.put(name, new BasicObjectContainerMock<>(containerCapacity));
-			ioStats.containerCreate();
 		}
+		ioStats.containerCreate();
 	}
 
 	@Override
@@ -95,8 +95,8 @@ implements StorageMock<T> {
 	public final void deleteContainer(final String name) {
 		synchronized(storageMap) {
 			storageMap.remove(name);
-			ioStats.containerDelete();
 		}
+		ioStats.containerDelete();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
