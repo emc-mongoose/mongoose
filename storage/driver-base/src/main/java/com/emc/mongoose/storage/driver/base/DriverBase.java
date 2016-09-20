@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -63,7 +64,7 @@ implements Driver<I, O> {
 			ioTask.reset();
 			try {
 				submit(ioTask);
-			} catch(final InterruptedException e) {
+			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to re submit the I/O task");
 			}
 		}
@@ -78,7 +79,7 @@ implements Driver<I, O> {
 			}
 			try {
 				submit(ioTasks, from, to);
-			} catch(final InterruptedException e) {
+			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to re submit {} I/O tasks", to - from
 				);
