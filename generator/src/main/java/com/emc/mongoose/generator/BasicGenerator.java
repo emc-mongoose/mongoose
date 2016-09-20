@@ -4,7 +4,9 @@ import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
+import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
@@ -206,16 +208,25 @@ implements Generator<I, O>, Output<I> {
 				namingType, namingPrefix, namingLength, namingRadix, namingOffset
 			);
 			
-			if(itemFactory instanceof BasicMutableDataItemFactory) {
-				this.itemInput = new NewDataItemInput<>(
-					(ItemFactory) itemFactory, pathInput, namingInput, contentSrc,
-					itemConfig.getDataConfig().getSize()
-				);
-			} else {
-				this.itemInput = null;
-			}
-			
 			this.ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
+			switch(ioType) {
+				case CREATE:
+					// TODO copy mode
+					if(itemFactory instanceof BasicMutableDataItemFactory) {
+						this.itemInput = new NewDataItemInput(
+							itemFactory, pathInput, namingInput, contentSrc,
+							itemConfig.getDataConfig().getSize()
+						);
+					} else {
+						this.itemInput = null; // TODO
+					}
+					break;
+				case READ:
+				case UPDATE:
+				case DELETE:
+					new CsvFileItemInput<>();
+					break;
+			}
 		} catch(final Exception e) {
 			throw new UserShootHisFootException(e);
 		}
