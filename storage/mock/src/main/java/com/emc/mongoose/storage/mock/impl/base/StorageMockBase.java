@@ -79,6 +79,7 @@ implements StorageMock<T> {
 		synchronized(storageMap) {
 			storageMap.put(name, new BasicObjectContainerMock<>(containerCapacity));
 		}
+		ioStats.containerCreate();
 	}
 
 	@Override
@@ -93,6 +94,7 @@ implements StorageMock<T> {
 		synchronized(storageMap) {
 			storageMap.remove(name);
 		}
+		ioStats.containerDelete();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////

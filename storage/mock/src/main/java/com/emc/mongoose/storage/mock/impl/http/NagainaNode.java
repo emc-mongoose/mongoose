@@ -100,9 +100,8 @@ implements StorageMockNode<MutableDataItemMock> {
 	@Override
 	public void close()
 	throws IOException {
-		client.close();
-		jmDns.unregisterAllServices();
-		jmDns.close();
 		server.close();
+		client.close();
+		jmDns.close();
 	}
 }
