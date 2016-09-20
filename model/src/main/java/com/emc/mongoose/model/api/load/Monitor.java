@@ -10,7 +10,7 @@ import com.emc.mongoose.model.api.metrics.IoStats;
  Created on 11.07.16.
  */
 public interface Monitor<I extends Item, O extends IoTask<I>>
-extends InterruptibleDaemon, IoTaskCallback<I, O>, Registry<Driver<I, O>> {
+extends InterruptibleDaemon, Output<O>, Registry<Driver<I, O>> {
 	
 	IoStats.Snapshot getIoStatsSnapshot();
 

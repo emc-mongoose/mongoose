@@ -48,6 +48,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -300,18 +301,21 @@ implements HttpDriver<I, O> {
 	}
 	
 	@Override
-	public void submit(final O task)
-	throws InterruptedException {
+	public void put(final O task) {
 		INSTANCE.submit(new HttpRequestFutureTask(task));
 	}
 	
 	@Override
-	public int submit(final List<O> tasks, final int from, final int to)
-	throws InterruptedException {
+	public int put(final List<O> tasks, final int from, final int to) {
 		for(int i = from; i < to; i ++) {
 			INSTANCE.submit(new HttpRequestFutureTask(tasks.get(i)));
 		}
 		return to - from;
+	}
+	
+	@Override
+	public int put(final List<O> tasks) {
+		return put(tasks, 0, tasks.size());
 	}
 	
 	@Override

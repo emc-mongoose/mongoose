@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.http.base;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;
@@ -19,7 +18,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.IOException;
 
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
@@ -38,14 +37,15 @@ extends SimpleChannelInboundHandler<HttpObject> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	
-	private final AtomicReference<Monitor<I, O>> monitorRef;
+	private final HttpDriverBase<I, O> driver;
 	
-	public HttpClientHandlerBase(final AtomicReference<Monitor<I, O>> monitorRef) {
-		this.monitorRef = monitorRef;
+	public HttpClientHandlerBase(final HttpDriverBase<I, O> driver) {
+		this.driver = driver;
 	}
 
 	@Override
-	protected void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg) {
+	protected void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg)
+	throws IOException {
 		
 		final IoTask ioTask = ctx.channel().attr(HttpDriver.ATTR_KEY_IOTASK).get();
 	
@@ -131,17 +131,18 @@ extends SimpleChannelInboundHandler<HttpObject> {
 			if(msg instanceof LastHttpContent) {
 				ioTask.setRespTimeDone(System.nanoTime() / 1000);
 				ctx.close();
-				monitorRef.get().ioTaskCompleted((O) ioTask);
+				driver.ioTaskCompleted((O) ioTask);
 			}
 		}
 	}
 	
 	@Override
-	public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
+	public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
+	throws IOException {
 		LogUtil.exception(LOG, Level.WARN, cause, "HTTP client handler failure");
 		final IoTask ioTask = ctx.channel().attr(HttpDriver.ATTR_KEY_IOTASK).get();
 		ctx.close();
 		ioTask.setStatus(FAIL_UNKNOWN);
-		monitorRef.get().ioTaskCompleted((O) ioTask);
+		driver.ioTaskCompleted((O) ioTask);
 	}
 }
