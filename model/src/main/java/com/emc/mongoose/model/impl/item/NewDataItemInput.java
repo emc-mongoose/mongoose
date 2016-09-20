@@ -37,7 +37,7 @@ implements Input<D> {
 	@Override
 	public final D get()
 	throws IOException {
-		return itemFactory.getInstance(
+		return itemFactory.getItem(
 			pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
 		);
 	}
@@ -47,7 +47,7 @@ implements Input<D> {
 	throws IOException {
 		for(int i = 0; i < maxCount; i ++) {
 			buffer.add(
-				itemFactory.getInstance(
+				itemFactory.getItem(
 					pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(),
 					contentSrc
 				)

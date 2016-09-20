@@ -10,10 +10,15 @@ public final class BasicItemFactory
 implements ItemFactory<BasicItem> {
 	
 	@Override
-	public final BasicItem getInstance(
+	public final BasicItem getItem(
 		final String path, final String name, final long id, final long size,
 		final ContentSource contentSrc
 	) {
 		return new BasicItem(path, name);
+	}
+	
+	@Override
+	public final Class<BasicItem> getItemClass() {
+		return BasicItem.class;
 	}
 }

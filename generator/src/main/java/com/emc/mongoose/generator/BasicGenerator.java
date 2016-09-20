@@ -177,8 +177,8 @@ implements Generator<I, O>, Output<I> {
 
 	public BasicGenerator(
 		final String runId, final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
-		final IoTaskFactory<I, O> ioTaskFactory, final ItemConfig itemConfig,
-		final LoadConfig loadConfig
+		final IoTaskFactory<I, O> ioTaskFactory, final ContentSource contentSrc,
+		final ItemConfig itemConfig, final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 		
 		this.runId = runId;
@@ -195,11 +195,6 @@ implements Generator<I, O>, Output<I> {
 				dstContainer = t;
 			}
 			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
-			
-			final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
-			final ContentSource contentSrc = ContentSourceUtil.getInstance(
-				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
-			);
 			
 			final NamingConfig namingConfig = itemConfig.getNamingConfig();
 			final ItemNamingType namingType = ItemNamingType.valueOf(namingConfig.getType().toUpperCase());
