@@ -3,12 +3,14 @@ package com.emc.mongoose.storage.mock.api;
 import com.emc.mongoose.common.collection.Listable;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 
+import java.io.Closeable;
 import java.util.Collection;
 
 /**
  Created on 19.07.16.
  */
-public interface ObjectContainerMock<T extends MutableDataItem> extends Listable<T> {
+public interface ObjectContainerMock<T extends MutableDataItem>
+extends Closeable, Listable<T> {
 
 	T get (final String key);
 

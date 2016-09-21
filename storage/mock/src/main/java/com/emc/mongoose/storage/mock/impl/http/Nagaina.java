@@ -7,7 +7,9 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.ServerBootstrap;
@@ -36,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 public final class Nagaina
 extends StorageMockBase<MutableDataItemMock>{
 
-	public static final String IDENTIFIER = Nagaina.class.getSimpleName().toLowerCase();
+	public static final String SVC_NAME = Nagaina.class.getSimpleName().toLowerCase();
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -48,13 +50,11 @@ extends StorageMockBase<MutableDataItemMock>{
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
-		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig, final ContentSource contentSource,
-		final List<ChannelInboundHandler> handlers
+		final StorageConfig storageConfig, final LoadConfig loadConfig, final ItemConfig itemConfig,
+		final ContentSource contentSource, final List<ChannelInboundHandler> handlers
 	) {
 		super(
-			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(),
-			itemConfig, contentSource
+			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource
 		);
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
@@ -68,6 +68,7 @@ extends StorageMockBase<MutableDataItemMock>{
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
+		super.doStart();
 		final int portsNumber = dispatchGroups.length;
 		for(int i = 0; i < portsNumber; i++) {
 			try {
@@ -116,15 +117,9 @@ extends StorageMockBase<MutableDataItemMock>{
 			LOG.info(Markers.MSG, "Listening the port {}", port);
 		}
 	}
-
+	
 	@Override
-	public boolean await()
-	throws InterruptedException {
-		return await(Long.MAX_VALUE, TimeUnit.DAYS);
-	}
-
-	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		try {
 //			for(final Channel channel : channels) {
@@ -139,11 +134,22 @@ extends StorageMockBase<MutableDataItemMock>{
 	}
 
 	@Override
-	public void close()
+	protected final void doClose()
 	throws IOException {
-		for(final Channel channel : channels) {
-			channel.close();
+		super.doClose();
+		for(int i = 0; i < channels.length; i ++) {
+			channels[i].close();
+			channels[i] = null;
 		}
+		for(int i = 0; i < dispatchGroups.length; i ++) {
+			dispatchGroups[i].shutdownGracefully(1, 1, TimeUnit.SECONDS);
+			dispatchGroups[i] = null;
+		}
+		for(int i = 0; i < workGroups.length; i ++) {
+			workGroups[i].shutdownGracefully(1, 1, TimeUnit.SECONDS);
+			workGroups[i] = null;
+		}
+		handlers.clear();
 	}
 
 	@Override

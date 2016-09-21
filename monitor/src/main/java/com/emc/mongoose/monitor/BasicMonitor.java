@@ -1,13 +1,12 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemBuffer;
 import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -25,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -41,7 +41,7 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
  Created by kurila on 12.07.16.
  */
 public class BasicMonitor<I extends Item, O extends IoTask<I>>
-extends InterruptibleDaemonBase
+extends DaemonBase
 implements Monitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -86,6 +86,9 @@ implements Monitor<I, O> {
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
+		Runtime.getRuntime().addShutdownHook(
+			new Thread(new ShutdownHook(), this.name + "-shutdown-hook")
+		);
 	}
 	
 	private final class ServiceTask
@@ -116,6 +119,19 @@ implements Monitor<I, O> {
 					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
 				postProcessItems();
+			}
+		}
+	}
+	
+	private final class ShutdownHook
+	implements Runnable {
+		
+		@Override
+		public final void run() {
+			try {
+				close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close \"{}\"", name);
 			}
 		}
 	}
@@ -384,9 +400,15 @@ implements Monitor<I, O> {
 
 	@Override
 	protected void doStart()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		for(final Generator<I, O> nextGenerator : generators) {
-			nextGenerator.start();
+			try {
+				nextGenerator.start();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
+				);
+			}
 		}
 		if(ioStats != null) {
 			ioStats.start();
@@ -396,25 +418,33 @@ implements Monitor<I, O> {
 
 	@Override
 	protected void doShutdown()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		for(final Generator<I, O> nextGenerator : generators) {
-			nextGenerator.shutdown();
+			try {
+				nextGenerator.shutdown();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to shutdown the generator {}",
+					nextGenerator.toString()
+				);
+			}
 		}
 	}
 
 	@Override
 	protected void doInterrupt()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		for(final Generator<I, O> nextGenerator : generators) {
-			nextGenerator.interrupt();
+			try {
+				nextGenerator.interrupt();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to interrupt the generator {}",
+					nextGenerator.toString()
+				);
+			}
 		}
 		worker.interrupt();
-	}
-
-	@Override
-	public boolean await()
-	throws InterruptedException {
-		return await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 
 	@Override
@@ -425,9 +455,16 @@ implements Monitor<I, O> {
 		do {
 			for(final String driverName : drivers.keySet()) {
 				nextDriver = drivers.get(driverName);
-				if(!nextDriver.isInterrupted()) {
-					allDriversFinished = false;
-					break;
+				try {
+					if(!nextDriver.isInterrupted()) {
+						allDriversFinished = false;
+						break;
+					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to check the state of the driver {}",
+						nextDriver.toString()
+					);
 				}
 				Thread.yield();
 			}
@@ -436,27 +473,24 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	public void close()
+	protected void doClose()
 	throws IOException {
-		if(!isInterrupted()) {
-			try {
-				interrupt();
-			} catch(final UserShootHisFootException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
-			}
-		}
 		generators.clear();
 		drivers.clear();
+		
+		LOG.info(Markers.PERF_SUM, lastStats.toSummaryString());
+		System.out.println(lastStats.toSummaryString());
+		lastStats = null;
 		if(ioStats != null) {
 			ioStats.close();
 		}
 		if(medIoStats != null) {
 			medIoStats.close();
 		}
+		
 		if(itemOutput != null) {
 			itemOutput.close();
 		}
 		itemOutBuff.close();
-		lastStats = null;
 	}
 }

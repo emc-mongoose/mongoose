@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.collection.ListingLRUMap;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
@@ -12,7 +13,10 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -26,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Created on 19.07.16.
  */
 public abstract class StorageMockBase<I extends MutableDataItemMock>
+extends DaemonBase
 implements StorageMock<I> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -53,14 +59,11 @@ implements StorageMock<I> {
 
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
-		final Config.StorageConfig.MockConfig mockConfig,
-		final Config.LoadConfig.MetricsConfig metricsConfig,
-		final Config.ItemConfig itemConfig,
+		final MockConfig mockConfig, final MetricsConfig metricsConfig, final ItemConfig itemConfig,
 		final ContentSource contentSrc
 	) {
 		super();
-		final Config.StorageConfig.MockConfig.ContainerConfig
-			containerConfig = mockConfig.getContainerConfig();
+		final ContainerConfig containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
 		this.itemInputFile = itemConfig.getInputConfig().getFile();
 		this.contentSrc = contentSrc;
@@ -215,21 +218,24 @@ implements StorageMock<I> {
 	};
 
 	@Override
-	public final void start() {
+	protected void doStart() {
 		loadPersistedDataItems();
 		ioStats.start();
-		doStart();
 		storageCapacityMonitorThread.start();
 		started.set(true);
 	}
-
+	
 	@Override
-	public final boolean isStarted() {
-		return started.get();
+	protected void doShutdown()
+	throws IllegalStateException {
 	}
-
-	protected abstract void doStart();
-
+	
+	@Override
+	protected void doInterrupt()
+	throws IllegalStateException {
+		storageCapacityMonitorThread.interrupt();
+	}
+	
 	@Override
 	public long getSize() {
 		long size = 0;
@@ -317,6 +323,25 @@ implements StorageMock<I> {
 			} finally {
 				displayProgressThread.interrupt();
 			}
+		}
+	}
+	
+	@Override
+	protected void doClose()
+	throws IOException {
+		ioStats.close();
+		contentSrc.close();
+		try {
+			storageMap.clear();
+		} catch(final ConcurrentModificationException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the storage mock");
+		}
+		try {
+			for(final ObjectContainerMock<I> containerMock : storageMap.values()) {
+				containerMock.close();
+			}
+		} catch(final ConcurrentModificationException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the containers");
 		}
 	}
 }

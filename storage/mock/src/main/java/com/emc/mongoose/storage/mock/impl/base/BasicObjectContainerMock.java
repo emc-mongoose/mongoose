@@ -4,6 +4,7 @@ import com.emc.mongoose.common.collection.ListingLRUMap;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -59,6 +60,10 @@ implements ObjectContainerMock<T> {
 	public synchronized T remove(final String key) {
 		return containerMap.remove(key);
 	}
-
-
+	
+	@Override
+	public void close()
+	throws IOException {
+		containerMap.clear();
+	}
 }

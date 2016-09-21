@@ -1,16 +1,13 @@
 package com.emc.mongoose.generator;
 
-import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
-import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -36,6 +33,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
  Created by kurila on 11.07.16.
  */
 public class BasicGenerator<I extends Item, O extends IoTask<I>>
-extends InterruptibleDaemonBase
+extends DaemonBase
 implements Generator<I, O>, Output<I> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -266,11 +264,11 @@ implements Generator<I, O>, Output<I> {
 
 	@Override
 	protected void doStart()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		for(final Driver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.start();
-			} catch(final UserShootHisFootException e) {
+			} catch(final RemoteException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the driver \"{}\"", nextDriver.toString()
 				);
@@ -290,20 +288,13 @@ implements Generator<I, O>, Output<I> {
 		for(final Driver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.interrupt();
-			} catch(final UserShootHisFootException e) {
+			} catch(final RemoteException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to interrupt the driver \"{}\"",
 					nextDriver.toString()
 				);
 			}
 		}
-	}
-
-	@Override
-	public boolean await()
-	throws InterruptedException {
-		worker.join();
-		return true;
 	}
 
 	@Override
@@ -314,15 +305,8 @@ implements Generator<I, O>, Output<I> {
 	}
 
 	@Override
-	public void close()
+	protected void doClose()
 	throws IOException {
-		if(!isInterrupted()) {
-			try {
-				interrupt();
-			} catch(final UserShootHisFootException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
-			}
-		}
 		if(itemInput != null) {
 			itemInput.close();
 		}

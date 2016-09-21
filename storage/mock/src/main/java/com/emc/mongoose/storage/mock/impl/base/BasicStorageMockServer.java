@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
@@ -15,20 +15,21 @@ import org.apache.logging.log4j.Logger;
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.storage.mock.impl.http.Nagaina.IDENTIFIER;
+import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;
 import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  Created on 06.09.16.
  */
 public class BasicStorageMockServer<T extends MutableDataItemMock>
-extends UnicastRemoteObject
+extends DaemonBase
 implements StorageMockServer<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -44,28 +45,30 @@ implements StorageMockServer<T> {
 	}
 
 	@Override
-	public void start()
-	throws UserShootHisFootException {
+	protected final void doStart()
+	throws IllegalStateException {
 		try {
 			LOG.info(Markers.MSG, "Register RMI service");
-			Registry registry = null;
+			
+			// TODO move the registry obtaining section to some kind of init
 			try {
-				registry = LocateRegistry.createRegistry(REGISTRY_PORT);
+				LocateRegistry.createRegistry(REGISTRY_PORT);
 			} catch(final RemoteException e) {
 				try {
-					registry = LocateRegistry.getRegistry(REGISTRY_PORT);
-				} catch(final RemoteException ie) {
+					LocateRegistry.getRegistry(REGISTRY_PORT);
+				} catch(final RemoteException ee) {
 					LogUtil.exception(
-						LOG, Level.ERROR, ie, "Failed to obtain RMI registry"
+						LOG, Level.ERROR, ee, "Failed to obtain RMI registry"
 					);
 				}
 			}
-			if (registry != null) {
-				registry.rebind(IDENTIFIER, this);
-			}
+			
+			// export
+			UnicastRemoteObject.exportObject(this, 0);
+			Naming.rebind(SVC_NAME, this);
+			
 			serviceInfo = ServiceInfo.create(
-				MDns.Type.HTTP.toString(), IDENTIFIER,
-				MDns.DEFAULT_PORT, "storage mock"
+				MDns.Type.HTTP.toString(), SVC_NAME, MDns.DEFAULT_PORT, "storage mock"
 			);
 			jmDns.registerService(serviceInfo);
 			LOG.info("Nagaina registered as service");
@@ -74,40 +77,54 @@ implements StorageMockServer<T> {
 				LOG, Level.ERROR, e, "Failed to register as service"
 			);
 		}
-		storage.start();
+		try {
+			storage.start();
+		} catch(final RemoteException e) {
+			throw new IllegalStateException(e);
+		}
 	}
-
+	
 	@Override
-	public boolean isStarted() {
-		return storage.isStarted();
+	protected void doShutdown()
+	throws IllegalStateException {
+		try {
+			storage.shutdown();
+		} catch(final RemoteException e) {
+			throw new IllegalStateException(e);
+		}
 	}
-
+	
 	@Override
-	public boolean await()
-	throws InterruptedException {
-		return storage.await();
+	protected void doInterrupt()
+	throws IllegalStateException {
+		try {
+			UnicastRemoteObject.unexportObject(this, true);
+			storage.interrupt();
+		} catch(final RemoteException e) {
+			throw new IllegalStateException(e);
+		}
 	}
-
+	
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException {
+	throws InterruptedException, RemoteException {
 		return storage.await(timeout, timeUnit);
 	}
-
+	
+	@Override
+	protected void doClose()
+	throws IOException {
+		try {
+			Naming.unbind(SVC_NAME);
+		} catch(final NotBoundException ignored) {
+		}
+		jmDns.unregisterService(serviceInfo);
+	}
+	
 	@Override
 	public T getObjectRemotely(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException {
 		return storage.getObject(containerName, id, offset, size);
-	}
-
-	@Override
-	public void close()
-	throws IOException {
-		jmDns.unregisterService(serviceInfo);
-		storage.close();
-		// Server is the wrapper for StorageMock, but not jmDns.
-		// That's why jmDns object should be closed outside this object (Since it may be used
-		// by different objects.
 	}
 }

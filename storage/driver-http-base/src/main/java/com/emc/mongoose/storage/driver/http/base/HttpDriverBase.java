@@ -2,14 +2,12 @@ package com.emc.mongoose.storage.driver.http.base;
 
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
-import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
@@ -47,11 +45,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,7 +74,7 @@ implements HttpDriver<I, O> {
 	protected HttpDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final String srcContainer, final SocketConfig socketConfig
-	) throws UserShootHisFootException {
+	) throws IllegalStateException {
 		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer);
 		try {
 			if(secret == null) {
@@ -244,6 +243,11 @@ implements HttpDriver<I, O> {
 					LOG, Level.WARN, e, "Failed to get the connection to \"{}\"", bestNode
 				);
 				return;
+			} catch(final RejectedExecutionException | IllegalStateException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "Failed to get the connection to \"{}\"", bestNode
+				);
+				return;
 			}
 			
 			channel.attr(ATTR_KEY_IOTASK).set(ioTask);
@@ -319,12 +323,6 @@ implements HttpDriver<I, O> {
 	}
 	
 	@Override
-	public boolean await()
-	throws InterruptedException {
-		return false;
-	}
-	
-	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return false;
@@ -342,17 +340,17 @@ implements HttpDriver<I, O> {
 	
 	@Override
 	protected void doStart()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 	}
 	
 	@Override
 	protected void doShutdown()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 	}
 	
 	@Override
 	protected void doInterrupt()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		final Future f = workerGroup.shutdownGracefully(0, 1, TimeUnit.NANOSECONDS);
 		try {
 			f.await(1, TimeUnit.SECONDS);
@@ -362,8 +360,19 @@ implements HttpDriver<I, O> {
 	}
 	
 	@Override
-	public void close()
+	protected void doClose()
 	throws IOException {
-		super.close();
+		super.doClose();
+		for(int i = 0; i < storageNodeAddrs.length; i ++) {
+			storageNodeAddrs[i] = null;
+		}
+		sharedHeaders.clear();
+		try {
+			secretKey.destroy();
+		} catch(final DestroyFailedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the secret key");
+		}
+		storageNodeBalancer.close();
+		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
 	}
 }

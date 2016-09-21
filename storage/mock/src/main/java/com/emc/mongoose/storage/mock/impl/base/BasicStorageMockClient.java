@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.data.ContentSource;
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.RunnableFuture;
@@ -42,25 +44,26 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
-import static com.emc.mongoose.storage.mock.impl.http.Nagaina.IDENTIFIER;
+import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;
 import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  Created on 06.09.16.
  */
 public final class BasicStorageMockClient<T extends MutableDataItemMock>
-extends ThreadPoolExecutor
+extends DaemonBase
 implements StorageMockClient<T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final ContentSource contentSrc;
 	private final JmDNS jmDns;
-	private final ConcurrentMap<String, StorageMockServer<T>> remoteNodeMap =
-		new ConcurrentHashMap<>();
+	private final ConcurrentMap<String, StorageMockServer<T>>
+		remoteNodeMap = new ConcurrentHashMap<>();
+	private final ExecutorService executor;
 
 	public BasicStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
-		super(
+		this.executor = new ThreadPoolExecutor(
 			ThreadUtil.getAvailableConcurrencyLevel(), ThreadUtil.getAvailableConcurrencyLevel(),
 			0, TimeUnit.DAYS,
 			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
@@ -70,16 +73,16 @@ implements StorageMockClient<T> {
 					LOG.error("Task {} rejected", r.toString());
 				}
 			}
-		);
+		) {
+			@Override
+			public final Future<T> submit(final Runnable task) {
+				final RunnableFuture<T> rf = (RunnableFuture<T>) task;
+				execute(rf);
+				return rf;
+			}
+		};
 		this.contentSrc = contentSrc;
 		this.jmDns = jmDns;
-	}
-	
-	@Override
-	public final Future<T> submit(final Runnable task) {
-		final RunnableFuture<T> rf = (RunnableFuture<T>) task;
-		execute(rf);
-		return rf;
 	}
 	
 	private final static class GetRemoteObjectTask<T extends MutableDataItemMock>
@@ -123,7 +126,7 @@ implements StorageMockClient<T> {
 		final CountDownLatch sharedCountDown = new CountDownLatch(remoteNodes.size());
 		final AtomicReference<T> resultRef = new AtomicReference<>(null);
 		for(final StorageMockServer<T> node : remoteNodes) {
-			submit(
+			executor.submit(
 				new GetRemoteObjectTask<>(
 					resultRef, sharedCountDown, node, containerName, id, offset, size
 				)
@@ -140,15 +143,31 @@ implements StorageMockClient<T> {
 	}
 	
 	@Override
-	public void start() {
+	protected void doStart() {
 		jmDns.addServiceListener(MDns.Type.HTTP.toString(), this);
 	}
-
+	
 	@Override
-	public void close()
-	throws IOException {
-		shutdownNow();
+	protected void doShutdown() {
+		executor.shutdown();
+	}
+	
+	@Override
+	public boolean await(final long timeout, final TimeUnit timeUnit)
+	throws InterruptedException {
+		return executor.awaitTermination(timeout, timeUnit);
+	}
+	
+	@Override
+	protected void doInterrupt() {
+		executor.shutdownNow();
 		jmDns.removeServiceListener(MDns.Type.HTTP.toString(), this);
+	}
+	
+	@Override
+	protected void doClose()
+	throws IOException {
+		remoteNodeMap.clear();
 	}
 
 	@Override
@@ -169,7 +188,7 @@ implements StorageMockClient<T> {
 			public final void accept(final String hostAddress) {
 				try {
 					final URI rmiUrl = new URI(
-						"rmi", null, hostAddress, REGISTRY_PORT, "/" + IDENTIFIER, null, null
+						"rmi", null, hostAddress, REGISTRY_PORT, "/" + SVC_NAME, null, null
 					);
 					final StorageMockServer<T> mock = (StorageMockServer<T>) Naming.lookup(
 						rmiUrl.toString()
@@ -195,7 +214,7 @@ implements StorageMockClient<T> {
 		final ServiceEvent event, final Consumer<String> consumer, final String actionMsg
 	) {
 		final ServiceInfo eventInfo = event.getInfo();
-		if(eventInfo.getQualifiedName().contains(IDENTIFIER)) {
+		if(eventInfo.getQualifiedName().contains(SVC_NAME)) {
 			for (final InetAddress address: eventInfo.getInet4Addresses()) {
 				try {
 					if(!address.equals(jmDns.getInetAddress())) {

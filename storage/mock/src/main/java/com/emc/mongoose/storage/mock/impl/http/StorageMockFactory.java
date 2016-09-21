@@ -13,11 +13,7 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentCon
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.channel.ChannelInboundHandler;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -29,14 +25,11 @@ import java.util.List;
  */
 public class StorageMockFactory {
 
-	private static final Logger LOG = LogManager.getLogger();
-
 	private final StorageConfig storageConfig;
 	private final LoadConfig loadConfig;
 	private final ItemConfig itemConfig;
 	private final LoadConfig.LimitConfig limitConfig;
 	private final ItemConfig.NamingConfig namingConfig;
-	private ContentSource contentSrc;
 
 	public StorageMockFactory(
 		final StorageConfig storageConfig, final LoadConfig loadConfig, final ItemConfig itemConfig
@@ -46,22 +39,15 @@ public class StorageMockFactory {
 		this.itemConfig = itemConfig;
 		this.limitConfig = loadConfig.getLimitConfig();
 		this.namingConfig = itemConfig.getNamingConfig();
-		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
-		final String contentSourcePath = contentConfig.getFile();
-		try {
-			this.contentSrc = ContentSourceUtil.getInstance(
-				contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
-			);
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to get content source on path {}", contentSourcePath
-			);
-			throw new IllegalStateException();
-		}
 	}
 
 	public StorageMockNode newNagainaNode()
-	throws RemoteException {
+	throws IOException {
+		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+		final String contentSourcePath = contentConfig.getFile();
+		final ContentSource contentSrc = ContentSourceUtil.getInstance(
+			contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
+		);
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<MutableDataItemMock> storage = new Nagaina(
 			storageConfig, loadConfig, itemConfig, contentSrc, handlers
@@ -82,7 +68,13 @@ public class StorageMockFactory {
 		return storageMockNode;
 	}
 
-	public StorageMock newNagaina() {
+	public StorageMock newNagaina()
+	throws IOException {
+		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+		final String contentSourcePath = contentConfig.getFile();
+		final ContentSource contentSrc = ContentSourceUtil.getInstance(
+			contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
+		);
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<MutableDataItemMock> storage = new Nagaina(
 			storageConfig, loadConfig, itemConfig, contentSrc, handlers

@@ -1,7 +1,5 @@
 package com.emc.mongoose.common.concurrent;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-
 import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
@@ -13,14 +11,29 @@ public interface Daemon
 extends Closeable {
 
 	void start()
-	throws UserShootHisFootException;
+	throws IllegalStateException, RemoteException;
 
-	boolean isStarted();
-
+	boolean isStarted()
+	throws RemoteException;
+	
+	void shutdown()
+	throws IllegalStateException, RemoteException;
+	
+	boolean isShutdown()
+	throws RemoteException;
+	
 	boolean await()
-	throws InterruptedException;
+	throws InterruptedException, RemoteException;
 
 	boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException;
-
+	throws InterruptedException, RemoteException;
+	
+	void interrupt()
+	throws IllegalStateException, RemoteException;
+	
+	boolean isInterrupted()
+	throws RemoteException;
+	
+	boolean isClosed()
+	throws RemoteException;
 }
