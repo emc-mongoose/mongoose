@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.fs;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Driver;
@@ -99,7 +98,7 @@ implements Driver<I, O> {
 	
 	@Override
 	protected void doStart()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskExecutor.submit(new IoTaskSchedule());
 		}
@@ -107,13 +106,13 @@ implements Driver<I, O> {
 
 	@Override
 	protected void doShutdown()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		ioTaskExecutor.shutdown();
 	}
 
 	@Override
 	protected void doInterrupt()
-	throws UserShootHisFootException {
+	throws IllegalStateException {
 		final List<Runnable> interruptedTasks = ioTaskExecutor.shutdownNow();
 		LOG.debug(Markers.MSG, "{} I/O tasks dropped", interruptedTasks.size());
 	}
@@ -158,21 +157,15 @@ implements Driver<I, O> {
 	}
 
 	@Override
-	public boolean await()
-	throws InterruptedException {
-		return await(Long.MAX_VALUE, TimeUnit.DAYS);
-	}
-
-	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return ioTaskExecutor.awaitTermination(timeout, timeUnit);
 	}
 
 	@Override
-	public void close()
+	protected void doClose()
 	throws IOException {
-		super.close();
+		super.doClose();
 		ioTaskQueue.clear();
 	}
 }

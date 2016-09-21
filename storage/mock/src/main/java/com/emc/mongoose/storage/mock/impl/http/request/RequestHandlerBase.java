@@ -348,7 +348,7 @@ extends ChannelInboundHandlerAdapter {
 			if(object != null) {
 				handleObjectReadSuccess(object, ctx);
 			} else {
-				if (remoteStorage != null) {
+				if(remoteStorage != null) {
 					object = remoteStorage.getObject(containerName, id, offset, 0);
 				}
 				if(object == null) {
@@ -361,6 +361,9 @@ extends ChannelInboundHandlerAdapter {
 					handleObjectReadSuccess(object, ctx);
 				}
 			}
+		} catch(final ContainerMockNotFoundException e) {
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
+			ioStats.markRead(false, 0);
 		} catch(final IOException | ContainerMockException  e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);

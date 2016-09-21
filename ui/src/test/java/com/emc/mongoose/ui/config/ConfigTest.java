@@ -36,7 +36,7 @@ public class ConfigTest {
 		argsMap.put("--load-limit-rate", "12.345");
 		argsMap.put("--load-limit-size", "321KB");
 		argsMap.put("--load-limit-time", "5m");
-		argsMap.put("--storage-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
+		argsMap.put("--storage-node-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
 		argsMap.put("--storage-http-fsAccess", "true");
 		argsMap.put("--storage-http-headers", "customHeaderName:customHeaderValue");
 		argsMap.put("--storage-mock-headCount", "2");
@@ -62,29 +62,33 @@ public class ConfigTest {
 			new SizeInBytes(argsMap.get("--io-buffer-size")),
 			config.getIoConfig().getBufferConfig().getSize()
 		);
+		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertEquals(
 			Integer.parseInt(argsMap.get("--socket-timeoutMilliSec")),
-			config.getSocketConfig().getTimeoutMilliSec()
+			socketConfig.getTimeoutMilliSec()
 		);
-		assertEquals(true, config.getSocketConfig().getReuseAddr());
-		assertEquals(false, config.getSocketConfig().getTcpNoDelay());
-		assertEquals(true, config.getSocketConfig().getInterestOpQueued());
+		assertEquals(true, socketConfig.getReuseAddr());
+		assertEquals(false, socketConfig.getTcpNoDelay());
+		assertEquals(true, socketConfig.getInterestOpQueued());
+		final Config.ItemConfig.DataConfig dataConfig = config.getItemConfig().getDataConfig();
 		assertEquals(
 			"16MB",
-			config.getItemConfig().getDataConfig().getContentConfig().getRingSize().toString()
+			dataConfig.getContentConfig().getRingSize().toString()
 		);
-		assertEquals(1, config.getItemConfig().getDataConfig().getRanges().getRandomCount());
-		assertEquals(1000, config.getLoadConfig().getLimitConfig().getCount());
-		assertEquals(12.345, config.getLoadConfig().getLimitConfig().getRate());
-		assertEquals("321KB", config.getLoadConfig().getLimitConfig().getSize().toString());
-		assertEquals(300, config.getLoadConfig().getLimitConfig().getTime());
-		assertEquals(4, config.getStorageConfig().getAddrs().size());
-		assertEquals(true, config.getStorageConfig().getHttpConfig().getFsAccess());
+		assertEquals(1, dataConfig.getRanges().getRandomCount());
+		final Config.LoadConfig loadConfig = config.getLoadConfig();
+		assertEquals(1000, loadConfig.getLimitConfig().getCount());
+		assertEquals(12.345, loadConfig.getLimitConfig().getRate());
+		assertEquals("321KB", loadConfig.getLimitConfig().getSize().toString());
+		assertEquals(300, loadConfig.getLimitConfig().getTime());
+		final Config.StorageConfig storageConfig = config.getStorageConfig();
+		assertEquals(4, storageConfig.getNodeConfig().getAddrs().size());
+		assertEquals(true, storageConfig.getHttpConfig().getFsAccess());
 		assertEquals(
 			"customHeaderValue",
-			config.getStorageConfig().getHttpConfig().getHeaders().get("customHeaderName")
+			storageConfig.getHttpConfig().getHeaders().get("customHeaderName")
 		);
-		assertEquals(2, config.getStorageConfig().getMockConfig().getHeadCount());
+		assertEquals(2, storageConfig.getMockConfig().getHeadCount());
 	}
 	
 	@Test

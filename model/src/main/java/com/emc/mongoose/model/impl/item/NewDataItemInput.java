@@ -4,7 +4,6 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.util.SizeInBytes;
 
 import java.io.IOException;
@@ -16,17 +15,15 @@ implements Input<D> {
 	private final ItemFactory<D> itemFactory;
 	private final Input<String> pathInput;
 	private final BasicItemNameInput idInput;
-	private final ContentSource contentSrc;
 	private final SizeInBytes dataSize;
 	//
 	public NewDataItemInput(
 		final ItemFactory<D> itemFactory, final Input<String> pathInput,
-		final BasicItemNameInput idInput, final ContentSource contentSrc, final SizeInBytes dataSize
+		final BasicItemNameInput idInput, final SizeInBytes dataSize
 	) throws IllegalArgumentException {
 		this.itemFactory = itemFactory;
 		this.pathInput = pathInput;
 		this.idInput = idInput;
-		this.contentSrc = ContentSourceUtil.clone(contentSrc);
 		this.dataSize = dataSize;
 	}
 	//
@@ -37,8 +34,8 @@ implements Input<D> {
 	@Override
 	public final D get()
 	throws IOException {
-		return itemFactory.getInstance(
-			pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
+		return itemFactory.getItem(
+			pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get()
 		);
 	}
 	//
@@ -47,9 +44,8 @@ implements Input<D> {
 	throws IOException {
 		for(int i = 0; i < maxCount; i ++) {
 			buffer.add(
-				itemFactory.getInstance(
-					pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(),
-					contentSrc
+				itemFactory.getItem(
+					pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get()
 				)
 			);
 		}
@@ -72,9 +68,6 @@ implements Input<D> {
 	@Override
 	public final void close()
 	throws IOException {
-		if(contentSrc != null) {
-			contentSrc.close();
-		}
 	}
 	//
 	@Override

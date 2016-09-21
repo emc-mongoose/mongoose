@@ -1,7 +1,9 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.collection.ListingLRUMap;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
@@ -11,7 +13,10 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -25,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,35 +39,33 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created on 19.07.16.
  */
-public abstract class StorageMockBase<T extends MutableDataItemMock>
-implements StorageMock<T> {
+public abstract class StorageMockBase<I extends MutableDataItemMock>
+extends DaemonBase
+implements StorageMock<I> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final AtomicBoolean started = new AtomicBoolean(false);
 
-	private final String dataSrcPath;
+	private final String itemInputFile;
 	private final StorageIoStats ioStats;
 	protected final ContentSource contentSrc;
 	private final int storageCapacity, containerCapacity;
 
-	private final ListingLRUMap<String, ObjectContainerMock<T>> storageMap;
-	private final ObjectContainerMock<T> defaultContainer;
+	private final ListingLRUMap<String, ObjectContainerMock<I>> storageMap;
+	private final ObjectContainerMock<I> defaultContainer;
 
 	private volatile boolean isCapacityExhausted = false;
 
 	@SuppressWarnings("unchecked")
 	public StorageMockBase(
-		final Config.StorageConfig.MockConfig mockConfig,
-		final Config.LoadConfig.MetricsConfig metricsConfig,
-		final Config.ItemConfig itemConfig,
+		final MockConfig mockConfig, final MetricsConfig metricsConfig, final ItemConfig itemConfig,
 		final ContentSource contentSrc
 	) {
 		super();
-		final Config.StorageConfig.MockConfig.ContainerConfig
-			containerConfig = mockConfig.getContainerConfig();
+		final ContainerConfig containerConfig = mockConfig.getContainerConfig();
 		storageMap = new ListingLRUMap<>(containerConfig.getCountLimit());
-		this.dataSrcPath = itemConfig.getInputConfig().getFile();
+		this.itemInputFile = itemConfig.getInputConfig().getFile();
 		this.contentSrc = contentSrc;
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
 		this.storageCapacity = mockConfig.getCapacity();
@@ -83,7 +87,7 @@ implements StorageMock<T> {
 	}
 
 	@Override
-	public final ObjectContainerMock<T> getContainer(final String name) {
+	public final ObjectContainerMock<I> getContainer(final String name) {
 		synchronized(storageMap) {
 			return storageMap.get(name);
 		}
@@ -101,7 +105,7 @@ implements StorageMock<T> {
 	// Object methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	protected abstract T newDataObject(final String id, final long offset, final long size);
+	protected abstract I newDataObject(final String id, final long offset, final long size);
 
 	@Override
 	public final void createObject(
@@ -110,7 +114,7 @@ implements StorageMock<T> {
 		if(isCapacityExhausted) {
 			throw new StorageMockCapacityLimitReachedException();
 		}
-		final ObjectContainerMock<T> c = getContainer(containerName);
+		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
 			c.put(id, newDataObject(id, offset, size));
 		} else {
@@ -122,9 +126,9 @@ implements StorageMock<T> {
 	public final void updateObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
-		final ObjectContainerMock<T> c = getContainer(containerName);
+		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
-			final T obj = c.get(id);
+			final I obj = c.get(id);
 			if(obj != null) {
 				obj.update(offset, size);
 			} else {
@@ -139,9 +143,9 @@ implements StorageMock<T> {
 	public final void appendObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
-		final ObjectContainerMock<T> c = getContainer(containerName);
+		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
-			final T obj = c.get(id);
+			final I obj = c.get(id);
 			if(obj != null) {
 				obj.append(offset, size);
 			} else {
@@ -153,11 +157,11 @@ implements StorageMock<T> {
 	}
 
 	@Override
-	public final T getObject(
+	public final I getObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
-		final ObjectContainerMock<T> c = getContainer(containerName);
+		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
 			return c.get(id);
 		} else {
@@ -169,7 +173,7 @@ implements StorageMock<T> {
 	public final void deleteObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
-		final ObjectContainerMock<T> c = getContainer(containerName);
+		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
 			c.remove(id);
 		} else {
@@ -178,11 +182,11 @@ implements StorageMock<T> {
 	}
 
 	@Override
-	public final T listObjects(
-		final String containerName, final String afterObjectId, final Collection<T> outputBuffer,
+	public final I listObjects(
+		final String containerName, final String afterObjectId, final Collection<I> outputBuffer,
 		final int limit
 	) throws ContainerMockException {
-		final ObjectContainerMock<T> container = getContainer(containerName);
+		final ObjectContainerMock<I> container = getContainer(containerName);
 		if(container != null) {
 			return container.list(afterObjectId, outputBuffer, limit);
 		} else {
@@ -214,26 +218,29 @@ implements StorageMock<T> {
 	};
 
 	@Override
-	public final void start() {
+	protected void doStart() {
 		loadPersistedDataItems();
 		ioStats.start();
-		doStart();
 		storageCapacityMonitorThread.start();
 		started.set(true);
 	}
-
+	
 	@Override
-	public final boolean isStarted() {
-		return started.get();
+	protected void doShutdown()
+	throws IllegalStateException {
 	}
-
-	protected abstract void doStart();
-
+	
+	@Override
+	protected void doInterrupt()
+	throws IllegalStateException {
+		storageCapacityMonitorThread.interrupt();
+	}
+	
 	@Override
 	public long getSize() {
 		long size = 0;
 		synchronized(storageMap) {
-			for(final ObjectContainerMock<T> container : storageMap.values()) {
+			for(final ObjectContainerMock<I> container : storageMap.values()) {
 				size += container.size();
 			}
 		}
@@ -246,8 +253,8 @@ implements StorageMock<T> {
 	}
 
 	@Override
-	public final void putIntoDefaultContainer(final List<T> dataItems) {
-		for(final T object : dataItems) {
+	public final void putIntoDefaultContainer(final List<I> dataItems) {
+		for(final I object : dataItems) {
 			defaultContainer.put(object.getName(), object);
 		}
 	}
@@ -259,41 +266,40 @@ implements StorageMock<T> {
 
 	@SuppressWarnings({"InfiniteLoopStatement", "unchecked"})
 	private void loadPersistedDataItems() {
-		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
-			final Path dataFilePath = Paths.get(dataSrcPath);
-			if(!Files.exists(dataFilePath)) {
-				LOG.warn(
-					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists"
-				);
+		if(itemInputFile != null && !itemInputFile.isEmpty()) {
+			final Path itemInputFile = Paths.get(this.itemInputFile);
+			if(!Files.exists(itemInputFile)) {
+				LOG.warn(Markers.ERR, "Item input file @ \"{}\" doesn't exists", itemInputFile);
 				return;
 			}
-			if(Files.isDirectory(dataFilePath)) {
-				LOG.warn(
-					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is a directory"
-				);
+			if(Files.isDirectory(itemInputFile)) {
+				LOG.warn(Markers.ERR, "Item input file @ \"{}\" is a directory", itemInputFile);
 				return;
 			}
-			if(Files.isReadable(dataFilePath)) {
-				LOG.debug(
-					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
-				);
+			if(Files.isReadable(itemInputFile)) {
+				LOG.warn(Markers.ERR, "Item input file @ \"{}\" is not readable", itemInputFile);
+				return;
 			}
+			
 			final AtomicLong count = new AtomicLong(0);
-			List<T> buff;
+			List<I> buff;
 			int n;
-			final Thread displayProgressThread = new Thread(() -> {
-				try {
-					while(true) {
-						LOG.info(Markers.MSG, "{} items loaded...", count.get());
-						TimeUnit.SECONDS.sleep(10);
+			final Thread displayProgressThread = new Thread(
+				() -> {
+					try {
+						while(true) {
+							LOG.info(Markers.MSG, "{} items loaded...", count.get());
+							TimeUnit.SECONDS.sleep(10);
+						}
+					} catch(final InterruptedException e) {
 					}
-				} catch(final InterruptedException ignored) {
 				}
-			});
+			);
+			
+			final ItemFactory<I> itemFactory = new BasicMutableDataItemMockFactory<>(contentSrc);
 			try(
-				final CsvFileItemInput<T>
-					csvFileItemInput = new CsvFileItemInput<>(
-					dataFilePath, (Class<T>) BasicMutableDataItemMock.class, contentSrc
+				final CsvFileItemInput<I> csvFileItemInput = new CsvFileItemInput<>(
+					itemInputFile, itemFactory
 				)
 			) {
 				displayProgressThread.start();
@@ -308,15 +314,34 @@ implements StorageMock<T> {
 					}
 				} while(true);
 			} catch(final EOFException e) {
-				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
+				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, itemInputFile);
 			} catch(final IOException | NoSuchMethodException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to load the data items from file \"{}\"",
-					dataFilePath
+					itemInputFile
 				);
 			} finally {
 				displayProgressThread.interrupt();
 			}
+		}
+	}
+	
+	@Override
+	protected void doClose()
+	throws IOException {
+		ioStats.close();
+		contentSrc.close();
+		try {
+			storageMap.clear();
+		} catch(final ConcurrentModificationException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the storage mock");
+		}
+		try {
+			for(final ObjectContainerMock<I> containerMock : storageMap.values()) {
+				containerMock.close();
+			}
+		} catch(final ConcurrentModificationException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the containers");
 		}
 	}
 }

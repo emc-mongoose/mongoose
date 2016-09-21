@@ -1,31 +1,33 @@
 package com.emc.mongoose.model.impl.item;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.FileItemInput;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.ItemFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+
+import static java.nio.file.Files.newInputStream;
+
 /**
  Created by kurila on 30.06.15.
  */
-public class CsvFileItemInput<T extends Item>
-extends CsvItemInput<T>
-implements FileItemInput<T> {
+public class CsvFileItemInput<I extends Item>
+extends CsvItemInput<I>
+implements FileItemInput<I> {
 	//
 	protected final Path itemsFilePath;
 	/**
 	 @param itemsFilePath the input stream to get the data item records from
-	 @param itemCls the particular data item implementation class used to parse the records
+	 @param itemFactory the concrete item factory
 	 @throws IOException
 	 @throws NoSuchMethodException */
-	public CsvFileItemInput(
-		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
-	) throws IOException, NoSuchMethodException {
-		super(Files.newInputStream(itemsFilePath, StandardOpenOption.READ), itemCls, contentSrc);
+	public CsvFileItemInput(final Path itemsFilePath, final ItemFactory<I> itemFactory)
+	throws IOException, NoSuchMethodException {
+		super(newInputStream(itemsFilePath, StandardOpenOption.READ), itemFactory);
 		this.itemsFilePath = itemsFilePath;
 	}
 	//

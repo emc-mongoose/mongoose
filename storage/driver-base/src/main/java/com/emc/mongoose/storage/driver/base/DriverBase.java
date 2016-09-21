@@ -1,17 +1,14 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.common.concurrent.InterruptibleDaemonBase;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
 import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.api.load.Monitor;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
  This mock just passes the submitted tasks to the load monitor em
  */
 public abstract class DriverBase<I extends Item, O extends IoTask<I>>
-extends InterruptibleDaemonBase
+extends DaemonBase
 implements Driver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -85,14 +82,8 @@ implements Driver<I, O> {
 	}
 	
 	@Override
-	public void close()
-	throws IOException {
-		if(!isInterrupted()) {
-			try {
-				interrupt();
-			} catch(final UserShootHisFootException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
-			}
-		}
+	protected void doClose()
+	throws IOException, IllegalStateException {
+		monitorRef.set(null);
 	}
 }

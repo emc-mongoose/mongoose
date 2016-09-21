@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
  Created on 09.09.16.
  */
 public class NagainaNode
+extends DaemonBase
 implements StorageMockNode<MutableDataItemMock> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -36,7 +37,7 @@ implements StorageMockNode<MutableDataItemMock> {
 	public NagainaNode(
 		final StorageMock<MutableDataItemMock> storage, final ContentSource contentSrc
 	) {
-//		System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
+		// System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
 		try {
 			jmDns = JmDNS.create(NetUtil.getHostAddr());
 			LOG.info("mDNS address: " + jmDns.getInetAddress());
@@ -58,35 +59,38 @@ implements StorageMockNode<MutableDataItemMock> {
 	}
 
 	@Override
-	public void start()
-	throws UserShootHisFootException {
+	protected void doStart()
+	throws IllegalStateException {
 		try {
 			server.start();
+			client.start();
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to start storage mock server");
+			throw new IllegalStateException(e);
 		}
-		client.start();
 	}
-
+	
 	@Override
-	public boolean isStarted() {
+	protected void doShutdown()
+	throws IllegalStateException {
 		try {
-			return server.isStarted();
-		} catch(final RemoteException ignore) {
+			server.shutdown();
+			client.shutdown();
+		} catch(final RemoteException e) {
+			throw new IllegalStateException(e);
 		}
-		return false;
 	}
-
+	
 	@Override
-	public boolean await()
-	throws InterruptedException {
+	protected void doInterrupt()
+	throws IllegalStateException {
 		try {
-			return server.await();
-		} catch(final RemoteException ignore) {
+			server.interrupt();
+			client.interrupt();
+		} catch(final RemoteException e) {
+			throw new IllegalStateException(e);
 		}
-		return false;
 	}
-
+	
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
@@ -96,9 +100,9 @@ implements StorageMockNode<MutableDataItemMock> {
 		}
 		return false;
 	}
-
+	
 	@Override
-	public void close()
+	protected void doClose()
 	throws IOException {
 		server.close();
 		client.close();

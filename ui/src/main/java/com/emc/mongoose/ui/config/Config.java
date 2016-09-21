@@ -28,8 +28,9 @@ public final class Config {
 	private static final class TimeStrToLongDeserializer
 	extends JsonDeserializer<Long> {
 		@Override
-		public final Long deserialize(final JsonParser p, final DeserializationContext ctx)
-		throws JsonProcessingException, IOException {
+		public final Long deserialize(
+			final JsonParser p, final DeserializationContext ctx
+		) throws IOException {
 			return TimeUtil.getTimeInSeconds(p.getValueAsString());
 		}
 	}
@@ -37,8 +38,9 @@ public final class Config {
 	private static final class SizeInBytesDeserializer
 	extends JsonDeserializer<SizeInBytes> {
 		@Override
-		public final SizeInBytes deserialize(final JsonParser p, final DeserializationContext ctx)
-		throws JsonProcessingException, IOException {
+		public final SizeInBytes deserialize(
+			final JsonParser p, final DeserializationContext ctx
+		) throws IOException {
 			return new SizeInBytes(p.getValueAsString());
 		}
 	}
@@ -46,8 +48,9 @@ public final class Config {
 	private static final class DataRangesConfigDeserializer
 	extends JsonDeserializer<DataRangesConfig> {
 		@Override
-		public final DataRangesConfig deserialize(final JsonParser p, final DeserializationContext ctx)
-		throws JsonProcessingException, IOException {
+		public final DataRangesConfig deserialize(
+			final JsonParser p, final DeserializationContext ctx
+		) throws IOException {
 			try {
 				return new DataRangesConfig(p.getValueAsInt());
 			} catch(final IOException ignored) {
@@ -150,7 +153,7 @@ public final class Config {
 		this.aliasingConfig = aliasingConfig;
 	}
 	
-	public final static class IoConfig {
+	public static final class IoConfig {
 		
 		public static final String KEY_BUFFER = "buffer";
 		
@@ -188,7 +191,7 @@ public final class Config {
 		}
 	}
 
-	public final static class SocketConfig {
+	public static final class SocketConfig {
 
 		public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
 		public static final String KEY_REUSE_ADDR = "reuseAddr";
@@ -275,7 +278,7 @@ public final class Config {
 		}
 	}
 
-	public final static class ItemConfig {
+	public static final class ItemConfig {
 
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_DATA = "data";
@@ -332,7 +335,7 @@ public final class Config {
 			return namingConfig;
 		}
 
-		public final static class DataConfig {
+		public static final class DataConfig {
 
 			public static final String KEY_CONTENT = "content";
 			public static final String KEY_RANGES = "ranges";
@@ -381,7 +384,7 @@ public final class Config {
 				return verify;
 			}
 
-			public final static class ContentConfig {
+			public static final class ContentConfig {
 
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
@@ -421,7 +424,7 @@ public final class Config {
 			}
 		}
 
-		public final static class InputConfig {
+		public static final class InputConfig {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
@@ -450,7 +453,7 @@ public final class Config {
 
 		}
 
-		public final static class OutputConfig {
+		public static final class OutputConfig {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
@@ -478,7 +481,7 @@ public final class Config {
 			}
 		}
 		
-		public final static class NamingConfig {
+		public static final class NamingConfig {
 
 			public static final String KEY_TYPE = "type";
 			public static final String KEY_PREFIX = "prefix";
@@ -537,11 +540,12 @@ public final class Config {
 		}
 	}
 
-	public final static class LoadConfig {
+	public static final class LoadConfig {
 
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_CONCURRENCY = "concurrency";
 		public static final String KEY_LIMIT = "limit";
+		public static final String KEY_GENERATOR = "generator";
 		public static final String KEY_METRICS = "metrics";
 		public static final String KEY_QUEUE = "queue";
 		public static final String KEY_TYPE = "type";
@@ -556,6 +560,10 @@ public final class Config {
 		
 		public final void setLimitConfig(final LimitConfig limitConfig) {
 			this.limitConfig = limitConfig;
+		}
+
+		public final void setGeneratorConfig(final GeneratorConfig generatorConfig) {
+			this.generatorConfig = generatorConfig;
 		}
 		
 		public final void setMetricsConfig(
@@ -575,6 +583,7 @@ public final class Config {
 		@JsonProperty(KEY_CIRCULAR) private boolean circular;
 		@JsonProperty(KEY_CONCURRENCY) private int concurrency;
 		@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
+		@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
 		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
 		@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
 		@JsonProperty(KEY_TYPE) private String type;
@@ -598,6 +607,10 @@ public final class Config {
 			return limitConfig;
 		}
 
+		public final GeneratorConfig getGeneratorConfig() {
+			return generatorConfig;
+		}
+
 		public final MetricsConfig getMetricsConfig() {
 			return metricsConfig;
 		}
@@ -606,7 +619,7 @@ public final class Config {
 			return queueConfig;
 		}
 
-		public final static class LimitConfig {
+		public static final class LimitConfig {
 
 			public static final String KEY_COUNT = "count";
 			public static final String KEY_RATE = "rate";
@@ -658,7 +671,35 @@ public final class Config {
 			}
 		}
 
-		public final static class MetricsConfig {
+		public static final class GeneratorConfig {
+
+			public static final String KEY_REMOTE = "remote";
+			public static final String KEY_ADDRS = "addrs";
+
+			public final void setAddrs(final List<String> addrs) {
+				this.addrs = addrs;
+			}
+
+			public final void setRemote(final boolean remote) {
+				this.remote = remote;
+			}
+
+			@JsonProperty(KEY_ADDRS) private List<String> addrs;
+			@JsonProperty(KEY_REMOTE) private boolean remote;
+
+			public GeneratorConfig() {
+			}
+
+			public List<String> getAddrs() {
+				return addrs;
+			}
+
+			public boolean getRemote() {
+				return remote;
+			}
+		}
+
+		public static final class MetricsConfig {
 
 			public static final String KEY_INTERMEDIATE = "intermediate";
 			public static final String KEY_PERIOD = "period";
@@ -699,7 +740,7 @@ public final class Config {
 			}
 		}
 		
-		public final static class QueueConfig {
+		public static final class QueueConfig {
 			
 			public static final String KEY_SIZE = "size";
 			
@@ -718,7 +759,7 @@ public final class Config {
 		}
 	}
 
-	public final static class RunConfig {
+	public static final class RunConfig {
 
 		public static final String KEY_FILE = "file";
 		public static final String KEY_ID = "id";
@@ -746,19 +787,16 @@ public final class Config {
 		}
 	}
 
-	public final static class StorageConfig {
+	public static final class StorageConfig {
 
-		public static final String KEY_ADDRS = "addrs";
 		public static final String KEY_AUTH = "auth";
 		public static final String KEY_HTTP = "http";
+		public static final String KEY_NODE = "node";
+		public static final String KEY_DRIVER = "driver";
 		public static final String KEY_PORT = "port";
 		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
-
-		public final void setAddrs(final List<String> addrs) {
-			this.addrs = addrs;
-		}
 		
 		public final void setAuthConfig(final AuthConfig authConfig) {
 			this.authConfig = authConfig;
@@ -766,6 +804,14 @@ public final class Config {
 		
 		public final void setHttpConfig(final HttpConfig httpConfig) {
 			this.httpConfig = httpConfig;
+		}
+		
+		public final void setNodeConfig(final NodeConfig nodeConfig) {
+			this.nodeConfig = nodeConfig;
+		}
+		
+		public final void setDriverConfig(final DriverConfig driverConfig) {
+			this.driverConfig = driverConfig;
 		}
 		
 		public final void setPort(final int port) {
@@ -784,9 +830,10 @@ public final class Config {
 			this.mockConfig = mockConfig;
 		}
 
-		@JsonProperty(KEY_ADDRS) private List<String> addrs;
 		@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
 		@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
+		@JsonProperty(KEY_NODE) private NodeConfig nodeConfig;
+		@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
 		@JsonProperty(KEY_PORT) private int port;
 		@JsonProperty(KEY_SSL) private boolean ssl;
 		@JsonProperty(KEY_TYPE) private String type;
@@ -796,16 +843,20 @@ public final class Config {
 		public StorageConfig() {
 		}
 
-		public List<String> getAddrs() {
-			return addrs;
-		}
-
 		public AuthConfig getAuthConfig() {
 			return authConfig;
 		}
 
 		public HttpConfig getHttpConfig() {
 			return httpConfig;
+		}
+
+		public NodeConfig getNodeConfig() {
+			return nodeConfig;
+		}
+
+		public DriverConfig getDriverConfig() {
+			return driverConfig;
 		}
 
 		public int getPort() {
@@ -824,7 +875,7 @@ public final class Config {
 			return mockConfig;
 		}
 
-		public final static class AuthConfig {
+		public static final class AuthConfig {
 
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
@@ -862,7 +913,7 @@ public final class Config {
 			}
 		}
 
-		public final static class HttpConfig {
+		public static final class HttpConfig {
 
 			public static final String KEY_API = "api";
 			public static final String KEY_FS_ACCESS = "fsAccess";
@@ -921,8 +972,54 @@ public final class Config {
 				return headers;
 			}
 		}
+		
+		public static final class NodeConfig {
 
-		public final static class MockConfig {
+			public static final String KEY_ADDRS = "addrs";
+
+			public final void setAddrs(final List<String> addrs) {
+				this.addrs = addrs;
+			}
+
+			@JsonProperty(KEY_ADDRS) private List<String> addrs;
+			
+			public NodeConfig() {
+			}
+			
+			public List<String> getAddrs() {
+				return addrs;
+			}
+		}
+		
+		public static final class DriverConfig {
+			
+			public static final String KEY_REMOTE = "remote";
+			public static final String KEY_ADDRS = "addrs";
+
+			public final void setAddrs(final List<String> addrs) {
+				this.addrs = addrs;
+			}
+
+			public final void setRemote(final boolean remote) {
+				this.remote = remote;
+			}
+
+			@JsonProperty(KEY_ADDRS) private List<String> addrs;
+			@JsonProperty(KEY_REMOTE) private boolean remote;
+
+			public DriverConfig() {
+			}
+
+			public List<String> getAddrs() {
+				return addrs;
+			}
+
+			public boolean getRemote() {
+				return remote;
+			}
+		}
+
+		public static final class MockConfig {
 
 			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_CAPACITY = "capacity";
@@ -971,7 +1068,7 @@ public final class Config {
 				return node;
 			}
 
-			public final static class ContainerConfig {
+			public static final class ContainerConfig {
 
 				public static final String KEY_CAPACITY = "capacity";
 				public static final String KEY_COUNT_LIMIT = "countLimit";
