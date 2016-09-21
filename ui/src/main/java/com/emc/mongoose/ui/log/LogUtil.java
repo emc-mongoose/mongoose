@@ -11,20 +11,19 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.apache.logging.log4j.core.util.Cancellable;
-import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Queue;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -33,25 +32,7 @@ import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
 /**
  Created by kurila on 06.05.14.
  */
-public final class LogUtil
-implements ShutdownCallbackRegistry {
-	//
-	@Override
-	public final Cancellable addShutdownCallback(final Runnable callback) {
-		return new Cancellable() {
-			//
-			@Override
-			public void cancel() {
-			}
-			//
-			@Override
-			public void run() {
-				if(callback != null) {
-					callback.run();
-				}
-			}
-		};
-	}
+public final class LogUtil {
 	//
 	private final static String
 		//
@@ -71,7 +52,7 @@ implements ShutdownCallbackRegistry {
 		VALUE_CLOCK = "CoarseCachedClock",
 		//
 		KEY_SHUTDOWN_CALLBACK_REGISTRY = "log4j.shutdownCallbackRegistry",
-		VALUE_SHUTDOWN_CALLBACK_REGISTRY = LogUtil.class.getCanonicalName(),
+		VALUE_SHUTDOWN_CALLBACK_REGISTRY = "com.djdch.log4j.StaticShutdownCallbackRegistry",
 		//
 		KEY_CONFIG_FACTORY = "log4j.configurationFactory",
 		VALUE_CONFIG_FACTORY = "org.apache.logging.log4j.core.config.json.JsonConfigurationFactory",
@@ -79,10 +60,6 @@ implements ShutdownCallbackRegistry {
 		FNAME_LOG_CONF = "logging.json",
 		//
 		MONGOOSE = "mongoose";
-	//
-	public static final Lock HOOKS_LOCK = new ReentrantLock();
-	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
-	public static final AtomicInteger LOAD_HOOKS_COUNT = new AtomicInteger(0);
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
@@ -106,6 +83,7 @@ implements ShutdownCallbackRegistry {
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
+	public final static Queue<Closeable> UNCLOSED_REGISTRY = new ConcurrentLinkedQueue<>();
 	//
 	public static String newRunId() {
 		return LogUtil.FMT_DT.format(
@@ -207,49 +185,27 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 	//
-	public static boolean isConsoleColoringEnabled() {
-		return STDOUT_COLORING_ENABLED;
-	}
-	//
 	public static void shutdown() {
-		final Logger LOG = LogManager.getLogger();
-		try {
-			if(LOAD_HOOKS_COUNT.get() != 0) {
-				LOG.debug(
-					Markers.MSG, "Not all load jobs are closed, blocking the loggers shutdown"
-				);
-				if(HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-					try {
-						if(HOOKS_COND.await(10, TimeUnit.SECONDS)) {
-							LOG.debug(Markers.MSG, "All load jobs are closed");
-						} else {
-							LOG.debug(
-								Markers.ERR, "Timeout while waiting the load jobs to be closed"
-							);
-						}
-					} finally {
-						HOOKS_LOCK.unlock();
-					}
-				} else {
-					LOG.debug(Markers.ERR, "Failed to acquire the lock for deletion");
-				}
-			} else {
-				LOG.debug(
-					Markers.MSG, "There's no unclosed load jobs, forcing logging subsystem shutdown"
-				);
-			}
-		} catch (final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
-		} finally {
-			LOG_CTX_LOCK.lock();
+		for(final Closeable c : UNCLOSED_REGISTRY) {
 			try {
-				if(LOG_CTX != null && !LOG_CTX.isStopped()) {
-					LOG_CTX.stop();
-				}
-			} finally {
-				LOG_CTX_LOCK.unlock();
+				c.close();
+			} catch(final Throwable t) {
+				t.printStackTrace(System.err);
 			}
 		}
+		LOG_CTX_LOCK.lock();
+		try {
+			if(LOG_CTX != null && LOG_CTX.isStarted()) {
+				LOG_CTX.stop();
+				System.out.println("Logging stopped"); System.out.flush();
+			}
+		} finally {
+			LOG_CTX_LOCK.unlock();
+		}
+	}
+	//
+	public static boolean isConsoleColoringEnabled() {
+		return STDOUT_COLORING_ENABLED;
 	}
 	//
 	public static void exception(

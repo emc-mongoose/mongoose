@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +47,8 @@ extends DaemonBase
 implements Monitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
+	public final static Queue<Monitor> UNCLOSED_JOBS = new ConcurrentLinkedQueue<>();
+	
 	private final String name;
 	private final List<Generator<I, O>> generators;
 	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
@@ -86,9 +90,7 @@ implements Monitor<I, O> {
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
-		Runtime.getRuntime().addShutdownHook(
-			new Thread(new ShutdownHook(), this.name + "-shutdown-hook")
-		);
+		LogUtil.UNCLOSED_REGISTRY.add(this);
 	}
 	
 	private final class ServiceTask
@@ -119,19 +121,6 @@ implements Monitor<I, O> {
 					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
 				postProcessItems();
-			}
-		}
-	}
-	
-	private final class ShutdownHook
-	implements Runnable {
-		
-		@Override
-		public final void run() {
-			try {
-				close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close \"{}\"", name);
 			}
 		}
 	}
@@ -479,7 +468,7 @@ implements Monitor<I, O> {
 		drivers.clear();
 		
 		LOG.info(Markers.PERF_SUM, lastStats.toSummaryString());
-		System.out.println(lastStats.toSummaryString());
+		LogUtil.UNCLOSED_REGISTRY.remove(this);
 		lastStats = null;
 		if(ioStats != null) {
 			ioStats.close();
