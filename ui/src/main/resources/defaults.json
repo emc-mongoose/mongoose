@@ -53,6 +53,12 @@
 			"size" : 0,
 			"time" : "0s"
 		},
+		"generator": {
+			"remote": false,
+			"addrs" : [
+				"127.0.0.1"
+			]
+		},
 		"metrics" : {
 			"intermediate" : false,
 			"period" : "10s",
@@ -68,9 +74,6 @@
 		"file" : null
 	},
 	"storage" : {
-		"addrs" : [
-			"127.0.0.1"
-		],
 		"auth" : {
 			"id" : null,
 			"secret" : null,
@@ -85,6 +88,17 @@
 			},
 			"namespace" : null,
 			"versioning" : false
+		},
+		"node": {
+			"addrs" : [
+				"127.0.0.1"
+			]
+		},
+		"driver": {
+			"remote": false,
+			"addrs" : [
+				"127.0.0.1"
+			]
 		},
 		"port" : 9020,
 		"ssl" : false,

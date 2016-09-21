@@ -52,7 +52,10 @@ public class ConfigLoaderTest {
 		assertThat(contentConfig, notNullValue());
 		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
 		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
-		assertThat(contentConfig.getRingSize(), equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize"));
+		assertThat(
+			contentConfig.getRingSize(),
+			equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize")
+		);
 		assertThat(dataConfig.getRanges().getRandomCount(), equalTo(0, "item.data.ranges"));
 		assertThat(dataConfig.getSize(), equalTo(new SizeInBytes("1MB"), "item.data.size"));
 		assertThat(dataConfig.getVerify(), equalTo(true, "item.data.verify"));
@@ -82,12 +85,33 @@ public class ConfigLoaderTest {
 		assertThat(limitConfig.getRate(), equalTo(0.0, "load.limit.rate"));
 		assertThat(limitConfig.getSize(), equalTo(new SizeInBytes(0), "load.limit.size"));
 		final String timeTestValue = "0s";
-		assertThat(limitConfig.getTime(), equalTo(TimeUtil.getTimeUnit(timeTestValue).toSeconds(TimeUtil.getTimeValue(timeTestValue)), "load.limit.time"));
+		assertThat(
+			limitConfig.getTime(),
+			equalTo(
+				TimeUtil
+					.getTimeUnit(timeTestValue)
+					.toSeconds(TimeUtil.getTimeValue(timeTestValue)),
+				"load.limit.time"
+			)
+		);
+		final Config.LoadConfig.GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
+		assertThat(generatorConfig.getRemote(), equalTo(false, "load.generator.remote"));
+		assertThat(
+			generatorConfig.getAddrs().get(0), equalTo("127.0.0.1", "load.generator.addrs")
+		);
 		final Config.LoadConfig.MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
 		assertThat(metricsConfig.getIntermediate(), equalTo(false, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
-		assertThat(metricsConfig.getPeriod(), equalTo(TimeUtil.getTimeUnit(periodTestValue).toSeconds(TimeUtil.getTimeValue(periodTestValue)), "load.metrics.period"));
+		assertThat(
+			metricsConfig.getPeriod(),
+			equalTo(
+				TimeUtil
+					.getTimeUnit(periodTestValue)
+					.toSeconds(TimeUtil.getTimeValue(periodTestValue)),
+				"load.metrics.period"
+			)
+		);
 		assertThat(metricsConfig.getPrecondition(), equalTo(false, "load.metrics.precondition"));
 		final Config.RunConfig runConfig = config.getRunConfig();
 		assertThat(runConfig, notNullValue());
@@ -95,7 +119,6 @@ public class ConfigLoaderTest {
 		assertThat(runConfig.getFile(), nullValue("run.file"));
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		assertThat(storageConfig, notNullValue());
-		assertThat(storageConfig.getAddrs().get(0), equalTo("127.0.0.1", "storage.address"));
 		final Config.StorageConfig.AuthConfig authConfig = storageConfig.getAuthConfig();
 		assertThat(authConfig, notNullValue());
 		assertThat(authConfig.getId(), nullValue("storage.auth.id"));
@@ -117,18 +140,36 @@ public class ConfigLoaderTest {
 			equalTo("mongoose/3.0.0-SNAPSHOT", "storage.http.headers[User-Agent]"));
 		assertThat(httpConfig.getNamespace(), nullValue("storage.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.http.versioning"));
+		assertThat(
+			storageConfig.getNodeConfig().getAddrs().get(0),
+			equalTo("127.0.0.1", "storage.node.addrs")
+		);
+		final Config.StorageConfig.DriverConfig driverConfig = storageConfig.getDriverConfig();
+		assertThat(storageConfig.getSsl(), equalTo(false, "storage.driver.remote"));
+		assertThat(
+			driverConfig.getAddrs().get(0),
+			equalTo("127.0.0.1", "storage.driver.addrs")
+		);
 		assertThat(storageConfig.getPort(), equalTo(9020, "storage.port"));
 		assertThat(storageConfig.getSsl(), equalTo(false, "storage.ssl"));
 		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
 		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());
-		assertThat(mockConfig.getHeadCount() == 1 || mockConfig.getHeadCount() == 5, equalTo(true, "storage.mock.headCount"));
+		assertThat(
+			mockConfig.getHeadCount() == 1 || mockConfig.getHeadCount() == 5,
+			equalTo(true, "storage.mock.headCount")
+		);
 		assertThat(mockConfig.getCapacity(), equalTo(1_000_000, "storage.mock.capacity"));
-		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig =
-			mockConfig.getContainerConfig();
+		assertThat(mockConfig.getNode(), equalTo(false, "storage.mock.node"));
+		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig = mockConfig
+			.getContainerConfig();
 		assertThat(containerConfig, notNullValue());
-		assertThat(containerConfig.getCapacity(), equalTo(1_000_000, "storage.mock.container.capacity"));
-		assertThat(containerConfig.getCountLimit(), equalTo(1_000_000, "storage.mock.container.countLimit"));
+		assertThat(
+			containerConfig.getCapacity(), equalTo(1_000_000, "storage.mock.container.capacity"));
+		assertThat(
+			containerConfig.getCountLimit(),
+			equalTo(1_000_000, "storage.mock.container.countLimit")
+		);
 	}
 	
 }

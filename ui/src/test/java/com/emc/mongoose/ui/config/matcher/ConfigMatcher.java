@@ -42,6 +42,6 @@ public class ConfigMatcher<T> extends TypeSafeMatcher<T> {
 
 	@Override
 	public void describeTo(final Description description) {
-		description.appendText("parameter '").appendText(path).appendText("' was - ").appendValue(expectedValue);
+		description.appendText("parameter '").appendText(path).appendText("' should be - ").appendValue(expectedValue);
 	}
 }
