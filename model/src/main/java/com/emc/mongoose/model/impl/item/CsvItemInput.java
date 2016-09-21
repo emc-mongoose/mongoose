@@ -1,53 +1,44 @@
 package com.emc.mongoose.model.impl.item;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.impl.data.ContentSourceUtil;
+import com.emc.mongoose.model.api.item.ItemFactory;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
-public class CsvItemInput<T extends Item>
-implements Input<T> {
+public class CsvItemInput<I extends Item>
+implements Input<I> {
 	//
 	protected BufferedReader itemsSrc;
-	protected final Constructor<? extends T> itemConstructor;
-	protected final ContentSource contentSrc;
-	private T lastItem = null;
+	protected final ItemFactory<I> itemFactory;
+	private I lastItem = null;
 	//
 	/**
 	 @param in the input stream to get the data item records from
-	 @param itemCls the particular data item implementation class used to parse the records
+	 @param itemFactory the concrete item factory used to parse the records
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public CsvItemInput(
-		final InputStream in, final Class<? extends T> itemCls, final ContentSource contentSrc
-	) throws IOException, NoSuchMethodException {
+	public CsvItemInput(final InputStream in, final ItemFactory<I> itemFactory)
+	throws IOException, NoSuchMethodException {
 		this(
 			new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)),
-			itemCls.getConstructor(String.class, ContentSource.class), contentSrc
+			itemFactory
 		);
 	}
 	//
-	protected CsvItemInput(
-		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor,
-		final ContentSource contentSrc
-	) {
+	protected CsvItemInput(final BufferedReader itemsSrc, final ItemFactory<I> itemFactory) {
 		this.itemsSrc = itemsSrc;
-		this.itemConstructor = itemConstructor;
-		this.contentSrc = ContentSourceUtil.clone(contentSrc);
+		this.itemFactory = itemFactory;
 	}
 	//
 	public void setItemsSrc(final BufferedReader itemsSrc) {
@@ -69,39 +60,27 @@ implements Input<T> {
 	}
 	//
 	@Override
-	public T get()
+	public I get()
 	throws IOException {
 		final String nextLine = itemsSrc.readLine();
-		try {
-			return nextLine == null ? null : itemConstructor.newInstance(nextLine, contentSrc);
-		} catch(
-			final InstantiationException | IllegalAccessException | InvocationTargetException e
-		) {
-			throw new IOException(e);
-		}
+		return nextLine == null ? null : itemFactory.getItem(nextLine);
 	}
 	//
 	@Override
-	public int get(final List<T> buffer, final int limit)
+	public int get(final List<I> buffer, final int limit)
 	throws IOException {
 		int i;
 		String nextLine;
-		try {
-			for(i = 0; i < limit; i ++) {
-				nextLine = itemsSrc.readLine();
-				if(nextLine == null) {
-					if(i == 0) {
-						throw new EOFException();
-					} else {
-						break;
-					}
+		for(i = 0; i < limit; i ++) {
+			nextLine = itemsSrc.readLine();
+			if(nextLine == null) {
+				if(i == 0) {
+					throw new EOFException();
+				} else {
+					break;
 				}
-				buffer.add(itemConstructor.newInstance(nextLine, contentSrc));
 			}
-		} catch(
-			final InstantiationException | IllegalAccessException | InvocationTargetException e
-		) {
-			throw new IOException(e);
+			buffer.add(itemFactory.getItem(nextLine));
 		}
 		return i;
 	}
@@ -116,7 +95,6 @@ implements Input<T> {
 	public void close()
 	throws IOException {
 		itemsSrc.close();
-		contentSrc.close();
 	}
 	//
 	@Override

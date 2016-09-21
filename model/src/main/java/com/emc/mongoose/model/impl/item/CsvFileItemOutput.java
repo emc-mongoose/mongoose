@@ -1,8 +1,8 @@
 package com.emc.mongoose.model.impl.item;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.FileItemOutput;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.ItemFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,35 +11,34 @@ import java.nio.file.StandardOpenOption;
 /**
  Created by kurila on 30.06.15.
  */
-public class CsvFileItemOutput<T extends Item>
-extends CsvItemOutput<T>
-implements FileItemOutput<T> {
+public class CsvFileItemOutput<I extends Item>
+extends CsvItemOutput<I>
+implements FileItemOutput<I> {
 	//
 	protected Path itemsFilePath;
 	//
-	public CsvFileItemOutput(
-		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
-	) throws IOException {
+	public CsvFileItemOutput(final Path itemsFilePath, final ItemFactory<I> itemFactory)
+	throws IOException {
 		super(
 			Files.newOutputStream(
 				itemsFilePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE
 			),
-			itemCls, contentSrc
+			itemFactory
 		);
 		this.itemsFilePath = itemsFilePath;
 	}
 	//
-	public CsvFileItemOutput(final Class<? extends T> itemCls, final ContentSource contentSrc)
+	public CsvFileItemOutput(final ItemFactory<I> itemFactory)
 	throws IOException {
-		this(Files.createTempFile(null, ".csv"), itemCls, contentSrc);
+		this(Files.createTempFile(null, ".csv"), itemFactory);
 		this.itemsFilePath.toFile().deleteOnExit();
 	}
 	//
 	@Override
-	public CsvFileItemInput<T> getInput()
+	public CsvFileItemInput<I> getInput()
 	throws IOException {
 		try {
-			return new CsvFileItemInput<>(itemsFilePath, itemCls, contentSrc);
+			return new CsvFileItemInput<>(itemsFilePath, itemFactory);
 		} catch(final NoSuchMethodException e) {
 			throw new IOException(e);
 		}

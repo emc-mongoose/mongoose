@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -179,8 +180,8 @@ implements Generator<I, O>, Output<I> {
 
 	public BasicGenerator(
 		final String runId, final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
-		final IoTaskFactory<I, O> ioTaskFactory, final ContentSource contentSrc,
-		final ItemConfig itemConfig, final LoadConfig loadConfig
+		final IoTaskFactory<I, O> ioTaskFactory, final ItemConfig itemConfig,
+		final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 		
 		this.runId = runId;
@@ -214,8 +215,7 @@ implements Generator<I, O>, Output<I> {
 					// TODO copy mode
 					if(itemFactory instanceof BasicMutableDataItemFactory) {
 						this.itemInput = new NewDataItemInput(
-							itemFactory, pathInput, namingInput, contentSrc,
-							itemConfig.getDataConfig().getSize()
+							itemFactory, pathInput, namingInput, itemConfig.getDataConfig().getSize()
 						);
 					} else {
 						this.itemInput = null; // TODO
@@ -224,8 +224,18 @@ implements Generator<I, O>, Output<I> {
 				case READ:
 				case UPDATE:
 				case DELETE:
-					new CsvFileItemInput<>();
+					final String itemInputFile = itemConfig.getInputConfig().getFile();
+					if(itemInputFile != null && !itemInputFile.isEmpty()) {
+						this.itemInput = new CsvFileItemInput<>(
+							Paths.get(itemInputFile), itemFactory
+						);
+					} else {
+						// TODO use container input
+						this.itemInput = null;
+					}
 					break;
+				default:
+					throw new UserShootHisFootException();
 			}
 		} catch(final Exception e) {
 			throw new UserShootHisFootException(e);

@@ -118,16 +118,6 @@ public class Main {
 		}
 		log.info(Markers.MSG, "Load drivers initialized");
 		
-		final ItemFactory itemFactory;
-		if(ItemType.CONTAINER.equals(itemType)) {
-			// TODO container item factory
-			itemFactory = null;
-			log.info(Markers.MSG, "Work on the container items");
-		} else {
-			itemFactory = new BasicMutableDataItemFactory();
-			log.info(Markers.MSG, "Work on the mutable data items");
-		}
-		
 		final IoTaskFactory ioTaskFactory;
 		if(ItemType.CONTAINER.equals(itemType)) {
 			// TODO container I/O tasks factory
@@ -143,11 +133,21 @@ public class Main {
 			)
 		) {
 			
+			final ItemFactory itemFactory;
+			if(ItemType.CONTAINER.equals(itemType)) {
+				// TODO container item factory
+				itemFactory = null;
+				log.info(Markers.MSG, "Work on the container items");
+			} else {
+				itemFactory = new BasicMutableDataItemFactory(contentSrc);
+				log.info(Markers.MSG, "Work on the mutable data items");
+			}
+			
 			final List<Generator> generators = new ArrayList<>();
 			
 			generators.add(
 				new BasicGenerator(
-					runId, drivers, itemFactory, ioTaskFactory, contentSrc, itemConfig, loadConfig
+					runId, drivers, itemFactory, ioTaskFactory, itemConfig, loadConfig
 				)
 			);
 			log.info(Markers.MSG, "Load generators initialized");
@@ -157,9 +157,7 @@ public class Main {
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {
 					final Path itemOutputPath = Paths.get(itemOutputFile);
-					final Output itemOutput = new CsvFileItemOutput(
-						itemOutputPath, itemFactory.getItemClass(), contentSrc
-					);
+					final Output itemOutput = new CsvFileItemOutput(itemOutputPath, itemFactory);
 					monitor.setItemOutput(itemOutput);
 				}
 				

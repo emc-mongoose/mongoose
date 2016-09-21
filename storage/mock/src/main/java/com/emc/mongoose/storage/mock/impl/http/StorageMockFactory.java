@@ -9,7 +9,10 @@ import com.emc.mongoose.storage.mock.api.StorageMockNode;
 import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.S3RequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.SwiftRequestHandler;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.channel.ChannelInboundHandler;
 import org.apache.logging.log4j.Level;
@@ -28,26 +31,22 @@ public class StorageMockFactory {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private final Config.StorageConfig storageConfig;
-	private final Config.LoadConfig loadConfig;
-	private final Config.ItemConfig itemConfig;
-	private final Config.LoadConfig.LimitConfig limitConfig;
-	private final Config.ItemConfig.NamingConfig namingConfig;
+	private final StorageConfig storageConfig;
+	private final LoadConfig loadConfig;
+	private final ItemConfig itemConfig;
+	private final LoadConfig.LimitConfig limitConfig;
+	private final ItemConfig.NamingConfig namingConfig;
 	private ContentSource contentSrc;
 
 	public StorageMockFactory(
-		final Config.StorageConfig storageConfig, final Config.LoadConfig loadConfig,
-		final Config.ItemConfig itemConfig
+		final StorageConfig storageConfig, final LoadConfig loadConfig, final ItemConfig itemConfig
 	) {
 		this.storageConfig = storageConfig;
 		this.loadConfig = loadConfig;
 		this.itemConfig = itemConfig;
 		this.limitConfig = loadConfig.getLimitConfig();
 		this.namingConfig = itemConfig.getNamingConfig();
-		final Config.ItemConfig.DataConfig.ContentConfig contentConfig =
-			itemConfig
-				.getDataConfig()
-				.getContentConfig();
+		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
 		try {
 			this.contentSrc = ContentSourceUtil.getInstance(

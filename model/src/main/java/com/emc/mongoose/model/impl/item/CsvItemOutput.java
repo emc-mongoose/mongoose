@@ -1,8 +1,8 @@
 package com.emc.mongoose.model.impl.item;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.ItemFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -14,30 +14,27 @@ import java.util.List;
  The data item output writing into the specified file human-readable data item records using the CSV
  format
  */
-public abstract class CsvItemOutput<T extends Item>
-implements Output<T> {
+public abstract class CsvItemOutput<I extends Item>
+implements Output<I> {
 	//
-	protected final Class<? extends T> itemCls;
-	protected final ContentSource contentSrc;
+	protected final ItemFactory<I> itemFactory;
 	protected final BufferedWriter itemsDst;
 	//
-	protected CsvItemOutput(
-		final OutputStream out, final Class<? extends T> itemCls, final ContentSource contentSrc
-	) throws IOException {
+	protected CsvItemOutput(final OutputStream out, final ItemFactory<I> itemFactory)
+	throws IOException {
 		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
-		this.itemCls = itemCls;
-		this.contentSrc = contentSrc;
+		this.itemFactory = itemFactory;
 	}
 	//
 	@Override
-	public void put(final T item)
+	public void put(final I item)
 	throws IOException {
 		itemsDst.write(item.toString());
 		itemsDst.newLine();
 	}
 	//
 	@Override
-	public int put(final List<T> buffer, final int from, final int to)
+	public int put(final List<I> buffer, final int from, final int to)
 	throws IOException {
 		for(int i = from; i < to; i ++) {
 			put(buffer.get(i));
@@ -46,7 +43,7 @@ implements Output<T> {
 	}
 	//
 	@Override
-	public final int put(final List<T> items)
+	public final int put(final List<I> items)
 	throws IOException {
 		return put(items, 0, items.size());
 	}

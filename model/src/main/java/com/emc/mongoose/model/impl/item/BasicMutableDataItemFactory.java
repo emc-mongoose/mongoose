@@ -2,23 +2,31 @@ package com.emc.mongoose.model.impl.item;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.ItemFactory;
+import com.emc.mongoose.model.api.item.MutableDataItem;
 
 /**
  Created by kurila on 14.07.16.
  */
-public final class BasicMutableDataItemFactory
-implements ItemFactory<BasicMutableDataItem> {
+public class BasicMutableDataItemFactory<I extends MutableDataItem>
+extends BasicDataItemFactory<I>
+implements ItemFactory<I> {
 	
-	@Override
-	public final BasicMutableDataItem getItem(
-		final String path, final String name, final long id, final long size,
-		final ContentSource contentSrc
-	) {
-		return new BasicMutableDataItem(path, name, id, size, contentSrc);
+	public BasicMutableDataItemFactory(final ContentSource contentSrc) {
+		super(contentSrc);
 	}
 	
 	@Override
-	public final Class<BasicMutableDataItem> getItemClass() {
-		return BasicMutableDataItem.class;
+	public I getItem(final String path, final String name, final long id, final long size) {
+		return (I) new BasicMutableDataItem(path, name, id, size, contentSrc);
+	}
+	
+	@Override
+	public I getItem(final String line) {
+		return (I) new BasicMutableDataItem(line, contentSrc);
+	}
+	
+	@Override
+	public Class<I> getItemClass() {
+		return (Class<I>) BasicMutableDataItem.class;
 	}
 }
