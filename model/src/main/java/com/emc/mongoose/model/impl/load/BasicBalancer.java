@@ -137,5 +137,9 @@ implements Balancer<S> {
 	@Override
 	public final void close()
 	throws IOException {
+		for(int i = 0; i < options.length; i ++) {
+			options[i] = null;
+		}
+		leaseMap.clear();
 	}
 }

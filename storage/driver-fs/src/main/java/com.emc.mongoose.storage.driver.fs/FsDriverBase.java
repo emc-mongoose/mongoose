@@ -13,8 +13,11 @@ import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.nio.channels.ClosedChannelException;
+import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -87,14 +90,36 @@ implements Driver<I, O> {
 			}
 		}
 	}
-	
+
 	/**
 	 Reentrant method which performs create/read/etc I/O operation.
 	 May change the task status or not change if the I/O operation is not completed during this
 	 particular invocation
 	 @param ioTask
 	 */
-	protected abstract void executeIoTask(final O ioTask);
+	private void executeIoTask(final O ioTask) {
+		if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
+			ioTask.startRequest();
+			ioTask.startResponse();
+		}
+		try {
+			executeIoTaskActually(ioTask);
+		} catch(final FileNotFoundException e) {
+			ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
+		} catch(final AccessDeniedException e) {
+			ioTask.setStatus(IoTask.Status.RESP_FAIL_AUTH);
+		} catch(final ClosedChannelException e) {
+			ioTask.setStatus(IoTask.Status.CANCELLED);
+		} catch(final IOException e) {
+			ioTask.setStatus(IoTask.Status.FAIL_IO);
+		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
+			ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
+		}
+	}
+
+	protected abstract void executeIoTaskActually(final O ioTask)
+	throws Throwable;
 	
 	@Override
 	protected void doStart()

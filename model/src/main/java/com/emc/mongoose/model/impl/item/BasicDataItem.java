@@ -210,7 +210,7 @@ implements DataItem {
 	//
 	@Override
 	public final boolean isOpen() {
-		return false;
+		return true;
 	}
 	//
 	@Override

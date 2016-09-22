@@ -50,7 +50,7 @@ extends SimpleChannelInboundHandler<HttpObject> {
 		final IoTask ioTask = ctx.channel().attr(HttpDriver.ATTR_KEY_IOTASK).get();
 	
 		if(msg instanceof HttpResponse) {
-			ioTask.setRespTimeStart(System.nanoTime() / 1000);
+			ioTask.startResponse();
 			final HttpResponse httpResponse = (HttpResponse) msg;
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			final HttpStatusClass statusClass = httpResponseStatus.codeClass();
@@ -120,7 +120,7 @@ extends SimpleChannelInboundHandler<HttpObject> {
 				if(ioTask instanceof DataIoTask) {
 					final DataIoTask dataIoTask = (DataIoTask) ioTask;
 					if(dataIoTask.getDataLatency() == -1) { // if not set yet - 1st time
-						dataIoTask.setRespDataTimeStart(System.nanoTime() / 1000);
+						dataIoTask.startDataResponse();
 					}
 					final ByteBuf content = ((HttpContent) msg).content();
 					dataIoTask.setCountBytesDone(
@@ -129,7 +129,7 @@ extends SimpleChannelInboundHandler<HttpObject> {
 				}
 			}
 			if(msg instanceof LastHttpContent) {
-				ioTask.setRespTimeDone(System.nanoTime() / 1000);
+				ioTask.finishResponse();
 				ctx.close();
 				driver.ioTaskCompleted((O) ioTask);
 			}

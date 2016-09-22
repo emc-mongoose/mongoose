@@ -45,13 +45,13 @@ public interface IoTask<I extends Item> {
 
 	long getReqTimeStart();
 	
-	void setReqTimeStart(final long reqTimeStart);
-	
-	void setReqTimeDone(final long reqTimeDone);
-	
-	void setRespTimeStart(final long respTimeStart);
-	
-	void setRespTimeDone(final long respTimeDone);
+	void startRequest();
+
+	void finishRequest();
+
+	void startResponse();
+
+	void finishResponse();
 
 	int getDuration();
 

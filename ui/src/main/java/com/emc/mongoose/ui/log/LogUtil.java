@@ -197,7 +197,6 @@ public final class LogUtil {
 		try {
 			if(LOG_CTX != null && LOG_CTX.isStarted()) {
 				LOG_CTX.stop();
-				System.out.println("Logging stopped"); System.out.flush();
 			}
 		} finally {
 			LOG_CTX_LOCK.unlock();

@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static java.io.File.pathSeparatorChar;
@@ -97,38 +98,26 @@ implements Driver<I, O> {
 	}
 
 	@Override
-	protected void executeIoTask(final O ioTask) {
-		try {
-			final LoadType ioType = ioTask.getLoadType();
-			final I fileItem = ioTask.getItem();
-			switch(ioType) {
-				case CREATE:
-					createFile(
-						fileItem, ioTask, getSrcChannel(fileItem, ioTask),
-						getDstChannel(fileItem, ioTask, ioType)
-					);
-					break;
-				case READ:
-					readFile(fileItem, ioTask, getSrcChannel(fileItem, ioTask));
-					break;
-				case UPDATE:
-					updateFile(fileItem, ioTask, getDstChannel(fileItem, ioTask, ioType));
-					break;
-				case DELETE:
-					deleteFile(fileItem, ioTask);
-					break;
-			}
-		} catch(final FileNotFoundException e) {
-			ioTask.setStatus(Status.RESP_FAIL_NOT_FOUND);
-		} catch(final AccessDeniedException e) {
-			ioTask.setStatus(Status.RESP_FAIL_AUTH);
-		} catch(final ClosedChannelException e) {
-			ioTask.setStatus(Status.CANCELLED);
-		} catch(final IOException e) {
-			ioTask.setStatus(Status.FAIL_IO);
-		} catch(final Throwable e) {
-			e.printStackTrace(System.out);
-			ioTask.setStatus(Status.FAIL_UNKNOWN);
+	protected void executeIoTaskActually(final O ioTask)
+	throws Throwable {
+		final LoadType ioType = ioTask.getLoadType();
+		final I fileItem = ioTask.getItem();
+		switch(ioType) {
+			case CREATE:
+				createFile(
+					fileItem, ioTask, getSrcChannel(fileItem, ioTask),
+					getDstChannel(fileItem, ioTask, ioType)
+				);
+				break;
+			case READ:
+				readFile(fileItem, ioTask, getSrcChannel(fileItem, ioTask));
+				break;
+			case UPDATE:
+				updateFile(fileItem, ioTask, getDstChannel(fileItem, ioTask, ioType));
+				break;
+			case DELETE:
+				deleteFile(fileItem, ioTask);
+				break;
 		}
 	}
 
@@ -150,6 +139,8 @@ implements Driver<I, O> {
 				ioTask.setCountBytesDone(countBytesDone);
 			}
 		} else {
+			ioTask.finishRequest();
+			ioTask.finishResponse();
 			ioTask.setStatus(Status.SUCC);
 		}
 	}
@@ -165,18 +156,25 @@ implements Driver<I, O> {
 			// TODO verification fileItem.readAndVerify(srcChannel, buffIn);
 			ioTask.setCountBytesDone(countBytesDone);
 		} else {
+			ioTask.finishRequest();
+			ioTask.finishResponse();
 			ioTask.setStatus(Status.SUCC);
 		}
 	}
 
 	private void updateFile(final I fileItem, final O ioTask, final FileChannel dstChannel)
 	throws IOException {
-
+		ioTask.finishRequest();
+		ioTask.finishResponse();
+		ioTask.setStatus(Status.SUCC);
 	}
 
 	private void deleteFile(final I fileItem, final O ioTask)
 	throws IOException {
 		final Path dstPath = Paths.get(ioTask.getDstPath());
 		Files.delete(dstPath);
+		ioTask.finishRequest();
+		ioTask.finishResponse();
+		ioTask.setStatus(Status.SUCC);
 	}
 }

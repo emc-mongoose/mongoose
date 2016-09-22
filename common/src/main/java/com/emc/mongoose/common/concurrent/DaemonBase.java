@@ -12,6 +12,7 @@ public abstract class DaemonBase
 implements Daemon {
 
 	private AtomicReference<State> stateRef = new AtomicReference<>(State.INITIAL);
+	protected final Object state = new Object();
 
 	private enum State {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
@@ -33,6 +34,9 @@ implements Daemon {
 	public final void start()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(State.INITIAL, State.STARTED)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doStart();
 		} else {
 			throw new IllegalStateException("start failed: state is " + stateRef.get());
@@ -48,8 +52,14 @@ implements Daemon {
 	public final void shutdown()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(State.INITIAL, State.SHUTDOWN)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doShutdown();
 		} else if(stateRef.compareAndSet(State.STARTED, State.SHUTDOWN)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doShutdown();
 		} else {
 			throw new IllegalStateException("shutdown failed: state is " + stateRef.get());
@@ -62,9 +72,9 @@ implements Daemon {
 	}
 	
 	@Override
-	public final boolean await()
+	public final void await()
 	throws InterruptedException, RemoteException {
-		return await(Long.MAX_VALUE, TimeUnit.SECONDS);
+		await(Long.MAX_VALUE, TimeUnit.SECONDS);
 	}
 	
 	@Override
@@ -75,6 +85,9 @@ implements Daemon {
 		} catch(final IllegalStateException ignored) {
 		}
 		if(stateRef.compareAndSet(State.SHUTDOWN, State.INTERRUPTED)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doInterrupt();
 		} else {
 			throw new IllegalStateException("interrupt failed: state is " + stateRef.get());
@@ -94,6 +107,9 @@ implements Daemon {
 		} catch(final IllegalStateException ignored) {
 		}
 		if(stateRef.compareAndSet(State.INTERRUPTED, State.CLOSED)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doClose();
 		} else {
 			throw new IllegalStateException("close failed: state is " + stateRef.get());

@@ -166,12 +166,8 @@ public class Main {
 				monitor.await();
 				log.info(Markers.MSG, "Load monitor done");
 			}
-			
-			for(final Generator generator : generators) {
-				generator.close();
-			}
-			generators.clear();
-			log.info(Markers.MSG, "Cleanup done");
+		} catch(final Throwable t) {
+			t.printStackTrace(System.err);
 		}
 	}
 }

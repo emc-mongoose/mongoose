@@ -22,7 +22,7 @@ extends Closeable {
 	boolean isShutdown()
 	throws RemoteException;
 	
-	boolean await()
+	void await()
 	throws InterruptedException, RemoteException;
 
 	boolean await(final long timeout, final TimeUnit timeUnit)

@@ -7,10 +7,10 @@ import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.model.util.ItemNamingType;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.api.io.Input;
@@ -33,7 +33,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,13 +49,14 @@ extends DaemonBase
 implements Generator<I, O>, Output<I> {
 
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int BATCH_SIZE = 0x1000;
 
 	private final List<Driver<I, O>> drivers;
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Thread worker;
-	private final int batchSize = 0x1000;
+	private final long countLimit;
 	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
 	private final boolean isCircular;
@@ -120,12 +120,20 @@ implements Generator<I, O>, Output<I> {
 				return;
 			}
 			int n = 0, m = 0;
+			long remaining;
 			try {
 				List<I> buff;
 				while(!isInterrupted()) {
+					remaining = countLimit - producedItemsCount;
+					if(remaining <= 0) {
+						break;
+					}
 					try {
-						buff = new ArrayList<>(batchSize);
-						n = itemInput.get(buff, batchSize);
+						buff = new ArrayList<>(BATCH_SIZE);
+						n = itemInput.get(buff, BATCH_SIZE);
+						if(n > remaining) {
+							n = (int) remaining;
+						}
 						if(isShuffling) {
 							Collections.shuffle(buff, rnd);
 						}
@@ -163,15 +171,17 @@ implements Generator<I, O>, Output<I> {
 			} finally {
 				LOG.debug(
 					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					Thread.currentThread().getName(), producedItemsCount, itemInput, this
+					Thread.currentThread().getName(), producedItemsCount, itemInput.toString(), this
 				);
 				try {
 					itemInput.close();
 				} catch(final IOException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to close the item source \"{}\"", itemInput
+						LOG, Level.WARN, e, "Failed to close the item source \"{}\"",
+						itemInput.toString()
 					);
 				}
+				shutdown();
 			}
 		}
 	}
@@ -184,11 +194,13 @@ implements Generator<I, O>, Output<I> {
 		
 		this.runId = runId;
 		this.drivers = drivers;
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		
 		try {
+			this.countLimit = limitConfig.getCount();
 			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 			this.isCircular = loadConfig.getCircular();
-			this.rateThrottle = new RateThrottle<>(loadConfig.getLimitConfig().getRate());
+			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
 			final String t = itemConfig.getOutputConfig().getContainer();
 			if(t == null || t.isEmpty()) {
 				dstContainer = runId;
@@ -265,15 +277,6 @@ implements Generator<I, O>, Output<I> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(final Driver<I, O> nextDriver : drivers) {
-			try {
-				nextDriver.start();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start the driver \"{}\"", nextDriver.toString()
-				);
-			}
-		}
 		worker.start();
 	}
 
@@ -285,16 +288,6 @@ implements Generator<I, O>, Output<I> {
 	@Override
 	protected void doInterrupt() {
 		worker.interrupt();
-		for(final Driver<I, O> nextDriver : drivers) {
-			try {
-				nextDriver.interrupt();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to interrupt the driver \"{}\"",
-					nextDriver.toString()
-				);
-			}
-		}
 	}
 
 	@Override
@@ -309,9 +302,6 @@ implements Generator<I, O>, Output<I> {
 	throws IOException {
 		if(itemInput != null) {
 			itemInput.close();
-		}
-		for(final Driver<I, O> nextDriver : drivers) {
-			nextDriver.close();
 		}
 	}
 }

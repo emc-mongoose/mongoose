@@ -241,6 +241,9 @@ implements HttpDriver<I, O> {
 					return;
 				}
 			}
+			if(bestNode == null) {
+				return;
+			}
 			ioTask.setNodeAddr(bestNode);
 			
 			final LoadType ioType = ioTask.getLoadType();
@@ -263,7 +266,7 @@ implements HttpDriver<I, O> {
 			channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 			
 			try {
-				ioTask.setReqTimeStart(System.nanoTime() / 1000);
+				ioTask.startRequest();
 				final HttpRequest httpRequest = requestFactoryMap
 					.computeIfAbsent(ioType, requestFactoryMapper)
 					.getHttpRequest(ioTask, bestNode);
@@ -313,7 +316,7 @@ implements HttpDriver<I, O> {
 		@Override
 		public final void operationComplete(final Future<Void> future)
 		throws Exception {
-			ioTask.setReqTimeDone(System.nanoTime() / 1000);
+			ioTask.finishRequest();
 		}
 	}
 	
@@ -380,10 +383,12 @@ implements HttpDriver<I, O> {
 			storageNodeAddrs[i] = null;
 		}
 		sharedHeaders.clear();
-		try {
-			secretKey.destroy();
-		} catch(final DestroyFailedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the secret key");
+		if(secretKey != null) {
+			try {
+				secretKey.destroy();
+			} catch(final DestroyFailedException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the secret key");
+			}
 		}
 		storageNodeBalancer.close();
 		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);

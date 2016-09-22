@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.impl.item;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.ItemFactory;
@@ -72,6 +71,6 @@ implements Input<D> {
 	//
 	@Override
 	public final String toString() {
-		return "newDataItemSrc<" + itemFactory.getClass().getDeclaringClass().getSimpleName() + ">";
+		return "newDataItemSrc<" + itemFactory.getClass().getSimpleName() + ">";
 	}
 }
