@@ -130,7 +130,7 @@ public final class LogUtil {
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
 				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
-				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
+				//System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "run.id" property with timestamp value if not set before
 				final String runId = ThreadContext.get(KEY_RUN_ID);

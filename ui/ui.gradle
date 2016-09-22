@@ -8,24 +8,23 @@ dependencies {
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-iostreams:${depVersion.log4j}",
 
-		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}"
+		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
 	)
 
 	compileOnly(
 		project(':common'),
-		project(':model')
+		project(':model'),
 	)
 
 	runtime(
 		"com.lmax:disruptor:3.3.4",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
-		"com.djdch.log4j:log4j-staticshutdown:1.1.0"
 	)
 
 	testCompile(
 		project(':common'),
-		project(':model')
+		project(':model'),
 	)
 }
 
@@ -34,7 +33,7 @@ configurations.compileOnly.dependencies.each { it.transitive = false }
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations)
+			"Class-Path": setClassPath(configurations),
 		)
 	}
 }
