@@ -52,13 +52,15 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
 /**
  Created by kurila on 29.07.16.
+ Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
 public abstract class HttpDriverBase<I extends Item, O extends IoTask<I>>
 extends DriverBase<I, O>
@@ -75,15 +77,15 @@ implements HttpDriver<I, O> {
 	private final EventLoopGroup workerGroup;
 	protected final Bootstrap bootstrap;
 
-	private final ConcurrentMap<LoadType, HttpRequestFactory<I, O>>
+	private final Map<LoadType, HttpRequestFactory<I, O>>
 		requestFactoryMap = new ConcurrentHashMap<>();
-	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapper;
+	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapFunc;
 
 	protected HttpDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final SocketConfig socketConfig
+		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer);
+		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
 		try {
 			if(secret == null) {
 				secretKey = null;
@@ -120,7 +122,7 @@ implements HttpDriver<I, O> {
 		bootstrap.handler(
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
 		);
-		requestFactoryMapper = loadType -> CrudHttpRequestFactory.getInstance(
+		requestFactoryMapFunc = loadType -> CrudHttpRequestFactory.getInstance(
 			loadType, HttpDriverBase.this, srcContainer
 		);
 	}
@@ -268,7 +270,7 @@ implements HttpDriver<I, O> {
 			try {
 				ioTask.startRequest();
 				final HttpRequest httpRequest = requestFactoryMap
-					.computeIfAbsent(ioType, requestFactoryMapper)
+					.computeIfAbsent(ioType, requestFactoryMapFunc)
 					.getHttpRequest(ioTask, bestNode);
 				channel.write(httpRequest);
 				if(LoadType.CREATE.equals(ioType)) {

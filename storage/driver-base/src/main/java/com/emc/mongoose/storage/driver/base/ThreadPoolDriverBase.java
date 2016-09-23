@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.fs;
+package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -6,18 +6,15 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.storage.driver.base.DriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -27,8 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 19.07.16.
+ The multi-threaded I/O driver.
  */
-public abstract class FsDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class ThreadPoolDriverBase<I extends Item, O extends IoTask<I>>
 extends DriverBase<I, O>
 implements Driver<I, O> {
 
@@ -39,11 +37,11 @@ implements Driver<I, O> {
 	private final int ioWorkerCount;
 	private final BlockingQueue<O> ioTaskQueue;
 
-	public FsDriverBase(
+	public ThreadPoolDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final String srcContainer, final SizeInBytes ioBuffSize
+		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
-		super(runId, storageConfig, loadConfig, srcContainer);
+		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
 		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {
@@ -63,6 +61,11 @@ implements Driver<I, O> {
 		);
 	}
 
+	/**
+	 The class represents the non-blocking I/O task execution algorithm.
+	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
+	 So the I/O task may be invoked multiple times (in the reentrant manner).
+	 */
 	private final class IoTaskSchedule
 	implements Runnable {
 
@@ -73,13 +76,20 @@ implements Driver<I, O> {
 			final Thread currentThread = Thread.currentThread();
 			IoTask.Status nextStatus;
 			try {
-				while(!FsDriverBase.this.isInterrupted() && !currentThread.isInterrupted()) {
+				while(
+					!ThreadPoolDriverBase.this.isInterrupted() && !currentThread.isInterrupted()
+				) {
+					// prepare the tasks buffer
 					ioTaskBuff.clear();
+					// get the tasks from the queue for further reentrant/non-blocking execution
 					ioTaskQueue.drainTo(ioTaskBuff, BATCH_SIZE);
+					// for each task try to invoke the reentrant/non-blocking execution
 					for(final O ioTask : ioTaskBuff) {
-						executeIoTask(ioTask);
+						invokeNio(ioTask);
+						// check the task status after invocation if it's still active or not
 						nextStatus = ioTask.getStatus();
 						if(nextStatus.equals(IoTask.Status.ACTIVE)) {
+							// the task is not finished yet - put it back to the tasks queue
 							ioTaskQueue.put(ioTask);
 						} else {
 							ioTaskCompleted(ioTask);
@@ -92,34 +102,12 @@ implements Driver<I, O> {
 	}
 
 	/**
-	 Reentrant method which performs create/read/etc I/O operation.
+	 Reentrant method which decorates the actual non-blocking create/read/etc I/O operation.
 	 May change the task status or not change if the I/O operation is not completed during this
 	 particular invocation
 	 @param ioTask
 	 */
-	private void executeIoTask(final O ioTask) {
-		if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
-			ioTask.startRequest();
-			ioTask.startResponse();
-		}
-		try {
-			executeIoTaskActually(ioTask);
-		} catch(final FileNotFoundException e) {
-			ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
-		} catch(final AccessDeniedException e) {
-			ioTask.setStatus(IoTask.Status.RESP_FAIL_AUTH);
-		} catch(final ClosedChannelException e) {
-			ioTask.setStatus(IoTask.Status.CANCELLED);
-		} catch(final IOException e) {
-			ioTask.setStatus(IoTask.Status.FAIL_IO);
-		} catch(final Throwable e) {
-			e.printStackTrace(System.out);
-			ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
-		}
-	}
-
-	protected abstract void executeIoTaskActually(final O ioTask)
-	throws Throwable;
+	protected abstract void invokeNio(final O ioTask);
 	
 	@Override
 	protected void doStart()

@@ -28,15 +28,14 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -58,21 +57,15 @@ implements StorageMockClient<T> {
 
 	private final ContentSource contentSrc;
 	private final JmDNS jmDns;
-	private final ConcurrentMap<String, StorageMockServer<T>>
+	private final Map<String, StorageMockServer<T>>
 		remoteNodeMap = new ConcurrentHashMap<>();
 	private final ExecutorService executor;
 
 	public BasicStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
 		this.executor = new ThreadPoolExecutor(
 			ThreadUtil.getAvailableConcurrencyLevel(), ThreadUtil.getAvailableConcurrencyLevel(),
-			0, TimeUnit.DAYS,
-			new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
-			new RejectedExecutionHandler() {
-				@Override
-				public final void rejectedExecution(final Runnable r, final ThreadPoolExecutor e) {
-					LOG.error("Task {} rejected", r.toString());
-				}
-			}
+			0, TimeUnit.DAYS, new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
+			(r, e) -> LOG.error("Task {} rejected", r.toString())
 		) {
 			@Override
 			public final Future<T> submit(final Runnable task) {
