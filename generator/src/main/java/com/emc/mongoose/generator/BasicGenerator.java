@@ -48,8 +48,8 @@ public class BasicGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements Generator<I, O>, Output<I> {
 
-	private final static Logger LOG = LogManager.getLogger();
-	private final static int BATCH_SIZE = 0x1000;
+	private static final Logger LOG = LogManager.getLogger();
+	private static final int BATCH_SIZE = 0x1000; // 4MB
 
 	private final List<Driver<I, O>> drivers;
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
@@ -226,7 +226,8 @@ implements Generator<I, O>, Output<I> {
 					// TODO copy mode
 					if(itemFactory instanceof BasicMutableDataItemFactory) {
 						this.itemInput = new NewDataItemInput(
-							itemFactory, pathInput, namingInput, itemConfig.getDataConfig().getSize()
+							itemFactory, pathInput, namingInput,
+							itemConfig.getDataConfig().getSize()
 						);
 					} else {
 						this.itemInput = null; // TODO
