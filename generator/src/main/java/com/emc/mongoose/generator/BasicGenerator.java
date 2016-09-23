@@ -197,7 +197,8 @@ implements Generator<I, O>, Output<I> {
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		
 		try {
-			this.countLimit = limitConfig.getCount();
+			final long l = limitConfig.getCount();
+			this.countLimit = l > 0 ? l : Long.MAX_VALUE;
 			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 			this.isCircular = loadConfig.getCircular();
 			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
