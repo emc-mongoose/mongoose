@@ -51,12 +51,10 @@ implements Daemon {
 	@Override
 	public final void shutdown()
 	throws IllegalStateException {
-		if(stateRef.compareAndSet(State.INITIAL, State.SHUTDOWN)) {
-			synchronized(state) {
-				state.notifyAll();
-			}
-			doShutdown();
-		} else if(stateRef.compareAndSet(State.STARTED, State.SHUTDOWN)) {
+		if(
+			stateRef.compareAndSet(State.INITIAL, State.SHUTDOWN) ||
+				stateRef.compareAndSet(State.STARTED, State.SHUTDOWN)
+			) {
 			synchronized(state) {
 				state.notifyAll();
 			}
