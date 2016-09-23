@@ -1,15 +1,13 @@
-package com.emc.mongoose.monitor.impl;
+package com.emc.mongoose.monitor.driver;
 
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.monitor.api.Factory;
+import com.emc.mongoose.common.pattern.Factory;
 import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Created by on 9/21/2016.

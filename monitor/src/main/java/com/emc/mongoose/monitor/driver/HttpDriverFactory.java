@@ -1,10 +1,10 @@
-package com.emc.mongoose.monitor.impl;
+package com.emc.mongoose.monitor.driver;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.monitor.api.TypedFactory;
+import com.emc.mongoose.common.pattern.EnumFactory;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3Driver;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
  * Created by on 9/21/2016.
  */
 public class HttpDriverFactory<I extends MutableDataItem, O extends DataIoTask<I>>
-implements TypedFactory<Driver<I, O>, HttpDriverFactory.Protocol> {
+implements EnumFactory<Driver<I, O>, HttpDriverFactory.Api> {
 
     private final String runId;
     private final LoadConfig loadConfig;
@@ -38,7 +38,7 @@ implements TypedFactory<Driver<I, O>, HttpDriverFactory.Protocol> {
     }
 
     @Override
-    public Driver<I, O> create(final Protocol type) {
+    public Driver<I, O> create(final Api type) {
         final Logger log = LogManager.getLogger();
         switch(type) {
             case ATMOS:
@@ -60,7 +60,7 @@ implements TypedFactory<Driver<I, O>, HttpDriverFactory.Protocol> {
         return null;
     }
 
-    public enum Protocol {
+    public enum Api {
         S3, SWIFT, ATMOS
     }
 }
