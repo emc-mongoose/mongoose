@@ -45,6 +45,7 @@ extends DaemonBase
 implements Monitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
+
 	private final String name;
 	private final List<Generator<I, O>> generators;
 	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
@@ -53,11 +54,13 @@ implements Monitor<I, O> {
 	private final long sizeLimit;
 	private final int batchSize = 0x1000;
 	private final ItemBuffer<I> itemOutBuff;
+	private final Thread worker;
+
 	private final IoStats ioStats, medIoStats;
 	private volatile IoStats.Snapshot lastStats = null;
-	private final Thread worker;
 	private final AtomicLong counterResults = new AtomicLong(0);
 	private volatile Output<I> itemOutput;
+	private volatile boolean isPostProcessDone = false;
 	
 	public BasicMonitor(
 		final String name, final List<Generator<I, O>> generators, final LoadConfig loadConfig
@@ -86,9 +89,7 @@ implements Monitor<I, O> {
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
-		Runtime.getRuntime().addShutdownHook(
-			new Thread(new ShutdownHook(), this.name + "-shutdown-hook")
-		);
+		LogUtil.UNCLOSED_REGISTRY.add(this);
 	}
 	
 	private final class ServiceTask
@@ -123,19 +124,6 @@ implements Monitor<I, O> {
 		}
 	}
 	
-	private final class ShutdownHook
-	implements Runnable {
-		
-		@Override
-		public final void run() {
-			try {
-				close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close \"{}\"", name);
-			}
-		}
-	}
-	
 	protected void postProcessItems() {
 		final List<I> items = new ArrayList<>(batchSize);
 		try {
@@ -154,6 +142,8 @@ implements Monitor<I, O> {
 						items.clear();
 					}
 				}
+			} else if(isDone()) {
+				isPostProcessDone = true;
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput);
@@ -170,11 +160,11 @@ implements Monitor<I, O> {
 			lastStats.getSuccCount() + lastStats.getFailCount() >= countLimit
 		);
 	}
-	//
+
 	protected final boolean isDoneSizeLimit() {
 		return sizeLimit > 0 && lastStats.getByteCount() >= sizeLimit;
 	}
-	//
+
 	private boolean isDone() {
 		if(isDoneCountLimit()) {
 			LOG.debug(Markers.MSG, "{}: done due to max count done state", getName());
@@ -401,6 +391,15 @@ implements Monitor<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
+		for(final Driver<I, O> nextDriver : drivers.values()) {
+			try {
+				nextDriver.start();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
+				);
+			}
+		}
 		for(final Generator<I, O> nextGenerator : generators) {
 			try {
 				nextGenerator.start();
@@ -421,11 +420,21 @@ implements Monitor<I, O> {
 	throws IllegalStateException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			try {
-				nextGenerator.shutdown();
+				nextGenerator.interrupt();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to shutdown the generator {}",
+					LOG, Level.WARN, e, "Failed to interrupt the generator {}",
 					nextGenerator.toString()
+				);
+			}
+		}
+		for(final Driver<I, O> nextDriver : drivers.values()) {
+			try {
+				nextDriver.shutdown();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to shutdown the driver {}",
+					nextDriver.toString()
 				);
 			}
 		}
@@ -434,13 +443,13 @@ implements Monitor<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final Generator<I, O> nextGenerator : generators) {
+		for(final Driver<I, O> nextDriver : drivers.values()) {
 			try {
-				nextGenerator.interrupt();
+				nextDriver.interrupt();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to interrupt the generator {}",
-					nextGenerator.toString()
+					LOG, Level.WARN, e, "Failed to interrupt the driver {}",
+					nextDriver.toString()
 				);
 			}
 		}
@@ -450,36 +459,56 @@ implements Monitor<I, O> {
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
-		boolean allDriversFinished = true;
-		Driver<I, O> nextDriver;
-		do {
-			for(final String driverName : drivers.keySet()) {
-				nextDriver = drivers.get(driverName);
-				try {
-					if(!nextDriver.isInterrupted()) {
-						allDriversFinished = false;
-						break;
-					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to check the state of the driver {}",
-						nextDriver.toString()
-					);
-				}
-				Thread.yield();
+		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
+		/*if(loadedPrevState != null) {
+			if(isLimitReached) {
+				return true;
 			}
-		} while(!allDriversFinished);
+			t = TimeUnit.MICROSECONDS.toMillis(
+				loadedPrevState.getStatsSnapshot().getElapsedTime()
+			);
+			timeOutMilliSec -= t;
+		}*/
+		//
+		LOG.debug(
+			Markers.MSG, "{}: await for the done condition at most for {}[s]",
+			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutMilliSec)
+		);
+		t = System.currentTimeMillis();
+		while(System.currentTimeMillis() - t < timeOutMilliSec) {
+			synchronized(state) {
+				state.wait(100);
+			}
+			if(isInterrupted()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to \"interrupted\" state", getName());
+				return true;
+			}
+			if(isClosed()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to \"closed\" state", getName());
+				return true;
+			}
+			if(isPostProcessDone) {
+				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
+				return true;
+			}
+		}
+		LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 		return false;
 	}
 
 	@Override
 	protected void doClose()
 	throws IOException {
+		for(final Generator<I, O> generator : generators) {
+			generator.close();
+		}
 		generators.clear();
+		for(final Driver<I, O> driver : drivers.values()) {
+			driver.close();
+		}
 		drivers.clear();
-		
-		LOG.info(Markers.PERF_SUM, lastStats.toSummaryString());
-		System.out.println(lastStats.toSummaryString());
+
+		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
 		lastStats = null;
 		if(ioStats != null) {
 			ioStats.close();
@@ -492,5 +521,8 @@ implements Monitor<I, O> {
 			itemOutput.close();
 		}
 		itemOutBuff.close();
+
+		LogUtil.UNCLOSED_REGISTRY.remove(this);
+
 	}
 }

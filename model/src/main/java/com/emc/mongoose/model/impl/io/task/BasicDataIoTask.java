@@ -71,10 +71,10 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public final void setRespDataTimeStart(final long respDataTimeStart) {
-		this.respDataTimeStart = respDataTimeStart;
+	public final void startDataResponse() {
+		respDataTimeStart = System.nanoTime() / 1000;
 	}
-	
+
 	@Override
 	public final int getDataLatency() {
 		if(respDataTimeStart > respTimeDone) {

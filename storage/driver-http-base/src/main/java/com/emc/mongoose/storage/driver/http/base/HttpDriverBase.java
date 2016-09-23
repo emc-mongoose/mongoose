@@ -23,6 +23,8 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
+import com.emc.mongoose.storage.driver.http.base.request.CrudHttpRequestFactory;
+import com.emc.mongoose.storage.driver.http.base.request.HttpRequestFactory;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
@@ -50,9 +52,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-
+import java.util.function.Function;
 /**
  Created by kurila on 29.07.16.
  */
@@ -70,7 +74,11 @@ implements HttpDriver<I, O> {
 	private final Balancer<String> storageNodeBalancer;
 	private final EventLoopGroup workerGroup;
 	protected final Bootstrap bootstrap;
-	
+
+	private final ConcurrentMap<LoadType, HttpRequestFactory<I, O>>
+		requestFactoryMap = new ConcurrentHashMap<>();
+	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapper;
+
 	protected HttpDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final String srcContainer, final SocketConfig socketConfig
@@ -111,6 +119,9 @@ implements HttpDriver<I, O> {
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
 		bootstrap.handler(
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
+		);
+		requestFactoryMapper = loadType -> CrudHttpRequestFactory.getInstance(
+			loadType, HttpDriverBase.this, srcContainer
 		);
 	}
 	
@@ -164,8 +175,9 @@ implements HttpDriver<I, O> {
 		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
 		return httpRequest;
 	}
-	
-	protected HttpMethod getHttpMethod(final LoadType loadType) {
+
+	@Override
+	public HttpMethod getHttpMethod(final LoadType loadType) {
 		switch(loadType) {
 			case READ:
 				return HttpMethod.GET;
@@ -175,8 +187,9 @@ implements HttpDriver<I, O> {
 				return HttpMethod.PUT;
 		}
 	}
-	
-	protected String getDstUriPath(final I item, final O ioTask) {
+
+	@Override
+	public String getDstUriPath(final I item, final O ioTask) {
 		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
 	}
 	
@@ -192,9 +205,6 @@ implements HttpDriver<I, O> {
 			return objPath + SLASH + object.getName();
 		}
 	}
-	
-	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
-	throws URISyntaxException;
 	
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
 		// TODO apply dynamic headers also
@@ -231,6 +241,9 @@ implements HttpDriver<I, O> {
 					return;
 				}
 			}
+			if(bestNode == null) {
+				return;
+			}
 			ioTask.setNodeAddr(bestNode);
 			
 			final LoadType ioType = ioTask.getLoadType();
@@ -253,8 +266,11 @@ implements HttpDriver<I, O> {
 			channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 			
 			try {
-				ioTask.setReqTimeStart(System.nanoTime() / 1000);
-				channel.write(getHttpRequest(ioTask, bestNode));
+				ioTask.startRequest();
+				final HttpRequest httpRequest = requestFactoryMap
+					.computeIfAbsent(ioType, requestFactoryMapper)
+					.getHttpRequest(ioTask, bestNode);
+				channel.write(httpRequest);
 				if(LoadType.CREATE.equals(ioType)) {
 					if(item instanceof DataItem) {
 						final DataItem dataItem = (DataItem) item;
@@ -300,7 +316,7 @@ implements HttpDriver<I, O> {
 		@Override
 		public final void operationComplete(final Future<Void> future)
 		throws Exception {
-			ioTask.setReqTimeDone(System.nanoTime() / 1000);
+			ioTask.finishRequest();
 		}
 	}
 	
@@ -308,7 +324,7 @@ implements HttpDriver<I, O> {
 	public void put(final O task) {
 		INSTANCE.submit(new HttpRequestFutureTask(task));
 	}
-	
+
 	@Override
 	public int put(final List<O> tasks, final int from, final int to) {
 		for(int i = from; i < to; i ++) {
@@ -367,10 +383,12 @@ implements HttpDriver<I, O> {
 			storageNodeAddrs[i] = null;
 		}
 		sharedHeaders.clear();
-		try {
-			secretKey.destroy();
-		} catch(final DestroyFailedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the secret key");
+		if(secretKey != null) {
+			try {
+				secretKey.destroy();
+			} catch(final DestroyFailedException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the secret key");
+			}
 		}
 		storageNodeBalancer.close();
 		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);

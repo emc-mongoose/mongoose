@@ -4,6 +4,11 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
+import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
+import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
+import static com.emc.mongoose.common.concurrent.Daemon.State.SHUTDOWN;
+import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
 
 /**
  Created on 12.07.16.
@@ -11,11 +16,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
-	private AtomicReference<State> stateRef = new AtomicReference<>(State.INITIAL);
-
-	private enum State {
-		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
-	}
+	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
+	protected final Object state = new Object();
 
 	protected abstract void doStart()
 	throws IllegalStateException;
@@ -32,7 +34,10 @@ implements Daemon {
 	@Override
 	public final void start()
 	throws IllegalStateException {
-		if(stateRef.compareAndSet(State.INITIAL, State.STARTED)) {
+		if(stateRef.compareAndSet(INITIAL, STARTED)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doStart();
 		} else {
 			throw new IllegalStateException("start failed: state is " + stateRef.get());
@@ -41,15 +46,16 @@ implements Daemon {
 
 	@Override
 	public final boolean isStarted() {
-		return stateRef.get().equals(State.STARTED);
+		return stateRef.get().equals(STARTED);
 	}
 
 	@Override
 	public final void shutdown()
 	throws IllegalStateException {
-		if(stateRef.compareAndSet(State.INITIAL, State.SHUTDOWN)) {
-			doShutdown();
-		} else if(stateRef.compareAndSet(State.STARTED, State.SHUTDOWN)) {
+		if(stateRef.compareAndSet(INITIAL, SHUTDOWN) || stateRef.compareAndSet(STARTED, SHUTDOWN)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doShutdown();
 		} else {
 			throw new IllegalStateException("shutdown failed: state is " + stateRef.get());
@@ -58,13 +64,13 @@ implements Daemon {
 
 	@Override
 	public final boolean isShutdown() {
-		return stateRef.get().equals(State.SHUTDOWN);
+		return stateRef.get().equals(SHUTDOWN);
 	}
 	
 	@Override
-	public final boolean await()
+	public final void await()
 	throws InterruptedException, RemoteException {
-		return await(Long.MAX_VALUE, TimeUnit.SECONDS);
+		await(Long.MAX_VALUE, TimeUnit.SECONDS);
 	}
 	
 	@Override
@@ -74,7 +80,10 @@ implements Daemon {
 			shutdown();
 		} catch(final IllegalStateException ignored) {
 		}
-		if(stateRef.compareAndSet(State.SHUTDOWN, State.INTERRUPTED)) {
+		if(stateRef.compareAndSet(SHUTDOWN, INTERRUPTED)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doInterrupt();
 		} else {
 			throw new IllegalStateException("interrupt failed: state is " + stateRef.get());
@@ -83,7 +92,7 @@ implements Daemon {
 
 	@Override
 	public final boolean isInterrupted() {
-		return stateRef.get().equals(State.INTERRUPTED);
+		return stateRef.get().equals(INTERRUPTED);
 	}
 	
 	@Override
@@ -93,7 +102,10 @@ implements Daemon {
 			interrupt();
 		} catch(final IllegalStateException ignored) {
 		}
-		if(stateRef.compareAndSet(State.INTERRUPTED, State.CLOSED)) {
+		if(stateRef.compareAndSet(INTERRUPTED, CLOSED)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			doClose();
 		} else {
 			throw new IllegalStateException("close failed: state is " + stateRef.get());
@@ -102,6 +114,6 @@ implements Daemon {
 	
 	@Override
 	public final boolean isClosed() {
-		return stateRef.get().equals(State.CLOSED);
+		return stateRef.get().equals(CLOSED);
 	}
 }

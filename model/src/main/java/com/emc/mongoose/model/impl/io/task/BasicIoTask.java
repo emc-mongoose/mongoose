@@ -11,25 +11,25 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
  */
 public class BasicIoTask<I extends Item>
 implements IoTask<I> {
-	//
+	
 	protected final LoadType ioType;
 	protected final I item;
 	protected final String dstPath;
-	//
+	
 	protected volatile String nodeAddr;
 	protected volatile Status status;
 	protected volatile long reqTimeStart;
 	protected volatile long reqTimeDone;
 	protected volatile long respTimeStart;
 	protected volatile long respTimeDone;
-	//
+	
 	public BasicIoTask(final LoadType ioType, final I item, final String dstPath) {
 		this.ioType = ioType;
 		this.item = item;
 		this.dstPath = dstPath;
 		reset();
 	}
-	//
+	
 	@Override
 	public void reset() {
 		item.reset();
@@ -37,84 +37,85 @@ implements IoTask<I> {
 		status = Status.PENDING;
 		reqTimeStart = reqTimeDone = respTimeStart = reqTimeDone = 0;
 	}
-	//
+	
 	@Override
 	public final I getItem() {
 		return item;
 	}
-	//
+	
 	@Override
 	public final LoadType getLoadType() {
 		return ioType;
 	}
-	//
+	
 	@Override
 	public final String getNodeAddr() {
 		return nodeAddr;
 	}
-	//
+	
 	@Override
 	public final void setNodeAddr(final String nodeAddr) {
 		this.nodeAddr = nodeAddr;
 	}
-	//
+	
 	@Override
 	public final Status getStatus() {
 		return status;
 	}
-	//
+	
 	@Override
 	public final void setStatus(final Status status) {
 		this.status = status;
 	}
-	//
+	
 	@Override
 	public final long getReqTimeStart() {
 		return reqTimeStart;
 	}
-	//
+	
 	@Override
-	public final void setReqTimeStart(final long reqTimeStart) {
-		this.reqTimeStart = reqTimeStart;
+	public final void startRequest() {
+		reqTimeStart = System.nanoTime() / 1000;
+		status = Status.ACTIVE;
 	}
-	//
+
 	@Override
-	public final void setReqTimeDone(final long reqTimeDone) {
-		this.reqTimeDone = reqTimeDone;
+	public final void finishRequest() {
+		reqTimeDone = System.nanoTime() / 1000;
 	}
-	//
+
 	@Override
-	public final void setRespTimeStart(final long respTimeStart) {
-		this.respTimeStart = respTimeStart;
+	public final void startResponse() {
+		respTimeStart = System.nanoTime() / 1000;
 	}
-	//
+
 	@Override
-	public final void setRespTimeDone(final long respTimeDone) {
-		this.respTimeDone = respTimeDone;
+	public final void finishResponse() {
+		respTimeDone = System.nanoTime() / 1000;
 	}
-	//
+	
 	@Override
 	public final int getDuration() {
 		return (int) (respTimeDone - reqTimeStart);
 	}
-	//
+	
 	@Override
 	public final int getLatency() {
 		return (int) (respTimeStart - reqTimeDone);
 	}
-	//
+	
 	@Override
 	public final String getDstPath() {
 		return dstPath;
 	}
-	//
+	
 	protected final static ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
 			return new StringBuilder();
 		}
 	};
-	//
+	
 	@Override
 	public String toString() {
 		final StringBuilder strb = STRB.get();

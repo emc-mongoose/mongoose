@@ -1,5 +1,6 @@
 package com.emc.mongoose.ui.log;
 
+import com.emc.mongoose.common.concurrent.Daemon;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,10 +22,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Queue;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,23 +36,6 @@ import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
  */
 public final class LogUtil
 implements ShutdownCallbackRegistry {
-	//
-	@Override
-	public final Cancellable addShutdownCallback(final Runnable callback) {
-		return new Cancellable() {
-			//
-			@Override
-			public void cancel() {
-			}
-			//
-			@Override
-			public void run() {
-				if(callback != null) {
-					callback.run();
-				}
-			}
-		};
-	}
 	//
 	private final static String
 		//
@@ -71,7 +55,7 @@ implements ShutdownCallbackRegistry {
 		VALUE_CLOCK = "CoarseCachedClock",
 		//
 		KEY_SHUTDOWN_CALLBACK_REGISTRY = "log4j.shutdownCallbackRegistry",
-		VALUE_SHUTDOWN_CALLBACK_REGISTRY = LogUtil.class.getCanonicalName(),
+		VALUE_SHUTDOWN_CALLBACK_REGISTRY = "com.djdch.log4j.StaticShutdownCallbackRegistry",
 		//
 		KEY_CONFIG_FACTORY = "log4j.configurationFactory",
 		VALUE_CONFIG_FACTORY = "org.apache.logging.log4j.core.config.json.JsonConfigurationFactory",
@@ -79,10 +63,6 @@ implements ShutdownCallbackRegistry {
 		FNAME_LOG_CONF = "logging.json",
 		//
 		MONGOOSE = "mongoose";
-	//
-	public static final Lock HOOKS_LOCK = new ReentrantLock();
-	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
-	public static final AtomicInteger LOAD_HOOKS_COUNT = new AtomicInteger(0);
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
@@ -106,6 +86,7 @@ implements ShutdownCallbackRegistry {
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
+	public final static Queue<Daemon> UNCLOSED_REGISTRY = new ConcurrentLinkedQueue<>();
 	//
 	public static String newRunId() {
 		return LogUtil.FMT_DT.format(
@@ -152,7 +133,7 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
 				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
-				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
+				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "run.id" property with timestamp value if not set before
 				final String runId = ThreadContext.get(KEY_RUN_ID);
@@ -207,49 +188,40 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 	//
-	public static boolean isConsoleColoringEnabled() {
-		return STDOUT_COLORING_ENABLED;
-	}
-	//
 	public static void shutdown() {
-		final Logger LOG = LogManager.getLogger();
-		try {
-			if(LOAD_HOOKS_COUNT.get() != 0) {
-				LOG.debug(
-					Markers.MSG, "Not all load jobs are closed, blocking the loggers shutdown"
-				);
-				if(HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-					try {
-						if(HOOKS_COND.await(10, TimeUnit.SECONDS)) {
-							LOG.debug(Markers.MSG, "All load jobs are closed");
-						} else {
-							LOG.debug(
-								Markers.ERR, "Timeout while waiting the load jobs to be closed"
-							);
-						}
-					} finally {
-						HOOKS_LOCK.unlock();
-					}
-				} else {
-					LOG.debug(Markers.ERR, "Failed to acquire the lock for deletion");
-				}
-			} else {
-				LOG.debug(
-					Markers.MSG, "There's no unclosed load jobs, forcing logging subsystem shutdown"
-				);
-			}
-		} catch (final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
-		} finally {
-			LOG_CTX_LOCK.lock();
+
+		// close all unclosed daemons
+		for(final Daemon d : UNCLOSED_REGISTRY) {
 			try {
-				if(LOG_CTX != null && !LOG_CTX.isStopped()) {
-					LOG_CTX.stop();
-				}
-			} finally {
-				LOG_CTX_LOCK.unlock();
+				d.close();
+			} catch(final IllegalStateException ignored) {
+			} catch(final Throwable t) {
+				t.printStackTrace(System.err);
 			}
 		}
+
+		// wait until the list of the unclosed daemons is empty
+		while(!UNCLOSED_REGISTRY.isEmpty()) {
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch(final InterruptedException e) {
+				break;
+			}
+		}
+
+		// stop the logging
+		LOG_CTX_LOCK.lock();
+		try {
+			if(LOG_CTX != null && LOG_CTX.isStarted()) {
+				LOG_CTX.stop();
+			}
+		} finally {
+			LOG_CTX_LOCK.unlock();
+		}
+	}
+	//
+	public static boolean isConsoleColoringEnabled() {
+		return STDOUT_COLORING_ENABLED;
 	}
 	//
 	public static void exception(
@@ -276,5 +248,20 @@ implements ShutdownCallbackRegistry {
 		logger.log(
 			level, marker, logger.getMessageFactory().newMessage(msgPattern, args), new Throwable()
 		);
+	}
+
+	@Override
+	public final Cancellable addShutdownCallback(final Runnable callback) {
+		return new Cancellable() {
+			@Override
+			public final void cancel() {
+			}
+			@Override
+			public final void run() {
+				if(callback != null) {
+					callback.run();
+				}
+			}
+		};
 	}
 }

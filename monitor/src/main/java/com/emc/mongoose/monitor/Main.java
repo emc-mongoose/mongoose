@@ -18,6 +18,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.RunConfig;
 
 import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -39,7 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 11.07.16.
  */
@@ -125,7 +126,9 @@ public class Main {
 		} else {
 			ioTaskFactory = new BasicDataIoTaskFactory<>();
 		}
-		
+
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		final long timeLimitSec = limitConfig.getTime();
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		try(
 			final ContentSource contentSrc = ContentSourceUtil.getInstance(
@@ -163,15 +166,14 @@ public class Main {
 				
 				monitor.start();
 				log.info(Markers.MSG, "Load monitor start");
-				monitor.await();
-				log.info(Markers.MSG, "Load monitor done");
+				if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
+					log.info(Markers.MSG, "Load monitor done");
+				} else {
+					log.info(Markers.MSG, "Load monitor timeout");
+				}
 			}
-			
-			for(final Generator generator : generators) {
-				generator.close();
-			}
-			generators.clear();
-			log.info(Markers.MSG, "Cleanup done");
+		} catch(final Throwable t) {
+			t.printStackTrace(System.err);
 		}
 	}
 }

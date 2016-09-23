@@ -65,7 +65,7 @@ extends HttpDriverBase<I, O> {
 	}
 	
 	@Override
-	protected void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
+	public void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
 	throws URISyntaxException {
 		httpHeaders.set(KEY_X_AMZ_COPY_SOURCE, getSrcUriPath(obj));
 	}
