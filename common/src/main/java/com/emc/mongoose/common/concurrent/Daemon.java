@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 public interface Daemon
 extends Closeable {
 
+	enum State {
+		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
+	}
+
 	void start()
 	throws IllegalStateException, RemoteException;
 

@@ -27,10 +27,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -509,9 +507,8 @@ implements Monitor<I, O> {
 			driver.close();
 		}
 		drivers.clear();
-		
-		LOG.info(Markers.PERF_SUM, lastStats.toSummaryString());
-		LogUtil.UNCLOSED_REGISTRY.remove(this);
+
+		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
 		lastStats = null;
 		if(ioStats != null) {
 			ioStats.close();
@@ -524,5 +521,8 @@ implements Monitor<I, O> {
 			itemOutput.close();
 		}
 		itemOutBuff.close();
+
+		LogUtil.UNCLOSED_REGISTRY.remove(this);
+
 	}
 }

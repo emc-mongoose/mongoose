@@ -1,5 +1,6 @@
 package com.emc.mongoose.ui.log;
 
+import com.emc.mongoose.common.concurrent.Daemon;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,12 +12,12 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.core.util.Cancellable;
+import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
@@ -24,6 +25,7 @@ import java.util.Locale;
 import java.util.Queue;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,7 +34,8 @@ import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
 /**
  Created by kurila on 06.05.14.
  */
-public final class LogUtil {
+public final class LogUtil
+implements ShutdownCallbackRegistry {
 	//
 	private final static String
 		//
@@ -83,7 +86,7 @@ public final class LogUtil {
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
-	public final static Queue<Closeable> UNCLOSED_REGISTRY = new ConcurrentLinkedQueue<>();
+	public final static Queue<Daemon> UNCLOSED_REGISTRY = new ConcurrentLinkedQueue<>();
 	//
 	public static String newRunId() {
 		return LogUtil.FMT_DT.format(
@@ -130,7 +133,7 @@ public final class LogUtil {
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
 				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
-				//System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
+				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "run.id" property with timestamp value if not set before
 				final String runId = ThreadContext.get(KEY_RUN_ID);
@@ -186,13 +189,27 @@ public final class LogUtil {
 	}
 	//
 	public static void shutdown() {
-		for(final Closeable c : UNCLOSED_REGISTRY) {
+
+		// close all unclosed daemons
+		for(final Daemon d : UNCLOSED_REGISTRY) {
 			try {
-				c.close();
+				d.close();
+			} catch(final IllegalStateException ignored) {
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
 		}
+
+		// wait until the list of the unclosed daemons is empty
+		while(!UNCLOSED_REGISTRY.isEmpty()) {
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch(final InterruptedException e) {
+				break;
+			}
+		}
+
+		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX != null && LOG_CTX.isStarted()) {
@@ -231,5 +248,20 @@ public final class LogUtil {
 		logger.log(
 			level, marker, logger.getMessageFactory().newMessage(msgPattern, args), new Throwable()
 		);
+	}
+
+	@Override
+	public final Cancellable addShutdownCallback(final Runnable callback) {
+		return new Cancellable() {
+			@Override
+			public final void cancel() {
+			}
+			@Override
+			public final void run() {
+				if(callback != null) {
+					callback.run();
+				}
+			}
+		};
 	}
 }
