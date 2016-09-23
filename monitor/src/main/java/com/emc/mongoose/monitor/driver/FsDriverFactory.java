@@ -10,38 +10,30 @@ import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
 /**
- * Created by on 9/21/2016.
+ Created by on 9/21/2016.
  */
 public class FsDriverFactory<I extends MutableDataItem, O extends DataIoTask<I>>
 implements Factory<Driver<I, O>> {
 
-    private final String runId;
-    private final AuthConfig authConfig;
-    private final LoadConfig loadConfig;
-    private final String srcContainer;
-    private final SizeInBytes ioBuffSize;
+	private final String runId;
+	private final AuthConfig authConfig;
+	private final LoadConfig loadConfig;
+	private final String srcContainer;
+	private final SizeInBytes ioBuffSize;
 
-    public FsDriverFactory(
-            final String runId,
-            final AuthConfig authConfig, final LoadConfig loadConfig,
-            final String srcContainer,
-            final SizeInBytes ioBuffSize
-    ) {
-        this.runId = runId;
-        this.authConfig = authConfig;
-        this.loadConfig = loadConfig;
-        this.srcContainer = srcContainer;
-        this.ioBuffSize = ioBuffSize;
-    }
+	public FsDriverFactory(
+		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final String srcContainer, final SizeInBytes ioBuffSize
+	) {
+		this.runId = runId;
+		this.authConfig = authConfig;
+		this.loadConfig = loadConfig;
+		this.srcContainer = srcContainer;
+		this.ioBuffSize = ioBuffSize;
+	}
 
-    @Override
-    public Driver<I, O> create() {
-        return new BasicFileDriver<>(
-                runId,
-                authConfig, loadConfig,
-                srcContainer,
-                ioBuffSize
-        );
-    }
-
+	@Override
+	public Driver<I, O> create() {
+		return new BasicFileDriver<>(runId, authConfig, loadConfig, srcContainer, ioBuffSize);
+	}
 }
