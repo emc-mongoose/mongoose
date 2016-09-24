@@ -7,7 +7,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.Monitor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicReference;
  Created by kurila on 11.07.16.
  This mock just passes the submitted tasks to the load monitor em
  */
-public abstract class DriverBase<I extends Item, O extends IoTask<I>>
+public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements Driver<I, O> {
+implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -35,7 +35,7 @@ implements Driver<I, O> {
 	protected final String srcContainer;
 	protected final boolean verifyFlag;
 
-	protected DriverBase(
+	protected StorageDriverBase(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final String srcContainer, final boolean verifyFlag
 	) {

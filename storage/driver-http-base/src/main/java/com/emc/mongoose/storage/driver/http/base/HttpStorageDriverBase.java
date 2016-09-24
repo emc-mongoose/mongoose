@@ -13,7 +13,7 @@ import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.base.DriverBase;
+import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -62,9 +62,9 @@ import java.util.function.Function;
  Created by kurila on 29.07.16.
  Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
-public abstract class HttpDriverBase<I extends Item, O extends IoTask<I>>
-extends DriverBase<I, O>
-implements HttpDriver<I, O> {
+public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends StorageDriverBase<I, O>
+implements HttpStorageDriver<I, O> {
 	
 	private final static Logger LOG = LogManager.getLogger();
 	
@@ -81,7 +81,7 @@ implements HttpDriver<I, O> {
 		requestFactoryMap = new ConcurrentHashMap<>();
 	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapFunc;
 
-	protected HttpDriverBase(
+	protected HttpStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
@@ -123,7 +123,7 @@ implements HttpDriver<I, O> {
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
 		);
 		requestFactoryMapFunc = loadType -> CrudHttpRequestFactory.getInstance(
-			loadType, HttpDriverBase.this, srcContainer
+			loadType, HttpStorageDriverBase.this, srcContainer
 		);
 	}
 	

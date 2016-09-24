@@ -14,8 +14,8 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.model.api.load.Generator;
+import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.model.api.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
@@ -47,8 +47,8 @@ implements Monitor<I, O> {
 	private final static Logger LOG = LogManager.getLogger();
 
 	private final String name;
-	private final List<Generator<I, O>> generators;
-	private final Map<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
+	private final List<LoadGenerator<I, O>> generators;
+	private final Map<String, StorageDriver<I, O>> drivers = new ConcurrentHashMap<>();
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -63,11 +63,11 @@ implements Monitor<I, O> {
 	private volatile boolean isPostProcessDone = false;
 	
 	public BasicMonitor(
-		final String name, final List<Generator<I, O>> generators, final LoadConfig loadConfig
+		final String name, final List<LoadGenerator<I, O>> generators, final LoadConfig loadConfig
 	) {
 		this.name = name;
 		this.generators = generators;
-		for(final Generator<I, O> generator : generators) {
+		for(final LoadGenerator<I, O> generator : generators) {
 			generator.register(this);
 		}
 		this.metricsConfig = loadConfig.getMetricsConfig();
@@ -363,7 +363,7 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	public final void register(final Driver<I, O> driver)
+	public final void register(final StorageDriver<I, O> driver)
 	throws IllegalStateException {
 		if(null == drivers.putIfAbsent(driver.toString(), driver)) {
 			LOG.info(
@@ -392,7 +392,7 @@ implements Monitor<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(final Driver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers.values()) {
 			try {
 				nextDriver.start();
 			} catch(final RemoteException e) {
@@ -401,7 +401,7 @@ implements Monitor<I, O> {
 				);
 			}
 		}
-		for(final Generator<I, O> nextGenerator : generators) {
+		for(final LoadGenerator<I, O> nextGenerator : generators) {
 			try {
 				nextGenerator.start();
 			} catch(final RemoteException e) {
@@ -419,7 +419,7 @@ implements Monitor<I, O> {
 	@Override
 	protected void doShutdown()
 	throws IllegalStateException {
-		for(final Generator<I, O> nextGenerator : generators) {
+		for(final LoadGenerator<I, O> nextGenerator : generators) {
 			try {
 				nextGenerator.interrupt();
 			} catch(final RemoteException e) {
@@ -429,7 +429,7 @@ implements Monitor<I, O> {
 				);
 			}
 		}
-		for(final Driver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers.values()) {
 			try {
 				nextDriver.shutdown();
 			} catch(final RemoteException e) {
@@ -444,7 +444,7 @@ implements Monitor<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final Driver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers.values()) {
 			try {
 				nextDriver.interrupt();
 			} catch(final RemoteException e) {
@@ -500,11 +500,11 @@ implements Monitor<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException {
-		for(final Generator<I, O> generator : generators) {
+		for(final LoadGenerator<I, O> generator : generators) {
 			generator.close();
 		}
 		generators.clear();
-		for(final Driver<I, O> driver : drivers.values()) {
+		for(final StorageDriver<I, O> driver : drivers.values()) {
 			driver.close();
 		}
 		drivers.clear();

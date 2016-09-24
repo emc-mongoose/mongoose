@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.http.base;
 
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.util.LoadType;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -12,8 +12,8 @@ import java.net.URISyntaxException;
 /**
  Created by kurila on 30.08.16.
  */
-public interface HttpDriver<I extends Item, O extends IoTask<I>>
-extends Driver<I, O> {
+public interface HttpStorageDriver<I extends Item, O extends IoTask<I>>
+extends StorageDriver<I, O> {
 	
 	String SIGN_METHOD = "HmacSHA1";
 	

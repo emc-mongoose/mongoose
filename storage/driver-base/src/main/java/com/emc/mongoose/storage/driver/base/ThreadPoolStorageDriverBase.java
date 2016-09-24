@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.SizeInBytes;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -26,9 +26,9 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 19.07.16.
  The multi-threaded I/O driver.
  */
-public abstract class ThreadPoolDriverBase<I extends Item, O extends IoTask<I>>
-extends DriverBase<I, O>
-implements Driver<I, O> {
+public abstract class ThreadPoolStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends StorageDriverBase<I, O>
+implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int BATCH_SIZE = 0x80;
@@ -37,7 +37,7 @@ implements Driver<I, O> {
 	private final int ioWorkerCount;
 	private final BlockingQueue<O> ioTaskQueue;
 
-	public ThreadPoolDriverBase(
+	public ThreadPoolStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
 		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
@@ -77,7 +77,7 @@ implements Driver<I, O> {
 			IoTask.Status nextStatus;
 			try {
 				while(
-					!ThreadPoolDriverBase.this.isInterrupted() && !currentThread.isInterrupted()
+					!ThreadPoolStorageDriverBase.this.isInterrupted() && !currentThread.isInterrupted()
 				) {
 					// prepare the tasks buffer
 					ioTaskBuff.clear();

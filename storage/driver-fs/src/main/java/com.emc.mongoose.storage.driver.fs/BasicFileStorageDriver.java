@@ -4,13 +4,13 @@ import com.emc.mongoose.model.api.io.task.DataIoTask;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.storage.driver.base.ThreadPoolDriverBase;
+import com.emc.mongoose.storage.driver.base.ThreadPoolStorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -37,9 +37,9 @@ import static java.io.File.separatorChar;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileDriver<I extends MutableDataItem, O extends DataIoTask<I>>
-extends ThreadPoolDriverBase<I, O>
-implements Driver<I, O> {
+public final class BasicFileStorageDriver<I extends MutableDataItem, O extends DataIoTask<I>>
+extends ThreadPoolStorageDriverBase<I, O>
+implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -48,7 +48,7 @@ implements Driver<I, O> {
 	private final Map<O, FileChannel> dstOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openDstFileFunc;
 
-	public BasicFileDriver(
+	public BasicFileStorageDriver(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {

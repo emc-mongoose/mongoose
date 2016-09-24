@@ -18,8 +18,8 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.io.task.IoTaskFactory;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.model.api.load.Generator;
+import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.api.load.Monitor;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
@@ -44,14 +44,14 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 11.07.16.
  */
-public class BasicGenerator<I extends Item, O extends IoTask<I>>
+public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements Generator<I, O>, Output<I> {
+implements LoadGenerator<I, O>, Output<I> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int BATCH_SIZE = 0x1000;
 
-	private final List<Driver<I, O>> drivers;
+	private final List<StorageDriver<I, O>> drivers;
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType;
 	private final Input<I> itemInput;
@@ -71,7 +71,7 @@ implements Generator<I, O>, Output<I> {
 	public final void put(final I item)
 	throws IOException {
 		final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
-		final Driver<I, O> nextDriver = getNextDriver();
+		final StorageDriver<I, O> nextDriver = getNextDriver();
 		nextDriver.put(nextIoTask);
 	}
 	
@@ -83,7 +83,7 @@ implements Generator<I, O>, Output<I> {
 			for(int i = from; i < to; i ++) {
 				ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
 			}
-			final Driver<I, O> nextDriver = getNextDriver();
+			final StorageDriver<I, O> nextDriver = getNextDriver();
 			nextDriver.put(ioTasks, 0, ioTasks.size());
 		}
 		return to - from;
@@ -97,7 +97,7 @@ implements Generator<I, O>, Output<I> {
 		for(final I nextItem : buffer) {
 			ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
 		}
-		final Driver<I, O> nextDriver = getNextDriver();
+		final StorageDriver<I, O> nextDriver = getNextDriver();
 		nextDriver.put(ioTasks, 0, n);
 		return n;
 	}
@@ -186,8 +186,8 @@ implements Generator<I, O>, Output<I> {
 		}
 	}
 
-	public BasicGenerator(
-		final String runId, final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
+	public BasicLoadGenerator(
+		final String runId, final List<StorageDriver<I, O>> drivers, final ItemFactory<I> itemFactory,
 		final IoTaskFactory<I, O> ioTaskFactory, final ItemConfig itemConfig,
 		final LoadConfig loadConfig
 	) throws UserShootHisFootException {
@@ -262,7 +262,7 @@ implements Generator<I, O>, Output<I> {
 	public final void register(final Monitor<I, O> monitor)
 	throws IllegalStateException {
 		if(monitorRef.compareAndSet(null, monitor)) {
-			for(final Driver<I, O> driver : drivers) {
+			for(final StorageDriver<I, O> driver : drivers) {
 				driver.register(monitor);
 			}
 		} else {
@@ -271,7 +271,7 @@ implements Generator<I, O>, Output<I> {
 	}
 
 	private final AtomicLong rrc = new AtomicLong(0);
-	protected Driver<I, O> getNextDriver() {
+	protected StorageDriver<I, O> getNextDriver() {
 		return drivers.get((int) (rrc.incrementAndGet() % drivers.size()));
 	}
 

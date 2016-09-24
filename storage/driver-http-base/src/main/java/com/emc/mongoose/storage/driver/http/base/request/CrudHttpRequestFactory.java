@@ -5,7 +5,7 @@ import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.http.base.HttpDriver;
+import com.emc.mongoose.storage.driver.http.base.HttpStorageDriver;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -23,16 +23,16 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public abstract class CrudHttpRequestFactory<I extends Item, O extends IoTask<I>>
 implements HttpRequestFactory<I, O> {
 
-	protected final HttpDriver<I, O> httpDriver;
+	protected final HttpStorageDriver<I, O> httpDriver;
 	protected final String srcContainer;
 
-	protected CrudHttpRequestFactory(final HttpDriver<I, O> httpDriver, final String srcContainer) {
+	protected CrudHttpRequestFactory(final HttpStorageDriver<I, O> httpDriver, final String srcContainer) {
 		this.httpDriver = httpDriver;
 		this.srcContainer = srcContainer;
 	}
 
 	public static <I extends Item, O extends IoTask<I>> HttpRequestFactory getInstance(
-		final LoadType ioType, final HttpDriver<I, O> httpDriver, final String srcContainer
+		final LoadType ioType, final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 	) {
 		switch(ioType) {
 			case CREATE:
@@ -72,7 +72,7 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected CreateRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
@@ -106,7 +106,7 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected ReadRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
@@ -126,7 +126,7 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected UpdateRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
@@ -146,7 +146,7 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected DeleteRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
