@@ -8,7 +8,7 @@ import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.StorageDriver;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,7 +26,7 @@ implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	protected final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
+	protected final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
 	protected final String runId;
 	protected final int concurrencyLevel;
 	protected final boolean isCircular;
@@ -49,7 +49,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final void register(final Monitor<I, O> monitor)
+	public final void register(final LoadMonitor<I, O> monitor)
 	throws IllegalStateException {
 		if(monitorRef.compareAndSet(null, monitor)) {
 			monitor.register(this);

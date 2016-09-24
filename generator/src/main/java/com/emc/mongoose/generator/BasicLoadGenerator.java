@@ -20,7 +20,7 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.impl.item.BasicItemNameInput;
@@ -52,7 +52,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final static int BATCH_SIZE = 0x1000;
 
 	private final List<StorageDriver<I, O>> drivers;
-	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
+	private final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Thread worker;
@@ -259,7 +259,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	}
 
 	@Override
-	public final void register(final Monitor<I, O> monitor)
+	public final void register(final LoadMonitor<I, O> monitor)
 	throws IllegalStateException {
 		if(monitorRef.compareAndSet(null, monitor)) {
 			for(final StorageDriver<I, O> driver : drivers) {

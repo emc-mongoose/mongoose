@@ -4,7 +4,7 @@ import com.emc.mongoose.model.api.StorageType;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
 import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
@@ -158,7 +158,7 @@ public class Main {
 			);
 			log.info(Markers.MSG, "Load generators initialized");
 			
-			try(final Monitor monitor = new BasicMonitor(runId, generators, loadConfig)) {
+			try(final LoadMonitor monitor = new BasicLoadMonitor(runId, generators, loadConfig)) {
 				
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {

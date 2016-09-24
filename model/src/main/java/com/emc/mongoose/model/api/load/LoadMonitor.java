@@ -9,7 +9,7 @@ import com.emc.mongoose.model.api.metrics.IoStats;
 /**
  Created on 11.07.16.
  */
-public interface Monitor<I extends Item, O extends IoTask<I>>
+public interface LoadMonitor<I extends Item, O extends IoTask<I>>
 extends Daemon, Output<O>, Registry<StorageDriver<I, O>> {
 	
 	IoStats.Snapshot getIoStatsSnapshot();

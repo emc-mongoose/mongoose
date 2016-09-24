@@ -16,7 +16,7 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.api.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -40,9 +40,9 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicMonitor<I extends Item, O extends IoTask<I>>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements Monitor<I, O> {
+implements LoadMonitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -62,7 +62,7 @@ implements Monitor<I, O> {
 	private volatile Output<I> itemOutput;
 	private volatile boolean isPostProcessDone = false;
 	
-	public BasicMonitor(
+	public BasicLoadMonitor(
 		final String name, final List<LoadGenerator<I, O>> generators, final LoadConfig loadConfig
 	) {
 		this.name = name;
