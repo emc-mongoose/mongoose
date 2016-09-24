@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.api.load;
 
+import com.emc.mongoose.common.Registry;
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.io.task.IoTask;
