@@ -50,23 +50,29 @@ implements HttpRequestFactory<I, O> {
 		}
 	}
 
-	protected final HttpHeaders initHeaders(final String nodeAddr) {
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-		return httpHeaders;
-	}
-
-	protected final HttpRequest initRequest(
-		final I item, final O ioTask, final HttpHeaders httpHeaders
-	) {
+	@Override
+	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	throws URISyntaxException {
+		final I item = ioTask.getItem();
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = httpDriver.getHttpMethod(ioType);
 		final String dstUriPath = httpDriver.getDstUriPath(item, ioTask);
-		return new DefaultHttpRequest(
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
 		);
+		configureHttpRequest(item, httpHeaders);
+		httpDriver.applyMetaDataHeaders(httpHeaders);
+		httpDriver.applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
+		httpDriver.applyDynamicHeaders(httpHeaders);
+		httpDriver.applySharedHeaders(httpHeaders);
+		return httpRequest;
 	}
+
+	protected abstract void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
+	throws URISyntaxException;
 
 	private final static class CreateRequestFactory<I extends Item, O extends IoTask<I>>
 	extends CrudHttpRequestFactory<I, O> {
@@ -78,11 +84,8 @@ implements HttpRequestFactory<I, O> {
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			if(srcContainer == null) {
 				if(item instanceof DataItem) {
 					try {
@@ -98,7 +101,6 @@ implements HttpRequestFactory<I, O> {
 				httpDriver.applyCopyHeaders(httpHeaders, item);
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			}
-			return httpRequest;
 		}
 	}
 
@@ -112,13 +114,9 @@ implements HttpRequestFactory<I, O> {
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			return httpRequest;
 		}
 	}
 
@@ -132,13 +130,9 @@ implements HttpRequestFactory<I, O> {
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			// TODO cast to MutableDataItem, set ranges headers conditionally
-			return httpRequest;
 		}
 	}
 
@@ -152,13 +146,9 @@ implements HttpRequestFactory<I, O> {
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			return httpRequest;
 		}
 	}
 }

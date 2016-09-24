@@ -23,6 +23,17 @@ extends StorageDriver<I, O> {
 
 	String getDstUriPath(final I item, final O ioTask);
 
+	/** add all the shared headers if missing */
+	void applySharedHeaders(final HttpHeaders httpHeaders);
+
+	void applyDynamicHeaders(final HttpHeaders httpHeaders);
+
+	void applyMetaDataHeaders(final HttpHeaders httpHeaders);
+
+	void applyAuthHeaders(
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+	);
+
 	void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
 	throws URISyntaxException;
 }

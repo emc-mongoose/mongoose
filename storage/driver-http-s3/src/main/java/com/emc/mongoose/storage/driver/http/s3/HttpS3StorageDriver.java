@@ -64,13 +64,13 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	public void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
+	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
 	throws URISyntaxException {
 		httpHeaders.set(KEY_X_AMZ_COPY_SOURCE, getSrcUriPath(obj));
 	}
 	
 	@Override
-	protected void applyAuthHeaders(
+	public final void applyAuthHeaders(
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
 		final String signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders));

@@ -143,7 +143,7 @@ implements LoadMonitor<I, O> {
 						items.clear();
 					}
 				}
-			} else if(isDone()) {
+			} else if(isDone() || isIdle()) {
 				isPostProcessDone = true;
 			}
 		} catch(final IOException e) {
@@ -176,6 +176,43 @@ implements LoadMonitor<I, O> {
 			return true;
 		}
 		return false;
+	}
+
+	private boolean isIdle() {
+
+		boolean idleFlag = true;
+
+		for(final LoadGenerator<I, O> nextLoadGenerator : generators) {
+			try {
+				if(!nextLoadGenerator.isInterrupted()) {
+					idleFlag = false;
+					break;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					nextLoadGenerator
+				);
+			}
+		}
+
+		if(idleFlag) {
+			for(final StorageDriver<I, O> nextStorageDriver : drivers.values()) {
+				try {
+					if(!nextStorageDriver.isIdle()) {
+						idleFlag = false;
+						break;
+					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
+						nextStorageDriver
+					);
+				}
+			}
+		}
+
+		return idleFlag;
 	}
 	
 	

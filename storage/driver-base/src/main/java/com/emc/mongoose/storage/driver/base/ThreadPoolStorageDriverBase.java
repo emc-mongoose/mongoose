@@ -4,7 +4,6 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.StorageDriver;
-import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.SizeInBytes;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
@@ -35,6 +34,7 @@ implements StorageDriver<I, O> {
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
+	private final List<NioWorkerTask> ioWorkerTasks;
 	private final BlockingQueue<O> ioTaskQueue;
 
 	public ThreadPoolStorageDriverBase(
@@ -52,10 +52,14 @@ implements StorageDriver<I, O> {
 		}
 		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
+		ioWorkerTasks = new ArrayList<>(ioWorkerCount);
+		for(int i = 0; i < ioWorkerCount; i ++) {
+			ioWorkerTasks.add(new NioWorkerTask());
+		}
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new IoWorker.Factory(
+			new com.emc.mongoose.model.util.IoWorker.Factory(
 				this.runId + "-ioWorker", (int) ioBuffSize.getMin(), (int) ioBuffSize.getMax()
 			)
 		);
@@ -66,10 +70,16 @@ implements StorageDriver<I, O> {
 	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
 	 So the I/O task may be invoked multiple times (in the reentrant manner).
 	 */
-	private final class IoTaskSchedule
+	private final class NioWorkerTask
 	implements Runnable {
 
 		private final List<O> ioTaskBuff = new ArrayList<>(BATCH_SIZE);
+
+		private volatile boolean idleFlag = false;
+
+		public final boolean isIdle() {
+			return idleFlag;
+		}
 
 		@Override
 		public final void run() {
@@ -77,12 +87,19 @@ implements StorageDriver<I, O> {
 			IoTask.Status nextStatus;
 			try {
 				while(
-					!ThreadPoolStorageDriverBase.this.isInterrupted() && !currentThread.isInterrupted()
+					!ThreadPoolStorageDriverBase.this.isInterrupted() &&
+					!currentThread.isInterrupted()
 				) {
 					// prepare the tasks buffer
 					ioTaskBuff.clear();
 					// get the tasks from the queue for further reentrant/non-blocking execution
 					ioTaskQueue.drainTo(ioTaskBuff, BATCH_SIZE);
+					// check for idle state
+					if(ioTaskBuff.size() == 0) {
+						idleFlag = true;
+					} else {
+						idleFlag = false;
+					}
 					// for each task try to invoke the reentrant/non-blocking execution
 					for(final O ioTask : ioTaskBuff) {
 						invokeNio(ioTask);
@@ -112,8 +129,8 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(int i = 0; i < ioWorkerCount; i ++) {
-			ioTaskExecutor.submit(new IoTaskSchedule());
+		for(final NioWorkerTask ioWorkerTask : ioWorkerTasks) {
+			ioTaskExecutor.submit(ioWorkerTask);
 		}
 	}
 
@@ -131,12 +148,28 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public boolean isFullThrottleEntered() {
+	public final boolean isIdle() {
+		if(ioTaskQueue.isEmpty()) {
+			for(final NioWorkerTask ioWorkerTask : ioWorkerTasks) {
+				if(!ioWorkerTask.isIdle()) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public final boolean isFullThrottleEntered() {
+		// TODO
 		return false;
 	}
 
 	@Override
-	public boolean isFullThrottleExited() {
+	public final boolean isFullThrottleExited() {
+		// TODO
 		return false;
 	}
 
