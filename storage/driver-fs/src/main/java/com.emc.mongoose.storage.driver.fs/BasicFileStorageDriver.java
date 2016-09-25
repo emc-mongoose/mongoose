@@ -118,7 +118,9 @@ implements StorageDriver<I, O> {
 
 			switch(ioType) {
 				case CREATE:
-					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
+					if(srcContainer != null) { // copy mode
+						srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
+					}
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					invokeCreate(item, ioTask, srcChannel, dstChannel);
 					break;
@@ -156,6 +158,8 @@ implements StorageDriver<I, O> {
 		} catch(final IOException e) {
 			ioTask.setStatus(Status.FAIL_IO);
 		} catch(final Throwable e) {
+			// should be Throwable here in order to make the closing block further always reachable
+			// the same effect may be reached using "finally" block after this "catch"
 			e.printStackTrace(System.out);
 			ioTask.setStatus(Status.FAIL_UNKNOWN);
 		}
@@ -188,10 +192,11 @@ implements StorageDriver<I, O> {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
-			if(srcContainer == null) {
+			if(srcChannel == null) {
 				countBytesDone += fileItem.write(dstChannel, contentSize - countBytesDone);
 				ioTask.setCountBytesDone(countBytesDone);
 			} else {
+				// copy mode
 				countBytesDone += srcChannel.transferTo(
 					countBytesDone, contentSize - countBytesDone, dstChannel
 				);

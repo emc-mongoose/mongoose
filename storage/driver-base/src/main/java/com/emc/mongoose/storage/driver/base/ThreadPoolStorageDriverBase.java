@@ -7,8 +7,10 @@ import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.util.SizeInBytes;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import com.emc.mongoose.ui.log.Markers;
 
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Markers;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,12 +32,12 @@ extends StorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int BATCH_SIZE = 0x80;
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
 	private final List<NioWorkerTask> ioWorkerTasks;
 	private final BlockingQueue<O> ioTaskQueue;
+	private final BlockingQueue<O> activeTaskQueue;
 
 	public ThreadPoolStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
@@ -51,6 +53,7 @@ implements StorageDriver<I, O> {
 			throw new IllegalArgumentException("Invalid I/O buff size max: " + ioBuffSizeMax);
 		}
 		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
+		activeTaskQueue = new ArrayBlockingQueue<>(concurrencyLevel);
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
 		ioWorkerTasks = new ArrayList<>(ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
@@ -73,47 +76,49 @@ implements StorageDriver<I, O> {
 	private final class NioWorkerTask
 	implements Runnable {
 
-		private final List<O> ioTaskBuff = new ArrayList<>(BATCH_SIZE);
-
-		private volatile boolean idleFlag = false;
-
-		public final boolean isIdle() {
-			return idleFlag;
-		}
+		private final int ioTaskBuffCapacity = Math.max(
+			1, concurrencyLevel / ThreadUtil.getAvailableConcurrencyLevel()
+		);
+		@SuppressWarnings("unchecked")
+		private final O ioTaskBuff[] = (O[]) new IoTask[ioTaskBuffCapacity];
 
 		@Override
 		public final void run() {
 			final Thread currentThread = Thread.currentThread();
-			IoTask.Status nextStatus;
+			O ioTask;
+			IoTask.Status status;
+			int i;
 			try {
 				while(
 					!ThreadPoolStorageDriverBase.this.isInterrupted() &&
 					!currentThread.isInterrupted()
 				) {
-					// prepare the tasks buffer
-					ioTaskBuff.clear();
-					// get the tasks from the queue for further reentrant/non-blocking execution
-					ioTaskQueue.drainTo(ioTaskBuff, BATCH_SIZE);
-					// check for idle state
-					if(ioTaskBuff.size() == 0) {
-						idleFlag = true;
-					} else {
-						idleFlag = false;
-					}
-					// for each task try to invoke the reentrant/non-blocking execution
-					for(final O ioTask : ioTaskBuff) {
+					for(i = 0; i < ioTaskBuffCapacity; i ++) {
+						ioTask = ioTaskBuff[i];
+						// get the task from the queue if there's a free space in the active tasks
+						// buffer
+						if(ioTask == null) {
+							ioTask = ioTaskQueue.take();
+							ioTaskBuff[i] = ioTask;
+						}
+						// perform non blocking I/O for the task
 						invokeNio(ioTask);
-						// check the task status after invocation if it's still active or not
-						nextStatus = ioTask.getStatus();
-						if(nextStatus.equals(IoTask.Status.ACTIVE)) {
-							// the task is not finished yet - put it back to the tasks queue
-							ioTaskQueue.put(ioTask);
-						} else {
-							ioTaskCompleted(ioTask);
+						// remove the task from the buffer if it is not active more
+						status = ioTask.getStatus();
+						if(!status.equals(IoTask.Status.ACTIVE)) {
+							ioTaskBuff[i] = null;
+							try {
+								ioTaskCompleted(ioTask);
+							} catch(final IOException e) {
+								LogUtil.exception(
+									LOG, Level.WARN, e,
+									"Failed to invoke the I/O task completion callback"
+								);
+							}
 						}
 					}
 				}
-			} catch(final InterruptedException | IOException ignored) {
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -149,16 +154,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean isIdle() {
-		if(ioTaskQueue.isEmpty()) {
-			for(final NioWorkerTask ioWorkerTask : ioWorkerTasks) {
-				if(!ioWorkerTask.isIdle()) {
-					return false;
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
+		return ioTaskQueue.isEmpty() && activeTaskQueue.isEmpty();
 	}
 
 	@Override
@@ -213,5 +209,6 @@ implements StorageDriver<I, O> {
 	throws IOException {
 		super.doClose();
 		ioTaskQueue.clear();
+		activeTaskQueue.clear();
 	}
 }
