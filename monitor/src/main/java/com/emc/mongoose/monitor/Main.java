@@ -16,9 +16,9 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.RunConfig;
-
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -30,6 +30,7 @@ import com.emc.mongoose.model.api.load.Generator;
 import com.emc.mongoose.model.impl.io.task.BasicDataIoTaskFactory;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -66,6 +67,7 @@ public class Main {
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final LoadConfig loadConfig = config.getLoadConfig();
 		final RunConfig runConfig = config.getRunConfig();
+		final InputConfig inputConfig = itemConfig.getInputConfig();
 		
 		String runId = runConfig.getId();
 		if(runId == null) {
@@ -92,7 +94,7 @@ public class Main {
 				drivers.add(
 					new BasicFileDriver<>(
 						runId, storageConfig.getAuthConfig(), loadConfig,
-						itemConfig.getInputConfig().getContainer(),
+						inputConfig.getContainer(), itemConfig.getDataConfig().getVerify(),
 						config.getIoConfig().getBufferConfig().getSize()
 					)
 				);
@@ -107,8 +109,8 @@ public class Main {
 					case "s3" :
 						drivers.add(
 							new HttpS3Driver<>(
-								runId, loadConfig, storageConfig,
-								itemConfig.getInputConfig().getContainer(), config.getSocketConfig()
+								runId, loadConfig, storageConfig, inputConfig.getContainer(),
+								itemConfig.getDataConfig().getVerify(), config.getSocketConfig()
 							)
 						);
 						break;
@@ -128,7 +130,8 @@ public class Main {
 		}
 
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-		final long timeLimitSec = limitConfig.getTime();
+		final long t = limitConfig.getTime();
+		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		try(
 			final ContentSource contentSrc = ContentSourceUtil.getInstance(
@@ -172,8 +175,8 @@ public class Main {
 					log.info(Markers.MSG, "Load monitor timeout");
 				}
 			}
-		} catch(final Throwable t) {
-			t.printStackTrace(System.err);
+		} catch(final Throwable throwable) {
+			throwable.printStackTrace(System.err);
 		}
 	}
 }

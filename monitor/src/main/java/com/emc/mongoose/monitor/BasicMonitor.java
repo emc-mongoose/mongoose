@@ -27,9 +27,9 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -48,7 +48,7 @@ implements Monitor<I, O> {
 
 	private final String name;
 	private final List<Generator<I, O>> generators;
-	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
+	private final Map<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -120,6 +120,7 @@ implements Monitor<I, O> {
 					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
 				postProcessItems();
+				LockSupport.parkNanos(1);
 			}
 		}
 	}
@@ -211,7 +212,7 @@ implements Monitor<I, O> {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
 				LOG.warn(
-					Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+					Markers.ERR, "{}: latency {} is more than duration: {}", getName(), respLatency,
 					reqDuration
 				);
 			}
@@ -509,7 +510,6 @@ implements Monitor<I, O> {
 		drivers.clear();
 
 		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
-		lastStats = null;
 		if(ioStats != null) {
 			ioStats.close();
 		}

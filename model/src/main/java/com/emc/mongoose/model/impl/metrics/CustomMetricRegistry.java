@@ -89,7 +89,7 @@ implements Closeable, MetricSet {
 	 * @return a new {@link ConcurrentMap}
 	 */
 	private ConcurrentMap<String, Metric> buildMap() {
-		return new ConcurrentHashMap<String, Metric>();
+		return new ConcurrentHashMap<>();
 	}
 
 	/**

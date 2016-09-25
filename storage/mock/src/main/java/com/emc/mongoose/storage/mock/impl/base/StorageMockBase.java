@@ -45,8 +45,6 @@ implements StorageMock<I> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private final AtomicBoolean started = new AtomicBoolean(false);
-
 	private final String itemInputFile;
 	private final StorageIoStats ioStats;
 	protected final ContentSource contentSrc;
@@ -222,7 +220,6 @@ implements StorageMock<I> {
 		loadPersistedDataItems();
 		ioStats.start();
 		storageCapacityMonitorThread.start();
-		started.set(true);
 	}
 	
 	@Override

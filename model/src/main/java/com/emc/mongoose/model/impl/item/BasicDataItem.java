@@ -217,7 +217,7 @@ implements DataItem {
 	public final int read(final ByteBuffer dst) {
 		final int n;
 		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) (offset + position) % ringBuffSize);
+		ringBuff.position((int) ((offset + position) % ringBuffSize));
 		// bytes count to transfer
 		n = Math.min(dst.remaining(), ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
@@ -235,7 +235,7 @@ implements DataItem {
 		}
 		int m;
 		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) (offset + position) % ringBuffSize);
+		ringBuff.position((int) ((offset + position) % ringBuffSize));
 		final int n = Math.min(src.remaining(), ringBuff.remaining());
 		if(n > 0) {
 			byte bs, bi;
@@ -270,7 +270,7 @@ implements DataItem {
 	throws DataCorruptionException, IOException {
 		int n;
 		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) (offset + position) % ringBuffSize);
+		ringBuff.position((int) ((offset + position) % ringBuffSize));
 		n = ringBuff.remaining();
 		if(buff.limit() > n) {
 			buff.limit(n);

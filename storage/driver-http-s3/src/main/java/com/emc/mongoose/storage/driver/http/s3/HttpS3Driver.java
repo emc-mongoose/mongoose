@@ -54,9 +54,9 @@ extends HttpDriverBase<I, O> {
 	
 	public HttpS3Driver(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final SocketConfig socketConfig
+		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(runId, loadConfig, storageConfig, srcContainer, socketConfig);
+		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, socketConfig);
 	}
 	
 	@Override

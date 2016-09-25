@@ -33,10 +33,11 @@ implements Driver<I, O> {
 	protected final String userName;
 	protected final String secret;
 	protected final String srcContainer;
+	protected final boolean verifyFlag;
 
 	protected DriverBase(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer
+		final String srcContainer, final boolean verifyFlag
 	) {
 		this.runId = runId;
 		this.userName = authConfig.getId();
@@ -44,6 +45,7 @@ implements Driver<I, O> {
 		concurrencyLevel = loadConfig.getConcurrency();
 		isCircular = loadConfig.getCircular();
 		this.srcContainer = srcContainer;
+		this.verifyFlag = verifyFlag;
 	}
 
 	@Override
@@ -55,7 +57,7 @@ implements Driver<I, O> {
 			throw new IllegalStateException("Driver is already used by another monitor");
 		}
 	}
-	
+
 	public final void ioTaskCompleted(final O ioTask)
 	throws IOException {
 		if(isCircular) {
