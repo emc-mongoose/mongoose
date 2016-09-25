@@ -10,7 +10,7 @@ import com.emc.mongoose.model.impl.data.DataSizeException;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.storage.driver.base.ThreadPoolStorageDriverBase;
+import com.emc.mongoose.storage.driver.base.NioStorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -38,7 +38,7 @@ import static java.io.File.separatorChar;
  Created by kurila on 19.07.16.
  */
 public final class BasicFileStorageDriver<I extends MutableDataItem, O extends DataIoTask<I>>
-extends ThreadPoolStorageDriverBase<I, O>
+extends NioStorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
