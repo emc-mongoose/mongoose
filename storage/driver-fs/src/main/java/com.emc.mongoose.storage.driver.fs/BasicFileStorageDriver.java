@@ -1,8 +1,10 @@
 package com.emc.mongoose.storage.driver.fs;
 
-import com.emc.mongoose.model.api.io.task.DataIoTask;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
+
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
@@ -37,7 +39,7 @@ import static java.io.File.separatorChar;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileStorageDriver<I extends MutableDataItem, O extends DataIoTask<I>>
+public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
 extends NioStorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
@@ -220,8 +222,16 @@ implements StorageDriver<I, O> {
 				int currRangeIdx = 0;
 				try {
 					if(fileItem.hasBeenUpdated()) {
-						// TODO verify updated file items
-						throw new IllegalStateException("Not implemented yet");
+						final DataItem currRange = ioTask.getCurrRange();
+						if(currRange != null) {
+							countBytesDone += currRange.readAndVerify(srcChannel, buffIn);
+							if(countBytesDone == ioTask.getNextRangeOffset()) {
+								// switch to the next data range
+								ioTask.incrementRangeIdx();
+							}
+						} else {
+							throw new IllegalStateException("Null data range");
+						}
 					} else {
 						countBytesDone += fileItem.readAndVerify(srcChannel, buffIn);
 					}

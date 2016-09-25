@@ -10,13 +10,8 @@ public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
 
-	protected final long contentSize;
+	protected long contentSize;
 	protected volatile long countBytesDone;
-	protected volatile DataItem currRange;
-	protected volatile long currRangeSize;
-	protected volatile long nextRangeOffset;
-	protected volatile int currRangeIdx;
-	protected volatile int currDataLayerIdx;
 	protected volatile long respDataTimeStart;
 
 	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
@@ -34,15 +29,6 @@ implements DataIoTask<T> {
 					throw new IllegalStateException();
 				}
 				break;
-			/*case UPDATE:
-				if(item.hasScheduledUpdates()) {
-					contentSize = item.getUpdatingRangesSize();
-				} else if(item.isAppending()) {
-					contentSize = item.getAppendSize();
-				} else {
-					contentSize = item.size();
-				}
-				break;*/
 			default:
 				contentSize = 0;
 				break;
@@ -52,9 +38,8 @@ implements DataIoTask<T> {
 	@Override
 	public void reset() {
 		super.reset();
-		currRange = null;
-		countBytesDone = currRangeSize = nextRangeOffset = currRangeIdx = 0;
-		respDataTimeStart = currDataLayerIdx = 0;
+		countBytesDone = 0;
+		respDataTimeStart = 0;
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
 import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
+import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskFactory;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
 import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriver;
@@ -27,7 +28,6 @@ import com.emc.mongoose.model.api.io.task.IoTaskFactory;
 import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.impl.io.task.BasicDataIoTaskFactory;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 /**
  Created by kurila on 11.07.16.
  */
@@ -126,7 +127,7 @@ public class Main {
 			// TODO container I/O tasks factory
 			ioTaskFactory = null;
 		} else {
-			ioTaskFactory = new BasicDataIoTaskFactory<>();
+			ioTaskFactory = new BasicMutableDataIoTaskFactory<>();
 		}
 
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
