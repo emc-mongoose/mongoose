@@ -1,4 +1,4 @@
-package com.emc.mongoose.monitor.driver;
+package com.emc.mongoose.monitor.driver.api;
 
 import com.emc.mongoose.common.net.Service;
 

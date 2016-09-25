@@ -1,4 +1,4 @@
-package com.emc.mongoose.monitor.driver;
+package com.emc.mongoose.monitor.driver.impl;
 
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
@@ -16,9 +16,9 @@ public class FsDriverFactory<I extends MutableDataItem, O extends DataIoTask<I>>
 implements Factory<Driver<I, O>> {
 
 	private final String runId;
-	private final AuthConfig authConfig;
 	private final LoadConfig loadConfig;
 	private final String srcContainer;
+	private final AuthConfig authConfig;
 	private final SizeInBytes ioBuffSize;
 
 	public FsDriverFactory(

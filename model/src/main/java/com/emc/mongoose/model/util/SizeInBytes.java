@@ -11,11 +11,11 @@ import java.util.regex.Pattern;
 public final class SizeInBytes
 implements Serializable {
 	//
-	private final static String
+	private static final String
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
 	//
-	public final static String SIZE_UNITS = "kmgtpe";
-	public final static Pattern PATTERN_SIZE = Pattern.compile("([\\d\\.]+)(["+SIZE_UNITS+"]?)b?");
+	public static final String SIZE_UNITS = "kmgtpe";
+	public static final Pattern PATTERN_SIZE = Pattern.compile("([\\d\\.]+)(["+SIZE_UNITS+"]?)b?");
 	//
 	public static long toFixedSize(final String value)
 	throws NumberFormatException {
@@ -66,7 +66,7 @@ implements Serializable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static char SEP1 = '-', SEP2 = ',';
+	private static final char SEP1 = '-', SEP2 = ',';
 	//
 	private long min, range = 0;
 	private double bias = 1;

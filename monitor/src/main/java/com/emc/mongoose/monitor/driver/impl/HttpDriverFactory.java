@@ -1,10 +1,11 @@
-package com.emc.mongoose.monitor.driver;
+package com.emc.mongoose.monitor.driver.impl;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Driver;
 import com.emc.mongoose.common.pattern.EnumFactory;
+import com.emc.mongoose.monitor.driver.api.HttpDriverConfigFactory;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3Driver;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -18,21 +19,10 @@ import org.apache.logging.log4j.Logger;
 public class HttpDriverFactory<I extends MutableDataItem, O extends DataIoTask<I>>
 implements EnumFactory<Driver<I, O>, HttpDriverFactory.Api> {
 
-	private final String runId;
-	private final LoadConfig loadConfig;
-	private final StorageConfig storageConfig;
-	private final String srcContainer;
-	private final SocketConfig socketConfig;
+	private final HttpDriverConfigFactory configFactory;
 
-	public HttpDriverFactory(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final SocketConfig socketConfig
-	) {
-		this.runId = runId;
-		this.loadConfig = loadConfig;
-		this.storageConfig = storageConfig;
-		this.srcContainer = srcContainer;
-		this.socketConfig = socketConfig;
+	public HttpDriverFactory(final HttpDriverConfigFactory configFactory) {
+		this.configFactory = configFactory;
 	}
 
 	@Override
@@ -45,8 +35,12 @@ implements EnumFactory<Driver<I, O>, HttpDriverFactory.Api> {
 				break;
 			case S3:
 				try {
-					return new HttpS3Driver<>(runId, loadConfig, storageConfig, srcContainer,
-						socketConfig
+					return new HttpS3Driver<>(
+						configFactory.getRunId(),
+						configFactory.getLoadConfig(),
+						configFactory.getStorageConfig(),
+						configFactory.getSourceContainer(),
+						configFactory.getSocketConfig()
 					);
 				} catch(final UserShootHisFootException e) {
 					log.error(e);
