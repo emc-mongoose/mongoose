@@ -3,8 +3,12 @@ package com.emc.mongoose.model.api.item;
 /**
  Created on 19.07.16.
  */
-interface UpdatableDataItem
+public interface UpdatableDataItem
 extends DataItem {
+
+	static long getRangeOffset(final int i) {
+		return (1 << i) - 1;
+	}
 
 	boolean hasBeenUpdated();
 

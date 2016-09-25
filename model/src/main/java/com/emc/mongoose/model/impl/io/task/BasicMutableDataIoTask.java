@@ -1,12 +1,13 @@
 package com.emc.mongoose.model.impl.io.task;
 
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
+import com.emc.mongoose.model.api.item.UpdatableDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
 import com.emc.mongoose.model.util.LoadType;
 
 import java.io.IOException;
+
 /**
  Created by andrey on 25.09.16.
  */
@@ -14,7 +15,7 @@ public final class BasicMutableDataIoTask<I extends MutableDataItem>
 extends BasicDataIoTask<I>
 implements MutableDataIoTask<I> {
 
-	private volatile DataItem currRange = null;
+	private volatile BasicDataItem currRange = null;
 	private volatile long nextRangeOffset;
 	private volatile int currRangeIdx;
 	private volatile int currDataLayerIdx;
@@ -43,10 +44,10 @@ implements MutableDataIoTask<I> {
 	}
 
 	@Override
-	public final DataItem getCurrRange() {
+	public final BasicDataItem getCurrRange() {
 		if(currRange == null && currRangeIdx < item.getCountRangesTotal()) {
 			final long currRangeSize = item.getRangeSize(currRangeIdx);
-			nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx + 1);
+			nextRangeOffset = UpdatableDataItem.getRangeOffset(currRangeIdx + 1);
 			if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
 				currRange = new BasicDataItem(
 					item.getOffset() + nextRangeOffset, currRangeSize,
@@ -63,8 +64,33 @@ implements MutableDataIoTask<I> {
 	}
 
 	@Override
+	public BasicDataItem getUpdatingRange() {
+		if(currRange == null) {
+			final long currRangeSize = item.getRangeSize(currRangeIdx);
+			nextRangeOffset = UpdatableDataItem.getRangeOffset(currRangeIdx + 1);
+			if(item.isCurrLayerRangeUpdating(currRangeIdx)) {
+				currRange = new BasicDataItem(
+					item.getOffset() + nextRangeOffset, currRangeSize,
+					currDataLayerIdx + 1, item.getContentSrc()
+				);
+			} else if(item.isNextLayerRangeUpdating(currRangeIdx)) {
+				currRange = new BasicDataItem(
+					item.getOffset() + nextRangeOffset, currRangeSize,
+					currDataLayerIdx + 2, item.getContentSrc()
+				);
+			}
+		}
+		return currRange;
+	}
+
+	@Override
 	public final long getNextRangeOffset() {
 		return nextRangeOffset;
+	}
+
+	@Override
+	public final int getCurrRangeIdx() {
+		return currRangeIdx;
 	}
 
 	@Override

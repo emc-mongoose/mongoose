@@ -219,7 +219,6 @@ implements StorageDriver<I, O> {
 			final ByteBuffer buffIn = ((IoWorker) Thread.currentThread())
 				.getThreadLocalBuff(contentSize - countBytesDone);
 			if(verifyFlag) {
-				int currRangeIdx = 0;
 				try {
 					if(fileItem.hasBeenUpdated()) {
 						final DataItem currRange = ioTask.getCurrRange();
@@ -244,7 +243,8 @@ implements StorageDriver<I, O> {
 						"{}: content mismatch @ offset {}, expected: {}, actual: {} " +
 						"(within byte range which is {})", fileItem.getName(), countBytesDone,
 						String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual),
-						fileItem.isCurrLayerRangeUpdated(currRangeIdx) ? "UPDATED" : "NOT updated"
+						fileItem.isCurrLayerRangeUpdated(ioTask.getCurrRangeIdx()) ?
+							"UPDATED" : "NOT updated"
 					);
 				}
 			} else {
@@ -261,10 +261,33 @@ implements StorageDriver<I, O> {
 	private void invokeUpdate(
 		final I fileItem, final O ioTask, final FileChannel dstChannel
 	) throws IOException {
-		// TODO
-		ioTask.startResponse();
-		ioTask.finishResponse();
-		ioTask.setStatus(Status.SUCC);
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long contentSize = fileItem.getUpdatingRangesSize();
+		if(countBytesDone < contentSize) {
+			DataItem updatingRange;
+			// find the next updating range
+			while(null == (updatingRange = ioTask.getUpdatingRange())) {
+				ioTask.incrementRangeIdx();
+			}
+			if(ioTask.getCurrRangeIdx() < fileItem.getCountRangesTotal()) {
+				final long updatingRangeSize = updatingRange.size();
+				countBytesDone = updatingRange.write(
+					dstChannel, updatingRangeSize - countBytesDone
+				);
+				ioTask.setCountBytesDone(ioTask.getCountBytesDone() + countBytesDone);
+				// switch to the next data range if current range is written out completely
+				if(countBytesDone == updatingRangeSize) {
+					ioTask.incrementRangeIdx();
+				}
+			} else {
+				throw new IllegalStateException("Unexpected behavior");
+			}
+		} else {
+			fileItem.commitUpdatedRanges();
+			ioTask.startResponse();
+			ioTask.finishResponse();
+			ioTask.setStatus(Status.SUCC);
+		}
 	}
 
 	private void invokeDelete(final I fileItem, final O ioTask)

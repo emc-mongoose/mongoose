@@ -7,8 +7,4 @@ package com.emc.mongoose.model.api.item;
  */
 public interface MutableDataItem
 extends AppendableDataItem, UpdatableDataItem {
-
-	static long getRangeOffset(final int i) {
-		return (1 << i) - 1;
-	}
 }

@@ -10,7 +10,11 @@ extends DataIoTask<I> {
 
 	DataItem getCurrRange();
 
+	DataItem getUpdatingRange();
+
 	long getNextRangeOffset();
+
+	int getCurrRangeIdx();
 
 	void incrementRangeIdx();
 }
