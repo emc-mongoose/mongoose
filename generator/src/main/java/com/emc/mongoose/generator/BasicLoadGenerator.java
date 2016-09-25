@@ -68,9 +68,9 @@ implements LoadGenerator<I, O>, Output<I> {
 	private long producedItemsCount = 0;
 
 	public BasicLoadGenerator(
-		final String runId, final List<StorageDriver<I, O>> drivers, final ItemFactory<I> itemFactory,
-		final IoTaskFactory<I, O> ioTaskFactory, final ItemConfig itemConfig,
-		final LoadConfig loadConfig
+		final String runId, final List<StorageDriver<I, O>> drivers,
+		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory,
+		final ItemConfig itemConfig, final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 
 		this.runId = runId;
