@@ -68,11 +68,9 @@ extends RequestHandlerBase<T> {
 
 	public S3RequestHandler(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> localStorage,
-		final StorageMockClient<T> remoteStorage,
-		final ContentSource contentSource
+		final StorageMock<T> localStorage, final StorageMockClient<T> remoteStorage
 	) throws RemoteException {
-		super(limitConfig, namingConfig, localStorage, remoteStorage, contentSource);
+		super(limitConfig, namingConfig, localStorage, remoteStorage);
 	}
 
 	@Override

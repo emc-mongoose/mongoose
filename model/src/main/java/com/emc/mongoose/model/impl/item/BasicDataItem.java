@@ -171,6 +171,11 @@ implements DataItem {
 	}
 	//
 	@Override
+	public final int getLayerNum() {
+		return layerNum;
+	}
+	//
+	@Override
 	public final long getOffset() {
 		return offset;
 	}

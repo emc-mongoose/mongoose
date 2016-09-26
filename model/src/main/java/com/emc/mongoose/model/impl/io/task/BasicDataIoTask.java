@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.impl.io.task;
 
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
@@ -13,10 +14,12 @@ extends BasicIoTask<T>
 implements DataIoTask<T> {
 
 	protected long contentSize;
+	protected long itemDataOffset;
+	protected ContentSource contentSrc;
 	
 	protected volatile long countBytesDone;
 	protected volatile long respDataTimeStart;
-
+	
 	public BasicDataIoTask() {
 		super();
 	}
@@ -40,6 +43,8 @@ implements DataIoTask<T> {
 				contentSize = 0;
 				break;
 		}
+		itemDataOffset = item.getOffset();
+		contentSrc = item.getContentSrc();
 	}
 	
 	@Override
@@ -96,6 +101,8 @@ implements DataIoTask<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
+		itemDataOffset = item.getOffset();
+		contentSrc = item.getContentSrc();
 		contentSize = in.readLong();
 		countBytesDone = in.readLong();
 		respDataTimeStart = in.readLong();

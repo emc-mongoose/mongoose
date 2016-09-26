@@ -13,6 +13,9 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+
 /**
  Created by andrey on 25.09.16.
  */
@@ -20,7 +23,7 @@ public final class BasicMutableDataIoTask<I extends MutableDataItem>
 extends BasicDataIoTask<I>
 implements MutableDataIoTask<I> {
 	
-	private final BitSet[] updatingRangesMask = new BitSet[] {
+	private final BitSet[] updRangesMaskPair = new BitSet[] {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
 	
@@ -53,11 +56,11 @@ implements MutableDataIoTask<I> {
 	@Override
 	public final void scheduleRandomRangesUpdate(final int count) {
 		try {
-			final int countRangesTotal = MutableDataItem.getRangeCount(item.size());
+			final int countRangesTotal = getRangeCount(item.size());
 			if(count < 1 || count > countRangesTotal) {
 				throw new IllegalArgumentException(
 					"Range count should be more than 0 and less than max " + countRangesTotal +
-					" for the item size"
+						" for the item size"
 				);
 			}
 			for(int i = 0; i < count; i++) {
@@ -71,13 +74,16 @@ implements MutableDataIoTask<I> {
 	private void scheduleRandomUpdate(final int countRangesTotal) {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
-		if(countRangesTotal > item.getUpdatedRangesCount() + updatingRangesMask[0].cardinality()) {
+		if(
+			countRangesTotal > item.getUpdatedRangesCount() +
+				updRangesMaskPair[0].cardinality()
+		) {
 			// current layer has not updated yet ranges
 			for(int i = 0; i < countRangesTotal; i++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;
 				if(!item.isRangeUpdated(nextCellPos)) {
-					if(!updatingRangesMask[0].get(nextCellPos)) {
-						updatingRangesMask[0].set(nextCellPos);
+					if(!updRangesMaskPair[0].get(nextCellPos)) {
+						updRangesMaskPair[0].set(nextCellPos);
 						break;
 					}
 				}
@@ -86,9 +92,9 @@ implements MutableDataIoTask<I> {
 			// update the next layer ranges
 			for(int i = 0; i < countRangesTotal; i++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;
-				if(!updatingRangesMask[0].get(nextCellPos)) {
-					if(!updatingRangesMask[1].get(nextCellPos)) {
-						updatingRangesMask[1].set(nextCellPos);
+				if(!updRangesMaskPair[0].get(nextCellPos)) {
+					if(!updRangesMaskPair[1].get(nextCellPos)) {
+						updRangesMaskPair[1].set(nextCellPos);
 						break;
 					}
 				}
@@ -104,24 +110,44 @@ implements MutableDataIoTask<I> {
 	
 	@Override
 	public final long getUpdatingRangesSize() {
-		return 0;
+		long sumSize = 0;
+		try {
+			for(int i = 0; i < getRangeCount(item.size()); i++) {
+				if(updRangesMaskPair[0].get(i) || updRangesMaskPair[1].get(i)) {
+					sumSize += item.getRangeSize(i);
+				}
+			}
+		} catch(final IOException e) {
+			throw new IllegalStateException(e);
+		}
+		return sumSize;
+	}
+	
+	@Override
+	public final int getCurrRangeIdx() {
+		return currRangeIdx;
+	}
+	
+	@Override
+	public final void setCurrRangeIdx(final int currRangeIdx) {
+		this.currRangeIdx = currRangeIdx;
 	}
 	
 	@Override
 	public final BasicDataItem getCurrRange() {
 		try {
-			if(currRange == null && currRangeIdx < MutableDataItem.getRangeCount(item.size())) {
+			if(currRange == null && currRangeIdx < getRangeCount(item.size())) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx + 1);
+				nextRangeOffset = getRangeOffset(currRangeIdx + 1);
 				if(item.isRangeUpdated(currRangeIdx)) {
 					currRange = new BasicDataItem(
-						item.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx + 1, item.getContentSrc()
+						itemDataOffset + nextRangeOffset, currRangeSize, currDataLayerIdx + 1,
+						contentSrc
 					);
 				} else {
 					currRange = new BasicDataItem(
-						item.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx, item.getContentSrc()
+						itemDataOffset + nextRangeOffset, currRangeSize, currDataLayerIdx,
+						contentSrc
 					);
 				}
 			}
@@ -130,25 +156,50 @@ implements MutableDataIoTask<I> {
 		}
 		return currRange;
 	}
-
+	
 	@Override
-	public final BitSet[] getUpdatingRangesMask() {
-		return updatingRangesMask;
+	public final BasicDataItem getCurrRangeUpdate() {
+		if(updRangesMaskPair[0].get(currRangeIdx)) {
+			final long currRangeSize = item.getRangeSize(currRangeIdx);
+			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+			currRange = new BasicDataItem(
+				itemDataOffset + nextRangeOffset, currRangeSize,
+				currDataLayerIdx + 1, contentSrc
+			);
+		} else if(updRangesMaskPair[1].get(currRangeIdx)) {
+			final long currRangeSize = item.getRangeSize(currRangeIdx);
+			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+			currRange = new BasicDataItem(
+				itemDataOffset + nextRangeOffset, currRangeSize,
+				currDataLayerIdx + 2, contentSrc
+			);
+		} else {
+			currRange = null;
+		}
+		return currRange;
+	}
+	
+	public final BitSet[] getUpdRangesMaskPair() {
+		return updRangesMaskPair;
 	}
 	
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeLong(updatingRangesMask[0].isEmpty() ? 0 : updatingRangesMask[0].toLongArray()[0]);
-		out.writeLong(updatingRangesMask[1].isEmpty() ? 0 : updatingRangesMask[1].toLongArray()[0]);
+		out.writeLong(
+			updRangesMaskPair[0].isEmpty() ? 0 : updRangesMaskPair[0].toLongArray()[0]
+		);
+		out.writeLong(
+			updRangesMaskPair[1].isEmpty() ? 0 : updRangesMaskPair[1].toLongArray()[0]
+		);
 	}
 	
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		updatingRangesMask[0].or(BitSet.valueOf(new long[] {in.readLong()}));
-		updatingRangesMask[1].or(BitSet.valueOf(new long[] {in.readLong()}));
+		updRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
+		updRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
 	}
 }

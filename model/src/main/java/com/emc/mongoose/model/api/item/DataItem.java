@@ -22,6 +22,8 @@ extends Item, SeekableByteChannel {
 	//
 	void reset();
 	//
+	int getLayerNum();
+	//
 	long getOffset();
 	//
 	void setOffset(final long offset);

@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.driver.fs;
 
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
@@ -144,7 +146,7 @@ implements StorageDriver<I, O> {
 					invokeUpdate(item, ioTask, dstChannel);
 					break;
 				case DELETE:
-					invokeDelete(item, ioTask);
+					invokeDelete(ioTask);
 					break;
 				default:
 					ioTask.setStatus(Status.FAIL_UNKNOWN);
@@ -255,20 +257,38 @@ implements StorageDriver<I, O> {
 	throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
-		if(updatingRangesSize < countBytesDone) {
-			countBytesDone += fileItem.writeUpdates(
-				dstChannel, updatingRangesSize - countBytesDone
-			);
+		if(updatingRangesSize > 0 && updatingRangesSize < countBytesDone) {
+			DataItem updatingRange;
+			int currRangeIdx = 0;
+			while(null == (updatingRange = ioTask.getCurrRangeUpdate())) {
+				currRangeIdx = ioTask.getCurrRangeIdx();
+				if(currRangeIdx < getRangeCount(fileItem.size())) {
+					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+				} else {
+					break;
+				}
+			}
+			if(updatingRange != null) {
+				final long updatingRangeSize = updatingRange.size();
+				countBytesDone += updatingRange.write(
+					dstChannel, updatingRange.size() - countBytesDone
+				);
+				if(countBytesDone == updatingRangeSize) {
+					countBytesDone = 0;
+					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+				}
+			}
 			ioTask.setCountBytesDone(countBytesDone);
 		} else {
-			fileItem.commitUpdatedRanges(ioTask.getUpdatingRangesMask());
 			ioTask.startResponse();
 			ioTask.finishResponse();
+			ioTask.setCountBytesDone(updatingRangesSize);
+			fileItem.commitUpdatedRanges(ioTask.getUpdRangesMaskPair());
 			ioTask.setStatus(Status.SUCC);
 		}
 	}
 
-	private void invokeDelete(final I fileItem, final O ioTask)
+	private void invokeDelete(final O ioTask)
 	throws IOException {
 		final Path dstPath = Paths.get(ioTask.getDstPath());
 		Files.delete(dstPath);

@@ -7,6 +7,8 @@ import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+
 public class BasicMutableDataItemMock
 extends BasicMutableDataItem
 implements MutableDataItemMock {

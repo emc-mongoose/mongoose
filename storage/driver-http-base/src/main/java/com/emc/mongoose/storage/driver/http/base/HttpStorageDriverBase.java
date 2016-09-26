@@ -6,19 +6,21 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
 import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
-import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
 import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -316,26 +318,8 @@ implements HttpStorageDriver<I, O> {
 				} else if(LoadType.UPDATE.equals(ioType)) {
 					if(item instanceof MutableDataItem) {
 						final MutableDataItem mdi = (MutableDataItem) item;
-						final DataIoTask dataIoTask = (DataIoTask) ioTask;
-						if(mdi.hasScheduledUpdates()) {
-							long nextRangeOffset, nextRangeSize;
-							BasicDataItem nextUpdatedRange;
-							for(int i = 0; i < mdi.getCountRangesTotal(); i ++) {
-								if(mdi.isCurrLayerRangeUpdating(i)) {
-									nextRangeOffset = BasicMutableDataItem.getRangeOffset(i);
-									nextRangeSize = mdi.getRangeSize(i);
-									nextUpdatedRange = new BasicDataItem(
-										(BasicDataItem) mdi, nextRangeOffset, nextRangeSize, true
-									);
-									channel
-										.write(new DataItemFileRegion<>(nextUpdatedRange))
-										.addListener(this);
-									dataIoTask.setCountBytesDone(
-										dataIoTask.getCountBytesDone() + nextRangeSize
-									);
-								}
-							}
-						}
+						final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+						// TODO
 					}
 				}
 			} catch(final IOException e) {
