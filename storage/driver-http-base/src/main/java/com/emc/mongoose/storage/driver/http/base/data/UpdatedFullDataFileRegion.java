@@ -8,7 +8,7 @@ import com.emc.mongoose.model.impl.item.BasicDataItem;
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-import static com.emc.mongoose.model.api.item.UpdatableDataItem.getRangeOffset;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 
 public class UpdatedFullDataFileRegion<T extends MutableDataItem>
 extends DataItemFileRegion<T> {

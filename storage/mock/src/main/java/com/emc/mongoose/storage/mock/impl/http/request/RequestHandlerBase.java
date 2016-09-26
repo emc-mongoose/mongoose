@@ -384,7 +384,7 @@ extends ChannelInboundHandlerAdapter {
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		HttpUtil.setContentLength(response, size);
 		ctx.write(response);
-		if(object.hasBeenUpdated()) {
+		if(object.isUpdated()) {
 			ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
 		} else {
 			ctx.write(new DataItemFileRegion<>(object, contentSource));

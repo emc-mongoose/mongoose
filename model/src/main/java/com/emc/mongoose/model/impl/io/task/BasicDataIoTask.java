@@ -5,15 +5,22 @@ import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
 
 	protected long contentSize;
+	
 	protected volatile long countBytesDone;
 	protected volatile long respDataTimeStart;
 
+	public BasicDataIoTask() {
+		super();
+	}
+	
 	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
 	throws IOException {
 		super(ioType, item, dstPath);
@@ -74,5 +81,23 @@ implements DataIoTask<T> {
 			.append(',').append(countBytesDone)
 			.append(',').append(getDataLatency())
 			.toString();
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeLong(contentSize);
+		out.writeLong(countBytesDone);
+		out.writeLong(respDataTimeStart);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		contentSize = in.readLong();
+		countBytesDone = in.readLong();
+		respDataTimeStart = in.readLong();
 	}
 }

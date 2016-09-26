@@ -4,6 +4,10 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.util.LoadType;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import static com.emc.mongoose.model.api.item.Item.SLASH;
 
 /**
@@ -12,9 +16,9 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
 public class BasicIoTask<I extends Item>
 implements IoTask<I> {
 	
-	protected final LoadType ioType;
-	protected final I item;
-	protected final String dstPath;
+	protected LoadType ioType;
+	protected I item;
+	protected String dstPath;
 	
 	protected volatile String nodeAddr;
 	protected volatile Status status;
@@ -22,6 +26,9 @@ implements IoTask<I> {
 	protected volatile long reqTimeDone;
 	protected volatile long respTimeStart;
 	protected volatile long respTimeDone;
+	
+	public BasicIoTask() {
+	}
 	
 	public BasicIoTask(final LoadType ioType, final I item, final String dstPath) {
 		this.ioType = ioType;
@@ -138,5 +145,33 @@ implements IoTask<I> {
 			.append(respLatency > 0 ? respLatency : 0).append(',')
 			.append(reqDuration)
 			.toString();
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		out.writeObject(ioType);
+		out.writeObject(item);
+		out.writeObject(dstPath);
+		out.writeObject(nodeAddr);
+		out.writeObject(status);
+		out.writeLong(reqTimeStart);
+		out.writeLong(reqTimeDone);
+		out.writeLong(respTimeStart);
+		out.writeLong(respTimeDone);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		ioType = (LoadType) in.readObject();
+		item = (I) in.readObject();
+		dstPath = (String) in.readObject();
+		nodeAddr = (String) in.readObject();
+		status = (Status) in.readObject();
+		reqTimeStart = in.readLong();
+		reqTimeDone = in.readLong();
+		respTimeStart = in.readLong();
+		respTimeDone = in.readLong();
 	}
 }

@@ -220,14 +220,10 @@ implements StorageDriver<I, O> {
 				.getThreadLocalBuff(contentSize - countBytesDone);
 			if(verifyFlag) {
 				try {
-					if(fileItem.hasBeenUpdated()) {
+					if(fileItem.isUpdated()) {
 						final DataItem currRange = ioTask.getCurrRange();
 						if(currRange != null) {
 							countBytesDone += currRange.readAndVerify(srcChannel, buffIn);
-							if(countBytesDone == ioTask.getNextRangeOffset()) {
-								// switch to the next data range
-								ioTask.incrementRangeIdx();
-							}
 						} else {
 							throw new IllegalStateException("Null data range");
 						}
@@ -239,12 +235,9 @@ implements StorageDriver<I, O> {
 					countBytesDone += e.offset;
 					ioTask.setCountBytesDone(countBytesDone);
 					LOG.warn(
-						Markers.MSG,
-						"{}: content mismatch @ offset {}, expected: {}, actual: {} " +
-						"(within byte range which is {})", fileItem.getName(), countBytesDone,
-						String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual),
-						fileItem.isCurrLayerRangeUpdated(ioTask.getCurrRangeIdx()) ?
-							"UPDATED" : "NOT updated"
+						Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+						fileItem.getName(), countBytesDone,
+						String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
 					);
 				}
 			} else {
@@ -258,32 +251,17 @@ implements StorageDriver<I, O> {
 		}
 	}
 
-	private void invokeUpdate(
-		final I fileItem, final O ioTask, final FileChannel dstChannel
-	) throws IOException {
+	private void invokeUpdate(final I fileItem, final O ioTask, final FileChannel dstChannel)
+	throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
-		final long contentSize = fileItem.getUpdatingRangesSize();
-		if(countBytesDone < contentSize) {
-			DataItem updatingRange;
-			// find the next updating range
-			while(null == (updatingRange = ioTask.getUpdatingRange())) {
-				ioTask.incrementRangeIdx();
-			}
-			if(ioTask.getCurrRangeIdx() < fileItem.getCountRangesTotal()) {
-				final long updatingRangeSize = updatingRange.size();
-				countBytesDone = updatingRange.write(
-					dstChannel, updatingRangeSize - countBytesDone
-				);
-				ioTask.setCountBytesDone(ioTask.getCountBytesDone() + countBytesDone);
-				// switch to the next data range if current range is written out completely
-				if(countBytesDone == updatingRangeSize) {
-					ioTask.incrementRangeIdx();
-				}
-			} else {
-				throw new IllegalStateException("Unexpected behavior");
-			}
+		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
+		if(updatingRangesSize < countBytesDone) {
+			countBytesDone += fileItem.writeUpdates(
+				dstChannel, updatingRangesSize - countBytesDone
+			);
+			ioTask.setCountBytesDone(countBytesDone);
 		} else {
-			fileItem.commitUpdatedRanges();
+			fileItem.commitUpdatedRanges(ioTask.getUpdatingRangesMask());
 			ioTask.startResponse();
 			ioTask.finishResponse();
 			ioTask.setStatus(Status.SUCC);

@@ -1,10 +1,35 @@
 package com.emc.mongoose.model.api.item;
 
+import java.nio.channels.WritableByteChannel;
+import java.util.BitSet;
+
 /**
  Created by kurila on 29.09.14.
  Identifiable, appendable and updatable data item.
  Data item identifier is a 64-bit word.
  */
 public interface MutableDataItem
-extends AppendableDataItem, UpdatableDataItem {
+extends DataItem {
+	
+	double LOG2 = Math.log(2);
+	
+	static int getRangeCount(final long size) {
+		return (int) Math.ceil(Math.log(size + 1) / LOG2);
+	}
+	
+	static long getRangeOffset(final int i) {
+		return (1 << i) - 1;
+	}
+	
+	long getRangeSize(int rangeIdx);
+	
+	boolean isUpdated();
+	
+	int writeUpdates(final WritableByteChannel chanDst, final long maxCount);
+	
+	void commitUpdatedRanges(final BitSet[] updatingRangesMask);
+	
+	boolean isRangeUpdated(final int rangeIdx);
+	
+	int getUpdatedRangesCount();
 }
