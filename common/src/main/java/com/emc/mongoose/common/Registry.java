@@ -1,4 +1,4 @@
-package com.emc.mongoose.model.api.load;
+package com.emc.mongoose.common;
 
 /**
  Created by kurila on 14.09.16.

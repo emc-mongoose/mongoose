@@ -3,8 +3,7 @@ package com.emc.mongoose.storage.driver.http.s3;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.storage.driver.http.base.HttpDriverBase;
+import com.emc.mongoose.storage.driver.http.base.HttpStorageDriverBase;
 
 import static com.emc.mongoose.storage.driver.http.s3.S3Constants.AUTH_PREFIX;
 import static com.emc.mongoose.storage.driver.http.s3.S3Constants.HEADERS_CANONICAL;
@@ -35,8 +34,8 @@ import java.util.TreeMap;
 /**
  Created by kurila on 01.08.16.
  */
-public final class HttpS3Driver<I extends Item, O extends IoTask<I>>
-extends HttpDriverBase<I, O> {
+public final class HttpS3StorageDriver<I extends Item, O extends IoTask<I>>
+extends HttpStorageDriverBase<I, O> {
 	
 	private final static Logger LOG = LogManager.getLogger();
 	
@@ -52,7 +51,7 @@ extends HttpDriverBase<I, O> {
 	
 	private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	
-	public HttpS3Driver(
+	public HttpS3StorageDriver(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
@@ -65,13 +64,13 @@ extends HttpDriverBase<I, O> {
 	}
 	
 	@Override
-	public void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
+	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
 	throws URISyntaxException {
 		httpHeaders.set(KEY_X_AMZ_COPY_SOURCE, getSrcUriPath(obj));
 	}
 	
 	@Override
-	protected void applyAuthHeaders(
+	public final void applyAuthHeaders(
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
 		final String signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders));

@@ -1,16 +1,18 @@
 package com.emc.mongoose.storage.driver.fs;
 
-import com.emc.mongoose.model.api.io.task.DataIoTask;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
+
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
 import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.storage.driver.base.ThreadPoolDriverBase;
+import com.emc.mongoose.storage.driver.base.NioStorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -37,9 +39,9 @@ import static java.io.File.separatorChar;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileDriver<I extends MutableDataItem, O extends DataIoTask<I>>
-extends ThreadPoolDriverBase<I, O>
-implements Driver<I, O> {
+public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
+extends NioStorageDriverBase<I, O>
+implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -48,7 +50,7 @@ implements Driver<I, O> {
 	private final Map<O, FileChannel> dstOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openDstFileFunc;
 
-	public BasicFileDriver(
+	public BasicFileStorageDriver(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
@@ -118,7 +120,9 @@ implements Driver<I, O> {
 
 			switch(ioType) {
 				case CREATE:
-					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
+					if(srcContainer != null) { // copy mode
+						srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
+					}
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					invokeCreate(item, ioTask, srcChannel, dstChannel);
 					break;
@@ -156,6 +160,8 @@ implements Driver<I, O> {
 		} catch(final IOException e) {
 			ioTask.setStatus(Status.FAIL_IO);
 		} catch(final Throwable e) {
+			// should be Throwable here in order to make the closing block further always reachable
+			// the same effect may be reached using "finally" block after this "catch"
 			e.printStackTrace(System.out);
 			ioTask.setStatus(Status.FAIL_UNKNOWN);
 		}
@@ -188,10 +194,11 @@ implements Driver<I, O> {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
-			if(srcContainer == null) {
+			if(srcChannel == null) {
 				countBytesDone += fileItem.write(dstChannel, contentSize - countBytesDone);
 				ioTask.setCountBytesDone(countBytesDone);
 			} else {
+				// copy mode
 				countBytesDone += srcChannel.transferTo(
 					countBytesDone, contentSize - countBytesDone, dstChannel
 				);
@@ -212,11 +219,14 @@ implements Driver<I, O> {
 			final ByteBuffer buffIn = ((IoWorker) Thread.currentThread())
 				.getThreadLocalBuff(contentSize - countBytesDone);
 			if(verifyFlag) {
-				int currRangeIdx = 0;
 				try {
-					if(fileItem.hasBeenUpdated()) {
-						// TODO verify updated file items
-						throw new IllegalStateException("Not implemented yet");
+					if(fileItem.isUpdated()) {
+						final DataItem currRange = ioTask.getCurrRange();
+						if(currRange != null) {
+							countBytesDone += currRange.readAndVerify(srcChannel, buffIn);
+						} else {
+							throw new IllegalStateException("Null data range");
+						}
 					} else {
 						countBytesDone += fileItem.readAndVerify(srcChannel, buffIn);
 					}
@@ -225,11 +235,9 @@ implements Driver<I, O> {
 					countBytesDone += e.offset;
 					ioTask.setCountBytesDone(countBytesDone);
 					LOG.warn(
-						Markers.MSG,
-						"{}: content mismatch @ offset {}, expected: {}, actual: {} " +
-						"(within byte range which is {})", fileItem.getName(), countBytesDone,
-						String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual),
-						fileItem.isCurrLayerRangeUpdated(currRangeIdx) ? "UPDATED" : "NOT updated"
+						Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+						fileItem.getName(), countBytesDone,
+						String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
 					);
 				}
 			} else {
@@ -243,13 +251,21 @@ implements Driver<I, O> {
 		}
 	}
 
-	private void invokeUpdate(
-		final I fileItem, final O ioTask, final FileChannel dstChannel
-	) throws IOException {
-		// TODO
-		ioTask.startResponse();
-		ioTask.finishResponse();
-		ioTask.setStatus(Status.SUCC);
+	private void invokeUpdate(final I fileItem, final O ioTask, final FileChannel dstChannel)
+	throws IOException {
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
+		if(updatingRangesSize < countBytesDone) {
+			countBytesDone += fileItem.writeUpdates(
+				dstChannel, updatingRangesSize - countBytesDone
+			);
+			ioTask.setCountBytesDone(countBytesDone);
+		} else {
+			fileItem.commitUpdatedRanges(ioTask.getUpdatingRangesMask());
+			ioTask.startResponse();
+			ioTask.finishResponse();
+			ioTask.setStatus(Status.SUCC);
+		}
 	}
 
 	private void invokeDelete(final I fileItem, final O ioTask)

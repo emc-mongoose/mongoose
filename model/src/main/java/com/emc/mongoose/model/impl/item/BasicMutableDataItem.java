@@ -22,10 +22,6 @@ implements MutableDataItem {
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet maskRangesRead = new BitSet(Long.SIZE);
-	protected transient final BitSet maskRangesWrite[] = new BitSet[] {
-		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
-	};
-	protected transient long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicMutableDataItem() {
 		super();
@@ -137,29 +133,9 @@ implements MutableDataItem {
 		return result + (int) (value >>> 1);
 	}*/
 	//
-	private static final double LOG2 = Math.log(2);
-	//
-	public static int getRangeCount(final long size) {
-		return (int) Math.ceil(Math.log(size + 1) / LOG2);
-	}
-	//
-	public static long getRangeOffset(final int i) {
-		return (1 << i) - 1;
-	}
-	//
 	@Override
 	public final long getRangeSize(final int i) {
-		return Math.min(getRangeOffset(i + 1), size) - getRangeOffset(i);
-	}
-	//
-	@Override
-	public final int getCountRangesTotal() {
-		return getRangeCount(size);
-	}
-	//
-	@Override
-	public final int getCurrLayerIndex() {
-		return layerNum;
+		return Math.min(MutableDataItem.getRangeOffset(i + 1), size) - getRangeOffset(i);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////

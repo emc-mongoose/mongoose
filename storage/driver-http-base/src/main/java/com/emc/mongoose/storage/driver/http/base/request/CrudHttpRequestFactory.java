@@ -5,7 +5,7 @@ import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.http.base.HttpDriver;
+import com.emc.mongoose.storage.driver.http.base.HttpStorageDriver;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -23,16 +23,16 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public abstract class CrudHttpRequestFactory<I extends Item, O extends IoTask<I>>
 implements HttpRequestFactory<I, O> {
 
-	protected final HttpDriver<I, O> httpDriver;
+	protected final HttpStorageDriver<I, O> httpDriver;
 	protected final String srcContainer;
 
-	protected CrudHttpRequestFactory(final HttpDriver<I, O> httpDriver, final String srcContainer) {
+	protected CrudHttpRequestFactory(final HttpStorageDriver<I, O> httpDriver, final String srcContainer) {
 		this.httpDriver = httpDriver;
 		this.srcContainer = srcContainer;
 	}
 
 	public static <I extends Item, O extends IoTask<I>> HttpRequestFactory getInstance(
-		final LoadType ioType, final HttpDriver<I, O> httpDriver, final String srcContainer
+		final LoadType ioType, final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 	) {
 		switch(ioType) {
 			case CREATE:
@@ -50,39 +50,42 @@ implements HttpRequestFactory<I, O> {
 		}
 	}
 
-	protected final HttpHeaders initHeaders(final String nodeAddr) {
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-		return httpHeaders;
-	}
-
-	protected final HttpRequest initRequest(
-		final I item, final O ioTask, final HttpHeaders httpHeaders
-	) {
+	@Override
+	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	throws URISyntaxException {
+		final I item = ioTask.getItem();
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = httpDriver.getHttpMethod(ioType);
 		final String dstUriPath = httpDriver.getDstUriPath(item, ioTask);
-		return new DefaultHttpRequest(
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
 		);
+		configureHttpRequest(item, httpHeaders);
+		httpDriver.applyMetaDataHeaders(httpHeaders);
+		httpDriver.applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
+		httpDriver.applyDynamicHeaders(httpHeaders);
+		httpDriver.applySharedHeaders(httpHeaders);
+		return httpRequest;
 	}
+
+	protected abstract void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
+	throws URISyntaxException;
 
 	private final static class CreateRequestFactory<I extends Item, O extends IoTask<I>>
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected CreateRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			if(srcContainer == null) {
 				if(item instanceof DataItem) {
 					try {
@@ -98,7 +101,6 @@ implements HttpRequestFactory<I, O> {
 				httpDriver.applyCopyHeaders(httpHeaders, item);
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			}
-			return httpRequest;
 		}
 	}
 
@@ -106,19 +108,15 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected ReadRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			return httpRequest;
 		}
 	}
 
@@ -126,19 +124,15 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected UpdateRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			// TODO cast to MutableDataItem, set ranges headers conditionally
-			return httpRequest;
 		}
 	}
 
@@ -146,19 +140,15 @@ implements HttpRequestFactory<I, O> {
 	extends CrudHttpRequestFactory<I, O> {
 
 		protected DeleteRequestFactory(
-			final HttpDriver<I, O> httpDriver, final String srcContainer
+			final HttpStorageDriver<I, O> httpDriver, final String srcContainer
 		) {
 			super(httpDriver, srcContainer);
 		}
 
 		@Override
-		public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+		protected final void configureHttpRequest(final I item, final HttpHeaders httpHeaders)
 		throws URISyntaxException {
-			final I item = ioTask.getItem();
-			final HttpHeaders httpHeaders = initHeaders(nodeAddr);
-			final HttpRequest httpRequest = initRequest(item, ioTask, httpHeaders);
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			return httpRequest;
 		}
 	}
 }

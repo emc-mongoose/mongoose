@@ -12,7 +12,7 @@ import io.netty.channel.ChannelHandler;
 public final class HttpS3ClientHandler<I extends Item, O extends IoTask<I>>
 extends HttpClientHandlerBase<I, O> {
 	
-	public HttpS3ClientHandler(final HttpS3Driver<I, O> driver) {
+	public HttpS3ClientHandler(final HttpS3StorageDriver<I, O> driver) {
 		super(driver);
 	}
 }

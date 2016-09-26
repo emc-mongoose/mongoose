@@ -18,9 +18,9 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.io.task.IoTaskFactory;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.model.api.load.Generator;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.load.LoadGenerator;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.impl.item.BasicItemNameInput;
@@ -44,15 +44,15 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 11.07.16.
  */
-public class BasicGenerator<I extends Item, O extends IoTask<I>>
+public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements Generator<I, O>, Output<I> {
+implements LoadGenerator<I, O>, Output<I> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int BATCH_SIZE = 0x1000;
 
-	private final List<Driver<I, O>> drivers;
-	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
+	private final List<StorageDriver<I, O>> drivers;
+	private final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Thread worker;
@@ -66,50 +66,84 @@ implements Generator<I, O>, Output<I> {
 	private final String runId;
 
 	private long producedItemsCount = 0;
-	
-	@Override
-	public final void put(final I item)
-	throws IOException {
-		final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
-		final Driver<I, O> nextDriver = getNextDriver();
-		nextDriver.put(nextIoTask);
-	}
-	
-	@Override
-	public final int put(final List<I> buffer, final int from, final int to)
-	throws IOException {
-		if(to > from) {
-			final List<O> ioTasks = new ArrayList<>(to - from);
-			for(int i = from; i < to; i ++) {
-				ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
+
+	public BasicLoadGenerator(
+		final String runId, final List<StorageDriver<I, O>> drivers,
+		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory,
+		final ItemConfig itemConfig, final LoadConfig loadConfig
+	) throws UserShootHisFootException {
+
+		this.runId = runId;
+		this.drivers = drivers;
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+
+		try {
+			final long l = limitConfig.getCount();
+			this.countLimit = l > 0 ? l : Long.MAX_VALUE;
+			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
+			this.isCircular = loadConfig.getCircular();
+			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
+			final String t = itemConfig.getOutputConfig().getContainer();
+			if(t == null || t.isEmpty()) {
+				dstContainer = runId;
+			} else {
+				dstContainer = t;
 			}
-			final Driver<I, O> nextDriver = getNextDriver();
-			nextDriver.put(ioTasks, 0, ioTasks.size());
+			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
+
+			final NamingConfig namingConfig = itemConfig.getNamingConfig();
+			final ItemNamingType namingType = ItemNamingType.valueOf(
+				namingConfig.getType().toUpperCase()
+			);
+			final String namingPrefix = namingConfig.getPrefix();
+			final int namingLength = namingConfig.getLength();
+			final int namingRadix = namingConfig.getRadix();
+			final long namingOffset = namingConfig.getOffset();
+			final BasicItemNameInput namingInput = new BasicItemNameInput(
+				namingType, namingPrefix, namingLength, namingRadix, namingOffset
+			);
+
+			this.ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
+			switch(ioType) {
+				case CREATE:
+					// TODO copy mode
+					if(itemFactory instanceof BasicMutableDataItemFactory) {
+						this.itemInput = new NewDataItemInput(
+							itemFactory, pathInput, namingInput,
+							itemConfig.getDataConfig().getSize()
+						);
+					} else {
+						this.itemInput = null; // TODO
+					}
+					break;
+				case READ:
+				case UPDATE:
+				case DELETE:
+					final String itemInputFile = itemConfig.getInputConfig().getFile();
+					if(itemInputFile != null && !itemInputFile.isEmpty()) {
+						this.itemInput = new CsvFileItemInput<>(
+							Paths.get(itemInputFile), itemFactory
+						);
+					} else {
+						// TODO use container input
+						this.itemInput = null;
+					}
+					break;
+				default:
+					throw new UserShootHisFootException();
+			}
+		} catch(final Exception e) {
+			throw new UserShootHisFootException(e);
 		}
-		return to - from;
+
+		this.ioTaskFactory = ioTaskFactory;
+
+		worker = new Thread(new GeneratorTask(), "generator");
+		worker.setDaemon(true);
 	}
-	
-	@Override
-	public final int put(final List<I> buffer)
-	throws IOException {
-		final int n = buffer.size();
-		final List<O> ioTasks = new ArrayList<>(n);
-		for(final I nextItem : buffer) {
-			ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
-		}
-		final Driver<I, O> nextDriver = getNextDriver();
-		nextDriver.put(ioTasks, 0, n);
-		return n;
-	}
-	
-	@Override
-	public final Input<I> getInput()
-	throws IOException {
-		return itemInput;
-	}
-	
+
 	private final class GeneratorTask
-	implements Runnable {
+		implements Runnable {
 
 		private final Random rnd = new Random();
 
@@ -164,7 +198,7 @@ implements Generator<I, O>, Output<I> {
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e, "Failed to transfer the data items, count = {}, " +
-								"batch size = {}, batch offset = {}", producedItemsCount, n, m
+							"batch size = {}, batch offset = {}", producedItemsCount, n, m
 						);
 					}
 				}
@@ -186,83 +220,52 @@ implements Generator<I, O>, Output<I> {
 		}
 	}
 
-	public BasicGenerator(
-		final String runId, final List<Driver<I, O>> drivers, final ItemFactory<I> itemFactory,
-		final IoTaskFactory<I, O> ioTaskFactory, final ItemConfig itemConfig,
-		final LoadConfig loadConfig
-	) throws UserShootHisFootException {
-		
-		this.runId = runId;
-		this.drivers = drivers;
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-		
-		try {
-			final long l = limitConfig.getCount();
-			this.countLimit = l > 0 ? l : Long.MAX_VALUE;
-			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
-			this.isCircular = loadConfig.getCircular();
-			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
-			final String t = itemConfig.getOutputConfig().getContainer();
-			if(t == null || t.isEmpty()) {
-				dstContainer = runId;
-			} else {
-				dstContainer = t;
+	@Override
+	public final void put(final I item)
+	throws IOException {
+		final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
+		final StorageDriver<I, O> nextDriver = getNextDriver();
+		nextDriver.put(nextIoTask);
+	}
+	
+	@Override
+	public final int put(final List<I> buffer, final int from, final int to)
+	throws IOException {
+		if(to > from) {
+			final List<O> ioTasks = new ArrayList<>(to - from);
+			for(int i = from; i < to; i ++) {
+				ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
 			}
-			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
-			
-			final NamingConfig namingConfig = itemConfig.getNamingConfig();
-			final ItemNamingType namingType = ItemNamingType.valueOf(namingConfig.getType().toUpperCase());
-			final String namingPrefix = namingConfig.getPrefix();
-			final int namingLength = namingConfig.getLength();
-			final int namingRadix = namingConfig.getRadix();
-			final long namingOffset = namingConfig.getOffset();
-			final BasicItemNameInput namingInput = new BasicItemNameInput(
-				namingType, namingPrefix, namingLength, namingRadix, namingOffset
-			);
-			
-			this.ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
-			switch(ioType) {
-				case CREATE:
-					// TODO copy mode
-					if(itemFactory instanceof BasicMutableDataItemFactory) {
-						this.itemInput = new NewDataItemInput(
-							itemFactory, pathInput, namingInput, itemConfig.getDataConfig().getSize()
-						);
-					} else {
-						this.itemInput = null; // TODO
-					}
-					break;
-				case READ:
-				case UPDATE:
-				case DELETE:
-					final String itemInputFile = itemConfig.getInputConfig().getFile();
-					if(itemInputFile != null && !itemInputFile.isEmpty()) {
-						this.itemInput = new CsvFileItemInput<>(
-							Paths.get(itemInputFile), itemFactory
-						);
-					} else {
-						// TODO use container input
-						this.itemInput = null;
-					}
-					break;
-				default:
-					throw new UserShootHisFootException();
-			}
-		} catch(final Exception e) {
-			throw new UserShootHisFootException(e);
+			final StorageDriver<I, O> nextDriver = getNextDriver();
+			nextDriver.put(ioTasks, 0, ioTasks.size());
 		}
-		
-		this.ioTaskFactory = ioTaskFactory;
-		
-		worker = new Thread(new GeneratorTask(), "generator");
-		worker.setDaemon(true);
+		return to - from;
+	}
+	
+	@Override
+	public final int put(final List<I> buffer)
+	throws IOException {
+		final int n = buffer.size();
+		final List<O> ioTasks = new ArrayList<>(n);
+		for(final I nextItem : buffer) {
+			ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
+		}
+		final StorageDriver<I, O> nextDriver = getNextDriver();
+		nextDriver.put(ioTasks, 0, n);
+		return n;
+	}
+	
+	@Override
+	public final Input<I> getInput()
+	throws IOException {
+		return itemInput;
 	}
 
 	@Override
-	public final void register(final Monitor<I, O> monitor)
+	public final void register(final LoadMonitor<I, O> monitor)
 	throws IllegalStateException {
 		if(monitorRef.compareAndSet(null, monitor)) {
-			for(final Driver<I, O> driver : drivers) {
+			for(final StorageDriver<I, O> driver : drivers) {
 				driver.register(monitor);
 			}
 		} else {
@@ -271,7 +274,7 @@ implements Generator<I, O>, Output<I> {
 	}
 
 	private final AtomicLong rrc = new AtomicLong(0);
-	protected Driver<I, O> getNextDriver() {
+	protected StorageDriver<I, O> getNextDriver() {
 		return drivers.get((int) (rrc.incrementAndGet() % drivers.size()));
 	}
 
@@ -283,7 +286,7 @@ implements Generator<I, O>, Output<I> {
 
 	@Override
 	protected void doShutdown() {
-		doInterrupt();
+		interrupt();
 	}
 
 	@Override

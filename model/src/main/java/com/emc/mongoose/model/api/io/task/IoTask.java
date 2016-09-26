@@ -3,10 +3,13 @@ package com.emc.mongoose.model.api.io.task;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.util.LoadType;
 
+import java.io.Externalizable;
+
 /**
  Created by kurila on 11.07.16.
  */
-public interface IoTask<I extends Item> {
+public interface IoTask<I extends Item>
+extends Externalizable {
 
 	enum Status {
 		PENDING(0, "Pending"),

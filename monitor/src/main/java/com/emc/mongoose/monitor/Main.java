@@ -4,11 +4,12 @@ import com.emc.mongoose.model.api.StorageType;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
+import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskFactory;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
-import com.emc.mongoose.storage.driver.fs.BasicFileDriver;
-import com.emc.mongoose.storage.driver.http.s3.HttpS3Driver;
+import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
+import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriver;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
@@ -22,12 +23,11 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.generator.BasicGenerator;
+import com.emc.mongoose.generator.BasicLoadGenerator;
 import com.emc.mongoose.model.api.io.task.IoTaskFactory;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.model.api.load.Generator;
-import com.emc.mongoose.model.impl.io.task.BasicDataIoTaskFactory;
+import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 /**
  Created by kurila on 11.07.16.
  */
@@ -83,7 +84,7 @@ public class Main {
 		final Logger log = LogManager.getLogger();
 		log.info(Markers.MSG, "Configuration loaded");
 		
-		final List<Driver> drivers = new ArrayList<>();
+		final List<StorageDriver> drivers = new ArrayList<>();
 		if(StorageType.FS.equals(storageType)) {
 			log.info(Markers.MSG, "Work on the filesystem");
 			if(ItemType.CONTAINER.equals(itemType)) {
@@ -92,7 +93,7 @@ public class Main {
 			} else {
 				log.info(Markers.MSG, "Work on the files");
 				drivers.add(
-					new BasicFileDriver<>(
+					new BasicFileStorageDriver<>(
 						runId, storageConfig.getAuthConfig(), loadConfig,
 						inputConfig.getContainer(), itemConfig.getDataConfig().getVerify(),
 						config.getIoConfig().getBufferConfig().getSize()
@@ -108,7 +109,7 @@ public class Main {
 				switch(apiType.toLowerCase()) {
 					case "s3" :
 						drivers.add(
-							new HttpS3Driver<>(
+							new HttpS3StorageDriver<>(
 								runId, loadConfig, storageConfig, inputConfig.getContainer(),
 								itemConfig.getDataConfig().getVerify(), config.getSocketConfig()
 							)
@@ -126,7 +127,7 @@ public class Main {
 			// TODO container I/O tasks factory
 			ioTaskFactory = null;
 		} else {
-			ioTaskFactory = new BasicDataIoTaskFactory<>();
+			ioTaskFactory = new BasicMutableDataIoTaskFactory<>();
 		}
 
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
@@ -149,16 +150,16 @@ public class Main {
 				log.info(Markers.MSG, "Work on the mutable data items");
 			}
 			
-			final List<Generator> generators = new ArrayList<>();
+			final List<LoadGenerator> generators = new ArrayList<>();
 			
 			generators.add(
-				new BasicGenerator(
+				new BasicLoadGenerator(
 					runId, drivers, itemFactory, ioTaskFactory, itemConfig, loadConfig
 				)
 			);
 			log.info(Markers.MSG, "Load generators initialized");
 			
-			try(final Monitor monitor = new BasicMonitor(runId, generators, loadConfig)) {
+			try(final LoadMonitor monitor = new BasicLoadMonitor(runId, generators, loadConfig)) {
 				
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {
