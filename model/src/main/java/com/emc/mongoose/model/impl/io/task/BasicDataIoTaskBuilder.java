@@ -22,6 +22,6 @@ implements DataIoTaskBuilder<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem, final String dstPath) {
-		return (O) new BasicDataIoTask<I>(ioType, dataItem, dstPath, rangesConfig);
+		return (O) new BasicDataIoTask<>(ioType, dataItem, dstPath, rangesConfig);
 	}
 }

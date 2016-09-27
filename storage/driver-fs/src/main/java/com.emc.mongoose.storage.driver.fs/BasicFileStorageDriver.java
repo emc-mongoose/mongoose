@@ -218,19 +218,30 @@ implements StorageDriver<I, O> {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize) {
-			final ByteBuffer buffIn = ((IoWorker) Thread.currentThread())
-				.getThreadLocalBuff(contentSize - countBytesDone);
 			if(verifyFlag) {
 				try {
 					if(fileItem.isUpdated()) {
 						final DataItem currRange = ioTask.getCurrRange();
+						final int nextRangeIdx = ioTask.getCurrRangeIdx() + 1;
+						final long nextRangeOffset = getRangeOffset(nextRangeIdx);
 						if(currRange != null) {
-							countBytesDone += currRange.readAndVerify(srcChannel, buffIn);
+							countBytesDone += currRange.readAndVerify(
+								srcChannel,
+								((IoWorker) Thread.currentThread())
+									.getThreadLocalBuff(nextRangeOffset - countBytesDone)
+							);
+							if(countBytesDone == nextRangeOffset) {
+								ioTask.setCurrRangeIdx(nextRangeIdx);
+							}
 						} else {
 							throw new IllegalStateException("Null data range");
 						}
 					} else {
-						countBytesDone += fileItem.readAndVerify(srcChannel, buffIn);
+						countBytesDone += fileItem.readAndVerify(
+							srcChannel,
+							((IoWorker) Thread.currentThread())
+								.getThreadLocalBuff(contentSize - countBytesDone)
+						);
 					}
 				} catch(final DataCorruptionException e) {
 					ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
@@ -243,7 +254,10 @@ implements StorageDriver<I, O> {
 					);
 				}
 			} else {
-				countBytesDone += srcChannel.read(buffIn);
+				countBytesDone += srcChannel.read(
+					((IoWorker) Thread.currentThread())
+						.getThreadLocalBuff(contentSize - countBytesDone)
+				);
 			}
 			ioTask.setCountBytesDone(countBytesDone);
 		} else {
@@ -257,32 +271,33 @@ implements StorageDriver<I, O> {
 	throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
-		if(updatingRangesSize > 0 && updatingRangesSize < countBytesDone) {
+		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
 			DataItem updatingRange;
 			int currRangeIdx = 0;
 			while(null == (updatingRange = ioTask.getCurrRangeUpdate())) {
 				currRangeIdx = ioTask.getCurrRangeIdx();
 				if(currRangeIdx < getRangeCount(fileItem.size())) {
-					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+					ioTask.setCurrRangeIdx(++ currRangeIdx);
 				} else {
 					break;
 				}
 			}
 			if(updatingRange != null) {
 				final long updatingRangeSize = updatingRange.size();
+				dstChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
 				countBytesDone += updatingRange.write(
 					dstChannel, updatingRange.size() - countBytesDone
 				);
 				if(countBytesDone == updatingRangeSize) {
-					countBytesDone = 0;
 					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+					ioTask.setCountBytesDone(0);
 				}
+			} else {
+				ioTask.setCountBytesDone(updatingRangesSize);
 			}
-			ioTask.setCountBytesDone(countBytesDone);
 		} else {
 			ioTask.startResponse();
 			ioTask.finishResponse();
-			ioTask.setCountBytesDone(updatingRangesSize);
 			fileItem.commitUpdatedRanges(ioTask.getUpdRangesMaskPair());
 			ioTask.setStatus(Status.SUCC);
 		}
