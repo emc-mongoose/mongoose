@@ -1,24 +1,23 @@
-package com.emc.mongoose.storage.driver.fs;
+package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.model.util.IoWorker;
+import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.storage.driver.base.DriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
+
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -27,23 +26,24 @@ import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 19.07.16.
+ The multi-threaded non-blocking I/O storage driver.
  */
-public abstract class FsDriverBase<I extends Item, O extends IoTask<I>>
-extends DriverBase<I, O>
-implements Driver<I, O> {
+public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends StorageDriverBase<I, O>
+implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int BATCH_SIZE = 0x80;
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
+	private final List<NioWorkerTask> ioWorkerTasks;
 	private final BlockingQueue<O> ioTaskQueue;
 
-	public FsDriverBase(
+	public NioStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final String srcContainer, final SizeInBytes ioBuffSize
+		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
-		super(runId, storageConfig, loadConfig, srcContainer);
+		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
 		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {
@@ -54,79 +54,93 @@ implements Driver<I, O> {
 		}
 		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
+		ioWorkerTasks = new ArrayList<>(ioWorkerCount);
+		for(int i = 0; i < ioWorkerCount; i ++) {
+			ioWorkerTasks.add(new NioWorkerTask());
+		}
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new IoWorker.Factory(
+			new com.emc.mongoose.model.util.IoWorker.Factory(
 				this.runId + "-ioWorker", (int) ioBuffSize.getMin(), (int) ioBuffSize.getMax()
 			)
 		);
 	}
 
-	private final class IoTaskSchedule
+	/**
+	 The class represents the non-blocking I/O task execution algorithm.
+	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
+	 So the I/O task may be invoked multiple times (in the reentrant manner).
+	 */
+	private final class NioWorkerTask
 	implements Runnable {
 
-		private final List<O> ioTaskBuff = new ArrayList<>(BATCH_SIZE);
+		private final int ioTaskBuffCapacity = Math.max(
+			1, concurrencyLevel / ThreadUtil.getAvailableConcurrencyLevel()
+		);
+		@SuppressWarnings("unchecked")
+		private final List<O> ioTaskBuff = new ArrayList<>(ioTaskBuffCapacity);
+
+		private volatile boolean idleFlag = false;
+
+		public final boolean isIdle() {
+			return idleFlag;
+		}
 
 		@Override
 		public final void run() {
-			final Thread currentThread = Thread.currentThread();
-			IoTask.Status nextStatus;
-			try {
-				while(!FsDriverBase.this.isInterrupted() && !currentThread.isInterrupted()) {
-					ioTaskBuff.clear();
-					ioTaskQueue.drainTo(ioTaskBuff, BATCH_SIZE);
-					for(final O ioTask : ioTaskBuff) {
-						executeIoTask(ioTask);
-						nextStatus = ioTask.getStatus();
-						if(nextStatus.equals(IoTask.Status.ACTIVE)) {
-							ioTaskQueue.put(ioTask);
-						} else {
-							ioTaskCompleted(ioTask);
+
+			Iterator<O> ioTaskIterator;
+			int ioTaskBuffSize;
+			O ioTask;
+
+			while(!NioStorageDriverBase.this.isInterrupted()) {
+
+				ioTaskBuffSize = ioTaskBuff.size();
+				if(ioTaskBuffSize < ioTaskBuffCapacity) {
+					ioTaskBuffSize += ioTaskQueue.drainTo(
+						ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
+					);
+				}
+
+				if(ioTaskBuffSize > 0) {
+					idleFlag = false;
+					ioTaskIterator = ioTaskBuff.iterator();
+					while(ioTaskIterator.hasNext()) {
+						ioTask = ioTaskIterator.next();
+						// perform non blocking I/O for the task
+						invokeNio(ioTask);
+						// remove the task from the buffer if it is not active more
+						if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+							ioTaskIterator.remove();
+							try {
+								ioTaskCompleted(ioTask);
+							} catch(final IOException e) {
+								LogUtil.exception(LOG, Level.WARN, e,
+									"Failed to invoke the I/O task completion callback"
+								);
+							}
 						}
 					}
+				} else {
+					idleFlag = true;
 				}
-			} catch(final InterruptedException | IOException ignored) {
 			}
 		}
 	}
 
 	/**
-	 Reentrant method which performs create/read/etc I/O operation.
+	 Reentrant method which decorates the actual non-blocking create/read/etc I/O operation.
 	 May change the task status or not change if the I/O operation is not completed during this
 	 particular invocation
 	 @param ioTask
 	 */
-	private void executeIoTask(final O ioTask) {
-		if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
-			ioTask.startRequest();
-			ioTask.startResponse();
-		}
-		try {
-			executeIoTaskActually(ioTask);
-		} catch(final FileNotFoundException e) {
-			ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
-		} catch(final AccessDeniedException e) {
-			ioTask.setStatus(IoTask.Status.RESP_FAIL_AUTH);
-		} catch(final ClosedChannelException e) {
-			ioTask.setStatus(IoTask.Status.CANCELLED);
-		} catch(final IOException e) {
-			ioTask.setStatus(IoTask.Status.FAIL_IO);
-		} catch(final Throwable e) {
-			e.printStackTrace(System.out);
-			ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
-		}
-	}
-
-	protected abstract void executeIoTaskActually(final O ioTask)
-	throws Throwable;
+	protected abstract void invokeNio(final O ioTask);
 	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(int i = 0; i < ioWorkerCount; i ++) {
-			ioTaskExecutor.submit(new IoTaskSchedule());
-		}
+		ioWorkerTasks.forEach(ioTaskExecutor::submit);
 	}
 
 	@Override
@@ -143,12 +157,28 @@ implements Driver<I, O> {
 	}
 
 	@Override
-	public boolean isFullThrottleEntered() {
+	public final boolean isIdle() {
+		if(ioTaskQueue.isEmpty()) {
+			for(final NioWorkerTask ioWorkerTask : ioWorkerTasks) {
+				if(!ioWorkerTask.isIdle()) {
+					return false;
+				}
+			}
+			return true; // I/O task queue is empty and all I/O workers are idle
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public final boolean isFullThrottleEntered() {
+		// TODO
 		return false;
 	}
 
 	@Override
-	public boolean isFullThrottleExited() {
+	public final boolean isFullThrottleExited() {
+		// TODO
 		return false;
 	}
 

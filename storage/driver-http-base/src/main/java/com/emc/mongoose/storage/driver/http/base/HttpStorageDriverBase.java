@@ -2,31 +2,36 @@ package com.emc.mongoose.storage.driver.http.base;
 
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.Balancer;
-import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
+import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
-import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
 import com.emc.mongoose.model.impl.load.BasicBalancer;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.base.DriverBase;
+import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
+import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.request.CrudHttpRequestFactory;
 import com.emc.mongoose.storage.driver.http.base.request.HttpRequestFactory;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -34,8 +39,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
@@ -52,38 +55,52 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
+
 /**
  Created by kurila on 29.07.16.
+ Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
-public abstract class HttpDriverBase<I extends Item, O extends IoTask<I>>
-extends DriverBase<I, O>
-implements HttpDriver<I, O> {
+public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends StorageDriverBase<I, O>
+implements HttpStorageDriver<I, O> {
 	
-	private final static Logger LOG = LogManager.getLogger();
-	
+	private static final Logger LOG = LogManager.getLogger();
+	private static final Map<String, Input<String>> HEADER_NAME_INPUTS = new ConcurrentHashMap<>();
+	private static final Map<String, Input<String>> HEADER_VALUE_INPUTS = new ConcurrentHashMap<>();
+	private static final Function<String, Input<String>> PATTERN_INPUT_FUNC = headerName -> {
+		try {
+			return new AsyncPatternDefinedInput(headerName);
+		} catch(final UserShootHisFootException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create the pattern defined input");
+			return null;
+		}
+	};
+
 	private final String storageNodeAddrs[];
 	private final int storageNodePort;
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
+	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	protected final SecretKeySpec secretKey;
 	
 	private final Balancer<String> storageNodeBalancer;
 	private final EventLoopGroup workerGroup;
 	protected final Bootstrap bootstrap;
 
-	private final ConcurrentMap<LoadType, HttpRequestFactory<I, O>>
+	private final Map<LoadType, HttpRequestFactory<I, O>>
 		requestFactoryMap = new ConcurrentHashMap<>();
-	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapper;
+	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapFunc;
 
-	protected HttpDriverBase(
+	protected HttpStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final SocketConfig socketConfig
+		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer);
+		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
 		try {
 			if(secret == null) {
 				secretKey = null;
@@ -120,61 +137,24 @@ implements HttpDriver<I, O> {
 		bootstrap.handler(
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
 		);
-		requestFactoryMapper = loadType -> CrudHttpRequestFactory.getInstance(
-			loadType, HttpDriverBase.this, srcContainer
+		requestFactoryMapFunc = loadType -> CrudHttpRequestFactory.getInstance(
+			loadType, HttpStorageDriverBase.this, srcContainer
 		);
+
+		final HttpConfig httpConfig = storageConfig.getHttpConfig();
+		final Map<String, String> headersMap = httpConfig.getHeaders();
+		String headerValue;
+		for(final String headerName : headersMap.keySet()) {
+			headerValue = headersMap.get(headerName);
+			if(-1 < headerName.indexOf(PATTERN_CHAR) || -1 < headerValue.indexOf(PATTERN_CHAR)) {
+				dynamicHeaders.add(headerName, headerValue);
+			} else {
+				sharedHeaders.add(headerName, headerValue);
+			}
+		}
 	}
 	
 	protected abstract HttpClientHandlerBase<I, O> getApiSpecificHandler();
-	
-	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
-	throws URISyntaxException {
-		final I item = ioTask.getItem();
-		final LoadType ioType = ioTask.getLoadType();
-		final HttpMethod httpMethod = getHttpMethod(ioType);
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		final String dstUriPath = getDstUriPath(item, ioTask);
-		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
-		);
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-		switch(ioType) {
-			case CREATE:
-				if(srcContainer == null) {
-					if(item instanceof DataItem) {
-						try {
-							httpHeaders.set(
-								HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size()
-							);
-						} catch(final IOException ignored) {
-						}
-					} else {
-						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-					}
-				} else {
-					applyCopyHeaders(httpHeaders, item);
-					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-				}
-				break;
-			case READ:
-				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-				break;
-			case UPDATE:
-				if(item instanceof MutableDataItem) {
-					// TODO set ranges headers conditionally
-				} else {
-					throw new IllegalStateException();
-				}
-				break;
-			case DELETE:
-				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-				break;
-		}
-		applyMetaDataHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
-		return httpRequest;
-	}
 
 	@Override
 	public HttpMethod getHttpMethod(final LoadType loadType) {
@@ -205,18 +185,74 @@ implements HttpDriver<I, O> {
 			return objPath + SLASH + object.getName();
 		}
 	}
-	
-	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		// TODO apply dynamic headers also
+
+	@Override
+	public final void applySharedHeaders(final HttpHeaders httpHeaders) {
+		String sharedHeaderName;
+		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
+			sharedHeaderName = sharedHeader.getKey();
+			if(!httpHeaders.contains(sharedHeaderName)) {
+				httpHeaders.add(sharedHeaderName, sharedHeader.getValue());
+			}
+		}
 	}
-	
-	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
+
+	@Override
+	public final void applyDynamicHeaders(final HttpHeaders httpHeaders) {
+
+		String headerName;
+		String headerValue;
+		Input<String> headerNameInput;
+		Input<String> headerValueInput;
+
+		for(final Map.Entry<String, String> nextHeader : dynamicHeaders) {
+
+			headerName = nextHeader.getKey();
+			// header name is a generator pattern
+			headerNameInput = HEADER_NAME_INPUTS.computeIfAbsent(headerName, PATTERN_INPUT_FUNC);
+			if(headerNameInput == null) {
+				continue;
+			}
+			// spin while header name generator is not ready
+			try {
+				while(null == (headerName = headerNameInput.get())) {
+					LockSupport.parkNanos(1_000_000);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to calculate the header name");
+				continue;
+			}
+
+			headerValue = nextHeader.getValue();
+			// header value is a generator pattern
+			headerValueInput = HEADER_VALUE_INPUTS.computeIfAbsent(headerValue, PATTERN_INPUT_FUNC);
+			if(headerValueInput == null) {
+				continue;
+			}
+			// spin while header value generator is not ready
+			try {
+				while(null == (headerValue = headerValueInput.get())) {
+					LockSupport.parkNanos(1_000_000);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to calculate the header value");
+				continue;
+			}
+			// put the generated header value into the request
+			httpHeaders.set(headerName, headerValue);
+		}
 	}
-	
-	protected abstract void applyAuthHeaders(
+
+	@Override
+	public void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
+	}
+
+	@Override
+	public void applyAuthHeaders(
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
-	);
-	
+	) {
+	}
+
 	private final class HttpRequestFutureTask
 	extends FutureTaskBase
 	implements GenericFutureListener<Future<Void>> {
@@ -268,7 +304,7 @@ implements HttpDriver<I, O> {
 			try {
 				ioTask.startRequest();
 				final HttpRequest httpRequest = requestFactoryMap
-					.computeIfAbsent(ioType, requestFactoryMapper)
+					.computeIfAbsent(ioType, requestFactoryMapFunc)
 					.getHttpRequest(ioTask, bestNode);
 				channel.write(httpRequest);
 				if(LoadType.CREATE.equals(ioType)) {
@@ -282,26 +318,8 @@ implements HttpDriver<I, O> {
 				} else if(LoadType.UPDATE.equals(ioType)) {
 					if(item instanceof MutableDataItem) {
 						final MutableDataItem mdi = (MutableDataItem) item;
-						final DataIoTask dataIoTask = (DataIoTask) ioTask;
-						if(mdi.hasScheduledUpdates()) {
-							long nextRangeOffset, nextRangeSize;
-							BasicDataItem nextUpdatedRange;
-							for(int i = 0; i < mdi.getCountRangesTotal(); i ++) {
-								if(mdi.isCurrLayerRangeUpdating(i)) {
-									nextRangeOffset = BasicMutableDataItem.getRangeOffset(i);
-									nextRangeSize = mdi.getRangeSize(i);
-									nextUpdatedRange = new BasicDataItem(
-										(BasicDataItem) mdi, nextRangeOffset, nextRangeSize, true
-									);
-									channel
-										.write(new DataItemFileRegion<>(nextUpdatedRange))
-										.addListener(this);
-									dataIoTask.setCountBytesDone(
-										dataIoTask.getCountBytesDone() + nextRangeSize
-									);
-								}
-							}
-						}
+						final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+						// TODO
 					}
 				}
 			} catch(final IOException e) {
@@ -343,14 +361,22 @@ implements HttpDriver<I, O> {
 	throws InterruptedException {
 		return false;
 	}
-	
+
 	@Override
-	public boolean isFullThrottleEntered() {
+	public final boolean isIdle() {
+		// TODO
 		return false;
 	}
 	
 	@Override
-	public boolean isFullThrottleExited() {
+	public final boolean isFullThrottleEntered() {
+		// TODO
+		return false;
+	}
+	
+	@Override
+	public final boolean isFullThrottleExited() {
+		// TODO
 		return false;
 	}
 	
@@ -387,7 +413,7 @@ implements HttpDriver<I, O> {
 			try {
 				secretKey.destroy();
 			} catch(final DestroyFailedException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the secret key");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clear the secret key");
 			}
 		}
 		storageNodeBalancer.close();

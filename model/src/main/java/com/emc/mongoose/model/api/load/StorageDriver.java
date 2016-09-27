@@ -11,8 +11,13 @@ import java.rmi.RemoteException;
 /**
  Created on 11.07.16.
  */
-public interface Driver<I extends Item, O extends IoTask<I>>
-extends Daemon, Output<O>, Registry<Monitor<I, O>>, Remote {
+public interface StorageDriver<I extends Item, O extends IoTask<I>>
+extends Daemon, Output<O>, Remote {
+	
+	void register(final LoadMonitor<I, O> monitor);
+
+	boolean isIdle()
+	throws RemoteException;
 
 	boolean isFullThrottleEntered()
 	throws RemoteException;

@@ -9,7 +9,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+
+import static java.nio.file.StandardOpenOption.READ;
 
 /**
  Created by kurila on 31.05.16.
@@ -17,10 +18,10 @@ import java.nio.file.StandardOpenOption;
 public class ContentSourceUtil {
 
 	public static ContentSource clone(ContentSource anotherContentSrc) {
-		if(anotherContentSrc instanceof FileContentSource) {
-			return new FileContentSource((FileContentSource) anotherContentSrc);
-		} else if(anotherContentSrc instanceof SeedContentSource) {
+		if(anotherContentSrc instanceof SeedContentSource) {
 			return new SeedContentSource((SeedContentSource) anotherContentSrc);
+		} else if(anotherContentSrc instanceof BasicContentSource) {
+			return new BasicContentSource((BasicContentSource) anotherContentSrc);
 		} else {
 			throw new IllegalStateException("Unhandled content source type");
 		}
@@ -30,6 +31,8 @@ public class ContentSourceUtil {
 		final String contentFilePath, final String seed, final SizeInBytes ringSize
 	) throws IOException, IllegalStateException {
 		final ContentSource instance;
+		final int ringSizeBytes = (int) ringSize.get() > Integer.MAX_VALUE ?
+			Integer.MAX_VALUE : (int) ringSize.get();
 		if(contentFilePath != null && !contentFilePath.isEmpty()) {
 			final Path p = Paths.get(contentFilePath);
 			if(Files.exists(p) && !Files.isDirectory(p) &&
@@ -37,11 +40,10 @@ public class ContentSourceUtil {
 				final File f = p.toFile();
 				final long fileSize = f.length();
 				if(fileSize > 0) {
-					try(
-						final ReadableByteChannel rbc = Files
-							.newByteChannel(p, StandardOpenOption.READ)
-					) {
-						instance = new FileContentSource(rbc, fileSize);
+					try(final ReadableByteChannel rbc = Files.newByteChannel(p, READ)) {
+						instance = new BasicContentSource(
+							rbc, fileSize > ringSizeBytes ? ringSizeBytes : (int) fileSize
+						);
 					}
 				} else {
 					throw new IllegalStateException(
@@ -55,7 +57,7 @@ public class ContentSourceUtil {
 				);
 			}
 		} else {
-			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSize.get());
+			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSizeBytes);
 		}
 		return instance;
 	}

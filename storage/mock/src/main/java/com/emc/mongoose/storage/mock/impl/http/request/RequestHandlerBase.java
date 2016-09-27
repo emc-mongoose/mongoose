@@ -74,7 +74,6 @@ extends ChannelInboundHandlerAdapter {
 	private final StorageMockClient<T> remoteStorage;
 	private final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
-	private final ContentSource contentSource;
 	private final String apiClsName;
 
 	private final int prefixLength, idRadix;
@@ -95,9 +94,7 @@ extends ChannelInboundHandlerAdapter {
 
 	protected RequestHandlerBase(
 		final LimitConfig limitConfig, final NamingConfig namingConfig,
-		final StorageMock<T> localStorage,
-		final StorageMockClient<T> remoteStorage,
-		final ContentSource contentSource
+		final StorageMock<T> localStorage, final StorageMockClient<T> remoteStorage
 	) throws RemoteException {
 		this.rateLimit = limitConfig.getRate();
 		final String t = namingConfig.getPrefix();
@@ -105,7 +102,6 @@ extends ChannelInboundHandlerAdapter {
 		this.idRadix = namingConfig.getRadix();
 		this.remoteStorage = remoteStorage;
 		this.localStorage = localStorage;
-		this.contentSource = contentSource;
 		this.ioStats = localStorage.getStats();
 		this.apiClsName = getClass().getSimpleName();
 	}
@@ -384,10 +380,10 @@ extends ChannelInboundHandlerAdapter {
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		HttpUtil.setContentLength(response, size);
 		ctx.write(response);
-		if(object.hasBeenUpdated()) {
-			ctx.write(new UpdatedFullDataFileRegion<>(object, contentSource));
+		if(object.isUpdated()) {
+			ctx.write(new UpdatedFullDataFileRegion<>(object));
 		} else {
-			ctx.write(new DataItemFileRegion<>(object, contentSource));
+			ctx.write(new DataItemFileRegion<>(object));
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}

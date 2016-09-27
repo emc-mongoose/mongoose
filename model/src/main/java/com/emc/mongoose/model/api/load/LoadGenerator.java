@@ -7,6 +7,6 @@ import com.emc.mongoose.model.api.item.Item;
 /**
  Created on 11.07.16.
  */
-public interface Generator<I extends Item, O extends IoTask<I>>
-extends Daemon, Registry<Monitor<I, O>> {
+public interface LoadGenerator<I extends Item, O extends IoTask<I>>
+extends Daemon {
 }

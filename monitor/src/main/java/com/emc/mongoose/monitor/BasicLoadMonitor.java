@@ -14,9 +14,9 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.Driver;
-import com.emc.mongoose.model.api.load.Generator;
-import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.load.LoadGenerator;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.api.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
@@ -28,8 +28,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,15 +38,15 @@ import static com.emc.mongoose.model.api.item.Item.SLASH;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicMonitor<I extends Item, O extends IoTask<I>>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements Monitor<I, O> {
+implements LoadMonitor<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
 	private final String name;
-	private final List<Generator<I, O>> generators;
-	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
+	private final List<LoadGenerator<I, O>> generators;
+	private final List<StorageDriver<I, O>> drivers;
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -62,13 +60,15 @@ implements Monitor<I, O> {
 	private volatile Output<I> itemOutput;
 	private volatile boolean isPostProcessDone = false;
 	
-	public BasicMonitor(
-		final String name, final List<Generator<I, O>> generators, final LoadConfig loadConfig
+	public BasicLoadMonitor(
+		final String name, final List<LoadGenerator<I, O>> generators,
+		final List<StorageDriver<I,O>> drivers, final LoadConfig loadConfig
 	) {
 		this.name = name;
 		this.generators = generators;
-		for(final Generator<I, O> generator : generators) {
-			generator.register(this);
+		this.drivers = drivers;
+		for(final StorageDriver<I, O> nextDriver : drivers) {
+			nextDriver.register(this);
 		}
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
@@ -120,6 +120,7 @@ implements Monitor<I, O> {
 					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
 				postProcessItems();
+				LockSupport.parkNanos(1);
 			}
 		}
 	}
@@ -142,7 +143,7 @@ implements Monitor<I, O> {
 						items.clear();
 					}
 				}
-			} else if(isDone()) {
+			} else if(isDone() || isIdle()) {
 				isPostProcessDone = true;
 			}
 		} catch(final IOException e) {
@@ -175,6 +176,43 @@ implements Monitor<I, O> {
 			return true;
 		}
 		return false;
+	}
+
+	private boolean isIdle() {
+
+		boolean idleFlag = true;
+
+		for(final LoadGenerator<I, O> nextLoadGenerator : generators) {
+			try {
+				if(!nextLoadGenerator.isInterrupted()) {
+					idleFlag = false;
+					break;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					nextLoadGenerator
+				);
+			}
+		}
+
+		if(idleFlag) {
+			for(final StorageDriver<I, O> nextStorageDriver : drivers) {
+				try {
+					if(!nextStorageDriver.isIdle()) {
+						idleFlag = false;
+						break;
+					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
+						nextStorageDriver
+					);
+				}
+			}
+		}
+
+		return idleFlag;
 	}
 	
 	
@@ -211,7 +249,7 @@ implements Monitor<I, O> {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
 				LOG.warn(
-					Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+					Markers.ERR, "{}: latency {} is more than duration: {}", getName(), respLatency,
 					reqDuration
 				);
 			}
@@ -362,18 +400,6 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	public final void register(final Driver<I, O> driver)
-	throws IllegalStateException {
-		if(null == drivers.putIfAbsent(driver.toString(), driver)) {
-			LOG.info(
-				Markers.MSG, "Monitor {}: driver {} registered", toString(), driver.toString()
-			);
-		} else {
-			throw new IllegalStateException("Driver already registered");
-		}
-	}
-
-	@Override
 	public final IoStats.Snapshot getIoStatsSnapshot() {
 		return ioStats.getSnapshot();
 	}
@@ -391,7 +417,7 @@ implements Monitor<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(final Driver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.start();
 			} catch(final RemoteException e) {
@@ -400,7 +426,7 @@ implements Monitor<I, O> {
 				);
 			}
 		}
-		for(final Generator<I, O> nextGenerator : generators) {
+		for(final LoadGenerator<I, O> nextGenerator : generators) {
 			try {
 				nextGenerator.start();
 			} catch(final RemoteException e) {
@@ -418,7 +444,7 @@ implements Monitor<I, O> {
 	@Override
 	protected void doShutdown()
 	throws IllegalStateException {
-		for(final Generator<I, O> nextGenerator : generators) {
+		for(final LoadGenerator<I, O> nextGenerator : generators) {
 			try {
 				nextGenerator.interrupt();
 			} catch(final RemoteException e) {
@@ -428,7 +454,7 @@ implements Monitor<I, O> {
 				);
 			}
 		}
-		for(final Driver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.shutdown();
 			} catch(final RemoteException e) {
@@ -443,7 +469,7 @@ implements Monitor<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final Driver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.interrupt();
 			} catch(final RemoteException e) {
@@ -499,17 +525,16 @@ implements Monitor<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException {
-		for(final Generator<I, O> generator : generators) {
+		for(final LoadGenerator<I, O> generator : generators) {
 			generator.close();
 		}
 		generators.clear();
-		for(final Driver<I, O> driver : drivers.values()) {
+		for(final StorageDriver<I, O> driver : drivers) {
 			driver.close();
 		}
 		drivers.clear();
 
 		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
-		lastStats = null;
 		if(ioStats != null) {
 			ioStats.close();
 		}

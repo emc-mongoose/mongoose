@@ -1,60 +1,60 @@
 package com.emc.mongoose.model.impl.io.task;
 
+import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
 
-	protected final long contentSize;
+	protected long contentSize;
+	protected long itemDataOffset;
+	protected ContentSource contentSrc;
+	
 	protected volatile long countBytesDone;
-	protected volatile DataItem currRange;
-	protected volatile long currRangeSize;
-	protected volatile long nextRangeOffset;
-	protected volatile int currRangeIdx;
-	protected volatile int currDataLayerIdx;
 	protected volatile long respDataTimeStart;
-
-	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
-	throws IOException {
+	
+	public BasicDataIoTask() {
+		super();
+	}
+	
+	public BasicDataIoTask(
+		final LoadType ioType, final T item, final String dstPath,
+		final DataRangesConfig rangesConfig
+	) {
 		super(ioType, item, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
 			case CREATE:
 			case READ:
-				// TODO partial read support
+				// TODO partial read support, use rangesConfig
 				try {
 					contentSize = item.size();
 				} catch(IOException e) {
 					throw new IllegalStateException();
 				}
 				break;
-			/*case UPDATE:
-				if(item.hasScheduledUpdates()) {
-					contentSize = item.getUpdatingRangesSize();
-				} else if(item.isAppending()) {
-					contentSize = item.getAppendSize();
-				} else {
-					contentSize = item.size();
-				}
-				break;*/
 			default:
 				contentSize = 0;
 				break;
 		}
+		itemDataOffset = item.getOffset();
+		contentSrc = item.getContentSrc();
 	}
 	
 	@Override
 	public void reset() {
 		super.reset();
-		currRange = null;
-		countBytesDone = currRangeSize = nextRangeOffset = currRangeIdx = 0;
-		respDataTimeStart = currDataLayerIdx = 0;
+		countBytesDone = 0;
+		respDataTimeStart = 0;
 	}
 
 	@Override
@@ -65,9 +65,6 @@ implements DataIoTask<T> {
 	@Override
 	public final void setCountBytesDone(final long n) {
 		this.countBytesDone = n;
-		if(contentSize == countBytesDone) {
-			status = Status.SUCC;
-		}
 	}
 
 	@Override
@@ -92,5 +89,25 @@ implements DataIoTask<T> {
 			.append(',').append(countBytesDone)
 			.append(',').append(getDataLatency())
 			.toString();
+	}
+	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeLong(contentSize);
+		out.writeLong(countBytesDone);
+		out.writeLong(respDataTimeStart);
+	}
+	
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		itemDataOffset = item.getOffset();
+		contentSrc = item.getContentSrc();
+		contentSize = in.readLong();
+		countBytesDone = in.readLong();
+		respDataTimeStart = in.readLong();
 	}
 }

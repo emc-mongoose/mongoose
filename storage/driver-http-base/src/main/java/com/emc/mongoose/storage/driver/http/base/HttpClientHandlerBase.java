@@ -37,9 +37,9 @@ extends SimpleChannelInboundHandler<HttpObject> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	
-	private final HttpDriverBase<I, O> driver;
+	private final HttpStorageDriverBase<I, O> driver;
 	
-	public HttpClientHandlerBase(final HttpDriverBase<I, O> driver) {
+	public HttpClientHandlerBase(final HttpStorageDriverBase<I, O> driver) {
 		this.driver = driver;
 	}
 
@@ -47,7 +47,7 @@ extends SimpleChannelInboundHandler<HttpObject> {
 	protected void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg)
 	throws IOException {
 		
-		final IoTask ioTask = ctx.channel().attr(HttpDriver.ATTR_KEY_IOTASK).get();
+		final IoTask ioTask = ctx.channel().attr(HttpStorageDriver.ATTR_KEY_IOTASK).get();
 	
 		if(msg instanceof HttpResponse) {
 			ioTask.startResponse();
@@ -140,7 +140,7 @@ extends SimpleChannelInboundHandler<HttpObject> {
 	public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
 	throws IOException {
 		LogUtil.exception(LOG, Level.WARN, cause, "HTTP client handler failure");
-		final IoTask ioTask = ctx.channel().attr(HttpDriver.ATTR_KEY_IOTASK).get();
+		final IoTask ioTask = ctx.channel().attr(HttpStorageDriver.ATTR_KEY_IOTASK).get();
 		ctx.close();
 		ioTask.setStatus(FAIL_UNKNOWN);
 		driver.ioTaskCompleted((O) ioTask);

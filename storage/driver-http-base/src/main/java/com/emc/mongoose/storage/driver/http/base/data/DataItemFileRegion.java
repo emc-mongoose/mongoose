@@ -1,8 +1,6 @@
 package com.emc.mongoose.storage.driver.http.base.data;
 
-import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.impl.item.BasicDataItem;
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
@@ -13,24 +11,16 @@ public class DataItemFileRegion<T extends DataItem>
 extends AbstractReferenceCounted
 implements FileRegion {
 	
-	protected final T dataObject;
+	protected final T dataItem;
 	protected final long baseItemSize;
 	protected long doneByteCount = 0;
 
-	public DataItemFileRegion(final T dataObject)
+	public DataItemFileRegion(final T dataItem)
 	throws IOException {
-		this.dataObject = dataObject;
-		this.baseItemSize = dataObject.size();
+		this.dataItem = dataItem;
+		this.baseItemSize = dataItem.size();
 	}
 
-	@SuppressWarnings("unchecked")
-	public DataItemFileRegion(final T dataObject, final ContentSource contentSrc)
-	throws IOException {
-		this(
-			(T) new BasicDataItem(dataObject.getOffset(), dataObject.size(), contentSrc)
-		);
-	}
-	
 	@Override
 	public long position() {
 		return doneByteCount;
@@ -55,8 +45,8 @@ implements FileRegion {
 	@Override
 	public long transferTo(final WritableByteChannel target, final long position)
 	throws IOException {
-		dataObject.position(position);
-		doneByteCount += dataObject.write(target, baseItemSize - position);
+		dataItem.position(position);
+		doneByteCount += dataItem.write(target, baseItemSize - position);
 		return doneByteCount;
 	}
 

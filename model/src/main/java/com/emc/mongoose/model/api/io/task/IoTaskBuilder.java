@@ -6,7 +6,9 @@ import com.emc.mongoose.model.util.LoadType;
 /**
  Created by kurila on 14.07.16.
  */
-public interface IoTaskFactory<I extends Item, O extends IoTask<I>> {
+public interface IoTaskBuilder<I extends Item, O extends IoTask<I>> {
+	
+	IoTaskBuilder<I, O> setIoType(final LoadType ioType);
 
-	O getInstance(final LoadType ioType, final I item, final String dstPath);
+	O getInstance(final I item, final String dstPath);
 }
