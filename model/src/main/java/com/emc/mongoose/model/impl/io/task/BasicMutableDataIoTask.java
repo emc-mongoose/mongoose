@@ -1,6 +1,7 @@
 package com.emc.mongoose.model.impl.io.task;
 
 import com.emc.mongoose.common.collection.ByteRange;
+import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
@@ -36,10 +37,18 @@ implements MutableDataIoTask<I> {
 		super();
 	}
 	
-	public BasicMutableDataIoTask(final LoadType ioType, final I item, final String dstPath)
-	throws IOException {
-		super(ioType, item, dstPath);
+	public BasicMutableDataIoTask(
+		final LoadType ioType, final I item, final String dstPath,
+		final DataRangesConfig rangesConfig
+	) {
+		super(ioType, item, dstPath, rangesConfig);
 		if(LoadType.UPDATE.equals(ioType)) {
+			final int n = rangesConfig.getRandomCount();
+			if(n > 0) {
+				scheduleRandomRangesUpdate(n);
+			} else {
+				scheduleFixedRangesUpdate(rangesConfig.getFixedByteRanges());
+			}
 			contentSize = getUpdatingRangesSize();
 		}
 	}

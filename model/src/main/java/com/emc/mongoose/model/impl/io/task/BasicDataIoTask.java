@@ -1,6 +1,7 @@
 package com.emc.mongoose.model.impl.io.task;
 
 import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.util.LoadType;
@@ -24,15 +25,17 @@ implements DataIoTask<T> {
 		super();
 	}
 	
-	public BasicDataIoTask(final LoadType ioType, final T item, final String dstPath)
-	throws IOException {
+	public BasicDataIoTask(
+		final LoadType ioType, final T item, final String dstPath,
+		final DataRangesConfig rangesConfig
+	) {
 		super(ioType, item, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
 			case CREATE:
 			case READ:
-				// TODO partial read support
+				// TODO partial read support, use rangesConfig
 				try {
 					contentSize = item.size();
 				} catch(IOException e) {

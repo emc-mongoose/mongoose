@@ -6,8 +6,10 @@ import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
 import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.data.ContentSourceUtil;
-import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskFactory;
+import com.emc.mongoose.model.impl.io.task.BasicIoTaskBuilder;
+import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
+import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriver;
 import com.emc.mongoose.ui.cli.CliArgParser;
@@ -20,11 +22,13 @@ import static com.emc.mongoose.ui.config.Config.RunConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+
+import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.generator.BasicLoadGenerator;
-import com.emc.mongoose.model.api.io.task.IoTaskFactory;
+import com.emc.mongoose.model.api.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
@@ -122,18 +126,21 @@ public class Main {
 		}
 		log.info(Markers.MSG, "Load drivers initialized");
 		
-		final IoTaskFactory ioTaskFactory;
+		final DataConfig dataConfig = itemConfig.getDataConfig();
+		final IoTaskBuilder ioTaskBuilder;
 		if(ItemType.CONTAINER.equals(itemType)) {
 			// TODO container I/O tasks factory
-			ioTaskFactory = null;
+			ioTaskBuilder = new BasicIoTaskBuilder();
 		} else {
-			ioTaskFactory = new BasicMutableDataIoTaskFactory<>();
+			ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
+				.setRangesConfig(dataConfig.getRanges());
 		}
+		ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
 
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		final long t = limitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
-		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+		final ContentConfig contentConfig = dataConfig.getContentConfig();
 		try(
 			final ContentSource contentSrc = ContentSourceUtil.getInstance(
 				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
@@ -154,12 +161,16 @@ public class Main {
 			
 			generators.add(
 				new BasicLoadGenerator(
-					runId, drivers, itemFactory, ioTaskFactory, itemConfig, loadConfig
+					runId, drivers, itemFactory, ioTaskBuilder, itemConfig, loadConfig
 				)
 			);
 			log.info(Markers.MSG, "Load generators initialized");
 			
-			try(final LoadMonitor monitor = new BasicLoadMonitor(runId, generators, loadConfig)) {
+			try(
+				final LoadMonitor monitor = new BasicLoadMonitor(
+					runId, generators, drivers,loadConfig
+				)
+			) {
 				
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {

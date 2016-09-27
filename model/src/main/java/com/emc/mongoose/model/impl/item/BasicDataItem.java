@@ -166,6 +166,7 @@ implements DataItem {
 	//
 	@Override
 	public void reset() {
+		super.reset();
 		layerNum = 0;
 		position = 0;
 	}

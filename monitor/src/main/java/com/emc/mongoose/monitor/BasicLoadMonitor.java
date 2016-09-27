@@ -27,9 +27,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -48,7 +46,7 @@ implements LoadMonitor<I, O> {
 
 	private final String name;
 	private final List<LoadGenerator<I, O>> generators;
-	private final Map<String, StorageDriver<I, O>> drivers = new ConcurrentHashMap<>();
+	private final List<StorageDriver<I, O>> drivers;
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -63,12 +61,14 @@ implements LoadMonitor<I, O> {
 	private volatile boolean isPostProcessDone = false;
 	
 	public BasicLoadMonitor(
-		final String name, final List<LoadGenerator<I, O>> generators, final LoadConfig loadConfig
+		final String name, final List<LoadGenerator<I, O>> generators,
+		final List<StorageDriver<I,O>> drivers, final LoadConfig loadConfig
 	) {
 		this.name = name;
 		this.generators = generators;
-		for(final LoadGenerator<I, O> generator : generators) {
-			generator.register(this);
+		this.drivers = drivers;
+		for(final StorageDriver<I, O> nextDriver : drivers) {
+			nextDriver.register(this);
 		}
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
@@ -197,7 +197,7 @@ implements LoadMonitor<I, O> {
 		}
 
 		if(idleFlag) {
-			for(final StorageDriver<I, O> nextStorageDriver : drivers.values()) {
+			for(final StorageDriver<I, O> nextStorageDriver : drivers) {
 				try {
 					if(!nextStorageDriver.isIdle()) {
 						idleFlag = false;
@@ -400,18 +400,6 @@ implements LoadMonitor<I, O> {
 	}
 
 	@Override
-	public final void register(final StorageDriver<I, O> driver)
-	throws IllegalStateException {
-		if(null == drivers.putIfAbsent(driver.toString(), driver)) {
-			LOG.info(
-				Markers.MSG, "Monitor {}: driver {} registered", toString(), driver.toString()
-			);
-		} else {
-			throw new IllegalStateException("Driver already registered");
-		}
-	}
-
-	@Override
 	public final IoStats.Snapshot getIoStatsSnapshot() {
 		return ioStats.getSnapshot();
 	}
@@ -429,7 +417,7 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(final StorageDriver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.start();
 			} catch(final RemoteException e) {
@@ -466,7 +454,7 @@ implements LoadMonitor<I, O> {
 				);
 			}
 		}
-		for(final StorageDriver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.shutdown();
 			} catch(final RemoteException e) {
@@ -481,7 +469,7 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final StorageDriver<I, O> nextDriver : drivers.values()) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
 				nextDriver.interrupt();
 			} catch(final RemoteException e) {
@@ -541,7 +529,7 @@ implements LoadMonitor<I, O> {
 			generator.close();
 		}
 		generators.clear();
-		for(final StorageDriver<I, O> driver : drivers.values()) {
+		for(final StorageDriver<I, O> driver : drivers) {
 			driver.close();
 		}
 		drivers.clear();

@@ -51,10 +51,10 @@ implements StorageDriver<I, O> {
 	@Override
 	public final void register(final LoadMonitor<I, O> monitor)
 	throws IllegalStateException {
-		if(monitorRef.compareAndSet(null, monitor)) {
-			monitor.register(this);
-		} else {
-			throw new IllegalStateException("Driver is already used by another monitor");
+		if(!monitorRef.compareAndSet(null, monitor)) {
+			throw new IllegalStateException(
+				"This storage driver is already used by another monitor"
+			);
 		}
 	}
 
