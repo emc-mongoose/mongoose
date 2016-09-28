@@ -11,16 +11,17 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+
+import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.io.task.IoTaskFactory;
+import com.emc.mongoose.model.api.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.impl.item.BasicItemNameInput;
@@ -39,7 +40,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  Created by kurila on 11.07.16.
@@ -52,7 +52,6 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final static int BATCH_SIZE = 0x1000;
 
 	private final List<StorageDriver<I, O>> drivers;
-	private final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Thread worker;
@@ -61,15 +60,16 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final boolean isShuffling = false;
 	private final boolean isCircular;
 	private final Throttle<I> rateThrottle;
-	private final IoTaskFactory<I, O> ioTaskFactory;
+	private final IoTaskBuilder<I, O> ioTaskBuilder;
 	private final String dstContainer;
 	private final String runId;
+	private final DataRangesConfig rangesConfig;
 
 	private long producedItemsCount = 0;
 
 	public BasicLoadGenerator(
 		final String runId, final List<StorageDriver<I, O>> drivers,
-		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory,
+		final ItemFactory<I> itemFactory, final IoTaskBuilder<I, O> ioTaskBuilder,
 		final ItemConfig itemConfig, final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 
@@ -102,6 +102,7 @@ implements LoadGenerator<I, O>, Output<I> {
 			final BasicItemNameInput namingInput = new BasicItemNameInput(
 				namingType, namingPrefix, namingLength, namingRadix, namingOffset
 			);
+			rangesConfig = itemConfig.getDataConfig().getRanges();
 
 			this.ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
 			switch(ioType) {
@@ -136,7 +137,7 @@ implements LoadGenerator<I, O>, Output<I> {
 			throw new UserShootHisFootException(e);
 		}
 
-		this.ioTaskFactory = ioTaskFactory;
+		this.ioTaskBuilder = ioTaskBuilder;
 
 		worker = new Thread(new GeneratorTask(), "generator");
 		worker.setDaemon(true);
@@ -195,9 +196,9 @@ implements LoadGenerator<I, O>, Output<I> {
 							IllegalStateException e
 						) {
 						break;
-					} catch(final IOException e) {
+					} catch(final Exception e) {
 						LogUtil.exception(
-							LOG, Level.DEBUG, e, "Failed to transfer the data items, count = {}, " +
+							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
 							"batch size = {}, batch offset = {}", producedItemsCount, n, m
 						);
 					}
@@ -223,7 +224,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	@Override
 	public final void put(final I item)
 	throws IOException {
-		final O nextIoTask = ioTaskFactory.getInstance(ioType, item, dstContainer);
+		final O nextIoTask = ioTaskBuilder.getInstance(item, dstContainer);
 		final StorageDriver<I, O> nextDriver = getNextDriver();
 		nextDriver.put(nextIoTask);
 	}
@@ -234,7 +235,7 @@ implements LoadGenerator<I, O>, Output<I> {
 		if(to > from) {
 			final List<O> ioTasks = new ArrayList<>(to - from);
 			for(int i = from; i < to; i ++) {
-				ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i), dstContainer));
+				ioTasks.add(ioTaskBuilder.getInstance(buffer.get(i), dstContainer));
 			}
 			final StorageDriver<I, O> nextDriver = getNextDriver();
 			nextDriver.put(ioTasks, 0, ioTasks.size());
@@ -248,7 +249,7 @@ implements LoadGenerator<I, O>, Output<I> {
 		final int n = buffer.size();
 		final List<O> ioTasks = new ArrayList<>(n);
 		for(final I nextItem : buffer) {
-			ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem, dstContainer));
+			ioTasks.add(ioTaskBuilder.getInstance(nextItem, dstContainer));
 		}
 		final StorageDriver<I, O> nextDriver = getNextDriver();
 		nextDriver.put(ioTasks, 0, n);
@@ -259,18 +260,6 @@ implements LoadGenerator<I, O>, Output<I> {
 	public final Input<I> getInput()
 	throws IOException {
 		return itemInput;
-	}
-
-	@Override
-	public final void register(final LoadMonitor<I, O> monitor)
-	throws IllegalStateException {
-		if(monitorRef.compareAndSet(null, monitor)) {
-			for(final StorageDriver<I, O> driver : drivers) {
-				driver.register(monitor);
-			}
-		} else {
-			throw new IllegalStateException("Generator is already used by another monitor");
-		}
 	}
 
 	private final AtomicLong rrc = new AtomicLong(0);

@@ -7,5 +7,14 @@ import com.emc.mongoose.common.exception.IoFireball;
  */
 public abstract class DataVerificationException
 extends IoFireball {
-	public long offset;
+	
+	private final long offset;
+	
+	public DataVerificationException(final long offset) {
+		this.offset = offset;
+	}
+	
+	public long getOffset() {
+		return offset;
+	}
 }

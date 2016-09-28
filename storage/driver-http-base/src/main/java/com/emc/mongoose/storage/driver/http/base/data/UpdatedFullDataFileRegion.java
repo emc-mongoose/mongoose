@@ -9,37 +9,39 @@ import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+import static java.lang.Math.min;
 
 public class UpdatedFullDataFileRegion<T extends MutableDataItem>
 extends DataItemFileRegion<T> {
 
 	private DataItem currRange;
-	private long currRangeSize, nextRangeOffset;
-	private int currRangeIdx, currDataLayerIdx;
-	private ContentSource contentSource;
+	private long currRangeSize, nextRangeOffset, dataItemOffset;
+	private final int layerNum;
+	private final ContentSource contentSrc;
 	
-	public UpdatedFullDataFileRegion(final T dataItem, final ContentSource contentSource)
+	private int currRangeIdx = 0;
+	
+	public UpdatedFullDataFileRegion(final T dataItem)
 	throws IOException {
-		super(dataItem, contentSource);
-		this.contentSource = contentSource;
-		currDataLayerIdx = dataObject.getCurrLayerIndex();
+		super(dataItem);
+		dataItemOffset = dataItem.offset();
+		layerNum = dataItem.layer();
+		contentSrc = dataItem.getContentSrc();
 	}
 
 	@Override
 	public long transferTo(final WritableByteChannel target, final long position)
 	throws IOException {
-		dataObject.position(position);
+		dataItem.position(position);
 		if(doneByteCount == nextRangeOffset) {
-			currRangeSize = dataObject.getRangeSize(currRangeIdx);
-			if(dataObject.isCurrLayerRangeUpdated(currRangeIdx)) {
+			currRangeSize = dataItem.getRangeSize(currRangeIdx);
+			if(dataItem.isRangeUpdated(currRangeIdx)) {
 				currRange = new BasicDataItem(
-					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx + 1,
-					contentSource
+					dataItemOffset + nextRangeOffset, currRangeSize, layerNum + 1, contentSrc
 				);
 			} else {
 				currRange = new BasicDataItem(
-					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
-					contentSource
+					dataItemOffset + nextRangeOffset, currRangeSize, layerNum, contentSrc
 				);
 			}
 			currRangeIdx ++;
@@ -47,7 +49,7 @@ extends DataItemFileRegion<T> {
 		}
 		if(currRangeSize > 0) {
 			doneByteCount += currRange.write(
-				target, Math.min(nextRangeOffset - position, baseItemSize - doneByteCount)
+				target, min(nextRangeOffset - position, baseItemSize - doneByteCount)
 			);
 		}
 		return doneByteCount;

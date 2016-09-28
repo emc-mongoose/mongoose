@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.api.item;
 
-import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
 
 /**
@@ -25,11 +24,9 @@ extends DataItem {
 	
 	boolean isUpdated();
 	
-	int writeUpdates(final WritableByteChannel chanDst, final long maxCount);
-	
-	void commitUpdatedRanges(final BitSet[] updatingRangesMask);
-	
 	boolean isRangeUpdated(final int rangeIdx);
 	
 	int getUpdatedRangesCount();
+	
+	void commitUpdatedRanges(final BitSet[] updatingRangesMask);
 }

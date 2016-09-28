@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.BitSet;
-import java.util.concurrent.ThreadLocalRandom;
+
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+import static java.lang.Math.min;
 
 public class BasicMutableDataItem
 extends BasicDataItem
@@ -98,8 +100,8 @@ implements MutableDataItem {
 			.append(super.toString()).append(',')
 			.append(Integer.toHexString(layerNum)).append('/')
 			.append(
-				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
-					Hex.encodeHexString(maskRangesRead.toByteArray())
+				maskRangesRead.isEmpty() ?
+					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesRead.toByteArray())
 			).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,15 +113,14 @@ implements MutableDataItem {
 		if(!(o instanceof BasicMutableDataItem) || !super.equals(o)) {
 			return false;
 		} else {
-			final BasicMutableDataItem other = BasicMutableDataItem.class.cast(o);
-			return maskRangesRead.equals(other.maskRangesRead)
-				&& maskRangesWrite.equals(other.maskRangesWrite);
+			final BasicMutableDataItem other = (BasicMutableDataItem) o;
+			return maskRangesRead.equals(other.maskRangesRead);
 		}
 	}
 	//
 	@Override
 	public int hashCode() {
-		return super.hashCode() ^ maskRangesRead.hashCode() ^ maskRangesWrite.hashCode();
+		return super.hashCode() ^ maskRangesRead.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
@@ -135,147 +136,42 @@ implements MutableDataItem {
 	//
 	@Override
 	public final long getRangeSize(final int i) {
-		return Math.min(MutableDataItem.getRangeOffset(i + 1), size) - getRangeOffset(i);
+		return min(getRangeOffset(i + 1), size) - getRangeOffset(i);
 	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	
 	@Override
-	public final boolean hasBeenUpdated() {
+	public boolean isUpdated() {
 		return !maskRangesRead.isEmpty();
 	}
-	//
+	
 	@Override
-	public final boolean hasScheduledUpdates() {
-		return !maskRangesWrite[0].isEmpty() || !maskRangesWrite[1].isEmpty();
-	}
-	//
-	@Override
-	public final boolean isCurrLayerRangeUpdated(final int i) {
-		return maskRangesRead.get(i);
-	}
-	//
-	@Override
-	public final boolean isCurrLayerRangeUpdating(final int i) {
-		return maskRangesWrite[0].get(i);
-	}
-	//
-	@Override
-	public final boolean isNextLayerRangeUpdating(final int i) {
-		return maskRangesWrite[1].get(i);
-	}
-	//
-	private synchronized void scheduleRandomUpdate(final int countRangesTotal) {
-		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
-		int nextCellPos;
-		if(countRangesTotal > maskRangesRead.cardinality() + maskRangesWrite[0].cardinality()) {
-			// current layer has not updated yet ranges
-			for(int i = 0; i < countRangesTotal; i++) {
-				nextCellPos = (startCellPos + i) % countRangesTotal;
-				if(!maskRangesRead.get(nextCellPos)) {
-					if(!maskRangesWrite[0].get(nextCellPos)) {
-						maskRangesWrite[0].set(nextCellPos);
-						break;
-					}
-				}
-			}
-		} else {
-			// update the next layer ranges
-			for(int i = 0; i < countRangesTotal; i++) {
-				nextCellPos = (startCellPos + i) % countRangesTotal;
-				if(!maskRangesWrite[0].get(nextCellPos)) {
-					if(!maskRangesWrite[1].get(nextCellPos)) {
-						maskRangesWrite[1].set(nextCellPos);
-						break;
-					}
-				}
-			}
-		}
-	}
-	//
-	@Override
-	public final void scheduleRandomUpdates(final int count)
-	throws IllegalArgumentException {
-		final int countRangesTotal = getRangeCount(size);
-		if(count < 1 || count > countRangesTotal) {
-			throw new IllegalArgumentException(
-				"Range count should be more than 0 and less than max " + countRangesTotal +
-					" for the item size"
-			);
-		}
-		for(int i = 0; i < count; i++) {
-			scheduleRandomUpdate(countRangesTotal);
-		}
-	}
-	//
-	@Override
-	public final long getUpdatingRangesSize() {
-		final long rangeCount = getRangeCount(size);
-		long pendingSize = 0;
-		for(int i = 0; i < rangeCount; i ++) {
-			if(maskRangesWrite[0].get(i) || maskRangesWrite[1].get(i)) {
-				pendingSize += getRangeSize(i);
-			}
-		}
-		return pendingSize;
-	}
-	//
-	@Override
-	public final void commitUpdatedRanges() {
-		// move pending updated ranges to history
-		if(maskRangesWrite[1].isEmpty()) {
-			maskRangesRead.or(maskRangesWrite[0]);
+	public void commitUpdatedRanges(final BitSet[] updatingRangesMaskPair) {
+		if(updatingRangesMaskPair[1].isEmpty()) {
+			maskRangesRead.or(updatingRangesMaskPair[0]);
 		} else {
 			maskRangesRead.clear();
-			maskRangesRead.or(maskRangesWrite[1]);
-			maskRangesWrite[1].clear();
+			maskRangesRead.or(updatingRangesMaskPair[1]);
 			layerNum ++;
 		}
-		maskRangesWrite[0].clear();
 	}
-	//
+	
 	@Override
-	public final void resetUpdates() {
-		maskRangesRead.clear();
-		maskRangesWrite[0].clear();
-		maskRangesWrite[1].clear();
+	public boolean isRangeUpdated(final int rangeIdx) {
+		return maskRangesRead.get(rangeIdx);
 	}
+	
+	@Override
+	public int getUpdatedRangesCount() {
+		return maskRangesRead.cardinality();
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// APPEND //////////////////////////////////////////////////////////////////////////////////////
+	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final boolean isAppending() {
-		return pendingAugmentSize > 0;
-	}
-	//
-	@Override
-	public void scheduleAppend(final long augmentSize)
-	throws IllegalArgumentException {
-		if(augmentSize > 0) {
-			pendingAugmentSize = augmentSize;
-			final int
-				lastCellPos = size > 0 ? getRangeCount(size) - 1 : 0,
-				nextCellPos = getRangeCount(size + augmentSize);
-			if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
-				maskRangesRead.set(lastCellPos, nextCellPos);
-			}
-		} else {
-			throw new IllegalArgumentException(
-				"Append tail size should be more than 0, but got " + augmentSize
-			);
-		}
-	}
-	//
-	@Override
-	public final long getAppendSize() {
-		return pendingAugmentSize;
-	}
-	//
-	@Override
-	public final void commitAppend() {
-		size += pendingAugmentSize;
-		pendingAugmentSize = 0;
-	}
 	
 	@Override
 	public void writeExternal(final ObjectOutput out)

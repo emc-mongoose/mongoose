@@ -5,10 +5,9 @@ import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.model.util.SizeInBytes;
 import org.apache.commons.collections4.map.LRUMap;
 //
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Map;
@@ -16,7 +15,7 @@ import java.util.Map;
 /**
  Created by kurila on 16.10.15.
  */
-public abstract class ContentSourceBase
+public class BasicContentSource
 implements ContentSource {
 	//
 	protected transient ByteBuffer zeroByteLayer = null;
@@ -24,10 +23,10 @@ implements ContentSource {
 	//
 	protected transient Map<Integer, ByteBuffer> byteLayersMap = null;
 	//
-	protected ContentSourceBase() {
+	public BasicContentSource() {
 	}
 	//
-	protected ContentSourceBase(final ByteBuffer zeroByteLayer) {
+	public BasicContentSource(final ByteBuffer zeroByteLayer) {
 		this.zeroByteLayer = zeroByteLayer;
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
@@ -38,7 +37,7 @@ implements ContentSource {
 		byteLayersMap.put(0, zeroByteLayer);
 	}
 	//
-	protected ContentSourceBase(final ReadableByteChannel zeroLayerSrcChan, final int size)
+	protected BasicContentSource(final ReadableByteChannel zeroLayerSrcChan, final int size)
 	throws IOException {
 		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
@@ -58,7 +57,7 @@ implements ContentSource {
 		} while(n < size);
 	}
 	//
-	protected ContentSourceBase(final ContentSourceBase anotherContentSource) {
+	protected BasicContentSource(final BasicContentSource anotherContentSource) {
 		this.zeroByteLayer = anotherContentSource.zeroByteLayer;
 		this.seed = anotherContentSource.seed;
 		byteLayersMap = new LRUMap<>(
@@ -119,10 +118,10 @@ implements ContentSource {
 		}
 	}
 
-	private void writeObject(final ObjectOutputStream out)
+	@Override
+	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		// write default properties
-		out.defaultWriteObject();
+		out.writeLong(seed);
 		// write buffer capacity and data
 		final byte buff[] = new byte[zeroByteLayer.capacity()];
 		zeroByteLayer.clear(); // reset
@@ -131,12 +130,12 @@ implements ContentSource {
 		out.write(buff);
 	}
 
-	private void readObject(final ObjectInputStream in)
+	@Override
+	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		//read default properties
-		in.defaultReadObject();
+		seed = in.readLong();
 		//read buffer data and wrap with ByteBuffer
-		int size = in.readInt();
+		final int size = in.readInt();
 		final byte buff[] = new byte[size];
 		for(int i, j = 0; j < size;) {
 			i = in.read(buff, j, size - j);

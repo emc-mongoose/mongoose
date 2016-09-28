@@ -57,13 +57,13 @@ public class StorageMockFactory {
 		);
 		final StorageMockClient<MutableDataItemMock> client = storageMockNode.client();
 		handlers.add(
-			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client, contentSrc)
+			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client)
 		);
 		handlers.add(
-			new AtmosRequestHandler<>(limitConfig, namingConfig, storage, client, contentSrc)
+			new AtmosRequestHandler<>(limitConfig, namingConfig, storage, client)
 		);
 		handlers.add(
-			new S3RequestHandler<>(limitConfig, namingConfig, storage, client, contentSrc)
+			new S3RequestHandler<>(limitConfig, namingConfig, storage, client)
 		);
 		return storageMockNode;
 	}
@@ -81,13 +81,13 @@ public class StorageMockFactory {
 		);
 		try {
 			handlers.add(
-				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null, contentSrc)
+				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null)
 			);
 			handlers.add(
-				new AtmosRequestHandler<>(limitConfig, namingConfig, storage, null, contentSrc)
+				new AtmosRequestHandler<>(limitConfig, namingConfig, storage, null)
 			);
 			handlers.add(
-				new S3RequestHandler<>(limitConfig, namingConfig, storage, null, contentSrc)
+				new S3RequestHandler<>(limitConfig, namingConfig, storage, null)
 			);
 		} catch(final RemoteException ignore) {
 		}

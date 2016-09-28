@@ -7,9 +7,9 @@ import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.util.SizeInBytes;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

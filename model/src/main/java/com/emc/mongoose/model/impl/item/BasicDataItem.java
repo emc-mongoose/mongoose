@@ -11,6 +11,7 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Arrays;
 
 /**
  Created by kurila on 09.05.14.
@@ -24,8 +25,6 @@ implements DataItem {
 	private static final String
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
-	protected static final String
-		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
 	private transient ContentSource contentSrc;
 	private transient int ringBuffSize;
@@ -47,8 +46,29 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(final String value, final ContentSource contentSrc) {
-		this(contentSrc);
-		fromString(value);
+		this(value.split(",", 3), contentSrc);
+	}
+	//
+	private BasicDataItem(final String tokens[], final ContentSource contentSrc) {
+		super(tokens[0]);
+		if(tokens.length == 3) {
+			try {
+				offset(Long.parseLong(tokens[1], 0x10));
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
+			}
+			try {
+				truncate(Long.parseLong(tokens[2], 10));
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
+			}
+		} else {
+			throw new IllegalArgumentException(
+				"Invalid data item meta info: " + Arrays.toString(tokens)
+			);
+		}
+		this.contentSrc = contentSrc;
+		ringBuffSize = contentSrc.getSize();
 	}
 	//
 	public BasicDataItem(
@@ -117,26 +137,6 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	protected void fromString(final String value) {
-		final String tokens[] = value.split(",", 3);
-		if(tokens.length == 3) {
-			super.fromString(tokens[0]);
-			try {
-				setOffset(Long.parseLong(tokens[1], 0x10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
-			}
-			try {
-				truncate(Long.parseLong(tokens[2], 10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
-			}
-		} else {
-			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, value));
-		}
-	}
-	//
 	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
 	@Override
 	public String toString() {
@@ -166,19 +166,29 @@ implements DataItem {
 	//
 	@Override
 	public void reset() {
-		layerNum = 0;
+		super.reset();
 		position = 0;
 	}
 	//
 	@Override
-	public final long getOffset() {
+	public final int layer() {
+		return layerNum;
+	}
+	//
+	@Override
+	public final void size(final long size) {
+		this.size = size;
+	}
+	//
+	@Override
+	public final long offset() {
 		return offset;
 	}
 	//
 	@Override
-	public final void setOffset(final long offset) {
+	public final void offset(final long offset) {
 		this.offset = offset < 0 ? Long.MAX_VALUE + offset + 1 : offset;
-		reset();
+		position = 0;
 	}
 	//
 	public long position() {

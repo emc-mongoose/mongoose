@@ -19,15 +19,6 @@ implements Item {
 	}
 	//
 	public BasicItem(final String value) {
-		fromString(value);
-	}
-	//
-	public BasicItem(final String path, final String name) {
-		this.path = path;
-		this.name = name;
-	}
-	//
-	protected void fromString(final String value) {
 		if(value == null || value.isEmpty()) {
 			throw new IllegalArgumentException("Empty/null item value");
 		}
@@ -38,6 +29,11 @@ implements Item {
 			path = value.substring(0, lastSlashPos + 1);
 			name = value.substring(lastSlashPos + 1);
 		}
+	}
+	//
+	public BasicItem(final String path, final String name) {
+		this.path = path;
+		this.name = name;
 	}
 	//
 	@Override

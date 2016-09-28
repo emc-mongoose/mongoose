@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.config;
+package com.emc.mongoose.model.api.data;
 //
 import com.emc.mongoose.common.collection.ByteRange;
 import com.emc.mongoose.common.exception.InvalidByteRangeException;

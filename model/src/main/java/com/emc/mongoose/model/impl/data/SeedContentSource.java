@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
  Implemented as finite buffer of pseudorandom bytes.
  */
 public final class SeedContentSource
-extends ContentSourceBase
+extends BasicContentSource
 implements ContentSource {
 
 	public SeedContentSource() {
