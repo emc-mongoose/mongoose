@@ -13,6 +13,6 @@ implements MutableDataIoTaskBuilder<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public final O getInstance(final I item, final String dstPath) {
-		return (O) new BasicMutableDataIoTask<I>(ioType, item, dstPath, rangesConfig);
+		return (O) new BasicMutableDataIoTask<>(ioType, item, dstPath, rangesConfig);
 	}
 }

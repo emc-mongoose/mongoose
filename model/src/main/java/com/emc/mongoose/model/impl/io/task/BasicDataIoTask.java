@@ -16,7 +16,7 @@ implements DataIoTask<T> {
 
 	protected long contentSize;
 	protected long itemDataOffset;
-	protected ContentSource contentSrc;
+	protected volatile ContentSource contentSrc;
 	
 	protected volatile long countBytesDone;
 	protected volatile long respDataTimeStart;
@@ -46,7 +46,7 @@ implements DataIoTask<T> {
 				contentSize = 0;
 				break;
 		}
-		itemDataOffset = item.getOffset();
+		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 	}
 	
@@ -104,7 +104,7 @@ implements DataIoTask<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		itemDataOffset = item.getOffset();
+		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 		contentSize = in.readLong();
 		countBytesDone = in.readLong();

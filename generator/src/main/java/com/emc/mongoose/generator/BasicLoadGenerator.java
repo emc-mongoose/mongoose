@@ -196,9 +196,9 @@ implements LoadGenerator<I, O>, Output<I> {
 							IllegalStateException e
 						) {
 						break;
-					} catch(final IOException e) {
+					} catch(final Exception e) {
 						LogUtil.exception(
-							LOG, Level.DEBUG, e, "Failed to transfer the data items, count = {}, " +
+							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
 							"batch size = {}, batch offset = {}", producedItemsCount, n, m
 						);
 					}

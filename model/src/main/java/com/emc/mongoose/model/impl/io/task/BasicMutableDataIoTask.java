@@ -28,10 +28,8 @@ implements MutableDataIoTask<I> {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
 	
-	private BasicDataItem currRange;
-	private long nextRangeOffset;
-	private int currRangeIdx;
-	private int currDataLayerIdx;
+	private volatile BasicDataItem currRange;
+	private volatile int currRangeIdx;
 	
 	public BasicMutableDataIoTask() {
 		super();
@@ -57,9 +55,7 @@ implements MutableDataIoTask<I> {
 	public final void reset() {
 		super.reset();
 		currRange = null;
-		nextRangeOffset = 0;
 		currRangeIdx = 0;
-		currDataLayerIdx = 0;
 	}
 	
 	@Override
@@ -139,6 +135,7 @@ implements MutableDataIoTask<I> {
 	
 	@Override
 	public final void setCurrRangeIdx(final int currRangeIdx) {
+		currRange = null;
 		this.currRangeIdx = currRangeIdx;
 	}
 	
@@ -147,15 +144,16 @@ implements MutableDataIoTask<I> {
 		try {
 			if(currRange == null && currRangeIdx < getRangeCount(item.size())) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final int layerIdx = item.layer();
 				if(item.isRangeUpdated(currRangeIdx)) {
 					currRange = new BasicDataItem(
-						itemDataOffset + nextRangeOffset, currRangeSize, currDataLayerIdx + 1,
+						itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 1,
 						contentSrc
 					);
 				} else {
 					currRange = new BasicDataItem(
-						itemDataOffset + nextRangeOffset, currRangeSize, currDataLayerIdx,
+						itemDataOffset + nextRangeOffset, currRangeSize, layerIdx,
 						contentSrc
 					);
 				}
@@ -168,22 +166,23 @@ implements MutableDataIoTask<I> {
 	
 	@Override
 	public final BasicDataItem getCurrRangeUpdate() {
-		if(updRangesMaskPair[0].get(currRangeIdx)) {
-			final long currRangeSize = item.getRangeSize(currRangeIdx);
-			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-			currRange = new BasicDataItem(
-				itemDataOffset + nextRangeOffset, currRangeSize,
-				currDataLayerIdx + 1, contentSrc
-			);
-		} else if(updRangesMaskPair[1].get(currRangeIdx)) {
-			final long currRangeSize = item.getRangeSize(currRangeIdx);
-			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-			currRange = new BasicDataItem(
-				itemDataOffset + nextRangeOffset, currRangeSize,
-				currDataLayerIdx + 2, contentSrc
-			);
-		} else {
-			currRange = null;
+		if(currRange == null) {
+			final int layerIdx = item.layer();
+			if(updRangesMaskPair[0].get(currRangeIdx)) {
+				final long currRangeSize = item.getRangeSize(currRangeIdx);
+				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				currRange = new BasicDataItem(
+					itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 1, contentSrc
+				);
+			} else if(updRangesMaskPair[1].get(currRangeIdx)) {
+				final long currRangeSize = item.getRangeSize(currRangeIdx);
+				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				currRange = new BasicDataItem(
+					itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 2, contentSrc
+				);
+			} else {
+				currRange = null;
+			}
 		}
 		return currRange;
 	}

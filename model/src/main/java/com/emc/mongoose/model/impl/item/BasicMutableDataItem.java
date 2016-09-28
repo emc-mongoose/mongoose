@@ -100,8 +100,8 @@ implements MutableDataItem {
 			.append(super.toString()).append(',')
 			.append(Integer.toHexString(layerNum)).append('/')
 			.append(
-				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
-					Hex.encodeHexString(maskRangesRead.toByteArray())
+				maskRangesRead.isEmpty() ?
+					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesRead.toByteArray())
 			).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,11 +190,5 @@ implements MutableDataItem {
 		final byte buff[] = new byte[len];
 		in.readFully(buff);
 		maskRangesRead.or(BitSet.valueOf(buff));
-	}
-	
-	@Override
-	public void reset() {
-		super.reset();
-		maskRangesRead.clear();
 	}
 }
