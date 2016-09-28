@@ -12,4 +12,6 @@ extends FsStorageDriverConfigFactory, HttpStorageDriverConfigFactory {
 
 	StorageType getStorageType();
 
+
+
 }
