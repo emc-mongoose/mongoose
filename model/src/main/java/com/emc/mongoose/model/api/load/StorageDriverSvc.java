@@ -12,7 +12,7 @@ import java.rmi.RemoteException;
 public interface StorageDriverSvc<I extends Item, O extends IoTask<I>>
 extends StorageDriver<I, O>, Service {
 
-	void registerRemotely(final String monitorSvcName)
+	void registerRemotely(final String hostName, final String monitorSvcName)
 	throws RemoteException;
 	
 }

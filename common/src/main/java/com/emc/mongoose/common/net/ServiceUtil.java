@@ -60,11 +60,16 @@ public abstract class ServiceUtil {
 
 	public static URI svcUri(final String svcName)
 	throws SocketException, OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+		String hostName = System.getProperty(ServiceUtil.KEY_RMI_HOSTNAME);
+		if (null != hostName) {
+			hostName = NetUtil.getHostAddrString();
+		}
+		return svcUri(hostName, svcName);
+	}
+
+	private static URI svcUri(final String hostName, final String svcName)
+	throws SocketException, OmgLookAtMyConsoleException, OmgDoesNotPerformException {
 		try {
-			String hostName = System.getProperty(ServiceUtil.KEY_RMI_HOSTNAME);
-			if (null != hostName) {
-				hostName = NetUtil.getHostAddrString();
-			}
 			return new URI(
 				"rmi", null, hostName, REGISTRY_PORT, "/" + svcName, null, null
 			);
@@ -93,6 +98,14 @@ public abstract class ServiceUtil {
 	throws RemoteException, NotBoundException, MalformedURLException, SocketException,
 		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
 		final String svcUri = svcUri(name).toString();
+		return (S) Naming.lookup(svcUri);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <S extends Service> S getSvc(final String host, final String name)
+	throws RemoteException, NotBoundException, MalformedURLException, SocketException,
+		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+		final String svcUri = svcUri(host, name).toString();
 		return (S) Naming.lookup(svcUri);
 	}
 

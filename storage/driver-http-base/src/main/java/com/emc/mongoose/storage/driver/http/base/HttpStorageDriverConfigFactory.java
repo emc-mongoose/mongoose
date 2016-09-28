@@ -11,4 +11,6 @@ extends StorageDriverConfigFactory {
 
 	SocketConfig getSocketConfig();
 
+	boolean getVerifyFlag();
+
 }

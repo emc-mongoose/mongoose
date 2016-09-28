@@ -34,12 +34,12 @@ import java.util.TreeMap;
 /**
  Created by kurila on 01.08.16.
  */
-public final class HttpS3StorageDriver<I extends Item, O extends IoTask<I>>
+public class HttpS3StorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	
-	private final static ThreadLocal<StringBuilder>
+	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
 			@Override
 			protected final StringBuilder initialValue() {
@@ -47,9 +47,9 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		};
 		
-	private final static ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
+	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
 	
-	private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	
 	public HttpS3StorageDriver(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemBuffer;
+import com.emc.mongoose.model.api.load.StorageDriverSvc;
 import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
 import com.emc.mongoose.model.util.LoadType;
@@ -42,7 +43,7 @@ public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadMonitor<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
 	private final List<LoadGenerator<I, O>> generators;
@@ -68,7 +69,9 @@ implements LoadMonitor<I, O> {
 		this.generators = generators;
 		this.drivers = drivers;
 		for(final StorageDriver<I, O> nextDriver : drivers) {
-			nextDriver.register(this);
+			if (!(nextDriver instanceof StorageDriverSvc)) {
+				nextDriver.register(this);
+			}
 		}
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriosSec = (int) metricsConfig.getPeriod();

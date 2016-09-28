@@ -1,4 +1,4 @@
-package com.emc.mongoose.monitor.driver.config;
+package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.model.api.StorageType;
 import com.emc.mongoose.storage.driver.fs.FsStorageDriverConfigFactory;
@@ -11,7 +11,5 @@ public interface CommonStorageDriverConfigFactory
 extends FsStorageDriverConfigFactory, HttpStorageDriverConfigFactory {
 
 	StorageType getStorageType();
-
-
 
 }

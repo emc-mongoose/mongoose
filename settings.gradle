@@ -5,6 +5,7 @@ include 'storage:driver-base'
 include 'storage:driver-fs'
 include 'storage:driver-http-base'
 include 'storage:driver-http-s3'
+include 'storage:driver-service'
 include 'storage:mock'
 
 rootProject.name = 'mongoose'
