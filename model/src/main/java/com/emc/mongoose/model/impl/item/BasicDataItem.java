@@ -53,7 +53,7 @@ implements DataItem {
 		super(tokens[0]);
 		if(tokens.length == 3) {
 			try {
-				setOffset(Long.parseLong(tokens[1], 0x10));
+				offset(Long.parseLong(tokens[1], 0x10));
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
 			}
@@ -171,17 +171,22 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final int getLayerNum() {
+	public final int layer() {
 		return layerNum;
 	}
 	//
 	@Override
-	public final long getOffset() {
+	public final void size(final long size) {
+		this.size = size;
+	}
+	//
+	@Override
+	public final long offset() {
 		return offset;
 	}
 	//
 	@Override
-	public final void setOffset(final long offset) {
+	public final void offset(final long offset) {
 		this.offset = offset < 0 ? Long.MAX_VALUE + offset + 1 : offset;
 		position = 0;
 	}

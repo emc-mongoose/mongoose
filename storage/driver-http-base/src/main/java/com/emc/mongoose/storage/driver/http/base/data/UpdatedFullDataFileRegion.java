@@ -24,8 +24,8 @@ extends DataItemFileRegion<T> {
 	public UpdatedFullDataFileRegion(final T dataItem)
 	throws IOException {
 		super(dataItem);
-		dataItemOffset = dataItem.getOffset();
-		layerNum = dataItem.getLayerNum();
+		dataItemOffset = dataItem.offset();
+		layerNum = dataItem.layer();
 		contentSrc = dataItem.getContentSrc();
 	}
 

@@ -5,4 +5,15 @@ package com.emc.mongoose.model.impl.data;
  */
 public class DataSizeException
 extends DataVerificationException {
+	
+	private final long expected;
+	
+	public DataSizeException(final long expected, final long actual) {
+		super(actual);
+		this.expected = expected;
+	}
+	
+	public long getExpected() {
+		return expected;
+	}
 }
