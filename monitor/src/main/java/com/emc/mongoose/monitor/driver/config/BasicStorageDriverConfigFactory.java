@@ -1,6 +1,6 @@
 package com.emc.mongoose.monitor.driver.config;
 
-import com.emc.mongoose.model.api.StorageType;
+import com.emc.mongoose.model.api.storage.StorageType;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.ui.config.Config;
 

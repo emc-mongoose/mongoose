@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.http.base;
 
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.util.LoadType;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;

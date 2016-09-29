@@ -10,17 +10,14 @@ import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.api.load.Balancer;
+import com.emc.mongoose.model.api.load.LoadBalancer;
 import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
-import com.emc.mongoose.model.impl.item.BasicDataItem;
-import com.emc.mongoose.model.impl.load.BasicBalancer;
+import com.emc.mongoose.model.impl.load.BasicLoadBalancer;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
 import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -37,6 +34,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.pool.ChannelPool;
+import io.netty.channel.pool.ChannelPoolHandler;
+import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -68,7 +68,7 @@ import java.util.function.Function;
  */
 public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
-implements HttpStorageDriver<I, O> {
+implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	private static final Map<String, Input<String>> HEADER_NAME_INPUTS = new ConcurrentHashMap<>();
@@ -88,9 +88,10 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	protected final SecretKeySpec secretKey;
 	
-	private final Balancer<String> storageNodeBalancer;
+	private final LoadBalancer<String> nodeBalancer;
 	private final EventLoopGroup workerGroup;
-	protected final Bootstrap bootstrap;
+	private final Bootstrap bootstrap;
+	private final ChannelPool connPool;
 
 	private final Map<LoadType, HttpRequestFactory<I, O>>
 		requestFactoryMap = new ConcurrentHashMap<>();
@@ -112,7 +113,7 @@ implements HttpStorageDriver<I, O> {
 		}
 		storageNodeAddrs = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
 		storageNodePort = storageConfig.getPort();
-		storageNodeBalancer = new BasicBalancer<>(storageNodeAddrs);
+		nodeBalancer = new BasicLoadBalancer<>(storageNodeAddrs);
 		
 		final HttpClientHandlerBase<I, O> apiSpecificHandler = getApiSpecificHandler();
 		
@@ -137,6 +138,7 @@ implements HttpStorageDriver<I, O> {
 		bootstrap.handler(
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
 		);
+		connPool = new FixedChannelPool(bootstrap, this, concurrencyLevel);
 		requestFactoryMapFunc = loadType -> CrudHttpRequestFactory.getInstance(
 			loadType, HttpStorageDriverBase.this, srcContainer
 		);
@@ -271,7 +273,7 @@ implements HttpStorageDriver<I, O> {
 				bestNode = storageNodeAddrs[0];
 			} else {
 				try {
-					bestNode = storageNodeBalancer.get();
+					bestNode = nodeBalancer.get();
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the best node");
 					return;
@@ -361,11 +363,28 @@ implements HttpStorageDriver<I, O> {
 	throws InterruptedException {
 		return false;
 	}
-
+	
+	@Override
+	public final void channelReleased(final Channel c)
+	throws Exception {
+		c.remoteAddress()
+	}
+	
+	@Override
+	public final void channelAcquired(final Channel c)
+	throws Exception {
+		
+	}
+	
+	@Override
+	public final void channelCreated(final Channel c)
+	throws Exception {
+		
+	}
+	
 	@Override
 	public final boolean isIdle() {
-		// TODO
-		return false;
+		return nodeBalancer.getLeasedCount() == 0;
 	}
 	
 	@Override
@@ -416,7 +435,7 @@ implements HttpStorageDriver<I, O> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clear the secret key");
 			}
 		}
-		storageNodeBalancer.close();
+		nodeBalancer.close();
 		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
 	}
 }

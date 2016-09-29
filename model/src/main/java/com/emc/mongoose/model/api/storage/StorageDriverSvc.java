@@ -1,4 +1,4 @@
-package com.emc.mongoose.model.api.load;
+package com.emc.mongoose.model.api.storage;
 
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.model.api.io.task.IoTask;

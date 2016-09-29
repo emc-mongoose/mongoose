@@ -20,7 +20,7 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;

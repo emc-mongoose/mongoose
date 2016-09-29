@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.http.base;
 
 
 import com.emc.mongoose.common.pattern.EnumFactory;
-import com.emc.mongoose.model.api.load.StorageDriverSvc;
+import com.emc.mongoose.model.api.storage.StorageDriverSvc;
 
 import java.rmi.RemoteException;
 

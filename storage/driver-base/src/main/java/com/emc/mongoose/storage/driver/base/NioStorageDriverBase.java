@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.util.SizeInBytes;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;

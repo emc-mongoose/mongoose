@@ -1,7 +1,5 @@
 package com.emc.mongoose.model.impl.data;
 
-import com.emc.mongoose.model.api.data.ContentSource;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 /**
@@ -10,8 +8,7 @@ import java.nio.ByteBuffer;
  Implemented as finite buffer of pseudorandom bytes.
  */
 public final class SeedContentSource
-extends BasicContentSource
-implements ContentSource {
+extends BasicContentSource {
 
 	public SeedContentSource() {
 		super();

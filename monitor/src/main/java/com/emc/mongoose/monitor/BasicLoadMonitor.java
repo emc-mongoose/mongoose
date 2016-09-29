@@ -14,7 +14,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.api.metrics.IoStats;

@@ -1,8 +1,7 @@
 package com.emc.mongoose.model.impl.load;
 
-import com.emc.mongoose.model.api.load.Balancer;
+import com.emc.mongoose.model.api.load.LoadBalancer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +11,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 08.12.15.
  */
-public final class BasicBalancer<S>
-implements Balancer<S> {
+public final class BasicLoadBalancer<S>
+implements LoadBalancer<S> {
 	
 	private final static ThreadLocal<List<Object>> BEST_CHOICES = new ThreadLocal<List<Object>>() {
 		@Override
@@ -25,7 +24,7 @@ implements Balancer<S> {
 	private final S options[];
 	private final Map<S, AtomicInteger> leaseMap;
 	
-	public BasicBalancer(final S options[]) {
+	public BasicLoadBalancer(final S options[]) {
 		this.options = options;
 		if(options == null) {
 			this.leaseMap = null;
@@ -62,6 +61,15 @@ implements Balancer<S> {
 	}
 	
 	@Override
+	public final int getLeasedCount() {
+		int sum = 0;
+		for(final S option : options) {
+			sum += leaseMap.get(option).get();
+		}
+		return sum;
+	}
+	
+	@Override
 	public final S get() {
 		if(options == null) {
 			return null;
@@ -91,8 +99,7 @@ implements Balancer<S> {
 	}
 	
 	@Override
-	public int get(final List<S> buffer, final int limit)
-	throws IOException {
+	public final int get(final List<S> buffer, final int limit) {
 		if(options == null) {
 			return 0;
 		}
@@ -123,20 +130,17 @@ implements Balancer<S> {
 	}
 	
 	@Override
-	public void skip(final long count)
-	throws IOException {
+	public final void skip(final long count) {
 		rrc.incrementAndGet();
 	}
 	
 	@Override
-	public void reset()
-	throws IOException {
+	public final void reset() {
 		rrc.set(0);
 	}
 	
 	@Override
-	public final void close()
-	throws IOException {
+	public final void close() {
 		for(int i = 0; i < options.length; i ++) {
 			options[i] = null;
 		}

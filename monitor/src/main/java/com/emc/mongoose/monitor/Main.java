@@ -1,6 +1,6 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.model.api.StorageType;
+import com.emc.mongoose.model.api.storage.StorageType;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
@@ -30,7 +30,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.generator.BasicLoadGenerator;
 import com.emc.mongoose.model.api.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;

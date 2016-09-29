@@ -2,13 +2,12 @@ package com.emc.mongoose.storage.driver.fs;
 
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
 import com.emc.mongoose.model.util.IoWorker;

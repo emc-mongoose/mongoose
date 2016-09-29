@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.common.pattern.BuilderSvc;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 
 /**
  Created on 28.09.16.
