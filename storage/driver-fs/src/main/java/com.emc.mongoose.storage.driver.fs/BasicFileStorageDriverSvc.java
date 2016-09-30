@@ -1,12 +1,13 @@
-package com.emc.mongoose.storage.driver.http.s3;
+package com.emc.mongoose.storage.driver.fs;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.load.LoadMonitorSvc;
 import com.emc.mongoose.model.api.load.StorageDriverSvc;
+import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -17,22 +18,24 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 /**
- Created on 28.09.16.
+ Created on 30.09.16.
  */
-public class HttpS3StorageDriverSvc<I extends Item, O extends IoTask<I>>
-extends HttpS3StorageDriver<I, O>
+public class BasicFileStorageDriverSvc<I extends MutableDataItem, O extends MutableDataIoTask<I>>
+extends BasicFileStorageDriver<I, O>
 implements StorageDriverSvc<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public HttpS3StorageDriverSvc(
+	public BasicFileStorageDriverSvc(
 		final String runId, final Config.LoadConfig loadConfig,
-		final String srcContainer, final Config.StorageConfig storageConfig,
-		final boolean verifyFlag, final Config.SocketConfig socketConfig
-	) throws UserShootHisFootException {
-		super(runId, loadConfig, srcContainer, storageConfig, verifyFlag, socketConfig);
+		final String srcContainer, final StorageConfig storageConfig,
+		final boolean verifyFlag, final SizeInBytes ioBuffSize
+	) {
+		super(runId, loadConfig, srcContainer, storageConfig, verifyFlag, ioBuffSize);
 	}
 
+
+	// TODO eliminate duplication
 	@Override
 	public void registerRemotely(final String hostName, final String monitorSvcName)
 	throws RemoteException {
@@ -48,7 +51,7 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final String getName()
+	public String getName()
 	throws RemoteException {
 		return getClass().getCanonicalName();
 	}

@@ -52,10 +52,11 @@ extends HttpStorageDriverBase<I, O> {
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	
 	public HttpS3StorageDriver(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
+		final String runId, final LoadConfig loadConfig,
+		final String srcContainer, final StorageConfig storageConfig,
+		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, socketConfig);
+		super(runId, loadConfig, srcContainer, storageConfig, verifyFlag, socketConfig);
 	}
 	
 	@Override

@@ -15,5 +15,6 @@ extends Serializable {
 	LoadConfig getLoadConfig();
 	String getSourceContainer();
 	StorageConfig getStorageConfig();
+	boolean getVerifyFlag();
 
 }

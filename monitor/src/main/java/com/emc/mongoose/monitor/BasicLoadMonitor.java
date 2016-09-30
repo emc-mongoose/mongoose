@@ -68,15 +68,11 @@ implements LoadMonitor<I, O> {
 		this.name = name;
 		this.generators = generators;
 		this.drivers = drivers;
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			if (!(nextDriver instanceof StorageDriverSvc)) {
-				nextDriver.register(this);
-			}
-		}
+		registerDrivers(drivers);
 		this.metricsConfig = loadConfig.getMetricsConfig();
-		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
-		this.ioStats = new BasicIoStats(name, metricsPeriosSec);
-		this.medIoStats = new BasicIoStats(name, metricsPeriosSec);
+		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
+		this.ioStats = new BasicIoStats(name, metricsPeriodSec);
+		this.medIoStats = new BasicIoStats(name, metricsPeriodSec);
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		if(limitConfig.getCount() > 0) {
 			countLimit = limitConfig.getCount();
@@ -88,11 +84,17 @@ implements LoadMonitor<I, O> {
 		} else {
 			sizeLimit = Long.MAX_VALUE;
 		}
-		this.worker = new Thread(new ServiceTask(metricsPeriosSec), name);
+		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
 		LogUtil.UNCLOSED_REGISTRY.add(this);
+	}
+
+	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
+			nextDriver.register(this);
+		}
 	}
 	
 	private final class ServiceTask

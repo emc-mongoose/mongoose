@@ -24,8 +24,6 @@ public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
-
 	protected final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
 	protected final String runId;
 	protected final int concurrencyLevel;
@@ -36,8 +34,9 @@ implements StorageDriver<I, O> {
 	protected final boolean verifyFlag;
 
 	protected StorageDriverBase(
-		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag
+		final String runId, final LoadConfig loadConfig,
+		final String srcContainer, final AuthConfig authConfig,
+		final boolean verifyFlag
 	) {
 		this.runId = runId;
 		this.userName = authConfig.getId();

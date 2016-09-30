@@ -7,13 +7,14 @@ import java.rmi.RemoteException;
  */
 public class Main {
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	throws InterruptedException {
 		final StorageDriverFactorySvc driverFactorySvc = new BasicStorageDriverFactorySvc();
 		try {
 			driverFactorySvc.start();
 			driverFactorySvc.await();
-		} catch(final RemoteException | InterruptedException e) {
-			e.printStackTrace(System.err);
+		} catch(final Throwable throwable) {
+			throwable.printStackTrace(System.err);
 		}
 	}
 

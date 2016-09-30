@@ -1,18 +1,19 @@
 package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
-import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
+import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.api.StorageType;
+import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.MutableDataItem;
+import com.emc.mongoose.ui.config.Config.StorageConfig.StorageType;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.SocketException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
@@ -20,19 +21,21 @@ import java.util.concurrent.TimeUnit;
 /**
  Created on 28.09.16.
  */
-public class BasicStorageDriverFactorySvc
+public class BasicStorageDriverFactorySvc<
+	I extends Item & MutableDataItem, O extends IoTask<I> &MutableDataIoTask<I>
+	>
 extends DaemonBase
-implements StorageDriverFactorySvc {
+implements StorageDriverFactorySvc<I, O, CommonStorageDriverConfigFactory> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	public BasicStorageDriverFactorySvc() {
 		try {
 			ServiceUtil.create(this);
-		} catch(final RemoteException | MalformedURLException | SocketException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to create service");
-		} catch(final OmgLookAtMyConsoleException | OmgDoesNotPerformException e) {
+		} catch(final DanShootHisFootException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Internal error");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to create service");
 		}
 	}
 
@@ -51,13 +54,12 @@ implements StorageDriverFactorySvc {
 	throws IllegalStateException {
 		try {
 			ServiceUtil.close(this);
-		} catch(
-			final RemoteException | MalformedURLException |
-				SocketException | NotBoundException e
-			) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close service");
-		} catch(final OmgLookAtMyConsoleException | OmgDoesNotPerformException e) {
+		} catch(final DanShootHisFootException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Internal error");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close service");
+		} catch(final NotBoundException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Try to close unbounded service");
 		}
 	}
 
@@ -67,7 +69,7 @@ implements StorageDriverFactorySvc {
 	}
 
 	@Override
-	public String getName()
+	public final String getName()
 	throws RemoteException {
 		return SVC_NAME;
 	}
@@ -80,17 +82,19 @@ implements StorageDriverFactorySvc {
 	}
 
 	@Override
-	public String create(final CommonStorageDriverConfigFactory configFactory)
-	throws RemoteException {
+	public String create(
+		final CommonStorageDriverConfigFactory configFactory
+	) throws RemoteException {
 		final StorageType storageType = configFactory.getStorageType();
 		switch(storageType) {
 			case HTTP:
-				return new HttpStorageDriverFactory(configFactory)
-//					.create(configFactory.getStorageConfig().getHttpConfig().getApi());
-					.create(HttpStorageDriverFactory.Api.S3);
+				return new HttpStorageDriverFactory<I, O>(configFactory)
+					.create(configFactory.getStorageConfig().getHttpConfig().getApi());
 			case FS:
-				throw new UnsupportedOperationException();
+				return new FsStorageDriverFactory<I, O>(configFactory)
+					.create();
 		}
 		return null;
 	}
+
 }

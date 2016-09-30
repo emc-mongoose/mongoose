@@ -1,7 +1,6 @@
 package com.emc.mongoose.monitor;
 
-import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
+import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -28,21 +27,26 @@ implements LoadMonitorSvc<I, O> {
 	private static final Logger LOG = LogManager.getLogger();
 
 	public BasicLoadMonitorSvc(
-		final String name, final List<LoadGenerator<I, O>> loadGenerators,
-		final List<StorageDriver<I, O>> storageDrivers, final Config.LoadConfig loadConfig
+		final String name, final List<LoadGenerator<I, O>> generators,
+		final List<StorageDriver<I, O>> drivers, final Config.LoadConfig loadConfig
 	) {
-		super(name, loadGenerators, storageDrivers, loadConfig);
+		super(name, generators, drivers, loadConfig);
+	}
+
+	@Override
+	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
+		final String hostName;
 		try {
-			final String hostName = NetUtil.getHostAddrString();
-			for (final StorageDriver<I, O> nextDriver: storageDrivers) {
+			hostName = NetUtil.getHostAddrString();
+			for (final StorageDriver<I, O> nextDriver: drivers) {
 				if (nextDriver instanceof StorageDriverSvc) {
-					final StorageDriverSvc<I, O> nextDriverSvc =
-						(StorageDriverSvc<I, O>) nextDriver;
+					final StorageDriverSvc<I, O>
+						nextDriverSvc = (StorageDriverSvc<I, O>) nextDriver;
 					nextDriverSvc.registerRemotely(hostName, getName());
 				}
 			}
-		} catch(final OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to define host name");
+		} catch(final DanShootHisFootException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to determine host name");
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to register monitor service");
 		}

@@ -3,6 +3,8 @@ package com.emc.mongoose.ui.config;
 import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.model.util.TimeUtil;
+import com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig.Api;
+import com.emc.mongoose.ui.config.Config.StorageConfig.StorageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -56,6 +58,26 @@ public final class Config {
 			} catch(final IOException ignored) {
 				return new DataRangesConfig(p.getValueAsString());
 			}
+		}
+	}
+
+	private static final class HttpApiDeserializer
+	extends JsonDeserializer<Api> {
+		@Override
+		public Api deserialize(
+			final JsonParser p, final DeserializationContext ctx
+		) throws IOException {
+			return Api.valueOf(p.getValueAsString().toUpperCase());
+		}
+	}
+
+	private static final class StorageTypeDeserializer
+	extends JsonDeserializer<StorageType> {
+		@Override
+		public StorageType deserialize(
+			final JsonParser p, final DeserializationContext ctx
+		) throws IOException {
+			return StorageType.valueOf(p.getValueAsString().toUpperCase());
 		}
 	}
 
@@ -789,6 +811,11 @@ public final class Config {
 
 	public static final class StorageConfig {
 
+		public enum StorageType {
+			FS,
+			HTTP
+		}
+
 		public static final String KEY_AUTH = "auth";
 		public static final String KEY_HTTP = "http";
 		public static final String KEY_NODE = "node";
@@ -822,7 +849,7 @@ public final class Config {
 			this.ssl = ssl;
 		}
 		
-		public final void setType(final String type) {
+		public final void setType(final StorageType type) {
 			this.type = type;
 		}
 		
@@ -836,7 +863,8 @@ public final class Config {
 		@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
 		@JsonProperty(KEY_PORT) private int port;
 		@JsonProperty(KEY_SSL) private boolean ssl;
-		@JsonProperty(KEY_TYPE) private String type;
+		@JsonProperty(KEY_TYPE) @JsonDeserialize(using = StorageTypeDeserializer.class)
+		private StorageType type;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
 
 
@@ -867,7 +895,7 @@ public final class Config {
 			return ssl;
 		}
 
-		public String getType() {
+		public StorageType getType() {
 			return type;
 		}
 
@@ -915,6 +943,10 @@ public final class Config {
 
 		public static final class HttpConfig {
 
+			public enum Api {
+				S3, SWIFT, ATMOS
+			}
+
 			public static final String KEY_API = "api";
 			public static final String KEY_FS_ACCESS = "fsAccess";
 			public static final String KEY_HEADERS = "headers";
@@ -923,7 +955,7 @@ public final class Config {
 			public static final String KEY_NAMESPACE = "namespace";
 			public static final String KEY_VERSIONING = "versioning";
 			
-			public final void setApi(final String api) {
+			public final void setApi(final Api api) {
 				this.api = api;
 			}
 			
@@ -943,7 +975,8 @@ public final class Config {
 				this.headers = headers;
 			}
 			
-			@JsonProperty(KEY_API) private String api;
+			@JsonDeserialize(using = HttpApiDeserializer.class) @JsonProperty(KEY_API)
+			private Api api;
 			@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
 			@JsonProperty(KEY_NAMESPACE) private String namespace;
 			@JsonProperty(KEY_VERSIONING) private boolean versioning;
@@ -952,7 +985,7 @@ public final class Config {
 			public HttpConfig() {
 			}
 
-			public String getApi() {
+			public Api getApi() {
 				return api;
 			}
 

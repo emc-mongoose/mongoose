@@ -1,9 +1,10 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.api.StorageType;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
+import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemType;
 import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.api.load.StorageDriverSvc;
@@ -12,9 +13,9 @@ import com.emc.mongoose.model.impl.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriver;
+import com.emc.mongoose.storage.driver.service.BasicStorageDriverConfigFactory;
 import com.emc.mongoose.storage.driver.service.CommonStorageDriverConfigFactory;
 import com.emc.mongoose.storage.driver.service.StorageDriverFactorySvc;
 import com.emc.mongoose.ui.cli.CliArgParser;
@@ -30,6 +31,8 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 
 import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig.Api;
+import com.emc.mongoose.ui.config.Config.StorageConfig.StorageType;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -40,7 +43,6 @@ import com.emc.mongoose.model.api.load.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -74,13 +76,13 @@ public class Main {
 		config.apply(CliArgParser.parseArgs(args));
 		
 		final StorageConfig storageConfig = config.getStorageConfig();
-		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
+		final StorageType storageType = storageConfig.getType();
 		final ItemConfig itemConfig = config.getItemConfig();
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final LoadConfig loadConfig = config.getLoadConfig();
 		final RunConfig runConfig = config.getRunConfig();
 		final InputConfig inputConfig = itemConfig.getInputConfig();
-		final String apiType = storageConfig.getHttpConfig().getApi();
+		final Api apiType = storageConfig.getHttpConfig().getApi();
 
 		String runId = runConfig.getId();
 		if(runId == null) {
@@ -97,7 +99,7 @@ public class Main {
 		log.info(Markers.MSG, "Configuration loaded");
 		final List<StorageDriver> drivers = new ArrayList<>();
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		if (!driverConfig.getRemote()) {
+		if(!driverConfig.getRemote()) {
 			if(StorageType.FS.equals(storageType)) {
 				log.info(Markers.MSG, "Work on the filesystem");
 				if(ItemType.CONTAINER.equals(itemType)) {
@@ -105,9 +107,11 @@ public class Main {
 					// TODO directory load driver
 				} else {
 					log.info(Markers.MSG, "Work on the files");
-					drivers.add(new BasicFileStorageDriver<>(runId, storageConfig.getAuthConfig(),
-						loadConfig, inputConfig.getContainer(), itemConfig.getDataConfig().getVerify(),
-						config.getIoConfig().getBufferConfig().getSize()
+					drivers.add(
+						new BasicFileStorageDriver<>(
+							runId, loadConfig, inputConfig.getContainer(), storageConfig,
+							itemConfig.getDataConfig().getVerify(),
+							config.getIoConfig().getBufferConfig().getSize()
 					));
 				}
 			} else if(StorageType.HTTP.equals(storageType)) {
@@ -116,10 +120,11 @@ public class Main {
 				if(ItemType.CONTAINER.equals(itemType)) {
 					// TODO container/bucket load driver
 				} else {
-					switch(apiType.toLowerCase()) {
-						case "s3":
-							drivers.add(new HttpS3StorageDriver<>(runId, loadConfig, storageConfig,
-								inputConfig.getContainer(), itemConfig.getDataConfig().getVerify(),
+					switch(apiType) {
+						case S3:
+							drivers.add(new HttpS3StorageDriver<>(
+								runId, loadConfig, inputConfig.getContainer(),
+								storageConfig, itemConfig.getDataConfig().getVerify(),
 								config.getSocketConfig()
 							));
 							break;
@@ -132,55 +137,19 @@ public class Main {
 			final List<String> driverConfigAddrs = driverConfig.getAddrs();
 			for (final String addrs: driverConfigAddrs) {
 				try {
-					final StorageDriverFactorySvc driverFactorySvc = ServiceUtil.getSvc(
+					final StorageDriverFactorySvc<
+						? extends Item, ? extends IoTask<Item>, CommonStorageDriverConfigFactory
+						> driverFactorySvc = ServiceUtil.getSvc(
 						addrs, StorageDriverFactorySvc.SVC_NAME
 					);
-					// TODO temp decision
 					final CommonStorageDriverConfigFactory defaultSdConfigFactory =
-						new CommonStorageDriverConfigFactory() {
-							@Override
-							public String getRunId() {
-								return ThreadContext.get(KEY_RUN_ID);
-							}
-
-							@Override
-							public LoadConfig getLoadConfig() {
-								return loadConfig;
-							}
-
-							@Override
-							public String getSourceContainer() {
-								return inputConfig.getContainer();
-							}
-
-							@Override
-							public StorageConfig getStorageConfig() {
-								return storageConfig;
-							}
-
-							@Override
-							public Config.SocketConfig getSocketConfig() {
-								return config.getSocketConfig();
-							}
-
-							@Override
-							public boolean getVerifyFlag() {
-								return itemConfig.getDataConfig().getVerify();
-							}
-
-							@Override
-							public SizeInBytes getIoBuffSize() {
-								return null;
-							}
-
-							@Override
-							public StorageType getStorageType() {
-								return storageType;
-							}
-						};
+						new BasicStorageDriverConfigFactory(
+							storageType, runId, loadConfig, inputConfig.getContainer(),
+							storageConfig, itemConfig.getDataConfig().getVerify(),
+							config.getSocketConfig()
+							);
 					final String driverSvcName = driverFactorySvc.create(defaultSdConfigFactory);
-					final StorageDriverSvc driverSvc =
-						ServiceUtil.getSvc(addrs, driverSvcName);
+					final StorageDriverSvc driverSvc = ServiceUtil.getSvc(addrs, driverSvcName);
 					drivers.add(driverSvc);
 				} catch(final NotBoundException e) {
 					log.error(

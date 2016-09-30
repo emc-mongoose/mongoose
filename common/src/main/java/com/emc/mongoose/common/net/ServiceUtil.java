@@ -1,13 +1,8 @@
 package com.emc.mongoose.common.net;
 
-import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
+import com.emc.mongoose.common.exception.DanShootHisFootException;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.Naming;
@@ -16,7 +11,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -31,7 +25,7 @@ public abstract class ServiceUtil {
 
 
 	private static Registry REGISTRY = null;
-	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
+	private static final String RMI_HOSTNAME = System.getProperty("java.rmi.server.hostname");
 	private static final Lock REGISTRY_LOCK = new ReentrantLock();
 	private static final Map<String, Service> SVCS = new ConcurrentHashMap<>();
 
@@ -59,20 +53,19 @@ public abstract class ServiceUtil {
 	}
 
 	public static URI svcUri(final String svcName)
-	throws SocketException, OmgLookAtMyConsoleException, OmgDoesNotPerformException {
-		String hostName = System.getProperty(ServiceUtil.KEY_RMI_HOSTNAME);
-		if (null != hostName) {
+	throws DanShootHisFootException {
+		String hostName;
+		if (null != RMI_HOSTNAME) {
+			hostName = RMI_HOSTNAME;
+		} else {
 			hostName = NetUtil.getHostAddrString();
 		}
 		return svcUri(hostName, svcName);
 	}
 
-	private static URI svcUri(final String hostName, final String svcName)
-	throws SocketException, OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+	private static URI svcUri(final String hostName, final String svcName) {
 		try {
-			return new URI(
-				"rmi", null, hostName, REGISTRY_PORT, "/" + svcName, null, null
-			);
+			return new URI("rmi", null, hostName, REGISTRY_PORT, "/" + svcName, null, null);
 		} catch(final URISyntaxException ignore) {
 		}
 		throw new IllegalArgumentException();
@@ -80,8 +73,7 @@ public abstract class ServiceUtil {
 
 
 	public static void create(final Service svc)
-	throws RemoteException, MalformedURLException, SocketException,
-		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+	throws DanShootHisFootException, IOException {
 		UnicastRemoteObject.exportObject(svc, 0);
 		final String svcName = svc.getName();
 		final String svcUri = svcUri(svcName).toString();
@@ -95,23 +87,20 @@ public abstract class ServiceUtil {
 
 	@SuppressWarnings("unchecked")
 	public static <S extends Service> S getSvc(final String name)
-	throws RemoteException, NotBoundException, MalformedURLException, SocketException,
-		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+	throws DanShootHisFootException, IOException, NotBoundException {
 		final String svcUri = svcUri(name).toString();
 		return (S) Naming.lookup(svcUri);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <S extends Service> S getSvc(final String host, final String name)
-	throws RemoteException, NotBoundException, MalformedURLException, SocketException,
-		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+	throws IOException, NotBoundException {
 		final String svcUri = svcUri(host, name).toString();
 		return (S) Naming.lookup(svcUri);
 	}
 
 	public static void close(final Service svc)
-	throws RemoteException, MalformedURLException, NotBoundException, SocketException,
-		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+	throws DanShootHisFootException, IOException, NotBoundException {
 		UnicastRemoteObject.unexportObject(svc, true);
 		final String svcUri = svcUri(svc.getName()).toString();
 		Naming.unbind(svcUri);
@@ -119,8 +108,7 @@ public abstract class ServiceUtil {
 	}
 
 	public static void shutdown()
-	throws RemoteException, NotBoundException, MalformedURLException, SocketException,
-		OmgLookAtMyConsoleException, OmgDoesNotPerformException {
+	throws DanShootHisFootException, IOException, NotBoundException {
 		for(final Service svc : SVCS.values()) {
 			close(svc);
 		}

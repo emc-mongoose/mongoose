@@ -3,9 +3,11 @@ package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.pattern.EnumFactory;
-import com.emc.mongoose.model.api.load.StorageDriverSvc;
+import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.storage.driver.http.base.HttpStorageDriverConfigFactory;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriverSvc;
+import com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig.Api;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,11 +18,10 @@ import java.rmi.RemoteException;
 /**
  Created on 25.09.16.
  */
-public class HttpStorageDriverFactory
-implements EnumFactory<String, HttpStorageDriverFactory.Api> {
+public class HttpStorageDriverFactory<I extends Item, O extends IoTask<I>>
+implements EnumFactory<String, Api> {
 
 	private static final Logger LOG = LogManager.getLogger();
-
 
 	private final HttpStorageDriverConfigFactory configFactory;
 
@@ -39,12 +40,11 @@ implements EnumFactory<String, HttpStorageDriverFactory.Api> {
 				break;
 			case S3:
 				try {
-					// todo add generics
-					driverSvcName = new HttpS3StorageDriverSvc(
+					driverSvcName = new HttpS3StorageDriverSvc<I, O>(
 						configFactory.getRunId(),
 						configFactory.getLoadConfig(),
-						configFactory.getStorageConfig(),
 						configFactory.getSourceContainer(),
+						configFactory.getStorageConfig(),
 						configFactory.getVerifyFlag(),
 						configFactory.getSocketConfig()
 					).getName();
@@ -58,7 +58,4 @@ implements EnumFactory<String, HttpStorageDriverFactory.Api> {
 		return driverSvcName;
 	}
 
-	public enum Api {
-		S3, SWIFT, ATMOS
-	}
 }
