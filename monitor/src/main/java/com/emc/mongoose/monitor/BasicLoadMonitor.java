@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemBuffer;
+import com.emc.mongoose.model.api.load.StorageDriverSvc;
 import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
 import com.emc.mongoose.model.util.LoadType;
@@ -42,7 +43,7 @@ public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadMonitor<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
 	private final List<LoadGenerator<I, O>> generators;
@@ -67,13 +68,11 @@ implements LoadMonitor<I, O> {
 		this.name = name;
 		this.generators = generators;
 		this.drivers = drivers;
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			nextDriver.register(this);
-		}
+		registerDrivers(drivers);
 		this.metricsConfig = loadConfig.getMetricsConfig();
-		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
-		this.ioStats = new BasicIoStats(name, metricsPeriosSec);
-		this.medIoStats = new BasicIoStats(name, metricsPeriosSec);
+		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
+		this.ioStats = new BasicIoStats(name, metricsPeriodSec);
+		this.medIoStats = new BasicIoStats(name, metricsPeriodSec);
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		if(limitConfig.getCount() > 0) {
 			countLimit = limitConfig.getCount();
@@ -85,11 +84,20 @@ implements LoadMonitor<I, O> {
 		} else {
 			sizeLimit = Long.MAX_VALUE;
 		}
-		this.worker = new Thread(new ServiceTask(metricsPeriosSec), name);
+		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
 		LogUtil.UNCLOSED_REGISTRY.add(this);
+	}
+
+	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
+		try {
+			for(final StorageDriver<I, O> nextDriver : drivers) {
+				nextDriver.register(this);
+			}
+		} catch(final RemoteException ignore) {
+		}
 	}
 	
 	private final class ServiceTask
@@ -406,7 +414,7 @@ implements LoadMonitor<I, O> {
 
 	@Override
 	public final String getName() {
-		return name;
+		return getClass().getSimpleName().toLowerCase() + "/" + name;
 	}
 	
 	@Override

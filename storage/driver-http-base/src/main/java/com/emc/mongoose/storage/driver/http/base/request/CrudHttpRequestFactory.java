@@ -15,6 +15,8 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.rmi.RemoteException;
+
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
@@ -52,7 +54,7 @@ implements HttpRequestFactory<I, O> {
 
 	@Override
 	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
-	throws URISyntaxException {
+	throws URISyntaxException, RemoteException {
 		final I item = ioTask.getItem();
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = httpDriver.getHttpMethod(ioType);
@@ -98,7 +100,10 @@ implements HttpRequestFactory<I, O> {
 					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				}
 			} else {
-				httpDriver.applyCopyHeaders(httpHeaders, item);
+				try {
+					httpDriver.applyCopyHeaders(httpHeaders, item);
+				} catch(final RemoteException ignore) {
+				}
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			}
 		}

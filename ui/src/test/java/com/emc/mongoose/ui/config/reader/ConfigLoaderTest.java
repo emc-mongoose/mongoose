@@ -9,6 +9,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig.Api.S3;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.StorageType.HTTP;
 import static com.emc.mongoose.ui.config.matcher.ConfigMatcher.equalTo;
 import static com.emc.mongoose.ui.config.matcher.ConfigNullMatcher.notNullValue;
 import static com.emc.mongoose.ui.config.matcher.ConfigNullMatcher.nullValue;
@@ -126,7 +128,7 @@ public class ConfigLoaderTest {
 		assertThat(authConfig.getToken(), nullValue("storage.auth.token"));
 		final Config.StorageConfig.HttpConfig httpConfig = storageConfig.getHttpConfig();
 		assertThat(httpConfig, notNullValue());
-		assertThat(httpConfig.getApi(), equalTo("S3", "storage.http.api"));
+		assertThat(httpConfig.getApi(), equalTo(S3, "storage.http.api"));
 		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.http.fsAccess"));
 		final Map<String, String> headers = httpConfig.getHeaders();
 		assertThat(headers, notNullValue());
@@ -152,7 +154,7 @@ public class ConfigLoaderTest {
 		);
 		assertThat(storageConfig.getPort(), equalTo(9020, "storage.port"));
 		assertThat(storageConfig.getSsl(), equalTo(false, "storage.ssl"));
-		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
+		assertThat(storageConfig.getType(), equalTo(HTTP, "storage.type"));
 		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());
 		assertThat(

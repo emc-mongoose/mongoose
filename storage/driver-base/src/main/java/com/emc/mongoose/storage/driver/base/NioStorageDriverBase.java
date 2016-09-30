@@ -40,10 +40,11 @@ implements StorageDriver<I, O> {
 	private final BlockingQueue<O> ioTaskQueue;
 
 	public NioStorageDriverBase(
-		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
+		final String runId, final LoadConfig loadConfig,
+		final String srcContainer, final AuthConfig authConfig,
+		final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
-		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
+		super(runId, loadConfig, srcContainer, authConfig, verifyFlag);
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
 		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {

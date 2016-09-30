@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.net;
 
+import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 
@@ -61,12 +62,12 @@ public interface NetUtil {
 
 
 	static String getHostAddrString()
-	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
+	throws DanShootHisFootException {
 		return getHostAddr().getHostAddress();
 	}
 
 	static long getHostAddrCode()
-	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
+	throws DanShootHisFootException {
 		return getHostAddrString().hashCode();
 	}
 }

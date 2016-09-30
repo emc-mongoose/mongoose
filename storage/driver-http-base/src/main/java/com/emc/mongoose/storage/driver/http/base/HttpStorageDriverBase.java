@@ -97,10 +97,11 @@ implements HttpStorageDriver<I, O> {
 	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapFunc;
 
 	protected HttpStorageDriverBase(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
+		final String runId, final LoadConfig loadConfig,
+		final String srcContainer, final StorageConfig storageConfig,
+		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
+		super(runId, loadConfig, srcContainer, storageConfig.getAuthConfig(), verifyFlag);
 		try {
 			if(secret == null) {
 				secretKey = null;

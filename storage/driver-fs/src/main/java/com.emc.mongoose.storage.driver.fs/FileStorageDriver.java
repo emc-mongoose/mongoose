@@ -15,6 +15,8 @@ import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.NioStorageDriverBase;
+import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -40,7 +42,7 @@ import static java.io.File.separatorChar;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
+public class FileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
 extends NioStorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
@@ -51,11 +53,14 @@ implements StorageDriver<I, O> {
 	private final Map<O, FileChannel> dstOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openDstFileFunc;
 
-	public BasicFileStorageDriver(
-		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
+	public FileStorageDriver(
+		final String runId, final LoadConfig loadConfig,
+		final String srcContainer, final StorageConfig storageConfig,
+		final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
-		super(runId, authConfig, loadConfig, srcContainer, verifyFlag, ioBuffSize);
+		super(
+			runId, loadConfig, srcContainer, storageConfig.getAuthConfig(), verifyFlag, ioBuffSize
+		);
 		openSrcFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
 			final Path srcFilePath;
