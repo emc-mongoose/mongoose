@@ -42,7 +42,7 @@ import static java.io.File.separatorChar;
 /**
  Created by kurila on 19.07.16.
  */
-public class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
+public class FileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
 extends NioStorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
@@ -53,7 +53,7 @@ implements StorageDriver<I, O> {
 	private final Map<O, FileChannel> dstOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openDstFileFunc;
 
-	public BasicFileStorageDriver(
+	public FileStorageDriver(
 		final String runId, final LoadConfig loadConfig,
 		final String srcContainer, final StorageConfig storageConfig,
 		final boolean verifyFlag, final SizeInBytes ioBuffSize

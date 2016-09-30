@@ -2,6 +2,7 @@ package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.net.NetUtil;
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.load.LoadGenerator;
@@ -14,6 +15,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -31,6 +34,13 @@ implements LoadMonitorSvc<I, O> {
 		final List<StorageDriver<I, O>> drivers, final Config.LoadConfig loadConfig
 	) {
 		super(name, generators, drivers, loadConfig);
+		try {
+			ServiceUtil.create(this);
+		} catch(final DanShootHisFootException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Internal error");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to create service");
+		}
 	}
 
 	@Override
@@ -49,6 +59,21 @@ implements LoadMonitorSvc<I, O> {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to determine host name");
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to register monitor service");
+		}
+	}
+
+	@Override
+	protected void doInterrupt()
+	throws IllegalStateException {
+		super.doInterrupt();
+		try {
+			ServiceUtil.close(this);
+		} catch(final DanShootHisFootException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Internal error");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close service");
+		} catch(final NotBoundException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Try to close unbounded service");
 		}
 	}
 }

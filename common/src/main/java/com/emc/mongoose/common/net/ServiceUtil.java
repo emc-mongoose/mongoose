@@ -27,7 +27,7 @@ public abstract class ServiceUtil {
 	private static Registry REGISTRY = null;
 	private static final String RMI_HOSTNAME = System.getProperty("java.rmi.server.hostname");
 	private static final Lock REGISTRY_LOCK = new ReentrantLock();
-	private static final Map<String, Service> SVCS = new ConcurrentHashMap<>();
+	private static final Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 
 	static {
 		rmiRegistryInit();
@@ -77,9 +77,8 @@ public abstract class ServiceUtil {
 		UnicastRemoteObject.exportObject(svc, 0);
 		final String svcName = svc.getName();
 		final String svcUri = svcUri(svcName).toString();
-		if(!SVCS.containsKey(svcUri)) {
+		if (null == SVC_MAP.putIfAbsent(svcName, svc)) {
 			Naming.rebind(svcUri, svc);
-			SVCS.put(svcName, svc);
 		} else {
 			throw new IllegalStateException("Duplication of service name");
 		}
@@ -104,12 +103,12 @@ public abstract class ServiceUtil {
 		UnicastRemoteObject.unexportObject(svc, true);
 		final String svcUri = svcUri(svc.getName()).toString();
 		Naming.unbind(svcUri);
-		SVCS.remove(svcUri);
+		SVC_MAP.remove(svcUri);
 	}
 
 	public static void shutdown()
 	throws DanShootHisFootException, IOException, NotBoundException {
-		for(final Service svc : SVCS.values()) {
+		for(final Service svc : SVC_MAP.values()) {
 			close(svc);
 		}
 	}

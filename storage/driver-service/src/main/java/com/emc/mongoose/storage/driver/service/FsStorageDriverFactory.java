@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.service;
 import com.emc.mongoose.common.pattern.SingleFactory;
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriverSvc;
+import com.emc.mongoose.storage.driver.fs.FileStorageDriverSvc;
 import com.emc.mongoose.storage.driver.fs.FsStorageDriverConfigFactory;
 
 import java.rmi.RemoteException;
@@ -23,7 +23,7 @@ implements SingleFactory<String> {
 	@Override
 	public String create()
 	throws RemoteException {
-		return new BasicFileStorageDriverSvc<I, O>(
+		return new FileStorageDriverSvc<I, O>(
 			configFactory.getRunId(),
 			configFactory.getLoadConfig(),
 			configFactory.getSourceContainer(),

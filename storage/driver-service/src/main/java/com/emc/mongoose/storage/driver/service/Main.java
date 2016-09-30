@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.service;
 
-import java.rmi.RemoteException;
+import com.emc.mongoose.common.net.ServiceUtil;
 
 /**
  Created on 28.09.16.
@@ -13,6 +13,7 @@ public class Main {
 		try {
 			driverFactorySvc.start();
 			driverFactorySvc.await();
+			ServiceUtil.shutdown();
 		} catch(final Throwable throwable) {
 			throwable.printStackTrace(System.err);
 		}

@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.concurrent.TimeUnit;
 
 /**
  Created on 28.09.16.
@@ -72,13 +71,6 @@ implements StorageDriverFactorySvc<I, O, CommonStorageDriverConfigFactory> {
 	public final String getName()
 	throws RemoteException {
 		return SVC_NAME;
-	}
-
-	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException {
-		timeUnit.sleep(timeout);
-		return true;
 	}
 
 	@Override

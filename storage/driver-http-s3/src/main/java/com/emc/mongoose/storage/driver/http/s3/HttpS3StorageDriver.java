@@ -155,4 +155,5 @@ extends HttpStorageDriverBase<I, O> {
 		sigData = mac.doFinal(canonicalForm.getBytes());
 		return BASE64_ENCODER.encodeToString(sigData);
 	}
+
 }

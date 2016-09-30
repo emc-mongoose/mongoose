@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.http.s3;
 
+import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -31,6 +32,13 @@ implements StorageDriverSvc<I, O> {
 		final boolean verifyFlag, final Config.SocketConfig socketConfig
 	) throws UserShootHisFootException {
 		super(runId, loadConfig, srcContainer, storageConfig, verifyFlag, socketConfig);
+		try {
+			ServiceUtil.create(this);
+		} catch(final DanShootHisFootException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Internal error");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to create service");
+		}
 	}
 
 	@Override
@@ -50,6 +58,21 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final String getName()
 	throws RemoteException {
-		return getClass().getCanonicalName();
+		return runId;
+	}
+
+	@Override
+	protected void doInterrupt()
+	throws IllegalStateException {
+		super.doInterrupt();
+		try {
+			ServiceUtil.close(this);
+		} catch(final DanShootHisFootException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Internal error");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close service");
+		} catch(final NotBoundException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Try to close unbounded service");
+		}
 	}
 }

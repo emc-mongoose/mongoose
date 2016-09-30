@@ -13,7 +13,7 @@ import com.emc.mongoose.model.impl.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
+import com.emc.mongoose.storage.driver.fs.FileStorageDriver;
 import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriver;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverConfigFactory;
 import com.emc.mongoose.storage.driver.service.CommonStorageDriverConfigFactory;
@@ -108,7 +108,7 @@ public class Main {
 				} else {
 					log.info(Markers.MSG, "Work on the files");
 					drivers.add(
-						new BasicFileStorageDriver<>(
+						new FileStorageDriver<>(
 							runId, loadConfig, inputConfig.getContainer(), storageConfig,
 							itemConfig.getDataConfig().getVerify(),
 							config.getIoConfig().getBufferConfig().getSize()
@@ -221,6 +221,7 @@ public class Main {
 					log.info(Markers.MSG, "Load monitor timeout");
 				}
 			}
+			ServiceUtil.shutdown();
 		} catch(final Throwable throwable) {
 			throwable.printStackTrace(System.err);
 		}

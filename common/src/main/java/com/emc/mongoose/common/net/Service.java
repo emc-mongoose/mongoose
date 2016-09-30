@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.Daemon;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 07.05.14.
@@ -14,4 +15,11 @@ extends Remote, Daemon {
 
 	String getName()
 	throws RemoteException;
+
+	@Override
+	default boolean await(final long timeout, final TimeUnit timeUnit)
+	throws InterruptedException, RemoteException {
+		timeUnit.sleep(timeout);
+		return true;
+	}
 }
