@@ -20,32 +20,22 @@ implements LoadBalancer<S> {
 			return new ArrayList<>();
 		}
 	};
-	private AtomicInteger rrc = new AtomicInteger(0);
+	private final AtomicInteger rrc = new AtomicInteger(0);
 	private final S options[];
 	private final Map<S, AtomicInteger> leaseMap;
+	private final int concurrencyLevel;
 	
-	public BasicLoadBalancer(final S options[]) {
+	public BasicLoadBalancer(final S options[], final int concurrencyLevel) {
 		this.options = options;
+		this.concurrencyLevel = concurrencyLevel;
 		if(options == null) {
 			this.leaseMap = null;
 		} else {
-			this.leaseMap = new HashMap<>(options.length);
-			for(final S node : options) {
-				leaseMap.put(node, new AtomicInteger(0));
+			this.leaseMap = new HashMap<>();
+			for(final S option : options) {
+				leaseMap.put(option, new AtomicInteger(0));
 			}
 		}
-	}
-	
-	@Override
-	public final void lease(final S subject)
-	throws NullPointerException {
-		leaseMap.get(subject).incrementAndGet();
-	}
-	
-	@Override
-	public final void leaseBatch(final S subject, final int n)
-	throws NullPointerException {
-		leaseMap.get(subject).addAndGet(n);
 	}
 	
 	@Override
@@ -61,24 +51,19 @@ implements LoadBalancer<S> {
 	}
 	
 	@Override
-	public final int getLeasedCount() {
-		int sum = 0;
-		for(final S option : options) {
-			sum += leaseMap.get(option).get();
-		}
-		return sum;
-	}
-	
-	@Override
 	public final S get() {
+		
 		if(options == null) {
 			return null;
 		}
 		if(options.length == 1) {
 			return options[0];
 		}
+		
 		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
 		bestChoices.clear();
+		final S bestChoice;
+		
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
 		for(final S nextChoice : options) {
 			nextLeaseCount = leaseMap.get(nextChoice).get();
@@ -90,16 +75,22 @@ implements LoadBalancer<S> {
 				bestChoices.add(nextChoice);
 			}
 		}
-		// round robin counter
-		if(!rrc.compareAndSet(Short.MAX_VALUE, 0)) {
+		
+		// select using round robin counter if there are more than 1 best options
+		if(rrc.compareAndSet(Integer.MAX_VALUE, 0)) {
+			bestChoice = bestChoices.get(0);
+		} else {
+			bestChoice = bestChoices.get(rrc.incrementAndGet() % bestChoices.size());
 			rrc.incrementAndGet();
 		}
-		// select using round robin counter if there are more than 1 best options
-		return bestChoices.get(rrc.get() % bestChoices.size());
+		leaseMap.get(bestChoice).incrementAndGet();
+		
+		return bestChoice;
 	}
 	
 	@Override
 	public final int get(final List<S> buffer, final int limit) {
+		
 		if(options == null) {
 			return 0;
 		}
@@ -109,9 +100,11 @@ implements LoadBalancer<S> {
 				buffer.set(0, choice);
 			}
 		}
+		
 		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
 		bestChoices.clear();
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
+		
 		for(final S nextChoice : options) {
 			nextLeaseCount = leaseMap.get(nextChoice).get();
 			if(nextLeaseCount < minLeaseCount) {
@@ -122,16 +115,21 @@ implements LoadBalancer<S> {
 				bestChoices.add(nextChoice);
 			}
 		}
+		
 		final int bestChoicesCount = bestChoices.size();
+		S nextChoice;
 		for(int i = 0; i < limit; i ++) {
-			buffer.add(bestChoices.get(i % bestChoicesCount));
+			nextChoice = bestChoices.get(i % bestChoicesCount);
+			leaseMap.get(nextChoice).incrementAndGet();
+			buffer.add(nextChoice);
 		}
+		
 		return limit;
 	}
 	
 	@Override
 	public final void skip(final long count) {
-		rrc.incrementAndGet();
+		rrc.addAndGet((int) (count % Integer.MAX_VALUE));
 	}
 	
 	@Override

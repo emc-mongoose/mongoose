@@ -8,17 +8,9 @@ import com.emc.mongoose.model.api.io.Input;
 public interface LoadBalancer<S>
 extends Input<S> {
 	
-	void lease(final S subject)
-	throws NullPointerException;
-	
-	void leaseBatch(final S subject, final int n)
-	throws NullPointerException;
-	
 	void release(final S subject)
 	throws NullPointerException;
 	
 	void releaseBatch(final S subject, final int n)
 	throws NullPointerException;
-	
-	int getLeasedCount();
 }

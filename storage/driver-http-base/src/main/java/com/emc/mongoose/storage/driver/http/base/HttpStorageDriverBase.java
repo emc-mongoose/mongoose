@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.http.base;
 
-import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.Input;
@@ -10,31 +9,27 @@ import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.api.load.LoadBalancer;
 import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.impl.load.BasicLoadBalancer;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.base.StorageDriverBase;
-import static com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer.INSTANCE;
 import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.http.base.request.CrudHttpRequestFactory;
 import com.emc.mongoose.storage.driver.http.base.request.HttpRequestFactory;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
+
+import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -44,7 +39,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.FutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,11 +48,11 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
@@ -67,7 +62,7 @@ import java.util.function.Function;
  Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
 public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends StorageDriverBase<I, O>
+extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 	
 	private static final Logger LOG = LogManager.getLogger();
@@ -82,16 +77,9 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		}
 	};
 
-	private final String storageNodeAddrs[];
-	private final int storageNodePort;
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	protected final SecretKeySpec secretKey;
-	
-	private final LoadBalancer<String> nodeBalancer;
-	private final EventLoopGroup workerGroup;
-	private final Bootstrap bootstrap;
-	private final ChannelPool connPool;
 
 	private final Map<LoadType, HttpRequestFactory<I, O>>
 		requestFactoryMap = new ConcurrentHashMap<>();
@@ -101,7 +89,9 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
+		
 		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
+		
 		try {
 			if(secret == null) {
 				secretKey = null;
@@ -111,11 +101,18 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		} catch(final UnsupportedEncodingException e) {
 			throw new IllegalStateException(e);
 		}
-		storageNodeAddrs = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
-		storageNodePort = storageConfig.getPort();
-		nodeBalancer = new BasicLoadBalancer<>(storageNodeAddrs);
 		
-		final HttpClientHandlerBase<I, O> apiSpecificHandler = getApiSpecificHandler();
+		storageNodePort = storageConfig.getPort();
+		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
+		storageNodeAddrs = new String[t.length];
+		String n;
+		for(int i = 0; i < t.length; i ++) {
+			n = t[i];
+			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
+		}
+		nodeBalancer = new BasicLoadBalancer<>(storageNodeAddrs, concurrencyLevel);
+		
+		final HttpClientHandlerBase<I, O> apiSpecificHandler = getChannelHandlerImpl();
 		
 		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("test"));
 		bootstrap = new Bootstrap();
@@ -138,7 +135,21 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.handler(
 			new HttpClientChannelInitializer(storageConfig.getSsl(), apiSpecificHandler)
 		);
-		connPool = new FixedChannelPool(bootstrap, this, concurrencyLevel);
+		Bootstrap nodeSpecificBootstrap;
+		InetSocketAddress nodeAddr;
+		for(final String na : storageNodeAddrs) {
+			if(na.contains(":")) {
+				final String addrParts[] = na.split(":");
+				nodeAddr = new InetSocketAddress(addrParts[0], Integer.valueOf(addrParts[1]));
+			} else {
+				nodeAddr = new InetSocketAddress(na, storageNodePort);
+			}
+			nodeSpecificBootstrap = bootstrap.clone();
+			nodeSpecificBootstrap.remoteAddress(nodeAddr);
+			connPoolMap.put(
+				na, new FixedChannelPool(nodeSpecificBootstrap, this, concurrencyLevel)
+			);
+		}
 		requestFactoryMapFunc = loadType -> CrudHttpRequestFactory.getInstance(
 			loadType, HttpStorageDriverBase.this, srcContainer
 		);
@@ -156,8 +167,16 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		}
 	}
 	
-	protected abstract HttpClientHandlerBase<I, O> getApiSpecificHandler();
-
+	protected abstract HttpClientHandlerBase<I, O> getChannelHandlerImpl();
+	
+	@Override
+	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	throws URISyntaxException {
+		return requestFactoryMap
+			.computeIfAbsent(ioTask.getLoadType(), requestFactoryMapFunc)
+			.getHttpRequest(ioTask, nodeAddr);
+	}
+	
 	@Override
 	public HttpMethod getHttpMethod(final LoadType loadType) {
 		switch(loadType) {
@@ -254,83 +273,94 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
 	}
+	
+	@Override
+	public void put(final O task) {
+		final String bestNode;
+		if(storageNodeAddrs.length == 1) {
+			bestNode = storageNodeAddrs[0];
+		} else {
+			try {
+				bestNode = nodeBalancer.get();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the best node");
+				return;
+			}
+		}
+		if(bestNode == null) {
+			return;
+		}
+		task.setNodeAddr(bestNode);
+		connPoolMap.get(bestNode).acquire().addListener(new ConnectionLeaseCallback<>(task, this));
+	}
 
-	private final class HttpRequestFutureTask
-	extends FutureTaskBase
-	implements GenericFutureListener<Future<Void>> {
+	@Override
+	public int put(final List<O> tasks, final int from, final int to) {
+		return to - from;
+	}
+	
+	private final static class ConnectionLeaseCallback<I extends Item, O extends IoTask<I>>
+	implements FutureListener<Channel> {
 		
 		private final O ioTask;
+		private final HttpStorageDriver<I, O> driver;
 		
-		public HttpRequestFutureTask(final O ioTask) {
+		public ConnectionLeaseCallback(final O ioTask, final HttpStorageDriver<I, O> driver) {
 			this.ioTask = ioTask;
+			this.driver = driver;
 		}
 		
 		@Override
-		public final void run() {
+		public final void operationComplete(final Future<Channel> future)
+		throws Exception {
 			
-			final String bestNode;
-			if(storageNodeAddrs.length == 1) {
-				bestNode = storageNodeAddrs[0];
-			} else {
-				try {
-					bestNode = nodeBalancer.get();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the best node");
-					return;
-				}
-			}
-			if(bestNode == null) {
-				return;
-			}
-			ioTask.setNodeAddr(bestNode);
-			
+			final Channel channel = future.getNow();
 			final LoadType ioType = ioTask.getLoadType();
 			final I item = ioTask.getItem();
-			final Channel channel;
-			try {
-				channel = bootstrap.connect(bestNode, storageNodePort).sync().channel();
-			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to get the connection to \"{}\"", bestNode
-				);
-				return;
-			} catch(final RejectedExecutionException | IllegalStateException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e, "Failed to get the connection to \"{}\"", bestNode
-				);
-				return;
-			}
+			final String nodeAddr = ioTask.getNodeAddr();
 			
-			channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-			
-			try {
-				ioTask.startRequest();
-				final HttpRequest httpRequest = requestFactoryMap
-					.computeIfAbsent(ioType, requestFactoryMapFunc)
-					.getHttpRequest(ioTask, bestNode);
-				channel.write(httpRequest);
-				if(LoadType.CREATE.equals(ioType)) {
-					if(item instanceof DataItem) {
-						final DataItem dataItem = (DataItem) item;
-						channel
-							.write(new DataItemFileRegion<>(dataItem))
-							.addListener(this);
-						((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
+			if(channel == null) {
+				LOG.error(Markers.ERR, "Invalid behavior: no connection leased from the pool");
+			} else {
+				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
+				
+				try {
+					ioTask.startRequest();
+					final HttpRequest httpRequest = driver.getHttpRequest(ioTask, nodeAddr);
+					channel.write(httpRequest);
+					if(LoadType.CREATE.equals(ioType)) {
+						if(item instanceof DataItem) {
+							final DataItem dataItem = (DataItem) item;
+							channel
+								.write(new DataItemFileRegion<>(dataItem))
+								.addListener(new RequestSentCallback(ioTask));
+							((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
+						}
+					} else if(LoadType.UPDATE.equals(ioType)) {
+						if(item instanceof MutableDataItem) {
+							final MutableDataItem mdi = (MutableDataItem) item;
+							final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+							// TODO
+						}
 					}
-				} else if(LoadType.UPDATE.equals(ioType)) {
-					if(item instanceof MutableDataItem) {
-						final MutableDataItem mdi = (MutableDataItem) item;
-						final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
-						// TODO
-					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+				} catch(final URISyntaxException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 				}
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
-			} catch(final URISyntaxException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
+				
+				channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 			}
-			
-			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		}
+	}
+	
+	private final static class RequestSentCallback
+	implements FutureListener<Void> {
+		
+		private final IoTask ioTask;
+		
+		public RequestSentCallback(final IoTask ioTask) {
+			this.ioTask = ioTask;
 		}
 		
 		@Override
@@ -338,19 +368,6 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 		throws Exception {
 			ioTask.finishRequest();
 		}
-	}
-	
-	@Override
-	public void put(final O task) {
-		INSTANCE.submit(new HttpRequestFutureTask(task));
-	}
-
-	@Override
-	public int put(final List<O> tasks, final int from, final int to) {
-		for(int i = from; i < to; i ++) {
-			INSTANCE.submit(new HttpRequestFutureTask(tasks.get(i)));
-		}
-		return to - from;
 	}
 	
 	@Override
@@ -365,21 +382,18 @@ implements HttpStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	public final void channelReleased(final Channel c)
+	public final void channelReleased(final Channel channel)
 	throws Exception {
-		c.remoteAddress()
 	}
 	
 	@Override
-	public final void channelAcquired(final Channel c)
+	public final void channelAcquired(final Channel channel)
 	throws Exception {
-		
 	}
 	
 	@Override
-	public final void channelCreated(final Channel c)
+	public final void channelCreated(final Channel channel)
 	throws Exception {
-		
 	}
 	
 	@Override

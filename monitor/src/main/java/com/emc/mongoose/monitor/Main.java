@@ -168,7 +168,7 @@ public class Main {
 			
 			try(
 				final LoadMonitor monitor = new BasicLoadMonitor(
-					runId, generators, drivers,loadConfig
+					runId, generators, drivers, loadConfig
 				)
 			) {
 				

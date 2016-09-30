@@ -3,6 +3,7 @@ include 'generator', 'monitor'
 
 include 'storage:driver-base'
 include 'storage:driver-fs'
+include 'storage:driver-net-base'
 include 'storage:driver-http-base'
 include 'storage:driver-http-s3'
 include 'storage:mock'

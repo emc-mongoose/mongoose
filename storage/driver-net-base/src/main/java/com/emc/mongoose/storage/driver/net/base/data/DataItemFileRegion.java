@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.http.base.data;
+package com.emc.mongoose.storage.driver.net.base.data;
 
 import com.emc.mongoose.model.api.item.DataItem;
 import io.netty.channel.FileRegion;

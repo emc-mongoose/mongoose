@@ -1,4 +1,4 @@
-description = 'mongoose-storage-driver-http-base'
+description = 'mongoose-storage-driver-net-base'
 
 dependencies {
 
@@ -6,7 +6,7 @@ dependencies {
 		project(':common'),
 		project(':model'),
 		project(':ui'),
-		project(':storage:driver-net-base')
+		project(':storage:driver-base')
 	)
 
 	compile(
@@ -16,7 +16,6 @@ dependencies {
 		"io.netty:netty-buffer:${depVersion.netty}",
 		"io.netty:netty-transport:${depVersion.netty}",
 		"io.netty:netty-handler:${depVersion.netty}",
-		"io.netty:netty-codec-http:${depVersion.netty}",
 		//"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
 	)
 
