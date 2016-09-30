@@ -92,8 +92,11 @@ implements LoadMonitor<I, O> {
 	}
 
 	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			nextDriver.register(this);
+		try {
+			for(final StorageDriver<I, O> nextDriver : drivers) {
+				nextDriver.register(this);
+			}
+		} catch(final RemoteException ignore) {
 		}
 	}
 	
@@ -411,7 +414,7 @@ implements LoadMonitor<I, O> {
 
 	@Override
 	public final String getName() {
-		return name;
+		return getClass().getSimpleName().toLowerCase() + "/" + name;
 	}
 	
 	@Override

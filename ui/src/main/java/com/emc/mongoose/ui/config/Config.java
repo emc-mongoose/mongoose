@@ -3,8 +3,6 @@ package com.emc.mongoose.ui.config;
 import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.model.util.TimeUtil;
-import com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig.Api;
-import com.emc.mongoose.ui.config.Config.StorageConfig.StorageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -12,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -62,22 +61,24 @@ public final class Config {
 	}
 
 	private static final class HttpApiDeserializer
-	extends JsonDeserializer<Api> {
+	extends JsonDeserializer<StorageConfig.HttpConfig.Api> {
 		@Override
-		public Api deserialize(
+		// static import cannot be applied here because of serialization
+		// for details see http://stackoverflow.com/questions/27664385/cannot-find-symbol-serializable
+		public StorageConfig.HttpConfig.Api deserialize(
 			final JsonParser p, final DeserializationContext ctx
 		) throws IOException {
-			return Api.valueOf(p.getValueAsString().toUpperCase());
+			return StorageConfig.HttpConfig.Api.valueOf(p.getValueAsString().toUpperCase());
 		}
 	}
 
 	private static final class StorageTypeDeserializer
-	extends JsonDeserializer<StorageType> {
+	extends JsonDeserializer<StorageConfig.StorageType> {
 		@Override
-		public StorageType deserialize(
+		public StorageConfig.StorageType deserialize(
 			final JsonParser p, final DeserializationContext ctx
 		) throws IOException {
-			return StorageType.valueOf(p.getValueAsString().toUpperCase());
+			return StorageConfig.StorageType.valueOf(p.getValueAsString().toUpperCase());
 		}
 	}
 
@@ -213,7 +214,7 @@ public final class Config {
 		}
 	}
 
-	public static final class SocketConfig {
+	public static final class SocketConfig implements Serializable {
 
 		public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
 		public static final String KEY_REUSE_ADDR = "reuseAddr";
@@ -562,7 +563,7 @@ public final class Config {
 		}
 	}
 
-	public static final class LoadConfig {
+	public static final class LoadConfig implements Serializable {
 
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_CONCURRENCY = "concurrency";
@@ -641,7 +642,7 @@ public final class Config {
 			return queueConfig;
 		}
 
-		public static final class LimitConfig {
+		public static final class LimitConfig implements Serializable {
 
 			public static final String KEY_COUNT = "count";
 			public static final String KEY_RATE = "rate";
@@ -693,7 +694,7 @@ public final class Config {
 			}
 		}
 
-		public static final class GeneratorConfig {
+		public static final class GeneratorConfig implements Serializable {
 
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
@@ -721,7 +722,7 @@ public final class Config {
 			}
 		}
 
-		public static final class MetricsConfig {
+		public static final class MetricsConfig implements Serializable {
 
 			public static final String KEY_INTERMEDIATE = "intermediate";
 			public static final String KEY_PERIOD = "period";
@@ -762,7 +763,7 @@ public final class Config {
 			}
 		}
 		
-		public static final class QueueConfig {
+		public static final class QueueConfig implements Serializable {
 			
 			public static final String KEY_SIZE = "size";
 			
@@ -809,7 +810,7 @@ public final class Config {
 		}
 	}
 
-	public static final class StorageConfig {
+	public static final class StorageConfig implements Serializable {
 
 		public enum StorageType {
 			FS,
@@ -840,7 +841,7 @@ public final class Config {
 		public final void setDriverConfig(final DriverConfig driverConfig) {
 			this.driverConfig = driverConfig;
 		}
-		
+
 		public final void setPort(final int port) {
 			this.port = port;
 		}
@@ -903,7 +904,7 @@ public final class Config {
 			return mockConfig;
 		}
 
-		public static final class AuthConfig {
+		public static final class AuthConfig implements Serializable {
 
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
@@ -941,7 +942,7 @@ public final class Config {
 			}
 		}
 
-		public static final class HttpConfig {
+		public static final class HttpConfig implements Serializable {
 
 			public enum Api {
 				S3, SWIFT, ATMOS
@@ -1006,7 +1007,7 @@ public final class Config {
 			}
 		}
 		
-		public static final class NodeConfig {
+		public static final class NodeConfig implements Serializable {
 
 			public static final String KEY_ADDRS = "addrs";
 
@@ -1024,7 +1025,7 @@ public final class Config {
 			}
 		}
 		
-		public static final class DriverConfig {
+		public static final class DriverConfig implements Serializable {
 			
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
@@ -1052,7 +1053,7 @@ public final class Config {
 			}
 		}
 
-		public static final class MockConfig {
+		public static final class MockConfig implements Serializable {
 
 			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_CAPACITY = "capacity";
@@ -1101,7 +1102,7 @@ public final class Config {
 				return node;
 			}
 
-			public static final class ContainerConfig {
+			public static final class ContainerConfig implements Serializable {
 
 				public static final String KEY_CAPACITY = "capacity";
 				public static final String KEY_COUNT_LIMIT = "countLimit";

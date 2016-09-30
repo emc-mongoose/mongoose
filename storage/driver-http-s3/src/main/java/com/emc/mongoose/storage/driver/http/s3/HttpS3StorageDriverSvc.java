@@ -58,7 +58,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final String getName()
 	throws RemoteException {
-		return runId;
+		return getClass().getSimpleName().toLowerCase() + "/" + runId;
 	}
 
 	@Override

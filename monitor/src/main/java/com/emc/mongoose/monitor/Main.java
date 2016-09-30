@@ -99,7 +99,8 @@ public class Main {
 		log.info(Markers.MSG, "Configuration loaded");
 		final List<StorageDriver> drivers = new ArrayList<>();
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		if(!driverConfig.getRemote()) {
+		final boolean remoteMode = driverConfig.getRemote();
+		if(!remoteMode) {
 			if(StorageType.FS.equals(storageType)) {
 				log.info(Markers.MSG, "Work on the filesystem");
 				if(ItemType.CONTAINER.equals(itemType)) {
@@ -201,9 +202,9 @@ public class Main {
 			log.info(Markers.MSG, "Load generators initialized");
 			
 			try(
-				final LoadMonitor monitor = new BasicLoadMonitor(
-					runId, generators, drivers, loadConfig
-				)
+				final LoadMonitor monitor = remoteMode ?
+					new BasicLoadMonitorSvc(runId, generators, drivers, loadConfig):
+					new BasicLoadMonitor(runId, generators, drivers, loadConfig)
 			) {
 				
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();

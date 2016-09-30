@@ -42,7 +42,6 @@ implements StorageDriverSvc<I, O> {
 		}
 	}
 
-
 	// TODO eliminate duplication
 	@Override
 	public void registerRemotely(final String hostName, final String monitorSvcName)
@@ -61,7 +60,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public String getName()
 	throws RemoteException {
-		return runId;
+		return getClass().getSimpleName().toLowerCase() + "/" + runId;
 	}
 
 	@Override
