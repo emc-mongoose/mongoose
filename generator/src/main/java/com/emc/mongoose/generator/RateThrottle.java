@@ -19,7 +19,7 @@ implements Throttle<T> {
 	}
 	//
 	@Override
-	public final boolean requestContinueFor(final T item)
+	public final boolean waitPassFor(final T item)
 	throws InterruptedException {
 		if(tgtNanoTime > 0) {
 			TimeUnit.NANOSECONDS.sleep(tgtNanoTime);
@@ -28,7 +28,7 @@ implements Throttle<T> {
 	}
 	//
 	@Override
-	public final boolean requestContinueFor(final T item, final int times)
+	public final boolean waitPassFor(final T item, final int times)
 	throws InterruptedException {
 		if(tgtNanoTime > 0 && times > 0) {
 			TimeUnit.NANOSECONDS.sleep(tgtNanoTime * times);

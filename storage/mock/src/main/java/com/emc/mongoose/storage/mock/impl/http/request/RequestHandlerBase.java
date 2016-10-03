@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
-import com.emc.mongoose.storage.driver.http.base.data.DataItemFileRegion;
-import com.emc.mongoose.storage.driver.http.base.data.UpdatedFullDataFileRegion;
+import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
+import com.emc.mongoose.storage.driver.net.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;

@@ -1,9 +1,10 @@
-package com.emc.mongoose.storage.driver.http.base.data;
+package com.emc.mongoose.storage.driver.net.base.data;
 
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
+import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;

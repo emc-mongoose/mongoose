@@ -1,6 +1,6 @@
-package com.emc.mongoose.model.impl.load;
+package com.emc.mongoose.model.impl.io;
 
-import com.emc.mongoose.model.api.load.LoadBalancer;
+import com.emc.mongoose.model.api.io.Input;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 08.12.15.
  */
-public final class BasicLoadBalancer<S>
-implements LoadBalancer<S> {
+public final class UniformOptionSelector<S>
+implements Input<S> {
 	
 	private final static ThreadLocal<List<Object>> BEST_CHOICES = new ThreadLocal<List<Object>>() {
 		@Override
@@ -23,11 +23,9 @@ implements LoadBalancer<S> {
 	private final AtomicInteger rrc = new AtomicInteger(0);
 	private final S options[];
 	private final Map<S, AtomicInteger> leaseMap;
-	private final int concurrencyLevel;
 	
-	public BasicLoadBalancer(final S options[], final int concurrencyLevel) {
+	public UniformOptionSelector(final S options[]) {
 		this.options = options;
-		this.concurrencyLevel = concurrencyLevel;
 		if(options == null) {
 			this.leaseMap = null;
 		} else {
@@ -36,18 +34,6 @@ implements LoadBalancer<S> {
 				leaseMap.put(option, new AtomicInteger(0));
 			}
 		}
-	}
-	
-	@Override
-	public void release(final S subject)
-	throws NullPointerException {
-		leaseMap.get(subject).decrementAndGet();
-	}
-	
-	@Override
-	public void releaseBatch(final S subject, final int n)
-	throws NullPointerException {
-		leaseMap.get(subject).addAndGet(-n);
 	}
 	
 	@Override

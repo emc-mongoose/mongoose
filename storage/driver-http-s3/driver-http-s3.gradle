@@ -6,7 +6,8 @@ dependencies {
 		project(':model'),
 		project(':ui'),
 		project(':storage:driver-base'),
-		project(':storage:driver-http-base')
+		project(':storage:driver-net-base'),
+		project(':storage:driver-http-base'),
 	)
 
 	compile(

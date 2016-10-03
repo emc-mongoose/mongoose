@@ -9,5 +9,4 @@ import com.emc.mongoose.model.api.storage.StorageDriver;
  */
 public interface NetStorageDriver<I extends Item, O extends IoTask<I>>
 extends StorageDriver<I, O> {
-	
 }
