@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -16,6 +17,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
@@ -23,12 +25,14 @@ import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -53,14 +57,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final Input<String> nodeSelector;
 	protected final Semaphore concurrencyThrottle;
 	protected final EventLoopGroup workerGroup;
-	protected final Bootstrap bootstrap;
 	protected final Map<String, ChannelPool> connPoolMap = new HashMap<>();
+	protected final boolean sslFlag;
 	
 	protected NetStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig, final String srcContainer, final boolean verifyFlag
 	) {
 		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
+		sslFlag = storageConfig.getSsl();
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
@@ -72,7 +77,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("test"));
-		bootstrap = new Bootstrap();
+		final Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
 		bootstrap.channel(NioSocketChannel.class);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
@@ -89,28 +94,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
 		//bootstrap.option(ChannelOption.SO_TIMEOUT, socketConfig.getTimeoutMillisec());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
-		bootstrap.handler(getChannelInitializerImpl(storageConfig.getSsl()));
-		Bootstrap nodeSpecificBootstrap;
-		InetSocketAddress nodeAddr;
 		for(final String na : storageNodeAddrs) {
+			
+			final InetSocketAddress nodeAddr;
 			if(na.contains(":")) {
 				final String addrParts[] = na.split(":");
 				nodeAddr = new InetSocketAddress(addrParts[0], Integer.valueOf(addrParts[1]));
 			} else {
 				nodeAddr = new InetSocketAddress(na, storageNodePort);
 			}
-			nodeSpecificBootstrap = bootstrap.clone();
-			nodeSpecificBootstrap.remoteAddress(nodeAddr);
 			connPoolMap.put(
-				na, new FixedChannelPool(nodeSpecificBootstrap, this, concurrencyLevel)
+				na, new FixedChannelPool(bootstrap.remoteAddress(nodeAddr), this, concurrencyLevel)
 			);
 		}
 		
 	}
-	
-	protected abstract ChannelInitializer<SocketChannel> getChannelInitializerImpl(
-		final boolean sslFlag
-	);
 	
 	@Override
 	public final void put(final O task)
@@ -189,6 +187,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected abstract FutureListener<Channel> getConnectionLeaseCallback(final O ioTask);
 	
 	@Override
+	public final void complete(final Channel channel, final O ioTask)
+	throws IOException {
+		connPoolMap.get(ioTask.getNodeAddr()).release(channel);
+		ioTaskCompleted(ioTask);
+	}
+	
+	@Override
 	public final void channelReleased(final Channel channel)
 	throws Exception {
 		concurrencyThrottle.release();
@@ -200,8 +205,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	public final void channelCreated(final Channel channel)
+	public void channelCreated(final Channel channel)
 	throws Exception {
+		final ChannelPipeline pipeline = channel.pipeline();
+		if(sslFlag) {
+			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
+			sslEngine.setUseClientMode(true);
+			pipeline.addLast(new SslHandler(sslEngine));
+		}
 	}
 	
 	@Override
@@ -254,8 +265,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws IOException {
 		super.doClose();
 		for(int i = 0; i < storageNodeAddrs.length; i ++) {
+			connPoolMap.get(storageNodeAddrs[i]).close();
 			storageNodeAddrs[i] = null;
 		}
+		connPoolMap.clear();
 		nodeSelector.close();
 		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
 	}

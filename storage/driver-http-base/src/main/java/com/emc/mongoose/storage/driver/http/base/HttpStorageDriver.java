@@ -7,7 +7,6 @@ import com.emc.mongoose.storage.driver.http.base.request.HttpRequestFactory;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriver;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.util.AttributeKey;
 
 import java.net.URISyntaxException;
 /**
@@ -17,8 +16,9 @@ public interface HttpStorageDriver<I extends Item, O extends IoTask<I>>
 extends NetStorageDriver<I, O>, HttpRequestFactory<I, O> {
 	
 	String SIGN_METHOD = "HmacSHA1";
-	
-	AttributeKey<IoTask> ATTR_KEY_IOTASK = AttributeKey.valueOf("ioTask");
+	int REQ_LINE_LEN = 4096;
+	int HEADERS_LEN = 4096;
+	int CHUNK_SIZE = 8192;
 	
 	HttpMethod getHttpMethod(final LoadType loadType);
 

@@ -26,13 +26,14 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import org.apache.logging.log4j.Level;
@@ -109,13 +110,13 @@ implements HttpStorageDriver<I, O> {
 	}
 	
 	@Override
-	protected ChannelInitializer<SocketChannel> getChannelInitializerImpl(
-		final boolean sslFlag
-	) {
-		return new HttpClientChannelInitializer(sslFlag, getChannelHandlerImpl());
+	public void channelCreated(final Channel channel)
+	throws Exception {
+		super.channelCreated(channel);
+		final ChannelPipeline pipeline = channel.pipeline();
+		pipeline.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true));
+		pipeline.addLast(new ChunkedWriteHandler());
 	}
-	
-	protected abstract HttpClientHandlerBase<I, O> getChannelHandlerImpl();
 	
 	@Override
 	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
@@ -276,7 +277,9 @@ implements HttpStorageDriver<I, O> {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 				}
 				
-				channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+				channel
+					.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+					.addListener(new RequestSentCallback(ioTask));
 			}
 		}
 	}
@@ -322,9 +325,6 @@ implements HttpStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
-		for(int i = 0; i < storageNodeAddrs.length; i ++) {
-			storageNodeAddrs[i] = null;
-		}
 		sharedHeaders.clear();
 		if(secretKey != null) {
 			try {
@@ -333,7 +333,5 @@ implements HttpStorageDriver<I, O> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clear the secret key");
 			}
 		}
-		nodeSelector.close();
-		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
 	}
 }
