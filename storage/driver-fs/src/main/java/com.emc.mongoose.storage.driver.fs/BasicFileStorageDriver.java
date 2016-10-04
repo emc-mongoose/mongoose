@@ -2,8 +2,7 @@ package com.emc.mongoose.storage.driver.fs;
 
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
@@ -14,6 +13,8 @@ import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.NioStorageDriverBase;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -33,7 +34,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static java.io.File.separatorChar;
 
 /**

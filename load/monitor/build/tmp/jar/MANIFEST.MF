@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-load-monitor
+Implementation-Version: 3.0.0-SNAPSHOT
+Class-Path: lib/log4j-core-2.6.2.jar lib/disruptor-3.3.4.jar lib/log4j
+ -api-2.6.2.jar lib/log4j-jul-2.6.2.jar mongoose-common.jar mongoose-u
+ i.jar mongoose-model.jar
+

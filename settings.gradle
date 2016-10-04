@@ -1,6 +1,7 @@
 include 'common', 'model', 'ui'
-include 'generator', 'monitor'
-
+include 'run'
+include 'load:generator'
+include 'load:monitor'
 include 'storage:driver-base'
 include 'storage:driver-fs'
 include 'storage:driver-net-base'
