@@ -3,8 +3,8 @@ package com.emc.mongoose.storage.driver.http.s3;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.storage.driver.http.base.BasicClientApiHandler;
 import com.emc.mongoose.storage.driver.http.base.HttpStorageDriverBase;
-
 import static com.emc.mongoose.storage.driver.http.s3.S3Constants.AUTH_PREFIX;
 import static com.emc.mongoose.storage.driver.http.s3.S3Constants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.http.s3.S3Constants.KEY_X_AMZ_COPY_SOURCE;
@@ -14,8 +14,9 @@ import static com.emc.mongoose.storage.driver.http.s3.S3Constants.URL_ARG_VERSIO
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
 import com.emc.mongoose.ui.log.Markers;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -59,8 +60,11 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final HttpS3ClientHandler<I, O> getApiSpecificHandler() {
-		return new HttpS3ClientHandler<>(this);
+	public final void channelCreated(final Channel channel)
+	throws Exception {
+		super.channelCreated(channel);
+		final ChannelPipeline pipeline = channel.pipeline();
+		pipeline.addLast(new BasicClientApiHandler<>(this));
 	}
 	
 	@Override

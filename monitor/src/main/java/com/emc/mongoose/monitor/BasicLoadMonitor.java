@@ -14,7 +14,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.StorageDriver;
+import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.api.metrics.IoStats;
@@ -114,13 +114,14 @@ implements LoadMonitor<I, O> {
 				nextNanoTimeStamp = System.nanoTime();
 				// refresh the stats
 				lastStats = ioStats.getSnapshot();
+				//
+				postProcessItems();
 				// output the current measurements periodically
 				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 					LOG.info(Markers.PERF_AVG, lastStats.toString());
 					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
-				postProcessItems();
-				LockSupport.parkNanos(1);
+				LockSupport.parkNanos(1_000_000);
 			}
 		}
 	}
@@ -147,7 +148,9 @@ implements LoadMonitor<I, O> {
 				isPostProcessDone = true;
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput);
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput
+			);
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", itemOutput);
@@ -525,29 +528,28 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException {
-		for(final LoadGenerator<I, O> generator : generators) {
-			generator.close();
+		try {
+			for(final LoadGenerator<I, O> generator : generators) {
+				generator.close();
+			}
+			generators.clear();
+			for(final StorageDriver<I, O> driver : drivers) {
+				driver.close();
+			}
+			drivers.clear();
+			LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
+			if(ioStats != null) {
+				ioStats.close();
+			}
+			if(medIoStats != null) {
+				medIoStats.close();
+			}
+			if(itemOutput != null) {
+				itemOutput.close();
+			}
+			itemOutBuff.close();
+		} finally {
+			LogUtil.UNCLOSED_REGISTRY.remove(this);
 		}
-		generators.clear();
-		for(final StorageDriver<I, O> driver : drivers) {
-			driver.close();
-		}
-		drivers.clear();
-
-		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
-		if(ioStats != null) {
-			ioStats.close();
-		}
-		if(medIoStats != null) {
-			medIoStats.close();
-		}
-		
-		if(itemOutput != null) {
-			itemOutput.close();
-		}
-		itemOutBuff.close();
-
-		LogUtil.UNCLOSED_REGISTRY.remove(this);
-
 	}
 }

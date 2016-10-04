@@ -13,7 +13,7 @@ public interface Throttle<X> {
 	 @return true if the thing should be passed, false otherwise
 	 @throws InterruptedException
 	 */
-	boolean requestContinueFor(final X thing)
+	boolean waitPassFor(final X thing)
 	throws InterruptedException;
 
 	/**
@@ -23,6 +23,6 @@ public interface Throttle<X> {
 	 @return true if the set of things should be passed, false otherwise
 	 @throws InterruptedException
 	 */
-	boolean requestContinueFor(final X thing, int times)
+	boolean waitPassFor(final X thing, int times)
 	throws InterruptedException;
 }

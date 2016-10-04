@@ -13,6 +13,7 @@ dependencies {
 		project(':generator'),
 		project(':storage:driver-base'),
 		project(':storage:driver-fs'),
+		project(':storage:driver-net-base'),
 		project(':storage:driver-http-base'),
 		project(':storage:driver-http-s3'),
 	)
@@ -21,6 +22,18 @@ dependencies {
 		"com.lmax:disruptor:3.3.4",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+	)
+
+	testCompileOnly(
+		project(':common'),
+		project(':ui'),
+		project(':model'),
+		project(':generator'),
+		project(':storage:driver-base'),
+		project(':storage:driver-fs'),
+		project(':storage:driver-net-base'),
+		project(':storage:driver-http-base'),
+		project(':storage:driver-http-s3'),
 	)
 }
 
@@ -34,3 +47,4 @@ jar {
 		)
 	}
 }
+

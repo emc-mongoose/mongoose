@@ -6,7 +6,8 @@ dependencies {
 		project(':model'),
 		project(':ui'),
 		project(':storage:driver-base'),
-		project(':storage:driver-http-base')
+		project(':storage:driver-net-base'),
+		project(':storage:driver-http-base'),
 	)
 
 	compile(
@@ -18,7 +19,7 @@ dependencies {
 		"io.netty:netty-transport:${depVersion.netty}",
 		"io.netty:netty-handler:${depVersion.netty}",
 		"io.netty:netty-codec-http:${depVersion.netty}",
-		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
+//		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
 	)
 
 	runtime(

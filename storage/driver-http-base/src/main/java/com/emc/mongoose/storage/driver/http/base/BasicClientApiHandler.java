@@ -4,17 +4,16 @@ import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.LastHttpContent;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,23 +31,19 @@ import static com.emc.mongoose.model.api.io.task.IoTask.Status.SUCC;
 /**
  Created by kurila on 05.09.16.
  */
-public class HttpClientHandlerBase<I extends Item, O extends IoTask<I>>
-extends SimpleChannelInboundHandler<HttpObject> {
+public class BasicClientApiHandler<I extends Item, O extends IoTask<I>>
+extends ClientHandlerBase<HttpObject, I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	
-	private final HttpStorageDriverBase<I, O> driver;
-	
-	public HttpClientHandlerBase(final HttpStorageDriverBase<I, O> driver) {
-		this.driver = driver;
+	public BasicClientApiHandler(final HttpStorageDriverBase<I, O> driver) {
+		super(driver);
 	}
 
 	@Override
-	protected void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg)
+	protected void handle(final Channel channel, final O ioTask, final HttpObject msg)
 	throws IOException {
 		
-		final IoTask ioTask = ctx.channel().attr(HttpStorageDriver.ATTR_KEY_IOTASK).get();
-	
 		if(msg instanceof HttpResponse) {
 			ioTask.startResponse();
 			final HttpResponse httpResponse = (HttpResponse) msg;
@@ -129,20 +124,8 @@ extends SimpleChannelInboundHandler<HttpObject> {
 				}
 			}
 			if(msg instanceof LastHttpContent) {
-				ioTask.finishResponse();
-				ctx.close();
-				driver.ioTaskCompleted((O) ioTask);
+				release(channel, ioTask);
 			}
 		}
-	}
-	
-	@Override
-	public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
-	throws IOException {
-		LogUtil.exception(LOG, Level.WARN, cause, "HTTP client handler failure");
-		final IoTask ioTask = ctx.channel().attr(HttpStorageDriver.ATTR_KEY_IOTASK).get();
-		ctx.close();
-		ioTask.setStatus(FAIL_UNKNOWN);
-		driver.ioTaskCompleted((O) ioTask);
 	}
 }

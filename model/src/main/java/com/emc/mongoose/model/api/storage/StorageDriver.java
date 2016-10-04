@@ -1,9 +1,10 @@
-package com.emc.mongoose.model.api.load;
+package com.emc.mongoose.model.api.storage;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.load.LoadMonitor;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

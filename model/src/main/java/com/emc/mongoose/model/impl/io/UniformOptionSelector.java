@@ -1,8 +1,7 @@
-package com.emc.mongoose.model.impl.load;
+package com.emc.mongoose.model.impl.io;
 
-import com.emc.mongoose.model.api.load.Balancer;
+import com.emc.mongoose.model.api.io.Input;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +11,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 08.12.15.
  */
-public final class BasicBalancer<S>
-implements Balancer<S> {
+public final class UniformOptionSelector<S>
+implements Input<S> {
 	
 	private final static ThreadLocal<List<Object>> BEST_CHOICES = new ThreadLocal<List<Object>>() {
 		@Override
@@ -21,56 +20,36 @@ implements Balancer<S> {
 			return new ArrayList<>();
 		}
 	};
-	private AtomicInteger rrc = new AtomicInteger(0);
+	private final AtomicInteger rrc = new AtomicInteger(0);
 	private final S options[];
 	private final Map<S, AtomicInteger> leaseMap;
 	
-	public BasicBalancer(final S options[]) {
+	public UniformOptionSelector(final S options[]) {
 		this.options = options;
 		if(options == null) {
 			this.leaseMap = null;
 		} else {
-			this.leaseMap = new HashMap<>(options.length);
-			for(final S node : options) {
-				leaseMap.put(node, new AtomicInteger(0));
+			this.leaseMap = new HashMap<>();
+			for(final S option : options) {
+				leaseMap.put(option, new AtomicInteger(0));
 			}
 		}
 	}
 	
 	@Override
-	public final void lease(final S subject)
-	throws NullPointerException {
-		leaseMap.get(subject).incrementAndGet();
-	}
-	
-	@Override
-	public final void leaseBatch(final S subject, final int n)
-	throws NullPointerException {
-		leaseMap.get(subject).addAndGet(n);
-	}
-	
-	@Override
-	public void release(final S subject)
-	throws NullPointerException {
-		leaseMap.get(subject).decrementAndGet();
-	}
-	
-	@Override
-	public void releaseBatch(final S subject, final int n)
-	throws NullPointerException {
-		leaseMap.get(subject).addAndGet(-n);
-	}
-	
-	@Override
 	public final S get() {
+		
 		if(options == null) {
 			return null;
 		}
 		if(options.length == 1) {
 			return options[0];
 		}
+		
 		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
 		bestChoices.clear();
+		final S bestChoice;
+		
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
 		for(final S nextChoice : options) {
 			nextLeaseCount = leaseMap.get(nextChoice).get();
@@ -82,17 +61,22 @@ implements Balancer<S> {
 				bestChoices.add(nextChoice);
 			}
 		}
-		// round robin counter
-		if(!rrc.compareAndSet(Short.MAX_VALUE, 0)) {
+		
+		// select using round robin counter if there are more than 1 best options
+		if(rrc.compareAndSet(Integer.MAX_VALUE, 0)) {
+			bestChoice = bestChoices.get(0);
+		} else {
+			bestChoice = bestChoices.get(rrc.incrementAndGet() % bestChoices.size());
 			rrc.incrementAndGet();
 		}
-		// select using round robin counter if there are more than 1 best options
-		return bestChoices.get(rrc.get() % bestChoices.size());
+		leaseMap.get(bestChoice).incrementAndGet();
+		
+		return bestChoice;
 	}
 	
 	@Override
-	public int get(final List<S> buffer, final int limit)
-	throws IOException {
+	public final int get(final List<S> buffer, final int limit) {
+		
 		if(options == null) {
 			return 0;
 		}
@@ -102,9 +86,11 @@ implements Balancer<S> {
 				buffer.set(0, choice);
 			}
 		}
+		
 		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
 		bestChoices.clear();
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
+		
 		for(final S nextChoice : options) {
 			nextLeaseCount = leaseMap.get(nextChoice).get();
 			if(nextLeaseCount < minLeaseCount) {
@@ -115,28 +101,30 @@ implements Balancer<S> {
 				bestChoices.add(nextChoice);
 			}
 		}
+		
 		final int bestChoicesCount = bestChoices.size();
+		S nextChoice;
 		for(int i = 0; i < limit; i ++) {
-			buffer.add(bestChoices.get(i % bestChoicesCount));
+			nextChoice = bestChoices.get(i % bestChoicesCount);
+			leaseMap.get(nextChoice).incrementAndGet();
+			buffer.add(nextChoice);
 		}
+		
 		return limit;
 	}
 	
 	@Override
-	public void skip(final long count)
-	throws IOException {
-		rrc.incrementAndGet();
+	public final void skip(final long count) {
+		rrc.addAndGet((int) (count % Integer.MAX_VALUE));
 	}
 	
 	@Override
-	public void reset()
-	throws IOException {
+	public final void reset() {
 		rrc.set(0);
 	}
 	
 	@Override
-	public final void close()
-	throws IOException {
+	public final void close() {
 		for(int i = 0; i < options.length; i ++) {
 			options[i] = null;
 		}
