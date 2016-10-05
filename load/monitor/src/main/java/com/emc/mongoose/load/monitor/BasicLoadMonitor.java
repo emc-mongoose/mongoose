@@ -67,9 +67,7 @@ implements LoadMonitor<I, O> {
 		this.name = name;
 		this.generators = generators;
 		this.drivers = drivers;
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			nextDriver.register(this);
-		}
+		registerDrivers(drivers);
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
 		this.ioStats = new BasicIoStats(name, metricsPeriosSec);
@@ -90,6 +88,15 @@ implements LoadMonitor<I, O> {
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
 		LogUtil.UNCLOSED_REGISTRY.add(this);
+	}
+
+	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
+		for(final StorageDriver<I, O> nextDriver : drivers) {
+			try {
+				nextDriver.register(this);
+			} catch(final RemoteException ignored) {
+			}
+		}
 	}
 	
 	private final class ServiceTask

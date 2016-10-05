@@ -1,4 +1,4 @@
-description = 'mongoose-monitor'
+description = 'mongoose-load-monitor'
 
 dependencies {
 

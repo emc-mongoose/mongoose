@@ -58,7 +58,7 @@ implements StorageDriver<I, O> {
 		}
 	}
 
-	public final void ioTaskCompleted(final O ioTask)
+	protected final void ioTaskCompleted(final O ioTask)
 	throws IOException {
 		if(isCircular) {
 			ioTask.reset();
@@ -67,7 +67,7 @@ implements StorageDriver<I, O> {
 		monitorRef.get().put(ioTask);
 	}
 	
-	public final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to)
+	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to)
 	throws IOException {
 		if(isCircular) {
 			for(int i = from; i < to; i ++) {

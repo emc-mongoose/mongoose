@@ -1,7 +1,7 @@
 package com.emc.mongoose.run;
 
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
-import com.emc.mongoose.model.api.storage.StorageType;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
@@ -11,8 +11,9 @@ import com.emc.mongoose.model.impl.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
 import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
-import com.emc.mongoose.storage.driver.http.s3.HttpS3StorageDriver;
+import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
+import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
+import com.emc.mongoose.model.api.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
@@ -21,10 +22,9 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.RunConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -35,7 +35,7 @@ import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadGenerator;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
-
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -68,13 +69,11 @@ public class Main {
 		config.apply(CliArgParser.parseArgs(args));
 		
 		final StorageConfig storageConfig = config.getStorageConfig();
-		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
 		final ItemConfig itemConfig = config.getItemConfig();
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final LoadConfig loadConfig = config.getLoadConfig();
 		final RunConfig runConfig = config.getRunConfig();
-		final InputConfig inputConfig = itemConfig.getInputConfig();
-		
+
 		String runId = runConfig.getId();
 		if(runId == null) {
 			runId = ThreadContext.get(KEY_RUN_ID);
@@ -88,43 +87,61 @@ public class Main {
 		
 		final Logger log = LogManager.getLogger();
 		log.info(Markers.MSG, "Configuration loaded");
-		
+
 		final List<StorageDriver> drivers = new ArrayList<>();
-		if(StorageType.FS.equals(storageType)) {
-			log.info(Markers.MSG, "Work on the filesystem");
-			if(ItemType.CONTAINER.equals(itemType)) {
-				log.info(Markers.MSG, "Work on the directories");
-				// TODO directory load driver
-			} else {
-				log.info(Markers.MSG, "Work on the files");
-				drivers.add(
-					new BasicFileStorageDriver<>(
-						runId, storageConfig.getAuthConfig(), loadConfig,
-						inputConfig.getContainer(), itemConfig.getDataConfig().getVerify(),
-						config.getIoConfig().getBufferConfig().getSize()
-					)
+		final DriverConfig driverConfig = storageConfig.getDriverConfig();
+		final boolean remoteDriversFlag = driverConfig.getRemote();
+		if(remoteDriversFlag) {
+			final List<String> driverSvcAddrs = driverConfig.getAddrs();
+			for(final String driverSvcAddr : driverSvcAddrs) {
+				final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
+					driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
 				);
-			}
-		} else if(StorageType.HTTP.equals(storageType)){
-			final String apiType = storageConfig.getHttpConfig().getApi();
-			log.info(Markers.MSG, "Work via HTTP using \"{}\" cloud storage API", apiType);
-			if(ItemType.CONTAINER.equals(itemType)) {
-				// TODO container/bucket load driver
-			} else {
-				switch(apiType.toLowerCase()) {
-					case "s3" :
-						drivers.add(
-							new HttpS3StorageDriver<>(
-								runId, loadConfig, storageConfig, inputConfig.getContainer(),
-								itemConfig.getDataConfig().getVerify(), config.getSocketConfig()
-							)
+				if(driverBuilderSvc == null) {
+					log.warn(
+						Markers.ERR,
+						"Failed to resolve the storage driver builder service @ {}",
+						driverSvcAddr
+					);
+					continue;
+				}
+				try {
+					final String driverSvcName = driverBuilderSvc
+						.setRunId(runId)
+						.setItemConfig(itemConfig)
+						.setIoConfig(config.getIoConfig())
+						.setLoadConfig(loadConfig)
+						.setSocketConfig(config.getSocketConfig())
+						.setStorageConfig(storageConfig)
+						.buildRemotely();
+					final StorageDriverSvc driverSvc = ServiceUtil.resolve(
+						driverSvcAddr, driverSvcName
+					);
+					if(driverSvc != null) {
+						drivers.add(driverSvc);
+					} else {
+						log.warn(
+							Markers.ERR, "Failed to resolve the storage driver service @ {}",
+							driverSvcAddr
 						);
-						break;
+					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(log, Level.WARN, e, "Looks like network failure");
 				}
 			}
 		} else {
-			throw new UserShootHisFootException("Unsupported storage type");
+			drivers.add(
+				new BasicStorageDriverBuilder<>()
+					.setRunId(runId)
+					.setItemConfig(itemConfig)
+					.setIoConfig(config.getIoConfig())
+					.setLoadConfig(loadConfig)
+					.setSocketConfig(config.getSocketConfig())
+					.setStorageConfig(storageConfig)
+					.build()
+			);
 		}
+
 		log.info(Markers.MSG, "Load drivers initialized");
 		
 		final DataConfig dataConfig = itemConfig.getDataConfig();

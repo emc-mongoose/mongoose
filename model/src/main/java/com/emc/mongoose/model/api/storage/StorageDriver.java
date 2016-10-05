@@ -15,7 +15,8 @@ import java.rmi.RemoteException;
 public interface StorageDriver<I extends Item, O extends IoTask<I>>
 extends Daemon, Output<O>, Remote {
 	
-	void register(final LoadMonitor<I, O> monitor);
+	void register(final LoadMonitor<I, O> monitor)
+	throws RemoteException;
 
 	boolean isIdle()
 	throws RemoteException;

@@ -265,7 +265,11 @@ implements LoadGenerator<I, O>, Output<I> {
 
 	private final AtomicLong rrc = new AtomicLong(0);
 	protected StorageDriver<I, O> getNextDriver() {
-		return drivers.get((int) (rrc.incrementAndGet() % drivers.size()));
+		if(drivers.isEmpty()) {
+			return null;
+		} else {
+			return drivers.get((int)(rrc.incrementAndGet() % drivers.size()));
+		}
 	}
 
 	@Override
