@@ -15,7 +15,7 @@ public interface StorageDriverBuilderSvc<
 	I extends Item, O extends IoTask<I>, T extends StorageDriverSvc<I, O>
 > extends StorageDriverBuilder<I, O, T>, Service {
 
-	String SVC_NAME = "storage-driver-builder";
+	String SVC_NAME = "storage/driver/builder";
 
 	@Override
 	StorageDriverBuilderSvc<I, O, T> setRunId(final String runId)

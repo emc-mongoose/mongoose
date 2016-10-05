@@ -1,4 +1,5 @@
 package com.emc.mongoose.storage.driver.builder;
+
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -7,7 +8,9 @@ import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.api.load.LoadMonitorSvc;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.storage.StorageDriverSvc;
-
+import com.emc.mongoose.ui.log.Markers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
@@ -18,25 +21,29 @@ import java.util.concurrent.TimeUnit;
 public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
 implements StorageDriverSvc<I, O> {
 
+	private final static Logger LOG = LogManager.getLogger();
+
 	private final StorageDriver<I, O> driver;
 	private final String runId;
+	private final String svcUri;
 
 	public WrappingStorageDriverSvc(final StorageDriver<I, O> driver, final String runId) {
 		this.driver = driver;
 		this.runId = runId;
+		this.svcUri = ServiceUtil.create(this);
+		LOG.info(Markers.MSG, "Storage driver service started: {}", svcUri);
 	}
 
 	@Override
 	public final String getName()
 	throws RemoteException {
-		return driver.getClass().getSimpleName() + "-" + runId;
+		return driver.getClass().getSimpleName() + "/" + runId;
 	}
 
 	@Override
 	public final void start()
 	throws IllegalStateException, RemoteException {
 		driver.start();
-		ServiceUtil.create(this);
 	}
 
 	@Override
@@ -53,6 +60,7 @@ implements StorageDriverSvc<I, O> {
 			driver.close();
 		} finally {
 			ServiceUtil.close(this);
+			LOG.info(Markers.MSG, "Storage driver service stopped: {}", svcUri);
 		}
 	}
 

@@ -67,7 +67,7 @@ public class BasicStorageDriverBuilderSvc<
 	@Override
 	public void start()
 	throws IllegalStateException, RemoteException {
-		LOG.info(Markers.MSG, "Service started and listening: {}", ServiceUtil.create(this));
+		LOG.info(Markers.MSG, "Storage driver builder service started: " + ServiceUtil.create(this));
 	}
 
 	@Override
@@ -138,7 +138,7 @@ public class BasicStorageDriverBuilderSvc<
 	public final String buildRemotely()
 	throws RemoteException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<I, O>(driver, getRunId());
+		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getRunId());
 		return wrapper.getName();
 	}
 }

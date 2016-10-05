@@ -52,7 +52,7 @@ extends SimpleChannelInboundHandler<M> {
 		if(cause instanceof PrematureChannelClosureException) {
 			return;
 		}
-		LogUtil.exception(LOG, Level.WARN, cause, "HTTP client handler failure");
+		LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
 		final Channel channel = ctx.channel();
 		final O ioTask = (O)channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		ioTask.setStatus(FAIL_UNKNOWN);

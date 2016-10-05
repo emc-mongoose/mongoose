@@ -2,6 +2,7 @@ package com.emc.mongoose.run;
 
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
+import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemType;
@@ -185,9 +186,9 @@ public class Main {
 			log.info(Markers.MSG, "Load generators initialized");
 			
 			try(
-				final LoadMonitor monitor = new BasicLoadMonitor(
-					runId, generators, drivers, loadConfig
-				)
+				final LoadMonitor monitor = remoteDriversFlag ?
+					new BasicLoadMonitorSvc(runId, generators, drivers, loadConfig) :
+					new BasicLoadMonitor(runId, generators, drivers, loadConfig)
 			) {
 				
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
@@ -198,7 +199,6 @@ public class Main {
 				}
 				
 				monitor.start();
-				log.info(Markers.MSG, "Load monitor start");
 				if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
 					log.info(Markers.MSG, "Load monitor done");
 				} else {

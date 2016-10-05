@@ -33,13 +33,13 @@ implements LoadMonitorSvc<I,O> {
 		final List<StorageDriver<I, O>> storageDrivers, final Config.LoadConfig loadConfig
 	) {
 		super(name, loadGenerators, storageDrivers, loadConfig);
-		ServiceUtil.create(this);
 	}
 
 	@Override
 	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
 		final String hostName;
 		try {
+			ServiceUtil.create(this);
 			hostName = NetUtil.getHostAddrString();
 			for(final StorageDriver<I, O> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
