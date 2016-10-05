@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -193,7 +194,7 @@ implements LoadGenerator<I, O>, Output<I> {
 						}
 					} catch(
 						final EOFException | InterruptedException | ClosedByInterruptException |
-							IllegalStateException e
+							IllegalStateException | InterruptedIOException e
 						) {
 						break;
 					} catch(final Exception e) {

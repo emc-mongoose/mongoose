@@ -8,6 +8,7 @@ import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.PrematureChannelClosureException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,9 +49,12 @@ extends SimpleChannelInboundHandler<M> {
 	@Override
 	public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
 	throws IOException {
+		if(cause instanceof PrematureChannelClosureException) {
+			return;
+		}
 		LogUtil.exception(LOG, Level.WARN, cause, "HTTP client handler failure");
 		final Channel channel = ctx.channel();
-		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
+		final O ioTask = (O)channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		ioTask.setStatus(FAIL_UNKNOWN);
 		driver.complete(channel, ioTask);
 	}
