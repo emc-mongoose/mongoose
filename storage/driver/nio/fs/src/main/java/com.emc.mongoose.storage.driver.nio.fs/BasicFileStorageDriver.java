@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.fs;
+package com.emc.mongoose.storage.driver.nio.fs;
 
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;

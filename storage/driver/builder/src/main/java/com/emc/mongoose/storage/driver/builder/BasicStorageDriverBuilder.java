@@ -6,13 +6,14 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemType;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.storage.StorageType;
-import com.emc.mongoose.storage.driver.fs.BasicFileStorageDriver;
-import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import static com.emc.mongoose.ui.config.Config.IoConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
+import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
+import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
@@ -129,12 +130,20 @@ public class BasicStorageDriverBuilder<
 				// TODO container/bucket load driver
 			} else {
 				switch(apiType.toLowerCase()) {
-					case "s3" :
+					case API_S3:
 						driver = (T) new S3StorageDriver<>(
 							runId, loadConfig, storageConfig, inputConfig.getContainer(),
 							itemConfig.getDataConfig().getVerify(), socketConfig
 						);
 						break;
+					case API_SWIFT:
+						driver = (T) new SwiftStorageDriver<>(
+							runId, loadConfig, storageConfig, inputConfig.getContainer(),
+							itemConfig.getDataConfig().getVerify(), socketConfig
+						);
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown HTTP storage API: " + apiType);
 				}
 			}
 		} else {

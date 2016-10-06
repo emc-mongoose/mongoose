@@ -19,6 +19,10 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 public interface StorageDriverBuilder<
 	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
 > {
+
+	String API_S3 = "s3";
+	String API_SWIFT = "swift";
+
 	String getRunId()
 	throws RemoteException;
 
