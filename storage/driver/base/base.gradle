@@ -1,0 +1,29 @@
+description = "mongoose-storage-driver-base"
+
+dependencies {
+	compile(
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}"
+	)
+
+	compileOnly(
+		project(":common"),
+		project(":model"),
+		project(":ui")
+	)
+
+	runtime(
+		"com.lmax:disruptor:3.3.4",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+	)
+}
+
+configurations.compileOnly.dependencies.each { it.transitive = false }
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
+}

@@ -34,7 +34,14 @@ ext {
 			}.join(" ")
 		].join(" ")
 	}
-	mutualProjects = subprojects.findAll {it != project("storage") && it != project("load")}
+	mutualProjects = subprojects.findAll {
+		it != project("load") &&
+		it != project("storage") &&
+		it != project("storage:driver") &&
+		it != project("storage:driver:net") &&
+		it != project("storage:driver:net:http") &&
+		it != project("storage:driver:nio")
+	}
 }
 
 subprojects {

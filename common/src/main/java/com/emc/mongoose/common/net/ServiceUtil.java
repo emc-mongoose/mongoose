@@ -129,28 +129,28 @@ public abstract class ServiceUtil {
 		return null;
 	}
 
-	public static void close(final Service svc)
-	throws RemoteException {
+	public static String close(final Service svc)
+	throws RemoteException, MalformedURLException {
+		String svcUri = null;
 		try {
 			UnicastRemoteObject.unexportObject(svc, true);
-		} catch(final NoSuchObjectException e) {
-			e.printStackTrace(System.err);
 		} finally {
 			try {
-				final String svcUri = getLocalSvcUri(svc.getName()).toString();
+				svcUri = getLocalSvcUri(svc.getName()).toString();
 				Naming.unbind(svcUri);
 				SVC_MAP.remove(svcUri);
-			} catch(final NotBoundException | MalformedURLException | URISyntaxException e) {
+			} catch(final NotBoundException | URISyntaxException e) {
 				e.printStackTrace(System.err);
 			}
 		}
+		return svcUri;
 	}
 
 	public static void shutdown() {
 		for(final Service svc : SVC_MAP.values()) {
 			try {
-				close(svc);
-			} catch(final RemoteException e) {
+				System.out.println("Service closed: " + close(svc));
+			} catch(final RemoteException | MalformedURLException e) {
 				e.printStackTrace(System.err);
 			}
 		}

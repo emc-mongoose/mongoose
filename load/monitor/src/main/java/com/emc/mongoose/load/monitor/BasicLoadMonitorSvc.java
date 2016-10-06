@@ -11,7 +11,7 @@ import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ implements LoadMonitorSvc<I,O> {
 	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
 		final String hostName;
 		try {
-			ServiceUtil.create(this);
+			LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
 			hostName = NetUtil.getHostAddrString();
 			for(final StorageDriver<I, O> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
@@ -63,7 +63,7 @@ implements LoadMonitorSvc<I,O> {
 	throws IllegalStateException {
 		super.doInterrupt();
 		try {
-			ServiceUtil.close(this);
+			LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close service");
 		}

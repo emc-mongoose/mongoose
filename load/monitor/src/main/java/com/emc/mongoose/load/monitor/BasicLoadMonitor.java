@@ -535,28 +535,38 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException {
-		try {
-			for(final LoadGenerator<I, O> generator : generators) {
+
+		for(final LoadGenerator<I, O> generator : generators) {
+			try {
 				generator.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to close the generator {}", generator
+				);
 			}
-			generators.clear();
-			for(final StorageDriver<I, O> driver : drivers) {
-				driver.close();
-			}
-			drivers.clear();
-			LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
-			if(ioStats != null) {
-				ioStats.close();
-			}
-			if(medIoStats != null) {
-				medIoStats.close();
-			}
-			if(itemOutput != null) {
-				itemOutput.close();
-			}
-			itemOutBuff.close();
-		} finally {
-			LogUtil.UNCLOSED_REGISTRY.remove(this);
 		}
+		generators.clear();
+
+		for(final StorageDriver<I, O> driver : drivers) {
+			try {
+				driver.close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the driver {}", driver);
+			}
+		}
+		drivers.clear();
+
+		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
+		if(ioStats != null) {
+			ioStats.close();
+		}
+		if(medIoStats != null) {
+			medIoStats.close();
+		}
+		if(itemOutput != null) {
+			itemOutput.close();
+		}
+		itemOutBuff.close();
+		LogUtil.UNCLOSED_REGISTRY.remove(this);
 	}
 }

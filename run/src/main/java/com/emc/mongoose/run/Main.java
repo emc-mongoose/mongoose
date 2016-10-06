@@ -98,6 +98,10 @@ public class Main {
 				final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
 					driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
 				);
+				log.info(
+					Markers.MSG, "Connected the service \"{}\" @ {}",
+					StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
+				);
 				if(driverBuilderSvc == null) {
 					log.warn(
 						Markers.ERR,
@@ -117,6 +121,10 @@ public class Main {
 						.buildRemotely();
 					final StorageDriverSvc driverSvc = ServiceUtil.resolve(
 						driverSvcAddr, driverSvcName
+					);
+					log.info(
+						Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
+						driverSvcAddr
 					);
 					if(driverSvc != null) {
 						drivers.add(driverSvc);

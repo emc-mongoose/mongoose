@@ -1,0 +1,50 @@
+description = "mongoose-storage-driver-builder"
+
+dependencies {
+
+	compile(
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+	)
+
+	compileOnly(
+		project(":common"),
+		project(":model"),
+		project(":ui"),
+		project(":storage:driver:base"),
+		project(":storage:driver:nio:base"),
+		project(":storage:driver:nio:fs"),
+		project(":storage:driver:net:base"),
+		project(":storage:driver:net:http:base"),
+		project(":storage:driver:net:http:s3"),
+		project(":storage:driver:net:http:swift"),
+	)
+
+	runtime(
+		"com.lmax:disruptor:3.3.4",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+	)
+
+	testCompile(
+		project(":common"),
+		project(":model"),
+		project(":load:generator"),
+		project(":storage:driver:base"),
+		project(":storage:driver:nio:base"),
+		project(":storage:driver:nio:fs"),
+		project(":storage:driver:net:base"),
+		project(":storage:driver:net:http:base"),
+		project(":storage:driver:net:http:s3"),
+		project(":storage:driver:net:http:swift"),
+	)
+}
+
+configurations.compileOnly.dependencies.each { it.transitive = false }
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations),
+		)
+	}
+}

@@ -69,7 +69,7 @@ implements StorageMock<I> {
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();
 		this.defaultContainer = new BasicObjectContainerMock<>(containerCapacity);
-		storageMap.put(getClass().getSimpleName().toLowerCase(), defaultContainer);
+		storageMap.put(DEFAULT_CONTAINER_NAME, defaultContainer);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////

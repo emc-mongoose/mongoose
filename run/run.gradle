@@ -12,7 +12,7 @@ dependencies {
 		project(":model"),
 		project(":load:monitor"),
 		project(":load:generator"),
-		project(":storage:driver-builder"),
+		project(":storage:driver:builder"),
 	)
 
 	runtime(
