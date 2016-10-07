@@ -89,91 +89,92 @@ public class Main {
 		final Logger log = LogManager.getLogger();
 		log.info(Markers.MSG, "Configuration loaded");
 
-		final List<StorageDriver> drivers = new ArrayList<>();
-		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final boolean remoteDriversFlag = driverConfig.getRemote();
-		if(remoteDriversFlag) {
-			final List<String> driverSvcAddrs = driverConfig.getAddrs();
-			for(final String driverSvcAddr : driverSvcAddrs) {
-				final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
-					driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
-				);
-				log.info(
-					Markers.MSG, "Connected the service \"{}\" @ {}",
-					StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
-				);
-				if(driverBuilderSvc == null) {
-					log.warn(
-						Markers.ERR,
-						"Failed to resolve the storage driver builder service @ {}",
-						driverSvcAddr
-					);
-					continue;
-				}
-				try {
-					final String driverSvcName = driverBuilderSvc
-						.setRunId(runId)
-						.setItemConfig(itemConfig)
-						.setIoConfig(config.getIoConfig())
-						.setLoadConfig(loadConfig)
-						.setSocketConfig(config.getSocketConfig())
-						.setStorageConfig(storageConfig)
-						.buildRemotely();
-					final StorageDriverSvc driverSvc = ServiceUtil.resolve(
-						driverSvcAddr, driverSvcName
-					);
-					log.info(
-						Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
-						driverSvcAddr
-					);
-					if(driverSvc != null) {
-						drivers.add(driverSvc);
-					} else {
-						log.warn(
-							Markers.ERR, "Failed to resolve the storage driver service @ {}",
-							driverSvcAddr
-						);
-					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(log, Level.WARN, e, "Looks like network failure");
-				}
-			}
-		} else {
-			drivers.add(
-				new BasicStorageDriverBuilder<>()
-					.setRunId(runId)
-					.setItemConfig(itemConfig)
-					.setIoConfig(config.getIoConfig())
-					.setLoadConfig(loadConfig)
-					.setSocketConfig(config.getSocketConfig())
-					.setStorageConfig(storageConfig)
-					.build()
-			);
-		}
-
-		log.info(Markers.MSG, "Load drivers initialized");
-		
 		final DataConfig dataConfig = itemConfig.getDataConfig();
-		final IoTaskBuilder ioTaskBuilder;
-		if(ItemType.CONTAINER.equals(itemType)) {
-			// TODO container I/O tasks factory
-			ioTaskBuilder = new BasicIoTaskBuilder();
-		} else {
-			ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
-				.setRangesConfig(dataConfig.getRanges());
-		}
-		ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
-
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-		final long t = limitConfig.getTime();
-		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
 		try(
 			final ContentSource contentSrc = ContentSourceUtil.getInstance(
 				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
 			)
 		) {
-			
+			final List<StorageDriver> drivers = new ArrayList<>();
+			final DriverConfig driverConfig = storageConfig.getDriverConfig();
+			final boolean remoteDriversFlag = driverConfig.getRemote();
+			if(remoteDriversFlag) {
+				final List<String> driverSvcAddrs = driverConfig.getAddrs();
+				for(final String driverSvcAddr : driverSvcAddrs) {
+					final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
+						driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
+					);
+					log.info(
+						Markers.MSG, "Connected the service \"{}\" @ {}",
+						StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
+					);
+					if(driverBuilderSvc == null) {
+						log.warn(
+							Markers.ERR,
+							"Failed to resolve the storage driver builder service @ {}",
+							driverSvcAddr
+						);
+						continue;
+					}
+					try {
+						final String driverSvcName = driverBuilderSvc
+							.setRunId(runId)
+							.setContentSource(contentSrc)
+							.setItemConfig(itemConfig)
+							.setIoConfig(config.getIoConfig())
+							.setLoadConfig(loadConfig)
+							.setSocketConfig(config.getSocketConfig())
+							.setStorageConfig(storageConfig)
+							.buildRemotely();
+						final StorageDriverSvc driverSvc = ServiceUtil.resolve(
+							driverSvcAddr, driverSvcName
+						);
+						log.info(
+							Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
+							driverSvcAddr
+						);
+						if(driverSvc != null) {
+							drivers.add(driverSvc);
+						} else {
+							log.warn(
+								Markers.ERR, "Failed to resolve the storage driver service @ {}",
+								driverSvcAddr
+							);
+						}
+					} catch(final RemoteException e) {
+						LogUtil.exception(log, Level.WARN, e, "Looks like network failure");
+					}
+				}
+			} else {
+				drivers.add(
+					new BasicStorageDriverBuilder<>()
+						.setRunId(runId)
+						.setContentSource(contentSrc)
+						.setItemConfig(itemConfig)
+						.setIoConfig(config.getIoConfig())
+						.setLoadConfig(loadConfig)
+						.setSocketConfig(config.getSocketConfig())
+						.setStorageConfig(storageConfig)
+						.build()
+				);
+			}
+			log.info(Markers.MSG, "Load drivers initialized");
+
+			final IoTaskBuilder ioTaskBuilder;
+			if(ItemType.CONTAINER.equals(itemType)) {
+				// TODO container I/O tasks factory
+				ioTaskBuilder = new BasicIoTaskBuilder();
+			} else {
+				ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
+					.setRangesConfig(dataConfig.getRanges());
+			}
+			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
+
+			final LimitConfig limitConfig = loadConfig.getLimitConfig();
+			final long t = limitConfig.getTime();
+			final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
+
 			final ItemFactory itemFactory;
 			if(ItemType.CONTAINER.equals(itemType)) {
 				// TODO container item factory

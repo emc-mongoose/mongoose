@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -117,23 +118,28 @@ implements LoadMonitor<I, O> {
 			
 			long nextNanoTimeStamp;
 			
-			while(!isInterrupted()) {
-				nextNanoTimeStamp = System.nanoTime();
-				// refresh the stats
-				lastStats = ioStats.getSnapshot();
-				//
-				postProcessItems();
-				// output the current measurements periodically
-				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-					LOG.info(Markers.PERF_AVG, lastStats.toString());
-					prevNanoTimeStamp = nextNanoTimeStamp;
+			try {
+				while(!isInterrupted()) {
+					nextNanoTimeStamp = System.nanoTime();
+					// refresh the stats
+					lastStats = ioStats.getSnapshot();
+					//
+					postProcessItems();
+					// output the current measurements periodically
+					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+						LOG.info(Markers.PERF_AVG, lastStats.toString());
+						prevNanoTimeStamp = nextNanoTimeStamp;
+					}
+					LockSupport.parkNanos(1_000_000);
 				}
-				LockSupport.parkNanos(1_000_000);
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted by concurrent modification");
 			}
 		}
 	}
 	
-	protected void postProcessItems() {
+	protected void postProcessItems()
+	throws InterruptedException {
 		final List<I> items = new ArrayList<>(batchSize);
 		try {
 			final int n = itemOutBuff.get(items, batchSize);
@@ -162,6 +168,8 @@ implements LoadMonitor<I, O> {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", itemOutput);
 			}
+		} catch(final ConcurrentModificationException e) {
+			throw new InterruptedException("Interrupt due to concurrent driver list modification");
 		}
 	}
 	
@@ -188,7 +196,8 @@ implements LoadMonitor<I, O> {
 		return false;
 	}
 
-	private boolean isIdle() {
+	private boolean isIdle()
+	throws ConcurrentModificationException {
 
 		boolean idleFlag = true;
 
@@ -484,7 +493,7 @@ implements LoadMonitor<I, O> {
 				nextDriver.interrupt();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to interrupt the driver {}",
+					LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
 					nextDriver.toString()
 				);
 			}

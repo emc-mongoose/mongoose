@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
@@ -34,6 +35,12 @@ public class BasicStorageDriverBuilderSvc<
 	@Override
 	public StorageDriverBuilderSvc<I, O, T> setRunId(final String runId) {
 		super.setRunId(runId);
+		return this;
+	}
+
+	@Override
+	public StorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc) {
+		super.setContentSource(contentSrc);
 		return this;
 	}
 
@@ -140,7 +147,9 @@ public class BasicStorageDriverBuilderSvc<
 	public final String buildRemotely()
 	throws RemoteException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getRunId());
+		final T wrapper = (T) new WrappingStorageDriverSvc<>(
+			driver, getRunId(), getContentSource()
+		);
 		return wrapper.getName();
 	}
 }

@@ -26,8 +26,8 @@ implements DataItem {
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
 	//
-	private transient ContentSource contentSrc;
-	private transient int ringBuffSize;
+	private ContentSource contentSrc;
+	private int ringBuffSize;
 	//
 	protected int layerNum = 0;
 	//

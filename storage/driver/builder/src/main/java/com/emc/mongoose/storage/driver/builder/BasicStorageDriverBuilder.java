@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemType;
@@ -28,6 +29,8 @@ public class BasicStorageDriverBuilder<
 	private final static Logger LOG = LogManager.getLogger();
 
 	private String runId;
+	private ContentSource contentSrc;
+
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private IoConfig ioConfig;
@@ -37,6 +40,11 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public String getRunId() {
 		return runId;
+	}
+
+	@Override
+	public ContentSource getContentSource() {
+		return contentSrc;
 	}
 
 	@Override
@@ -67,6 +75,12 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public StorageDriverBuilder<I, O, T> setRunId(final String runId) {
 		this.runId = runId;
+		return this;
+	}
+
+	@Override
+	public StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc) {
+		this.contentSrc = contentSrc;
 		return this;
 	}
 	

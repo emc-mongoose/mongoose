@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
@@ -26,6 +27,9 @@ public interface StorageDriverBuilder<
 	String getRunId()
 	throws RemoteException;
 
+	ContentSource getContentSource()
+	throws RemoteException;
+
 	ItemConfig getItemConfig()
 	throws RemoteException;
 
@@ -42,6 +46,9 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setRunId(final String runId)
+	throws RemoteException;
+
+	StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSource)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig)

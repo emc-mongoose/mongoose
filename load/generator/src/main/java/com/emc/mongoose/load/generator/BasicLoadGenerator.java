@@ -217,7 +217,10 @@ implements LoadGenerator<I, O>, Output<I> {
 						itemInput.toString()
 					);
 				}
-				shutdown();
+				try {
+					shutdown();
+				} catch(final IllegalStateException ignored) {
+				}
 			}
 		}
 	}
