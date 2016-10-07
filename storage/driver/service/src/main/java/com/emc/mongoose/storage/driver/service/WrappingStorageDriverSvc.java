@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.service;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.io.Input;
+import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
@@ -119,20 +120,20 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final void put(final O item)
+	public final void put(final O ioTask)
 	throws IOException {
-		if(item instanceof DataItem) {
-			((DataItem) item).setContentSrc(contentSrc);
+		if(ioTask instanceof DataIoTask) {
+			((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
 		}
-		driver.put(item);
+		driver.put(ioTask);
 	}
 
 	@Override
 	public final int put(final List<O> buffer, final int from, final int to)
 	throws IOException {
-		if(buffer.get(from) instanceof DataItem) {
+		if(buffer.get(from) instanceof DataIoTask) {
 			for(int i = from; i < to; i ++) {
-				((DataItem) buffer.get(i)).setContentSrc(contentSrc);
+				((DataItem) buffer.get(i).getItem()).setContentSrc(contentSrc);
 			}
 		}
 		return driver.put(buffer, from, to);
@@ -142,8 +143,8 @@ implements StorageDriverSvc<I, O> {
 	public final int put(final List<O> buffer)
 	throws IOException {
 		if(buffer.get(0) instanceof DataItem) {
-			for(final O item : buffer) {
-				((DataItem) item).setContentSrc(contentSrc);
+			for(final O ioTask : buffer) {
+				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
 			}
 		}
 		return driver.put(buffer);
