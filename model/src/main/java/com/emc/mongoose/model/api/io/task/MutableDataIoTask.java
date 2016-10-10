@@ -12,6 +12,9 @@ import java.util.List;
  */
 public interface MutableDataIoTask<I extends MutableDataItem>
 extends DataIoTask<I> {
+
+	@Override
+	I getItem();
 	
 	int getCurrRangeIdx();
 	

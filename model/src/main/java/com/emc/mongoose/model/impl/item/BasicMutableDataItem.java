@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;

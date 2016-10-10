@@ -6,6 +6,8 @@ import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.impl.io.UniformOptionSelector;
+import com.emc.mongoose.model.util.IoWorker;
+import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -60,9 +62,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	protected NetStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final SocketConfig socketConfig, final String srcContainer, final boolean verifyFlag
+		final SocketConfig socketConfig, final String srcContainer, final boolean verifyFlag,
+		final SizeInBytes ioBuffSize
 	) {
-		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
+		super(
+			runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag, ioBuffSize
+		);
 		sslFlag = storageConfig.getSsl();
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
@@ -74,7 +79,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		concurrencyThrottle = new Semaphore(concurrencyLevel);
-		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("test"));
+		workerGroup = new NioEventLoopGroup(
+			0, new IoWorker.Factory("ioWorker", ioBuffSizeMin, ioBuffSizeMax)
+		);
 		final Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
 		bootstrap.channel(NioSocketChannel.class);

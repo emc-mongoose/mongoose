@@ -84,7 +84,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/3.0.0-SNAPSHOT"
+				"User-Agent" : "mongoose/next"
 			},
 			"namespace" : null,
 			"versioning" : false

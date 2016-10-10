@@ -12,13 +12,16 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
 import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
+import com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 /**
  Created by andrey on 05.10.16.
  */
@@ -122,7 +125,9 @@ public class BasicStorageDriverBuilder<
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
-		final ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
+		final InputConfig inputConfig = itemConfig.getInputConfig();
+		final SizeInBytes ioBuffSize = ioConfig.getBufferConfig().getSize();
+		final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 		
 		if(StorageType.FS.equals(storageType)) {
 			LOG.info(Markers.MSG, "Work on the filesystem");
@@ -132,9 +137,8 @@ public class BasicStorageDriverBuilder<
 			} else {
 				LOG.info(Markers.MSG, "Work on the files");
 				driver = (T) new BasicFileStorageDriver<>(
-					runId, storageConfig.getAuthConfig(), loadConfig,
-					inputConfig.getContainer(), itemConfig.getDataConfig().getVerify(),
-					ioConfig.getBufferConfig().getSize()
+					runId, storageConfig.getAuthConfig(), loadConfig, inputConfig.getContainer(),
+					verifyFlag, ioBuffSize
 				);
 			}
 		} else if(StorageType.HTTP.equals(storageType)){
@@ -147,13 +151,13 @@ public class BasicStorageDriverBuilder<
 					case API_S3:
 						driver = (T) new S3StorageDriver<>(
 							runId, loadConfig, storageConfig, inputConfig.getContainer(),
-							itemConfig.getDataConfig().getVerify(), socketConfig
+							verifyFlag, ioBuffSize, socketConfig
 						);
 						break;
 					case API_SWIFT:
 						driver = (T) new SwiftStorageDriver<>(
 							runId, loadConfig, storageConfig, inputConfig.getContainer(),
-							itemConfig.getDataConfig().getVerify(), socketConfig
+							verifyFlag, ioBuffSize, socketConfig
 						);
 						break;
 					default:

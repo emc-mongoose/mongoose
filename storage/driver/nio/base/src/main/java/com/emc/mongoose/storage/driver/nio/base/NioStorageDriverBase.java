@@ -45,7 +45,7 @@ implements StorageDriver<I, O> {
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
 		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
-		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
+		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag, ioBuffSize);
 		final long ioBuffSizeMin = ioBuffSize.getMin();
 		final long ioBuffSizeMax = ioBuffSize.getMax();
 		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {

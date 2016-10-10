@@ -2,9 +2,23 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.MutableDataItem;
+import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
+import com.emc.mongoose.ui.log.Markers;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_TIMEOUT;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_AUTH;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_CLIENT;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SPACE;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SVC;
+import static com.emc.mongoose.model.api.io.task.IoTask.Status.SUCC;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpContent;
@@ -18,14 +32,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_TIMEOUT;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_AUTH;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_CLIENT;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SPACE;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SVC;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.SUCC;
 
 /**
  Created by kurila on 05.09.16.
@@ -35,8 +41,10 @@ extends ClientHandlerBase<HttpObject, I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	
-	public BasicClientApiHandler(final HttpStorageDriverBase<I, O> driver) {
-		super(driver);
+	public BasicClientApiHandler(
+		final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag
+	) {
+		super(driver, verifyFlag);
 	}
 
 	@Override
@@ -108,23 +116,60 @@ extends ClientHandlerBase<HttpObject, I, O> {
 			
 			return;
 		}
-		
+
 		if(msg instanceof HttpContent) {
 			if(LoadType.READ.equals(ioTask.getLoadType())) {
 				if(ioTask instanceof DataIoTask) {
 					final DataIoTask dataIoTask = (DataIoTask) ioTask;
+					final long countBytesDone = dataIoTask.getCountBytesDone();
 					if(dataIoTask.getDataLatency() == -1) { // if not set yet - 1st time
 						dataIoTask.startDataResponse();
 					}
-					final ByteBuf content = ((HttpContent) msg).content();
-					dataIoTask.setCountBytesDone(
-						dataIoTask.getCountBytesDone() + content.readableBytes()
-					);
+					final ByteBuf contentChunk = ((HttpContent) msg).content();
+					final int chunkSize = contentChunk.readableBytes();
+					if(chunkSize > 0) {
+						if(verifyFlag) {
+							final I item = ioTask.getItem();
+							try {
+								if(item instanceof MutableDataItem) {
+									final MutableDataItem mdi = (MutableDataItem) item;
+									if(mdi.isUpdated()) {
+										verifyUpdated(
+											mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
+										);
+										dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+									} else {
+										verifyChunkAndItsSize(
+											mdi, countBytesDone, contentChunk, chunkSize
+										);
+										dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+									}
+								} else {
+									verifyChunkAndItsSize(
+										(DataItem) item, countBytesDone, contentChunk, chunkSize
+									);
+									dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+								}
+							} catch(final DataCorruptionException e) {
+								dataIoTask.setCountBytesDone(countBytesDone + e.getOffset());
+								LOG.warn(Markers.MSG,
+									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+									item.getName(), countBytesDone + e.getOffset(),
+									String.format("\"0x%X\"", e.expected),
+									String.format("\"0x%X\"", e.actual)
+								);
+								throw e;
+							}
+						} else {
+							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+						}
+					}
 				}
 			}
-			if(msg instanceof LastHttpContent) {
-				release(channel, ioTask);
-			}
+		}
+
+		if(msg instanceof LastHttpContent) {
+			release(channel, ioTask);
 		}
 	}
 }

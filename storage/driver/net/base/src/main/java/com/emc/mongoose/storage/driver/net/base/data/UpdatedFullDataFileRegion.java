@@ -11,8 +11,8 @@ import java.nio.channels.WritableByteChannel;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static java.lang.Math.min;
 
-public class UpdatedFullDataFileRegion<T extends MutableDataItem>
-extends DataItemFileRegion<T> {
+public final class UpdatedFullDataFileRegion<I extends MutableDataItem>
+extends DataItemFileRegion<I> {
 
 	private DataItem currRange;
 	private long currRangeSize, nextRangeOffset, dataItemOffset;
@@ -21,7 +21,7 @@ extends DataItemFileRegion<T> {
 	
 	private int currRangeIdx = 0;
 	
-	public UpdatedFullDataFileRegion(final T dataItem)
+	public UpdatedFullDataFileRegion(final I dataItem)
 	throws IOException {
 		super(dataItem);
 		dataItemOffset = dataItem.offset();
@@ -30,7 +30,7 @@ extends DataItemFileRegion<T> {
 	}
 
 	@Override
-	public long transferTo(final WritableByteChannel target, final long position)
+	public final long transferTo(final WritableByteChannel target, final long position)
 	throws IOException {
 		dataItem.position(position);
 		if(doneByteCount == nextRangeOffset) {

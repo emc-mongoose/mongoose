@@ -2,13 +2,18 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.SocketConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.net.URISyntaxException;
+
 /**
  Created by andrey on 07.10.16.
  */
@@ -20,11 +25,21 @@ extends HttpStorageDriverBase<I, O> {
 	// TODO implement
 
 	public SwiftStorageDriver(
-		final String runId, final Config.LoadConfig loadConfig,
-		final Config.StorageConfig storageConfig, final String srcContainer,
-		final boolean verifyFlag, final Config.SocketConfig socketConfig
+		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize,
+		final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, socketConfig);
+		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, ioBuffSize, socketConfig);
+	}
+
+	@Override
+	protected final void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
+	}
+
+	@Override
+	protected final void applyAuthHeaders(
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+	) {
 	}
 
 	@Override

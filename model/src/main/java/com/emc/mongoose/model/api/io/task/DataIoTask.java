@@ -8,6 +8,9 @@ import com.emc.mongoose.model.api.item.DataItem;
 public interface DataIoTask<D extends DataItem>
 extends IoTask<D> {
 
+	@Override
+	D getItem();
+
 	long getCountBytesDone();
 
 	void setCountBytesDone(long n);

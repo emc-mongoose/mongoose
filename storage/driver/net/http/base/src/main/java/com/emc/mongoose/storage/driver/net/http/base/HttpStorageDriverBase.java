@@ -8,27 +8,33 @@ import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
+import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.util.LoadType;
 import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-import com.emc.mongoose.storage.driver.net.http.base.request.CrudHttpRequestFactory;
-import com.emc.mongoose.storage.driver.net.http.base.request.HttpRequestFactory;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
+
+import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
@@ -45,6 +51,7 @@ import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -75,15 +82,14 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	protected final SecretKeySpec secretKey;
 
-	private final Map<LoadType, HttpRequestFactory<I, O>>
-		requestFactoryMap = new ConcurrentHashMap<>();
-	private final Function<LoadType, HttpRequestFactory<I, O>> requestFactoryMapFunc;
-
 	protected HttpStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
+		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize,
+		final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, loadConfig, storageConfig, socketConfig, srcContainer, verifyFlag);
+		super(
+			runId, loadConfig, storageConfig, socketConfig, srcContainer, verifyFlag, ioBuffSize
+		);
 		try {
 			if(secret == null) {
 				secretKey = null;
@@ -93,9 +99,6 @@ implements HttpStorageDriver<I, O> {
 		} catch(final UnsupportedEncodingException e) {
 			throw new IllegalStateException(e);
 		}
-		requestFactoryMapFunc = loadType -> CrudHttpRequestFactory.getInstance(
-			loadType, HttpStorageDriverBase.this, srcContainer
-		);
 		final HttpConfig httpConfig = storageConfig.getHttpConfig();
 		final Map<String, String> headersMap = httpConfig.getHeaders();
 		String headerValue;
@@ -121,13 +124,75 @@ implements HttpStorageDriver<I, O> {
 	@Override
 	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
-		return requestFactoryMap
-			.computeIfAbsent(ioTask.getLoadType(), requestFactoryMapFunc)
-			.getHttpRequest(ioTask, nodeAddr);
+
+		final I item = ioTask.getItem();
+		final LoadType ioType = ioTask.getLoadType();
+		final HttpMethod httpMethod = getHttpMethod(ioType);
+		final String dstUriPath = getDstUriPath(item, ioTask);
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		final HttpRequest httpRequest = new DefaultHttpRequest(
+			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
+		);
+
+		switch(ioType) {
+			case CREATE:
+				if(srcContainer == null) {
+					if(item instanceof DataItem) {
+						try {
+							httpHeaders.set(
+								HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size()
+							);
+						} catch(final IOException ignored) {
+						}
+					} else {
+						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+					}
+				} else {
+					applyCopyHeaders(httpHeaders, item);
+					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				}
+				break;
+			case READ:
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				break;
+			case UPDATE:
+				final MutableDataItem mdi = (MutableDataItem) item;
+				final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, mdIoTask.getUpdatingRangesSize());
+				final BitSet updRangesMaskPair[] = mdIoTask.getUpdRangesMaskPair();
+				final StringBuilder strb = new StringBuilder();
+				try {
+					final long baseItemSize = mdi.size();
+					for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+						if(updRangesMaskPair[0].get(i) || updRangesMaskPair[1].get(i)) {
+							if(strb.length() > 0) {
+								strb.append(',');
+							}
+							strb
+								.append(getRangeOffset(i))
+								.append('-')
+								.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
+						}
+					}
+				} catch(final IOException ignored) {
+				}
+				httpHeaders.set(HttpHeaderNames.RANGE, "bytes=" + strb.toString());
+				break;
+			case DELETE:
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				break;
+		}
+
+		applyMetaDataHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
+		applyDynamicHeaders(httpHeaders);
+		applySharedHeaders(httpHeaders);
+		return httpRequest;
 	}
 	
-	@Override
-	public HttpMethod getHttpMethod(final LoadType loadType) {
+	protected HttpMethod getHttpMethod(final LoadType loadType) {
 		switch(loadType) {
 			case READ:
 				return HttpMethod.GET;
@@ -138,8 +203,7 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	@Override
-	public String getDstUriPath(final I item, final O ioTask) {
+	protected String getDstUriPath(final I item, final O ioTask) {
 		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
 	}
 	
@@ -156,8 +220,7 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	@Override
-	public final void applySharedHeaders(final HttpHeaders httpHeaders) {
+	private void applySharedHeaders(final HttpHeaders httpHeaders) {
 		String sharedHeaderName;
 		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
 			sharedHeaderName = sharedHeader.getKey();
@@ -167,8 +230,7 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	@Override
-	public final void applyDynamicHeaders(final HttpHeaders httpHeaders) {
+	private void applyDynamicHeaders(final HttpHeaders httpHeaders) {
 
 		String headerName;
 		String headerValue;
@@ -213,15 +275,14 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	@Override
-	public void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
-	}
+	protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
 
-	@Override
-	public void applyAuthHeaders(
+	protected abstract void applyAuthHeaders(
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
-	) {
-	}
+	);
+
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I item)
+	throws URISyntaxException;
 	
 	protected final FutureListener<Channel> getConnectionLeaseCallback(final O ioTask) {
 		return new ConnectionLeaseCallback<>(ioTask, this);
@@ -268,7 +329,25 @@ implements HttpStorageDriver<I, O> {
 						if(item instanceof MutableDataItem) {
 							final MutableDataItem mdi = (MutableDataItem) item;
 							final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
-							// TODO
+							DataItem updatedRange;
+							ChannelFuture reqSentFuture = null;
+							for(int i = 0; i < getRangeCount(mdi.size()); i ++) {
+								mdIoTask.setCurrRangeIdx(i);
+								updatedRange = mdIoTask.getCurrRangeUpdate();
+								if(updatedRange != null) {
+									reqSentFuture = channel.write(
+										new DataItemFileRegion<>(updatedRange)
+									);
+								}
+							}
+							if(reqSentFuture == null) {
+								LOG.error(Markers.ERR, "No ranges scheduled for the update");
+								ioTask.setStatus(IoTask.Status.RESP_FAIL_CLIENT);
+							} else {
+								reqSentFuture.addListener(new RequestSentCallback(mdIoTask));
+							}
+							mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
+							mdi.commitUpdatedRanges(mdIoTask.getUpdRangesMaskPair());
 						}
 					}
 				} catch(final IOException e) {

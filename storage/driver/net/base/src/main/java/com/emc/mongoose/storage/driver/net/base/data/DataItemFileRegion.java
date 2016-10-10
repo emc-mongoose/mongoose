@@ -7,15 +7,15 @@ import io.netty.util.AbstractReferenceCounted;
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-public class DataItemFileRegion<T extends DataItem>
+public class DataItemFileRegion<I extends DataItem>
 extends AbstractReferenceCounted
 implements FileRegion {
 	
-	protected final T dataItem;
+	protected final I dataItem;
 	protected final long baseItemSize;
 	protected long doneByteCount = 0;
 
-	public DataItemFileRegion(final T dataItem)
+	public DataItemFileRegion(final I dataItem)
 	throws IOException {
 		this.dataItem = dataItem;
 		this.baseItemSize = dataItem.size();

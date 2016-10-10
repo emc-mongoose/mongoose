@@ -9,6 +9,7 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadMonitor;
+import com.emc.mongoose.model.util.SizeInBytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,10 +35,12 @@ implements StorageDriver<I, O> {
 	protected final String secret;
 	protected final String srcContainer;
 	protected final boolean verifyFlag;
+	protected final int ioBuffSizeMin;
+	protected final int ioBuffSizeMax;
 
 	protected StorageDriverBase(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag
+		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
 	) {
 		this.runId = runId;
 		this.userName = authConfig.getId();
@@ -46,6 +49,8 @@ implements StorageDriver<I, O> {
 		isCircular = loadConfig.getCircular();
 		this.srcContainer = srcContainer;
 		this.verifyFlag = verifyFlag;
+		this.ioBuffSizeMin = (int) ioBuffSize.getMin();
+		this.ioBuffSizeMax = (int) ioBuffSize.getMax();
 	}
 
 	@Override
