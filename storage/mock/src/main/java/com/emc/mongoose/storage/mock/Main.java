@@ -4,6 +4,10 @@ import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.RunConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -14,9 +18,9 @@ import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.TimeUnit;
 
 import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
+
 /**
  Created on 12.07.16.
  */
@@ -35,7 +39,7 @@ public class Main {
 		}
 		config.apply(CliArgParser.parseArgs(args));
 		
-		final Config.RunConfig runConfig = config.getRunConfig();
+		final RunConfig runConfig = config.getRunConfig();
 		String runId = runConfig.getId();
 		if(runId == null) {
 			runId = ThreadContext.get(KEY_RUN_ID);
@@ -50,30 +54,31 @@ public class Main {
 		final Logger log = LogManager.getLogger();
 		log.info(Markers.MSG, "Configuration loaded");
 		
-		final Config.StorageConfig storageConfig = config.getStorageConfig();
-		final Config.LoadConfig loadConfig = config.getLoadConfig();
-		final Config.ItemConfig itemConfig = config.getItemConfig();
-		final StorageMockFactory storageMockFactory =
-			new StorageMockFactory(storageConfig, loadConfig, itemConfig);
+		final StorageConfig storageConfig = config.getStorageConfig();
+		final LoadConfig loadConfig = config.getLoadConfig();
+		final ItemConfig itemConfig = config.getItemConfig();
+		final StorageMockFactory storageMockFactory = new StorageMockFactory(
+			storageConfig, loadConfig, itemConfig
+		);
 		if(storageConfig.getMockConfig().getNode()) {
-			try(final Daemon storageMock = storageMockFactory.newNagainaNode()) {
-				storageMock.start();
+			try(final Daemon storageNodeMock = storageMockFactory.newStorageNodeMock()) {
+				storageNodeMock.start();
 				try {
-					storageMock.await();
+					storageNodeMock.await();
 				} catch(final InterruptedException ignored) {
 				}
 			} catch(final Exception e) {
-				LogUtil.exception(log, Level.ERROR, e, "Failed to run Nagaina node");
+				LogUtil.exception(log, Level.ERROR, e, "Failed to run storage node mock");
 			}
 		} else {
-			try(final Daemon storageMock = storageMockFactory.newNagaina()) {
+			try(final Daemon storageMock = storageMockFactory.newStorageMock()) {
 				storageMock.start();
 				try {
 					storageMock.await();
 				} catch(final InterruptedException ignored) {
 				}
 			} catch(final Exception e) {
-				LogUtil.exception(log, Level.ERROR, e, "Failed to run Nagaina");
+				LogUtil.exception(log, Level.ERROR, e, "Failed to run storage mock");
 			}
 		}
 	}

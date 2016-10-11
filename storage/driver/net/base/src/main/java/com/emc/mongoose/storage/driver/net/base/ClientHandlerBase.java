@@ -12,7 +12,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 
-import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
