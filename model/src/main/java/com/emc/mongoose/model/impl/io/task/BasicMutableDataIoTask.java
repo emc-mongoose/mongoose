@@ -144,16 +144,16 @@ implements MutableDataIoTask<I> {
 		try {
 			if(currRange == null && currRangeIdx < getRangeCount(item.size())) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				final int layerIdx = item.layer();
 				if(item.isRangeUpdated(currRangeIdx)) {
 					currRange = new BasicDataItem(
-						itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 1,
+						itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 1,
 						contentSrc
 					);
 				} else {
 					currRange = new BasicDataItem(
-						itemDataOffset + nextRangeOffset, currRangeSize, layerIdx,
+						itemDataOffset + currRangeOffset, currRangeSize, layerIdx,
 						contentSrc
 					);
 				}

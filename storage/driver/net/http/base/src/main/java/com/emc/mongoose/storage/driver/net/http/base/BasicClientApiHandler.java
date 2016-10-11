@@ -134,18 +134,18 @@ extends ClientHandlerBase<HttpObject, I, O> {
 								if(item instanceof MutableDataItem) {
 									final MutableDataItem mdi = (MutableDataItem) item;
 									if(mdi.isUpdated()) {
-										verifyUpdated(
+										verifyChunkUpdatedData(
 											mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
 										);
 										dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 									} else {
-										verifyChunkAndItsSize(
+										verifyChunkDataAndSize(
 											mdi, countBytesDone, contentChunk, chunkSize
 										);
 										dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 									}
 								} else {
-									verifyChunkAndItsSize(
+									verifyChunkDataAndSize(
 										(DataItem) item, countBytesDone, contentChunk, chunkSize
 									);
 									dataIoTask.setCountBytesDone(countBytesDone + chunkSize);

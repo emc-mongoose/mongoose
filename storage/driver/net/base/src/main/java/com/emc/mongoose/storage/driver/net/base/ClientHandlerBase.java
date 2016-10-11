@@ -12,6 +12,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 
+import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -53,42 +54,55 @@ extends SimpleChannelInboundHandler<M> {
 	protected abstract void handle(final Channel channel, final O ioTask, final M msg)
 	throws IOException;
 
-	protected final void verifyChunkAndItsSize(
+	protected final void verifyChunkDataAndSize(
 		final DataItem item, final long countBytesDone, final ByteBuf chunkData, final int chunkSize
 	) throws DataCorruptionException, IOException {
 		if(chunkSize > item.size() - countBytesDone) {
 			throw new DataSizeException(item.size(), countBytesDone + chunkSize);
 		}
-		verifyChunk(item, chunkData, chunkSize);
+		verifyChunkData(item, chunkData, chunkSize);
 	}
 
-	protected final void verifyUpdated(
+	protected final void verifyChunkUpdatedData(
 		final MutableDataItem item, final MutableDataIoTask ioTask, final ByteBuf chunkData,
 		final int chunkSize
 	) throws DataCorruptionException, IOException {
 
 		final long countBytesDone = ioTask.getCountBytesDone();
-		final int currRangeIdx = ioTask.getCurrRangeIdx();
-		final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-		if(countBytesDone == nextRangeOffset) {
-			if(nextRangeOffset < item.size()) {
-				ioTask.setCurrRangeIdx(currRangeIdx + 1);
-			} else {
-				throw new DataSizeException(item.size(), countBytesDone + chunkSize);
-			}
-		}
-		final DataItem currRange = ioTask.getCurrRange();
 
-		try {
-			verifyChunk(currRange, chunkData, chunkSize);
-		} catch(final DataCorruptionException e) {
-			throw new DataCorruptionException(
-				getRangeOffset(ioTask.getCurrRangeIdx()) + e.getOffset(), e.actual, e.expected
-			);
+		long verifiedByteCount = 0;
+		long nextRangeOffset;
+		int currRangeIdx;
+		DataItem currRange;
+
+		while(verifiedByteCount < chunkSize) {
+			currRangeIdx = ioTask.getCurrRangeIdx();
+			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+			if(countBytesDone + verifiedByteCount == nextRangeOffset) {
+				if(nextRangeOffset < item.size()) {
+					currRangeIdx ++;
+					nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+					ioTask.setCurrRangeIdx(currRangeIdx);
+				} else {
+					throw new DataSizeException(item.size(), countBytesDone + chunkSize);
+				}
+			}
+			currRange = ioTask.getCurrRange();
+			try {
+				verifyChunkData(
+					currRange, chunkData,
+					(int) Math.min(chunkSize, nextRangeOffset - countBytesDone - verifiedByteCount)
+				);
+				verifiedByteCount += currRange.size();
+			} catch(final DataCorruptionException e) {
+				throw new DataCorruptionException(
+					getRangeOffset(ioTask.getCurrRangeIdx()) + e.getOffset(), e.actual, e.expected
+				);
+			}
 		}
 	}
 
-	private final void verifyChunk(
+	private void verifyChunkData(
 		final DataItem item, final ByteBuf chunkData, final int chunkSize
 	) throws DataCorruptionException, IOException {
 
