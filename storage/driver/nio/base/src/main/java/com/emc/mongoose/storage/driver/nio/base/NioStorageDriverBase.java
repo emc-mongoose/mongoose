@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -63,9 +64,7 @@ implements StorageDriver<I, O> {
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new com.emc.mongoose.model.util.IoWorker.Factory(
-				this.runId + "-ioWorker", (int) ioBuffSize.getMin(), (int) ioBuffSize.getMax()
-			)
+			new NamingThreadFactory(this.runId + "-ioWorker")
 		);
 	}
 

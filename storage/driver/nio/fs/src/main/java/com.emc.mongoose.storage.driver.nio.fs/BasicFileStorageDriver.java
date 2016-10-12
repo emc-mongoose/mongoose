@@ -9,7 +9,6 @@ import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
-import com.emc.mongoose.model.util.IoWorker;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
@@ -239,9 +238,7 @@ implements StorageDriver<I, O> {
 					final long nextRangeOffset = getRangeOffset(nextRangeIdx);
 					if(currRange != null) {
 						final int n = currRange.readAndVerify(
-							srcChannel,
-							((IoWorker) Thread.currentThread())
-								.getThreadLocalBuff(nextRangeOffset - countBytesDone)
+							srcChannel, getIoBuffer(nextRangeOffset - countBytesDone)
 						);
 						if(n < 0) {
 							throw new DataSizeException(contentSize, countBytesDone);
@@ -256,9 +253,7 @@ implements StorageDriver<I, O> {
 					}
 				} else {
 					final int n = fileItem.readAndVerify(
-						srcChannel,
-						((IoWorker) Thread.currentThread())
-							.getThreadLocalBuff(contentSize - countBytesDone)
+						srcChannel, getIoBuffer(contentSize - countBytesDone)
 					);
 					if(n < 0) {
 						throw new DataSizeException(contentSize, countBytesDone);
@@ -286,9 +281,7 @@ implements StorageDriver<I, O> {
 		final long contentSize = fileItem.size();
 		int n;
 		if(countBytesDone < contentSize) {
-			n = srcChannel.read(
-				((IoWorker) Thread.currentThread()).getThreadLocalBuff(contentSize - countBytesDone)
-			);
+			n = srcChannel.read(getIoBuffer(contentSize - countBytesDone));
 			if(n < 0) {
 				finishIoTask(ioTask);
 				ioTask.setCountBytesDone(countBytesDone);

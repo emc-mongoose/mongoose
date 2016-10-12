@@ -2,14 +2,9 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
-import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_AUTH;
@@ -129,37 +124,7 @@ extends ClientHandlerBase<HttpObject, I, O> {
 					final int chunkSize = contentChunk.readableBytes();
 					if(chunkSize > 0) {
 						if(verifyFlag) {
-							final I item = ioTask.getItem();
-							try {
-								if(item instanceof MutableDataItem) {
-									final MutableDataItem mdi = (MutableDataItem) item;
-									if(mdi.isUpdated()) {
-										verifyChunkUpdatedData(
-											mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
-										);
-										dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-									} else {
-										verifyChunkDataAndSize(
-											mdi, countBytesDone, contentChunk, chunkSize
-										);
-										dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-									}
-								} else {
-									verifyChunkDataAndSize(
-										(DataItem) item, countBytesDone, contentChunk, chunkSize
-									);
-									dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-								}
-							} catch(final DataCorruptionException e) {
-								dataIoTask.setCountBytesDone(countBytesDone + e.getOffset());
-								LOG.warn(Markers.MSG,
-									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-									item.getName(), countBytesDone + e.getOffset(),
-									String.format("\"0x%X\"", e.expected),
-									String.format("\"0x%X\"", e.actual)
-								);
-								throw e;
-							}
+							driver.verifyChunk(channel, ioTask, contentChunk);
 						} else {
 							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 						}
@@ -169,7 +134,7 @@ extends ClientHandlerBase<HttpObject, I, O> {
 		}
 
 		if(msg instanceof LastHttpContent) {
-			release(channel, ioTask);
+			driver.complete(channel, ioTask);
 		}
 	}
 }

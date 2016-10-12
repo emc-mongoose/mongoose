@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
+
+import static com.emc.mongoose.model.util.SizeInBytes.formatFixedSize;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
@@ -10,10 +12,12 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadMonitor;
 import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,6 +41,7 @@ implements StorageDriver<I, O> {
 	protected final boolean verifyFlag;
 	protected final int ioBuffSizeMin;
 	protected final int ioBuffSizeMax;
+	protected final ThreadLocal<ByteBuffer[]> threadIoBuffers;
 
 	protected StorageDriverBase(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
@@ -51,6 +56,15 @@ implements StorageDriver<I, O> {
 		this.verifyFlag = verifyFlag;
 		this.ioBuffSizeMin = (int) ioBuffSize.getMin();
 		this.ioBuffSizeMax = (int) ioBuffSize.getMax();
+		threadIoBuffers = new ThreadLocal<ByteBuffer[]>() {
+			@Override
+			protected final ByteBuffer[] initialValue() {
+				final int buffCount = (int) (
+					Math.log(ioBuffSizeMax / ioBuffSizeMin) / Math.log(2) + 1
+				);
+				return new ByteBuffer[buffCount];
+			}
+		};
 	}
 
 	@Override
@@ -86,6 +100,73 @@ implements StorageDriver<I, O> {
 	@Override
 	public Input<O> getInput() {
 		return null;
+	}
+
+	protected final ByteBuffer getIoBuffer(final long size) {
+
+		final ByteBuffer[] ioBuffers = threadIoBuffers.get();
+		int i, currBuffSize = ioBuffSizeMin;
+		for(i = 0; i < ioBuffers.length && currBuffSize < size; i ++) {
+			currBuffSize *= 2;
+		}
+
+		if(i == ioBuffers.length) {
+			i --;
+		}
+		ByteBuffer buff = ioBuffers[i];
+
+		if(buff == null) {
+			try {
+				buff = ByteBuffer.allocateDirect(currBuffSize);
+				/*if(LOG.isTraceEnabled(Markers.MSG)) {
+					long buffSizeSum = 0;
+					for(final ByteBuffer ioBuff : ioBuffers) {
+						if(ioBuff != null) {
+							buffSizeSum += ioBuff.capacity();
+						}
+					}
+					LOG.trace(
+						Markers.MSG, "Allocated {} of direct memory, total used by the thread: {}",
+						SizeInBytes.formatFixedSize(currBuffSize),
+						SizeInBytes.formatFixedSize(buffSizeSum)
+					);
+				}*/
+				ioBuffers[i] = buff;
+			} catch(final OutOfMemoryError e) {
+				long buffSizeSum = 0;
+				for(final ByteBuffer smallerBuff : ioBuffers) {
+					if(smallerBuff != null) {
+						buffSizeSum += smallerBuff.capacity();
+						if(currBuffSize > smallerBuff.capacity()) {
+							buff = smallerBuff;
+						}
+					}
+				}
+				if(buff == null) {
+					/*LOG.error(
+						Markers.ERR, "Failed to allocate {} of direct memory, " +
+							"total direct memory allocated by thread is {}, " +
+							"unable to continue using a smaller buffer",
+						SizeInBytes.formatFixedSize(currBuffSize),
+						SizeInBytes.formatFixedSize(buffSizeSum)
+					);*/
+					throw e;
+				} else {
+					LOG.warn(
+						Markers.ERR,
+						"Failed to allocate " + formatFixedSize(currBuffSize) +
+						" of direct memory, total direct memory allocated by thread is " +
+						formatFixedSize(buffSizeSum) + ", will continue using smaller buffer of " +
+						"size " + formatFixedSize(buff.capacity())
+					);
+				}
+			}
+		}
+
+		buff
+			.position(0)
+			.limit(size < buff.capacity() ? Math.max(1, (int) size) : buff.capacity());
+		return buff;
 	}
 	
 	@Override
