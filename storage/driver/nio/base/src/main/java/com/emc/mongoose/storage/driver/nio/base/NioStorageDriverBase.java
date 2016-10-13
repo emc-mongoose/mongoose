@@ -189,7 +189,7 @@ implements StorageDriver<I, O> {
 	public void put(final O ioTask)
 	throws InterruptedIOException {
 		try {
-			ioTaskQueues[ioTask.hashCode() % ioWorkerCount].put(ioTask);
+			ioTaskQueues[Math.abs(ioTask.hashCode()) % ioWorkerCount].put(ioTask);
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();
 		}
@@ -202,7 +202,7 @@ implements StorageDriver<I, O> {
 			O nextIoTask;
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);
-				ioTaskQueues[nextIoTask.hashCode() % ioWorkerCount].put(nextIoTask);
+				ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount].put(nextIoTask);
 			}
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();

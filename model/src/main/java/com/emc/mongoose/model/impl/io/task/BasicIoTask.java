@@ -174,4 +174,9 @@ implements IoTask<I> {
 		respTimeStart = in.readLong();
 		respTimeDone = in.readLong();
 	}
+
+	@Override
+	public final int hashCode() {
+		return item.hashCode();
+	}
 }
