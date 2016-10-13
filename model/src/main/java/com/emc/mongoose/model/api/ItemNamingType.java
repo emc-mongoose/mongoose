@@ -1,4 +1,4 @@
-package com.emc.mongoose.model.util;
+package com.emc.mongoose.model.api;
 /**
  Created by kurila on 28.03.16.
  */

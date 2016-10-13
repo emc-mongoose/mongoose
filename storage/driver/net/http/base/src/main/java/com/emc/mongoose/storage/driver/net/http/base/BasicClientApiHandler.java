@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.net.http.base;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
@@ -124,7 +124,7 @@ extends ClientHandlerBase<HttpObject, I, O> {
 					final int chunkSize = contentChunk.readableBytes();
 					if(chunkSize > 0) {
 						if(verifyFlag) {
-							driver.verifyChunk(channel, ioTask, contentChunk);
+							verifyChunk(channel, ioTask, contentChunk, chunkSize);
 						} else {
 							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 						}

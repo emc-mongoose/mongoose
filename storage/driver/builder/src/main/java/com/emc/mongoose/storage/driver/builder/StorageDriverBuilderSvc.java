@@ -35,10 +35,6 @@ public interface StorageDriverBuilderSvc<
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, T> setIoConfig(final Config.IoConfig ioConfig)
-	throws RemoteException;
-
-	@Override
 	StorageDriverBuilderSvc<I, O, T> setStorageConfig(final Config.StorageConfig storageConfig)
 	throws RemoteException;
 

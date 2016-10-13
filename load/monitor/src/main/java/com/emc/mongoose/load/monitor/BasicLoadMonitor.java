@@ -6,7 +6,7 @@ import com.emc.mongoose.model.api.io.Output;
 import com.emc.mongoose.model.api.item.ItemBuffer;
 import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.model.impl.metrics.BasicIoStats;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;

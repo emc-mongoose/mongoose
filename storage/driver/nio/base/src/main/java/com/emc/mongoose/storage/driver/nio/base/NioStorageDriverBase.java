@@ -5,7 +5,6 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.util.SizeInBytes;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
@@ -44,17 +43,9 @@ implements StorageDriver<I, O> {
 
 	public NioStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
+		final String srcContainer, final boolean verifyFlag
 	) {
-		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag, ioBuffSize);
-		final long ioBuffSizeMin = ioBuffSize.getMin();
-		final long ioBuffSizeMax = ioBuffSize.getMax();
-		if(ioBuffSizeMin < 1 || ioBuffSizeMin > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException("Invalid I/O buff size min: " + ioBuffSizeMin);
-		}
-		if(ioBuffSizeMax < ioBuffSizeMin || ioBuffSizeMax > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException("Invalid I/O buff size max: " + ioBuffSizeMax);
-		}
+		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
 		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
 		ioWorkerTasks = new ArrayList<>(ioWorkerCount);

@@ -1,4 +1,4 @@
-package com.emc.mongoose.model.util;
+package com.emc.mongoose.model.api;
 
 import java.util.LinkedHashMap;
 import java.util.List;

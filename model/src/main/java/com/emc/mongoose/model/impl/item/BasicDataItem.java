@@ -291,7 +291,8 @@ implements DataItem {
 		if(n > 0) {
 			byte bs, bi;
 			buff.flip();
-			for(int m = 0; m < n; m++) {
+			
+			for(int m = 0; m < n; m ++) {
 				bs = ringBuff.get();
 				bi = buff.get();
 				if(bs != bi) {

@@ -1,23 +1,12 @@
 package com.emc.mongoose.storage.driver.net.base;
 
-import com.emc.mongoose.common.concurrent.BlockingQueueTaskSequencer;
-import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.impl.data.DataCorruptionException;
-import com.emc.mongoose.model.impl.data.DataSizeException;
-import com.emc.mongoose.model.impl.data.DataVerificationException;
 import com.emc.mongoose.model.impl.io.UniformOptionSelector;
-import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -25,8 +14,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
@@ -47,7 +34,6 @@ import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,12 +60,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	protected NetStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final SocketConfig socketConfig, final String srcContainer, final boolean verifyFlag,
-		final SizeInBytes ioBuffSize
+		final SocketConfig socketConfig, final String srcContainer, final boolean verifyFlag
 	) {
-		super(
-			runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag, ioBuffSize
-		);
+		super(runId, storageConfig.getAuthConfig(), loadConfig, srcContainer, verifyFlag);
 		sslFlag = storageConfig.getSsl();
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
@@ -228,171 +211,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setUseClientMode(true);
 			pipeline.addLast(new SslHandler(sslEngine));
-		}
-	}
-
-	@Override
-	public final void verifyChunk(
-		final Channel channel, final O ioTask, final ByteBuf contentChunk
-	) {
-		BlockingQueueTaskSequencer.INSTANCE.submit(
-			new BasicChunkVerificationTask(channel, ioTask, contentChunk)
-		);
-	}
-
-	private final class BasicChunkVerificationTask
-	extends FutureTaskBase<O> {
-
-		private final Channel channel;
-		private final O ioTask;
-		private final ByteBuf contentChunk;
-
-		public BasicChunkVerificationTask(
-			final Channel channel, final O ioTask, final ByteBuf contentChunk
-		) {
-			this.channel = channel;
-			this.ioTask = ioTask;
-			this.contentChunk = contentChunk;
-			contentChunk.retain();
-		}
-
-		@Override
-		public final void run() {
-
-			final DataIoTask dataIoTask = (DataIoTask) ioTask;
-			final DataItem item = dataIoTask.getItem();
-			final long countBytesDone = dataIoTask.getCountBytesDone();
-			final int chunkSize = contentChunk.readableBytes();
-
-			try {
-				if(item instanceof MutableDataItem) {
-					final MutableDataItem mdi = (MutableDataItem) item;
-					if(mdi.isUpdated()) {
-						verifyChunkUpdatedData(
-							mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize);
-						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-					} else {
-						verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
-						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-					}
-				} else {
-					verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
-					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-				}
-			} catch(final IOException e) {
-
-				if(e instanceof DataVerificationException) {
-					final DataVerificationException ee = (DataVerificationException)e;
-					dataIoTask.setCountBytesDone(ee.getOffset());
-					dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
-					if(e instanceof DataSizeException) {
-						try {
-							LOG.warn(
-								Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
-								item.getName(), item.size(), ee.getOffset()
-							);
-						} catch(final IOException ignored) {
-						}
-					} else if(e instanceof DataCorruptionException) {
-						final DataCorruptionException eee = (DataCorruptionException)ee;
-						LOG.warn(
-							Markers.MSG,
-							"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-							item.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
-							String.format("\"0x%X\"", eee.actual)
-						);
-					}
-				}
-
-				try {
-					complete(channel, ioTask);
-				} catch(final IOException ee) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
-				}
-
-			} finally {
-				contentChunk.release();
-			}
-		}
-
-		private void verifyChunkDataAndSize(
-			final DataItem item, final long countBytesDone, final ByteBuf chunkData,
-			final int chunkSize
-		) throws DataCorruptionException, IOException {
-			if(chunkSize > item.size() - countBytesDone) {
-				throw new DataSizeException(item.size(), countBytesDone + chunkSize);
-			}
-			verifyChunkData(item, chunkData, 0, chunkSize);
-		}
-
-		private void verifyChunkUpdatedData(
-			final MutableDataItem item, final MutableDataIoTask ioTask, final ByteBuf chunkData,
-			final int chunkSize
-		) throws DataCorruptionException, IOException {
-
-			final long countBytesDone = ioTask.getCountBytesDone();
-			int chunkCountDone = 0, remainingSize;
-			long nextRangeOffset;
-			int currRangeIdx;
-			DataItem currRange;
-
-			while(chunkCountDone < chunkSize) {
-
-				currRangeIdx = ioTask.getCurrRangeIdx();
-				nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-				if(countBytesDone + chunkCountDone == nextRangeOffset) {
-					if(nextRangeOffset < item.size()) {
-						currRangeIdx++;
-						nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-						ioTask.setCurrRangeIdx(currRangeIdx);
-					} else {
-						throw new DataSizeException(item.size(), countBytesDone + chunkSize);
-					}
-				}
-				currRange = ioTask.getCurrRange();
-
-				try {
-					remainingSize = (int)Math.min(chunkSize - chunkCountDone,
-						nextRangeOffset - countBytesDone - chunkCountDone
-					);
-					verifyChunkData(currRange, chunkData, chunkCountDone, remainingSize);
-					chunkCountDone += remainingSize;
-				} catch(final DataCorruptionException e) {
-					throw new DataCorruptionException(
-						getRangeOffset(ioTask.getCurrRangeIdx()) + e.getOffset(), e.actual,
-						e.expected
-					);
-				}
-			}
-		}
-
-		private void verifyChunkData(
-			final DataItem item, final ByteBuf chunkData, final int chunkOffset,
-			final int remainingSize
-		) throws DataCorruptionException, IOException {
-
-			// fill the expected data buffer to compare with a chunk
-			final ByteBuffer bb = getIoBuffer(remainingSize);
-			bb.limit(remainingSize);
-			int n = 0;
-			while(n < remainingSize) {
-				n += item.read(bb);
-			}
-			bb.flip();
-			final ByteBuf buff = Unpooled.wrappedBuffer(bb);
-
-			// fast compare word by word
-			//if(!ByteBufUtil.equals(buff, 0, chunkData, chunkOffset, remainingSize)) {
-				// slow byte by byte compare if fast one fails to find the exact mismatch position
-				byte expected, actual;
-				for(int i = 0; i < remainingSize; i++) {
-					expected = buff.getByte(i);
-					actual = chunkData.getByte(chunkOffset + i);
-					if(expected != actual) {
-						throw new DataCorruptionException(i, expected, actual);
-					}
-				}
-			//}
 		}
 	}
 

@@ -8,7 +8,6 @@ import com.emc.mongoose.model.api.storage.StorageDriver;
 
 import java.rmi.RemoteException;
 
-import static com.emc.mongoose.ui.config.Config.IoConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -36,9 +35,6 @@ public interface StorageDriverBuilder<
 	LoadConfig getLoadConfig()
 	throws RemoteException;
 
-	IoConfig getIoConfig()
-	throws RemoteException;
-
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
@@ -55,9 +51,6 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
-	throws RemoteException;
-
-	StorageDriverBuilder<I, O, T> setIoConfig(final IoConfig ioConfig)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)

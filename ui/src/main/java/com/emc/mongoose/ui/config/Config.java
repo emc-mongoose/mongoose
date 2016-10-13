@@ -1,8 +1,8 @@
 package com.emc.mongoose.ui.config;
 
 import com.emc.mongoose.model.api.data.DataRangesConfig;
-import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.model.util.TimeUtil;
+import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.api.TimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -62,7 +62,6 @@ public final class Config {
 
 	public static final String KEY_NAME = "name";
 	public static final String KEY_VERSION = "version";
-	public static final String KEY_IO = "io";
 	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_ITEM = "item";
 	public static final String KEY_LOAD = "load";
@@ -72,7 +71,6 @@ public final class Config {
 	
 	@JsonProperty(KEY_NAME) private String name;
 	@JsonProperty(KEY_VERSION) private String version;
-	@JsonProperty(KEY_IO) private IoConfig ioConfig;
 	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
 	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
@@ -88,10 +86,6 @@ public final class Config {
 
 	public final String getVersion() {
 		return version;
-	}
-
-	public final IoConfig getIoConfig() {
-		return ioConfig;
 	}
 
 	public final SocketConfig getSocketConfig() {
@@ -126,10 +120,6 @@ public final class Config {
 		this.version = version;
 	}
 	
-	public final void setIoConfig(final IoConfig ioConfig) {
-		this.ioConfig = ioConfig;
-	}
-	
 	public final void setSocketConfig(final SocketConfig socketConfig) {
 		this.socketConfig = socketConfig;
 	}
@@ -154,46 +144,6 @@ public final class Config {
 		this.aliasingConfig = aliasingConfig;
 	}
 	
-	public static final class IoConfig
-	implements Serializable {
-		
-		public static final String KEY_BUFFER = "buffer";
-		
-		@JsonProperty(KEY_BUFFER)
-		private BufferConfig bufferConfig;
-
-		public IoConfig() {
-		}
-
-		public static class BufferConfig
-		implements Serializable {
-			
-			public static final String KEY_SIZE = "size";
-			
-			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
-			private SizeInBytes size;
-
-			public BufferConfig() {
-			}
-
-			public final SizeInBytes getSize() {
-				return size;
-			}
-			
-			public final void setSize(final SizeInBytes size) {
-				this.size = size;
-			}
-		}
-
-		public final BufferConfig getBufferConfig() {
-			return bufferConfig;
-		}
-		
-		public final void setBufferConfig(final BufferConfig bufferConfig) {
-			this.bufferConfig = bufferConfig;
-		}
-	}
-
 	public static final class SocketConfig
 	implements Serializable {
 

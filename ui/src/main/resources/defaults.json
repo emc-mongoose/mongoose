@@ -1,11 +1,6 @@
 {
 	"name" : "mongoose",
 	"version" : "next",
-	"io" : {
-		"buffer" : {
-			"size" : "4KB-1MB"
-		}
-	},
 	"socket" : {
 		"timeoutMilliSec" : 1000000,
 		"reuseAddr" : true,

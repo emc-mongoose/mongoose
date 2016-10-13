@@ -7,12 +7,10 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.ItemType;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.storage.StorageType;
-import static com.emc.mongoose.ui.config.Config.IoConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
 import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
@@ -36,7 +34,6 @@ public class BasicStorageDriverBuilder<
 
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
-	private IoConfig ioConfig;
 	private StorageConfig storageConfig;
 	private SocketConfig socketConfig;
 
@@ -58,11 +55,6 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public LoadConfig getLoadConfig() {
 		return loadConfig;
-	}
-
-	@Override
-	public IoConfig getIoConfig() {
-		return ioConfig;
 	}
 
 	@Override
@@ -100,12 +92,6 @@ public class BasicStorageDriverBuilder<
 	}
 	
 	@Override
-	public StorageDriverBuilder<I, O, T> setIoConfig(final IoConfig ioConfig) {
-		this.ioConfig = ioConfig;
-		return this;
-	}
-	
-	@Override
 	public StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
@@ -126,7 +112,6 @@ public class BasicStorageDriverBuilder<
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
 		final InputConfig inputConfig = itemConfig.getInputConfig();
-		final SizeInBytes ioBuffSize = ioConfig.getBufferConfig().getSize();
 		final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 		
 		if(StorageType.FS.equals(storageType)) {
@@ -138,7 +123,7 @@ public class BasicStorageDriverBuilder<
 				LOG.info(Markers.MSG, "Work on the files");
 				driver = (T) new BasicFileStorageDriver<>(
 					runId, storageConfig.getAuthConfig(), loadConfig, inputConfig.getContainer(),
-					verifyFlag, ioBuffSize
+					verifyFlag
 				);
 			}
 		} else if(StorageType.HTTP.equals(storageType)){
@@ -151,13 +136,13 @@ public class BasicStorageDriverBuilder<
 					case API_S3:
 						driver = (T) new S3StorageDriver<>(
 							runId, loadConfig, storageConfig, inputConfig.getContainer(),
-							verifyFlag, ioBuffSize, socketConfig
+							verifyFlag, socketConfig
 						);
 						break;
 					case API_SWIFT:
 						driver = (T) new SwiftStorageDriver<>(
 							runId, loadConfig, storageConfig, inputConfig.getContainer(),
-							verifyFlag, ioBuffSize, socketConfig
+							verifyFlag, socketConfig
 						);
 						break;
 					default:

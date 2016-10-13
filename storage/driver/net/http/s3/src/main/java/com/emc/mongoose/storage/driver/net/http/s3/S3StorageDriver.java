@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientApiHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
@@ -55,10 +54,9 @@ extends HttpStorageDriverBase<I, O> {
 	
 	public S3StorageDriver(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize,
-		final SocketConfig socketConfig
+		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, ioBuffSize, socketConfig);
+		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, socketConfig);
 	}
 	
 	@Override

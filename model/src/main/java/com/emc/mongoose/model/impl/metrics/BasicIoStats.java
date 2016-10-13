@@ -4,7 +4,7 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.model.api.metrics.IoStats;
-import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.common.api.SizeInBytes;
 
 import java.io.IOException;
 import java.util.Locale;

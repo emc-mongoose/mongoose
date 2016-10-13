@@ -1,8 +1,8 @@
 package com.emc.mongoose.ui.config.reader;
 
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.model.util.TimeUtil;
+import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.api.TimeUtil;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import org.junit.Test;
 
@@ -27,11 +27,6 @@ public class ConfigLoaderTest {
 		assertThat(config, notNullValue());
 		assertThat(config.getName(), equalTo("mongoose", "name"));
 		assertThat(config.getVersion(), equalTo("3.0.0-SNAPSHOT", "version"));
-		final Config.IoConfig ioConfig = config.getIoConfig();
-		assertThat(ioConfig, notNullValue());
-		final Config.IoConfig.BufferConfig bufferConfig = ioConfig.getBufferConfig();
-		assertThat(bufferConfig, notNullValue());
-		assertThat(bufferConfig.getSize(), equalTo(new SizeInBytes("4KB-1MB"), "io.buffer.size"));
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertThat(socketConfig, notNullValue());
 		assertThat(socketConfig.getTimeoutMilliSec(), equalTo(1_000_000, "socket.timeoutMilliSec"));

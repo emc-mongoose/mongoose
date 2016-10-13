@@ -1,4 +1,4 @@
-package com.emc.mongoose.model.util;
+package com.emc.mongoose.common.api;
 
 import java.util.HashMap;
 import java.util.Map;

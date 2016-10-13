@@ -11,7 +11,7 @@ import com.emc.mongoose.model.impl.data.ContentSourceUtil;
 import com.emc.mongoose.model.impl.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.model.api.storage.StorageDriverSvc;
@@ -122,7 +122,6 @@ public class Main {
 							.setRunId(runId)
 							.setContentSource(contentSrc)
 							.setItemConfig(itemConfig)
-							.setIoConfig(config.getIoConfig())
 							.setLoadConfig(loadConfig)
 							.setSocketConfig(config.getSocketConfig())
 							.setStorageConfig(storageConfig)
@@ -152,7 +151,6 @@ public class Main {
 						.setRunId(runId)
 						.setContentSource(contentSrc)
 						.setItemConfig(itemConfig)
-						.setIoConfig(config.getIoConfig())
 						.setLoadConfig(loadConfig)
 						.setSocketConfig(config.getSocketConfig())
 						.setStorageConfig(storageConfig)

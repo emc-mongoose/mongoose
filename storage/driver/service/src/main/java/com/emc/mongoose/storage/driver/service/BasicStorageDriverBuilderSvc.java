@@ -9,7 +9,6 @@ import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
-import com.emc.mongoose.ui.config.Config.IoConfig;
 import com.emc.mongoose.ui.config.Config.ItemConfig;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -53,12 +52,6 @@ public class BasicStorageDriverBuilderSvc<
 	@Override
 	public StorageDriverBuilderSvc<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		super.setLoadConfig(loadConfig);
-		return this;
-	}
-
-	@Override
-	public StorageDriverBuilderSvc<I, O, T> setIoConfig(final IoConfig ioConfig) {
-		super.setIoConfig(ioConfig);
 		return this;
 	}
 

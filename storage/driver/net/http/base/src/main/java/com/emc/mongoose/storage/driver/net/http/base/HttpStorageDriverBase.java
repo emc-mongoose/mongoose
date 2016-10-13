@@ -10,7 +10,7 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.api.item.Item.SLASH;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
@@ -21,8 +21,6 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
-
-import com.emc.mongoose.model.util.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -84,12 +82,9 @@ implements HttpStorageDriver<I, O> {
 
 	protected HttpStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize,
-		final SocketConfig socketConfig
+		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(
-			runId, loadConfig, storageConfig, socketConfig, srcContainer, verifyFlag, ioBuffSize
-		);
+		super(runId, loadConfig, storageConfig, socketConfig, srcContainer, verifyFlag);
 		try {
 			if(secret == null) {
 				secretKey = null;

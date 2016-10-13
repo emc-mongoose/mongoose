@@ -3,14 +3,14 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.impl.data.DataCorruptionException;
 import com.emc.mongoose.model.impl.data.DataSizeException;
-import com.emc.mongoose.model.util.LoadType;
-import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.model.api.LoadType;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
@@ -51,9 +51,9 @@ implements StorageDriver<I, O> {
 
 	public BasicFileStorageDriver(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag, final SizeInBytes ioBuffSize
+		final String srcContainer, final boolean verifyFlag
 	) {
-		super(runId, authConfig, loadConfig, srcContainer, verifyFlag, ioBuffSize);
+		super(runId, authConfig, loadConfig, srcContainer, verifyFlag);
 		openSrcFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
 			final Path srcFilePath;
@@ -238,7 +238,7 @@ implements StorageDriver<I, O> {
 					final long nextRangeOffset = getRangeOffset(nextRangeIdx);
 					if(currRange != null) {
 						final int n = currRange.readAndVerify(
-							srcChannel, getIoBuffer(nextRangeOffset - countBytesDone)
+							srcChannel, ThreadLocalByteBuffer.get(nextRangeOffset - countBytesDone)
 						);
 						if(n < 0) {
 							throw new DataSizeException(contentSize, countBytesDone);
@@ -253,7 +253,7 @@ implements StorageDriver<I, O> {
 					}
 				} else {
 					final int n = fileItem.readAndVerify(
-						srcChannel, getIoBuffer(contentSize - countBytesDone)
+						srcChannel, ThreadLocalByteBuffer.get(contentSize - countBytesDone)
 					);
 					if(n < 0) {
 						throw new DataSizeException(contentSize, countBytesDone);
@@ -281,7 +281,7 @@ implements StorageDriver<I, O> {
 		final long contentSize = fileItem.size();
 		int n;
 		if(countBytesDone < contentSize) {
-			n = srcChannel.read(getIoBuffer(contentSize - countBytesDone));
+			n = srcChannel.read(ThreadLocalByteBuffer.get(contentSize - countBytesDone));
 			if(n < 0) {
 				finishIoTask(ioTask);
 				ioTask.setCountBytesDone(countBytesDone);

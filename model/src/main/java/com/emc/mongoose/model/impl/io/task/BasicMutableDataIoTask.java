@@ -1,11 +1,11 @@
 package com.emc.mongoose.model.impl.io.task;
 
-import com.emc.mongoose.common.collection.ByteRange;
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 
 import java.io.IOException;
 import java.io.ObjectInput;

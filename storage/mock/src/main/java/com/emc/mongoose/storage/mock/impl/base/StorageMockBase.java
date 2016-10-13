@@ -273,10 +273,6 @@ implements StorageMock<I> {
 				LOG.warn(Markers.ERR, "Item input file @ \"{}\" is a directory", itemInputFile);
 				return;
 			}
-			if(Files.isReadable(itemInputFile)) {
-				LOG.warn(Markers.ERR, "Item input file @ \"{}\" is not readable", itemInputFile);
-				return;
-			}
 			
 			final AtomicLong count = new AtomicLong(0);
 			List<I> buff;

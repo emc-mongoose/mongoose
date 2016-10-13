@@ -4,7 +4,7 @@ import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.model.impl.io.BasicValueInput;
-import com.emc.mongoose.model.util.ItemNamingType;
+import com.emc.mongoose.model.api.ItemNamingType;
 
 /**
  Created by kurila on 18.12.15.
