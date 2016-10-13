@@ -200,26 +200,30 @@ extends SimpleChannelInboundHandler<M> {
 			chunkData.writerIndex() - remainingSize < chunkPos
 		) {
 			fastEquals = false;
-		}
-		
-		final int longCount = remainingSize >>> 3;
-		final int byteCount = remainingSize & 7;
-		
-		// assuming the same order (big endian)
-		for(int i = longCount; i > 0; i --) {
-			if(buff.getLong(buffPos) != chunkData.getLong(chunkPos)) {
-				fastEquals = false;
+		} else {
+			final int longCount = remainingSize >>> 3;
+			final int byteCount = remainingSize & 7;
+			
+			// assuming the same order (big endian)
+			for(int i = longCount; i > 0; i --) {
+				if(buff.getLong(buffPos) != chunkData.getLong(chunkPos)) {
+					fastEquals = false;
+					break;
+				}
+				buffPos += 8;
+				chunkPos += 8;
 			}
-			buffPos += 8;
-			chunkPos += 8;
-		}
-		
-		for(int i = byteCount; i > 0; i --) {
-			if(buff.getByte(buffPos) != chunkData.getByte(chunkPos)) {
-				fastEquals = false;
+			
+			if(fastEquals) {
+				for(int i = byteCount; i > 0; i --) {
+					if(buff.getByte(buffPos) != chunkData.getByte(chunkPos)) {
+						fastEquals = false;
+						break;
+					}
+					buffPos++;
+					chunkPos++;
+				}
 			}
-			buffPos ++;
-			chunkPos ++;
 		}
 		
 		if(fastEquals) {

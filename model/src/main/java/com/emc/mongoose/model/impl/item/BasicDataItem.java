@@ -292,7 +292,16 @@ implements DataItem {
 			byte bs, bi;
 			buff.flip();
 			
-			for(int m = 0; m < n; m ++) {
+			final int wordCount = n >>> 3;
+			final int tailByteCount = n & 7;
+			
+			for(int k = 0; k < wordCount; k ++) {
+				if(ringBuff.getLong() != buff.getLong()) {
+					throw new DataCorruptionException(k << 3, ringBuff.get(), buff.get());
+				}
+			}
+			
+			for(int m = 0; m < tailByteCount; m ++) {
 				bs = ringBuff.get();
 				bi = buff.get();
 				if(bs != bi) {
