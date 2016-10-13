@@ -7,7 +7,6 @@ import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -38,19 +37,20 @@ implements StorageDriver<I, O> {
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
-	private final List<NioWorkerTask> ioWorkerTasks;
-	private final BlockingQueue<O> ioTaskQueue;
+	private final WorkerTask ioWorkerTasks[];
+	private final BlockingQueue<O> ioTaskQueues[];
 
 	public NioStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
 		final String srcContainer, final boolean verifyFlag
 	) {
 		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
-		ioTaskQueue = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
 		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
-		ioWorkerTasks = new ArrayList<>(ioWorkerCount);
+		ioWorkerTasks = new WorkerTask[ioWorkerCount];
+		ioTaskQueues = new BlockingQueue[ioWorkerCount];
 		for(int i = 0; i < ioWorkerCount; i ++) {
-			ioWorkerTasks.add(new NioWorkerTask());
+			ioTaskQueues[i] = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
+			ioWorkerTasks[i] = new NioWorkerTask(ioTaskQueues[i]);
 		}
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
@@ -59,22 +59,35 @@ implements StorageDriver<I, O> {
 		);
 	}
 
+
+	private interface WorkerTask
+	extends Runnable {
+
+		boolean isIdle();
+	}
+
 	/**
 	 The class represents the non-blocking I/O task execution algorithm.
 	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
 	 So the I/O task may be invoked multiple times (in the reentrant manner).
 	 */
 	private final class NioWorkerTask
-	implements Runnable {
+	implements WorkerTask {
 
 		private final int ioTaskBuffCapacity = Math.max(
 			1, concurrencyLevel / ThreadUtil.getAvailableConcurrencyLevel()
 		);
 		@SuppressWarnings("unchecked")
 		private final List<O> ioTaskBuff = new ArrayList<>(ioTaskBuffCapacity);
+		private final BlockingQueue<O> ioTaskQueue;
+
+		public NioWorkerTask(final BlockingQueue<O> ioTaskQueue) {
+			this.ioTaskQueue = ioTaskQueue;
+		}
 
 		private volatile boolean idleFlag = false;
 
+		@Override
 		public final boolean isIdle() {
 			return idleFlag;
 		}
@@ -132,7 +145,9 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		ioWorkerTasks.forEach(ioTaskExecutor::submit);
+		for(final Runnable ioWorkerTask : ioWorkerTasks) {
+			ioTaskExecutor.execute(ioWorkerTask);
+		}
 	}
 
 	@Override
@@ -150,16 +165,12 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean isIdle() {
-		if(ioTaskQueue.isEmpty()) {
-			for(final NioWorkerTask ioWorkerTask : ioWorkerTasks) {
-				if(!ioWorkerTask.isIdle()) {
-					return false;
-				}
+		for(final WorkerTask ioWorkerTask : ioWorkerTasks) {
+			if(!ioWorkerTask.isIdle()) {
+				return false;
 			}
-			return true; // I/O task queue is empty and all I/O workers are idle
-		} else {
-			return false;
 		}
+		return true; // I/O task queue is empty and all I/O workers are idle
 	}
 
 	@Override
@@ -178,7 +189,7 @@ implements StorageDriver<I, O> {
 	public void put(final O ioTask)
 	throws InterruptedIOException {
 		try {
-			ioTaskQueue.put(ioTask);
+			ioTaskQueues[ioTask.hashCode() % ioWorkerCount].put(ioTask);
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();
 		}
@@ -188,8 +199,10 @@ implements StorageDriver<I, O> {
 	public int put(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedIOException {
 		try {
+			O nextIoTask;
 			for(int i = from; i < to; i ++) {
-				ioTaskQueue.put(ioTasks.get(i));
+				nextIoTask = ioTasks.get(i);
+				ioTaskQueues[nextIoTask.hashCode() % ioWorkerCount].put(nextIoTask);
 			}
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();
@@ -213,6 +226,10 @@ implements StorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
-		ioTaskQueue.clear();
+		for(int i = 0; i < ioWorkerCount; i ++) {
+			ioWorkerTasks[i] = null;
+			ioTaskQueues[i].clear();
+			ioTaskQueues[i] = null;
+		}
 	}
 }
