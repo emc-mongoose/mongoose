@@ -51,9 +51,10 @@ extends SimpleChannelInboundHandler<M> {
 	private final static BlockingQueue<Runnable> TASK_QUEUES[] = new BlockingQueue[HW_CONCURRENCY];
 	private final static int QUEUE_SIZE = 0x1000;
 	static {
-		BlockingQueue<Runnable> taskQueue;
 		for(int i = 0; i < HW_CONCURRENCY; i ++) {
-			taskQueue = TASK_QUEUES[i] = new ArrayBlockingQueue<>(QUEUE_SIZE);
+			final BlockingQueue<Runnable> taskQueue = TASK_QUEUES[i] = new ArrayBlockingQueue<>(
+				QUEUE_SIZE
+			);
 			CHUNK_VERIFICATION_SERVICE.execute(
 				new Runnable() {
 					@Override
@@ -122,8 +123,8 @@ extends SimpleChannelInboundHandler<M> {
 	
 	protected final void verifyChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk, final int chunkSize
-	) {
-		CHUNK_VERIFICATION_SERVICE.execute(
+	) throws InterruptedException {
+		TASK_QUEUES[Math.abs(ioTask.hashCode()) % HW_CONCURRENCY].put(
 			new Runnable() {
 				@Override
 				public final void run() {

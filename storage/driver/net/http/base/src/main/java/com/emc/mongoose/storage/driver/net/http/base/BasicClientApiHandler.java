@@ -14,6 +14,7 @@ import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SPACE;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SVC;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.SUCC;
 
+import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpContent;
@@ -22,6 +23,7 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.LastHttpContent;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -124,7 +126,14 @@ extends ClientHandlerBase<HttpObject, I, O> {
 					final int chunkSize = contentChunk.readableBytes();
 					if(chunkSize > 0) {
 						if(verifyFlag) {
-							verifyChunk(channel, ioTask, contentChunk, chunkSize);
+							try {
+								verifyChunk(channel, ioTask, contentChunk, chunkSize);
+							} catch(final InterruptedException e) {
+								LogUtil.exception(
+									LOG, Level.WARN, e,
+									"Failed to schedule the chunk verification task"
+								);
+							}
 						} else {
 							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 						}
