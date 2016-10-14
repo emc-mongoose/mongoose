@@ -45,7 +45,7 @@ implements StorageDriver<I, O> {
 		final String srcContainer, final boolean verifyFlag
 	) {
 		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
-		ioWorkerCount = ThreadUtil.getAvailableConcurrencyLevel();
+		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new WorkerTask[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
 		for(int i = 0; i < ioWorkerCount; i ++) {
@@ -75,7 +75,7 @@ implements StorageDriver<I, O> {
 	implements WorkerTask {
 
 		private final int ioTaskBuffCapacity = Math.max(
-			1, concurrencyLevel / ThreadUtil.getAvailableConcurrencyLevel()
+			1, concurrencyLevel / ThreadUtil.getHardwareConcurrencyLevel()
 		);
 		@SuppressWarnings("unchecked")
 		private final List<O> ioTaskBuff = new ArrayList<>(ioTaskBuffCapacity);

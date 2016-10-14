@@ -258,6 +258,7 @@ implements StorageDriver<I, O> {
 					if(n < 0) {
 						throw new DataSizeException(contentSize, countBytesDone);
 					}
+					countBytesDone += n;
 				}
 			} catch(final DataCorruptionException e) {
 				ioTask.setStatus(Status.RESP_FAIL_CORRUPT);

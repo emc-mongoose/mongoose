@@ -73,11 +73,11 @@ extends StorageMockBase<MutableDataItemMock>{
 		for(int i = 0; i < portsNumber; i++) {
 			try {
 				dispatchGroups[i] = new NioEventLoopGroup(
-					ThreadUtil.getAvailableConcurrencyLevel(),
+					ThreadUtil.getHardwareConcurrencyLevel(),
 					new NamingThreadFactory("dispatcher@port#" + (port + i) + "-", true)
 				);
 				workGroups[i] = new NioEventLoopGroup(
-					ThreadUtil.getAvailableConcurrencyLevel(),
+					ThreadUtil.getHardwareConcurrencyLevel(),
 					new NamingThreadFactory("ioworker@port#" + (port + i) + "-", true)
 				);
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();

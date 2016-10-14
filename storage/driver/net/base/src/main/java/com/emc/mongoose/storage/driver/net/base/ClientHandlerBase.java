@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base;
 
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -16,7 +17,6 @@ import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,7 +28,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 04.10.16.
  */
@@ -36,7 +43,51 @@ public abstract class ClientHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
 	
 	private final static Logger LOG = LogManager.getLogger();
-	
+	private final static int HW_CONCURRENCY = ThreadUtil.getHardwareConcurrencyLevel();
+	private final static ExecutorService CHUNK_VERIFICATION_SERVICE = new ThreadPoolExecutor(
+		HW_CONCURRENCY, HW_CONCURRENCY, 0, TimeUnit.SECONDS,
+		new ArrayBlockingQueue<>(HW_CONCURRENCY)
+	);
+	private final static BlockingQueue<Runnable> TASK_QUEUES[] = new BlockingQueue[HW_CONCURRENCY];
+	private final static int QUEUE_SIZE = 0x1000;
+	static {
+		BlockingQueue<Runnable> taskQueue;
+		for(int i = 0; i < HW_CONCURRENCY; i ++) {
+			taskQueue = TASK_QUEUES[i] = new ArrayBlockingQueue<>(QUEUE_SIZE);
+			CHUNK_VERIFICATION_SERVICE.execute(
+				new Runnable() {
+					@Override
+					public final void run() {
+
+						int n;
+						final List<Runnable> taskBuff = new ArrayList<>(QUEUE_SIZE);
+
+						while(!Thread.currentThread().isInterrupted()) {
+
+							taskBuff.clear();
+							n = taskQueue.drainTo(taskBuff, QUEUE_SIZE);
+
+							if(n < 1) {
+								LockSupport.parkNanos(1_000_000);
+								continue;
+							}
+
+							for(final Runnable task : taskBuff) {
+								try {
+									task.run();
+								} catch(final Throwable cause) {
+									LogUtil.exception(
+										LOG, Level.WARN, cause, "Verification task failure"
+									);
+								}
+							}
+						}
+					}
+				}
+			);
+		}
+	}
+
 	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
 	
@@ -72,58 +123,61 @@ extends SimpleChannelInboundHandler<M> {
 	protected final void verifyChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk, final int chunkSize
 	) {
-		final DataIoTask dataIoTask = (DataIoTask) ioTask;
-		final DataItem item = dataIoTask.getItem();
-		final long countBytesDone = dataIoTask.getCountBytesDone();
-		
-		try {
-			if(item instanceof MutableDataItem) {
-				final MutableDataItem mdi = (MutableDataItem) item;
-				if(mdi.isUpdated()) {
-					verifyChunkUpdatedData(
-						mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize);
-					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-				} else {
-					verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
-					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-				}
-			} else {
-				verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
-				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-			}
-			
-		} catch(final IOException e) {
-			if(e instanceof DataVerificationException) {
-				final DataVerificationException ee = (DataVerificationException)e;
-				dataIoTask.setCountBytesDone(ee.getOffset());
-				dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
-				if(e instanceof DataSizeException) {
+		CHUNK_VERIFICATION_SERVICE.execute(
+			new Runnable() {
+				@Override
+				public final void run() {
+					final DataIoTask dataIoTask = (DataIoTask)ioTask;
+					final DataItem item = dataIoTask.getItem();
+					final long countBytesDone = dataIoTask.getCountBytesDone();
 					try {
-						LOG.warn(
-							Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
-							item.getName(), item.size(), ee.getOffset()
-						);
-					} catch(final IOException ignored) {
+						if(item instanceof MutableDataItem) {
+							final MutableDataItem mdi = (MutableDataItem)item;
+							if(mdi.isUpdated()) {
+								verifyChunkUpdatedData(
+									mdi, (MutableDataIoTask)ioTask, contentChunk, chunkSize);
+								dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+							} else {
+								verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
+								dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+							}
+						} else {
+							verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+						}
+					} catch(final IOException e) {
+						if(e instanceof DataVerificationException) {
+							final DataVerificationException ee = (DataVerificationException)e;
+							dataIoTask.setCountBytesDone(ee.getOffset());
+							dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
+							if(e instanceof DataSizeException) {
+								try {
+									LOG.warn(Markers.MSG,
+										"{}: invalid size, expected: {}, actual: {} ",
+										item.getName(), item.size(), ee.getOffset()
+									);
+								} catch(final IOException ignored) {
+								}
+							} else if(e instanceof DataCorruptionException) {
+								final DataCorruptionException eee = (DataCorruptionException)ee;
+								LOG.warn(Markers.MSG,
+									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+									item.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
+									String.format("\"0x%X\"", eee.actual)
+								);
+							}
+						}
+						try {
+							driver.complete(channel, ioTask);
+						} catch(final IOException ee) {
+							LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
+						}
 					}
-				} else if(e instanceof DataCorruptionException) {
-					final DataCorruptionException eee = (DataCorruptionException)ee;
-					LOG.warn(
-						Markers.MSG,
-						"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-						item.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
-						String.format("\"0x%X\"", eee.actual)
-					);
 				}
 			}
-			
-			try {
-				driver.complete(channel, ioTask);
-			} catch(final IOException ee) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
-			}
-		}
+		);
 	}
-	
+
 	private void verifyChunkDataAndSize(
 		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
 		final int chunkSize
@@ -240,47 +294,4 @@ extends SimpleChannelInboundHandler<M> {
 			}
 		}
 	}
-	
-	private static boolean byteBuffEquals(
-		final ByteBuf a, int aStartIndex, final ByteBuf b, int bStartIndex, final int length
-	) {
-		if (aStartIndex < 0 || bStartIndex < 0 || length < 0) {
-			throw new IllegalArgumentException("All indexes and lengths must be non-negative");
-		}
-		if (a.writerIndex() - length < aStartIndex || b.writerIndex() - length < bStartIndex) {
-			return false;
-		}
-		
-		final int longCount = length >>> 3;
-		final int byteCount = length & 7;
-		
-		if (a.order() == b.order()) {
-			for (int i = longCount; i > 0; i --) {
-				if (a.getLong(aStartIndex) != b.getLong(bStartIndex)) {
-					return false;
-				}
-				aStartIndex += 8;
-				bStartIndex += 8;
-			}
-		} else {
-			for (int i = longCount; i > 0; i --) {
-				if (a.getLong(aStartIndex) != Long.reverseBytes(b.getLong(bStartIndex))) {
-					return false;
-				}
-				aStartIndex += 8;
-				bStartIndex += 8;
-			}
-		}
-		
-		for (int i = byteCount; i > 0; i --) {
-			if (a.getByte(aStartIndex) != b.getByte(bStartIndex)) {
-				return false;
-			}
-			aStartIndex ++;
-			bStartIndex ++;
-		}
-		
-		return true;
-	}
-	
 }
