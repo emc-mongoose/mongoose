@@ -20,7 +20,7 @@
 			},
 			"ranges" : 0,
 			"size" : "1MB",
-			"verify" : true
+			"verify" : false
 		},
 		"input" : {
 			"container" : null,
