@@ -300,14 +300,15 @@ implements DataItem {
 					if(ws != wi) {
 						final int wordPos = k << 3;
 						byte bs, bi;
+						final ByteBuffer wsBytes = ByteBuffer.allocate(8).putLong(ws);
+						final ByteBuffer wiBytes = ByteBuffer.allocate(8).putLong(wi);
 						for(int i = 0; i < 8; i ++) {
-							bs = ringBuff.get(wordPos + i);
-							bi = buff.get(wordPos + i);
+							bs = wsBytes.get();
+							bi = wiBytes.get();
 							if(bs != bi) {
 								throw new DataCorruptionException(wordPos + i, bs, bi);
 							}
 						}
-						throw new IllegalStateException("Invalid word but no invalid byte found");
 					}
 				}
 			}
