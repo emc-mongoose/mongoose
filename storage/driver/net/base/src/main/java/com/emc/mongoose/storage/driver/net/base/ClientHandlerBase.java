@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.net.base;
 
-import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.io.task.IoTask;
@@ -14,8 +13,8 @@ import com.emc.mongoose.model.impl.data.DataVerificationException;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
-
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -28,14 +27,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 04.10.16.
  */
