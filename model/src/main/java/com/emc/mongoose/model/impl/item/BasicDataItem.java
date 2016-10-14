@@ -301,7 +301,9 @@ implements DataItem {
 						final int wordPos = k << 3;
 						byte bs, bi;
 						final ByteBuffer wsBytes = ByteBuffer.allocate(8).putLong(ws);
+						wsBytes.flip();
 						final ByteBuffer wiBytes = ByteBuffer.allocate(8).putLong(wi);
+						wiBytes.flip();
 						for(int i = 0; i < 8; i ++) {
 							bs = wsBytes.get();
 							bi = wiBytes.get();
