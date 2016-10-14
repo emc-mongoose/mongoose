@@ -170,15 +170,15 @@ implements MutableDataIoTask<I> {
 			final int layerIdx = item.layer();
 			if(updRangesMaskPair[0].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = new BasicDataItem(
-					itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 1, contentSrc
+					itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 1, contentSrc
 				);
 			} else if(updRangesMaskPair[1].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = new BasicDataItem(
-					itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 2, contentSrc
+					itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 2, contentSrc
 				);
 			} else {
 				currRange = null;

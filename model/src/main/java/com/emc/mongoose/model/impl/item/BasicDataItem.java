@@ -289,25 +289,41 @@ implements DataItem {
 		n = chanSrc.read(buff);
 		//
 		if(n > 0) {
-			byte bs, bi;
 			buff.flip();
 			
 			final int wordCount = n >>> 3;
+			if(wordCount > 0) {
+				long ws, wi;
+				for(int k = 0; k < wordCount; k ++) {
+					ws = ringBuff.getLong();
+					wi = buff.getLong();
+					if(ws != wi) {
+						final int wordPos = k << 3;
+						byte bs, bi;
+						for(int i = 0; i < 8; i ++) {
+							bs = ringBuff.get(wordPos + i);
+							bi = buff.get(wordPos + i);
+							if(bs != bi) {
+								throw new DataCorruptionException(wordPos + i, bs, bi);
+							}
+						}
+						throw new IllegalStateException("Invalid word but no invalid byte found");
+					}
+				}
+			}
+
 			final int tailByteCount = n & 7;
-			
-			for(int k = 0; k < wordCount; k ++) {
-				if(ringBuff.getLong() != buff.getLong()) {
-					throw new DataCorruptionException(k << 3, ringBuff.get(), buff.get());
+			if(tailByteCount > 0) {
+				byte bs, bi;
+				for(int m = 0; m < tailByteCount; m ++) {
+					bs = ringBuff.get();
+					bi = buff.get();
+					if(bs != bi) {
+						throw new DataCorruptionException(m, bs, bi);
+					}
 				}
 			}
-			
-			for(int m = 0; m < tailByteCount; m ++) {
-				bs = ringBuff.get();
-				bi = buff.get();
-				if(bs != bi) {
-					throw new DataCorruptionException(m, bs, bi);
-				}
-			}
+
 			position += n;
 		}
 		return n;
