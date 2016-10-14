@@ -2,7 +2,7 @@ package com.emc.mongoose.model.impl.data;
 //
 import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.common.math.MathUtil;
-import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.common.api.SizeInBytes;
 import org.apache.commons.collections4.map.LRUMap;
 //
 import java.io.IOException;

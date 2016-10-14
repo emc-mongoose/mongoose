@@ -28,13 +28,20 @@ ext {
 				file -> [
 					"lib", file.name
 				].join(File.separator)
-			}.join(' '),
+			}.join(" "),
 			(configurations.compileOnly - configurations.runtime).collect {
 				file -> file.name
-			}.join(' ')
-		].join(' ')
+			}.join(" ")
+		].join(" ")
 	}
-	mutualProjects = subprojects.findAll {it != project('storage')}
+	mutualProjects = subprojects.findAll {
+		it != project("load") &&
+		it != project("storage") &&
+		it != project("storage:driver") &&
+		it != project("storage:driver:net") &&
+		it != project("storage:driver:net:http") &&
+		it != project("storage:driver:nio")
+	}
 }
 
 subprojects {
@@ -61,7 +68,7 @@ subprojects {
 	jar {
 		LinkedList names = new LinkedList()
 		collectName(project, names)
-		def name = names.join('-')
+		def name = names.join("-")
 		archiveName "$name.$extension"
 		manifest {
 			attributes (

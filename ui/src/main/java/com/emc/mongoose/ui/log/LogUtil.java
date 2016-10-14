@@ -21,6 +21,7 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
+import java.util.ConcurrentModificationException;
 import java.util.Locale;
 import java.util.Queue;
 import java.util.TimeZone;
@@ -194,7 +195,7 @@ implements ShutdownCallbackRegistry {
 		for(final Daemon d : UNCLOSED_REGISTRY) {
 			try {
 				d.close();
-			} catch(final IllegalStateException ignored) {
+			} catch(final IllegalStateException | ConcurrentModificationException ignored) {
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}

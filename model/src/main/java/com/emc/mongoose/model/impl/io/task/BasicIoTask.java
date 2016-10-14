@@ -2,7 +2,7 @@ package com.emc.mongoose.model.impl.io.task;
 
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -173,5 +173,10 @@ implements IoTask<I> {
 		reqTimeDone = in.readLong();
 		respTimeStart = in.readLong();
 		respTimeDone = in.readLong();
+	}
+
+	@Override
+	public final int hashCode() {
+		return item.hashCode();
 	}
 }

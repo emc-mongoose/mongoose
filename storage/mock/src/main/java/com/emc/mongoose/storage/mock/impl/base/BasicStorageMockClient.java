@@ -63,7 +63,7 @@ implements StorageMockClient<T> {
 
 	public BasicStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
 		this.executor = new ThreadPoolExecutor(
-			ThreadUtil.getAvailableConcurrencyLevel(), ThreadUtil.getAvailableConcurrencyLevel(),
+			ThreadUtil.getHardwareConcurrencyLevel(), ThreadUtil.getHardwareConcurrencyLevel(),
 			0, TimeUnit.DAYS, new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
 			(r, e) -> LOG.error("Task {} rejected", r.toString())
 		) {

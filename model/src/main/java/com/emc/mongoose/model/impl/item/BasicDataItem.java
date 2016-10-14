@@ -26,8 +26,8 @@ implements DataItem {
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
 	//
-	private transient ContentSource contentSrc;
-	private transient int ringBuffSize;
+	private ContentSource contentSrc;
+	private int ringBuffSize;
 	//
 	protected int layerNum = 0;
 	//
@@ -289,15 +289,42 @@ implements DataItem {
 		n = chanSrc.read(buff);
 		//
 		if(n > 0) {
-			byte bs, bi;
 			buff.flip();
-			for(int m = 0; m < n; m++) {
-				bs = ringBuff.get();
-				bi = buff.get();
-				if(bs != bi) {
-					throw new DataCorruptionException(m, bs, bi);
+			
+			final int wordCount = n >>> 3;
+			if(wordCount > 0) {
+				long ws, wi;
+				for(int k = 0; k < wordCount; k ++) {
+					ws = ringBuff.getLong();
+					wi = buff.getLong();
+					if(ws != wi) {
+						final int wordPos = k << 3;
+						byte bs, bi;
+						for(int i = 0; i < 8; i ++) {
+							bs = (byte) (ws & 0xff);
+							ws >>= 8;
+							bi = (byte) (wi & 0xff);
+							wi >>= 8;
+							if(bs != bi) {
+								throw new DataCorruptionException(wordPos + i, bs, bi);
+							}
+						}
+					}
 				}
 			}
+
+			final int tailByteCount = n & 7;
+			if(tailByteCount > 0) {
+				byte bs, bi;
+				for(int m = 0; m < tailByteCount; m ++) {
+					bs = ringBuff.get();
+					bi = buff.get();
+					if(bs != bi) {
+						throw new DataCorruptionException(m, bs, bi);
+					}
+				}
+			}
+
 			position += n;
 		}
 		return n;

@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import org.junit.Assert;

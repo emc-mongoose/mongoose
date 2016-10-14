@@ -1,8 +1,8 @@
 package com.emc.mongoose.ui.config;
 
 import com.emc.mongoose.model.api.data.DataRangesConfig;
-import com.emc.mongoose.model.util.SizeInBytes;
-import com.emc.mongoose.model.util.TimeUtil;
+import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.api.TimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -61,7 +62,6 @@ public final class Config {
 
 	public static final String KEY_NAME = "name";
 	public static final String KEY_VERSION = "version";
-	public static final String KEY_IO = "io";
 	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_ITEM = "item";
 	public static final String KEY_LOAD = "load";
@@ -71,7 +71,6 @@ public final class Config {
 	
 	@JsonProperty(KEY_NAME) private String name;
 	@JsonProperty(KEY_VERSION) private String version;
-	@JsonProperty(KEY_IO) private IoConfig ioConfig;
 	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
 	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
@@ -87,10 +86,6 @@ public final class Config {
 
 	public final String getVersion() {
 		return version;
-	}
-
-	public final IoConfig getIoConfig() {
-		return ioConfig;
 	}
 
 	public final SocketConfig getSocketConfig() {
@@ -125,10 +120,6 @@ public final class Config {
 		this.version = version;
 	}
 	
-	public final void setIoConfig(final IoConfig ioConfig) {
-		this.ioConfig = ioConfig;
-	}
-	
 	public final void setSocketConfig(final SocketConfig socketConfig) {
 		this.socketConfig = socketConfig;
 	}
@@ -153,45 +144,8 @@ public final class Config {
 		this.aliasingConfig = aliasingConfig;
 	}
 	
-	public static final class IoConfig {
-		
-		public static final String KEY_BUFFER = "buffer";
-		
-		@JsonProperty(KEY_BUFFER)
-		private BufferConfig bufferConfig;
-
-		public IoConfig() {
-		}
-
-		public static class BufferConfig {
-			
-			public static final String KEY_SIZE = "size";
-			
-			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
-			private SizeInBytes size;
-
-			public BufferConfig() {
-			}
-
-			public final SizeInBytes getSize() {
-				return size;
-			}
-			
-			public final void setSize(final SizeInBytes size) {
-				this.size = size;
-			}
-		}
-
-		public final BufferConfig getBufferConfig() {
-			return bufferConfig;
-		}
-		
-		public final void setBufferConfig(final BufferConfig bufferConfig) {
-			this.bufferConfig = bufferConfig;
-		}
-	}
-
-	public static final class SocketConfig {
+	public static final class SocketConfig
+	implements Serializable {
 
 		public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
 		public static final String KEY_REUSE_ADDR = "reuseAddr";
@@ -278,7 +232,8 @@ public final class Config {
 		}
 	}
 
-	public static final class ItemConfig {
+	public static final class ItemConfig
+	implements Serializable {
 
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_DATA = "data";
@@ -335,7 +290,8 @@ public final class Config {
 			return namingConfig;
 		}
 
-		public static final class DataConfig {
+		public static final class DataConfig
+		implements Serializable {
 
 			public static final String KEY_CONTENT = "content";
 			public static final String KEY_RANGES = "ranges";
@@ -384,7 +340,8 @@ public final class Config {
 				return verify;
 			}
 
-			public static final class ContentConfig {
+			public static final class ContentConfig
+			implements Serializable {
 
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
@@ -424,7 +381,8 @@ public final class Config {
 			}
 		}
 
-		public static final class InputConfig {
+		public static final class InputConfig
+		implements Serializable {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
@@ -453,7 +411,8 @@ public final class Config {
 
 		}
 
-		public static final class OutputConfig {
+		public static final class OutputConfig
+		implements Serializable {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
@@ -481,7 +440,8 @@ public final class Config {
 			}
 		}
 		
-		public static final class NamingConfig {
+		public static final class NamingConfig
+		implements Serializable {
 
 			public static final String KEY_TYPE = "type";
 			public static final String KEY_PREFIX = "prefix";
@@ -540,7 +500,8 @@ public final class Config {
 		}
 	}
 
-	public static final class LoadConfig {
+	public static final class LoadConfig
+	implements Serializable {
 
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_CONCURRENCY = "concurrency";
@@ -619,7 +580,8 @@ public final class Config {
 			return queueConfig;
 		}
 
-		public static final class LimitConfig {
+		public static final class LimitConfig
+		implements Serializable {
 
 			public static final String KEY_COUNT = "count";
 			public static final String KEY_RATE = "rate";
@@ -671,7 +633,8 @@ public final class Config {
 			}
 		}
 
-		public static final class GeneratorConfig {
+		public static final class GeneratorConfig
+		implements Serializable {
 
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
@@ -699,7 +662,8 @@ public final class Config {
 			}
 		}
 
-		public static final class MetricsConfig {
+		public static final class MetricsConfig
+		implements Serializable {
 
 			public static final String KEY_INTERMEDIATE = "intermediate";
 			public static final String KEY_PERIOD = "period";
@@ -740,7 +704,8 @@ public final class Config {
 			}
 		}
 		
-		public static final class QueueConfig {
+		public static final class QueueConfig
+		implements Serializable {
 			
 			public static final String KEY_SIZE = "size";
 			
@@ -759,7 +724,8 @@ public final class Config {
 		}
 	}
 
-	public static final class RunConfig {
+	public static final class RunConfig
+	implements Serializable {
 
 		public static final String KEY_FILE = "file";
 		public static final String KEY_ID = "id";
@@ -787,7 +753,8 @@ public final class Config {
 		}
 	}
 
-	public static final class StorageConfig {
+	public static final class StorageConfig
+	implements Serializable {
 
 		public static final String KEY_AUTH = "auth";
 		public static final String KEY_HTTP = "http";
@@ -875,7 +842,8 @@ public final class Config {
 			return mockConfig;
 		}
 
-		public static final class AuthConfig {
+		public static final class AuthConfig
+		implements Serializable {
 
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
@@ -913,7 +881,8 @@ public final class Config {
 			}
 		}
 
-		public static final class HttpConfig {
+		public static final class HttpConfig
+		implements Serializable {
 
 			public static final String KEY_API = "api";
 			public static final String KEY_FS_ACCESS = "fsAccess";
@@ -973,7 +942,8 @@ public final class Config {
 			}
 		}
 		
-		public static final class NodeConfig {
+		public static final class NodeConfig
+		implements Serializable {
 
 			public static final String KEY_ADDRS = "addrs";
 
@@ -991,7 +961,8 @@ public final class Config {
 			}
 		}
 		
-		public static final class DriverConfig {
+		public static final class DriverConfig
+		implements Serializable {
 			
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
@@ -1019,7 +990,8 @@ public final class Config {
 			}
 		}
 
-		public static final class MockConfig {
+		public static final class MockConfig
+		implements Serializable {
 
 			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_CAPACITY = "capacity";
@@ -1068,7 +1040,8 @@ public final class Config {
 				return node;
 			}
 
-			public static final class ContainerConfig {
+			public static final class ContainerConfig
+			implements Serializable {
 
 				public static final String KEY_CAPACITY = "capacity";
 				public static final String KEY_COUNT_LIMIT = "countLimit";

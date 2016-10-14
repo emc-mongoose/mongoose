@@ -1,11 +1,11 @@
 package com.emc.mongoose.model.impl.io.task;
 
-import com.emc.mongoose.common.collection.ByteRange;
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 import com.emc.mongoose.model.impl.item.BasicDataItem;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -144,16 +144,16 @@ implements MutableDataIoTask<I> {
 		try {
 			if(currRange == null && currRangeIdx < getRangeCount(item.size())) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				final int layerIdx = item.layer();
 				if(item.isRangeUpdated(currRangeIdx)) {
 					currRange = new BasicDataItem(
-						itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 1,
+						itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 1,
 						contentSrc
 					);
 				} else {
 					currRange = new BasicDataItem(
-						itemDataOffset + nextRangeOffset, currRangeSize, layerIdx,
+						itemDataOffset + currRangeOffset, currRangeSize, layerIdx,
 						contentSrc
 					);
 				}
@@ -170,15 +170,15 @@ implements MutableDataIoTask<I> {
 			final int layerIdx = item.layer();
 			if(updRangesMaskPair[0].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = new BasicDataItem(
-					itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 1, contentSrc
+					itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 1, contentSrc
 				);
 			} else if(updRangesMaskPair[1].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = new BasicDataItem(
-					itemDataOffset + nextRangeOffset, currRangeSize, layerIdx + 2, contentSrc
+					itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 2, contentSrc
 				);
 			} else {
 				currRange = null;

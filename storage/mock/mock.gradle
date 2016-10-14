@@ -5,7 +5,7 @@ dependencies {
 	compileOnly(
 		project(':common'),
 		project(':model'),
-		project(':storage:driver-net-base'),
+		project(':storage:driver:net:base'),
 		project(':ui')
 	)
 
@@ -46,7 +46,6 @@ dependencies {
 }
 
 jar {
-	archiveName "nagaina.$extension"
 	manifest {
 		attributes(
 			"Class-Path": setClassPath(configurations),

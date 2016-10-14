@@ -14,6 +14,8 @@ import java.util.List;
 public interface StorageMock<T extends MutableDataItemMock>
 extends Daemon {
 
+	String DEFAULT_CONTAINER_NAME = "default";
+
 	long getSize();
 	long getCapacity();
 	StorageIoStats getStats();

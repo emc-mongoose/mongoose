@@ -244,7 +244,7 @@ extends ChannelInboundHandlerAdapter {
 	) {
 		if(containerName != null) {
 			if(httpMethod.equals(POST) || httpMethod.equals(PUT)) {
-				handleObjectCreate(containerName, id, offset, size, ctx);
+				handleObjectWrite(containerName, id, offset, size, ctx);
 			} else if(httpMethod.equals(GET)) {
 				handleObjectRead(containerName, id, offset, ctx);
 			} else if(httpMethod.equals(HEAD)) {
@@ -257,7 +257,7 @@ extends ChannelInboundHandlerAdapter {
 		}
 	}
 
-	private void handleObjectCreate(
+	private void handleObjectWrite(
 		final String containerName, final String id, final long offset, final long size,
 		final ChannelHandlerContext ctx
 	) {
@@ -272,7 +272,7 @@ extends ChannelInboundHandlerAdapter {
 				localStorage.createObject(containerName, id, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
-				final boolean success = handlePartialCreate(
+				final boolean success = handlePartialWrite(
 					containerName, id, rangeHeadersValues, size
 				);
 				ioStats.markWrite(success, size);
@@ -286,19 +286,22 @@ extends ChannelInboundHandlerAdapter {
 		} catch (final ObjectMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, 0);
-		} catch (final ContainerMockException | NumberFormatException e) {
+		} catch (final ContainerMockException | NumberFormatException | IllegalStateException e) {
 			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			ioStats.markWrite(false, 0);
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", id
 			);
+		} catch(final IllegalArgumentException e) {
+			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
+			ioStats.markWrite(false, 0);
 		}
 	}
 
 	private static final String VALUE_RANGE_PREFIX = "bytes=";
 	private static final String VALUE_RANGE_CONCAT = "-";
 
-	private boolean handlePartialCreate(
+	private boolean handlePartialWrite(
 		final String containerName, final String id, final List<String> rangeHeadersValues,
 		final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
@@ -313,15 +316,12 @@ extends ChannelInboundHandlerAdapter {
 					final int rangeBordersNum = rangeBorders.length;
 					final long offset = Long.parseLong(rangeBorders[0]);
 					if(rangeBordersNum == 1) {
-						localStorage.appendObject(containerName, id,
-								offset, size);
+						localStorage.appendObject(containerName, id, offset, size);
 					} else if(rangeBordersNum == 2) {
 						final long dynSize = Long.parseLong(rangeBorders[1]) - offset + 1;
 						localStorage.updateObject(containerName, id, offset, dynSize);
 					} else {
-						LOG.warn(
-								Markers.ERR, "Invalid range header value: \"{}\"", rangeValues
-						);
+						LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
 						return false;
 					}
 				}

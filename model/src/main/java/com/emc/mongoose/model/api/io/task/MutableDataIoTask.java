@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.api.io.task;
 
-import com.emc.mongoose.common.collection.ByteRange;
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.MutableDataItem;
 
@@ -12,6 +12,9 @@ import java.util.List;
  */
 public interface MutableDataIoTask<I extends MutableDataItem>
 extends DataIoTask<I> {
+
+	@Override
+	I getItem();
 	
 	int getCurrRangeIdx();
 	

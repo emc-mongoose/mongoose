@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.impl.data;
 
 import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.common.api.SizeInBytes;
 
 import java.io.File;
 import java.io.IOException;

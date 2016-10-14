@@ -3,7 +3,7 @@ package com.emc.mongoose.model.impl.item;
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.common.api.SizeInBytes;
 
 import java.io.IOException;
 import java.util.List;

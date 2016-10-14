@@ -41,7 +41,7 @@ public class StorageMockFactory {
 		this.namingConfig = itemConfig.getNamingConfig();
 	}
 
-	public StorageMockNode newNagainaNode()
+	public StorageMockNode newStorageNodeMock()
 	throws IOException {
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();
@@ -68,7 +68,7 @@ public class StorageMockFactory {
 		return storageMockNode;
 	}
 
-	public StorageMock newNagaina()
+	public StorageMock newStorageMock()
 	throws IOException {
 		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 		final String contentSourcePath = contentConfig.getFile();

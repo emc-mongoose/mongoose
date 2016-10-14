@@ -1,19 +1,23 @@
-include 'common', 'model', 'ui'
-include 'generator', 'monitor'
+include "common", "model", "ui", "run"
+include "load:generator"
+include "load:monitor"
+include "storage:driver:base"
+include "storage:driver:nio:base"
+include "storage:driver:nio:fs"
+include "storage:driver:net:base"
+include "storage:driver:net:http:base"
+include "storage:driver:net:http:s3"
+include "storage:driver:net:http:swift"
+include "storage:driver:builder"
+include "storage:driver:service"
+include "storage:mock"
 
-include 'storage:driver-base'
-include 'storage:driver-fs'
-include 'storage:driver-net-base'
-include 'storage:driver-http-base'
-include 'storage:driver-http-s3'
-include 'storage:mock'
-
-rootProject.name = 'mongoose'
+rootProject.name = "mongoose"
 
 void renameBuildFiles(def project) {
 	project.children.each { subproject ->
 		renameBuildFiles(subproject)
-		subproject.buildFileName = subproject.name + '.gradle'
+		subproject.buildFileName = subproject.name + ".gradle"
 	}
 }
 

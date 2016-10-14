@@ -4,7 +4,7 @@ import com.emc.mongoose.model.api.data.ContentSource;
 import com.emc.mongoose.model.api.data.DataRangesConfig;
 import com.emc.mongoose.model.api.io.task.DataIoTask;
 import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 
 import java.io.IOException;
 import java.io.ObjectInput;

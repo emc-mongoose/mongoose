@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.api.io.task;
 
 import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.model.api.LoadType;
 
 /**
  Created by kurila on 14.07.16.

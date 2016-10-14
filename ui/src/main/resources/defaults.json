@@ -1,11 +1,6 @@
 {
 	"name" : "mongoose",
-	"version" : "3.0.0-SNAPSHOT",
-	"io" : {
-		"buffer" : {
-			"size" : "4KB-1MB"
-		}
-	},
+	"version" : "next",
 	"socket" : {
 		"timeoutMilliSec" : 1000000,
 		"reuseAddr" : true,
@@ -25,7 +20,7 @@
 			},
 			"ranges" : 0,
 			"size" : "1MB",
-			"verify" : true
+			"verify" : false
 		},
 		"input" : {
 			"container" : null,
@@ -84,7 +79,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/3.0.0-SNAPSHOT"
+				"User-Agent" : "mongoose/next"
 			},
 			"namespace" : null,
 			"versioning" : false

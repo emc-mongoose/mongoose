@@ -8,7 +8,7 @@ extends DataVerificationException {
 	//
 	public final byte expected, actual;
 	//
-	public DataCorruptionException(final int relOffset, final byte expected, final byte actual) {
+	public DataCorruptionException(final long relOffset, final byte expected, final byte actual) {
 		super(relOffset);
 		this.expected = expected;
 		this.actual = actual;

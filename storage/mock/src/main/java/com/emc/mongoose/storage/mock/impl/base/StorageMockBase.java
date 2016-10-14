@@ -69,7 +69,7 @@ implements StorageMock<I> {
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();
 		this.defaultContainer = new BasicObjectContainerMock<>(containerCapacity);
-		storageMap.put(getClass().getSimpleName().toLowerCase(), defaultContainer);
+		storageMap.put(DEFAULT_CONTAINER_NAME, defaultContainer);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,10 +271,6 @@ implements StorageMock<I> {
 			}
 			if(Files.isDirectory(itemInputFile)) {
 				LOG.warn(Markers.ERR, "Item input file @ \"{}\" is a directory", itemInputFile);
-				return;
-			}
-			if(Files.isReadable(itemInputFile)) {
-				LOG.warn(Markers.ERR, "Item input file @ \"{}\" is not readable", itemInputFile);
 				return;
 			}
 			
