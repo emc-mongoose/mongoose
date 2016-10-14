@@ -131,6 +131,7 @@ extends SimpleChannelInboundHandler<M> {
 					final DataIoTask dataIoTask = (DataIoTask)ioTask;
 					final DataItem item = dataIoTask.getItem();
 					final long countBytesDone = dataIoTask.getCountBytesDone();
+					contentChunk.retain();
 					try {
 						if(item instanceof MutableDataItem) {
 							final MutableDataItem mdi = (MutableDataItem)item;
@@ -173,6 +174,8 @@ extends SimpleChannelInboundHandler<M> {
 						} catch(final IOException ee) {
 							LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
 						}
+					} finally {
+						contentChunk.release();
 					}
 				}
 			}
