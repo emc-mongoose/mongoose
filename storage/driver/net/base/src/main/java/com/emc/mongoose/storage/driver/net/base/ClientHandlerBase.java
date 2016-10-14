@@ -124,6 +124,7 @@ extends SimpleChannelInboundHandler<M> {
 	protected final void verifyChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk, final int chunkSize
 	) throws InterruptedException {
+		contentChunk.retain();
 		TASK_QUEUES[Math.abs(ioTask.hashCode()) % HW_CONCURRENCY].put(
 			new Runnable() {
 				@Override
@@ -131,7 +132,6 @@ extends SimpleChannelInboundHandler<M> {
 					final DataIoTask dataIoTask = (DataIoTask)ioTask;
 					final DataItem item = dataIoTask.getItem();
 					final long countBytesDone = dataIoTask.getCountBytesDone();
-					contentChunk.retain();
 					try {
 						if(item instanceof MutableDataItem) {
 							final MutableDataItem mdi = (MutableDataItem)item;
