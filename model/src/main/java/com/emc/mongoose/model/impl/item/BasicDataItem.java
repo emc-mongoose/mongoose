@@ -300,13 +300,11 @@ implements DataItem {
 					if(ws != wi) {
 						final int wordPos = k << 3;
 						byte bs, bi;
-						final ByteBuffer wsBytes = ByteBuffer.allocate(8).putLong(ws);
-						wsBytes.flip();
-						final ByteBuffer wiBytes = ByteBuffer.allocate(8).putLong(wi);
-						wiBytes.flip();
 						for(int i = 0; i < 8; i ++) {
-							bs = wsBytes.get();
-							bi = wiBytes.get();
+							bs = (byte) (ws & 0xff);
+							ws >>= 8;
+							bi = (byte) (wi & 0xff);
+							wi >>= 8;
 							if(bs != bi) {
 								throw new DataCorruptionException(wordPos + i, bs, bi);
 							}
