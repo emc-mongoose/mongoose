@@ -43,51 +43,6 @@ public abstract class ClientHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
 	
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int HW_CONCURRENCY = ThreadUtil.getHardwareConcurrencyLevel();
-	private final static ExecutorService CHUNK_VERIFICATION_SERVICE = new ThreadPoolExecutor(
-		HW_CONCURRENCY, HW_CONCURRENCY, 0, TimeUnit.SECONDS,
-		new ArrayBlockingQueue<>(HW_CONCURRENCY)
-	);
-	private final static BlockingQueue<Runnable> TASK_QUEUES[] = new BlockingQueue[HW_CONCURRENCY];
-	private final static int QUEUE_SIZE = 0x1000;
-	static {
-		for(int i = 0; i < HW_CONCURRENCY; i ++) {
-			final BlockingQueue<Runnable> taskQueue = TASK_QUEUES[i] = new ArrayBlockingQueue<>(
-				QUEUE_SIZE
-			);
-			CHUNK_VERIFICATION_SERVICE.execute(
-				new Runnable() {
-					@Override
-					public final void run() {
-
-						int n;
-						final List<Runnable> taskBuff = new ArrayList<>(QUEUE_SIZE);
-
-						while(!Thread.currentThread().isInterrupted()) {
-
-							taskBuff.clear();
-							n = taskQueue.drainTo(taskBuff, QUEUE_SIZE);
-
-							if(n < 1) {
-								LockSupport.parkNanos(1_000_000);
-								continue;
-							}
-
-							for(final Runnable task : taskBuff) {
-								try {
-									task.run();
-								} catch(final Throwable cause) {
-									LogUtil.exception(
-										LOG, Level.WARN, cause, "Verification task failure"
-									);
-								}
-							}
-						}
-					}
-				}
-			);
-		}
-	}
 
 	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
@@ -124,62 +79,53 @@ extends SimpleChannelInboundHandler<M> {
 	protected final void verifyChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk, final int chunkSize
 	) throws InterruptedException {
-		contentChunk.retain();
-		TASK_QUEUES[Math.abs(ioTask.hashCode()) % HW_CONCURRENCY].put(
-			new Runnable() {
-				@Override
-				public final void run() {
-					final DataIoTask dataIoTask = (DataIoTask)ioTask;
-					final DataItem item = dataIoTask.getItem();
-					final long countBytesDone = dataIoTask.getCountBytesDone();
+		final DataIoTask dataIoTask = (DataIoTask) ioTask;
+		final DataItem item = dataIoTask.getItem();
+		final long countBytesDone = dataIoTask.getCountBytesDone();
+		try {
+			if(item instanceof MutableDataItem) {
+				final MutableDataItem mdi = (MutableDataItem)item;
+				if(mdi.isUpdated()) {
+					verifyChunkUpdatedData(
+						mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
+					);
+					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+				} else {
+					verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
+					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+				}
+			} else {
+				verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+			}
+		} catch(final IOException e) {
+			if(e instanceof DataVerificationException) {
+				final DataVerificationException ee = (DataVerificationException)e;
+				dataIoTask.setCountBytesDone(ee.getOffset());
+				dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
+				if(e instanceof DataSizeException) {
 					try {
-						if(item instanceof MutableDataItem) {
-							final MutableDataItem mdi = (MutableDataItem)item;
-							if(mdi.isUpdated()) {
-								verifyChunkUpdatedData(
-									mdi, (MutableDataIoTask)ioTask, contentChunk, chunkSize);
-								dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-							} else {
-								verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
-								dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-							}
-						} else {
-							verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
-							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-						}
-					} catch(final IOException e) {
-						if(e instanceof DataVerificationException) {
-							final DataVerificationException ee = (DataVerificationException)e;
-							dataIoTask.setCountBytesDone(ee.getOffset());
-							dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
-							if(e instanceof DataSizeException) {
-								try {
-									LOG.warn(Markers.MSG,
-										"{}: invalid size, expected: {}, actual: {} ",
-										item.getName(), item.size(), ee.getOffset()
-									);
-								} catch(final IOException ignored) {
-								}
-							} else if(e instanceof DataCorruptionException) {
-								final DataCorruptionException eee = (DataCorruptionException)ee;
-								LOG.warn(Markers.MSG,
-									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-									item.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
-									String.format("\"0x%X\"", eee.actual)
-								);
-							}
-						}
-						try {
-							driver.complete(channel, ioTask);
-						} catch(final IOException ee) {
-							LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
-						}
-					} finally {
-						contentChunk.release();
+						LOG.warn(
+							Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
+							item.getName(), item.size(), ee.getOffset()
+						);
+					} catch(final IOException ignored) {
 					}
+				} else if(e instanceof DataCorruptionException) {
+					final DataCorruptionException eee = (DataCorruptionException)ee;
+					LOG.warn(
+						Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+						item.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
+						String.format("\"0x%X\"", eee.actual)
+					);
 				}
 			}
-		);
+			try {
+				driver.complete(channel, ioTask);
+			} catch(final IOException ee) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
+			}
+		}
 	}
 
 	private void verifyChunkDataAndSize(
