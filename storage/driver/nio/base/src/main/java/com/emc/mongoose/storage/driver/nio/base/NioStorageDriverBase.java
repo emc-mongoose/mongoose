@@ -37,6 +37,7 @@ implements StorageDriver<I, O> {
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
+	private final int ioTaskBuffCapacity;
 	private final WorkerTask ioWorkerTasks[];
 	private final BlockingQueue<O> ioTaskQueues[];
 
@@ -48,14 +49,17 @@ implements StorageDriver<I, O> {
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new WorkerTask[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
+		ioTaskBuffCapacity = Math.max(
+			1, concurrencyLevel / ThreadUtil.getHardwareConcurrencyLevel()
+		);
 		for(int i = 0; i < ioWorkerCount; i ++) {
-			ioTaskQueues[i] = new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize());
+			ioTaskQueues[i] = new ArrayBlockingQueue<>(ioTaskBuffCapacity);
 			ioWorkerTasks[i] = new NioWorkerTask(ioTaskQueues[i]);
 		}
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new NamingThreadFactory(this.runId + "-ioWorker")
+			new NamingThreadFactory(this.runId + "-ioWorker", true)
 		);
 	}
 
@@ -73,10 +77,7 @@ implements StorageDriver<I, O> {
 	 */
 	private final class NioWorkerTask
 	implements WorkerTask {
-
-		private final int ioTaskBuffCapacity = Math.max(
-			1, concurrencyLevel / ThreadUtil.getHardwareConcurrencyLevel()
-		);
+		
 		@SuppressWarnings("unchecked")
 		private final List<O> ioTaskBuff = new ArrayList<>(ioTaskBuffCapacity);
 		private final BlockingQueue<O> ioTaskQueue;

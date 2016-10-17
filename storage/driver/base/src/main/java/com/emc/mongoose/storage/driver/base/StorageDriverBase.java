@@ -65,7 +65,10 @@ implements StorageDriver<I, O> {
 			ioTask.reset();
 			put(ioTask);
 		}
-		monitorRef.get().put(ioTask);
+		final LoadMonitor<I, O> monitor = monitorRef.get();
+		if(monitor != null) {
+			monitorRef.get().put(ioTask);
+		}
 	}
 	
 	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to)
@@ -76,7 +79,12 @@ implements StorageDriver<I, O> {
 			}
 			put(ioTasks, from, to);
 		}
-		return monitorRef.get().put(ioTasks, from, to);
+		final LoadMonitor<I, O> monitor = monitorRef.get();
+		if(monitor != null) {
+			return monitorRef.get().put(ioTasks, from, to);
+		} else {
+			return 0;
+		}
 	}
 	
 	@Override

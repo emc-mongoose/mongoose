@@ -74,7 +74,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		concurrencyThrottle = new Semaphore(concurrencyLevel);
-		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("ioWorker"));
+		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("ioWorker", true));
 		final Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
 		bootstrap.channel(NioSocketChannel.class);

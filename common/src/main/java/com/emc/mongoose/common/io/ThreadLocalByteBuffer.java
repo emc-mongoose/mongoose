@@ -36,50 +36,18 @@ public final class ThreadLocalByteBuffer {
 		ByteBuffer buff = ioBuffers[i];
 		
 		if(buff == null) {
-			try {
-				buff = ByteBuffer.allocateDirect(currBuffSize);
-				/*if(LOG.isTraceEnabled(Markers.MSG)) {
-					long buffSizeSum = 0;
-					for(final ByteBuffer ioBuff : ioBuffers) {
-						if(ioBuff != null) {
-							buffSizeSum += ioBuff.capacity();
-						}
-					}
-					LOG.trace(
-						Markers.MSG, "Allocated {} of direct memory, total used by the thread: {}",
-						SizeInBytes.formatFixedSize(currBuffSize),
-						SizeInBytes.formatFixedSize(buffSizeSum)
-					);
-				}*/
-				ioBuffers[i] = buff;
-			} catch(final OutOfMemoryError e) {
-				long buffSizeSum = 0;
-				for(final ByteBuffer smallerBuff : ioBuffers) {
-					if(smallerBuff != null) {
-						buffSizeSum += smallerBuff.capacity();
-						if(currBuffSize > smallerBuff.capacity()) {
-							buff = smallerBuff;
-						}
-					}
-				}
-				if(buff == null) {
-					/*LOG.error(
-						Markers.ERR, "Failed to allocate {} of direct memory, " +
-							"total direct memory allocated by thread is {}, " +
-							"unable to continue using a smaller buffer",
-						SizeInBytes.formatFixedSize(currBuffSize),
-						SizeInBytes.formatFixedSize(buffSizeSum)
-					);*/
-					throw e;
-				} else {
-					System.err.println(
-						"Failed to allocate " + formatFixedSize(currBuffSize) +
-						" of direct memory, total direct memory allocated by thread is " +
-						formatFixedSize(buffSizeSum) + ", will continue using smaller buffer of " +
-						"size " + formatFixedSize(buff.capacity())
-					);
+			buff = ByteBuffer.allocateDirect(currBuffSize);
+			/*long buffSizeSum = 0;
+			for(final ByteBuffer ioBuff : ioBuffers) {
+				if(ioBuff != null) {
+					buffSizeSum += ioBuff.capacity();
 				}
 			}
+			System.out.println(
+				"Allocated " + formatFixedSize(currBuffSize) +
+				" of direct memory, total used by the thread: " + formatFixedSize(buffSizeSum)
+			);
+			ioBuffers[i] = buff;*/
 		}
 		
 		buff
