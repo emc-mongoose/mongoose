@@ -159,7 +159,7 @@ implements LoadGenerator<I, O>, Output<I> {
 			long remaining;
 			try {
 				List<I> buff;
-				while(!isInterrupted()) {
+				while(!worker.isInterrupted()) {
 					remaining = countLimit - producedItemsCount;
 					if(remaining <= 0) {
 						break;
@@ -173,16 +173,16 @@ implements LoadGenerator<I, O>, Output<I> {
 						if(isShuffling) {
 							Collections.shuffle(buff, rnd);
 						}
-						if(isInterrupted()) {
+						if(worker.isInterrupted()) {
 							break;
 						}
 						if(n > 0 && rateThrottle.waitPassFor(null, n)) {
-							for(m = 0; m < n && !isInterrupted(); ) {
+							for(m = 0; m < n && !worker.isInterrupted(); ) {
 								m += put(buff, m, n);
 							}
 							producedItemsCount += n;
 						} else {
-							if(isInterrupted()) {
+							if(worker.isInterrupted()) {
 								break;
 							}
 						}

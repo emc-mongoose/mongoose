@@ -119,7 +119,7 @@ implements LoadMonitor<I, O> {
 			long nextNanoTimeStamp;
 			
 			try {
-				while(!isInterrupted()) {
+				while(!worker.isInterrupted()) {
 					nextNanoTimeStamp = System.nanoTime();
 					// refresh the stats
 					lastStats = ioStats.getSnapshot();
@@ -203,7 +203,7 @@ implements LoadMonitor<I, O> {
 
 		for(final LoadGenerator<I, O> nextLoadGenerator : generators) {
 			try {
-				if(!nextLoadGenerator.isInterrupted()) {
+				if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
 					idleFlag = false;
 					break;
 				}
@@ -237,7 +237,7 @@ implements LoadMonitor<I, O> {
 	
 	@Override
 	public void put(final O ioTask) {
-		if(isInterrupted()) {
+		if(isInterrupted() || isClosed()) {
 			return;
 		}
 		final I item = ioTask.getItem();
@@ -299,7 +299,7 @@ implements LoadMonitor<I, O> {
 	public int put(final List<O> ioTasks, final int from, final int to) {
 
 		final int n;
-		if(isInterrupted()) {
+		if(isInterrupted() || isClosed()) {
 			n = 0;
 		} else {
 			n = to - from;

@@ -100,7 +100,7 @@ implements StorageDriver<I, O> {
 			int ioTaskBuffSize;
 			O ioTask;
 
-			while(!NioStorageDriverBase.this.isInterrupted()) {
+			while(!isInterrupted() && !isClosed()) {
 
 				ioTaskBuffSize = ioTaskBuff.size();
 				if(ioTaskBuffSize < ioTaskBuffCapacity) {
@@ -167,6 +167,9 @@ implements StorageDriver<I, O> {
 	@Override
 	public final boolean isIdle() {
 		for(final WorkerTask ioWorkerTask : ioWorkerTasks) {
+			if(isClosed() || isInterrupted()) {
+				return true;
+			}
 			if(!ioWorkerTask.isIdle()) {
 				return false;
 			}
@@ -222,7 +225,7 @@ implements StorageDriver<I, O> {
 	throws InterruptedException {
 		return ioTaskExecutor.awaitTermination(timeout, timeUnit);
 	}
-
+	
 	@Override
 	protected void doClose()
 	throws IOException {
