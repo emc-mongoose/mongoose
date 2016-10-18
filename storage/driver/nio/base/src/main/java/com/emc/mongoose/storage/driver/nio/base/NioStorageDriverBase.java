@@ -119,13 +119,7 @@ implements StorageDriver<I, O> {
 						// remove the task from the buffer if it is not active more
 						if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
 							ioTaskIterator.remove();
-							try {
-								ioTaskCompleted(ioTask);
-							} catch(final IOException e) {
-								LogUtil.exception(LOG, Level.WARN, e,
-									"Failed to invoke the I/O task completion callback"
-								);
-							}
+							ioTaskCompleted(ioTask);
 						}
 					}
 				} else {
@@ -192,10 +186,15 @@ implements StorageDriver<I, O> {
 	@Override
 	public void put(final O ioTask)
 	throws InterruptedIOException {
-		try {
-			ioTaskQueues[Math.abs(ioTask.hashCode()) % ioWorkerCount].put(ioTask);
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
+		final BlockingQueue<O> nextQueue = ioTaskQueues[
+			Math.abs(ioTask.hashCode()) % ioWorkerCount
+		];
+		if(nextQueue != null) {
+			try {
+				nextQueue.put(ioTask);
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
 		}
 	}
 
@@ -204,9 +203,13 @@ implements StorageDriver<I, O> {
 	throws InterruptedIOException {
 		try {
 			O nextIoTask;
+			BlockingQueue<O> nextQueue;
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);
-				ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount].put(nextIoTask);
+				nextQueue = ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount];
+				if(nextQueue != null) {
+					nextQueue.put(nextIoTask);
+				}
 			}
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();

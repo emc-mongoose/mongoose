@@ -10,10 +10,14 @@ import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
 import com.emc.mongoose.model.api.storage.StorageDriver;
 import com.emc.mongoose.model.api.load.LoadMonitor;
+import com.emc.mongoose.ui.log.LogUtil;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -59,15 +63,32 @@ implements StorageDriver<I, O> {
 		}
 	}
 
-	protected final void ioTaskCompleted(final O ioTask)
-	throws IOException {
-		if(isCircular) {
-			ioTask.reset();
-			put(ioTask);
-		}
+	protected final void ioTaskCompleted(final O ioTask) {
+		
 		final LoadMonitor<I, O> monitor = monitorRef.get();
 		if(monitor != null) {
-			monitorRef.get().put(ioTask);
+			try {
+				monitorRef.get().put(ioTask);
+			} catch(final NoSuchObjectException | EOFException e) {
+				if(isClosed() || isInterrupted()) {
+					// ignore
+				} else {
+					LogUtil.exception(LOG, Level.WARN, e, "Lost the connection with the monitor");
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to send the I/O task back to the monitor"
+				);
+			}
+		}
+		
+		if(isCircular) {
+			ioTask.reset();
+			try {
+				put(ioTask);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to reschedule the I/O task");
+			}
 		}
 	}
 	

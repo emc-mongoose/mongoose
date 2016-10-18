@@ -195,7 +195,7 @@ implements LoadGenerator<I, O>, Output<I> {
 					} catch(
 						final EOFException | InterruptedException | ClosedByInterruptException |
 							IllegalStateException | InterruptedIOException e
-						) {
+					) {
 						break;
 					} catch(final Exception e) {
 						LogUtil.exception(

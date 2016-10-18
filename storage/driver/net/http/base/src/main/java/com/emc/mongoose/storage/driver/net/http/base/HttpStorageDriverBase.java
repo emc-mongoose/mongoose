@@ -303,7 +303,7 @@ implements HttpStorageDriver<I, O> {
 			final I item = ioTask.getItem();
 			final String nodeAddr = ioTask.getNodeAddr();
 			
-			if(channel == null) {
+			if(channel == null && !driver.isClosed() && !driver.isInterrupted()) {
 				LOG.error(Markers.ERR, "Invalid behavior: no connection leased from the pool");
 			} else {
 				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
@@ -387,7 +387,7 @@ implements HttpStorageDriver<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		final Future f = workerGroup.shutdownGracefully(0, 1, TimeUnit.NANOSECONDS);
+		final Future f = workerGroup.shutdownGracefully(1, 1, TimeUnit.NANOSECONDS);
 		try {
 			f.await(1, TimeUnit.SECONDS);
 		} catch(final InterruptedException e) {

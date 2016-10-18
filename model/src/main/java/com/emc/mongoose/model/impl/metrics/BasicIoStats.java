@@ -400,10 +400,14 @@ implements IoStats {
 	public void markSucc(final long size, final int duration, final int latency) {
 		throughputSuccess.mark();
 		reqBytes.mark(size);
-		reqDuration.update(duration);
-		reqDurationSum.add(duration);
-		respLatencySum.add(latency);
-		respLatency.update(latency);
+		if(duration > 0) {
+			reqDuration.update(duration);
+			reqDurationSum.add(duration);
+		}
+		if(latency > 0 && latency < duration) {
+			respLatencySum.add(latency);
+			respLatency.update(latency);
+		}
 	}
 	//
 	@Override

@@ -185,8 +185,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected abstract FutureListener<Channel> getConnectionLeaseCallback(final O ioTask);
 	
 	@Override
-	public final void complete(final Channel channel, final O ioTask)
-	throws IOException {
+	public final void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
 		connPoolMap.get(ioTask.getNodeAddr()).release(channel);
 		ioTaskCompleted(ioTask);
@@ -265,7 +264,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		super.doClose();
 		for(int i = 0; i < storageNodeAddrs.length; i ++) {
 			if(!workerGroup.isShutdown()) {
-				connPoolMap.get(storageNodeAddrs[i]).close();
+				try {
+					connPoolMap.get(storageNodeAddrs[i]).close();
+				} catch(final Throwable cause) {
+					LogUtil.exception(
+						LOG, Level.WARN, cause, "Failed to close the connection pool for {}",
+						storageNodeAddrs[i]
+					);
+				}
 			}
 			storageNodeAddrs[i] = null;
 		}

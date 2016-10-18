@@ -23,7 +23,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -218,9 +220,19 @@ implements LoadMonitor<I, O> {
 		if(idleFlag) {
 			for(final StorageDriver<I, O> nextStorageDriver : drivers) {
 				try {
-					if(!nextStorageDriver.isIdle()) {
+					if(
+						!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
+						!nextStorageDriver.isIdle()
+					) {
 						idleFlag = false;
 						break;
+					}
+				} catch(final NoSuchObjectException e) {
+					if(!isClosed() && !isInterrupted()) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
+							nextStorageDriver
+						);
 					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(
@@ -266,12 +278,6 @@ implements LoadMonitor<I, O> {
 		
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
-			if(respLatency > 0 && respLatency > reqDuration) {
-				LOG.warn(
-					Markers.ERR, "{}: latency {} is more than duration: {}", getName(), respLatency,
-					reqDuration
-				);
-			}
 			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
 			if(medIoStats != null && medIoStats.isStarted()) {
 				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);

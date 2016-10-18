@@ -112,11 +112,8 @@ extends SimpleChannelInboundHandler<M> {
 					);
 				}
 			}
-			try {
-				driver.complete(channel, ioTask);
-			} catch(final IOException ee) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to release the channel");
-			}
+			
+			driver.complete(channel, ioTask);
 		}
 	}
 
