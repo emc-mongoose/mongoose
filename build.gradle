@@ -14,6 +14,7 @@ description = "Mongoose - high-load storage performance testing automation tool"
 allprojects {
 	version = defineVersion()
 	apply plugin: "java"
+	targetCompatibility = 1.7
 }
 
 ext {
