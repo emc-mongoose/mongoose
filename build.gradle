@@ -14,7 +14,6 @@ description = "Mongoose - high-load storage performance testing automation tool"
 allprojects {
 	version = defineVersion()
 	apply plugin: "java"
-	targetCompatibility = 1.7
 }
 
 ext {
@@ -56,7 +55,7 @@ subprojects {
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
-		targetCompatibility = JavaVersion.VERSION_1_8
+		targetCompatibility = JavaVersion.VERSION_1_7
 	}
 
 	task "create-dirs" << {
