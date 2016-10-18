@@ -19,11 +19,14 @@ import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslHandler;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,34 +75,50 @@ extends StorageMockBase<MutableDataItemMock>{
 		final int portsNumber = dispatchGroups.length;
 		for(int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroups[i] = new NioEventLoopGroup(
-					ThreadUtil.getHardwareConcurrencyLevel(),
-					new NamingThreadFactory("dispatcher@port#" + (port + i) + "-", true)
-				);
-				workGroups[i] = new NioEventLoopGroup(
-					ThreadUtil.getHardwareConcurrencyLevel(),
-					new NamingThreadFactory("ioworker@port#" + (port + i) + "-", true)
-				);
+				if(SystemUtils.IS_OS_LINUX) {
+					dispatchGroups[i] = new EpollEventLoopGroup(
+						ThreadUtil.getHardwareConcurrencyLevel(),
+						new NamingThreadFactory("dispatcher@port#" + (port + i) + "-", true)
+					);
+					workGroups[i] = new EpollEventLoopGroup(
+						ThreadUtil.getHardwareConcurrencyLevel(),
+						new NamingThreadFactory("ioworker@port#" + (port + i) + "-", true)
+					);
+				} else {
+					dispatchGroups[i] = new NioEventLoopGroup(
+						ThreadUtil.getHardwareConcurrencyLevel(),
+						new NamingThreadFactory("dispatcher@port#" + (port + i) + "-", true)
+					);
+					workGroups[i] = new NioEventLoopGroup(
+						ThreadUtil.getHardwareConcurrencyLevel(),
+						new NamingThreadFactory("ioworker@port#" + (port + i) + "-", true)
+					);
+				}
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
 				final int currentIndex = i;
 				serverBootstrap.group(dispatchGroups[i], workGroups[i])
-					.channel(NioServerSocketChannel.class)
-					.childHandler(new ChannelInitializer<SocketChannel>() {
-						@Override
-						protected void initChannel(final SocketChannel socketChannel)
-						throws Exception {
-							final ChannelPipeline pipeline = socketChannel.pipeline();
-							if(currentIndex % 2 == 1) {
-								pipeline.addLast(
-									new SslHandler(SslContext.INSTANCE.createSSLEngine())
-								);
-							}
-							pipeline.addLast(new HttpServerCodec());
-							for (final ChannelInboundHandler handler: handlers) {
-								pipeline.addLast(handler);
+					.channel(
+						SystemUtils.IS_OS_LINUX ?
+							EpollServerSocketChannel.class : NioServerSocketChannel.class
+					)
+					.childHandler(
+						new ChannelInitializer<SocketChannel>() {
+							@Override
+							protected final void initChannel(final SocketChannel socketChannel)
+							throws Exception {
+								final ChannelPipeline pipeline = socketChannel.pipeline();
+								if(currentIndex % 2 == 1) {
+									pipeline.addLast(
+										new SslHandler(SslContext.INSTANCE.createSSLEngine())
+									);
+								}
+								pipeline.addLast(new HttpServerCodec());
+								for(final ChannelInboundHandler handler: handlers) {
+									pipeline.addLast(handler);
+								}
 							}
 						}
-					});
+					);
 				final ChannelFuture bind = serverBootstrap.bind(port + i);
 				bind.sync();
 				channels[i] = bind.sync().channel();

@@ -10,9 +10,10 @@ dependencies {
 	)
 
 	compile(
-		"org.apache.commons:commons-collections4:4.1",
-		"commons-codec:commons-codec:1.10",
-		"io.dropwizard.metrics:metrics-core:3.1.2",
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
+		"org.apache.commons:commons-collections4:${depVersion.commonsCollections}",
+		"commons-codec:commons-codec:${depVersion.commonsCodec}",
+		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
 
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 
@@ -23,13 +24,13 @@ dependencies {
 		"io.netty:netty-transport:${depVersion.netty}",
 		"io.netty:netty-handler:${depVersion.netty}",
 		"io.netty:netty-codec-http:${depVersion.netty}",
-		//"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}",
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}",
 
 		'org.jmdns:jmdns:3.5.1'
 	)
 
 	runtime(
-		"com.lmax:disruptor:3.3.4",
+		"com.lmax:disruptor:${depVersion.disruptor}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		'org.slf4j:slf4j-simple:1.7.16'

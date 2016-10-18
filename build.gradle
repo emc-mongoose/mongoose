@@ -18,9 +18,15 @@ allprojects {
 
 ext {
 	depVersion = [
-		log4j: "2.6.2",
-		netty: "4.1.5.Final",
-		jackson: "2.8.1",
+		commonsCodec : "1.10",
+		commonsCollections : "4.1",
+		commonsLang : "2.6",
+		disruptor : "3.3.6",
+		fastutil : "7.0.13",
+		jackson: "2.8.4",
+		log4j : "2.7",
+		metrics : "3.1.2",
+		netty : "4.1.6.Final",
 	]
 	setClassPath = {
 		configurations -> [

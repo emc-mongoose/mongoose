@@ -2,11 +2,11 @@ description = 'mongoose-model'
 
 dependencies {
 	compile(
-		"org.apache.commons:commons-collections4:4.1",
-		"commons-codec:commons-codec:1.10",
-		"commons-lang:commons-lang:2.6",
-		"io.dropwizard.metrics:metrics-core:3.1.2",
-		"it.unimi.dsi:fastutil:7.0.13"
+		"org.apache.commons:commons-collections4:${depVersion.commonsCollections}",
+		"commons-codec:commons-codec:${depVersion.commonsCodec}",
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
+		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
+		"it.unimi.dsi:fastutil:${depVersion.fastutil}"
 	)
 
 	compileOnly(project(':common'))

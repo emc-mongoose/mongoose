@@ -18,6 +18,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
@@ -26,6 +28,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,10 +77,18 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		concurrencyThrottle = new Semaphore(concurrencyLevel);
-		workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("ioWorker", true));
+		if(SystemUtils.IS_OS_LINUX) {
+			workerGroup = new EpollEventLoopGroup(0, new NamingThreadFactory("ioWorker", true));
+		} else {
+			workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("ioWorker", true));
+		}
 		final Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
-		bootstrap.channel(NioSocketChannel.class);
+		if(SystemUtils.IS_OS_LINUX) {
+			bootstrap.channel(EpollSocketChannel.class);
+		} else {
+			bootstrap.channel(NioSocketChannel.class);
+		}
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )

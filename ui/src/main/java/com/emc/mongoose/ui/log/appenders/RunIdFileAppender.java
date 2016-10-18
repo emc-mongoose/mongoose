@@ -131,7 +131,7 @@ extends AbstractAppender {
 		}
 		//
 		final RunIdFileManager manager = RunIdFileManager.getRunIdFileManager(
-			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize
+			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize, config
 		);
 		//
 		return new RunIdFileAppender(

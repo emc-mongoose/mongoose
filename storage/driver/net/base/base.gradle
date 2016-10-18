@@ -10,17 +10,18 @@ dependencies {
 	)
 
 	compile(
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 
 		"io.netty:netty-common:${depVersion.netty}",
 		"io.netty:netty-buffer:${depVersion.netty}",
 		"io.netty:netty-transport:${depVersion.netty}",
 		"io.netty:netty-handler:${depVersion.netty}",
-		//"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
 	)
 
 	runtime(
-		"com.lmax:disruptor:3.3.4",
+		"com.lmax:disruptor:${depVersion.disruptor}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
 	)

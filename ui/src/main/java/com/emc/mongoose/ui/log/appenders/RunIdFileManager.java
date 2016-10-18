@@ -3,9 +3,12 @@ package com.emc.mongoose.ui.log.appenders;
 
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
+import org.apache.logging.log4j.core.appender.ConfigurationFactoryData;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
+import org.apache.logging.log4j.core.config.Configuration;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -33,10 +36,11 @@ extends AbstractManager {
 	private final Layout<? extends Serializable> layout;
 	//
 	protected RunIdFileManager(
-		final String fileName, final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
-		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize
+		final LoggerContext loggerContext, final String fileName, final boolean flagAppend,
+		final boolean flagLock, final boolean flagBuffered, final String uriAdvertise,
+		final Layout<? extends Serializable> layout, final int buffSize
 	) {
-		super(fileName);
+		super(loggerContext, fileName);
 		this.fileName = fileName;
 		this.flagAppend = flagAppend;
 		this.flagLock = flagLock;
@@ -48,7 +52,8 @@ extends AbstractManager {
 	}
 
 	/** Factory Data */
-	private static class FactoryData {
+	private static class FactoryData
+	extends ConfigurationFactoryData {
 		//
 		private final boolean flagAppend;
 		private final boolean flagLock;
@@ -67,8 +72,9 @@ extends AbstractManager {
 		public FactoryData(
 			final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
 			final int buffSize, final String uriAdvertise,
-			final Layout<? extends Serializable> layout
+			final Layout<? extends Serializable> layout, final Configuration config
 		) {
+			super(config);
 			this.flagAppend = flagAppend;
 			this.flagLock = flagLock;
 			this.flagBuffered = flagBuffered;
@@ -91,8 +97,8 @@ extends AbstractManager {
 		@Override
 		public RunIdFileManager createManager(final String fileName, final FactoryData data) {
 			return new RunIdFileManager(
-				fileName, data.flagAppend, data.flagLock, data.flagBuffered,
-				data.uriAdvertise, data.layout, data.buffSize
+				data.getLoggerContext(), fileName, data.flagAppend, data.flagLock,
+				data.flagBuffered, data.uriAdvertise, data.layout, data.buffSize
 			);
 		}
 	}
@@ -102,13 +108,14 @@ extends AbstractManager {
 	public static RunIdFileManager getRunIdFileManager(
 		final String fileName,
 		final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
-		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize
+		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize,
+		final Configuration config
 	) {
 		return RunIdFileManager.class.cast(
 			getManager(
 				fileName, FACTORY,
 				new FactoryData(
-					flagAppend, flagLock, flagBuffered, buffSize, uriAdvertise, layout
+					flagAppend, flagLock, flagBuffered, buffSize, uriAdvertise, layout, config
 				)
 			)
 		);
@@ -187,7 +194,8 @@ extends AbstractManager {
 		return currentOutPutStream;
 	}
 	//
-	protected final void close() {
+	@Override
+	public final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				if(layout != null) {
