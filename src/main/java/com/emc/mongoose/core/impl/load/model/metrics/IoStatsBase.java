@@ -31,6 +31,7 @@ implements IoStats {
 	protected final MBeanServer mBeanServer;
 	protected final CustomJmxReporter jmxReporter;
 	protected final Histogram reqDuration, respLatency;
+	protected volatile long tsStartMilliSec = -1;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
 	//
 	protected IoStatsBase(final String name, final boolean serveJmxFlag) {
@@ -52,6 +53,7 @@ implements IoStats {
 			jmxReporter.start();
 		}
 		tsStartMicroSec = TimeUnit.NANOSECONDS.toMicros(System.nanoTime());
+		tsStartMilliSec = System.currentTimeMillis();
 	}
 	//
 	@Override
@@ -106,6 +108,7 @@ implements IoStats {
 	protected final static class BasicSnapshot
 	implements Snapshot {
 		//
+		private final long tsStartMilliSec;
 		private final long countSucc;
 		private final double succRateLast;
 		private final long countFail;
@@ -121,6 +124,7 @@ implements IoStats {
 		private final long elapsedTime;
 		//
 		public BasicSnapshot(
+			final long tsStartMilliSec,
 			final long countSucc, final double succRateLast,
 			final long countFail, final double failRate,
 			final long countByte, final double byteRate,
@@ -128,6 +132,7 @@ implements IoStats {
 			final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
 		) {
+			this.tsStartMilliSec = tsStartMilliSec;
 			this.countSucc = countSucc;
 			this.succRateLast = succRateLast;
 			this.countFail = countFail;
@@ -141,6 +146,11 @@ implements IoStats {
 			this.durValues = durSnapshot.getValues();
 			this.latSnapshot = latSnapshot;
 			this.latValues = latSnapshot.getValues();
+		}
+		//
+		@Override
+		public final long getStartTimeMilliSec() {
+			return tsStartMilliSec;
 		}
 		//
 		@Override

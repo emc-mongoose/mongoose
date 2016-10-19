@@ -78,6 +78,7 @@ extends IoStatsBase {
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
 		LockSupport.parkNanos(1_000);
 		return new BasicSnapshot(
+			tsStartMilliSec,
 			throughPutSucc == null ? 0 : throughPutSucc.getCount(),
 			throughPutSucc == null ? 0 : throughPutSucc.getLastRate(),
 			throughPutFail == null ? 0 : throughPutFail.getCount(),

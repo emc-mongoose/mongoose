@@ -35,14 +35,19 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -63,6 +68,11 @@ extends BasicItemGenerator<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static DateFormat FMT_DATE_RESULTS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss") {
+		{
+			setTimeZone(TimeZone.getTimeZone("UTC"));
+		}
+	};
 	//
 	protected final int instanceNum, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -314,6 +324,16 @@ implements LoadExecutor<T> {
 					medIoStats == null ? null : medIoStats.getSnapshot().toSummaryString()
 				);
 			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				final long startTimeMillis = lastStats.getStartTimeMilliSec();
+				ThreadContext.put("start.date", FMT_DATE_RESULTS.format(new Date(startTimeMillis)));
+				ThreadContext.put(
+					"start.time", Long.toString(TimeUnit.MILLISECONDS.toSeconds(startTimeMillis))
+				);
+				final long endTimeMillis = System.currentTimeMillis();
+				ThreadContext.put("end.date", FMT_DATE_RESULTS.format(new Date(endTimeMillis)));
+				ThreadContext.put(
+					"end.time", Long.toString(TimeUnit.MILLISECONDS.toSeconds(endTimeMillis))
+				);
 				LOG.info(
 					logMarker, "\"{}\" summary: {}", getName(),
 					lastStats == null ? null : lastStats.toSummaryString()

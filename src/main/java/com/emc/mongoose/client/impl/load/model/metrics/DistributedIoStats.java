@@ -327,6 +327,7 @@ extends IoStatsBase {
 		final long currElapsedTime = tsStartMicroSec > 0 ?
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
 		return new BasicIoStats.BasicSnapshot(
+			tsStartMilliSec,
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
 			prevElapsedTimeMicroSec + currElapsedTime, sumDurMicroSec, sumLatMicroSec,
 			reqDuration.getSnapshot(), respLatency.getSnapshot()
