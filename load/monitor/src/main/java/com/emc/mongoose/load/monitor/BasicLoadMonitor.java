@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
@@ -129,7 +128,7 @@ implements LoadMonitor<I, O> {
 					postProcessItems();
 					// output the current measurements periodically
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						LOG.info(Markers.PERF_AVG, lastStats.toString());
+						LOG.info(Markers.METRICS_PERIODIC, lastStats.toString());
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
 					LockSupport.parkNanos(1_000_000);
@@ -396,12 +395,12 @@ implements LoadMonitor<I, O> {
 		final long reqTimeStart, final long reqDuration, final int respLatency,
 		final long countBytesDone, final int respDataLatency
 	) {
-		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+		if(LOG.isInfoEnabled(Markers.IO_TRACE)) {
 			final StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
 			strBuilder.setLength(0);
 			final String itemPath = item.getPath();
 			LOG.info(
-				Markers.PERF_TRACE,
+				Markers.IO_TRACE,
 				strBuilder
 					.append(ioType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
@@ -571,7 +570,7 @@ implements LoadMonitor<I, O> {
 		}
 		drivers.clear();
 
-		LOG.info(Markers.PERF_SUM, "Total: {}", lastStats.toSummaryString());
+		LOG.info(Markers.METRICS_TOTAL, "Total: {}", lastStats.toSummaryString());
 		if(ioStats != null) {
 			ioStats.close();
 		}

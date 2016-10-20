@@ -9,10 +9,9 @@ public interface Markers {
 	//
 	Marker MSG = MarkerManager.getMarker("msg");
 	Marker ERR = MarkerManager.getMarker("err");
-	Marker ITEM_LIST = MarkerManager.getMarker("itemList");
-	Marker PERF_AVG = MarkerManager.getMarker("perfAvg");
-	Marker PERF_SUM = MarkerManager.getMarker("perfSum");
-	Marker PERF_MED = MarkerManager.getMarker("perfMed");
-	Marker PERF_TRACE = MarkerManager.getMarker("perfTrace");
+	Marker METRICS_PERIODIC = MarkerManager.getMarker("metricsPeriodic");
+	Marker METRICS_TOTAL = MarkerManager.getMarker("metricsTotal");
+	Marker METRICS_MED = MarkerManager.getMarker("metricsMed");
+	Marker IO_TRACE = MarkerManager.getMarker("ioTrace");
 	Marker CFG = MarkerManager.getMarker("cfg");
 }
