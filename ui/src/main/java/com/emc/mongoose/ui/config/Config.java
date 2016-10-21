@@ -665,12 +665,12 @@ public final class Config {
 		public static final class MetricsConfig
 		implements Serializable {
 
-			public static final String KEY_INTERMEDIATE = "intermediate";
+			public static final String KEY_THRESHOLD = "threshold";
 			public static final String KEY_PERIOD = "period";
 			public static final String KEY_PRECONDITION= "precondition";
 			
-			public final void setIntermediate(final boolean intermediate) {
-				this.intermediate = intermediate;
+			public final void setThreshold(final double threshold) {
+				this.threshold = threshold;
 			}
 			
 			public final void setPeriod(final long period) {
@@ -681,7 +681,7 @@ public final class Config {
 				this.precondition = precondition;
 			}
 			
-			@JsonProperty(KEY_INTERMEDIATE) private boolean intermediate;
+			@JsonProperty(KEY_THRESHOLD) private double threshold;
 
 			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
 			private long period;
@@ -691,8 +691,8 @@ public final class Config {
 			public MetricsConfig() {
 			}
 
-			public final boolean getIntermediate() {
-				return intermediate;
+			public final double getThreshold() {
+				return threshold;
 			}
 
 			public final long getPeriod() {

@@ -58,10 +58,6 @@ public class ConfigTest {
 		
 		assertEquals(argsMap.get("--name"), config.getName());
 		assertEquals(argsMap.get("--version"), config.getVersion());
-		assertEquals(
-			new SizeInBytes(argsMap.get("--io-buffer-size")),
-			config.getIoConfig().getBufferConfig().getSize()
-		);
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertEquals(
 			Integer.parseInt(argsMap.get("--socket-timeoutMilliSec")),

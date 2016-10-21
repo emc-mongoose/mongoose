@@ -117,7 +117,7 @@ implements Decoder<Config> {
 			getJsonObject(loadConfigJson, Config.LoadConfig.KEY_METRICS);
 		final Config.LoadConfig.MetricsConfig metricsConfig =
 			new Config.LoadConfig.MetricsConfig(
-				metricsConfigJson.getBoolean(Config.LoadConfig.MetricsConfig.KEY_INTERMEDIATE),
+				metricsConfigJson.getBoolean(Config.LoadConfig.MetricsConfig.KEY_THRESHOLD),
 				getString(metricsConfigJson, Config.LoadConfig.MetricsConfig.KEY_PERIOD),
 				metricsConfigJson.getBoolean(Config.LoadConfig.MetricsConfig.KEY_PRECONDITION)
 			);

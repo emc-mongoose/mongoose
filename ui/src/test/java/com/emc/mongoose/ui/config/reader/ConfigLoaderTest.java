@@ -96,7 +96,7 @@ public class ConfigLoaderTest {
 		);
 		final Config.LoadConfig.MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
-		assertThat(metricsConfig.getIntermediate(), equalTo(false, "load.metrics.intermediate"));
+		assertThat(metricsConfig.getThreshold(), equalTo(false, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
 		assertThat(
 			metricsConfig.getPeriod(),

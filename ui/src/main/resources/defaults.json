@@ -1,16 +1,6 @@
 {
 	"name" : "mongoose",
 	"version" : "next",
-	"socket" : {
-		"timeoutMilliSec" : 1000000,
-		"reuseAddr" : true,
-		"keepAlive" : true,
-		"tcpNoDelay" : true,
-		"linger" : 0,
-		"bindBacklogSize" : 0,
-		"interestOpQueued" : false,
-		"selectInterval" : 100
-	},
 	"item" : {
 		"data" : {
 			"content" : {
@@ -42,22 +32,22 @@
 	"load" : {
 		"circular" : false,
 		"concurrency" : 1,
-		"limit" : {
-			"count" : 0,
-			"rate" : 0,
-			"size" : 0,
-			"time" : "0s"
-		},
 		"generator": {
 			"remote": false,
 			"addrs" : [
 				"127.0.0.1"
 			]
 		},
+		"limit" : {
+			"count" : 0,
+			"rate" : 0,
+			"size" : 0,
+			"time" : "0s"
+		},
 		"metrics" : {
-			"intermediate" : false,
 			"period" : "10s",
-			"precondition" : false
+			"precondition" : false,
+			"threshold" : 0
 		},
 		"queue" : {
 			"size" : 1000000
@@ -66,7 +56,17 @@
 	},
 	"run" : {
 		"id" : null,
-		"file" : null
+		"file" : "scenario/default.json"
+	},
+	"socket" : {
+		"timeoutMilliSec" : 1000000,
+		"reuseAddr" : true,
+		"keepAlive" : true,
+		"tcpNoDelay" : true,
+		"linger" : 0,
+		"bindBacklogSize" : 0,
+		"interestOpQueued" : false,
+		"selectInterval" : 100
 	},
 	"storage" : {
 		"auth" : {
