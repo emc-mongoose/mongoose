@@ -4,6 +4,7 @@ import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.item.DataItem;
 import com.emc.mongoose.model.api.item.ItemFactory;
 import com.emc.mongoose.common.api.SizeInBytes;
+import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,18 +34,26 @@ implements Input<D> {
 	@Override
 	public final D get()
 	throws IOException {
+		final String path = pathInput.get();
+		final String id = idInput.get();
 		return itemFactory.getItem(
-			pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get()
+			path.endsWith(SLASH) ? path + id : path + SLASH + id, idInput.getLastValue(),
+			dataSize.get()
 		);
 	}
 	//
 	@Override
 	public int get(final List<D> buffer, final int maxCount)
 	throws IOException {
+		String path;
+		String id;
 		for(int i = 0; i < maxCount; i ++) {
+			path = pathInput.get();
+			id = idInput.get();
 			buffer.add(
 				itemFactory.getItem(
-					pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get()
+					path.endsWith(SLASH) ? path + id : path + SLASH + id, idInput.getLastValue(),
+					dataSize.get()
 				)
 			);
 		}

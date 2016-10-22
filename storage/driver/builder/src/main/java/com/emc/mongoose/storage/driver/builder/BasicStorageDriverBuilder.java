@@ -111,7 +111,6 @@ public class BasicStorageDriverBuilder<
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
-		final InputConfig inputConfig = itemConfig.getInputConfig();
 		final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 		
 		if(StorageType.FS.equals(storageType)) {
@@ -122,8 +121,7 @@ public class BasicStorageDriverBuilder<
 			} else {
 				LOG.info(Markers.MSG, "Work on the files");
 				driver = (T) new BasicFileStorageDriver<>(
-					runId, storageConfig.getAuthConfig(), loadConfig, inputConfig.getContainer(),
-					verifyFlag
+					runId, storageConfig.getAuthConfig(), loadConfig, verifyFlag
 				);
 			}
 		} else if(StorageType.HTTP.equals(storageType)){
@@ -135,14 +133,12 @@ public class BasicStorageDriverBuilder<
 				switch(apiType.toLowerCase()) {
 					case API_S3:
 						driver = (T) new S3StorageDriver<>(
-							runId, loadConfig, storageConfig, inputConfig.getContainer(),
-							verifyFlag, socketConfig
+							runId, loadConfig, storageConfig, verifyFlag, socketConfig
 						);
 						break;
 					case API_SWIFT:
 						driver = (T) new SwiftStorageDriver<>(
-							runId, loadConfig, storageConfig, inputConfig.getContainer(),
-							verifyFlag, socketConfig
+							runId, loadConfig, storageConfig, verifyFlag, socketConfig
 						);
 						break;
 					default:

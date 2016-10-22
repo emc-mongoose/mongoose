@@ -25,9 +25,9 @@ extends HttpStorageDriverBase<I, O> {
 
 	public SwiftStorageDriver(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
+		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, loadConfig, storageConfig, srcContainer, verifyFlag, socketConfig);
+		super(runId, loadConfig, storageConfig, verifyFlag, socketConfig);
 	}
 
 	@Override
@@ -41,7 +41,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final I obj)
+	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
 	}
 }

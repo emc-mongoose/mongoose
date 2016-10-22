@@ -37,19 +37,17 @@ implements StorageDriver<I, O> {
 	protected final boolean isCircular;
 	protected final String userName;
 	protected final String secret;
-	protected final String srcContainer;
 	protected final boolean verifyFlag;
 
 	protected StorageDriverBase(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag
+		final boolean verifyFlag
 	) {
 		this.runId = runId;
 		this.userName = authConfig.getId();
 		secret = authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
 		isCircular = loadConfig.getCircular();
-		this.srcContainer = srcContainer;
 		this.verifyFlag = verifyFlag;
 	}
 

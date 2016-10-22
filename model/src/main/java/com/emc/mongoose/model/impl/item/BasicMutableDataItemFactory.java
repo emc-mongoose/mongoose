@@ -16,8 +16,8 @@ implements ItemFactory<I> {
 	}
 	
 	@Override
-	public I getItem(final String path, final String name, final long id, final long size) {
-		return (I) new BasicMutableDataItem(path, name, id, size, contentSrc);
+	public I getItem(final String name, final long id, final long size) {
+		return (I) new BasicMutableDataItem(name, id, size, contentSrc);
 	}
 	
 	@Override

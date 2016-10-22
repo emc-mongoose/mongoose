@@ -74,20 +74,13 @@ implements DataItem {
 	public BasicDataItem(
 		final long offset, final long size, final ContentSource contentSrc
 	) {
-		this(SLASH, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
 		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
-		this(SLASH, name, offset, size, 0, contentSrc);
-	}
-	//
-	public BasicDataItem(
-		final String path, final String name, final long offset, final long size,
-		final ContentSource contentSrc
-	) {
-		this(path, name, offset, size, 0, contentSrc);
+		this(name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
@@ -103,19 +96,7 @@ implements DataItem {
 		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
-		super(SLASH, name);
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
-		this.layerNum = layerNum;
-		this.offset = offset;
-		this.size = size;
-	}
-	//
-	public BasicDataItem(
-		final String path, final String name, final long offset, final long size,
-		final int layerNum, final ContentSource contentSrc
-	) {
-		super(path, name);
+		super(name);
 		this.contentSrc = contentSrc;
 		this.ringBuffSize = contentSrc.getSize();
 		this.layerNum = layerNum;

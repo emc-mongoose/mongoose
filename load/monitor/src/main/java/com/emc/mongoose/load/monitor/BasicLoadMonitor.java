@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.emc.mongoose.model.api.item.Item.SLASH;
+import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
 
 /**
  Created by kurila on 12.07.16.
@@ -390,26 +390,41 @@ implements LoadMonitor<I, O> {
 			return new StringBuilder();
 		}
 	};
-	protected void logTrace(
-		final LoadType ioType, final String nodeAddr, final I item, final IoTask.Status status,
-		final long reqTimeStart, final long reqDuration, final int respLatency,
-		final long countBytesDone, final int respDataLatency
-	) {
+	protected void logTrace(final O ioTask) {
+		final LoadType ioType = ioTask.getLoadType();
+		final String nodeAddr = ioTask.getNodeAddr();
+		final I item = ioTask.getItem();
+		final IoTask.Status status = ioTask.getStatus();
+		final long reqTimeStart = ioTask.getReqTimeStart();
+		final long reqDuration = ioTask.getDuration();
+		final int respLatency = ioTask.getLatency();
+		final String dstPath = ioTask.getDstPath();
+
+		final long countBytesDone;
+		final int respDataLatency;
+		if(ioTask instanceof DataIoTask) {
+			final DataIoTask dataIoTask = (DataIoTask) ioTask;
+			countBytesDone = dataIoTask.getCountBytesDone();
+			respDataLatency = dataIoTask.getDataLatency();
+		} else {
+			countBytesDone = 0;
+			respDataLatency = -1;
+		}
+
 		if(LOG.isInfoEnabled(Markers.IO_TRACE)) {
 			final StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
 			strBuilder.setLength(0);
-			final String itemPath = item.getPath();
 			LOG.info(
 				Markers.IO_TRACE,
 				strBuilder
 					.append(ioType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
 					.append(
-						itemPath == null ?
-						item.getName() :
-						itemPath.endsWith(SLASH) ?
-						itemPath + item.getName() :
-						itemPath + SLASH + item.getName()
+						dstPath == null ?
+							item.getName() :
+							dstPath.endsWith(SLASH) ?
+								dstPath + item.getName() :
+								dstPath + SLASH + item.getName()
 					)
 					.append(',')
 					.append(status.code).append(',')

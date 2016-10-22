@@ -10,8 +10,8 @@ public class BasicItemFactory<I extends Item>
 implements ItemFactory<I> {
 	
 	@Override
-	public I getItem(final String path, final String name, final long id, final long size) {
-		return (I) new BasicItem(path, name);
+	public I getItem(final String name, final long id, final long size) {
+		return (I) new BasicItem(name);
 	}
 	
 	@Override

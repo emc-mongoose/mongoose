@@ -8,13 +8,10 @@ import com.emc.mongoose.model.api.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -43,9 +40,9 @@ implements StorageDriver<I, O> {
 
 	public NioStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag
+		final boolean verifyFlag
 	) {
-		super(runId, storageConfig, loadConfig, srcContainer, verifyFlag);
+		super(runId, storageConfig, loadConfig, verifyFlag);
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new WorkerTask[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];

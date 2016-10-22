@@ -12,7 +12,7 @@ import com.emc.mongoose.model.impl.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.impl.io.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.api.LoadType;
 import static com.emc.mongoose.model.api.io.PatternDefinedInput.PATTERN_CHAR;
-import static com.emc.mongoose.model.api.item.Item.SLASH;
+import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -82,9 +82,9 @@ implements HttpStorageDriver<I, O> {
 
 	protected HttpStorageDriverBase(
 		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final String srcContainer, final boolean verifyFlag, final SocketConfig socketConfig
+		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, loadConfig, storageConfig, socketConfig, srcContainer, verifyFlag);
+		super(runId, loadConfig, storageConfig, socketConfig, verifyFlag);
 		try {
 			if(secret == null) {
 				secretKey = null;
@@ -123,7 +123,25 @@ implements HttpStorageDriver<I, O> {
 		final I item = ioTask.getItem();
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
-		final String dstUriPath = getDstUriPath(item, ioTask);
+
+		String srcUriPath = ioTask.getSrcPath();
+		if(srcUriPath != null) {
+			if(srcUriPath.endsWith(SLASH)) {
+				srcUriPath = srcUriPath + item.getName();
+			} else {
+				srcUriPath = srcUriPath + SLASH + item.getName();
+			}
+		}
+
+		String dstUriPath = ioTask.getDstPath();
+		if(dstUriPath != null) {
+			if(dstUriPath.endsWith(SLASH)) {
+				dstUriPath = dstUriPath + item.getName();
+			} else {
+				dstUriPath = dstUriPath + SLASH + item.getName();
+			}
+		}
+
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
@@ -133,7 +151,7 @@ implements HttpStorageDriver<I, O> {
 
 		switch(ioType) {
 			case CREATE:
-				if(srcContainer == null) {
+				if(srcUriPath == null) {
 					if(item instanceof DataItem) {
 						try {
 							httpHeaders.set(
@@ -145,7 +163,7 @@ implements HttpStorageDriver<I, O> {
 						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 					}
 				} else {
-					applyCopyHeaders(httpHeaders, item);
+					applyCopyHeaders(httpHeaders, srcUriPath);
 					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				}
 				break;
@@ -195,23 +213,6 @@ implements HttpStorageDriver<I, O> {
 				return HttpMethod.DELETE;
 			default:
 				return HttpMethod.PUT;
-		}
-	}
-
-	protected String getDstUriPath(final I item, final O ioTask) {
-		return SLASH + ioTask.getDstPath() + SLASH + item.getName();
-	}
-	
-	protected String getSrcUriPath(final I object)
-	throws URISyntaxException {
-		if(object == null) {
-			throw new IllegalArgumentException("No object");
-		}
-		final String objPath = object.getPath();
-		if(objPath.endsWith(SLASH)) {
-			return objPath + object.getName();
-		} else {
-			return objPath + SLASH + object.getName();
 		}
 	}
 
@@ -276,7 +277,7 @@ implements HttpStorageDriver<I, O> {
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	);
 
-	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final I item)
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException;
 	
 	protected final FutureListener<Channel> getConnectionLeaseCallback(final O ioTask) {

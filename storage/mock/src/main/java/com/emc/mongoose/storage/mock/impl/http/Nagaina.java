@@ -141,9 +141,6 @@ extends StorageMockBase<MutableDataItemMock>{
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		try {
-//			for(final Channel channel : channels) {
-//				channel.closeFuture().await(timeout, timeUnit);
-//			}
 			channels[0].closeFuture().await(timeout, timeUnit); // one channel is enough
 		} catch(final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Nagaina");

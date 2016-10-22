@@ -51,19 +51,16 @@ implements StorageDriver<I, O> {
 
 	public BasicFileStorageDriver(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final String srcContainer, final boolean verifyFlag
+		final boolean verifyFlag
 	) {
-		super(runId, authConfig, loadConfig, srcContainer, verifyFlag);
+		super(runId, authConfig, loadConfig, verifyFlag);
 		openSrcFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
-			final Path srcFilePath;
-			if(srcContainer == null) {
-				srcFilePath = Paths.get(fileItem.getPath() + separatorChar + fileItem.getName());
-			} else {
-				srcFilePath = Paths.get(
-					srcContainer, fileItem.getPath() + separatorChar + fileItem.getName()
-				);
+			final String srcPath = ioTask.getSrcPath();
+			if(srcPath == null) {
+				return null;
 			}
+			final Path srcFilePath = Paths.get(srcPath, fileItem.getName());
 			try {
 				return FileChannel.open(srcFilePath, StandardOpenOption.READ);
 			} catch(final IOException e) {
@@ -120,8 +117,8 @@ implements StorageDriver<I, O> {
 			switch(ioType) {
 				case CREATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
-					if(srcContainer != null) { // copy mode
-						srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
+					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
+					if(srcChannel != null) { // copy mode
 						invokeCopy(item, ioTask, srcChannel, dstChannel);
 					} else {
 						invokeCreate(item, ioTask, dstChannel);

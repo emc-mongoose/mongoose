@@ -11,6 +11,8 @@ import java.io.Externalizable;
 public interface IoTask<I extends Item>
 extends Externalizable {
 
+	String SLASH = "/";
+
 	enum Status {
 		PENDING(0, "Pending"),
 		ACTIVE(1, "Active"),
@@ -59,6 +61,8 @@ extends Externalizable {
 	int getDuration();
 
 	int getLatency();
+
+	String getSrcPath();
 
 	String getDstPath();
 	

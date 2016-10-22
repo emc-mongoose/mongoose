@@ -7,9 +7,6 @@ import com.emc.mongoose.model.api.LoadType;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import static com.emc.mongoose.model.api.item.Item.SLASH;
-
 /**
  Created by kurila on 20.10.15.
  */
@@ -18,6 +15,7 @@ implements IoTask<I> {
 	
 	protected LoadType ioType;
 	protected I item;
+	protected String srcPath;
 	protected String dstPath;
 	
 	protected volatile String nodeAddr;
@@ -33,6 +31,14 @@ implements IoTask<I> {
 	public BasicIoTask(final LoadType ioType, final I item, final String dstPath) {
 		this.ioType = ioType;
 		this.item = item;
+		final String itemName = item.getName();
+		final int lastSlashIndex = itemName.lastIndexOf(SLASH);
+		if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
+			srcPath = itemName.substring(0, lastSlashIndex);
+			item.setName(itemName.substring(lastSlashIndex + 1));
+		} else {
+			srcPath = null;
+		}
 		this.dstPath = dstPath;
 		reset();
 	}
@@ -110,7 +116,12 @@ implements IoTask<I> {
 	public final int getLatency() {
 		return (int) (respTimeStart - reqTimeDone);
 	}
-	
+
+	@Override
+	public final String getSrcPath() {
+		return srcPath;
+	}
+
 	@Override
 	public final String getDstPath() {
 		return dstPath;
@@ -127,17 +138,16 @@ implements IoTask<I> {
 	public String toString() {
 		final StringBuilder strb = STRB.get();
 		strb.setLength(0);
-		final String itemPath = item.getPath();
 		final long respLatency = getLatency();
 		final long reqDuration = getDuration();
 		return strb
 			.append(ioType.ordinal()).append(',')
 			.append(
-				itemPath == null ?
+				dstPath == null ?
 					item.getName() :
-					itemPath.endsWith(SLASH) ?
-						itemPath + item.getName() :
-						itemPath + SLASH + item.getName()
+					dstPath.endsWith(SLASH) ?
+						dstPath + item.getName() :
+						dstPath + SLASH + item.getName()
 			)
 			.append(',')
 			.append(status.code).append(',')

@@ -17,7 +17,7 @@ implements ItemFactory<I> {
 	}
 	
 	@Override
-	public final I getItem(final String path, final String name, final long id, final long size) {
+	public final I getItem(final String name, final long id, final long size) {
 		return (I) new BasicMutableDataItemMock(name, id, size, contentSrc);
 	}
 	

@@ -10,6 +10,8 @@ public final class CliArgParser {
 	
 	public final static String ARG_PREFIX = "--";
 	public final static String ARG_SEP = "-";
+	public final static String ARG_USAGE = "usage";
+	public final static String ARG_HELP = "help";
 	
 	public static void main(final String... args)
 	throws IllegalArgumentException {
@@ -19,7 +21,9 @@ public final class CliArgParser {
 	
 	public static Map<String, Object> parseArgs(final String... args)
 	throws IllegalArgumentException {
+
 		final Map<String, Object> tree = new HashMap<>();
+
 		String argValPair[];
 		for(final String arg : args) {
 			argValPair = arg.split("=", 2);
@@ -29,6 +33,7 @@ public final class CliArgParser {
 				parseArg(tree, argValPair[0]);
 			}
 		}
+
 		return tree;
 	}
 	

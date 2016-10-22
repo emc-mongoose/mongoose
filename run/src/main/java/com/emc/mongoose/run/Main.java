@@ -167,6 +167,7 @@ public class Main {
 				ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
 					.setRangesConfig(dataConfig.getRanges());
 			}
+			ioTaskBuilder.setSrcContainer(itemConfig.getInputConfig().getContainer());
 			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
 
 			final LimitConfig limitConfig = loadConfig.getLimitConfig();

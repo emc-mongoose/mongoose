@@ -8,7 +8,6 @@ import org.apache.commons.codec.binary.Hex;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
@@ -72,17 +71,10 @@ implements MutableDataItem {
 	}
 	//
 	public BasicMutableDataItem(
-		final String path, final String name, final long offset, final long size,
+		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
-		super(path, name, offset, size, 0, contentSrc);
-	}
-	//
-	public BasicMutableDataItem(
-		final String path, final String name, final long offset, final long size,
-		final int layerNum, final ContentSource contentSrc
-	) {
-		super(path, name, offset, size, layerNum, contentSrc);
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////

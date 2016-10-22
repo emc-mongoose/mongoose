@@ -12,13 +12,19 @@ public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I>>
 implements IoTaskBuilder<I, O> {
 	
 	protected volatile LoadType ioType = LoadType.CREATE; // by default
+	protected volatile String srcContainer = null;
 	
 	@Override
 	public final BasicIoTaskBuilder<I, O> setIoType(final LoadType ioType) {
 		this.ioType = ioType;
 		return this;
 	}
-	
+
+	@Override
+	public final BasicIoTaskBuilder<I, O> setSrcContainer(final String srcContainer) {
+		this.srcContainer = srcContainer;
+		return this;
+	}
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I item, final String dstPath) {
 		return (O) new BasicIoTask<>(ioType, item, dstPath);

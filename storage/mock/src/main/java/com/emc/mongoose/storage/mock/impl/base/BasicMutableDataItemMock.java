@@ -39,7 +39,7 @@ implements MutableDataItemMock {
 		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
-		super(SLASH, name, offset, size, layerNum, contentSrc);
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	//
 	public final synchronized void update(final long offset, final long size)
