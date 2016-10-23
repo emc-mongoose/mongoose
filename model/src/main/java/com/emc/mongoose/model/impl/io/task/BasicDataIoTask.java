@@ -26,10 +26,10 @@ implements DataIoTask<T> {
 	}
 	
 	public BasicDataIoTask(
-		final LoadType ioType, final T item, final String dstPath,
+		final LoadType ioType, final T item, final String srcPath, final String dstPath,
 		final DataRangesConfig rangesConfig
 	) {
-		super(ioType, item, dstPath);
+		super(ioType, item, srcPath, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {

@@ -384,25 +384,25 @@ public final class Config {
 		public static final class InputConfig
 		implements Serializable {
 
-			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_PATH = "path";
 			public static final String KEY_FILE = "file";
 			
-			public final void setContainer(final String container) {
-				this.container = container;
+			public final void setPath(final String path) {
+				this.path = path;
 			}
 			
 			public final void setFile(final String file) {
 				this.file = file;
 			}
 			
-			@JsonProperty(KEY_CONTAINER) private String container;
+			@JsonProperty(KEY_PATH) private String path;
 			@JsonProperty(KEY_FILE) private String file;
 
 			public InputConfig() {
 			}
 
-			public final String getContainer() {
-				return container;
+			public final String getPath() {
+				return path;
 			}
 
 			public final String getFile() {
@@ -414,25 +414,25 @@ public final class Config {
 		public static final class OutputConfig
 		implements Serializable {
 
-			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_PATH = "path";
 			public static final String KEY_FILE = "file";
 			
-			public final void setContainer(final String container) {
-				this.container = container;
+			public final void setPath(final String path) {
+				this.path = path;
 			}
 			
 			public final void setFile(final String file) {
 				this.file = file;
 			}
 			
-			@JsonProperty(KEY_CONTAINER) private String container;
+			@JsonProperty(KEY_PATH) private String path;
 			@JsonProperty(KEY_FILE) private String file;
 
 			public OutputConfig() {
 			}
 
-			public String getContainer() {
-				return container;
+			public String getPath() {
+				return path;
 			}
 
 			public String getFile() {

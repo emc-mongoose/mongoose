@@ -28,16 +28,22 @@ implements IoTask<I> {
 	public BasicIoTask() {
 	}
 	
-	public BasicIoTask(final LoadType ioType, final I item, final String dstPath) {
+	public BasicIoTask(
+		final LoadType ioType, final I item, final String srcPath, final String dstPath
+	) {
 		this.ioType = ioType;
 		this.item = item;
-		final String itemName = item.getName();
-		final int lastSlashIndex = itemName.lastIndexOf(SLASH);
-		if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
-			srcPath = itemName.substring(0, lastSlashIndex);
-			item.setName(itemName.substring(lastSlashIndex + 1));
+		if(srcPath == null) {
+			final String itemName = item.getName();
+			final int lastSlashIndex = itemName.lastIndexOf(SLASH);
+			if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
+				this.srcPath = itemName.substring(0, lastSlashIndex);
+				item.setName(itemName.substring(lastSlashIndex + 1));
+			} else {
+				this.srcPath = null;
+			}
 		} else {
-			srcPath = null;
+			this.srcPath = srcPath;
 		}
 		this.dstPath = dstPath;
 		reset();

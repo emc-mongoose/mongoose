@@ -281,6 +281,7 @@ implements LoadMonitor<I, O> {
 			if(medIoStats != null && medIoStats.isStarted()) {
 				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
 			}
+			// TODO set the destination item path
 			// put into the output buffer
 			try {
 				itemOutBuff.put(item);
@@ -324,6 +325,7 @@ implements LoadMonitor<I, O> {
 			final boolean preconditionFlag = metricsConfig.getPrecondition();
 			final LoadType ioType = ioTask.getLoadType();
 
+			// TODO removing iterator to remove unsuccessful tasks before batch put to the out buff
 			for(int i = from; i < to; i++) {
 				if(i > from) {
 					ioTask = ioTasks.get(i);
@@ -359,6 +361,16 @@ implements LoadMonitor<I, O> {
 					if(medIoStats != null && medIoStats.isStarted()) {
 						medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
 					}
+					// TODO set the destination item path
+					// put into the output buffer
+					try {
+						itemOutBuff.put(item);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
+							getName()
+						);
+					}
 				} else {
 					ioStats.markFail();
 					if(medIoStats != null && medIoStats.isStarted()) {
@@ -366,6 +378,8 @@ implements LoadMonitor<I, O> {
 					}
 				}
 			}
+
+			counterResults.addAndGet(n);
 		}
 
 		return n;

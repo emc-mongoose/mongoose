@@ -160,14 +160,14 @@ public class Main {
 			log.info(Markers.MSG, "Load drivers initialized");
 
 			final IoTaskBuilder ioTaskBuilder;
-			if(ItemType.CONTAINER.equals(itemType)) {
-				// TODO container I/O tasks factory
+			if(ItemType.PATH.equals(itemType)) {
+				// TODO path I/O tasks factory
 				ioTaskBuilder = new BasicIoTaskBuilder();
 			} else {
 				ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
 					.setRangesConfig(dataConfig.getRanges());
 			}
-			ioTaskBuilder.setSrcContainer(itemConfig.getInputConfig().getContainer());
+			ioTaskBuilder.setSrcPath(itemConfig.getInputConfig().getPath());
 			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
 
 			final LimitConfig limitConfig = loadConfig.getLimitConfig();
@@ -175,13 +175,13 @@ public class Main {
 			final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
 
 			final ItemFactory itemFactory;
-			if(ItemType.CONTAINER.equals(itemType)) {
-				// TODO container item factory
-				itemFactory = null;
-				log.info(Markers.MSG, "Work on the container items");
-			} else {
+			if(ItemType.DATA.equals(itemType)) {
 				itemFactory = new BasicMutableDataItemFactory(contentSrc);
 				log.info(Markers.MSG, "Work on the mutable data items");
+			} else {
+				// TODO path item factory
+				itemFactory = null;
+				log.info(Markers.MSG, "Work on the path items");
 			}
 			
 			final List<LoadGenerator> generators = new ArrayList<>();

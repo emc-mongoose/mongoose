@@ -81,14 +81,14 @@ implements Decoder<Config> {
 		final JsonObject inputConfigJson = getJsonObject(itemConfigJson, Config.ItemConfig.KEY_INPUT);
 		final Config.ItemConfig.InputConfig inputConfig =
 			new Config.ItemConfig.InputConfig(
-				getString(inputConfigJson, Config.ItemConfig.InputConfig.KEY_CONTAINER, null),
+				getString(inputConfigJson, Config.ItemConfig.InputConfig.KEY_PATH, null),
 				getString(inputConfigJson, Config.ItemConfig.InputConfig.KEY_FILE, null)
 			);
 		final JsonObject outputConfigJson =
 			getJsonObject(itemConfigJson, Config.ItemConfig.KEY_OUTPUT);
 		final Config.ItemConfig.OutputConfig outputConfig =
 			new Config.ItemConfig.OutputConfig(getString(
-				outputConfigJson, Config.ItemConfig.OutputConfig.KEY_CONTAINER, null),
+				outputConfigJson, Config.ItemConfig.OutputConfig.KEY_PATH, null),
 				getString(outputConfigJson, Config.ItemConfig.OutputConfig.KEY_FILE, null)
 			);
 		final JsonObject namingConfigJson = getJsonObject(itemConfigJson, Config.ItemConfig.KEY_NAMING);
@@ -158,7 +158,7 @@ implements Decoder<Config> {
 		final JsonObject mockConfigJson =
 			getJsonObject(storageConfigJson, Config.StorageConfig.KEY_MOCK);
 		final JsonObject containerConfigJson =
-			getJsonObject(mockConfigJson, Config.StorageConfig.MockConfig.KEY_CONTAINER);
+			getJsonObject(mockConfigJson, Config.StorageConfig.MockConfig.KEY_PATH);
 		final Config.StorageConfig.MockConfig mockConfig =
 			new Config.StorageConfig.MockConfig(
 				mockConfigJson.getInt(Config.StorageConfig.MockConfig.KEY_HEAD_COUNT),

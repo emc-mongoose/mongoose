@@ -56,11 +56,11 @@ public class ConfigLoaderTest {
 		assertThat(dataConfig.getVerify(), equalTo(true, "item.data.verify"));
 		final Config.ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
 		assertThat(inputConfig, notNullValue());
-		assertThat(inputConfig.getContainer(), nullValue("item.input.container"));
+		assertThat(inputConfig.getPath(), nullValue("item.input.path"));
 		assertThat(inputConfig.getFile(), nullValue("item.input.file"));
 		final Config.ItemConfig.OutputConfig outputConfig= itemConfig.getOutputConfig();
 		assertThat(outputConfig, notNullValue());
-		assertThat(outputConfig.getContainer(), nullValue("item.output.container"));
+		assertThat(outputConfig.getPath(), nullValue("item.output.path"));
 		assertThat(outputConfig.getFile(), nullValue("item.output.file"));
 		final Config.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
 		assertThat(namingConfig, notNullValue());

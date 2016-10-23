@@ -14,7 +14,6 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
 import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
-import com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
@@ -115,7 +114,7 @@ public class BasicStorageDriverBuilder<
 		
 		if(StorageType.FS.equals(storageType)) {
 			LOG.info(Markers.MSG, "Work on the filesystem");
-			if(ItemType.CONTAINER.equals(itemType)) {
+			if(ItemType.PATH.equals(itemType)) {
 				LOG.info(Markers.MSG, "Work on the directories");
 				// TODO directory load driver
 			} else {
@@ -127,7 +126,7 @@ public class BasicStorageDriverBuilder<
 		} else if(StorageType.HTTP.equals(storageType)){
 			final String apiType = storageConfig.getHttpConfig().getApi();
 			LOG.info(Markers.MSG, "Work via HTTP using \"{}\" cloud storage API", apiType);
-			if(ItemType.CONTAINER.equals(itemType)) {
+			if(ItemType.PATH.equals(itemType)) {
 				// TODO container/bucket load driver
 			} else {
 				switch(apiType.toLowerCase()) {

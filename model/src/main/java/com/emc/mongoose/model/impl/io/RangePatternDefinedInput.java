@@ -52,9 +52,9 @@ extends BasicPatternDefinedInput {
 			int segmentCounter = 0;
 			for(int j = 0; j < patternSymbolsNum; j++) {
 				int i = 0;
-				while (patternBuilder.charAt(i) != PatternDefinedInput.PATTERN_CHAR) {
+				while(patternBuilder.charAt(i) != PATTERN_CHAR) {
 					segmentsBuilder.append(patternBuilder.charAt(i)); // building of the segment by character
-					i++;
+					i ++;
 				}
 				segments[segmentCounter] = segmentsBuilder.toString();// adding of the segment in 'segments' filed
 				segmentsBuilder.setLength(0);

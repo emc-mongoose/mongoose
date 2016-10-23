@@ -1,8 +1,10 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.api.io.Output;
+import com.emc.mongoose.model.impl.io.ConstantStringInput;
 import com.emc.mongoose.model.impl.item.CsvFileItemInput;
 import com.emc.mongoose.model.api.ItemNamingType;
 import com.emc.mongoose.model.api.LoadType;
@@ -55,6 +57,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final List<StorageDriver<I, O>> drivers;
 	private final LoadType ioType;
 	private final Input<I> itemInput;
+	private final Input<String> dstPathInput;
 	private final Thread worker;
 	private final long countLimit;
 	private final int maxItemQueueSize;
@@ -62,7 +65,6 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final boolean isCircular;
 	private final Throttle<I> rateThrottle;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final String dstContainer;
 	private final String runId;
 	private final DataRangesConfig rangesConfig;
 
@@ -84,13 +86,12 @@ implements LoadGenerator<I, O>, Output<I> {
 			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 			this.isCircular = loadConfig.getCircular();
 			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
-			final String t = itemConfig.getOutputConfig().getContainer();
+			final String t = itemConfig.getOutputConfig().getPath();
 			if(t == null || t.isEmpty()) {
-				dstContainer = runId;
+				dstPathInput = new ConstantStringInput(runId);
 			} else {
-				dstContainer = t;
+				dstPathInput = new RangePatternDefinedInput(t);
 			}
-			final Input<String> pathInput = new RangePatternDefinedInput(dstContainer);
 
 			final NamingConfig namingConfig = itemConfig.getNamingConfig();
 			final ItemNamingType namingType = ItemNamingType.valueOf(
@@ -110,10 +111,8 @@ implements LoadGenerator<I, O>, Output<I> {
 				case CREATE:
 					// TODO copy mode
 					if(itemFactory instanceof BasicMutableDataItemFactory) {
-						this.itemInput = new NewDataItemInput(
-							itemFactory, pathInput, namingInput,
-							itemConfig.getDataConfig().getSize()
-						);
+						final SizeInBytes size = itemConfig.getDataConfig().getSize();
+						this.itemInput = new NewDataItemInput(itemFactory, namingInput, size);
 					} else {
 						this.itemInput = null; // TODO
 					}
@@ -127,7 +126,7 @@ implements LoadGenerator<I, O>, Output<I> {
 							Paths.get(itemInputFile), itemFactory
 						);
 					} else {
-						// TODO use container input
+						// TODO use path input
 						this.itemInput = null;
 					}
 					break;
@@ -228,7 +227,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	@Override
 	public final void put(final I item)
 	throws IOException {
-		final O nextIoTask = ioTaskBuilder.getInstance(item, dstContainer);
+		final O nextIoTask = ioTaskBuilder.getInstance(item, dstPathInput.get());
 		final StorageDriver<I, O> nextDriver = getNextDriver();
 		nextDriver.put(nextIoTask);
 	}
@@ -236,28 +235,28 @@ implements LoadGenerator<I, O>, Output<I> {
 	@Override
 	public final int put(final List<I> buffer, final int from, final int to)
 	throws IOException {
-		if(to > from) {
-			final List<O> ioTasks = new ArrayList<>(to - from);
-			for(int i = from; i < to; i ++) {
-				ioTasks.add(ioTaskBuilder.getInstance(buffer.get(i), dstContainer));
+		final int n = to - from;
+		if(n > 0) {
+			final List<O> ioTasks;
+			if(dstPathInput instanceof ConstantStringInput) {
+				final String dstPath = dstPathInput.get();
+				ioTasks = ioTaskBuilder.getInstances(buffer, dstPath, from, to);
+			} else {
+				final List<String> dstPaths = new ArrayList<>(n);
+				dstPathInput.get(dstPaths, n);
+				ioTasks = ioTaskBuilder.getInstances(buffer, dstPaths, from, to);
 			}
 			final StorageDriver<I, O> nextDriver = getNextDriver();
-			nextDriver.put(ioTasks, 0, ioTasks.size());
+			return nextDriver.put(ioTasks, 0, ioTasks.size());
+		} else {
+			return 0;
 		}
-		return to - from;
 	}
 	
 	@Override
 	public final int put(final List<I> buffer)
 	throws IOException {
-		final int n = buffer.size();
-		final List<O> ioTasks = new ArrayList<>(n);
-		for(final I nextItem : buffer) {
-			ioTasks.add(ioTaskBuilder.getInstance(nextItem, dstContainer));
-		}
-		final StorageDriver<I, O> nextDriver = getNextDriver();
-		nextDriver.put(ioTasks, 0, n);
-		return n;
+		return put(buffer, 0, buffer.size());
 	}
 	
 	@Override

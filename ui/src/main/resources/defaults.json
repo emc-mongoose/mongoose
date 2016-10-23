@@ -13,8 +13,8 @@
 			"verify" : false
 		},
 		"input" : {
-			"container" : null,
-			"file" : null
+			"file" : null,
+			"path" : null
 		},
 		"naming" : {
 			"type" : "random",
@@ -24,8 +24,8 @@
 			"length" : 13
 		},
 		"output" : {
-			"container" : null,
-			"file" : null
+			"file" : null,
+			"path" : null
 		},
 		"type" : "data"
 	},
@@ -112,17 +112,17 @@
 		"api.name" : [ "storage.http.api" ],
 		"api.atmos.port" : [ "storage.port" ],
 		"api.atmos.subtenant" : [ "auth.token" ],
-		"api.s3.bucket" : [ "item.dst.container" ],
+		"api.s3.bucket" : [ "item.output.path" ],
 		"api.s3.port" : [ "storage.port" ],
 		"api.swift.authToken" : [ "auth.token" ],
-		"api.swift.container" : [ "item.dst.container" ],
+		"api.swift.container" : [ "item.output.path" ],
 		"api.swift.port" : [ "storage.port" ],
 		"api.type.atmos.port" : [ "storage.port" ],
 		"api.type.atmos.subtenant" : [ "auth.token" ],
-		"api.type.s3.bucket" : [ "item.dst.container" ],
+		"api.type.s3.bucket" : [ "item.output.path" ],
 		"api.type.s3.port" : [ "storage.port" ],
 		"api.type.swift.authToken" : [ "auth.token" ],
-		"api.type.swift.container" : [ "item.dst.container" ],
+		"api.type.swift.container" : [ "item.output.path" ],
 		"api.type.swift.port" : [ "storage.port" ],
 		"data.count" : [ "load.limit.count" ],
 		"data.fsAccess" : [ "storage.http.fsAccess" ],
