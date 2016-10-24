@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
 
+import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 
@@ -62,6 +63,26 @@ implements StorageDriver<I, O> {
 	}
 
 	protected final void ioTaskCompleted(final O ioTask) {
+
+		// prepend the path to the item name
+		final String dstPath = ioTask.getDstPath();
+		final I item = ioTask.getItem();
+		if(dstPath != null) {
+			if(dstPath.endsWith(SLASH)) {
+				item.setName(dstPath + item.getName());
+			} else {
+				item.setName(dstPath + SLASH + item.getName());
+			}
+		}
+
+		if(isCircular) {
+			ioTask.reset();
+			try {
+				put(ioTask);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to reschedule the I/O task");
+			}
+		}
 		
 		final LoadMonitor<I, O> monitor = monitorRef.get();
 		if(monitor != null) {
@@ -79,28 +100,67 @@ implements StorageDriver<I, O> {
 				);
 			}
 		}
-		
-		if(isCircular) {
-			ioTask.reset();
-			try {
-				put(ioTask);
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to reschedule the I/O task");
-			}
-		}
 	}
 	
-	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to)
-	throws IOException {
+	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
+
+		String dstPath;
+		O ioTask;
+		I item;
+
 		if(isCircular) {
-			for(int i = from; i < to; i ++) {
-				ioTasks.get(i).reset();
+			for(int i = from; i < to; i++) {
+				ioTask = ioTasks.get(i);
+				dstPath = ioTask.getDstPath();
+				item = ioTask.getItem();
+				if(dstPath != null) {
+					if(dstPath.endsWith(SLASH)) {
+						item.setName(dstPath + item.getName());
+					} else {
+						item.setName(dstPath + SLASH + item.getName());
+					}
+				}
+				ioTask.reset();
 			}
-			put(ioTasks, from, to);
+
+			try {
+				put(ioTasks, from, to);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to reschedule {} I/O tasks", to - from
+				);
+			}
+		} else {
+			for(int i = from; i < to; i++) {
+				ioTask = ioTasks.get(i);
+				dstPath = ioTask.getDstPath();
+				item = ioTask.getItem();
+				if(dstPath != null) {
+					if(dstPath.endsWith(SLASH)) {
+						item.setName(dstPath + item.getName());
+					} else {
+						item.setName(dstPath + SLASH + item.getName());
+					}
+				}
+			}
 		}
+
 		final LoadMonitor<I, O> monitor = monitorRef.get();
 		if(monitor != null) {
-			return monitorRef.get().put(ioTasks, from, to);
+			try {
+				return monitorRef.get().put(ioTasks, from, to);
+			} catch(final NoSuchObjectException | EOFException e) {
+				if(isClosed() || isInterrupted()) {
+					// ignore
+				} else {
+					LogUtil.exception(LOG, Level.WARN, e, "Lost the connection with the monitor");
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to send {} I/O tasks back to the monitor", to - from
+				);
+			}
+			return 0;
 		} else {
 			return 0;
 		}

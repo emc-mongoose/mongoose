@@ -28,7 +28,9 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -267,13 +269,13 @@ implements LoadMonitor<I, O> {
 			countBytesDone = 0;
 		}
 		
-		/* perf trace logging
+		// perf trace logging
 		if(!metricsConfig.getPrecondition()) {
 			logTrace(
 				ioTask.getLoadType(), nodeAddr, item, status, ioTask.getReqTimeStart(), reqDuration,
 				respLatency, countBytesDone, respDataLatency
 			);
-		}*/
+		}
 		
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
@@ -318,14 +320,13 @@ implements LoadMonitor<I, O> {
 			I item;
 			IoTask.Status status;
 			String nodeAddr;
-			int reqDuration, respLatency, respDataLatency = 0;
+			int reqDuration, respLatency, respDataLatency = -1;
 			long countBytesDone = 0;
 			ioTask = ioTasks.get(from);
 			final boolean isDataTransferred = ioTask instanceof DataIoTask;
 			final boolean preconditionFlag = metricsConfig.getPrecondition();
 			final LoadType ioType = ioTask.getLoadType();
 
-			// TODO removing iterator to remove unsuccessful tasks before batch put to the out buff
 			for(int i = from; i < to; i++) {
 				if(i > from) {
 					ioTask = ioTasks.get(i);
@@ -341,13 +342,13 @@ implements LoadMonitor<I, O> {
 					countBytesDone = dataIoTask.getCountBytesDone();
 				}
 
-				/* perf trace logging
+				// perf trace logging
 				if(!preconditionFlag) {
 					logTrace(
 						ioType, nodeAddr, item, status, ioTask.getReqTimeStart(),
 						reqDuration, respLatency, countBytesDone, respDataLatency
 					);
-				}*/
+				}
 
 				if(IoTask.Status.SUCC == status) {
 					// update the metrics with success
@@ -397,34 +398,18 @@ implements LoadMonitor<I, O> {
 		return null;
 	}
 	
-	protected final static ThreadLocal<StringBuilder>
+	private final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
 			return new StringBuilder();
 		}
 	};
-	protected void logTrace(final O ioTask) {
-		final LoadType ioType = ioTask.getLoadType();
-		final String nodeAddr = ioTask.getNodeAddr();
-		final I item = ioTask.getItem();
-		final IoTask.Status status = ioTask.getStatus();
-		final long reqTimeStart = ioTask.getReqTimeStart();
-		final long reqDuration = ioTask.getDuration();
-		final int respLatency = ioTask.getLatency();
-		final String dstPath = ioTask.getDstPath();
-
-		final long countBytesDone;
-		final int respDataLatency;
-		if(ioTask instanceof DataIoTask) {
-			final DataIoTask dataIoTask = (DataIoTask) ioTask;
-			countBytesDone = dataIoTask.getCountBytesDone();
-			respDataLatency = dataIoTask.getDataLatency();
-		} else {
-			countBytesDone = 0;
-			respDataLatency = -1;
-		}
-
+	private void logTrace(
+		final LoadType ioType, final String nodeAddr, final I item, final IoTask.Status status,
+		final long reqTimeStart, final long reqDuration, final int respLatency,
+		final long countBytesDone, final int respDataLatency
+	) {
 		if(LOG.isInfoEnabled(Markers.IO_TRACE)) {
 			final StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
 			strBuilder.setLength(0);
@@ -433,13 +418,7 @@ implements LoadMonitor<I, O> {
 				strBuilder
 					.append(ioType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(
-						dstPath == null ?
-							item.getName() :
-							dstPath.endsWith(SLASH) ?
-								dstPath + item.getName() :
-								dstPath + SLASH + item.getName()
-					)
+					.append(item.getName())
 					.append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
