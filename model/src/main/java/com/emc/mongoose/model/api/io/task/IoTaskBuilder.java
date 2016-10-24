@@ -15,6 +15,8 @@ public interface IoTaskBuilder<I extends Item, O extends IoTask<I>> {
 
 	O getInstance(final I item, final String dstPath);
 
+	List<O> getInstances(final List<I> items, final int from, final int to);
+
 	List<O> getInstances(final List<I> items, String dstPath, final int from, final int to);
 
 	List<O> getInstances(

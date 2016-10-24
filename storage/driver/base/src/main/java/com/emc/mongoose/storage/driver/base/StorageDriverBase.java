@@ -1,11 +1,9 @@
 package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
-
 import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-
 import com.emc.mongoose.model.api.io.Input;
 import com.emc.mongoose.model.api.io.task.IoTask;
 import com.emc.mongoose.model.api.item.Item;
@@ -67,7 +65,16 @@ implements StorageDriver<I, O> {
 		// prepend the path to the item name
 		final String dstPath = ioTask.getDstPath();
 		final I item = ioTask.getItem();
-		if(dstPath != null) {
+		if(dstPath == null) {
+			final String srcPath = ioTask.getSrcPath();
+			if(srcPath != null && !srcPath.isEmpty()) {
+				if(srcPath.endsWith(SLASH)) {
+					item.setName(srcPath + item.getName());
+				} else {
+					item.setName(srcPath + SLASH + item.getName());
+				}
+			}
+		} else {
 			if(dstPath.endsWith(SLASH)) {
 				item.setName(dstPath + item.getName());
 			} else {
@@ -113,7 +120,16 @@ implements StorageDriver<I, O> {
 				ioTask = ioTasks.get(i);
 				dstPath = ioTask.getDstPath();
 				item = ioTask.getItem();
-				if(dstPath != null) {
+				if(dstPath == null) {
+					final String srcPath = ioTask.getSrcPath();
+					if(srcPath != null && !srcPath.isEmpty()) {
+						if(srcPath.endsWith(SLASH)) {
+							item.setName(srcPath + item.getName());
+						} else {
+							item.setName(srcPath + SLASH + item.getName());
+						}
+					}
+				} else {
 					if(dstPath.endsWith(SLASH)) {
 						item.setName(dstPath + item.getName());
 					} else {
@@ -135,7 +151,16 @@ implements StorageDriver<I, O> {
 				ioTask = ioTasks.get(i);
 				dstPath = ioTask.getDstPath();
 				item = ioTask.getItem();
-				if(dstPath != null) {
+				if(dstPath == null) {
+					final String srcPath = ioTask.getSrcPath();
+					if(srcPath != null && !srcPath.isEmpty()) {
+						if(srcPath.endsWith(SLASH)) {
+							item.setName(srcPath + item.getName());
+						} else {
+							item.setName(srcPath + SLASH + item.getName());
+						}
+					}
+				} else {
 					if(dstPath.endsWith(SLASH)) {
 						item.setName(dstPath + item.getName());
 					} else {

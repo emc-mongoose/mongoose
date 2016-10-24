@@ -19,6 +19,17 @@ implements MutableDataIoTaskBuilder<I, O> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
+	public List<O> getInstances(final List<I> items, final int from, final int to) {
+		final List<O> tasks = new ArrayList<>(to - from);
+		for(int i = from; i < to; i ++) {
+			tasks.add(
+				(O) new BasicMutableDataIoTask<>(ioType, items.get(i), srcPath, null, rangesConfig)
+			);
+		}
+		return tasks;
+	}
+
+	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(
 		final List<I> items, final String dstPath, final int from, final int to
 	) {

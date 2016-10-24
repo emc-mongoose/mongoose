@@ -57,10 +57,8 @@ implements StorageDriver<I, O> {
 		openSrcFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
 			final String srcPath = ioTask.getSrcPath();
-			if(srcPath == null) {
-				return null;
-			}
-			final Path srcFilePath = Paths.get(srcPath, fileItem.getName());
+			final Path srcFilePath = srcPath == null ?
+				Paths.get(fileItem.getName()) : Paths.get(srcPath, fileItem.getName());
 			try {
 				return FileChannel.open(srcFilePath, StandardOpenOption.READ);
 			} catch(final IOException e) {
@@ -74,18 +72,25 @@ implements StorageDriver<I, O> {
 		openDstFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
 			final LoadType ioType = ioTask.getLoadType();
-			Path dstPath = Paths.get(ioTask.getDstPath());
+			final String dstPath = ioTask.getDstPath();
+			final Path itemPath;
 			try {
-				if(!Files.exists(dstPath)) {
-					Files.createDirectories(dstPath);
+				if(dstPath == null || dstPath.isEmpty()) {
+					itemPath = Paths.get(fileItem.getName());
+				} else {
+					final Path parentPath = Paths.get(dstPath);
+					if(!Files.exists(parentPath)) {
+						Files.createDirectories(parentPath);
+					}
+					itemPath = Paths.get(dstPath, fileItem.getName());
+
 				}
-				dstPath = Paths.get(dstPath.toString(), fileItem.getName());
 				if(LoadType.CREATE.equals(ioType)) {
 					return FileChannel.open(
-						dstPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE
+						itemPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE
 					);
 				} else {
-					return FileChannel.open(dstPath, StandardOpenOption.WRITE);
+					return FileChannel.open(itemPath, StandardOpenOption.WRITE);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
@@ -332,8 +337,11 @@ implements StorageDriver<I, O> {
 
 	private void invokeDelete(final O ioTask)
 	throws IOException {
-		final Path dstPath = Paths.get(ioTask.getDstPath());
-		Files.delete(dstPath);
+		final String dstPath = ioTask.getDstPath();
+		final I fileItem = ioTask.getItem();
+		Files.delete(
+			dstPath == null ? Paths.get(fileItem.getName()) : Paths.get(dstPath, fileItem.getName())
+		);
 		finishIoTask(ioTask);
 	}
 }

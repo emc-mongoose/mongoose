@@ -13,8 +13,8 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-
 import com.emc.mongoose.model.api.data.DataRangesConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.model.api.io.Input;
@@ -28,10 +28,10 @@ import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.impl.item.BasicItemNameInput;
 import com.emc.mongoose.model.impl.item.NewDataItemInput;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -86,12 +86,6 @@ implements LoadGenerator<I, O>, Output<I> {
 			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 			this.isCircular = loadConfig.getCircular();
 			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
-			final String t = itemConfig.getOutputConfig().getPath();
-			if(t == null || t.isEmpty()) {
-				dstPathInput = new ConstantStringInput(runId);
-			} else {
-				dstPathInput = new RangePatternDefinedInput(t);
-			}
 
 			final NamingConfig namingConfig = itemConfig.getNamingConfig();
 			final ItemNamingType namingType = ItemNamingType.valueOf(
@@ -101,35 +95,72 @@ implements LoadGenerator<I, O>, Output<I> {
 			final int namingLength = namingConfig.getLength();
 			final int namingRadix = namingConfig.getRadix();
 			final long namingOffset = namingConfig.getOffset();
-			final BasicItemNameInput namingInput = new BasicItemNameInput(
+			final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 				namingType, namingPrefix, namingLength, namingRadix, namingOffset
 			);
 			rangesConfig = itemConfig.getDataConfig().getRanges();
 
+			final InputConfig inputConfig = itemConfig.getInputConfig();
+			final String itemInputFile = inputConfig.getFile();
+			final String itemInputPath = inputConfig.getPath();
 			this.ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
+
 			switch(ioType) {
+
 				case CREATE:
-					// TODO copy mode
-					if(itemFactory instanceof BasicMutableDataItemFactory) {
-						final SizeInBytes size = itemConfig.getDataConfig().getSize();
-						this.itemInput = new NewDataItemInput(itemFactory, namingInput, size);
+
+					if(itemInputFile == null || itemInputFile.isEmpty()) {
+						if(itemInputPath == null || itemInputPath.isEmpty()) {
+							if(itemFactory instanceof BasicMutableDataItemFactory) {
+								final SizeInBytes size = itemConfig.getDataConfig().getSize();
+								this.itemInput = new NewDataItemInput(
+									itemFactory, itemNameInput, size
+								);
+							} else {
+								this.itemInput = null; // TODO
+							}
+						} else {
+							// TODO path listing input
+							this.itemInput = null;
+						}
 					} else {
-						this.itemInput = null; // TODO
-					}
-					break;
-				case READ:
-				case UPDATE:
-				case DELETE:
-					final String itemInputFile = itemConfig.getInputConfig().getFile();
-					if(itemInputFile != null && !itemInputFile.isEmpty()) {
 						this.itemInput = new CsvFileItemInput<>(
 							Paths.get(itemInputFile), itemFactory
 						);
-					} else {
-						// TODO use path input
-						this.itemInput = null;
 					}
+
+					final String t = itemConfig.getOutputConfig().getPath();
+					if(t == null || t.isEmpty()) {
+						dstPathInput = new ConstantStringInput(runId);
+					} else {
+						dstPathInput = new RangePatternDefinedInput(t);
+					}
+
 					break;
+
+				case READ:
+				case UPDATE:
+				case DELETE:
+
+					if(itemInputFile == null || itemInputFile.isEmpty()) {
+						if(itemInputPath == null || itemInputPath.isEmpty()) {
+							throw new UserShootHisFootException(
+								"No input (file either path) is specified for non-create generator"
+							);
+						} else {
+							// TODO path listing input
+							this.itemInput = null;
+						}
+					} else {
+						this.itemInput = new CsvFileItemInput<>(
+							Paths.get(itemInputFile), itemFactory
+						);
+					}
+
+					dstPathInput = null;
+
+					break;
+
 				default:
 					throw new UserShootHisFootException();
 			}
@@ -238,7 +269,9 @@ implements LoadGenerator<I, O>, Output<I> {
 		final int n = to - from;
 		if(n > 0) {
 			final List<O> ioTasks;
-			if(dstPathInput instanceof ConstantStringInput) {
+			if(dstPathInput == null) {
+				ioTasks = ioTaskBuilder.getInstances(buffer, from, to);
+			} else if(dstPathInput instanceof ConstantStringInput) {
 				final String dstPath = dstPathInput.get();
 				ioTasks = ioTaskBuilder.getInstances(buffer, dstPath, from, to);
 			} else {
