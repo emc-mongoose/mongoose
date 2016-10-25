@@ -44,4 +44,9 @@ extends HttpStorageDriverBase<I, O> {
 	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
 	}
+	
+	@Override
+	public final String toString() {
+		return "Swift-" + super.toString();
+	}
 }

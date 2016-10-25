@@ -1,5 +1,6 @@
 package com.emc.mongoose.ui.log;
 
+import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.concurrent.Daemon;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -89,7 +90,7 @@ implements ShutdownCallbackRegistry {
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
 	public final static Queue<Daemon> UNCLOSED_REGISTRY = new ConcurrentLinkedQueue<>();
 	//
-	public static String newRunId() {
+	public static String getDateTimeStamp() {
 		return LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
@@ -97,7 +98,7 @@ implements ShutdownCallbackRegistry {
 	//
 	public static String getLogDir() {
 		String logDir = null;
-		final URL logDirUrl = LogUtil.class.getProtectionDomain().getCodeSource().getLocation();
+		final URL logDirUrl = Constants.class.getProtectionDomain().getCodeSource().getLocation();
 		try {
 			logDir = new File(logDirUrl.toURI()).getParent() + File.separatorChar + "log";
 		} catch(final URISyntaxException e) {
@@ -139,7 +140,7 @@ implements ShutdownCallbackRegistry {
 				// set "run.id" property with timestamp value if not set before
 				final String runId = ThreadContext.get(KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
-					ThreadContext.put(KEY_RUN_ID, newRunId());
+					ThreadContext.put(KEY_RUN_ID, getDateTimeStamp());
 				}
 				try {
 					final String log4jConfigurationFile = System.getProperty("log4j.configurationFile");

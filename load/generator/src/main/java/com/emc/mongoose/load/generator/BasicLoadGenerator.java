@@ -131,7 +131,7 @@ implements LoadGenerator<I, O>, Output<I> {
 
 					final String t = itemConfig.getOutputConfig().getPath();
 					if(t == null || t.isEmpty()) {
-						dstPathInput = new ConstantStringInput(runId);
+						dstPathInput = new ConstantStringInput(LogUtil.getDateTimeStamp());
 					} else {
 						dstPathInput = new RangePatternDefinedInput(t);
 					}
@@ -169,8 +169,13 @@ implements LoadGenerator<I, O>, Output<I> {
 		}
 
 		this.ioTaskBuilder = ioTaskBuilder;
-
-		worker = new Thread(new GeneratorTask(), "generator");
+		
+		final String ioStr = ioType.toString();
+		worker = new Thread(
+			new GeneratorTask(),
+			Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
+				(countLimit > 0 ? Long.toString(countLimit) : "")
+		);
 		worker.setDaemon(true);
 	}
 
@@ -336,5 +341,10 @@ implements LoadGenerator<I, O>, Output<I> {
 		if(itemInput != null) {
 			itemInput.close();
 		}
+	}
+	
+	@Override
+	public final String toString() {
+		return worker.getName();
 	}
 }

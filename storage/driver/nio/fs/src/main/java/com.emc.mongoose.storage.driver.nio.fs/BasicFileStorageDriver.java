@@ -21,19 +21,25 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.spi.FileSystemProvider;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import static java.io.File.separatorChar;
 
 /**
  Created by kurila on 19.07.16.
@@ -43,24 +49,49 @@ extends NioStorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
+	private final static FileSystem FS = FileSystems.getDefault();
+	private final static FileSystemProvider FS_PROVIDER = FS.provider();
+	private final static Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
+		{
+			add(StandardOpenOption.CREATE_NEW);
+			add(StandardOpenOption.WRITE);
+		}
+	};
+	private final static Set<OpenOption> READ_OPEN_OPT = new HashSet<OpenOption>() {
+		{
+			add(StandardOpenOption.READ);
+		}
+	};
+	private final static Set<OpenOption> WRITE_OPEN_OPT = new HashSet<OpenOption>() {
+		{
+			add(StandardOpenOption.WRITE);
+		}
+	};
 
 	private final Map<O, FileChannel> srcOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openSrcFileFunc;
+	
+	private final Map<String, File> dstParentDirs = new ConcurrentHashMap<>();
+	private final Function<String, File> createParentDirFunc;
 	private final Map<O, FileChannel> dstOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openDstFileFunc;
-
+	
 	public BasicFileStorageDriver(
 		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
 		super(runId, authConfig, loadConfig, verifyFlag);
+		
 		openSrcFileFunc = ioTask -> {
-			final I fileItem = ioTask.getItem();
 			final String srcPath = ioTask.getSrcPath();
-			final Path srcFilePath = srcPath == null ?
-				Paths.get(fileItem.getName()) : Paths.get(srcPath, fileItem.getName());
+			if(srcPath == null) {
+				return null;
+			}
+			final I fileItem = ioTask.getItem();
+			final Path srcFilePath = srcPath.isEmpty() ?
+				FS.getPath(fileItem.getName()) : FS.getPath(srcPath, fileItem.getName());
 			try {
-				return FileChannel.open(srcFilePath, StandardOpenOption.READ);
+				return FS_PROVIDER.newFileChannel(srcFilePath, READ_OPEN_OPT);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to open the source channel for the path @ \"{}\"",
@@ -69,6 +100,19 @@ implements StorageDriver<I, O> {
 				return null;
 			}
 		};
+		
+		createParentDirFunc = parentPath -> {
+			try {
+				final File parentDir = FS.getPath(parentPath).toFile();
+				if(!parentDir.exists()) {
+					parentDir.mkdirs();
+				}
+				return parentDir;
+			} catch(final Exception e) {
+				return null;
+			}
+		};
+		
 		openDstFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
 			final LoadType ioType = ioTask.getLoadType();
@@ -76,21 +120,16 @@ implements StorageDriver<I, O> {
 			final Path itemPath;
 			try {
 				if(dstPath == null || dstPath.isEmpty()) {
-					itemPath = Paths.get(fileItem.getName());
+					itemPath = FS.getPath(fileItem.getName());
 				} else {
-					final Path parentPath = Paths.get(dstPath);
-					if(!Files.exists(parentPath)) {
-						Files.createDirectories(parentPath);
-					}
-					itemPath = Paths.get(dstPath, fileItem.getName());
+					dstParentDirs.computeIfAbsent(dstPath, createParentDirFunc);
+					itemPath = FS.getPath(dstPath, fileItem.getName());
 
 				}
 				if(LoadType.CREATE.equals(ioType)) {
-					return FileChannel.open(
-						itemPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE
-					);
+					return FS_PROVIDER.newFileChannel(itemPath, CREATE_OPEN_OPT);
 				} else {
-					return FileChannel.open(itemPath, StandardOpenOption.WRITE);
+					return FS_PROVIDER.newFileChannel(itemPath, WRITE_OPEN_OPT);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
@@ -120,6 +159,7 @@ implements StorageDriver<I, O> {
 			final I item = ioTask.getItem();
 
 			switch(ioType) {
+				
 				case CREATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
@@ -129,6 +169,7 @@ implements StorageDriver<I, O> {
 						invokeCreate(item, ioTask, dstChannel);
 					}
 					break;
+				
 				case READ:
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(verifyFlag) {
@@ -146,13 +187,16 @@ implements StorageDriver<I, O> {
 						invokeRead(item, ioTask, srcChannel);
 					}
 					break;
+				
 				case UPDATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					invokeUpdate(item, ioTask, dstChannel);
 					break;
+				
 				case DELETE:
 					invokeDelete(ioTask);
 					break;
+				
 				default:
 					ioTask.setStatus(Status.FAIL_UNKNOWN);
 					LOG.fatal(Markers.ERR, "Unknown load type \"{}\"", ioType);
@@ -343,5 +387,10 @@ implements StorageDriver<I, O> {
 			dstPath == null ? Paths.get(fileItem.getName()) : Paths.get(dstPath, fileItem.getName())
 		);
 		finishIoTask(ioTask);
+	}
+	
+	@Override
+	public final String toString() {
+		return "FS-" + super.toString();
 	}
 }

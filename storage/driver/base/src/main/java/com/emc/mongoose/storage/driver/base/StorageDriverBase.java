@@ -49,6 +49,11 @@ implements StorageDriver<I, O> {
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
 	}
+	
+	@Override
+	public int getConcurrencyLevel() {
+		return concurrencyLevel;
+	}
 
 	@Override
 	public final void register(final LoadMonitor<I, O> monitor)
@@ -116,6 +121,7 @@ implements StorageDriver<I, O> {
 		I item;
 
 		if(isCircular) {
+			
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
 				dstPath = ioTask.getDstPath();
@@ -146,7 +152,9 @@ implements StorageDriver<I, O> {
 					LOG, Level.WARN, e, "Failed to reschedule {} I/O tasks", to - from
 				);
 			}
+			
 		} else {
+			
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
 				dstPath = ioTask.getDstPath();
@@ -200,5 +208,10 @@ implements StorageDriver<I, O> {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		monitorRef.set(null);
+	}
+	
+	@Override
+	public String toString() {
+		return concurrencyLevel + '-' + runId;
 	}
 }

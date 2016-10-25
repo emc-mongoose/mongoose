@@ -164,4 +164,9 @@ extends HttpStorageDriverBase<I, O> {
 		sigData = mac.doFinal(canonicalForm.getBytes());
 		return BASE64_ENCODER.encodeToString(sigData);
 	}
+	
+	@Override
+	public final String toString() {
+		return "S3-" + super.toString();
+	}
 }

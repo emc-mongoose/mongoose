@@ -28,16 +28,15 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
-
-import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
+import java.util.function.Function;
 
 /**
  Created by kurila on 12.07.16.
@@ -58,8 +57,11 @@ implements LoadMonitor<I, O> {
 	private final ItemBuffer<I> itemOutBuff;
 	private final Thread worker;
 
-	private final IoStats ioStats, medIoStats;
-	private volatile IoStats.Snapshot lastStats = null;
+	private final Map<LoadType, IoStats>
+		ioStats = new ConcurrentHashMap<>(),
+		medIoStats = new ConcurrentHashMap<>();
+	private volatile Map<LoadType, IoStats.Snapshot> lastStats = new ConcurrentHashMap<>();
+	private final Function<LoadType, IoStats> ioStatsInitFunc;
 	private final AtomicLong counterResults = new AtomicLong(0);
 	private volatile Output<I> itemOutput;
 	private volatile boolean isPostProcessDone = false;
@@ -73,9 +75,8 @@ implements LoadMonitor<I, O> {
 		this.drivers = drivers;
 		registerDrivers(drivers);
 		this.metricsConfig = loadConfig.getMetricsConfig();
-		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
-		this.ioStats = new BasicIoStats(name, metricsPeriosSec);
-		this.medIoStats = new BasicIoStats(name, metricsPeriosSec);
+		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
+		ioStatsInitFunc = ioType -> new BasicIoStats(ioType.toString(), metricsPeriodSec);
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		if(limitConfig.getCount() > 0) {
 			countLimit = limitConfig.getCount();
@@ -87,7 +88,7 @@ implements LoadMonitor<I, O> {
 		} else {
 			sizeLimit = Long.MAX_VALUE;
 		}
-		this.worker = new Thread(new ServiceTask(metricsPeriosSec), name);
+		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
@@ -125,7 +126,9 @@ implements LoadMonitor<I, O> {
 				while(!worker.isInterrupted()) {
 					nextNanoTimeStamp = System.nanoTime();
 					// refresh the stats
-					lastStats = ioStats.getSnapshot();
+					for(final LoadType nextIoType : ioStats.keySet()) {
+						lastStats.put(nextIoType, ioStats.get(nextIoType).getSnapshot());
+					}
 					//
 					postProcessItems();
 					// output the current measurements periodically
@@ -254,6 +257,7 @@ implements LoadMonitor<I, O> {
 			return;
 		}
 		final I item = ioTask.getItem();
+		final LoadType ioType = ioTask.getLoadType();
 		final IoTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		final int reqDuration = ioTask.getDuration();
@@ -272,16 +276,19 @@ implements LoadMonitor<I, O> {
 		// perf trace logging
 		if(!metricsConfig.getPrecondition()) {
 			logTrace(
-				ioTask.getLoadType(), nodeAddr, item, status, ioTask.getReqTimeStart(), reqDuration,
+				ioType, nodeAddr, item, status, ioTask.getReqTimeStart(), reqDuration,
 				respLatency, countBytesDone, respDataLatency
 			);
 		}
 		
+		final IoStats loadTypeStats = ioStats.computeIfAbsent(ioType, ioStatsInitFunc);
+		final IoStats loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
+		
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
-			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
-			if(medIoStats != null && medIoStats.isStarted()) {
-				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+			loadTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+			if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
+				loadTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 			}
 			// TODO set the destination item path
 			// put into the output buffer
@@ -294,9 +301,9 @@ implements LoadMonitor<I, O> {
 				);
 			}
 		} else {
-			ioStats.markFail();
-			if(medIoStats != null && medIoStats.isStarted()) {
-				medIoStats.markFail();
+			loadTypeStats.markFail();
+			if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
+				loadTypeMedStats.markFail();
 			}
 		}
 		
@@ -325,7 +332,8 @@ implements LoadMonitor<I, O> {
 			ioTask = ioTasks.get(from);
 			final boolean isDataTransferred = ioTask instanceof DataIoTask;
 			final boolean preconditionFlag = metricsConfig.getPrecondition();
-			final LoadType ioType = ioTask.getLoadType();
+			LoadType ioType;
+			IoStats loadTypeStats, loadTypeMedStats;
 
 			for(int i = from; i < to; i++) {
 				if(i > from) {
@@ -343,13 +351,17 @@ implements LoadMonitor<I, O> {
 				}
 
 				// perf trace logging
+				ioType = ioTask.getLoadType();
 				if(!preconditionFlag) {
 					logTrace(
 						ioType, nodeAddr, item, status, ioTask.getReqTimeStart(),
 						reqDuration, respLatency, countBytesDone, respDataLatency
 					);
 				}
-
+				
+				loadTypeStats = ioStats.computeIfAbsent(ioType, ioStatsInitFunc);
+				loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
+				
 				if(IoTask.Status.SUCC == status) {
 					// update the metrics with success
 					if(respLatency > 0 && respLatency > reqDuration) {
@@ -358,9 +370,9 @@ implements LoadMonitor<I, O> {
 							reqDuration
 						);
 					}
-					ioStats.markSucc(countBytesDone, reqDuration, respLatency);
-					if(medIoStats != null && medIoStats.isStarted()) {
-						medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+					loadTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
+						loadTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 					}
 					// TODO set the destination item path
 					// put into the output buffer
@@ -373,9 +385,9 @@ implements LoadMonitor<I, O> {
 						);
 					}
 				} else {
-					ioStats.markFail();
-					if(medIoStats != null && medIoStats.isStarted()) {
-						medIoStats.markFail();
+					loadTypeStats.markFail();
+					if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
+						loadTypeMedStats.markFail();
 					}
 				}
 			}
@@ -432,11 +444,6 @@ implements LoadMonitor<I, O> {
 	}
 
 	@Override
-	public final IoStats.Snapshot getIoStatsSnapshot() {
-		return ioStats.getSnapshot();
-	}
-
-	@Override
 	public final String getName() {
 		return name;
 	}
@@ -468,7 +475,9 @@ implements LoadMonitor<I, O> {
 			}
 		}
 		if(ioStats != null) {
-			ioStats.start();
+			for(final LoadType ioType : ioStats.keySet()) {
+				ioStats.get(ioType).start();
+			}
 		}
 		worker.start();
 	}

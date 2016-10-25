@@ -42,7 +42,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final String getName()
 	throws RemoteException {
-		return driver.getClass().getSimpleName() + "/" + runId;
+		return driver.toString();
 	}
 
 	@Override
@@ -155,7 +155,12 @@ implements StorageDriverSvc<I, O> {
 	throws IOException {
 		throw new RemoteException();
 	}
-
+	
+	@Override
+	public final int getConcurrencyLevel() {
+		return driver.getConcurrencyLevel();
+	}
+	
 	@Override
 	public final void register(final LoadMonitor<I, O> monitor)
 	throws RemoteException {
