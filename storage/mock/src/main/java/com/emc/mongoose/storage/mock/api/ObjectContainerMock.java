@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.api;
 
 import com.emc.mongoose.common.collection.Listable;
-import com.emc.mongoose.model.api.item.MutableDataItem;
+import com.emc.mongoose.model.item.MutableDataItem;
 
 import java.io.Closeable;
 import java.util.Collection;

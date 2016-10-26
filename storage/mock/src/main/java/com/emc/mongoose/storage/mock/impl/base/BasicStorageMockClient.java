@@ -4,7 +4,7 @@ import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;

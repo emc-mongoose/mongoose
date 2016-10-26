@@ -1,24 +1,27 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
-import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.Output;
-import com.emc.mongoose.model.api.item.ItemBuffer;
-import com.emc.mongoose.model.impl.item.LimitedQueueItemBuffer;
-import com.emc.mongoose.model.impl.metrics.BasicIoStats;
-import com.emc.mongoose.model.api.LoadType;
+import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageCsv;
+import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageTable;
+import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.model.item.ItemBuffer;
+import com.emc.mongoose.model.item.LimitedQueueItemBuffer;
+import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
+import com.emc.mongoose.model.load.LoadType;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.model.api.io.task.DataIoTask;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.api.load.LoadMonitor;
-import com.emc.mongoose.model.api.metrics.IoStats;
+import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.load.LoadGenerator;
+import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +37,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
@@ -62,7 +65,7 @@ implements LoadMonitor<I, O> {
 		medIoStats = new ConcurrentHashMap<>();
 	private volatile Map<LoadType, IoStats.Snapshot> lastStats = new ConcurrentHashMap<>();
 	private final Function<LoadType, IoStats> ioStatsInitFunc;
-	private final AtomicLong counterResults = new AtomicLong(0);
+	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<I> itemOutput;
 	private volatile boolean isPostProcessDone = false;
 	
@@ -133,7 +136,13 @@ implements LoadMonitor<I, O> {
 					postProcessItems();
 					// output the current measurements periodically
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						LOG.info(Markers.METRICS_PERIODIC, lastStats.toString());
+						LOG.info(
+							Markers.METRICS_PERIODIC_STDOUT,
+							new MetricsLogMessageTable(name, lastStats)
+						);
+						LOG.info(
+							Markers.METRICS_PERIODIC_FILE, new MetricsLogMessageCsv(lastStats)
+						);
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
 					LockSupport.parkNanos(1_000_000);
@@ -144,7 +153,7 @@ implements LoadMonitor<I, O> {
 		}
 	}
 	
-	protected void postProcessItems()
+	private void postProcessItems()
 	throws InterruptedException {
 		final List<I> items = new ArrayList<>(batchSize);
 		try {
@@ -179,15 +188,35 @@ implements LoadMonitor<I, O> {
 		}
 	}
 	
-	protected final boolean isDoneCountLimit() {
-		return countLimit > 0 && (
-			counterResults.get() >= countLimit ||
-			lastStats.getSuccCount() + lastStats.getFailCount() >= countLimit
-		);
+	private boolean isDoneCountLimit() {
+		if(countLimit > 0) {
+			if(counterResults.sum() >= countLimit) {
+				return true;
+			}
+			long succCountSum = 0;
+			long failCountSum = 0;
+			for(final LoadType ioType : lastStats.keySet()) {
+				succCountSum += lastStats.get(ioType).getSuccCount();
+				failCountSum += lastStats.get(ioType).getSuccCount();
+				if(succCountSum + failCountSum >= countLimit) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
-	protected final boolean isDoneSizeLimit() {
-		return sizeLimit > 0 && lastStats.getByteCount() >= sizeLimit;
+	private boolean isDoneSizeLimit() {
+		if(sizeLimit > 0) {
+			long sizeSum = 0;
+			for(final LoadType ioType : lastStats.keySet()) {
+				sizeSum += lastStats.get(ioType).getByteCount();
+				if(sizeSum >= sizeLimit) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private boolean isDone() {
@@ -307,7 +336,7 @@ implements LoadMonitor<I, O> {
 			}
 		}
 		
-		counterResults.incrementAndGet();
+		counterResults.increment();
 	}
 
 	@Override
@@ -392,7 +421,7 @@ implements LoadMonitor<I, O> {
 				}
 			}
 
-			counterResults.addAndGet(n);
+			counterResults.add(n);
 		}
 
 		return n;
@@ -587,13 +616,25 @@ implements LoadMonitor<I, O> {
 		}
 		drivers.clear();
 
-		LOG.info(Markers.METRICS_TOTAL, "Total: {}", lastStats.toSummaryString());
-		if(ioStats != null) {
-			ioStats.close();
+		LOG.info(
+			Markers.METRICS_TOTAL_STDOUT, new MetricsLogMessageTable(name, lastStats)
+		);
+		LOG.info(
+			Markers.METRICS_TOTAL_FILE, new MetricsLogMessageCsv(lastStats)
+		);
+		
+		for(final IoStats nextStats : ioStats.values()) {
+			nextStats.close();
 		}
+		ioStats.clear();
+		
 		if(medIoStats != null) {
-			medIoStats.close();
+			for(final IoStats nextMedStats : medIoStats.values()) {
+				nextMedStats.close();
+			}
+			medIoStats.clear();
 		}
+		
 		if(itemOutput != null) {
 			itemOutput.close();
 		}

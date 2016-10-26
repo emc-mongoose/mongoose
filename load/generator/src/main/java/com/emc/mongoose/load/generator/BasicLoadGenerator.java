@@ -3,31 +3,31 @@ package com.emc.mongoose.load.generator;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.model.api.io.Output;
-import com.emc.mongoose.model.impl.io.ConstantStringInput;
-import com.emc.mongoose.model.impl.item.CsvFileItemInput;
-import com.emc.mongoose.model.api.ItemNamingType;
-import com.emc.mongoose.model.api.LoadType;
+import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.model.io.ConstantStringInput;
+import com.emc.mongoose.model.item.CsvFileItemInput;
+import com.emc.mongoose.model.item.ItemNamingType;
+import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import com.emc.mongoose.model.api.data.DataRangesConfig;
+import com.emc.mongoose.model.data.DataRangesConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
-import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
-import com.emc.mongoose.model.impl.item.BasicItemNameInput;
-import com.emc.mongoose.model.impl.item.NewDataItemInput;
+import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.load.LoadGenerator;
+import com.emc.mongoose.model.io.RangePatternDefinedInput;
+import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
+import com.emc.mongoose.model.item.BasicItemNameInput;
+import com.emc.mongoose.model.item.NewDataItemInput;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -70,6 +70,7 @@ implements LoadGenerator<I, O>, Output<I> {
 
 	private long producedItemsCount = 0;
 
+	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final String runId, final List<StorageDriver<I, O>> drivers,
 		final ItemFactory<I> itemFactory, final IoTaskBuilder<I, O> ioTaskBuilder,
@@ -304,7 +305,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	}
 
 	private final AtomicLong rrc = new AtomicLong(0);
-	protected StorageDriver<I, O> getNextDriver() {
+	private StorageDriver<I, O> getNextDriver() {
 		if(drivers.isEmpty()) {
 			return null;
 		} else {

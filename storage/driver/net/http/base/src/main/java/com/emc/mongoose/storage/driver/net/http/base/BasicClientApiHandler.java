@@ -1,18 +1,18 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
-import com.emc.mongoose.model.api.io.task.DataIoTask;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.LoadType;
+import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_TIMEOUT;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_AUTH;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_CLIENT;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SPACE;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.RESP_FAIL_SVC;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_TIMEOUT;
+import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
+import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_AUTH;
+import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_CLIENT;
+import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
+import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SPACE;
+import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SVC;
+import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 
 import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;

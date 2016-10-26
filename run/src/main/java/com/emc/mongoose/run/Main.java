@@ -3,18 +3,18 @@ package com.emc.mongoose.run;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
-import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.api.io.Output;
-import com.emc.mongoose.model.api.item.ItemType;
-import com.emc.mongoose.model.api.load.LoadMonitor;
-import com.emc.mongoose.model.impl.data.ContentSourceUtil;
-import com.emc.mongoose.model.impl.io.task.BasicIoTaskBuilder;
-import com.emc.mongoose.model.impl.io.task.BasicMutableDataIoTaskBuilder;
-import com.emc.mongoose.model.impl.item.CsvFileItemOutput;
-import com.emc.mongoose.model.api.LoadType;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.model.item.ItemType;
+import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.model.data.ContentSourceUtil;
+import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
+import com.emc.mongoose.model.io.task.BasicMutableDataIoTaskBuilder;
+import com.emc.mongoose.model.item.CsvFileItemOutput;
+import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
-import com.emc.mongoose.model.api.storage.StorageDriverSvc;
+import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
@@ -30,11 +30,11 @@ import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.load.generator.BasicLoadGenerator;
-import com.emc.mongoose.model.api.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.api.load.LoadGenerator;
-import com.emc.mongoose.model.impl.item.BasicMutableDataItemFactory;
+import com.emc.mongoose.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.load.LoadGenerator;
+import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -59,6 +59,7 @@ public class Main {
 		LogUtil.init();
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void main(final String... args)
 	throws IOException, InterruptedException, UserShootHisFootException, InvocationTargetException,
 		IllegalAccessException {

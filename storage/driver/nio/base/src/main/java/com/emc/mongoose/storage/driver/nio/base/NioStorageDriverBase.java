@@ -2,9 +2,9 @@ package com.emc.mongoose.storage.driver.nio.base;
 
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.storage.StorageDriver;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
@@ -38,6 +38,7 @@ implements StorageDriver<I, O> {
 	private final WorkerTask ioWorkerTasks[];
 	private final BlockingQueue<O> ioTaskQueues[];
 
+	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
 		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag

@@ -1,18 +1,18 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.api.io.task.DataIoTask;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.impl.data.DataCorruptionException;
-import com.emc.mongoose.model.impl.data.DataSizeException;
-import com.emc.mongoose.model.impl.data.DataVerificationException;
+import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.MutableDataItem;
+import com.emc.mongoose.model.data.DataCorruptionException;
+import com.emc.mongoose.model.data.DataSizeException;
+import com.emc.mongoose.model.data.DataVerificationException;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.model.api.io.task.IoTask.Status.FAIL_UNKNOWN;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
+import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.ByteBuf;
@@ -44,7 +44,7 @@ extends SimpleChannelInboundHandler<M> {
 		this.verifyFlag = verifyFlag;
 	}
 	
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected final void channelRead0(final ChannelHandlerContext ctx, final M msg)
 	throws Exception {
 		final Channel channel = ctx.channel();

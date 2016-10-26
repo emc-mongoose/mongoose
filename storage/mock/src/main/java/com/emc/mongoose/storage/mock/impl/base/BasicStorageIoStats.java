@@ -2,17 +2,17 @@ package com.emc.mongoose.storage.mock.impl.base;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
-import com.emc.mongoose.model.api.metrics.IoStats;
-import com.emc.mongoose.model.impl.metrics.CustomMeter;
-import com.emc.mongoose.model.impl.metrics.ResumableUserTimeClock;
+import com.emc.mongoose.common.Constants;
+import com.emc.mongoose.model.metrics.CustomMeter;
+import com.emc.mongoose.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -155,11 +155,11 @@ implements StorageIoStats {
 			//
 			tpWrite.getCount(), countFailWrite.getCount(),
 			tpWrite.getMeanRate(), tpWrite.getLastRate(),
-			bwWrite.getMeanRate() / IoStats.MIB, bwWrite.getLastRate() / IoStats.MIB,
+			bwWrite.getMeanRate() / Constants.MIB, bwWrite.getLastRate() / Constants.MIB,
 			//
 			tpRead.getCount(), countFailRead.getCount(),
 			tpRead.getMeanRate(), tpRead.getLastRate(),
-			bwRead.getMeanRate() / IoStats.MIB, bwRead.getLastRate() / IoStats.MIB,
+			bwRead.getMeanRate() / Constants.MIB, bwRead.getLastRate() / Constants.MIB,
 			//
 			tpDelete.getCount(), countFailDelete.getCount(),
 			tpDelete.getMeanRate(), tpDelete.getLastRate()

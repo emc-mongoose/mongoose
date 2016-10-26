@@ -1,12 +1,11 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientApiHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 
-import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_X_AMZ_COPY_SOURCE;

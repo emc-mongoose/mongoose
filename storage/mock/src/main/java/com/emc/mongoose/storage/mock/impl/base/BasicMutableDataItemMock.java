@@ -1,13 +1,13 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
-import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.impl.item.BasicMutableDataItem;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.item.BasicMutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 
 public class BasicMutableDataItemMock
 extends BasicMutableDataItem

@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
-import static com.emc.mongoose.model.api.io.task.IoTask.SLASH;
+import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.api.load.LoadMonitor;
+import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

@@ -2,10 +2,10 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.net.ssl.SslContext;
-import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.impl.io.UniformOptionSelector;
+import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;

@@ -9,9 +9,12 @@ public interface Markers {
 	//
 	Marker MSG = MarkerManager.getMarker("msg");
 	Marker ERR = MarkerManager.getMarker("err");
-	Marker METRICS_PERIODIC = MarkerManager.getMarker("metricsPeriodic");
-	Marker METRICS_TOTAL = MarkerManager.getMarker("metricsTotal");
-	Marker METRICS_MED = MarkerManager.getMarker("metricsMed");
+	Marker METRICS_PERIODIC_STDOUT = MarkerManager.getMarker("metricsPeriodicStdout");
+	Marker METRICS_TOTAL_STDOUT = MarkerManager.getMarker("metricsTotalStdout");
+	Marker METRICS_MED_STDOUT = MarkerManager.getMarker("metricsMedStdout");
+	Marker METRICS_PERIODIC_FILE = MarkerManager.getMarker("metricsPeriodicFile");
+	Marker METRICS_TOTAL_FILE = MarkerManager.getMarker("metricsTotalFile");
+	Marker METRICS_MED_FILE = MarkerManager.getMarker("metricsMedFile");
 	Marker IO_TRACE = MarkerManager.getMarker("ioTrace");
 	Marker CFG = MarkerManager.getMarker("cfg");
 }

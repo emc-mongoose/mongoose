@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
-import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.impl.item.BasicDataItem;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.MutableDataItem;
+import com.emc.mongoose.model.item.BasicDataItem;
 
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import static java.lang.Math.min;
 
 public final class UpdatedFullDataFileRegion<I extends MutableDataItem>

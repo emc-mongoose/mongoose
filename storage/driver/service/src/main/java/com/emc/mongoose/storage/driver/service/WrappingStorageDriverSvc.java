@@ -1,16 +1,16 @@
 package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.api.io.Input;
-import com.emc.mongoose.model.api.io.task.DataIoTask;
-import com.emc.mongoose.model.api.io.task.IoTask;
-import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.api.item.Item;
-import com.emc.mongoose.model.api.load.LoadMonitor;
-import com.emc.mongoose.model.api.load.LoadMonitorSvc;
-import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.api.storage.StorageDriverSvc;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.model.load.LoadMonitorSvc;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

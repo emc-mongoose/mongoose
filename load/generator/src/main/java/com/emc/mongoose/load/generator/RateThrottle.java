@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.item.Item;
 
 import java.util.concurrent.TimeUnit;
 /**

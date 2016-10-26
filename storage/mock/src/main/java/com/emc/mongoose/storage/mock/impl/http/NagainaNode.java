@@ -4,7 +4,7 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.common.net.NetUtil;
-import com.emc.mongoose.model.api.data.ContentSource;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;

@@ -2,9 +2,9 @@ package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.collection.ListingLRUMap;
 import com.emc.mongoose.common.concurrent.DaemonBase;
-import com.emc.mongoose.model.api.data.ContentSource;
-import com.emc.mongoose.model.api.item.ItemFactory;
-import com.emc.mongoose.model.impl.item.CsvFileItemInput;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
@@ -33,8 +33,7 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created on 19.07.16.
@@ -274,14 +273,14 @@ implements StorageMock<I> {
 				return;
 			}
 			
-			final AtomicLong count = new AtomicLong(0);
+			final LongAdder count = new LongAdder();
 			List<I> buff;
 			int n;
 			final Thread displayProgressThread = new Thread(
 				() -> {
 					try {
 						while(true) {
-							LOG.info(Markers.MSG, "{} items loaded...", count.get());
+							LOG.info(Markers.MSG, "{} items loaded...", count.sum());
 							TimeUnit.SECONDS.sleep(10);
 						}
 					} catch(final InterruptedException e) {
@@ -301,13 +300,15 @@ implements StorageMock<I> {
 					n = csvFileItemInput.get(buff, 4096);
 					if(n > 0) {
 						putIntoDefaultContainer(buff);
-						count.addAndGet(n);
+						count.add(n);
 					} else {
 						break;
 					}
 				} while(true);
 			} catch(final EOFException e) {
-				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, itemInputFile);
+				LOG.info(
+					Markers.MSG, "Loaded {} data items from file {}", count.sum(), itemInputFile
+				);
 			} catch(final IOException | NoSuchMethodException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to load the data items from file \"{}\"",

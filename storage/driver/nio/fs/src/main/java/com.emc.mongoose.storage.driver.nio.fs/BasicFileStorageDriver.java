@@ -1,16 +1,16 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
-import static com.emc.mongoose.model.api.io.task.IoTask.Status;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeCount;
-import static com.emc.mongoose.model.api.item.MutableDataItem.getRangeOffset;
+import static com.emc.mongoose.model.io.task.IoTask.Status;
+import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
+import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.api.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.api.item.DataItem;
-import com.emc.mongoose.model.api.item.MutableDataItem;
-import com.emc.mongoose.model.api.storage.StorageDriver;
-import com.emc.mongoose.model.impl.data.DataCorruptionException;
-import com.emc.mongoose.model.impl.data.DataSizeException;
-import com.emc.mongoose.model.api.LoadType;
+import com.emc.mongoose.model.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.MutableDataItem;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.data.DataCorruptionException;
+import com.emc.mongoose.model.data.DataSizeException;
+import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;

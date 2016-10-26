@@ -6,7 +6,7 @@ import java.io.Closeable;
  Created on 19.07.16.
  */
 public interface StorageIoStats
-	extends Runnable, Closeable {
+extends Runnable, Closeable {
 
 	enum IoType {WRITE, READ, DELETE}
 

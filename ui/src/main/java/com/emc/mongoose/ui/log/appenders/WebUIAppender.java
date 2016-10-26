@@ -34,7 +34,7 @@ extends AbstractAppender {
 	//
 	private static final List<String> markerNames = Collections.unmodifiableList(Arrays.asList(
 		Markers.MSG.getName(), Markers.ERR.getName(),
-			Markers.METRICS_PERIODIC.getName(), Markers.METRICS_TOTAL.getName()));
+			Markers.METRICS_PERIODIC_STDOUT.getName(), Markers.METRICS_TOTAL_STDOUT.getName()));
 	//
 	public static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();

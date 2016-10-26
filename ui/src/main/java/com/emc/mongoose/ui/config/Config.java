@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.model.api.data.DataRangesConfig;
+import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
