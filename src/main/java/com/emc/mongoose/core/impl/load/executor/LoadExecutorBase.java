@@ -68,11 +68,12 @@ extends BasicItemGenerator<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static DateFormat FMT_DATE_RESULTS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss") {
-		{
-			setTimeZone(TimeZone.getTimeZone("UTC"));
-		}
-	};
+	protected final static DateFormat
+		FMT_DATE_RESULTS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss") {
+			{
+				setTimeZone(TimeZone.getTimeZone("UTC"));
+			}
+		};
 	//
 	protected final int instanceNum, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -307,10 +308,13 @@ implements LoadExecutor<T> {
 			}
 		} else {
 			final String runId = appConfig.getRunId();
-			String loadJobName = LoadExecutorBase.this.getName();
+			String loadJobName = getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
-				if(!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
+				if(
+					!appConfig.getLoadMetricsPrecondition() &&
+					!appConfig.getRunMode().equals(RUN_MODE_SERVER)
+				) { // todo make some webui flag here
 					try {
 						ChartUtil.addCharts(runId, loadJobName, lastStats);
 					} catch(final Exception e) {
@@ -334,6 +338,7 @@ implements LoadExecutor<T> {
 				ThreadContext.put(
 					"end.time", Long.toString(TimeUnit.MILLISECONDS.toSeconds(endTimeMillis))
 				);
+				ThreadContext.put("total.threads", Long.toString(totalThreadCount));
 				LOG.info(
 					logMarker, "\"{}\" summary: {}", getName(),
 					lastStats == null ? null : lastStats.toSummaryString()
@@ -411,7 +416,7 @@ implements LoadExecutor<T> {
 		//
 		this.appConfig = appConfig;
 		this.instanceNum = instanceNum;
-		storageNodeCount = addrs == null ? 0 : addrs.length;
+		storageNodeCount = addrs == null ? 1 : addrs.length;
 		//
 		setName(name);
 		if(itemInput != null) {
@@ -689,7 +694,7 @@ implements LoadExecutor<T> {
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
-			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
+			null : storageNodeAddrs.length > 0 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 		final IoTask<T> ioTask = getIoTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		try {
@@ -720,7 +725,7 @@ implements LoadExecutor<T> {
 			} else {
 				// select the target node
 				final String nextNodeAddr = storageNodeAddrs == null ?
-					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
+					null : storageNodeAddrs.length > 0 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IoTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
 				getIoTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);

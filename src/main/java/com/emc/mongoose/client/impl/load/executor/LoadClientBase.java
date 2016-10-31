@@ -18,6 +18,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.load.tasks.processors.ChartUtil;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -26,10 +27,13 @@ import com.emc.mongoose.client.impl.load.model.metrics.DistributedIoStats;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +48,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.emc.mongoose.common.conf.Constants.RUN_MODE_SERVER;
 /**
  Created by kurila on 20.10.14.
  */
@@ -727,5 +733,68 @@ implements LoadClient<T, W> {
 		}
 
 		return loadSvcAddrs.isEmpty();
+	}
+
+	@Override
+	public void logMetrics(final Marker logMarker) {
+		if(preconditionFlag) {
+			if(Markers.PERF_AVG.equals(logMarker)) {
+				LOG.info(Markers.MSG, lastStats == null ? null : lastStats.toString());
+			} else if(Markers.PERF_MED.equals(logMarker)) {
+				LOG.info(
+					Markers.MSG, "\"{}\" intermediate: {}", getName(),
+					medIoStats.getSnapshot().toSummaryString()
+				);
+			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				LOG.info(
+					Markers.MSG, "\"{}\" summary: {}", getName(),
+					lastStats == null ? null : lastStats.toSummaryString()
+				);
+			}
+		} else {
+			final String runId = appConfig.getRunId();
+			String loadJobName = getName();
+			if(Markers.PERF_AVG.equals(logMarker)) {
+				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
+				if(
+					!appConfig.getLoadMetricsPrecondition() &&
+						!appConfig.getRunMode().equals(RUN_MODE_SERVER)
+					) { // todo make some webui flag here
+					try {
+						ChartUtil.addCharts(runId, loadJobName, lastStats);
+					} catch(final Exception e) {
+						LogUtil.exception(LOG, Level.WARN, e, "ChartUtil failure");
+						e.printStackTrace(System.out);
+					}
+				}
+			} else if(Markers.PERF_MED.equals(logMarker)) {
+				LOG.info(
+					logMarker, "\"{}\" intermediate: {}", getName(),
+					medIoStats == null ? null : medIoStats.getSnapshot().toSummaryString()
+				);
+			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				final long startTimeMillis = lastStats.getStartTimeMilliSec();
+				ThreadContext.put("start.date", FMT_DATE_RESULTS.format(new Date(startTimeMillis)));
+				ThreadContext.put(
+					"start.time", Long.toString(TimeUnit.MILLISECONDS.toSeconds(startTimeMillis))
+				);
+				final long endTimeMillis = System.currentTimeMillis();
+				ThreadContext.put("end.date", FMT_DATE_RESULTS.format(new Date(endTimeMillis)));
+				ThreadContext.put(
+					"end.time", Long.toString(TimeUnit.MILLISECONDS.toSeconds(endTimeMillis))
+				);
+				ThreadContext.put(
+					"total.threads", Long.toString(totalThreadCount * loadSvcAddrs.length)
+				);
+				LOG.info(
+					logMarker, "\"{}\" summary: {}", getName(),
+					lastStats == null ? null : lastStats.toSummaryString()
+				);
+				loadJobName = loadJobName.substring(
+					loadJobName.indexOf('-') + 1, loadJobName.lastIndexOf('-')
+				);
+				ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
+			}
+		}
 	}
 }
