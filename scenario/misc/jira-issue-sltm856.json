@@ -1,0 +1,23 @@
+{
+	"type" : "for",
+	"value" : "threads",
+	"in" : [ 1, 5, 10 ],
+	"config" : {
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : "${threads}"
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"run" : {
+					"id" : "test${threads}"
+				}
+			}
+		}
+	]
+}

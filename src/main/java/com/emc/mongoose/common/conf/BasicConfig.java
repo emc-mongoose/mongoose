@@ -891,16 +891,12 @@ implements AppConfig {
 	private void applyAliasing() {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
-		log.debug(Markers.MSG, "Going to override the aliasing section");
 		String keyAlias, deprecatedKey, overriderKeys[];
 		Object overriderKeysRaw;
 		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
 			keyAlias = keyIter.next();
 			deprecatedKey = keyAlias.replaceAll(prefixKeyAliasingWithDot, "");
 			overriderKeysRaw = getProperty(keyAlias);
-			log.trace(
-				Markers.MSG, "Alias: \"{}\" -> \"{}\"", deprecatedKey, overriderKeysRaw
-			);
 			if(overriderKeysRaw instanceof List) {
 				overriderKeys = (String[]) ((List<String>) overriderKeysRaw).toArray();
 			} else if(overriderKeysRaw instanceof String) {
@@ -909,7 +905,7 @@ implements AppConfig {
 			} else if(overriderKeysRaw instanceof Boolean){
 				overriderKeys = new String[0];
 			} else {
-				log.warn(Markers.ERR, "Invalid aliasing key value: {}", overriderKeysRaw);
+				System.err.println("Invalid aliasing key value: " + overriderKeysRaw);
 				overriderKeys = null;
 			}
 			MAP_OVERRIDE.put(deprecatedKey, overriderKeys);

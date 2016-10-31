@@ -1,5 +1,4 @@
 package com.emc.mongoose.common.conf;
-//
 
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -22,11 +21,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-//
-//
-//
-//
-
 /**
  * Created by gusakk on 3/13/15.
  */
@@ -35,12 +29,10 @@ public class JsonConfigLoader {
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	private final AppConfig appConfig;
-
 	//
 	public JsonConfigLoader(final AppConfig appConfig) {
 		this.appConfig = appConfig;
 	}
-
 	//
 	public void loadPropsFromJsonCfgFile(final Path filePath) {
 		final File cfgFile = filePath.toFile();
@@ -51,24 +43,18 @@ public class JsonConfigLoader {
 		try {
 			JsonNode rootNode;
 			if (cfgFile.exists() && cfgFile.isFile()) {
-				LOG.debug(Markers.MSG, "Load the config from json file \"{}\"", cfgFile.toString());
 				rootNode = jsonMapper.readTree(cfgFile);
 			} else {
 				final ClassLoader cl = JsonConfigLoader.class.getClassLoader();
 				final InputStream bundledConf = cl.getResourceAsStream(AppConfig.FNAME_CONF);
-				LOG.debug(
-						Markers.MSG, "Load the bundled config", cl.getResource(AppConfig.FNAME_CONF)
-				);
 				rootNode = jsonMapper.readTree(bundledConf);
 			}
 			walkJsonTree(rootNode);
 		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", cfgFile
-			);
+			System.err.println("Failed to load properties from file: " + cfgFile);
+			e.printStackTrace(System.err);
 		}
 	}
-
 	//
 	public void loadPropsFromJsonString(final String string) {
 		final ObjectMapper jsonMapper = new ObjectMapper()
@@ -83,7 +69,6 @@ public class JsonConfigLoader {
 			);
 		}
 	}
-
 	//
 	public void loadPropsFromJsonByteArray(final byte buff[]) {
 		final ObjectMapper jsonMapper = new ObjectMapper();

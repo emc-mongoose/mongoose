@@ -829,7 +829,6 @@ implements HttpRequestConfig<T, C> {
 			super.close();
 		} finally {
 			clientDaemon.interrupt();
-			LOG.debug(Markers.MSG, "Client thread \"{}\" stopped", clientDaemon);
 		}
 		//
 		if(connPool != null && connPool.isShutdown()) {
@@ -846,7 +845,6 @@ implements HttpRequestConfig<T, C> {
 		}
 		//
 		ioReactor.shutdown(1);
-		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
 	//
 	@Override

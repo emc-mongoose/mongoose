@@ -189,9 +189,6 @@ implements ShutdownCallbackRegistry {
 					if(LOG_CTX == null) {
 						System.err.println("Logging configuration failed");
 					} else {
-						LogManager.getLogger().info(
-							Markers.MSG, "Logging subsystem is configured successfully"
-						);
 						Runtime.getRuntime().addShutdownHook(
 							new Thread("logCtxShutDownHook") {
 								@Override
