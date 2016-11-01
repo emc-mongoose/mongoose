@@ -32,9 +32,9 @@ extends AbstractAppender {
 
 	private final static int MAX_EVENTS_IN_THE_LIST = 3000;
 	//
-	private static final List<String> markerNames = Collections.unmodifiableList(Arrays.asList(
-		Markers.MSG.getName(), Markers.ERR.getName(),
-			Markers.METRICS_PERIODIC_STDOUT.getName(), Markers.METRICS_TOTAL_STDOUT.getName()));
+	private static final List<String> markerNames = Collections.unmodifiableList(
+		Arrays.asList(Markers.MSG.getName(), Markers.ERR.getName(), Markers.METRICS_FILE.getName())
+	);
 	//
 	public static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();

@@ -305,7 +305,7 @@ implements HttpStorageDriver<I, O> {
 			final String nodeAddr = ioTask.getNodeAddr();
 			
 			if(channel == null && !driver.isClosed() && !driver.isInterrupted()) {
-				LOG.error(Markers.ERR, "Invalid behavior: no connection leased from the pool");
+				LOG.warn(Markers.ERR, "Failed to obtain the connection to {}", nodeAddr);
 			} else {
 				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 				

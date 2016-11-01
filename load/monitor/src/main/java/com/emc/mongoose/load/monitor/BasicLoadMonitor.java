@@ -137,11 +137,11 @@ implements LoadMonitor<I, O> {
 					// output the current measurements periodically
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 						LOG.info(
-							Markers.METRICS_PERIODIC_STDOUT,
+							Markers.METRICS_STDOUT,
 							new MetricsLogMessageTable(name, lastStats)
 						);
 						LOG.info(
-							Markers.METRICS_PERIODIC_FILE, new MetricsLogMessageCsv(lastStats)
+							Markers.METRICS_FILE, new MetricsLogMessageCsv(lastStats)
 						);
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
@@ -616,12 +616,8 @@ implements LoadMonitor<I, O> {
 		}
 		drivers.clear();
 
-		LOG.info(
-			Markers.METRICS_TOTAL_STDOUT, new MetricsLogMessageTable(name, lastStats)
-		);
-		LOG.info(
-			Markers.METRICS_TOTAL_FILE, new MetricsLogMessageCsv(lastStats)
-		);
+		LOG.info(Markers.METRICS_STDOUT, new MetricsLogMessageTable(name, lastStats));
+		LOG.info(Markers.METRICS_FILE, new MetricsLogMessageCsv(lastStats));
 		
 		for(final IoStats nextStats : ioStats.values()) {
 			nextStats.close();

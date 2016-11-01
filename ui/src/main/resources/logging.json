@@ -48,12 +48,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "metricsPeriodicFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsTotalFile",
+								"marker": "metricsFile",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
@@ -117,12 +112,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "metricsPeriodicStdout",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsTotalStdout",
+								"marker": "metricsStdout",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
@@ -132,12 +122,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "metricsPeriodicFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsTotalFile",
+								"marker": "metricsFile",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
@@ -184,24 +169,11 @@
 						]
 					}
 				}, {
-					"name": "metricsPeriodicFile",
-					"type": "runIdFile",
-					"fileName": "metrics.periodic.csv",
-					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
-					},
-					"MarkerFilter": {
-						"marker": "metricsPeriodicFile",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
-					}
-				}, {
 					"name": "metricsMedFile",
 					"type": "runIdFile",
 					"fileName": "metrics.med.csv",
 					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n"
+						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
 					},
 					"Filters": {
@@ -221,11 +193,11 @@
 						]
 					}
 				}, {
-					"name": "metricsTotalFile",
+					"name": "metricsFile",
 					"type": "runIdFile",
-					"fileName": "metrics.total.csv",
+					"fileName": "metrics.csv",
 					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n"
+						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
 					},
 					"Filters": {
@@ -301,12 +273,8 @@
 						{ "ref": "msgFile" },
 						{ "ref": "3rdPartyFile" },
 						{ "ref": "errFile" },
-						{ "ref": "metricsPeriodicConsole" },
-						{ "ref": "metricsMedConsole" },
-						{ "ref": "metricsTotalConsole" },
-						{ "ref": "metricsPeriodicFile" },
+						{ "ref": "metricsFile" },
 						{ "ref": "metricsMedFile" },
-						{ "ref": "metricsTotalFile" },
 						{ "ref": "ioTraceFile" },
 						{ "ref": "WebUI" },
 						{ "ref": "cfgFile" }
