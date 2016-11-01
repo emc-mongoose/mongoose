@@ -68,6 +68,7 @@ implements LoadMonitor<I, O> {
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<I> itemOutput;
 	private volatile boolean isPostProcessDone = false;
+	private final int totalConcurrency;
 	
 	public BasicLoadMonitor(
 		final String name, final List<LoadGenerator<I, O>> generators,
@@ -76,6 +77,14 @@ implements LoadMonitor<I, O> {
 		this.name = name;
 		this.generators = generators;
 		this.drivers = drivers;
+		int concurrencySum = 0;
+		for(final StorageDriver<I, O> nextDriver : drivers) {
+			try {
+				concurrencySum += nextDriver.getConcurrencyLevel();
+			} catch(final RemoteException ignored) {
+			}
+		}
+		this.totalConcurrency = concurrencySum;
 		registerDrivers(drivers);
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
@@ -95,7 +104,7 @@ implements LoadMonitor<I, O> {
 		this.worker.setDaemon(true);
 		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
-		LogUtil.UNCLOSED_REGISTRY.add(this);
+		UNCLOSED.add(this);
 	}
 
 	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
@@ -138,10 +147,11 @@ implements LoadMonitor<I, O> {
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 						LOG.info(
 							Markers.METRICS_STDOUT,
-							new MetricsLogMessageTable(name, lastStats)
+							new MetricsLogMessageTable(name, lastStats, totalConcurrency)
 						);
 						LOG.info(
-							Markers.METRICS_FILE, new MetricsLogMessageCsv(lastStats)
+							Markers.METRICS_FILE,
+							new MetricsLogMessageCsv(lastStats, totalConcurrency)
 						);
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
@@ -616,8 +626,12 @@ implements LoadMonitor<I, O> {
 		}
 		drivers.clear();
 
-		LOG.info(Markers.METRICS_STDOUT, new MetricsLogMessageTable(name, lastStats));
-		LOG.info(Markers.METRICS_FILE, new MetricsLogMessageCsv(lastStats));
+		LOG.info(
+			Markers.METRICS_STDOUT, new MetricsLogMessageTable(name, lastStats, totalConcurrency)
+		);
+		LOG.info(
+			Markers.METRICS_FILE, new MetricsLogMessageCsv(lastStats, totalConcurrency)
+		);
 		
 		for(final IoStats nextStats : ioStats.values()) {
 			nextStats.close();
@@ -635,6 +649,6 @@ implements LoadMonitor<I, O> {
 			itemOutput.close();
 		}
 		itemOutBuff.close();
-		LogUtil.UNCLOSED_REGISTRY.remove(this);
+		UNCLOSED.remove(this);
 	}
 }

@@ -24,7 +24,8 @@ dependencies {
 	runtime(
 		"com.lmax:disruptor:${depVersion.disruptor}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.javassist:javassist:${depVersion.javassist}",
 	)
 }
 

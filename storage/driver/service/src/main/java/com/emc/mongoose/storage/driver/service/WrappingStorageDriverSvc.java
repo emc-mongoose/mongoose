@@ -157,7 +157,8 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final int getConcurrencyLevel() {
+	public final int getConcurrencyLevel()
+	throws RemoteException {
 		return driver.getConcurrencyLevel();
 	}
 	

@@ -18,8 +18,6 @@ import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
@@ -38,8 +36,10 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.Attribute;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  Created by kurila on 29.07.16.
@@ -304,8 +305,10 @@ implements HttpStorageDriver<I, O> {
 			final I item = ioTask.getItem();
 			final String nodeAddr = ioTask.getNodeAddr();
 			
-			if(channel == null && !driver.isClosed() && !driver.isInterrupted()) {
-				LOG.warn(Markers.ERR, "Failed to obtain the connection to {}", nodeAddr);
+			if(channel == null) {
+				if(!driver.isClosed() && !driver.isInterrupted()) {
+					LOG.warn(Markers.ERR, "Failed to obtain the connection to {}", nodeAddr);
+				} // else ignore
 			} else {
 				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 				
@@ -383,17 +386,6 @@ implements HttpStorageDriver<I, O> {
 	@Override
 	protected void doShutdown()
 	throws IllegalStateException {
-	}
-	
-	@Override
-	protected void doInterrupt()
-	throws IllegalStateException {
-		final Future f = workerGroup.shutdownGracefully(1, 1, TimeUnit.NANOSECONDS);
-		try {
-			f.await(1, TimeUnit.SECONDS);
-		} catch(final InterruptedException e) {
-			LOG.warn(Markers.ERR, "Failed to interrupt the HTTP storage driver gracefully");
-		}
 	}
 	
 	@Override

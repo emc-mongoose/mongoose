@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -38,9 +39,9 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +59,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final Input<String> nodeSelector;
 	protected final Semaphore concurrencyThrottle;
 	protected final EventLoopGroup workerGroup;
-	protected final Map<String, ChannelPool> connPoolMap = new HashMap<>();
+	protected final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	protected final boolean sslFlag;
 	
 	protected NetStorageDriverBase(
@@ -78,9 +79,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		if(SystemUtils.IS_OS_LINUX) {
-			workerGroup = new EpollEventLoopGroup(0, new NamingThreadFactory("ioWorker", true));
+			workerGroup = new EpollEventLoopGroup(
+				ThreadUtil.getHardwareConcurrencyLevel(), new NamingThreadFactory("ioWorker", true)
+			);
 		} else {
-			workerGroup = new NioEventLoopGroup(0, new NamingThreadFactory("ioWorker", true));
+			workerGroup = new NioEventLoopGroup(
+				ThreadUtil.getHardwareConcurrencyLevel(), new NamingThreadFactory("ioWorker", true)
+			);
 		}
 		final Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup);
@@ -198,7 +203,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public final void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
-		connPoolMap.get(ioTask.getNodeAddr()).release(channel);
+		final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
+		if(connPool != null) {
+			connPool.release(channel);
+		}
 		ioTaskCompleted(ioTask);
 	}
 	
@@ -259,14 +267,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected void doInterrupt()
+	protected final void doInterrupt()
 	throws IllegalStateException {
-		final Future f = workerGroup.shutdownGracefully(0, 1, TimeUnit.NANOSECONDS);
-		try {
+		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
+		/*try {
 			f.await(1, TimeUnit.SECONDS);
 		} catch(final InterruptedException e) {
-			LOG.warn(Markers.ERR, "Failed to interrupt the HTTP storage driver gracefully");
-		}
+			LOG.warn(Markers.ERR, "Failed to interrupt the storage driver gracefully");
+		}*/
 	}
 	
 	@Override
@@ -276,7 +284,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		for(int i = 0; i < storageNodeAddrs.length; i ++) {
 			if(!workerGroup.isShutdown()) {
 				try {
-					connPoolMap.get(storageNodeAddrs[i]).close();
+					final ChannelPool connPool = connPoolMap.remove(storageNodeAddrs[i]);
+					if(connPool != null) {
+						connPool.close();
+					}
 				} catch(final Throwable cause) {
 					LogUtil.exception(
 						LOG, Level.WARN, cause, "Failed to close the connection pool for {}",
@@ -288,6 +299,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		connPoolMap.clear();
 		nodeSelector.close();
-		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
+		workerGroup.shutdownGracefully(1, 1, TimeUnit.NANOSECONDS);
 	}
 }

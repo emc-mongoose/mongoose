@@ -2,8 +2,8 @@ package com.emc.mongoose.ui.log;
 
 import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.concurrent.DaemonBase;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
@@ -24,9 +24,7 @@ import java.net.URL;
 import java.util.Calendar;
 import java.util.ConcurrentModificationException;
 import java.util.Locale;
-import java.util.Queue;
 import java.util.TimeZone;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -88,7 +86,7 @@ implements ShutdownCallbackRegistry {
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
-	public final static Queue<Daemon> UNCLOSED_REGISTRY = new ConcurrentLinkedQueue<>();
+	
 	//
 	public static String getDateTimeStamp() {
 		return LogUtil.FMT_DT.format(
@@ -159,9 +157,6 @@ implements ShutdownCallbackRegistry {
 					if(LOG_CTX == null) {
 						System.err.println("Logging configuration failed");
 					} else {
-						LogManager.getLogger().info(
-							Markers.MSG, "Logging subsystem is configured successfully"
-						);
 						Runtime.getRuntime().addShutdownHook(
 							new Thread("logCtxShutDownHook") {
 								@Override
@@ -191,26 +186,7 @@ implements ShutdownCallbackRegistry {
 	}
 	//
 	public static void shutdown() {
-
-		// close all unclosed daemons
-		for(final Daemon d : UNCLOSED_REGISTRY) {
-			try {
-				d.close();
-			} catch(final IllegalStateException | ConcurrentModificationException ignored) {
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		}
-
-		// wait until the list of the unclosed daemons is empty
-		while(!UNCLOSED_REGISTRY.isEmpty()) {
-			try {
-				TimeUnit.SECONDS.sleep(1);
-			} catch(final InterruptedException e) {
-				break;
-			}
-		}
-
+		DaemonBase.closeAll();
 		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {

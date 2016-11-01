@@ -33,7 +33,8 @@ dependencies {
 		"com.lmax:disruptor:${depVersion.disruptor}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
-		'org.slf4j:slf4j-simple:1.7.16'
+		'org.slf4j:slf4j-simple:1.7.16',
+		"org.javassist:javassist:${depVersion.javassist}",
 	)
 
 	testCompile(

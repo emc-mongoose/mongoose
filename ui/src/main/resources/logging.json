@@ -204,7 +204,7 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "metricsTotalFile",
+								"marker": "metricsFile",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							},

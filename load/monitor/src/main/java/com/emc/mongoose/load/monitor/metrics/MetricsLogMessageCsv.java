@@ -3,6 +3,7 @@ package com.emc.mongoose.load.monitor.metrics;
 import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.ui.log.MessageBase;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 26.10.16.
  
  TypeLoad,
+ TotalConcurrency,
  CountSucc,
  CountFail,
  Size,
@@ -34,18 +36,27 @@ public final class MetricsLogMessageCsv
 extends MessageBase {
 	
 	private final Map<LoadType, IoStats.Snapshot> snapshots;
+	private final int totalConcurrency;
 	
-	public MetricsLogMessageCsv(final Map<LoadType, IoStats.Snapshot> snapshots) {
+	public MetricsLogMessageCsv(
+		final Map<LoadType, IoStats.Snapshot> snapshots, final int totalConcurrency
+	) {
 		this.snapshots = snapshots;
+		this.totalConcurrency = totalConcurrency;
 	}
 	
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
+		final Iterator<Map.Entry<LoadType, IoStats.Snapshot>>
+			entryIter = snapshots.entrySet().iterator();
+		Map.Entry<LoadType, IoStats.Snapshot> nextEntry;
 		IoStats.Snapshot nextSnapshot;
-		for(final LoadType nextLoadType : snapshots.keySet()) {
-			nextSnapshot = snapshots.get(nextLoadType);
+		while(entryIter.hasNext()) {
+			nextEntry = entryIter.next();
+			nextSnapshot = nextEntry.getValue();
 			buffer
-				.append(nextLoadType.name()).append(',')
+				.append(nextEntry.getKey().name()).append(',')
+				.append(totalConcurrency).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
 				.append(nextSnapshot.getFailCount()).append(',')
 				.append(nextSnapshot.getByteCount()).append(',')
@@ -63,8 +74,12 @@ extends MessageBase {
 				.append(nextSnapshot.getLatencyMin()).append(',')
 				.append(nextSnapshot.getLatencyLoQ()).append(',')
 				.append(nextSnapshot.getLatencyMed()).append(',')
-				.append(nextSnapshot.getLatencyHiQ()).append(',')
-				.append(nextSnapshot.getLatencyMax()).append('\n');
+				.append(nextSnapshot.getLatencyHiQ());
+			if(entryIter.hasNext()) {
+				buffer.append(nextSnapshot.getLatencyMax()).append('\n');
+			} else {
+				break;
+			}
 		}
 	}
 }
