@@ -13,6 +13,8 @@ public interface Markers {
 	Marker METRICS_MED_STDOUT = MarkerManager.getMarker("metricsMedStdout");
 	Marker METRICS_FILE = MarkerManager.getMarker("metricsFile");
 	Marker METRICS_MED_FILE = MarkerManager.getMarker("metricsMedFile");
+	Marker METRICS_FILE_TOTAL = MarkerManager.getMarker("metricsFileTotal");
+	Marker METRICS_MED_FILE_TOTAL = MarkerManager.getMarker("metricsMedFileTotal");
 	Marker IO_TRACE = MarkerManager.getMarker("ioTrace");
 	Marker CFG = MarkerManager.getMarker("cfg");
 }

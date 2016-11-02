@@ -1,8 +1,7 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.ui.cli.CliArgParser;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
+import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -53,7 +52,7 @@ public class ConfigTest {
 		}
 		final Map<String, Object> argTree = CliArgParser.parseArgs(args.toArray(new String[]{}));
 		
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		config.apply(argTree);
 		
 		assertEquals(argsMap.get("--name"), config.getName());
@@ -71,7 +70,7 @@ public class ConfigTest {
 			"16MB",
 			dataConfig.getContentConfig().getRingSize().toString()
 		);
-		assertEquals(1, dataConfig.getRanges().getRandomCount());
+		assertEquals(1, dataConfig.getRangesConfig().getRandomCount());
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		assertEquals(1000, loadConfig.getLimitConfig().getCount());
 		assertEquals(12.345, loadConfig.getLimitConfig().getRate());
@@ -90,7 +89,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidSizeValue()
 	throws Exception {
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("io", new HashMap<String, Object>() {{
@@ -107,7 +106,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidTimeValue()
 	throws Exception {
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("load", new HashMap<String, Object>() {{
@@ -124,7 +123,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidRangesValue()
 	throws Exception {
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("item", new HashMap<String, Object>() {{
@@ -141,7 +140,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidInteger()
 	throws Exception {
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("load", new HashMap<String, Object>() {{
@@ -158,7 +157,7 @@ public class ConfigTest {
 	@Test
 	public void testNoSuchArgName()
 	throws Exception {
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("load", new HashMap<String, Object>() {{

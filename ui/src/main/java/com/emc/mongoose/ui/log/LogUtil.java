@@ -1,7 +1,6 @@
 package com.emc.mongoose.ui.log;
 
 import com.emc.mongoose.common.Constants;
-import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
@@ -22,14 +21,12 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
-import java.util.ConcurrentModificationException;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
+import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
 /**
  Created by kurila on 06.05.14.
@@ -135,10 +132,10 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
-				// set "run.id" property with timestamp value if not set before
-				final String runId = ThreadContext.get(KEY_RUN_ID);
+				// set "load.job.name" property with timestamp value if not set before
+				final String runId = ThreadContext.get(KEY_JOB_NAME);
 				if(runId == null || runId.length() == 0) {
-					ThreadContext.put(KEY_RUN_ID, getDateTimeStamp());
+					ThreadContext.put(KEY_JOB_NAME, getDateTimeStamp());
 				}
 				try {
 					final String log4jConfigurationFile = System.getProperty("log4j.configurationFile");

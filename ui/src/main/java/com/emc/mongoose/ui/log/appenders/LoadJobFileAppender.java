@@ -16,7 +16,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.net.Advertiser;
 import org.apache.logging.log4j.core.util.Booleans;
-import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
+import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -25,15 +25,15 @@ import java.util.Map;
 /**
  Created by andrey on 13.03.15.
  */
-@Plugin(name = "RunIdFile", category = "Core", elementType = "appender", printObject = true)
-public final class RunIdFileAppender
+@Plugin(name = "LoadJobFile", category = "Core", elementType = "appender", printObject = true)
+public final class LoadJobFileAppender
 extends AbstractAppender {
 	//
 	private final String fName;
 	private final Advertiser advertiser;
 	private Object advertisement;
 	private final boolean ignoreExceptions, flagFlush;
-	private final RunIdFileManager manager;
+	private final LoadJobFileManager manager;
 	/**
 	 Instantiate a WriterAppender and set the output destination to a
 	 new {@link java.io.OutputStreamWriter} initialized with <code>os</code>
@@ -43,13 +43,13 @@ extends AbstractAppender {
 	 @param filter filter
 	 @param ignoreExceptions ignore exceptions
 	 @param manager The OutputStreamManager. */
-	protected RunIdFileAppender(
+	protected LoadJobFileAppender(
 		final String name,
 		final Layout<? extends Serializable> layout,
 		final Filter filter,
 		final boolean ignoreExceptions,
 		final boolean flagFlush,
-		final RunIdFileManager manager,
+		final LoadJobFileManager manager,
 		final String fName,
 		final Advertiser advertiser
 	) {
@@ -86,7 +86,7 @@ extends AbstractAppender {
 	private final static long DEFAULT_SIZE_TO_ROTATE = 0x400000; // 4MB
 	//
 	@PluginFactory
-	public static RunIdFileAppender createAppender(
+	public static LoadJobFileAppender createAppender(
 		@PluginAttribute("fileName") final String fileNamePrefix,
 		@PluginAttribute("name") final String name,
 		@PluginAttribute("bufferSize") final String bufferSize,
@@ -130,11 +130,11 @@ extends AbstractAppender {
 			}
 		}
 		//
-		final RunIdFileManager manager = RunIdFileManager.getRunIdFileManager(
+		final LoadJobFileManager manager = LoadJobFileManager.getRunIdFileManager(
 			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize, config
 		);
 		//
-		return new RunIdFileAppender(
+		return new LoadJobFileAppender(
 			name, layout, filter, ignoreExceptions, flagFlush, manager, fileNamePrefix,
 			isAdvertise ? config.getAdvertiser() : null
 		);
@@ -142,20 +142,20 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		final String currRunId;
+		final String jobName;
 		final Map<String, String> evtCtxMap = event.getContextMap();
 		//
-		if(evtCtxMap.containsKey(KEY_RUN_ID)) {
-			currRunId = event.getContextMap().get(KEY_RUN_ID);
-		} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
-			currRunId = ThreadContext.get(KEY_RUN_ID);
+		if(evtCtxMap.containsKey(KEY_JOB_NAME)) {
+			jobName = event.getContextMap().get(KEY_JOB_NAME);
+		} else if(ThreadContext.containsKey(KEY_JOB_NAME)) {
+			jobName = ThreadContext.get(KEY_JOB_NAME);
 		} else {
-			currRunId = null;
+			jobName = null;
 		}
 		final byte[] buff = getLayout().toByteArray(event);
 		if(buff.length > 0) {
 			try {
-				manager.write(currRunId, buff);
+				manager.write(jobName, buff);
 				if(flagFlush || event.isEndOfBatch()) {
 					manager.flush();
 				}

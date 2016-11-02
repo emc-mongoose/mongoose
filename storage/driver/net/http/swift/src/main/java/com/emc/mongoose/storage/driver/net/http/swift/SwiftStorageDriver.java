@@ -24,10 +24,10 @@ extends HttpStorageDriverBase<I, O> {
 	// TODO implement
 
 	public SwiftStorageDriver(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, loadConfig, storageConfig, verifyFlag, socketConfig);
+		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
 	}
 
 	@Override

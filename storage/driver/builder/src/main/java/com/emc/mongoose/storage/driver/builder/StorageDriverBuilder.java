@@ -23,7 +23,7 @@ public interface StorageDriverBuilder<
 	String API_S3 = "s3";
 	String API_SWIFT = "swift";
 
-	String getRunId()
+	String getJobName()
 	throws RemoteException;
 
 	ContentSource getContentSource()
@@ -41,7 +41,7 @@ public interface StorageDriverBuilder<
 	SocketConfig getSocketConfig()
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setRunId(final String runId)
+	StorageDriverBuilder<I, O, T> setJobName(final String runId)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSource)

@@ -19,7 +19,7 @@ public interface StorageDriverBuilderSvc<
 	String SVC_NAME = "storage/driver/builder";
 
 	@Override
-	StorageDriverBuilderSvc<I, O, T> setRunId(final String runId)
+	StorageDriverBuilderSvc<I, O, T> setJobName(final String jobName)
 	throws RemoteException;
 
 	@Override

@@ -28,7 +28,7 @@ public class BasicStorageDriverBuilder<
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	private String runId;
+	private String jobName;
 	private ContentSource contentSrc;
 
 	private ItemConfig itemConfig;
@@ -36,9 +36,8 @@ public class BasicStorageDriverBuilder<
 	private StorageConfig storageConfig;
 	private SocketConfig socketConfig;
 
-	@Override
-	public String getRunId() {
-		return runId;
+	public String getJobName() {
+		return jobName;
 	}
 
 	@Override
@@ -67,8 +66,8 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public StorageDriverBuilder<I, O, T> setRunId(final String runId) {
-		this.runId = runId;
+	public StorageDriverBuilder<I, O, T> setJobName(final String jobName) {
+		this.jobName = jobName;
 		return this;
 	}
 
@@ -119,8 +118,7 @@ public class BasicStorageDriverBuilder<
 				// TODO directory load driver
 			} else {
 				LOG.info(Markers.MSG, "Work on the files");
-				driver = (T) new BasicFileStorageDriver<>(
-					runId, storageConfig.getAuthConfig(), loadConfig, verifyFlag
+				driver = (T) new BasicFileStorageDriver<>(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag
 				);
 			}
 		} else if(StorageType.HTTP.equals(storageType)){
@@ -131,13 +129,11 @@ public class BasicStorageDriverBuilder<
 			} else {
 				switch(apiType.toLowerCase()) {
 					case API_S3:
-						driver = (T) new S3StorageDriver<>(
-							runId, loadConfig, storageConfig, verifyFlag, socketConfig
+						driver = (T) new S3StorageDriver<>(jobName, loadConfig, storageConfig, verifyFlag, socketConfig
 						);
 						break;
 					case API_SWIFT:
-						driver = (T) new SwiftStorageDriver<>(
-							runId, loadConfig, storageConfig, verifyFlag, socketConfig
+						driver = (T) new SwiftStorageDriver<>(jobName, loadConfig, storageConfig, verifyFlag, socketConfig
 						);
 						break;
 					default:

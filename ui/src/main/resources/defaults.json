@@ -38,6 +38,9 @@
 				"127.0.0.1"
 			]
 		},
+		"job" :{
+			"name" : null
+		},
 		"limit" : {
 			"count" : 0,
 			"rate" : 0,
@@ -55,7 +58,6 @@
 		"type" : "create"
 	},
 	"run" : {
-		"id" : null,
 		"file" : "scenario/default.json"
 	},
 	"socket" : {

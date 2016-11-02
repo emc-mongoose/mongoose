@@ -31,7 +31,7 @@ implements StorageDriver<I, O> {
 	private final static Logger LOG = LogManager.getLogger();
 
 	protected final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
-	protected final String runId;
+	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final boolean isCircular;
 	protected final String userName;
@@ -39,10 +39,10 @@ implements StorageDriver<I, O> {
 	protected final boolean verifyFlag;
 
 	protected StorageDriverBase(
-		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
-		this.runId = runId;
+		this.jobName = jobName;
 		this.userName = authConfig.getId();
 		secret = authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
@@ -212,6 +212,6 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public String toString() {
-		return concurrencyLevel + '-' + runId;
+		return concurrencyLevel + '-' + jobName;
 	}
 }

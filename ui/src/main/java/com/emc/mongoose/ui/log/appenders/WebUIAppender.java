@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
+import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
 /**
  Created by kurila on 23.10.14.
@@ -71,10 +71,10 @@ extends AbstractAppender {
 		if(ENABLED_FLAG) {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
-			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
-				currRunId = evtCtxMap.get(KEY_RUN_ID);
+			if(evtCtxMap.containsKey(KEY_JOB_NAME)) {
+				currRunId = evtCtxMap.get(KEY_JOB_NAME);
 			} else {
-				currRunId = ThreadContext.get(KEY_RUN_ID);
+				currRunId = ThreadContext.get(KEY_JOB_NAME);
 			}
 			//
 			if(currRunId != null) {

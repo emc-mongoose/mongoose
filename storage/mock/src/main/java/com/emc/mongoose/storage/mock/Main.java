@@ -6,21 +6,19 @@ import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.RunConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.JobConfig;
+import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-
-import static com.emc.mongoose.common.Constants.KEY_RUN_ID;
-
 /**
  Created on 12.07.16.
  */
@@ -31,31 +29,31 @@ public class Main {
 	}
 
 	public static void main(final String[] args)
-	throws IOException, InvocationTargetException, IllegalAccessException {
+	throws IOException {
 		
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
 			throw new IllegalStateException();
 		}
 		config.apply(CliArgParser.parseArgs(args));
-		
-		final RunConfig runConfig = config.getRunConfig();
-		String runId = runConfig.getId();
-		if(runId == null) {
-			runId = ThreadContext.get(KEY_RUN_ID);
-			runConfig.setId(runId);
+
+		final LoadConfig loadConfig = config.getLoadConfig();
+		final JobConfig jobConfig = loadConfig.getJobConfig();
+		String jobName = jobConfig.getName();
+		if(jobName == null) {
+			jobName = ThreadContext.get(KEY_JOB_NAME);
+			jobConfig.setName(jobName);
 		} else {
-			ThreadContext.put(KEY_RUN_ID, runId);
+			ThreadContext.put(KEY_JOB_NAME, jobName);
 		}
-		if(runId == null) {
-			throw new IllegalStateException("Run id is not set");
+		if(jobName == null) {
+			throw new IllegalStateException("Load job name is not set");
 		}
 		
 		final Logger log = LogManager.getLogger();
 		log.info(Markers.MSG, "Configuration loaded");
 		
 		final StorageConfig storageConfig = config.getStorageConfig();
-		final LoadConfig loadConfig = config.getLoadConfig();
 		final ItemConfig itemConfig = config.getItemConfig();
 		final StorageMockFactory storageMockFactory = new StorageMockFactory(
 			storageConfig, loadConfig, itemConfig

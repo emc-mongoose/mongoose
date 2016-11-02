@@ -24,10 +24,10 @@ import java.util.Map;
 //
 
 /** Created by andrey on 13.03.15. */
-public final class RunIdFileManager
+public final class LoadJobFileManager
 extends AbstractManager {
 	//
-	public final static List<RunIdFileManager> INSTANCES = new ArrayList<>();
+	public final static List<LoadJobFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -35,7 +35,7 @@ extends AbstractManager {
 	private final Map<String, OutputStream> outStreamsMap = new HashMap<>();
 	private final Layout<? extends Serializable> layout;
 	//
-	protected RunIdFileManager(
+	protected LoadJobFileManager(
 		final LoggerContext loggerContext, final String fileName, final boolean flagAppend,
 		final boolean flagLock, final boolean flagBuffered, final String uriAdvertise,
 		final Layout<? extends Serializable> layout, final int buffSize
@@ -87,7 +87,7 @@ extends AbstractManager {
 	 * Factory to create a FileManager.
 	 */
 	private final static class RunIdFileManagerFactory
-	implements ManagerFactory<RunIdFileManager, FactoryData> {
+	implements ManagerFactory<LoadJobFileManager, FactoryData> {
 		/**
 		 * Create a FileManager.
 		 * @param fileName The prefix for the name of the File.
@@ -95,8 +95,8 @@ extends AbstractManager {
 		 * @return The FileManager for the File.
 		 */
 		@Override
-		public RunIdFileManager createManager(final String fileName, final FactoryData data) {
-			return new RunIdFileManager(
+		public LoadJobFileManager createManager(final String fileName, final FactoryData data) {
+			return new LoadJobFileManager(
 				data.getLoggerContext(), fileName, data.flagAppend, data.flagLock,
 				data.flagBuffered, data.uriAdvertise, data.layout, data.buffSize
 			);
@@ -105,13 +105,13 @@ extends AbstractManager {
 	//
 	private final static RunIdFileManagerFactory FACTORY = new RunIdFileManagerFactory();
 	//
-	public static RunIdFileManager getRunIdFileManager(
+	public static LoadJobFileManager getRunIdFileManager(
 		final String fileName,
 		final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
 		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize,
 		final Configuration config
 	) {
-		return RunIdFileManager.class.cast(
+		return LoadJobFileManager.class.cast(
 			getManager(
 				fileName, FACTORY,
 				new FactoryData(
@@ -138,29 +138,29 @@ extends AbstractManager {
 	}
 	//
 	protected final void write(
-		final String currRunId, final byte[] buff, final int offset, final int len
+		final String jobName, final byte[] buff, final int offset, final int len
 	) {
-		final OutputStream outStream = getOutputStream(currRunId);
+		final OutputStream outStream = getOutputStream(jobName);
 		try {
 			outStream.write(buff, offset, len);
 		} catch (final Exception e) {
 			throw new AppenderLoggingException(
-				"Failed to write to the stream \""+getName()+"\" w/ run id \""+currRunId+"\"", e
+				"Failed to write to the stream \""+getName()+"\" for job name \""+jobName+"\"", e
 			);
 		}
 	}
 	//
-	protected final void write(final String currRunId, final byte[] bytes)  {
-		write(currRunId, bytes, 0, bytes.length);
+	protected final void write(final String jobName, final byte[] bytes)  {
+		write(jobName, bytes, 0, bytes.length);
 	}
 	//
-	protected final OutputStream prepareNewFile(final String currRunId) {
+	protected final OutputStream prepareNewFile(final String jobName) {
 		OutputStream newOutPutStream = null;
 		final File
 			outPutFile = new File(
-				currRunId == null ?
+				jobName == null ?
 					LogUtil.getLogDir() + File.separator + fileName :
-					LogUtil.getLogDir() + File.separator + currRunId + File.separator + fileName
+					LogUtil.getLogDir() + File.separator + jobName + File.separator + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();
@@ -172,7 +172,7 @@ extends AbstractManager {
 			newOutPutStream = new BufferedOutputStream(
 				new FileOutputStream(outPutFile.getPath(), flagAppend), this.buffSize
 			);
-			outStreamsMap.put(currRunId, newOutPutStream);
+			outStreamsMap.put(jobName, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
 				final byte header[] = layout.getHeader();
 				if(header != null) {
@@ -215,9 +215,9 @@ extends AbstractManager {
 	}
 	//
 	public static void closeAll(final String runId) {
-		final RunIdFileManager[] managers = new RunIdFileManager[INSTANCES.size()];
+		final LoadJobFileManager[] managers = new LoadJobFileManager[INSTANCES.size()];
 		INSTANCES.toArray(managers);
-		for(final RunIdFileManager manager : managers) {
+		for(final LoadJobFileManager manager : managers) {
 			if(manager.outStreamsMap.containsKey(runId)) {
 				manager.close();
 			}
@@ -239,7 +239,7 @@ extends AbstractManager {
 	}
 	//
 	public static void flush(final String runId) {
-		for(final RunIdFileManager instance : INSTANCES) {
+		for(final LoadJobFileManager instance : INSTANCES) {
 			final OutputStream outStream = instance.outStreamsMap.get(runId);
 			if(outStream != null) {
 				try {
@@ -253,7 +253,7 @@ extends AbstractManager {
 	//
 	public static void flushAll()
 	throws IOException {
-		for(final RunIdFileManager manager : INSTANCES) {
+		for(final LoadJobFileManager manager : INSTANCES) {
 			manager.flush();
 		}
 	}

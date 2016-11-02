@@ -32,8 +32,8 @@ public class BasicStorageDriverBuilderSvc<
 	private static final Logger LOG = LogManager.getLogger();
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setRunId(final String runId) {
-		super.setRunId(runId);
+	public StorageDriverBuilderSvc<I, O, T> setJobName(final String jobName) {
+		super.setJobName(jobName);
 		return this;
 	}
 
@@ -141,7 +141,7 @@ public class BasicStorageDriverBuilderSvc<
 	throws RemoteException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			driver, getRunId(), getContentSource()
+			driver, getJobName(), getContentSource()
 		);
 		return wrapper.getName();
 	}

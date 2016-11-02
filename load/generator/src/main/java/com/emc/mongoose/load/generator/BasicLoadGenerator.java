@@ -99,7 +99,7 @@ implements LoadGenerator<I, O>, Output<I> {
 			final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 				namingType, namingPrefix, namingLength, namingRadix, namingOffset
 			);
-			rangesConfig = itemConfig.getDataConfig().getRanges();
+			rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 
 			final InputConfig inputConfig = itemConfig.getInputConfig();
 			final String itemInputFile = inputConfig.getFile();
@@ -309,7 +309,7 @@ implements LoadGenerator<I, O>, Output<I> {
 		if(drivers.isEmpty()) {
 			return null;
 		} else {
-			return drivers.get((int)(rrc.incrementAndGet() % drivers.size()));
+			return drivers.get((int) (rrc.incrementAndGet() % drivers.size()));
 		}
 	}
 

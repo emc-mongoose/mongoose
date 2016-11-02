@@ -207,7 +207,7 @@ implements LoadMonitor<I, O> {
 			long failCountSum = 0;
 			for(final LoadType ioType : lastStats.keySet()) {
 				succCountSum += lastStats.get(ioType).getSuccCount();
-				failCountSum += lastStats.get(ioType).getSuccCount();
+				failCountSum += lastStats.get(ioType).getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					return true;
 				}
@@ -630,7 +630,7 @@ implements LoadMonitor<I, O> {
 			Markers.METRICS_STDOUT, new MetricsLogMessageTable(name, lastStats, totalConcurrency)
 		);
 		LOG.info(
-			Markers.METRICS_FILE, new MetricsLogMessageCsv(lastStats, totalConcurrency)
+			Markers.METRICS_FILE_TOTAL, new MetricsLogMessageCsv(lastStats, totalConcurrency)
 		);
 		
 		for(final IoStats nextStats : ioStats.values()) {

@@ -82,10 +82,10 @@ implements HttpStorageDriver<I, O> {
 	protected final SecretKeySpec secretKey;
 
 	protected HttpStorageDriverBase(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
-		super(runId, loadConfig, storageConfig, socketConfig, verifyFlag);
+		super(jobName, loadConfig, storageConfig, socketConfig, verifyFlag);
 		try {
 			if(secret == null) {
 				secretKey = null;

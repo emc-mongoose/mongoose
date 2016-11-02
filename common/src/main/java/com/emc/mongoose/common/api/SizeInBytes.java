@@ -5,18 +5,19 @@ import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 /**
  Created by kurila on 10.02.16.
  */
 public final class SizeInBytes
 implements Serializable {
-	//
+	
 	private static final String
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
-	//
+	
 	public static final String SIZE_UNITS = "kmgtpe";
 	public static final Pattern PATTERN_SIZE = Pattern.compile("([\\d\\.]+)(["+SIZE_UNITS+"]?)b?");
-	//
+	
 	public static long toFixedSize(final String value)
 	throws NumberFormatException {
 		final String unit;
@@ -43,7 +44,7 @@ implements Serializable {
 		size *= 1L << 10 * degree;
 		return (long) size;
 	}
-	//
+	
 	public static String formatFixedSize(final long v) {
 		if(v < 1024) {
 			return v + "B";
@@ -65,12 +66,12 @@ implements Serializable {
 			).toUpperCase();
 		}
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+
 	private static final char SEP1 = '-', SEP2 = ',';
-	//
+	
 	private long min, range = 0;
 	private double bias = 1;
-	//
+	
 	public SizeInBytes(final String sizeInfo) {
 		final int
 			sep1pos = sizeInfo.indexOf(SEP1),
@@ -90,11 +91,11 @@ implements Serializable {
 			throw new IllegalArgumentException("Min value is less than max: \"" + sizeInfo + "\"");
 		}
 	}
-	//
+	
 	public SizeInBytes(final long size) {
 		this(size, size, 1);
 	}
-	//
+	
 	public SizeInBytes(final long min, final long max, final double bias) {
 		if(min < 0) {
 			throw new IllegalArgumentException("Min size is less than 0");
@@ -109,7 +110,13 @@ implements Serializable {
 		this.range = max - min;
 		this.bias = bias;
 	}
-	//
+
+	public SizeInBytes(final SizeInBytes other) {
+		this.min = other.min;
+		this.range = other.range;
+		this.bias = other.bias;
+	}
+	
 	public long get() {
 		if(range == 0) {
 			return min;
@@ -119,15 +126,15 @@ implements Serializable {
 			return min + (long) Math.pow(ThreadLocalRandom.current().nextDouble(), bias) * range;
 		}
 	}
-	//
+	
 	public long getMin() {
 		return min;
 	}
-	//
+	
 	public long getMax() {
 		return min + range;
 	}
-	//
+	
 	private final static int APPROXIMATION_COUNT = 100;
 	public final long getAvg() {
 		if(range == 0) {
@@ -140,7 +147,7 @@ implements Serializable {
 			return sum / APPROXIMATION_COUNT;
 		}
 	}
-	//
+	
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder(formatFixedSize(min));
@@ -152,7 +159,7 @@ implements Serializable {
 		}
 		return sb.toString();
 	}
-	//
+	
 	@Override
 	public final boolean equals(final Object o) {
 		if(o instanceof SizeInBytes) {

@@ -3,7 +3,7 @@ package com.emc.mongoose.ui.config.reader;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigLoader;
+import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -17,13 +17,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  Created by kurila on 14.07.16.
  */
-public class ConfigLoaderTest {
+public class ConfigParserTest {
 
 	@SuppressWarnings("ConstantConditions")
 	@Test
 	public void shouldParseWithoutFireballsThrowing()
 	throws IOException {
-		final Config config = ConfigLoader.loadDefaultConfig();
+		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
 		assertThat(config.getName(), equalTo("mongoose", "name"));
 		assertThat(config.getVersion(), equalTo("3.0.0-SNAPSHOT", "version"));
@@ -51,7 +51,7 @@ public class ConfigLoaderTest {
 			contentConfig.getRingSize(),
 			equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize")
 		);
-		assertThat(dataConfig.getRanges().getRandomCount(), equalTo(0, "item.data.ranges"));
+		assertThat(dataConfig.getRangesConfig().getRandomCount(), equalTo(0, "item.data.ranges"));
 		assertThat(dataConfig.getSize(), equalTo(new SizeInBytes("1MB"), "item.data.size"));
 		assertThat(dataConfig.getVerify(), equalTo(true, "item.data.verify"));
 		final Config.ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
@@ -110,7 +110,6 @@ public class ConfigLoaderTest {
 		assertThat(metricsConfig.getPrecondition(), equalTo(false, "load.metrics.precondition"));
 		final Config.RunConfig runConfig = config.getRunConfig();
 		assertThat(runConfig, notNullValue());
-		assertThat(runConfig.getId(), nullValue("run.id"));
 		assertThat(runConfig.getFile(), nullValue("run.file"));
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		assertThat(storageConfig, notNullValue());

@@ -54,10 +54,10 @@ extends HttpStorageDriverBase<I, O> {
 	private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	
 	public S3StorageDriver(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
-		super(runId, loadConfig, storageConfig, verifyFlag, socketConfig);
+		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
 	}
 	
 	@Override

@@ -16,16 +16,6 @@ import static java.nio.file.StandardOpenOption.READ;
  */
 public class ContentSourceUtil {
 
-	public static ContentSource clone(ContentSource anotherContentSrc) {
-		if(anotherContentSrc instanceof SeedContentSource) {
-			return new SeedContentSource((SeedContentSource) anotherContentSrc);
-		} else if(anotherContentSrc instanceof BasicContentSource) {
-			return new BasicContentSource((BasicContentSource) anotherContentSrc);
-		} else {
-			throw new IllegalStateException("Unhandled content source type");
-		}
-	}
-
 	public static ContentSource getInstance(
 		final String contentFilePath, final String seed, final SizeInBytes ringSize
 	) throws IOException, IllegalStateException {

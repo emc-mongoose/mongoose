@@ -63,10 +63,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final boolean sslFlag;
 	
 	protected NetStorageDriverBase(
-		final String runId, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig, final boolean verifyFlag
 	) {
-		super(runId, storageConfig.getAuthConfig(), loadConfig, verifyFlag);
+		super(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag);
 		sslFlag = storageConfig.getSsl();
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});

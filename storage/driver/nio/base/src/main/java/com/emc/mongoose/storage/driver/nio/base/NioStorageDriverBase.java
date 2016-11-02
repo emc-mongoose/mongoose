@@ -40,10 +40,10 @@ implements StorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String runId, final AuthConfig storageConfig, final LoadConfig loadConfig,
+		final String jobName, final AuthConfig storageConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
-		super(runId, storageConfig, loadConfig, verifyFlag);
+		super(jobName, storageConfig, loadConfig, verifyFlag);
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new WorkerTask[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
@@ -57,7 +57,7 @@ implements StorageDriver<I, O> {
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new NamingThreadFactory(this.runId + "-ioWorker", true)
+			new NamingThreadFactory(this.jobName + "-ioWorker", true)
 		);
 	}
 

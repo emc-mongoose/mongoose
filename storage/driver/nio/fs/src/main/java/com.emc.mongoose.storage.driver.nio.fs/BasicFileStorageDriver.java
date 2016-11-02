@@ -77,10 +77,10 @@ implements StorageDriver<I, O> {
 	private final Function<O, FileChannel> openDstFileFunc;
 	
 	public BasicFileStorageDriver(
-		final String runId, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
-		super(runId, authConfig, loadConfig, verifyFlag);
+		super(jobName, authConfig, loadConfig, verifyFlag);
 		
 		openSrcFileFunc = ioTask -> {
 			final String srcPath = ioTask.getSrcPath();

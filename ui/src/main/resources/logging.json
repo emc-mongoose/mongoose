@@ -58,6 +58,16 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
+								"marker": "metricsFileTotal",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "metricsMedFileTotal",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "ioTrace",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
@@ -71,7 +81,7 @@
 					}
 				}, {
 					"name": "msgFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "messages.log",
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
@@ -88,7 +98,7 @@
 					}
 				}, {
 					"name": "3rdPartyFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "3rdparty.log",
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
@@ -132,6 +142,16 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
+								"marker": "metricsFileTotal",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "metricsMedFileTotal",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "ioTrace",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
@@ -149,7 +169,7 @@
 					}
 				}, {
 					"name": "errFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "errors.log",
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
@@ -170,7 +190,7 @@
 					}
 				}, {
 					"name": "metricsMedFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "metrics.med.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
@@ -193,8 +213,32 @@
 						]
 					}
 				}, {
+					"name": "metricsMedFileTotal",
+					"type": "loadJobFile",
+					"fileName": "metrics.med.total.csv",
+					"PatternLayout": {
+						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "metricsMedFileTotal",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
 					"name": "metricsFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "metrics.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
@@ -217,8 +261,32 @@
 						]
 					}
 				}, {
+					"name": "metricsFileTotal",
+					"type": "loadJobFile",
+					"fileName": "metrics.total.csv",
+					"PatternLayout": {
+						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "metricsFileTotal",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
 					"name": "ioTraceFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "io.trace.csv",
 					"PatternLayout": {
 						"header": "Thread,LoadType,TargetNode,ItemId,TransferSize,StatusCode,ReqTimeStart[us],RespLatency[us],DataLatency[us],Duration[us]\n",
@@ -242,7 +310,7 @@
 					}
 				}, {
 					"name": "cfgFile",
-					"type": "runIdFile",
+					"type": "loadJobFile",
 					"fileName": "config.log",
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} | %c{1} | %t | %m%n"
@@ -269,15 +337,29 @@
 					"bufferSize": 100000,
 					"shutdownTimeout": 10000,
 					"AppenderRef": [
-						{ "ref": "stdout" },
-						{ "ref": "msgFile" },
-						{ "ref": "3rdPartyFile" },
-						{ "ref": "errFile" },
-						{ "ref": "metricsFile" },
-						{ "ref": "metricsMedFile" },
-						{ "ref": "ioTraceFile" },
-						{ "ref": "WebUI" },
-						{ "ref": "cfgFile" }
+						{
+							"ref": "stdout"
+						}, {
+							"ref": "msgFile"
+						}, {
+							"ref": "3rdPartyFile"
+						}, {
+							"ref": "errFile"
+						}, {
+							"ref": "metricsFile"
+						}, {
+							"ref": "metricsMedFile"
+						}, {
+							"ref": "metricsFileTotal"
+						}, {
+							"ref": "metricsMedFileTotal"
+						}, {
+							"ref": "ioTraceFile"
+						}, {
+							"ref": "WebUI"
+						}, {
+							"ref": "cfgFile"
+						}
 					]
 				}
 			]

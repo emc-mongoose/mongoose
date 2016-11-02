@@ -3,28 +3,31 @@ package com.emc.mongoose.ui.config;
 import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
+import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
+import static com.emc.mongoose.ui.cli.CliArgParser.ARG_SEP;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import static org.apache.commons.lang.WordUtils.capitalize;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
-import static com.emc.mongoose.ui.cli.CliArgParser.ARG_SEP;
-import static org.apache.commons.lang.WordUtils.capitalize;
 /**
  Created on 11.07.16.
  */
-@SuppressWarnings("unused")
-public final class Config {
+public final class Config
+implements Serializable {
 
 	private static final class TimeStrToLongDeserializer
 	extends JsonDeserializer<Long> {
@@ -79,6 +82,17 @@ public final class Config {
 	@JsonProperty(KEY_ALIASING) private Map<String, Object> aliasingConfig;
 
 	public Config() {}
+
+	public Config(final Config config) {
+		this.name = config.getName();
+		this.version = config.getVersion();
+		this.socketConfig = new SocketConfig(config.getSocketConfig());
+		this.itemConfig = new ItemConfig(config.getItemConfig());
+		this.loadConfig = new LoadConfig(config.getLoadConfig());
+		this.runConfig = new RunConfig(config.getRunConfig());
+		this.storageConfig = new StorageConfig(config.getStorageConfig());
+		this.aliasingConfig = new HashMap<>(config.getAliasingConfig());
+	}
 
 	public final String getName() {
 		return name;
@@ -199,6 +213,17 @@ public final class Config {
 
 		public SocketConfig() {}
 
+		public SocketConfig(final SocketConfig other) {
+			this.timeoutMilliSec = other.getTimeoutMilliSec();
+			this.reuseAddr = other.getReuseAddr();
+			this.keepAlive = other.getKeepAlive();
+			this.tcpNoDelay = other.getTcpNoDelay();
+			this.linger = other.getLinger();
+			this.bindBackLogSize = other.getBindBackLogSize();
+			this.interestOpQueued = other.getInterestOpQueued();
+			this.selectInterval = other.getSelectInterval();
+		}
+
 		public final int getTimeoutMilliSec() {
 			return timeoutMilliSec;
 		}
@@ -249,12 +274,12 @@ public final class Config {
 			this.dataConfig = dataConfig;
 		}
 		
-		public final void setInput(final InputConfig input) {
-			this.input = input;
+		public final void setInputConfig(final InputConfig inputConfig) {
+			this.inputConfig = inputConfig;
 		}
 		
-		public final void setOutput(final OutputConfig output) {
-			this.output = output;
+		public final void setOutputConfig(final OutputConfig outputConfig) {
+			this.outputConfig = outputConfig;
 		}
 		
 		public final void setNamingConfig(final NamingConfig namingConfig) {
@@ -263,11 +288,19 @@ public final class Config {
 		
 		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_DATA) private DataConfig dataConfig;
-		@JsonProperty(KEY_INPUT) private InputConfig input;
-		@JsonProperty(KEY_OUTPUT) private OutputConfig output;
+		@JsonProperty(KEY_INPUT) private InputConfig inputConfig;
+		@JsonProperty(KEY_OUTPUT) private OutputConfig outputConfig;
 		@JsonProperty(KEY_NAMING) private NamingConfig namingConfig;
 
 		public ItemConfig() {
+		}
+
+		public ItemConfig(final ItemConfig other) {
+			this.type = other.getType();
+			this.dataConfig = new DataConfig(other.getDataConfig());
+			this.inputConfig = new InputConfig(other.getInputConfig());
+			this.outputConfig = new OutputConfig(other.getOutputConfig());
+			this.namingConfig = new NamingConfig(other.getNamingConfig());
 		}
 
 		public final String getType() {
@@ -279,11 +312,11 @@ public final class Config {
 		}
 
 		public final InputConfig getInputConfig() {
-			return input;
+			return inputConfig;
 		}
 
 		public final OutputConfig getOutputConfig() {
-			return output;
+			return outputConfig;
 		}
 
 		public final NamingConfig getNamingConfig() {
@@ -302,8 +335,8 @@ public final class Config {
 				this.contentConfig = contentConfig;
 			}
 			
-			public final void setRanges(final DataRangesConfig ranges) {
-				this.ranges = ranges;
+			public final void setRangesConfig(final DataRangesConfig rangesConfig) {
+				this.rangesConfig = rangesConfig;
 			}
 			
 			public final void setSize(final SizeInBytes size) {
@@ -316,7 +349,7 @@ public final class Config {
 			
 			@JsonProperty(KEY_CONTENT) private ContentConfig contentConfig;
 			@JsonProperty(KEY_RANGES) @JsonDeserialize(using = DataRangesConfigDeserializer.class)
-			private DataRangesConfig ranges;
+			private DataRangesConfig rangesConfig;
 			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
 			private SizeInBytes size;
 			@JsonProperty(KEY_VERIFY) private boolean verify;
@@ -324,12 +357,19 @@ public final class Config {
 			public DataConfig() {
 			}
 
+			public DataConfig(final DataConfig other) {
+				this.contentConfig = new ContentConfig(other.getContentConfig());
+				this.rangesConfig = new DataRangesConfig(other.getRangesConfig());
+				this.size = new SizeInBytes(other.getSize());
+				this.verify = other.getVerify();
+			}
+
 			public ContentConfig getContentConfig() {
 				return contentConfig;
 			}
 
-			public final DataRangesConfig getRanges() {
-				return ranges;
+			public final DataRangesConfig getRangesConfig() {
+				return rangesConfig;
 			}
 
 			public final SizeInBytes getSize() {
@@ -367,6 +407,12 @@ public final class Config {
 				public ContentConfig() {
 				}
 
+				public ContentConfig(final ContentConfig other) {
+					this.file = other.getFile();
+					this.seed = other.getSeed();
+					this.ringSize = new SizeInBytes(other.getRingSize());
+				}
+
 				public final String getFile() {
 					return file;
 				}
@@ -401,6 +447,11 @@ public final class Config {
 			public InputConfig() {
 			}
 
+			public InputConfig(final InputConfig other) {
+				this.path = other.getPath();
+				this.file = other.getFile();
+			}
+
 			public final String getPath() {
 				return path;
 			}
@@ -429,6 +480,11 @@ public final class Config {
 			@JsonProperty(KEY_FILE) private String file;
 
 			public OutputConfig() {
+			}
+
+			public OutputConfig(final OutputConfig other) {
+				this.path = other.getPath();
+				this.file = other.getFile();
 			}
 
 			public String getPath() {
@@ -478,6 +534,14 @@ public final class Config {
 			public NamingConfig() {
 			}
 
+			public NamingConfig(final NamingConfig other) {
+				this.type = other.getType();
+				this.prefix = other.getPrefix();
+				this.radix = other.getRadix();
+				this.offset = other.getOffset();
+				this.length = other.getLength();
+			}
+
 			public final String getType() {
 				return type;
 			}
@@ -505,8 +569,9 @@ public final class Config {
 
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_CONCURRENCY = "concurrency";
-		public static final String KEY_LIMIT = "limit";
 		public static final String KEY_GENERATOR = "generator";
+		public static final String KEY_JOB = "job";
+		public static final String KEY_LIMIT = "limit";
 		public static final String KEY_METRICS = "metrics";
 		public static final String KEY_QUEUE = "queue";
 		public static final String KEY_TYPE = "type";
@@ -518,15 +583,19 @@ public final class Config {
 		public final void setConcurrency(final int concurrency) {
 			this.concurrency = concurrency;
 		}
-		
-		public final void setLimitConfig(final LimitConfig limitConfig) {
-			this.limitConfig = limitConfig;
-		}
 
 		public final void setGeneratorConfig(final GeneratorConfig generatorConfig) {
 			this.generatorConfig = generatorConfig;
 		}
-		
+
+		public final void setJobConfig(final JobConfig jobConfig) {
+			this.jobConfig = jobConfig;
+		}
+
+		public final void setLimitConfig(final LimitConfig limitConfig) {
+			this.limitConfig = limitConfig;
+		}
+
 		public final void setMetricsConfig(
 			final MetricsConfig metricsConfig
 		) {
@@ -543,13 +612,25 @@ public final class Config {
 		
 		@JsonProperty(KEY_CIRCULAR) private boolean circular;
 		@JsonProperty(KEY_CONCURRENCY) private int concurrency;
-		@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
 		@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
+		@JsonProperty(KEY_JOB) private JobConfig jobConfig;
+		@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
 		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
 		@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
 		@JsonProperty(KEY_TYPE) private String type;
 		
 		public LoadConfig() {
+		}
+
+		public LoadConfig(final LoadConfig other) {
+			this.circular = other.getCircular();
+			this.concurrency = other.getConcurrency();
+			this.generatorConfig = new GeneratorConfig(other.getGeneratorConfig());
+			this.jobConfig = new JobConfig(other.getJobConfig());
+			this.limitConfig = new LimitConfig(other.getLimitConfig());
+			this.metricsConfig = new MetricsConfig(other.getMetricsConfig());
+			this.queueConfig = new QueueConfig(other.getQueueConfig());
+			this.type = other.getType();
 		}
 
 		public final String getType() {
@@ -564,12 +645,16 @@ public final class Config {
 			return concurrency;
 		}
 
-		public final LimitConfig getLimitConfig() {
-			return limitConfig;
-		}
-
 		public final GeneratorConfig getGeneratorConfig() {
 			return generatorConfig;
+		}
+
+		public final JobConfig getJobConfig() {
+			return jobConfig;
+		}
+
+		public final LimitConfig getLimitConfig() {
+			return limitConfig;
 		}
 
 		public final MetricsConfig getMetricsConfig() {
@@ -578,6 +663,63 @@ public final class Config {
 		
 		public final QueueConfig getQueueConfig() {
 			return queueConfig;
+		}
+
+		public static final class GeneratorConfig
+			implements Serializable {
+
+			public static final String KEY_REMOTE = "remote";
+			public static final String KEY_ADDRS = "addrs";
+
+			public final void setAddrs(final List<String> addrs) {
+				this.addrs = addrs;
+			}
+
+			public final void setRemote(final boolean remote) {
+				this.remote = remote;
+			}
+
+			@JsonProperty(KEY_ADDRS) private List<String> addrs;
+			@JsonProperty(KEY_REMOTE) private boolean remote;
+
+			public GeneratorConfig() {
+			}
+
+			public GeneratorConfig(final GeneratorConfig other) {
+				this.addrs = new ArrayList<>(other.getAddrs());
+				this.remote = other.getRemote();
+			}
+
+			public List<String> getAddrs() {
+				return addrs;
+			}
+
+			public boolean getRemote() {
+				return remote;
+			}
+		}
+
+		public static final class JobConfig
+		implements Serializable {
+
+			public JobConfig() {
+			}
+
+			public JobConfig(final JobConfig other) {
+				this.name = other.getName();
+			}
+
+			public static final String KEY_NAME = "name";
+
+			public final void setName(final String name) {
+				this.name = name;
+			}
+
+			@JsonProperty(KEY_NAME) private String name;
+
+			public final String getName() {
+				return name;
+			}
 		}
 
 		public static final class LimitConfig
@@ -616,6 +758,13 @@ public final class Config {
 			public LimitConfig() {
 			}
 
+			public LimitConfig(final LimitConfig other) {
+				this.count = other.getCount();
+				this.time = other.getTime();
+				this.rate = other.getRate();
+				this.size = new SizeInBytes(other.getSize());
+			}
+
 			public final long getCount() {
 				return count;
 			}
@@ -630,35 +779,6 @@ public final class Config {
 
 			public final long getTime() {
 				return time;
-			}
-		}
-
-		public static final class GeneratorConfig
-		implements Serializable {
-
-			public static final String KEY_REMOTE = "remote";
-			public static final String KEY_ADDRS = "addrs";
-
-			public final void setAddrs(final List<String> addrs) {
-				this.addrs = addrs;
-			}
-
-			public final void setRemote(final boolean remote) {
-				this.remote = remote;
-			}
-
-			@JsonProperty(KEY_ADDRS) private List<String> addrs;
-			@JsonProperty(KEY_REMOTE) private boolean remote;
-
-			public GeneratorConfig() {
-			}
-
-			public List<String> getAddrs() {
-				return addrs;
-			}
-
-			public boolean getRemote() {
-				return remote;
 			}
 		}
 
@@ -691,6 +811,12 @@ public final class Config {
 			public MetricsConfig() {
 			}
 
+			public MetricsConfig(final MetricsConfig other) {
+				this.threshold = other.getThreshold();
+				this.period = other.getPeriod();
+				this.precondition = other.getPrecondition();
+			}
+
 			public final double getThreshold() {
 				return threshold;
 			}
@@ -717,6 +843,10 @@ public final class Config {
 			
 			public QueueConfig() {
 			}
+
+			public QueueConfig(final QueueConfig other) {
+				this.size = other.getSize();
+			}
 			
 			public final int getSize() {
 				return size;
@@ -728,28 +858,22 @@ public final class Config {
 	implements Serializable {
 
 		public static final String KEY_FILE = "file";
-		public static final String KEY_ID = "id";
 		
 		public final void setFile(final String file) {
 			this.file = file;
 		}
 		
-		public final void setId(final String id) {
-			this.id = id;
-		}
-		
 		@JsonProperty(KEY_FILE) private String file;
-		@JsonProperty(KEY_ID) private String id;
 
 		public RunConfig() {
 		}
 
-		public final String getFile() {
-			return file;
+		public RunConfig(final RunConfig other) {
+			this.file = other.getFile();
 		}
 
-		public final String getId() {
-			return id;
+		public final String getFile() {
+			return file;
 		}
 	}
 
@@ -810,6 +934,17 @@ public final class Config {
 		public StorageConfig() {
 		}
 
+		public StorageConfig(final StorageConfig other) {
+			this.authConfig = new AuthConfig(other.getAuthConfig());
+			this.httpConfig = new HttpConfig(other.getHttpConfig());
+			this.nodeConfig = new NodeConfig(other.getNodeConfig());
+			this.driverConfig = new DriverConfig(other.getDriverConfig());
+			this.port = other.getPort();
+			this.ssl = other.getSsl();
+			this.type = other.getType();
+			this.mockConfig = new MockConfig(other.getMockConfig());
+		}
+
 		public AuthConfig getAuthConfig() {
 			return authConfig;
 		}
@@ -868,6 +1003,12 @@ public final class Config {
 			public AuthConfig() {
 			}
 
+			public AuthConfig(final AuthConfig other) {
+				this.id = other.getId();
+				this.secret = other.getSecret();
+				this.token = other.getToken();
+			}
+
 			public String getId() {
 				return id;
 			}
@@ -921,6 +1062,14 @@ public final class Config {
 			public HttpConfig() {
 			}
 
+			public HttpConfig(final HttpConfig other) {
+				this.api = other.getApi();
+				this.fsAccess = other.getFsAccess();
+				this.namespace = other.getNamespace();
+				this.versioning = other.getVersioning();
+				this.headers = new HashMap<>(other.getHeaders());
+			}
+
 			public String getApi() {
 				return api;
 			}
@@ -955,6 +1104,10 @@ public final class Config {
 			
 			public NodeConfig() {
 			}
+
+			public NodeConfig(final NodeConfig other) {
+				this.addrs = new ArrayList<>(other.getAddrs());
+			}
 			
 			public List<String> getAddrs() {
 				return addrs;
@@ -979,6 +1132,11 @@ public final class Config {
 			@JsonProperty(KEY_REMOTE) private boolean remote;
 
 			public DriverConfig() {
+			}
+
+			public DriverConfig(final DriverConfig other) {
+				this.remote = other.getRemote();
+				this.addrs = new ArrayList<>(other.getAddrs());
 			}
 
 			public List<String> getAddrs() {
@@ -1024,6 +1182,13 @@ public final class Config {
 			public MockConfig() {
 			}
 
+			public MockConfig(final MockConfig other) {
+				this.headCount = other.getHeadCount();
+				this.capacity = other.getCapacity();
+				this.containerConfig = new ContainerConfig(other.getContainerConfig());
+				this.node = other.getNode();
+			}
+
 			public int getHeadCount() {
 				return headCount;
 			}
@@ -1060,6 +1225,11 @@ public final class Config {
 				public ContainerConfig() {
 				}
 
+				public ContainerConfig(final ContainerConfig other) {
+					this.capacity = other.getCapacity();
+					this.countLimit = other.getCountLimit();
+				}
+
 				public int getCapacity() {
 					return capacity;
 				}
@@ -1074,11 +1244,13 @@ public final class Config {
 	}
 	
 	public void apply(final Map<String, Object> tree)
-	throws InvocationTargetException, IllegalAccessException, IllegalStateException {
+	throws IllegalArgumentException {
 		try {
 			applyRecursively(this, tree);
 		} catch(final IllegalArgumentNameException e) {
 			throw new IllegalArgumentNameException(ARG_PREFIX + e.getMessage());
+		} catch(final InvocationTargetException | IllegalAccessException e) {
+			e.printStackTrace(System.err);
 		}
 	}
 
@@ -1117,10 +1289,14 @@ public final class Config {
 			final Method fieldGetter = configCls.getMethod("get" + capitalize(key));
 			final Class fieldType = fieldGetter.getReturnType();
 			if(fieldType.equals(String.class)) {
-				configCls.getMethod("set" + capitalize(key), String.class).invoke(config, value);
+				configCls
+					.getMethod("set" + capitalize(key), String.class)
+					.invoke(config, value);
 			} else if(fieldType.equals(List.class)) {
 				final List<String> listValue = Arrays.asList(value.split(","));
-				configCls.getMethod("set" + capitalize(key), List.class).invoke(config, listValue);
+				configCls
+					.getMethod("set" + capitalize(key), List.class)
+					.invoke(config, listValue);
 			} else if(fieldType.equals(Map.class)) {
 				final Map<String, String> field = (Map<String, String>) fieldGetter.invoke(config);
 				final String keyValuePair[] = value.split(":", 2);
@@ -1131,37 +1307,52 @@ public final class Config {
 				}
 			} else if(fieldType.equals(Integer.TYPE)) {
 				final int intValue = Integer.parseInt(value);
-				configCls.getMethod("set" + capitalize(key), Integer.TYPE).invoke(config, intValue);
+				configCls
+					.getMethod("set" + capitalize(key), Integer.TYPE)
+					.invoke(config, intValue);
 			} else if(fieldType.equals(Long.TYPE)) {
 				try {
 					final long longValue = Long.parseLong(value);
-					configCls.getMethod("set" + capitalize(key), Long.TYPE).invoke(config, longValue);
+					configCls
+						.getMethod("set" + capitalize(key), Long.TYPE)
+						.invoke(config, longValue);
 				} catch(final NumberFormatException e) {
 					final long timeValue = TimeUtil.getTimeInSeconds(value);
-					configCls.getMethod("set" + capitalize(key), Long.TYPE).invoke(config, timeValue);
+					configCls
+						.getMethod("set" + capitalize(key), Long.TYPE)
+						.invoke(config, timeValue);
 				}
 			} else if(fieldType.equals(Double.TYPE)) {
 				final double doubleValue = Double.parseDouble(value);
-				configCls.getMethod("set" + capitalize(key), Double.TYPE).invoke(config, doubleValue);
+				configCls
+					.getMethod("set" + capitalize(key), Double.TYPE)
+					.invoke(config, doubleValue);
 			} else if(fieldType.equals(Boolean.TYPE)) {
 				final boolean flagValue = Boolean.parseBoolean(value);
-				configCls.getMethod("set" + capitalize(key), Boolean.TYPE).invoke(config, flagValue);
+				configCls
+					.getMethod("set" + capitalize(key), Boolean.TYPE)
+					.invoke(config, flagValue);
 			} else if(fieldType.equals(SizeInBytes.class)) {
 				final SizeInBytes sizeValue = new SizeInBytes(value);
-				configCls.getMethod("set" + capitalize(key), SizeInBytes.class).invoke(config, sizeValue);
+				configCls
+					.getMethod("set" + capitalize(key), SizeInBytes.class)
+					.invoke(config, sizeValue);
 			} else if(fieldType.equals(DataRangesConfig.class)) {
 				try {
 					final int rangesCount = Integer.parseInt(value);
-					configCls.getMethod("set" + capitalize(key), DataRangesConfig.class).invoke(
-						config, new DataRangesConfig(rangesCount));
+					configCls
+						.getMethod("set" + capitalize(key), DataRangesConfig.class)
+						.invoke(config, new DataRangesConfig(rangesCount));
 				} catch(final NumberFormatException e) {
 					final DataRangesConfig rangesValue = new DataRangesConfig(value);
-					configCls.getMethod("set" + capitalize(key), DataRangesConfig.class).invoke(
-						config, rangesValue);
+					configCls
+						.getMethod("set" + capitalize(key), DataRangesConfig.class)
+						.invoke(config, rangesValue);
 				}
 			} else {
 				throw new IllegalStateException(
-					"Field type is \"" + fieldType.getName() + "\" for key: " + key);
+					"Field type is \"" + fieldType.getName() + "\" for key: " + key
+				);
 			}
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalArgumentNameException(key);
