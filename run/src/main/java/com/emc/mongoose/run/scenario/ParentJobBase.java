@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.scenario;
+package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Markers;

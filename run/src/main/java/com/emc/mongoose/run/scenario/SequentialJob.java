@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.scenario;
+package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Markers;
@@ -27,7 +27,6 @@ extends ParentJobBase {
 	//
 	@Override
 	public synchronized void run() {
-		super.run();
 		LOG.debug(Markers.MSG, "{}: start {} child jobs", toString(), childJobs.size());
 		for(final Job subJob : childJobs) {
 			LOG.debug(Markers.MSG, "{}: child job \"{}\" start", toString(), subJob.toString());

@@ -1,11 +1,13 @@
-package com.emc.mongoose.ui.scenario;
+package com.emc.mongoose.run.scenario;
 
-import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
+
 /**
  Created by andrey on 01.07.16.
  */
@@ -16,7 +18,7 @@ extends SequentialJob {
 
 	private final long count;
 
-	public LoopJob(final AppConfig appConfig, final Map<String, Object> subTree)
+	public LoopJob(final Config appConfig, final Map<String, Object> subTree)
 	throws NumberFormatException, IllegalArgumentException {
 		super(appConfig, subTree);
 		final Object value = subTree.get(KEY_NODE_VALUE);

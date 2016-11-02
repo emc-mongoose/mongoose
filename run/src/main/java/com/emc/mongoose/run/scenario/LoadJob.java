@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.scenario;
+package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;

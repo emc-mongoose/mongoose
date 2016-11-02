@@ -14,9 +14,6 @@ dependencies {
 	compileOnly(
 		project(':common'),
 		project(':model'),
-		project(':load:generator'),
-		project(':load:monitor'),
-		project(':storage:driver:builder'),
 	)
 
 	runtime(

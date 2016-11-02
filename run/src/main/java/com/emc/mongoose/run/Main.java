@@ -10,7 +10,7 @@ import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import com.emc.mongoose.ui.scenario.LoadJob;
+import com.emc.mongoose.run.scenario.LoadJob;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

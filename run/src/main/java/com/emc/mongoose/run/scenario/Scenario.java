@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.scenario;
+package com.emc.mongoose.run.scenario;
 
 /**
  Created by kurila on 02.02.16.
