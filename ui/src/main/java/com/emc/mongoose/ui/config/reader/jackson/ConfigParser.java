@@ -1,20 +1,19 @@
 package com.emc.mongoose.ui.config.reader.jackson;
 
-import com.emc.mongoose.common.exception.IoFireball;
+import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.config.Config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.emc.mongoose.common.Constants.DIR_CONFIG;
 import static com.emc.mongoose.common.Constants.FNAME_CONFIG;
 
 /**
@@ -25,26 +24,16 @@ public abstract class ConfigParser {
 	private ConfigParser() {}
 
 	public static Config loadDefaultConfig()
-	throws IoFireball {
-		
-		final URL configUrl = ConfigParser.class.getClassLoader().getResource(FNAME_CONFIG);
-		if(configUrl == null) {
-			return null;
-		}
+	throws IOException {
+		final String defaultConfigPath = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
+			File.separator + FNAME_CONFIG;
 		final ObjectMapper mapper = new ObjectMapper();
-		final Config config;
-		try(final InputStream is = configUrl.openStream()) {
-			config = mapper.readValue(is, Config.class);
-		} catch(final IOException e) {
-			throw new IoFireball(e);
-		}
-		
-		return config;
+		return mapper.readValue(new File(defaultConfigPath), Config.class);
 	}
 
 	public static Config replace(
 		final Config config, final String replacePattern, final Object newValue
-	) throws OmgLookAtMyConsoleException, OmgDoesNotPerformException, IoFireball {
+	) throws OmgLookAtMyConsoleException, OmgDoesNotPerformException, IOException {
 		final ObjectMapper mapper = new ObjectMapper();
 		try {
 			final String configText = mapper.writeValueAsString(config);
@@ -98,8 +87,6 @@ public abstract class ConfigParser {
 			return mapper.readValue(newConfigText, Config.class);
 		} catch(final JsonProcessingException e) {
 			throw new OmgDoesNotPerformException(e);
-		} catch(final IOException e) {
-			throw new IoFireball(e);
 		}
 	}
 }

@@ -1,10 +1,9 @@
 package com.emc.mongoose.model.io;
-//
-import com.emc.mongoose.common.exception.IoFireball;
-//
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
+
 /**
  Created by kurila on 10.02.16.
  */
@@ -28,19 +27,19 @@ implements Input<T> {
 	//
 	@Override
 	public T get()
-	throws IoFireball {
+	throws IOException {
 		final T prevValue = lastValue;
 		try {
 			lastValue = updateAction.call();
 		} catch(final Exception e) {
-			throw new IoFireball("Failed to execute the update action \"{" + updateAction + "\"}");
+			throw new IOException("Failed to execute the update action \"{" + updateAction + "\"}");
 		}
 		return prevValue ;
 	}
 	//
 	@Override
 	public int get(final List<T> buffer, final int limit)
-	throws IoFireball {
+	throws IOException {
 		int count = 0;
 		try {
 			for(; count < limit; count ++) {
@@ -48,20 +47,20 @@ implements Input<T> {
 				lastValue = updateAction.call();
 			}
 		} catch(final Exception e) {
-			throw new IoFireball("Failed to execute the update action \"{" + updateAction + "\"}");
+			throw new IOException("Failed to execute the update action \"{" + updateAction + "\"}");
 		}
 		return count;
 	}
 	//
 	@Override
 	public void skip(final long count)
-	throws IoFireball {
+	throws IOException {
 		try {
 			for(int i = 0; i < count; i++) {
 				lastValue = updateAction.call();
 			}
 		} catch(final Exception e) {
-			throw new IoFireball("Failed to execute the update action \"{" + updateAction + "\"}");
+			throw new IOException("Failed to execute the update action \"{" + updateAction + "\"}");
 		}
 	}
 	//
@@ -73,7 +72,7 @@ implements Input<T> {
 	//
 	@Override
 	public void close()
-	throws IoFireball {
+	throws IOException {
 		// just free the memory
 		lastValue = null;
 		updateAction = null;

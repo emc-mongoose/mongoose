@@ -1,6 +1,5 @@
 package com.emc.mongoose.run.scenario;
 
-import com.emc.mongoose.common.exception.IoFireball;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
@@ -220,7 +219,7 @@ extends SequentialJob {
 					LOG.error(Markers.ERR, "Invalid jobs node type: {}", jobTreeList.getClass());
 				}
 			}
-		} catch(final UserShootHisFootException | IoFireball e) {
+		} catch(final UserShootHisFootException | IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to replace the configuration values");
 		}
 	}

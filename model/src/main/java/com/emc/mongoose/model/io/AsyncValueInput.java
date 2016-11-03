@@ -2,13 +2,14 @@ package com.emc.mongoose.model.io;
 //
 import com.emc.mongoose.common.concurrent.InitCallable;
 import com.emc.mongoose.common.concurrent.InitRunnable;
-import com.emc.mongoose.common.exception.IoFireball;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 //
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 10.02.16.
  */
@@ -107,12 +108,12 @@ extends BasicValueInput<T> {
 	//
 	@Override
 	public void skip(final long count)
-	throws IoFireball {
+	throws IOException {
 	}
 	//
 	@Override
 	public void close()
-	throws IoFireball {
+	throws IOException {
 		super.close();
 		UPDATE_TASKS.remove(updateTask);
 	}

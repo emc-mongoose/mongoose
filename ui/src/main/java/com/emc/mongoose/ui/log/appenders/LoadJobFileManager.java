@@ -1,6 +1,7 @@
 package com.emc.mongoose.ui.log.appenders;
 //
 
+import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -159,8 +160,8 @@ extends AbstractManager {
 		final File
 			outPutFile = new File(
 				jobName == null ?
-					LogUtil.getLogDir() + File.separator + fileName :
-					LogUtil.getLogDir() + File.separator + jobName + File.separator + fileName
+					PathUtil.getBaseDir() + File.separatorChar + "log" + File.separator + fileName :
+					PathUtil.getBaseDir() + File.separatorChar + "log" + File.separator + jobName + File.separator + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();

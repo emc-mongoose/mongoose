@@ -121,7 +121,7 @@ implements Input<T> {
 					throw new InvalidClassException(o == null ? null : o.getClass().getName());
 				}
 			}
-		} catch (final ClassNotFoundException e) {
+		} catch(final ClassNotFoundException e) {
 			throw new IOException(e);
 		}
 	}

@@ -1,12 +1,12 @@
 package com.emc.mongoose.model.data;
 
-import com.emc.mongoose.common.exception.IoFireball;
+import java.io.IOException;
 
 /**
  Created by andrey on 26.06.15.
  */
 public abstract class DataVerificationException
-extends IoFireball {
+extends IOException {
 	
 	private final long offset;
 	

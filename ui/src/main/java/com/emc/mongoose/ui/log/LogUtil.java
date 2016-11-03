@@ -1,7 +1,8 @@
 package com.emc.mongoose.ui.log;
 
-import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.env.PathUtil;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -18,14 +19,14 @@ import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.emc.mongoose.common.Constants.DIR_CONFIG;
+import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
 /**
@@ -57,7 +58,7 @@ implements ShutdownCallbackRegistry {
 		KEY_CONFIG_FACTORY = "log4j.configurationFactory",
 		VALUE_CONFIG_FACTORY = "org.apache.logging.log4j.core.config.json.JsonConfigurationFactory",
 		//
-		FNAME_LOG_CONF = "logging.json",
+		FNAME_LOG_CONF = "conf/logging.json",
 		//
 		MONGOOSE = "mongoose";
 	//
@@ -89,17 +90,6 @@ implements ShutdownCallbackRegistry {
 		return LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
-	}
-	//
-	public static String getLogDir() {
-		String logDir = null;
-		final URL logDirUrl = Constants.class.getProtectionDomain().getCodeSource().getLocation();
-		try {
-			logDir = new File(logDirUrl.toURI()).getParent() + File.separatorChar + "log";
-		} catch(final URISyntaxException e) {
-			e.printStackTrace(System.err);
-		}
-		return logDir;
 	}
 	//
 	private static boolean isStdOutColoringEnabledByConfig() {
@@ -138,18 +128,12 @@ implements ShutdownCallbackRegistry {
 					ThreadContext.put(KEY_JOB_NAME, getDateTimeStamp());
 				}
 				try {
-					final String log4jConfigurationFile = System.getProperty("log4j.configurationFile");
+					String log4jConfigurationFile = System.getProperty("log4j.configurationFile");
 					if(log4jConfigurationFile == null) {
-						final ClassLoader classloader = LogUtil.class.getClassLoader();
-						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
-						if(bundleLogConfURL != null) {
-							LOG_CTX = Configurator.initialize(
-								MONGOOSE, classloader, bundleLogConfURL.toURI()
-							);
-						}
-					} else {
-						LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigurationFile);
+						log4jConfigurationFile = PathUtil.getBaseDir() + File.separator +
+							DIR_CONFIG + File.separator + FNAME_LOG_CONFIG;
 					}
+					LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigurationFile);
 					//
 					if(LOG_CTX == null) {
 						System.err.println("Logging configuration failed");

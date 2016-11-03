@@ -95,6 +95,9 @@ task dist(type: Tar) {
 	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	into("$baseName-$rootProject.version") {
+		into("config") {
+			from { "config" }
+		}
 		into("lib") {
 			for(Project p: mutualProjects) {
 				from p.configurations.runtime
@@ -128,7 +131,7 @@ void collectName(Project p, LinkedList<String> names) {
 }
 
 String defineVersion() {
-	def configFilePath = [rootDir, "ui", "src", "main", "resources", "defaults.json"].join(File.separator);
+	def configFilePath = [rootDir, "config", "defaults.json"].join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().parseText(inputFile.text)
 	json.version

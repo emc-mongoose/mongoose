@@ -25,7 +25,9 @@ public class Main {
 		LogUtil.init();
 
 		final Map<String, Object> cliArgs = CliArgParser.parseArgs(args);
-		final String scenarioArg = (String) cliArgs.get(BasicCliArgs.SCENARIO.name().toLowerCase());
+		final String scenarioArg = (String) cliArgs.remove(
+			BasicCliArgs.SCENARIO.name().toLowerCase()
+		);
 		
 		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
