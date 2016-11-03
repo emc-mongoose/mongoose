@@ -530,6 +530,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void startActually() {
+		appConfig.setRunId(appConfig.getRunId()); // bandage to set the inheritable thread context
 		LOG.debug(Markers.MSG, "Starting {}", getName());
 		initStats(appConfig.getNetworkServeJmx());
 		ioStats.start();
