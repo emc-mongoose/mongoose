@@ -103,6 +103,9 @@ task dist(type: Tar) {
 		for(Project p: mutualProjects) {
 			from p.jar.outputs.files
 		}
+		into("scenario") {
+			from { "scenario" }
+		}
 	}
 }
 

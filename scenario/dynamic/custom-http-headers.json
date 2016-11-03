@@ -1,0 +1,14 @@
+{
+	"type" : "load",
+	"config" : {
+		"storage" : {
+			"http" : {
+				"headers" : {
+					"key1" : "value1",
+					"key2" : "value2",
+					"key3" : "value3"
+				}
+			}
+		}
+	}
+}

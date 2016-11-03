@@ -1,0 +1,13 @@
+{
+	"type" : "sequential",
+	"jobs" : [
+		{
+			"type" : "command",
+			"value" : "find / | grep mongoose",
+			"blocking" : false
+		}, {
+			"type" : "command",
+			"value" : "sleep 10s"
+		}
+	]
+}

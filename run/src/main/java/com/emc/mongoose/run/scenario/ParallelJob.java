@@ -25,6 +25,9 @@ extends ParentJobBase {
 	//
 	@Override
 	public final synchronized void run() {
+		
+		super.run();
+		
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
 			childJobs.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
 		);
@@ -33,6 +36,7 @@ extends ParentJobBase {
 		}
 		LOG.debug(Markers.MSG, "{}: started {} child jobs", toString(), childJobs.size());
 		parallelJobsExecutor.shutdown();
+		
 		final long limitTime = localConfig.getLoadConfig().getLimitConfig().getTime();
 		try {
 			if(limitTime > 0) {

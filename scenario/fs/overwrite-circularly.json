@@ -1,0 +1,51 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "circular-file-overwrite"
+			},
+			"data" : {
+				"size" : "64KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1
+			}
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "circular-file-overwrite.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "circular-file-overwrite.csv"
+					}
+				},
+				"load" : {
+					"type" : "update",
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value, time -> 5 minutes
+						"count" : 0,
+						"time" : "5m"
+					}
+				}
+			}
+		}
+	]
+}

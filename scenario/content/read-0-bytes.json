@@ -1,0 +1,41 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"content" : {
+					"file" : "conf/content/zerobytes"
+				}
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "content-read-zerobytes.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "content-read-zerobytes.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

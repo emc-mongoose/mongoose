@@ -1,0 +1,27 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"content" : {
+					"file" : "conf/content/textexample"
+				}
+			}
+		},
+		"load" : {
+			"server" : {
+				"addrs" : [
+					"10.249.237.72", "10.249.237.73"
+				]
+			}
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.249.237.71"
+			]
+		}
+	}
+}

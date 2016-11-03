@@ -1,0 +1,60 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "partial-append"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1
+			}
+		}
+	},
+	"jobs": [
+		{
+			// write new data
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "partial-append-0.csv"
+					}
+				}
+			}
+		}, {
+			// append the written data
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : "1024-4096"
+					},
+					"src" : {
+						"file" : "partial-append-0.csv"
+					},
+					"dst" : {
+						"file" : "partial-append-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		}, {
+			// verify the updated data
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "partial-append-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

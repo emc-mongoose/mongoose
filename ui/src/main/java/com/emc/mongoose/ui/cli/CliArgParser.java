@@ -10,8 +10,6 @@ public final class CliArgParser {
 	
 	public final static String ARG_PREFIX = "--";
 	public final static String ARG_SEP = "-";
-	public final static String ARG_USAGE = "usage";
-	public final static String ARG_HELP = "help";
 	
 	public static void main(final String... args)
 	throws IllegalArgumentException {

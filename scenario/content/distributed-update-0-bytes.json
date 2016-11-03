@@ -1,0 +1,70 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"content" : {
+					"file" : "conf/content/zerobytes"
+				},
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"server" : {
+				"addrs" : [
+					"10.249.237.72", "10.249.237.73"
+				]
+			}
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.249.237.71"
+			]
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "content-read-zerobytes-0.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 10
+					},
+					"dst" : {
+						"file" : "content-read-zerobytes-1.csv"
+					},
+					"src" : {
+						"file" : "content-read-zerobytes-0.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "content-read-zerobytes-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

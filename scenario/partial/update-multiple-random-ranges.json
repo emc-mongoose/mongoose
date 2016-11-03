@@ -1,0 +1,62 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "partial-update-multiple-random-ranges"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100
+			},
+			"threads" : 2
+		}
+	},
+	"jobs": [
+		{
+			// write new data
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "partial-update-multiple-random-ranges-0.csv"
+					}
+				}
+			}
+		}, {
+			// update the written data
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						// update 10 random byte ranges per request
+						"ranges" : 10
+					},
+					"src" : {
+						"file" : "partial-update-multiple-random-ranges-0.csv"
+					},
+					"dst" : {
+						"file" : "partial-update-multiple-random-ranges-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		}, {
+			// verify the updated data
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "partial-update-multiple-random-ranges-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

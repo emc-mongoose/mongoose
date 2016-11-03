@@ -1,0 +1,45 @@
+{
+	"type" : "for",
+	"value" : "iteration",
+	"in" : "1-10",
+	"config" : {
+		"load" : {
+			"threads" : 1000,
+			"limit" : {
+				"count" : 100000
+			}
+		},
+		"item" : {
+			"data" : {
+				"size" : "10KB"
+			},
+			"dst" : {
+				"container" : "issue-745"
+			}
+		},
+		
+		"storage" : {
+			"http" : {
+				"api" : "s3",
+				"namespace" : "ns1"
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "for",
+			"value" : "i",
+			"in" : "1-5",
+			"config" : {
+				"run" : {
+					"id" : "LONGEVITY-${iteration}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		}
+	]
+}

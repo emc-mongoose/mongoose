@@ -1,0 +1,48 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local",
+			"token" : "1ff8da66af94ebbfcaf2ff63079fce29"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		},
+		"storage" : {
+			"port" : 9022,
+			"http" : {
+				"api" : "atmos",
+				"fsAccess" : true
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "linear-read-atmos-fs-access.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "linear-read-atmos-fs-access.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+
+
+

@@ -1,0 +1,57 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "weighted-load"
+			}
+		},
+		"load" : {
+			"threads" : 100
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "1KB"
+					},
+					"dst" : {
+						"file" : "weighted-load.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 10000
+					},
+					"metrics" : {
+						"period" : 0
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "4KB-16KB"
+					},
+					"src" : {
+						"file" : "weighted-load.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						"time" : "5m"
+					},
+					"type" : [
+						"create=20%", "read=80%"
+					]
+				}
+			}
+		}
+	]
+}

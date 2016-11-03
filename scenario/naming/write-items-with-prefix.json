@@ -1,0 +1,10 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"naming" : {
+				"prefix" : "____"
+			}
+		}
+	}
+}

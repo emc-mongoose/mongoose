@@ -1,0 +1,64 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "fs-verify-updated"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100
+			},
+			"threads" : 2
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs": [
+		{
+			// write new data
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "fs-verify-updated-0.csv"
+					}
+				}
+			}
+		}, {
+			// update the written data
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 10 // update 10 random byte ranges per request
+					},
+					"src" : {
+						"file" : "fs-verify-updated-0.csv"
+					},
+					"dst" : {
+						"file" : "fs-verify-updated-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		}, {
+			// verify the updated data
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "fs-verify-updated-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,18 @@
+{
+	"type" : "for",
+	"value" : "i",
+	"in" : "${RANGE}",
+	"config" : {
+		"load" : {
+			"limit" : {
+				"time" : "1s"
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "command",
+			"value" : "echo ${i}"
+		}
+	]
+}

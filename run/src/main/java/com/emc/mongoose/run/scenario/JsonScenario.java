@@ -27,7 +27,7 @@ implements Scenario {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public JsonScenario(final Config config, final File scenarioSrcFile)
-	throws IOException, CloneNotSupportedException {
+	throws IOException {
 		this(
 			config,
 			new ObjectMapper()
@@ -40,7 +40,7 @@ implements Scenario {
 	}
 	//
 	public JsonScenario(final Config config, final InputStream scenarioInputStream)
-	throws IOException, CloneNotSupportedException {
+	throws IOException {
 		this(
 			config,
 			new ObjectMapper()
@@ -53,7 +53,7 @@ implements Scenario {
 	}
 	//
 	public JsonScenario(final Config config, final String scenarioString)
-	throws IOException, CloneNotSupportedException {
+	throws IOException {
 		this(
 			config,
 			new ObjectMapper()
@@ -66,7 +66,7 @@ implements Scenario {
 	}
 	//
 	public JsonScenario(final Config config, final Map<String, Object> tree)
-	throws IOException, CloneNotSupportedException {
+	throws IOException {
 		super(config, overrideFromEnv(validateAgainstSchema(tree)));
 	}
 	//

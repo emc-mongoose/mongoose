@@ -1,0 +1,78 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "circular-read-updated"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
+		}
+	},
+	"jobs": [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "circular-read-updated-0.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						// partial write or random ranges update
+						"ranges" : 3
+					},
+					"dst" : {
+						"file" : "circular-read-updated-1.csv"
+					},
+					"src" : {
+						"file" : "circular-read-updated-0.csv"
+					}
+				},
+				"load" : {
+					"type" : "update",
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value of 1, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}, {
+			"type" : "command",
+			"value" : "sleep 20"
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "circular-read-updated-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read",
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}
+	]
+}
+

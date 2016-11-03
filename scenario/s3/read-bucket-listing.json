@@ -1,0 +1,33 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "read-bucket-listing"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 10
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition"
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "read-bucket-listing"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

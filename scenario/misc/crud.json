@@ -1,0 +1,100 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "mixed-crud"
+			},
+			"data" : {
+				"size" : "8KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 20
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "mixed-crud-0.csv"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "mixed-crud-1.csv"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "mixed-crud-2.csv"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			"type" : "command",
+			"value" : "sleep 5s"
+		}, {
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load"
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "mixed-crud-0.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"ranges" : 1
+							},
+							"src" : {
+								"file" : "mixed-crud-1.csv"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "mixed-crud-2.csv"
+							}
+						},
+						"load" : {
+							"type" : "delete"
+						}
+					}
+				}
+			]
+		}
+	]
+}

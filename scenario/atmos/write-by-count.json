@@ -1,0 +1,24 @@
+{
+	"type": "load",
+	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
+		"item" : {
+			"dst" : {
+				"file" : "linear-write-by-count-atmos.csv"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1234
+			}
+		},
+		"storage" : {
+			"port" : 9022,
+			"http" : {
+				"api" : "atmos"
+			}
+		}
+	}
+}

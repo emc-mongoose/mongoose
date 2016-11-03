@@ -1,0 +1,15 @@
+{
+	"type" : "load",
+	"config" : {
+		"auth" : {
+			"token" : "existingAuthToken"
+		},
+		"storage" : {
+			"http" : {
+				"api" : "Swift",
+				"namespace" : "test"
+			},
+			"port" : 9024
+		}
+	}
+}

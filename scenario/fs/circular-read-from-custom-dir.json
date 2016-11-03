@@ -1,0 +1,42 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "fs-circular-read-from-custom-dir"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10
+			}
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition"
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "fs-circular-read-from-custom-dir"
+					}
+				},
+				"load" : {
+					"type" : "read",
+					"circular" : true,
+					"limit" : {
+						// count -> infinity, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}
+	]
+}
+

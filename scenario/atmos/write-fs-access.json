@@ -1,0 +1,25 @@
+{
+	"type": "load",
+	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
+		"item" : {
+			"dst" : {
+				"file" : "linear-write-fs-access-atmos.csv"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		},
+		"storage" : {
+			"port" : 9022,
+			"http" : {
+				"api" : "atmos",
+				"fsAccess" : true
+			}
+		}
+	}
+}

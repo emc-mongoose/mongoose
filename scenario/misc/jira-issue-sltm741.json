@@ -1,0 +1,23 @@
+{
+	"type" : "for",
+	"value" : "i",
+	"in" : "1-4",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : 1
+					}
+				},
+				"load" : {
+					"threads" : "${i}",
+					"limit" : {
+						"time" : "15s"
+					}
+				}
+			}
+		}
+	]
+}

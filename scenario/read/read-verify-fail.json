@@ -1,0 +1,55 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "read-verify-fail"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "read-verify-fail.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
+				}
+			}
+		}, {
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 1
+					},
+					"src" : {
+						"file" : "read-verify-fail.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "read-verify-fail.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+

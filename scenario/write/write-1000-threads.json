@@ -1,0 +1,8 @@
+{
+	"type" : "load",
+	"config" : {
+		"load" : {
+			"threads" : 1000
+		}
+	}
+}

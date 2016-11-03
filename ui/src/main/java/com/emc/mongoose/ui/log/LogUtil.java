@@ -133,8 +133,8 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "load.job.name" property with timestamp value if not set before
-				final String runId = ThreadContext.get(KEY_JOB_NAME);
-				if(runId == null || runId.length() == 0) {
+				final String loadJobName = ThreadContext.get(KEY_JOB_NAME);
+				if(loadJobName == null || loadJobName.length() == 0) {
 					ThreadContext.put(KEY_JOB_NAME, getDateTimeStamp());
 				}
 				try {

@@ -1,0 +1,165 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"type" : "container"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10
+			},
+			"server" : {
+				"addrs" : [
+					"10.249.237.72", "10.249.237.73"
+				]
+			},
+			"threads" : 10
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.249.237.71"
+			]
+		}
+	},
+	"jobs" : [
+		{
+			// create 10 containers
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "read-containers-with-items.json"
+					},
+					"naming" : {
+						"type" : "asc",
+						"radix" : 10,
+						"length" : 1
+					}
+				}
+			}
+		}, {
+			// fill each of 10 created containers with items
+			"type" : "parallel",
+			"config" : {
+				"item" : {
+					"type" : "data"
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100000
+					},
+					"threads" : 10
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "0"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "1"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "2"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "3"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "4"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "5"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "6"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "7"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "8"
+							}
+						}
+					}
+				}, {
+					"type" : "precondition",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"container" : "9"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			// read 10 containers with the files
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "read-containers-with-items.json"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

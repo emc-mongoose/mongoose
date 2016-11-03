@@ -1,0 +1,45 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "linear-read-zero-size"
+			},
+			"data" : {
+				"size" : "0"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "linear-read-zero-size.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "linear-read-zero-size.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+
+
+

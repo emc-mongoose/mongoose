@@ -1,0 +1,57 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "distributed-read"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10,
+			"server" : {
+				"addrs": [
+					"10.77.4.57"
+				]
+			}
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.77.4.57"
+			]
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "8KB"
+					},
+					"dst" : {
+						"file" : "distributed-read.csv"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "distributed-read.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

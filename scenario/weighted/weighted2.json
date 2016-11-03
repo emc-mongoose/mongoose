@@ -1,0 +1,82 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "8KB"
+			},
+			"dst" : {
+				"container" : "weighted2-load",
+				"file" : "weighted2-read-input.csv"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10000
+			},
+			"metrics" : {
+				"period" : 0
+			},
+			"threads" : 100
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "8KB"
+					},
+					"dst" : {
+						"file" : "weighted2-read-input.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "1KB"
+					},
+					"dst" : {
+						"file" : "weighted2-delete-input.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "64KB"
+					},
+					"src" : {
+						// new item generator will be used for write,
+						// one CSV file will be used for read,
+						// and the other CSV file will be used for delete
+						"file" : [
+							null,
+							"weighted2-read-input.csv",
+							"weighted2-delete-input.csv"
+						]
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						"time" : "5m",
+						"count" : 0
+					},
+					"metrics" : {
+						"period" : 10
+					},
+					"type" : [
+						"create=50%", "read=30%", "delete=20%"
+					]
+				}
+			}
+		}
+	]
+}

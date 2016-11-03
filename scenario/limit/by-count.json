@@ -1,0 +1,10 @@
+{
+	"type" : "load",
+	"config" : {
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	}
+}

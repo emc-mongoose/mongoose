@@ -44,7 +44,8 @@ implements Serializable {
 
 	public DataRangesConfig(final DataRangesConfig other) {
 		this.randomCount = other.getRandomCount();
-		this.fixedByteRanges = new ArrayList<>(other.getFixedByteRanges());
+		this.fixedByteRanges = other.fixedByteRanges == null ?
+			null : new ArrayList<>(other.fixedByteRanges);
 	}
 	
 	@Override

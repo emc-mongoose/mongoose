@@ -1,0 +1,16 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : 100
+			}
+		},
+		"network" : {
+			"ssl" : true
+		},
+		"storage" : {
+			"port" : 9021
+		}
+	}
+}

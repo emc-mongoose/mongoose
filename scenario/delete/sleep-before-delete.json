@@ -1,0 +1,44 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "linear-sleep-and-delete"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "linear-sleep-and-delete.csv"
+					}
+				}
+			}
+		}, {
+			// sleep 15 seconds between the jobs executed sequentially
+			"type" : "command",
+			"value" : "sleep 15s"
+		},
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "linear-sleep-and-delete.csv"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				}
+			}
+		}
+	]
+}

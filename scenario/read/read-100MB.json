@@ -1,0 +1,49 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
+		"item" : {
+			"dst" : {
+				"container" : "linear-read-100MB"
+			},
+			"data" : {
+				"size" : "10MB"
+			}
+		},
+		"load" : {
+			"threads" : 10
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "linear-read-100MB.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "linear-read-100MB.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
