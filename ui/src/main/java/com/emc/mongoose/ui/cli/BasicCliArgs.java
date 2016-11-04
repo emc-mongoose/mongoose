@@ -5,6 +5,5 @@ package com.emc.mongoose.ui.cli;
  */
 public enum BasicCliArgs {
 	HELP,
-	SCENARIO,
 	USAGE,
 }

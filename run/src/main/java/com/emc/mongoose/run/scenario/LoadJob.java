@@ -181,7 +181,7 @@ extends JobBase {
 			try {
 				generators.add(
 					new BasicLoadGenerator(
-						jobName, drivers, itemFactory, ioTaskBuilder, itemConfig, loadConfig
+						drivers, itemFactory, ioTaskBuilder, itemConfig, loadConfig
 					)
 				);
 			} catch(final UserShootHisFootException e) {

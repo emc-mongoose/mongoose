@@ -2,7 +2,6 @@ package com.emc.mongoose.run;
 
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.run.scenario.Scenario;
-import com.emc.mongoose.ui.cli.BasicCliArgs;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
@@ -25,19 +24,16 @@ public class Main {
 		LogUtil.init();
 
 		final Map<String, Object> cliArgs = CliArgParser.parseArgs(args);
-		final String scenarioArg = (String) cliArgs.remove(
-			BasicCliArgs.SCENARIO.name().toLowerCase()
-		);
-		
 		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
 			throw new UserShootHisFootException("Config is null");
 		}
 		config.apply(cliArgs);
-		
+
+		final String scenarioValue = config.getScenarioConfig().getFile();
 		final Path scenarioPath;
-		if(scenarioArg != null && !scenarioArg.isEmpty()) {
-			scenarioPath = Paths.get(scenarioArg);
+		if(scenarioValue != null && !scenarioValue.isEmpty()) {
+			scenarioPath = Paths.get(scenarioValue);
 		} else {
 			scenarioPath = Paths.get(Scenario.DIR_SCENARIO, Scenario.FNAME_DEFAULT_SCENARIO);
 		}

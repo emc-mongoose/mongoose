@@ -63,7 +63,6 @@ implements Serializable {
 		}
 	}
 
-	public static final String KEY_NAME = "name";
 	public static final String KEY_VERSION = "version";
 	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_ITEM = "item";
@@ -72,30 +71,24 @@ implements Serializable {
 	public static final String KEY_STORAGE = "storage";
 	public static final String KEY_ALIASING = "aliasing";
 	
-	@JsonProperty(KEY_NAME) private String name;
 	@JsonProperty(KEY_VERSION) private String version;
 	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
 	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
-	@JsonProperty(KEY_RUN) private RunConfig runConfig;
+	@JsonProperty(KEY_RUN) private ScenarioConfig scenarioConfig;
 	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
 	@JsonProperty(KEY_ALIASING) private Map<String, Object> aliasingConfig;
 
 	public Config() {}
 
 	public Config(final Config config) {
-		this.name = config.getName();
 		this.version = config.getVersion();
 		this.socketConfig = new SocketConfig(config.getSocketConfig());
 		this.itemConfig = new ItemConfig(config.getItemConfig());
 		this.loadConfig = new LoadConfig(config.getLoadConfig());
-		this.runConfig = new RunConfig(config.getRunConfig());
+		this.scenarioConfig = new ScenarioConfig(config.getScenarioConfig());
 		this.storageConfig = new StorageConfig(config.getStorageConfig());
 		this.aliasingConfig = new HashMap<>(config.getAliasingConfig());
-	}
-
-	public final String getName() {
-		return name;
 	}
 
 	public final String getVersion() {
@@ -114,8 +107,8 @@ implements Serializable {
 		return loadConfig;
 	}
 
-	public final RunConfig getRunConfig() {
-		return runConfig;
+	public final ScenarioConfig getScenarioConfig() {
+		return scenarioConfig;
 	}
 
 	public final ItemConfig getItemConfig() {
@@ -124,10 +117,6 @@ implements Serializable {
 
 	public final Map<String, Object> getAliasingConfig() {
 		return aliasingConfig;
-	}
-	
-	public final void setName(final String name) {
-		this.name = name;
 	}
 	
 	public final void setVersion(final String version) {
@@ -146,8 +135,8 @@ implements Serializable {
 		this.loadConfig = loadConfig;
 	}
 	
-	public final void setRunConfig(final RunConfig runConfig) {
-		this.runConfig = runConfig;
+	public final void setScenarioConfig(final ScenarioConfig scenarioConfig) {
+		this.scenarioConfig = scenarioConfig;
 	}
 	
 	public final void setItemConfig(final ItemConfig itemConfig) {
@@ -854,7 +843,7 @@ implements Serializable {
 		}
 	}
 
-	public static final class RunConfig
+	public static final class ScenarioConfig
 	implements Serializable {
 
 		public static final String KEY_FILE = "file";
@@ -865,10 +854,10 @@ implements Serializable {
 		
 		@JsonProperty(KEY_FILE) private String file;
 
-		public RunConfig() {
+		public ScenarioConfig() {
 		}
 
-		public RunConfig(final RunConfig other) {
+		public ScenarioConfig(final ScenarioConfig other) {
 			this.file = other.getFile();
 		}
 

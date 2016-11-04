@@ -25,8 +25,7 @@ public class ConfigParserTest {
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
-		assertThat(config.getName(), equalTo("mongoose", "name"));
-		assertThat(config.getVersion(), equalTo("3.0.0-SNAPSHOT", "version"));
+		assertThat(config.getVersion(), equalTo("next", "version"));
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertThat(socketConfig, notNullValue());
 		assertThat(socketConfig.getTimeoutMilliSec(), equalTo(1_000_000, "socket.timeoutMilliSec"));
@@ -108,9 +107,9 @@ public class ConfigParserTest {
 			)
 		);
 		assertThat(metricsConfig.getPrecondition(), equalTo(false, "load.metrics.precondition"));
-		final Config.RunConfig runConfig = config.getRunConfig();
-		assertThat(runConfig, notNullValue());
-		assertThat(runConfig.getFile(), nullValue("run.file"));
+		final Config.ScenarioConfig scenarioConfig = config.getScenarioConfig();
+		assertThat(scenarioConfig, notNullValue());
+		assertThat(scenarioConfig.getFile(), nullValue("run.file"));
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		assertThat(storageConfig, notNullValue());
 		final Config.StorageConfig.AuthConfig authConfig = storageConfig.getAuthConfig();

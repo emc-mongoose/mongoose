@@ -16,6 +16,8 @@ implements IoTask<I> {
 	protected I item;
 	protected String srcPath;
 	protected String dstPath;
+	protected String authId;
+	protected String secret;
 	
 	protected volatile String nodeAddr;
 	protected volatile Status status;
@@ -28,7 +30,8 @@ implements IoTask<I> {
 	}
 	
 	public BasicIoTask(
-		final LoadType ioType, final I item, final String srcPath, final String dstPath
+		final LoadType ioType, final I item, final String srcPath, final String dstPath,
+		final String authId, final String secret
 	) {
 		this.ioType = ioType;
 		this.item = item;
@@ -45,6 +48,8 @@ implements IoTask<I> {
 			this.srcPath = srcPath;
 		}
 		this.dstPath = dstPath;
+		this.authId = authId;
+		this.secret = secret;
 		reset();
 	}
 	
@@ -64,6 +69,16 @@ implements IoTask<I> {
 	@Override
 	public final LoadType getLoadType() {
 		return ioType;
+	}
+
+	@Override
+	public final String getAuthId() {
+		return authId;
+	}
+
+	@Override
+	public final String getSecret() {
+		return secret;
 	}
 	
 	@Override
@@ -168,6 +183,8 @@ implements IoTask<I> {
 		out.writeObject(ioType);
 		out.writeObject(item);
 		out.writeObject(dstPath);
+		out.writeObject(authId);
+		out.writeObject(secret);
 		out.writeObject(nodeAddr);
 		out.writeObject(status);
 		out.writeLong(reqTimeStart);
@@ -182,6 +199,8 @@ implements IoTask<I> {
 		ioType = (LoadType) in.readObject();
 		item = (I) in.readObject();
 		dstPath = (String) in.readObject();
+		authId = (String) in.readObject();
+		secret = (String) in.readObject();
 		nodeAddr = (String) in.readObject();
 		status = (Status) in.readObject();
 		reqTimeStart = in.readLong();

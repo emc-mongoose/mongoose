@@ -13,7 +13,6 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import com.emc.mongoose.model.data.DataRangesConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -65,19 +64,16 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final boolean isCircular;
 	private final Throttle<I> rateThrottle;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final String runId;
-	private final DataRangesConfig rangesConfig;
 
 	private long producedItemsCount = 0;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final String runId, final List<StorageDriver<I, O>> drivers,
+		final List<StorageDriver<I, O>> drivers,
 		final ItemFactory<I> itemFactory, final IoTaskBuilder<I, O> ioTaskBuilder,
 		final ItemConfig itemConfig, final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 
-		this.runId = runId;
 		this.drivers = drivers;
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 
@@ -99,7 +95,6 @@ implements LoadGenerator<I, O>, Output<I> {
 			final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 				namingType, namingPrefix, namingLength, namingRadix, namingOffset
 			);
-			rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 
 			final InputConfig inputConfig = itemConfig.getInputConfig();
 			final String itemInputFile = inputConfig.getFile();

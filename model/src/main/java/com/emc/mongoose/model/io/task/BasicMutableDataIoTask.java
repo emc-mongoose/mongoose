@@ -36,9 +36,9 @@ implements MutableDataIoTask<I> {
 	
 	public BasicMutableDataIoTask(
 		final LoadType ioType, final I item, final String srcPath, final String dstPath,
-		final DataRangesConfig rangesConfig
+		final String authId, final String secret, final DataRangesConfig rangesConfig
 	) {
-		super(ioType, item, srcPath, dstPath, rangesConfig);
+		super(ioType, item, srcPath, dstPath, authId, secret, rangesConfig);
 		if(LoadType.UPDATE.equals(ioType)) {
 			final int n = rangesConfig.getRandomCount();
 			if(n > 0) {
