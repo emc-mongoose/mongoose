@@ -26,7 +26,7 @@ public final class BasicLoadMonitorSvc<I extends Item, O extends IoTask<I>>
 extends BasicLoadMonitor<I, O>
 implements LoadMonitorSvc<I,O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	public BasicLoadMonitorSvc(
 		final String name, final List<LoadGenerator<I, O>> loadGenerators,
@@ -44,7 +44,7 @@ implements LoadMonitorSvc<I,O> {
 			for(final StorageDriver<I, O> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
 					try {
-						((StorageDriverSvc<I, O>) nextDriver).registerRemotely(hostName, getName());
+						((StorageDriverSvc<I, O>) nextDriver).setLoadMonitorSvc(hostName, getName());
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,

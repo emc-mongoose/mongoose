@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 public final class MetricsLogMessageTable
 extends MessageBase {
 	
-	private final static String TABLE_HEADER_LINES[] = new String[] {
+	private static final String TABLE_HEADER_LINES[] = new String[] {
 		"______________________________________________________________________________________________________________",
 		" Load | Total |       Count       |  Job  |    TP [op/s]    |        |  BW [MB/s]  |Latency [us]|Duration [us]",
 		" Type | Concur|-------------------| Time  |-----------------|  Size  |-------------|------------|-------------",

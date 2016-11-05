@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class UniformOptionSelector<S>
 implements Input<S> {
 	
-	private final static ThreadLocal<List<Object>> BEST_CHOICES = new ThreadLocal<List<Object>>() {
+	private static final ThreadLocal<List<Object>> BEST_CHOICES = new ThreadLocal<List<Object>>() {
 		@Override
 		protected final List<Object> initialValue() {
 			return new ArrayList<>();

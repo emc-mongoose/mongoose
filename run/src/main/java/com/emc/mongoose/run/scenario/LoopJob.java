@@ -14,7 +14,7 @@ import java.util.Map;
 public class LoopJob
 extends SequentialJob {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final long count;
 

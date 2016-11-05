@@ -25,10 +25,10 @@ import java.util.concurrent.ThreadFactory;
 public final class CommandJob
 extends JobBase {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
-	private final static ThreadFactory TF_STD_ERR = new NamingThreadFactory("stdErrReader", true);
-	private final static String KEY_NODE_BLOCKING = "blocking";
+	private static final Logger LOG = LogManager.getLogger();
+	private static final ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
+	private static final ThreadFactory TF_STD_ERR = new NamingThreadFactory("stdErrReader", true);
+	private static final String KEY_NODE_BLOCKING = "blocking";
 	//
 	private final String cmdLine;
 	private final boolean blockingFlag;

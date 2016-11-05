@@ -48,7 +48,7 @@ public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadMonitor<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
 	private final List<LoadGenerator<I, O>> generators;
@@ -76,6 +76,9 @@ implements LoadMonitor<I, O> {
 	) {
 		this.name = name;
 		this.generators = generators;
+		for(final LoadGenerator<I, O> nextGenerator : generators) {
+			nextGenerator.setLoadMonitor(this);
+		}
 		this.drivers = drivers;
 		int concurrencySum = 0;
 		for(final StorageDriver<I, O> nextDriver : drivers) {
@@ -110,7 +113,7 @@ implements LoadMonitor<I, O> {
 	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
 		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
-				nextDriver.register(this);
+				nextDriver.setLoadMonitor(this);
 			} catch(final RemoteException ignored) {
 			}
 		}
@@ -449,7 +452,7 @@ implements LoadMonitor<I, O> {
 		return null;
 	}
 	
-	private final static ThreadLocal<StringBuilder>
+	private static final ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {

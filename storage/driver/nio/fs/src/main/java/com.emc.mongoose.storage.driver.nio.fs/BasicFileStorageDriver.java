@@ -13,7 +13,6 @@ import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -48,21 +47,21 @@ public final class BasicFileStorageDriver<I extends MutableDataItem, O extends M
 extends NioStorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
-	private final static FileSystem FS = FileSystems.getDefault();
-	private final static FileSystemProvider FS_PROVIDER = FS.provider();
-	private final static Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
+	private static final Logger LOG = LogManager.getLogger();
+	private static final FileSystem FS = FileSystems.getDefault();
+	private static final FileSystemProvider FS_PROVIDER = FS.provider();
+	private static final Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
 		{
 			add(StandardOpenOption.CREATE_NEW);
 			add(StandardOpenOption.WRITE);
 		}
 	};
-	private final static Set<OpenOption> READ_OPEN_OPT = new HashSet<OpenOption>() {
+	private static final Set<OpenOption> READ_OPEN_OPT = new HashSet<OpenOption>() {
 		{
 			add(StandardOpenOption.READ);
 		}
 	};
-	private final static Set<OpenOption> WRITE_OPEN_OPT = new HashSet<OpenOption>() {
+	private static final Set<OpenOption> WRITE_OPEN_OPT = new HashSet<OpenOption>() {
 		{
 			add(StandardOpenOption.WRITE);
 		}
@@ -77,10 +76,9 @@ implements StorageDriver<I, O> {
 	private final Function<O, FileChannel> openDstFileFunc;
 	
 	public BasicFileStorageDriver(
-		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
-		super(jobName, authConfig, loadConfig, verifyFlag);
+		super(jobName, loadConfig, verifyFlag);
 		
 		openSrcFileFunc = ioTask -> {
 			final String srcPath = ioTask.getSrcPath();

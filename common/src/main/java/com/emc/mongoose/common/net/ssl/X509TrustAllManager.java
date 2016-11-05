@@ -12,7 +12,7 @@ implements X509TrustManager {
 
 	private X509TrustAllManager() {}
 
-	public final static X509TrustAllManager INSTANCE = new X509TrustAllManager();
+	public static final X509TrustAllManager INSTANCE = new X509TrustAllManager();
 
 	@Override
 	public final void checkClientTrusted(final X509Certificate[] x509Certificates, final String s)

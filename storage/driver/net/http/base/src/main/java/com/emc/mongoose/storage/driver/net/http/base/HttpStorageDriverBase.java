@@ -36,7 +36,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import io.netty.util.Attribute;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -45,14 +44,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.crypto.spec.SecretKeySpec;
-import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -66,8 +63,9 @@ extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 	
 	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<String, Input<String>> HEADER_NAME_INPUTS = new ConcurrentHashMap<>();
-	private static final Map<String, Input<String>> HEADER_VALUE_INPUTS = new ConcurrentHashMap<>();
+	
+	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
+	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
 	private static final Function<String, Input<String>> PATTERN_INPUT_FUNC = headerName -> {
 		try {
 			return new AsyncPatternDefinedInput(headerName);
@@ -79,22 +77,12 @@ implements HttpStorageDriver<I, O> {
 
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
-	protected final SecretKeySpec secretKey;
 
 	protected HttpStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
 		super(jobName, loadConfig, storageConfig, socketConfig, verifyFlag);
-		try {
-			if(secret == null) {
-				secretKey = null;
-			} else {
-				secretKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
-			}
-		} catch(final UnsupportedEncodingException e) {
-			throw new IllegalStateException(e);
-		}
 		final HttpConfig httpConfig = storageConfig.getHttpConfig();
 		final Map<String, String> headersMap = httpConfig.getHeaders();
 		String headerValue;
@@ -200,7 +188,9 @@ implements HttpStorageDriver<I, O> {
 		}
 
 		applyMetaDataHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
+		applyAuthHeaders(
+			httpMethod, dstUriPath, ioTask.getAuthId(), ioTask.getSecret(), httpHeaders
+		);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
 		return httpRequest;
@@ -238,7 +228,7 @@ implements HttpStorageDriver<I, O> {
 
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
-			headerNameInput = HEADER_NAME_INPUTS.computeIfAbsent(headerName, PATTERN_INPUT_FUNC);
+			headerNameInput = headerNameInputs.computeIfAbsent(headerName, PATTERN_INPUT_FUNC);
 			if(headerNameInput == null) {
 				continue;
 			}
@@ -254,7 +244,7 @@ implements HttpStorageDriver<I, O> {
 
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
-			headerValueInput = HEADER_VALUE_INPUTS.computeIfAbsent(headerValue, PATTERN_INPUT_FUNC);
+			headerValueInput = headerValueInputs.computeIfAbsent(headerValue, PATTERN_INPUT_FUNC);
 			if(headerValueInput == null) {
 				continue;
 			}
@@ -275,7 +265,8 @@ implements HttpStorageDriver<I, O> {
 	protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
 
 	protected abstract void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpMethod httpMethod, final String dstUriPath, final String userName,
+		final String secret, final HttpHeaders httpHeaders
 	);
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
@@ -285,7 +276,7 @@ implements HttpStorageDriver<I, O> {
 		return new ConnectionLeaseCallback<>(ioTask, this);
 	}
 	
-	private final static class ConnectionLeaseCallback<I extends Item, O extends IoTask<I>>
+	private static final class ConnectionLeaseCallback<I extends Item, O extends IoTask<I>>
 	implements FutureListener<Channel> {
 		
 		private final O ioTask;
@@ -362,7 +353,7 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 	
-	private final static class RequestSentCallback
+	private static final class RequestSentCallback
 	implements FutureListener<Void> {
 		
 		private final IoTask ioTask;
@@ -393,12 +384,8 @@ implements HttpStorageDriver<I, O> {
 	throws IOException {
 		super.doClose();
 		sharedHeaders.clear();
-		if(secretKey != null) {
-			try {
-				secretKey.destroy();
-			} catch(final DestroyFailedException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clear the secret key");
-			}
-		}
+		dynamicHeaders.clear();
+		headerNameInputs.clear();
+		headerValueInputs.clear();
 	}
 }

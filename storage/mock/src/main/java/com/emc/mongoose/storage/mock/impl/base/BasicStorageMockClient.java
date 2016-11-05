@@ -78,7 +78,7 @@ implements StorageMockClient<T> {
 		this.jmDns = jmDns;
 	}
 	
-	private final static class GetRemoteObjectTask<T extends MutableDataItemMock>
+	private static final class GetRemoteObjectTask<T extends MutableDataItemMock>
 	extends AnyNotNullSharedFutureTaskBase<T> {
 		
 		private final StorageMockServer<T> node;

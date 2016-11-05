@@ -5,16 +5,18 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientApiHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
-
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_X_AMZ_COPY_SOURCE;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_AMZ;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_EMC;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.URL_ARG_VERSIONING;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -26,12 +28,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  Created by kurila on 01.08.16.
@@ -39,9 +46,9 @@ import java.util.TreeMap;
 public final class S3StorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	
-	private final static ThreadLocal<StringBuilder>
+	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
 			@Override
 			protected final StringBuilder initialValue() {
@@ -49,9 +56,22 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		};
 		
-	private final static ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
+	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
 	
-	private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+
+	private final Map<String, SecretKeySpec> secretKeys = new ConcurrentHashMap<>();
+	private final Function<String, SecretKeySpec> SECRET_KEY_FUNC = secret -> {
+		try {
+			if(secret == null) {
+				return null;
+			} else {
+				return new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
+			}
+		} catch(final UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
+	};
 	
 	public S3StorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
@@ -79,10 +99,14 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	public final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+	protected final void applyAuthHeaders(
+		final HttpMethod httpMethod, final String dstUriPath, final String userName,
+		final String secret, final HttpHeaders httpHeaders
 	) {
-		final String signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders));
+		final String signature = getSignature(
+			getCanonical(httpMethod, dstUriPath, httpHeaders),
+			secretKeys.computeIfAbsent(secret, SECRET_KEY_FUNC)
+		);
 		if(signature != null) {
 			httpHeaders.set(
 				HttpHeaderNames.AUTHORIZATION, AUTH_PREFIX + userName + ":" + signature
@@ -143,7 +167,7 @@ extends HttpStorageDriverBase<I, O> {
 		return buffCanonical.toString();
 	}
 	
-	private String getSignature(final String canonicalForm) {
+	private String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
 		//
 		if(secretKey == null) {
 			return null;
@@ -167,5 +191,12 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	public final String toString() {
 		return "S3-" + super.toString();
+	}
+
+	@Override
+	public final void close()
+	throws IOException {
+		super.close();
+		secretKeys.clear();
 	}
 }

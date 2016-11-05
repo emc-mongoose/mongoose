@@ -18,7 +18,7 @@ extends Daemon, Output<O>, Remote {
 	int getConcurrencyLevel()
 	throws RemoteException;
 	
-	void register(final LoadMonitor<I, O> monitor)
+	void setLoadMonitor(final LoadMonitor<I, O> monitor)
 	throws RemoteException;
 
 	boolean isIdle()

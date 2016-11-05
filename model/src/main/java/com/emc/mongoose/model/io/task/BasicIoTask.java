@@ -147,7 +147,7 @@ implements IoTask<I> {
 		return dstPath;
 	}
 	
-	protected final static ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
+	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
 			return new StringBuilder();

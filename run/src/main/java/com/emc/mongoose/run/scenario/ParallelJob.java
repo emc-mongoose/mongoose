@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class ParallelJob
 extends ParentJobBase {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected ParallelJob(final Config appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);

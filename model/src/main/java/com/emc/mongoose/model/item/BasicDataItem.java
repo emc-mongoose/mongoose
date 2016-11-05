@@ -117,7 +117,7 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	private static final ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
 	@Override
 	public String toString() {
 		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();

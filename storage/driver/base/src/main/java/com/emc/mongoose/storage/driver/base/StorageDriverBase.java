@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.model.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -28,23 +27,18 @@ public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	protected final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
 	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final boolean isCircular;
-	protected final String userName;
-	protected final String secret;
 	protected final boolean verifyFlag;
 
 	protected StorageDriverBase(
-		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
-		final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
 		this.jobName = jobName;
-		this.userName = authConfig.getId();
-		secret = authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
@@ -56,7 +50,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final void register(final LoadMonitor<I, O> monitor)
+	public final void setLoadMonitor(final LoadMonitor<I, O> monitor)
 	throws IllegalStateException {
 		if(!monitorRef.compareAndSet(null, monitor)) {
 			throw new IllegalStateException(

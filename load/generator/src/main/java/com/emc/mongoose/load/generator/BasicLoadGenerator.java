@@ -2,11 +2,11 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
-import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.ConstantStringInput;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.ItemNamingType;
+import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -21,7 +21,6 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.io.RangePatternDefinedInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
@@ -41,7 +40,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by kurila on 11.07.16.
@@ -50,10 +48,11 @@ public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadGenerator<I, O>, Output<I> {
 
-	private final static Logger LOG = LogManager.getLogger();
-	private final static int BATCH_SIZE = 0x1000;
+	private static final Logger LOG = LogManager.getLogger();
+	private static final int BATCH_SIZE = 0x1000;
 
-	private final List<StorageDriver<I, O>> drivers;
+	private volatile LoadMonitor<I, O> monitor;
+
 	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Input<String> dstPathInput;
@@ -62,19 +61,16 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
 	private final boolean isCircular;
-	private final Throttle<I> rateThrottle;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
 
 	private long producedItemsCount = 0;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final List<StorageDriver<I, O>> drivers,
 		final ItemFactory<I> itemFactory, final IoTaskBuilder<I, O> ioTaskBuilder,
 		final ItemConfig itemConfig, final LoadConfig loadConfig
 	) throws UserShootHisFootException {
 
-		this.drivers = drivers;
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 
 		try {
@@ -82,7 +78,6 @@ implements LoadGenerator<I, O>, Output<I> {
 			this.countLimit = l > 0 ? l : Long.MAX_VALUE;
 			this.maxItemQueueSize = loadConfig.getQueueConfig().getSize();
 			this.isCircular = loadConfig.getCircular();
-			this.rateThrottle = new RateThrottle<>(limitConfig.getRate());
 
 			final NamingConfig namingConfig = itemConfig.getNamingConfig();
 			final ItemNamingType namingType = ItemNamingType.valueOf(
@@ -175,17 +170,28 @@ implements LoadGenerator<I, O>, Output<I> {
 		worker.setDaemon(true);
 	}
 
+	@Override
+	public final void setLoadMonitor(final LoadMonitor<I, O> monitor) {
+		this.monitor = monitor;
+	}
+
 	private final class GeneratorTask
-		implements Runnable {
+	implements Runnable {
 
 		private final Random rnd = new Random();
 
 		@Override
 		public final void run() {
+
+			if(monitor == null) {
+				LOG.warn(Markers.ERR, "No load monitor set, exiting");
+			}
+
 			if(itemInput == null) {
-				LOG.debug(Markers.MSG, "No item source for the producing, exiting");
+				LOG.warn(Markers.MSG, "No item source for the producing, exiting");
 				return;
 			}
+
 			int n = 0, m = 0;
 			long remaining;
 			try {
@@ -207,7 +213,7 @@ implements LoadGenerator<I, O>, Output<I> {
 						if(worker.isInterrupted()) {
 							break;
 						}
-						if(n > 0 && rateThrottle.waitPassFor(null, n)) {
+						if(n > 0) {
 							for(m = 0; m < n && !worker.isInterrupted(); ) {
 								m += put(buff, m, n);
 							}
@@ -224,8 +230,8 @@ implements LoadGenerator<I, O>, Output<I> {
 							break;
 						}
 					} catch(
-						final EOFException | InterruptedException | ClosedByInterruptException |
-							IllegalStateException | InterruptedIOException e
+						final EOFException | ClosedByInterruptException | IllegalStateException |
+							InterruptedIOException e
 					) {
 						break;
 					} catch(final Exception e) {
@@ -260,8 +266,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	public final void put(final I item)
 	throws IOException {
 		final O nextIoTask = ioTaskBuilder.getInstance(item, dstPathInput.get());
-		final StorageDriver<I, O> nextDriver = getNextDriver();
-		nextDriver.put(nextIoTask);
+		monitor.put(nextIoTask);
 	}
 	
 	@Override
@@ -280,8 +285,7 @@ implements LoadGenerator<I, O>, Output<I> {
 				dstPathInput.get(dstPaths, n);
 				ioTasks = ioTaskBuilder.getInstances(buffer, dstPaths, from, to);
 			}
-			final StorageDriver<I, O> nextDriver = getNextDriver();
-			return nextDriver.put(ioTasks, 0, ioTasks.size());
+			return monitor.put(ioTasks, 0, ioTasks.size());
 		} else {
 			return 0;
 		}
@@ -297,15 +301,6 @@ implements LoadGenerator<I, O>, Output<I> {
 	public final Input<I> getInput()
 	throws IOException {
 		return itemInput;
-	}
-
-	private final AtomicLong rrc = new AtomicLong(0);
-	private StorageDriver<I, O> getNextDriver() {
-		if(drivers.isEmpty()) {
-			return null;
-		} else {
-			return drivers.get((int) (rrc.incrementAndGet() % drivers.size()));
-		}
 	}
 
 	@Override

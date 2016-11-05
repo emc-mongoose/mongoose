@@ -9,10 +9,10 @@ import java.nio.ByteBuffer;
  */
 public final class ThreadLocalByteBuffer {
 	
-	public final static int SIZE_MIN = 1;
-	public final static int SIZE_MAX = 0x100000; // 1MB
+	public static final int SIZE_MIN = 1;
+	public static final int SIZE_MAX = 0x100000; // 1MB
 	
-	private final static ThreadLocal<ByteBuffer[]> BUFFERS = new ThreadLocal<ByteBuffer[]>() {
+	private static final ThreadLocal<ByteBuffer[]> BUFFERS = new ThreadLocal<ByteBuffer[]>() {
 		@Override
 		protected final ByteBuffer[] initialValue() {
 			final int buffCount = (int) (
@@ -22,7 +22,7 @@ public final class ThreadLocalByteBuffer {
 		}
 	};
 	
-	public final static ByteBuffer get(final long size) {
+	public static final ByteBuffer get(final long size) {
 		
 		final ByteBuffer[] ioBuffers = BUFFERS.get();
 		int i, currBuffSize = SIZE_MIN;

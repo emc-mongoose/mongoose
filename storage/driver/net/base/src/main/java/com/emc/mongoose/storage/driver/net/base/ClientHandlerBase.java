@@ -34,7 +34,7 @@ import java.nio.ByteBuffer;
 public abstract class ClientHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
 	
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;

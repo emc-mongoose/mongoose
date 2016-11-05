@@ -35,7 +35,7 @@ import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 public final class LogUtil
 implements ShutdownCallbackRegistry {
 	//
-	private final static String
+	private static final String
 		//
 		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
 		VALUE_LOG4J_CTX_ASYNC_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
@@ -83,7 +83,7 @@ implements ShutdownCallbackRegistry {
 	//
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
-	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
+	private static final Lock LOG_CTX_LOCK = new ReentrantLock();
 	
 	//
 	public static String getDateTimeStamp() {

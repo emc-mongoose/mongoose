@@ -28,7 +28,7 @@ import java.util.Map;
 public final class LoadJobFileManager
 extends AbstractManager {
 	//
-	public final static List<LoadJobFileManager> INSTANCES = new ArrayList<>();
+	public static final List<LoadJobFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -87,7 +87,7 @@ extends AbstractManager {
 	/**
 	 * Factory to create a FileManager.
 	 */
-	private final static class RunIdFileManagerFactory
+	private static final class RunIdFileManagerFactory
 	implements ManagerFactory<LoadJobFileManager, FactoryData> {
 		/**
 		 * Create a FileManager.
@@ -104,7 +104,7 @@ extends AbstractManager {
 		}
 	}
 	//
-	private final static RunIdFileManagerFactory FACTORY = new RunIdFileManagerFactory();
+	private static final RunIdFileManagerFactory FACTORY = new RunIdFileManagerFactory();
 	//
 	public static LoadJobFileManager getRunIdFileManager(
 		final String fileName,

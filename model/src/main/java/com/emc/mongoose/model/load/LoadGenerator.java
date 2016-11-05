@@ -9,4 +9,6 @@ import com.emc.mongoose.model.item.Item;
  */
 public interface LoadGenerator<I extends Item, O extends IoTask<I>>
 extends Daemon {
+
+	void setLoadMonitor(final LoadMonitor<I, O> monitor);
 }

@@ -135,7 +135,7 @@ implements Serializable {
 		return min + range;
 	}
 	
-	private final static int APPROXIMATION_COUNT = 100;
+	private static final int APPROXIMATION_COUNT = 100;
 	public final long getAvg() {
 		if(range == 0) {
 			return min;

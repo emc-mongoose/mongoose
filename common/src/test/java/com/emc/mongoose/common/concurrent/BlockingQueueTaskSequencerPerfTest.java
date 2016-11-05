@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 @RunWith(Parameterized.class)
 public class BlockingQueueTaskSequencerPerfTest {
 
-	private final static class RunnableFutureMock<V>
+	private static final class RunnableFutureMock<V>
 	implements RunnableFuture<V> {
 		@Override
 		public boolean cancel(final boolean mayInterruptIfRunning) {
@@ -56,7 +56,7 @@ public class BlockingQueueTaskSequencerPerfTest {
 		}
 	}
 
-	private final static class SubmitTask
+	private static final class SubmitTask
 	implements Runnable {
 
 		public SubmitTask(final int threadTaskCount) {

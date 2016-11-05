@@ -25,11 +25,11 @@ import java.util.regex.Pattern;
 public final class ForJob
 extends SequentialJob {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	
-	public final static String KEY_NODE_IN = "in";
-	public final static char REPLACE_MARKER_CHAR = '$';
-	public final static Pattern SEQ_SPEC_PATTERN = Pattern.compile(
+	public static final String KEY_NODE_IN = "in";
+	public static final char REPLACE_MARKER_CHAR = '$';
+	public static final Pattern SEQ_SPEC_PATTERN = Pattern.compile(
 		"(-?[\\d.]+)(-(-?[\\d.]+)(,([\\d.]+))?)?"
 	);
 

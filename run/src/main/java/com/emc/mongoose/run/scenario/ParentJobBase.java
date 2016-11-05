@@ -17,7 +17,7 @@ import java.util.Map;
 public abstract class ParentJobBase
 extends JobBase {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	protected final List<Job> childJobs = new LinkedList<>();
 

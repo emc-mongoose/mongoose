@@ -59,7 +59,7 @@ implements IoStats {
 	throws IOException {
 	}
 	//
-	protected final static class BasicSnapshot
+	protected static final class BasicSnapshot
 	implements Snapshot {
 		//
 		private final long countSucc;

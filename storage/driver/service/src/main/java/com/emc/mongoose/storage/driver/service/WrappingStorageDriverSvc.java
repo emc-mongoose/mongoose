@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
 implements StorageDriverSvc<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final StorageDriver<I, O> driver;
 	private final String runId;
@@ -52,11 +52,11 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final void registerRemotely(final String addr, final String monitorSvcName)
+	public final void setLoadMonitorSvc(final String addr, final String monitorSvcName)
 	throws RemoteException {
 		final LoadMonitorSvc<I, O> monitorSvc = ServiceUtil.resolve(addr, monitorSvcName);
 		LOG.info(Markers.MSG, "Connected the service \"{}\" @ {}", monitorSvcName, addr);
-		driver.register(monitorSvc);
+		driver.setLoadMonitor(monitorSvc);
 	}
 
 	@Override
@@ -163,7 +163,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final void register(final LoadMonitor<I, O> monitor)
+	public final void setLoadMonitor(final LoadMonitor<I, O> monitor)
 	throws RemoteException {
 		throw new RemoteException();
 	}

@@ -14,8 +14,8 @@ import java.util.TimeZone;
 public final class AsyncCurrentDateInput
 extends AsyncValueInput<String> {
 	//
-	public final static String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz"; //e.g. Sun, 06 Nov 1994 08:49:37 GMT
-	public final static DateFormat FMT_DATE = new SimpleDateFormat(
+	public static final String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz"; //e.g. Sun, 06 Nov 1994 08:49:37 GMT
+	public static final DateFormat FMT_DATE = new SimpleDateFormat(
 		PATTERN_RFC1123, Locale.ROOT
 	) {{
 		setTimeZone(TimeZone.getTimeZone("UTC"));

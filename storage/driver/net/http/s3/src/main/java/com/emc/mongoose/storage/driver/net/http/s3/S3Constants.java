@@ -15,4 +15,5 @@ public interface S3Constants {
 		HttpHeaderNames.CONTENT_MD5, HttpHeaderNames.CONTENT_TYPE, HttpHeaderNames.DATE
 	};
 	String URL_ARG_VERSIONING = "versioning";
+	String SIGN_METHOD = "HmacSHA1";
 }

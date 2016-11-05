@@ -8,8 +8,8 @@ import java.util.Map;
  */
 public final class CliArgParser {
 	
-	public final static String ARG_PREFIX = "--";
-	public final static String ARG_SEP = "-";
+	public static final String ARG_PREFIX = "--";
+	public static final String ARG_SEP = "-";
 	
 	public static void main(final String... args)
 	throws IllegalArgumentException {

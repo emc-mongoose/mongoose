@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 public final class LoadJob
 extends JobBase {
 	
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	
 	private final boolean preconditionFlag;
 
@@ -161,6 +161,8 @@ extends JobBase {
 			}
 			ioTaskBuilder.setSrcPath(itemConfig.getInputConfig().getPath());
 			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
+			ioTaskBuilder.setAuthId(storageConfig.getAuthConfig().getId());
+			ioTaskBuilder.setSecret(storageConfig.getAuthConfig().getSecret());
 			
 			final LoadConfig.LimitConfig limitConfig = loadConfig.getLimitConfig();
 			final long t = limitConfig.getTime();
@@ -180,9 +182,7 @@ extends JobBase {
 			
 			try {
 				generators.add(
-					new BasicLoadGenerator(
-						drivers, itemFactory, ioTaskBuilder, itemConfig, loadConfig
-					)
+					new BasicLoadGenerator(itemFactory, ioTaskBuilder, itemConfig, loadConfig)
 				);
 			} catch(final UserShootHisFootException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Looks like configuration failure");

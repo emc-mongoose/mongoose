@@ -14,7 +14,7 @@ import java.util.Map;
 public class SequentialJob
 extends ParentJobBase {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	//
 	public SequentialJob(final Config appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);

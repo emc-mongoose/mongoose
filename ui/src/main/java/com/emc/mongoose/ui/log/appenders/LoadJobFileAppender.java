@@ -82,8 +82,8 @@ extends AbstractAppender {
 		return fName;
 	}
 	//
-	private final static int DEFAULT_SIZE_BUFF = 0x40000; // 256KB
-	private final static long DEFAULT_SIZE_TO_ROTATE = 0x400000; // 4MB
+	private static final int DEFAULT_SIZE_BUFF = 0x40000; // 256KB
+	private static final long DEFAULT_SIZE_TO_ROTATE = 0x400000; // 4MB
 	//
 	@PluginFactory
 	public static LoadJobFileAppender createAppender(

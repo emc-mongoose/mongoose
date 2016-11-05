@@ -13,6 +13,10 @@ public interface IoTaskBuilder<I extends Item, O extends IoTask<I>> {
 
 	IoTaskBuilder<I, O> setSrcPath(final String srcPath);
 
+	IoTaskBuilder<I, O> setAuthId(final String authId);
+
+	IoTaskBuilder<I, O> setSecret(final String secret);
+
 	O getInstance(final I item, final String dstPath);
 
 	List<O> getInstances(final List<I> items, final int from, final int to);

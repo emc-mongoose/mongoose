@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  */
 public abstract class TimeUtil {
 	
-	private final static Map<String, TimeUnit> TIME_UNIT_SHORTCUTS = new HashMap<String, TimeUnit>() {
+	private static final Map<String, TimeUnit> TIME_UNIT_SHORTCUTS = new HashMap<String, TimeUnit>() {
 		{
 			put("s", TimeUnit.SECONDS);
 			put("m", TimeUnit.MINUTES);
@@ -19,8 +19,8 @@ public abstract class TimeUtil {
 			put("d", TimeUnit.DAYS);
 		}
 	};
-	private final static Pattern PATTERN_TIME = Pattern.compile("([0-9]*)([smhdSMHD]?)");
-	private final static Pattern PATTERN_TIME_COMPAT = Pattern.compile("([0-9]*)\\.([a-zA-Z]{4,7})");
+	private static final Pattern PATTERN_TIME = Pattern.compile("([0-9]*)([smhdSMHD]?)");
+	private static final Pattern PATTERN_TIME_COMPAT = Pattern.compile("([0-9]*)\\.([a-zA-Z]{4,7})");
 	
 	public static long getTimeValue(final String rawValue)
 	throws IllegalArgumentException {

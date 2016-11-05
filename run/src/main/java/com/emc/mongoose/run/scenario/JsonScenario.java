@@ -24,7 +24,7 @@ public class JsonScenario
 extends SequentialJob
 implements Scenario {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	//
 	public JsonScenario(final Config config, final File scenarioSrcFile)
 	throws IOException {
@@ -85,7 +85,7 @@ implements Scenario {
 		return tree;
 	}
 	//
-	private final static Pattern PATTERN_ENV_VAR = Pattern.compile(
+	private static final Pattern PATTERN_ENV_VAR = Pattern.compile(
 		".*\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}.*"
 	);
 	private static Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {

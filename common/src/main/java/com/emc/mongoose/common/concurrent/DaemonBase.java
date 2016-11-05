@@ -19,7 +19,7 @@ import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
 public abstract class DaemonBase
 implements Daemon {
 	
-	protected final static Queue<Daemon> UNCLOSED = new ConcurrentLinkedQueue<>();
+	protected static final Queue<Daemon> UNCLOSED = new ConcurrentLinkedQueue<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -101,7 +101,7 @@ implements Daemon {
 	}
 	
 	@Override
-	public final void close()
+	public void close()
 	throws IOException, IllegalStateException {
 		try {
 			interrupt();

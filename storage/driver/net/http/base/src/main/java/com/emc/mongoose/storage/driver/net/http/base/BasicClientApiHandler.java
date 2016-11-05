@@ -36,7 +36,7 @@ import java.io.IOException;
 public class BasicClientApiHandler<I extends Item, O extends IoTask<I>>
 extends ClientHandlerBase<HttpObject, I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	
 	public BasicClientApiHandler(
 		final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag

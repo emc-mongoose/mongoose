@@ -16,9 +16,9 @@ public class BasicMutableDataItem
 extends BasicDataItem
 implements MutableDataItem {
 	//
-	private final static char LAYER_MASK_SEP = '/';
+	private static final char LAYER_MASK_SEP = '/';
 	//
-	protected final static String
+	protected static final String
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ implements MutableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	private static final ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
 	@Override
 	public synchronized String toString() {
 		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();

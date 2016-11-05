@@ -11,6 +11,8 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URISyntaxException;
 
 /**
@@ -19,7 +21,7 @@ import java.net.URISyntaxException;
 public class SwiftStorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	// TODO implement
 
@@ -36,7 +38,8 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpMethod httpMethod, final String dstUriPath, final String userName,
+		final String secret, final HttpHeaders httpHeaders
 	) {
 	}
 

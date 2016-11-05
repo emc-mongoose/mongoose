@@ -30,7 +30,7 @@ implements Serializable {
 		this.timeStamp = timeStamp;
 	}
 
-	public final static class SleComparator
+	public static final class SleComparator
 	implements Comparator<ShortenedLogEvent> {
 
 		@Override

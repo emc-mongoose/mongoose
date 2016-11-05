@@ -30,7 +30,7 @@ import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 public final class WebUIAppender
 extends AbstractAppender {
 
-	private final static int MAX_EVENTS_IN_THE_LIST = 3000;
+	private static final int MAX_EVENTS_IN_THE_LIST = 3000;
 	//
 	private static final List<String> markerNames = Collections.unmodifiableList(
 		Arrays.asList(Markers.MSG.getName(), Markers.ERR.getName(), Markers.METRICS_FILE.getName())

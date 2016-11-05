@@ -13,7 +13,7 @@ public final class BlockingQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
-	public final static BlockingQueueTaskSequencer INSTANCE = new BlockingQueueTaskSequencer(
+	public static final BlockingQueueTaskSequencer INSTANCE = new BlockingQueueTaskSequencer(
 		"blockingQueueTaskSequencer", true, DEFAULT_TASK_QUEUE_SIZE_LIMIT
 	);
 	static {

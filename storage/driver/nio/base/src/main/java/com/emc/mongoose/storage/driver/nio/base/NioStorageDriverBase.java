@@ -6,7 +6,6 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -30,7 +29,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
@@ -40,10 +39,9 @@ implements StorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String jobName, final AuthConfig storageConfig, final LoadConfig loadConfig,
-		final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
-		super(jobName, storageConfig, loadConfig, verifyFlag);
+		super(jobName, loadConfig, verifyFlag);
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new WorkerTask[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];

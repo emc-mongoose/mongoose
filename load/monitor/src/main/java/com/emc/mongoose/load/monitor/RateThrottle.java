@@ -1,14 +1,13 @@
-package com.emc.mongoose.load.generator;
+package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.model.item.Item;
 
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.04.16.
  */
-public class RateThrottle<T extends Item>
-implements Throttle<T> {
+public class RateThrottle<X>
+implements Throttle<X> {
 	//
 	private final long tgtNanoTime;
 	//
@@ -19,7 +18,7 @@ implements Throttle<T> {
 	}
 	//
 	@Override
-	public final boolean waitPassFor(final T item)
+	public final boolean waitPassFor(final X item)
 	throws InterruptedException {
 		if(tgtNanoTime > 0) {
 			TimeUnit.NANOSECONDS.sleep(tgtNanoTime);
@@ -28,7 +27,7 @@ implements Throttle<T> {
 	}
 	//
 	@Override
-	public final boolean waitPassFor(final T item, final int times)
+	public final boolean waitPassFor(final X item, final int times)
 	throws InterruptedException {
 		if(tgtNanoTime > 0 && times > 0) {
 			TimeUnit.NANOSECONDS.sleep(tgtNanoTime * times);

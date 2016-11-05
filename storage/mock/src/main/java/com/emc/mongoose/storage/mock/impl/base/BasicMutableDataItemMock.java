@@ -13,7 +13,7 @@ public class BasicMutableDataItemMock
 extends BasicMutableDataItem
 implements MutableDataItemMock {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	//
 	public BasicMutableDataItemMock() {
 		super();

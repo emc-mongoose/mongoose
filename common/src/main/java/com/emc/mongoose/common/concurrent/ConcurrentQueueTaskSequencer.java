@@ -13,7 +13,7 @@ public class ConcurrentQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
-	public final static ConcurrentQueueTaskSequencer INSTANCE = new ConcurrentQueueTaskSequencer(
+	public static final ConcurrentQueueTaskSequencer INSTANCE = new ConcurrentQueueTaskSequencer(
 		"concurrentQueueTaskSequencer", true
 	);
 	static {

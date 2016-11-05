@@ -13,7 +13,6 @@ import java.net.URISyntaxException;
 public interface HttpStorageDriver<I extends Item, O extends IoTask<I>>
 extends NetStorageDriver<I, O> {
 	
-	String SIGN_METHOD = "HmacSHA1";
 	int REQ_LINE_LEN = 1024;
 	int HEADERS_LEN = 2048;
 	int CHUNK_SIZE = 8192;

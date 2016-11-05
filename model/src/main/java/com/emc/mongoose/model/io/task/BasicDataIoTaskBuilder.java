@@ -23,14 +23,20 @@ implements DataIoTaskBuilder<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem, final String dstPath) {
-		return (O) new BasicDataIoTask<>(ioType, dataItem, srcPath, dstPath, rangesConfig);
+		return (O) new BasicDataIoTask<>(
+			ioType, dataItem, srcPath, dstPath, authId, secret, rangesConfig
+		);
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items, final int from, final int to) {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
-			tasks.add((O) new BasicDataIoTask<>(ioType, items.get(i), srcPath, null, rangesConfig));
+			tasks.add(
+				(O) new BasicDataIoTask<>(
+					ioType, items.get(i), srcPath, null, authId, secret, rangesConfig
+				)
+			);
 		}
 		return tasks;
 	}
@@ -42,7 +48,9 @@ implements DataIoTaskBuilder<I, O> {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
 			tasks.add(
-				(O) new BasicDataIoTask<>(ioType, items.get(i), srcPath, dstPath, rangesConfig)
+				(O) new BasicDataIoTask<>(
+					ioType, items.get(i), srcPath, dstPath, authId, secret, rangesConfig
+				)
 			);
 		}
 		return tasks;
@@ -56,7 +64,7 @@ implements DataIoTaskBuilder<I, O> {
 		for(int i = from; i < to; i ++) {
 			tasks.add(
 				(O) new BasicDataIoTask<>(
-					ioType, items.get(i), srcPath, dstPaths.get(i), rangesConfig
+					ioType, items.get(i), srcPath, dstPaths.get(i), authId, secret, rangesConfig
 				)
 			);
 		}

@@ -52,7 +52,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	
 	protected final String storageNodeAddrs[];
 	protected final int storageNodePort;
@@ -66,7 +66,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final SocketConfig socketConfig, final boolean verifyFlag
 	) {
-		super(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag);
+		super(jobName, loadConfig, verifyFlag);
 		sslFlag = storageConfig.getSsl();
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});

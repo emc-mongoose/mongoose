@@ -9,7 +9,7 @@ import org.apache.logging.log4j.util.StringBuilderFormattable;
 public abstract class MessageBase
 implements Message, StringBuilderFormattable {
 	
-	private final static ThreadLocal<StringBuilder> THRLOC_STRB = new ThreadLocal<StringBuilder>() {
+	private static final ThreadLocal<StringBuilder> THRLOC_STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected StringBuilder initialValue() {
 			return new StringBuilder();

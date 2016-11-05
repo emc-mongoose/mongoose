@@ -26,7 +26,7 @@ public class BasicStorageDriverBuilder<
 	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
 > implements StorageDriverBuilder<I, O, T> {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private String jobName;
 	private ContentSource contentSrc;

@@ -20,7 +20,7 @@ public final class BasicStorageIoStats
 extends Thread
 implements StorageIoStats {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final Counter countFailWrite, countFailRead, countFailDelete, countContainers;
 	private final CustomMeter tpWrite, tpRead, tpDelete, bwWrite, bwRead;
@@ -44,7 +44,7 @@ implements StorageIoStats {
 		bwRead = new CustomMeter(clock, metricsPeriodSec);
 	}
 
-	private final static String
+	private static final String
 		MSG_FMT_METRICS = "Capacity used: %d (%.1f%%), containers count: %d\n" +
 		"\tOperation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last\n" +
 		"\t----------|------------|------------|------------|------------|------------|------------\n" +

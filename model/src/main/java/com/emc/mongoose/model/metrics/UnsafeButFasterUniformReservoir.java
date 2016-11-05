@@ -26,7 +26,7 @@ public class UnsafeButFasterUniformReservoir implements Reservoir {
 	private final AtomicLong count = new AtomicLong(0);
 	private final AtomicLongArray values;
 
-	private final static Random RND = new Random();
+	private static final Random RND = new Random();
 
 	/**
 	 * Creates a new {@link com.codahale.metrics.UniformReservoir} of 1028 elements, which offers a 99.9% confidence level

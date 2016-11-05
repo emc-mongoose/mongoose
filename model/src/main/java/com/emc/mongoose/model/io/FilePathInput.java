@@ -49,7 +49,7 @@ implements Input<String> {
 		return Integer.toString(Math.abs(RANDOM.nextInt(width)), RADIX);
 	}
 
-	private final static ThreadLocal<StringBuilder>
+	private static final ThreadLocal<StringBuilder>
 		THREAD_LOCAL_PATH_BUILDER = new ThreadLocal<StringBuilder>() {
 			@Override
 			protected StringBuilder initialValue() {

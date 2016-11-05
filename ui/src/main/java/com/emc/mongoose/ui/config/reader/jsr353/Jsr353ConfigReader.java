@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class Jsr353ConfigReader {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 
 	/*private static JsonObject readJson(final ClassLoader classLoader, final String jsonFilePath) {
