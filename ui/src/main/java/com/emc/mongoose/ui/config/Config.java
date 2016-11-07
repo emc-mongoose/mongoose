@@ -64,19 +64,19 @@ implements Serializable {
 	}
 
 	public static final String KEY_VERSION = "version";
-	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_ITEM = "item";
 	public static final String KEY_LOAD = "load";
-	public static final String KEY_RUN = "run";
+	public static final String SCENARIO = "scenario";
+	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_STORAGE = "storage";
 	public static final String KEY_ALIASING = "aliasing";
 	
-	@JsonProperty(KEY_VERSION) private String version;
+	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
+	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
+	@JsonProperty(SCENARIO) private ScenarioConfig scenarioConfig;
 	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
-	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
-	@JsonProperty(KEY_RUN) private ScenarioConfig scenarioConfig;
-	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
+	@JsonProperty(KEY_VERSION) private String version;
 	@JsonProperty(KEY_ALIASING) private Map<String, Object> aliasingConfig;
 
 	public Config() {}

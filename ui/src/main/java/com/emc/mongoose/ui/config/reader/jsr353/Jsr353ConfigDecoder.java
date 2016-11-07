@@ -127,7 +127,7 @@ implements Decoder<Config> {
 			loadConfigJson.getInt(Config.LoadConfig.KEY_CONCURRENCY), limitConfig,
 			metricsConfig
 		);
-		final JsonObject runConfigJson = getJsonObject(commonConfigJson, Config.KEY_RUN);
+		final JsonObject runConfigJson = getJsonObject(commonConfigJson, Config.SCENARIO);
 		final Config.RunConfig runConfig = new Config.RunConfig(
 			getString(runConfigJson, Config.RunConfig.KEY_ID, null),
 			getString(runConfigJson, Config.RunConfig.KEY_FILE, null)
