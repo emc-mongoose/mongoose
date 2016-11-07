@@ -12,12 +12,15 @@ import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Map;
 
 /**
  Created by andrey on 05.10.16.
@@ -29,10 +32,10 @@ implements LoadMonitorSvc<I,O> {
 	private static final Logger LOG = LogManager.getLogger();
 
 	public BasicLoadMonitorSvc(
-		final String name, final List<LoadGenerator<I, O>> loadGenerators,
-		final List<StorageDriver<I, O>> storageDrivers, final Config.LoadConfig loadConfig
+		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> storageDrivers,
+		final Config.LoadConfig loadConfig
 	) {
-		super(name, loadGenerators, storageDrivers, loadConfig);
+		super(name, storageDrivers, loadConfig);
 	}
 
 	@Override

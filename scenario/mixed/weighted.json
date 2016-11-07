@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "weighted-load"
+				"container" : "/weighted-load"
 			}
 		},
 		"load" : {
@@ -18,7 +18,7 @@
 					"data" : {
 						"size" : "1KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "weighted-load.csv"
 					}
 				},
@@ -32,26 +32,35 @@
 				}
 			}
 		}, {
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "4KB-16KB"
+			"type" : "mixed",
+			"weights" : [
+				20,
+				80
+			],
+			"config" : [
+				{
+					"item" : {
+						"data" : {
+							"size" : "4KB-16KB"
+						},
+						"src" : {
+							"file" : "weighted-load.csv"
+						}
 					},
-					"src" : {
-						"file" : "weighted-load.csv"
+					"load" : {
+						"circular" : true,
+						"limit" : {
+							"time" : "5m"
+						},
+						"type" : {
+							"create" : 20,
+							"read" : 80
+						}
 					}
-				},
-				"load" : {
-					"circular" : true,
-					"limit" : {
-						"time" : "5m"
-					},
-					"type" : [
-						"create=20%", "read=80%"
-					]
+				}, {
+					
 				}
-			}
+			]
 		}
 	]
 }

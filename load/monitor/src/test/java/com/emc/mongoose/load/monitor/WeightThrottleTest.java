@@ -135,7 +135,7 @@ public class WeightThrottleTest {
 				try {
 					final IoTaskMock ioTask = new IoTaskMock();
 					ioTask.loadType = loadType;
-					if(fc.waitPassFor(loadType)) {
+					if(fc.getPassFor(loadType)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {
@@ -176,7 +176,7 @@ public class WeightThrottleTest {
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}
-					if(fc.waitPassFor(loadType, 128)) {
+					if(fc.getPassFor(loadType, 128)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {

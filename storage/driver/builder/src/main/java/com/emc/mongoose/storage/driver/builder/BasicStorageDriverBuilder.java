@@ -30,7 +30,6 @@ public class BasicStorageDriverBuilder<
 
 	private String jobName;
 	private ContentSource contentSrc;
-
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private StorageConfig storageConfig;
@@ -39,7 +38,7 @@ public class BasicStorageDriverBuilder<
 	public String getJobName() {
 		return jobName;
 	}
-
+	
 	@Override
 	public ContentSource getContentSource() {
 		return contentSrc;
@@ -70,7 +69,7 @@ public class BasicStorageDriverBuilder<
 		this.jobName = jobName;
 		return this;
 	}
-
+	
 	@Override
 	public StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc) {
 		this.contentSrc = contentSrc;

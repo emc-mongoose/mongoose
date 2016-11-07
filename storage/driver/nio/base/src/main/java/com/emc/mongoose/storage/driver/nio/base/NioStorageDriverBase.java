@@ -41,7 +41,7 @@ implements StorageDriver<I, O> {
 	public NioStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
-		super(jobName, loadConfig, verifyFlag);
+		super(jobName, null, loadConfig, verifyFlag);
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new WorkerTask[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];

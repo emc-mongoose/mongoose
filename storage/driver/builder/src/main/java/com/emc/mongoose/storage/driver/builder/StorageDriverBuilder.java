@@ -5,13 +5,12 @@ import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
-
-import java.rmi.RemoteException;
-
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+
+import java.rmi.RemoteException;
 
 /**
  Created by andrey on 05.10.16.
@@ -25,7 +24,7 @@ public interface StorageDriverBuilder<
 
 	String getJobName()
 	throws RemoteException;
-
+	
 	ContentSource getContentSource()
 	throws RemoteException;
 
@@ -43,7 +42,7 @@ public interface StorageDriverBuilder<
 
 	StorageDriverBuilder<I, O, T> setJobName(final String runId)
 	throws RemoteException;
-
+	
 	StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSource)
 	throws RemoteException;
 

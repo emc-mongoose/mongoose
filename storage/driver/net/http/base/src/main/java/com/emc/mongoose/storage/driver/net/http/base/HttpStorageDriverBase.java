@@ -43,16 +43,13 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  Created by kurila on 29.07.16.
@@ -188,9 +185,7 @@ implements HttpStorageDriver<I, O> {
 		}
 
 		applyMetaDataHeaders(httpHeaders);
-		applyAuthHeaders(
-			httpMethod, dstUriPath, ioTask.getAuthId(), ioTask.getSecret(), httpHeaders
-		);
+		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
 		return httpRequest;
@@ -265,8 +260,7 @@ implements HttpStorageDriver<I, O> {
 	protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
 
 	protected abstract void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final String userName,
-		final String secret, final HttpHeaders httpHeaders
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	);
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)

@@ -26,9 +26,9 @@ implements DataIoTask<T> {
 	
 	public BasicDataIoTask(
 		final LoadType ioType, final T item, final String srcPath, final String dstPath,
-		final String authId, final String secret, final DataRangesConfig rangesConfig
+		final DataRangesConfig rangesConfig
 	) {
-		super(ioType, item, srcPath, dstPath, authId, secret);
+		super(ioType, item, srcPath, dstPath);
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {

@@ -40,10 +40,6 @@ extends Externalizable {
 
 	I getItem();
 
-	String getAuthId();
-
-	String getSecret();
-
 	String getNodeAddr();
 	
 	void setNodeAddr(final String nodeAddr);

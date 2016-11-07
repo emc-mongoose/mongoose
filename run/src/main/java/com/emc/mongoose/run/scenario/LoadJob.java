@@ -161,8 +161,6 @@ extends JobBase {
 			}
 			ioTaskBuilder.setSrcPath(itemConfig.getInputConfig().getPath());
 			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
-			ioTaskBuilder.setAuthId(storageConfig.getAuthConfig().getId());
-			ioTaskBuilder.setSecret(storageConfig.getAuthConfig().getSecret());
 			
 			final LoadConfig.LimitConfig limitConfig = loadConfig.getLimitConfig();
 			final long t = limitConfig.getTime();

@@ -12,7 +12,6 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -27,7 +26,6 @@ import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
@@ -63,10 +61,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final boolean sslFlag;
 	
 	protected NetStorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final SocketConfig socketConfig, final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final SocketConfig socketConfig, final boolean verifyFlag
 	) {
-		super(jobName, loadConfig, verifyFlag);
+		super(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag);
 		sslFlag = storageConfig.getSsl();
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});

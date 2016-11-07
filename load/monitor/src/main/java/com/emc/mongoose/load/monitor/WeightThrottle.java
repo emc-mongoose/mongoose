@@ -36,7 +36,7 @@ implements Throttle<K> {
 	}
 
 	@Override
-	public final boolean waitPassFor(final K key)
+	public final boolean getPassFor(final K key)
 	throws InterruptedException {
 		int remainingWeight;
 		while(true) {
@@ -64,7 +64,7 @@ implements Throttle<K> {
 	}
 
 	@Override
-	public final boolean waitPassFor(final K key, final int times)
+	public final boolean getPassFor(final K key, final int times)
 	throws InterruptedException {
 		int left = times;
 		if(left == 0) {

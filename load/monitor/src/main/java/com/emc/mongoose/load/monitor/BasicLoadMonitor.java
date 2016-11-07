@@ -5,6 +5,7 @@ import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageCsv;
 import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageTable;
 import com.emc.mongoose.model.io.Input;
 import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.model.io.RoundRobinOutput;
 import com.emc.mongoose.model.item.ItemBuffer;
 import com.emc.mongoose.model.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
@@ -51,9 +52,7 @@ implements LoadMonitor<I, O> {
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
-	private final Output<O> generatorOutput;
-	private final List<LoadGenerator<I, O>> generators;
-	private final List<StorageDriver<I, O>> drivers;
+	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers;
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -72,28 +71,28 @@ implements LoadMonitor<I, O> {
 	private final int totalConcurrency;
 	
 	public BasicLoadMonitor(
-		final String name, final List<LoadGenerator<I, O>> generators,
-		final List<StorageDriver<I,O>> drivers, final LoadConfig loadConfig
+		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final LoadConfig loadConfig
 	) {
 		this.name = name;
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-		generatorOutput = new PendingIoTaskDispatcher<>(
-			drivers, limitConfig.getRate(), null, null
-		);
-		this.generators = generators;
-		for(final LoadGenerator<I, O> nextGenerator : generators) {
-			nextGenerator.setOutput(generatorOutput);
+		Output<O> nextGeneratorOutput;
+		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
+			nextGeneratorOutput = new RoundRobinOutput<>(drivers.get(nextGenerator));
+			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 		this.drivers = drivers;
 		int concurrencySum = 0;
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			try {
-				concurrencySum += nextDriver.getConcurrencyLevel();
-			} catch(final RemoteException ignored) {
+		for(final List<StorageDriver<I, O>> nextDrivers : drivers.values()) {
+			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
+				try {
+					concurrencySum += nextDriver.getConcurrencyLevel();
+				} catch(final RemoteException ignored) {
+				}
 			}
+			registerDrivers(nextDrivers);
 		}
 		this.totalConcurrency = concurrencySum;
-		registerDrivers(drivers);
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
 		ioStatsInitFunc = ioType -> new BasicIoStats(ioType.toString(), metricsPeriodSec);
@@ -250,14 +249,12 @@ implements LoadMonitor<I, O> {
 
 	private boolean isIdle()
 	throws ConcurrentModificationException {
-
-		boolean idleFlag = true;
-
-		for(final LoadGenerator<I, O> nextLoadGenerator : generators) {
+		
+		for(final LoadGenerator<I, O> nextLoadGenerator : drivers.keySet()) {
+			
 			try {
 				if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
-					idleFlag = false;
-					break;
+					return false;
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
@@ -265,17 +262,14 @@ implements LoadMonitor<I, O> {
 					nextLoadGenerator
 				);
 			}
-		}
-
-		if(idleFlag) {
-			for(final StorageDriver<I, O> nextStorageDriver : drivers) {
+			
+			for(final StorageDriver<I, O> nextStorageDriver : drivers.get(nextLoadGenerator)) {
 				try {
 					if(
 						!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
 						!nextStorageDriver.isIdle()
 					) {
-						idleFlag = false;
-						break;
+						return false;
 					}
 				} catch(final NoSuchObjectException e) {
 					if(!isClosed() && !isInterrupted()) {
@@ -293,7 +287,7 @@ implements LoadMonitor<I, O> {
 			}
 		}
 
-		return idleFlag;
+		return true;
 	}
 	
 	
@@ -502,16 +496,20 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			try {
-				nextDriver.start();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
-				);
+		
+		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
+			
+			for(final StorageDriver<I, O> nextDriver : drivers.get(nextGenerator)) {
+				try {
+					nextDriver.start();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
+					);
+				}
 			}
-		}
-		for(final LoadGenerator<I, O> nextGenerator : generators) {
+			
+			
 			try {
 				nextGenerator.start();
 			} catch(final RemoteException e) {
@@ -520,18 +518,22 @@ implements LoadMonitor<I, O> {
 				);
 			}
 		}
+		
 		if(ioStats != null) {
 			for(final LoadType ioType : ioStats.keySet()) {
 				ioStats.get(ioType).start();
 			}
 		}
+		
 		worker.start();
 	}
 
 	@Override
 	protected void doShutdown()
 	throws IllegalStateException {
-		for(final LoadGenerator<I, O> nextGenerator : generators) {
+		
+		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
+			
 			try {
 				nextGenerator.interrupt();
 			} catch(final RemoteException e) {
@@ -540,15 +542,16 @@ implements LoadMonitor<I, O> {
 					nextGenerator.toString()
 				);
 			}
-		}
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			try {
-				nextDriver.shutdown();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to shutdown the driver {}",
-					nextDriver.toString()
-				);
+			
+			for(final StorageDriver<I, O> nextDriver : drivers.get(nextGenerator)) {
+				try {
+					nextDriver.shutdown();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to shutdown the driver {}",
+						nextDriver.toString()
+					);
+				}
 			}
 		}
 	}
@@ -556,14 +559,16 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final StorageDriver<I, O> nextDriver : drivers) {
-			try {
-				nextDriver.interrupt();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
-					nextDriver.toString()
-				);
+		for(final List<StorageDriver<I, O>> nextDrivers : drivers.values()) {
+			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
+				try {
+					nextDriver.interrupt();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
+						nextDriver.toString()
+					);
+				}
 			}
 		}
 		worker.interrupt();
@@ -613,7 +618,8 @@ implements LoadMonitor<I, O> {
 	protected void doClose()
 	throws IOException {
 
-		for(final LoadGenerator<I, O> generator : generators) {
+		for(final LoadGenerator<I, O> generator : drivers.keySet()) {
+			
 			try {
 				generator.close();
 			} catch(final IOException e) {
@@ -621,16 +627,16 @@ implements LoadMonitor<I, O> {
 					LOG, Level.WARN, e, "Failed to close the generator {}", generator
 				);
 			}
-		}
-		generators.clear();
-
-		for(final StorageDriver<I, O> driver : drivers) {
-			try {
-				driver.close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the driver {}", driver);
+			
+			for(final StorageDriver<I, O> driver : drivers.get(generator)) {
+				try {
+					driver.close();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the driver {}", driver);
+				}
 			}
 		}
+		
 		drivers.clear();
 
 		LOG.info(

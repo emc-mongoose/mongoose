@@ -37,8 +37,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final String userName,
-		final String secret, final HttpHeaders httpHeaders
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
 	}
 

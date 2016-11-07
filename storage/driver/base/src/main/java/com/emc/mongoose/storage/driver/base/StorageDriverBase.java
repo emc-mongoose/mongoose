@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.model.io.Input;
 import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -34,12 +35,17 @@ implements StorageDriver<I, O> {
 	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final boolean isCircular;
+	protected final String userName;
+	protected final String secret;
 	protected final boolean verifyFlag;
 
 	protected StorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
+		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final boolean verifyFlag
 	) {
 		this.jobName = jobName;
+		this.userName = authConfig == null ? null : authConfig.getId();
+		secret = authConfig == null ? null : authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;

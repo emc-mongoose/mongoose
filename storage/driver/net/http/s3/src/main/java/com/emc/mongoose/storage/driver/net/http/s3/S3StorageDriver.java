@@ -15,20 +15,22 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.URL_ARG_VE
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.util.AsciiString;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
@@ -37,8 +39,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  Created by kurila on 01.08.16.
@@ -60,24 +61,22 @@ extends HttpStorageDriverBase<I, O> {
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
-	private final Map<String, SecretKeySpec> secretKeys = new ConcurrentHashMap<>();
-	private final Function<String, SecretKeySpec> SECRET_KEY_FUNC = secret -> {
-		try {
-			if(secret == null) {
-				return null;
-			} else {
-				return new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
-			}
-		} catch(final UnsupportedEncodingException e) {
-			throw new IllegalStateException(e);
-		}
-	};
+	private final SecretKeySpec secretKey;
 	
 	public S3StorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag, final SocketConfig socketConfig
+		final String jobName, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
+		SecretKeySpec tmpKey = null;
+		if(secret != null) {
+			try {
+				tmpKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
+			} catch(final UnsupportedEncodingException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failure");
+			}
+		}
+		secretKey = tmpKey;
 	}
 	
 	@Override
@@ -100,17 +99,13 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final String userName,
-		final String secret, final HttpHeaders httpHeaders
+		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
 		final String signature;
-		if(secret == null) {
+		if(secretKey == null) {
 			signature = null;
 		} else {
-			signature = getSignature(
-				getCanonical(httpMethod, dstUriPath, httpHeaders),
-				secretKeys.computeIfAbsent(secret, SECRET_KEY_FUNC)
-			);
+			signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders), secretKey);
 		}
 		if(signature != null) {
 			httpHeaders.set(
@@ -202,6 +197,12 @@ extends HttpStorageDriverBase<I, O> {
 	public final void close()
 	throws IOException {
 		super.close();
-		secretKeys.clear();
+		if(secretKey != null && !secretKey.isDestroyed()) {
+			try {
+				secretKey.destroy();
+			} catch(final DestroyFailedException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failure");
+			}
+		}
 	}
 }
