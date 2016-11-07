@@ -190,7 +190,7 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	public final String toString() {
-		return "S3-" + super.toString();
+		return String.format(super.toString(), "s3");
 	}
 
 	@Override

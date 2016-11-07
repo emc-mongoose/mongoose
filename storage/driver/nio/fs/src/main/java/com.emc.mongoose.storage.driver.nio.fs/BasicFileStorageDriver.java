@@ -389,6 +389,6 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final String toString() {
-		return "FS-" + super.toString();
+		return String.format(super.toString(), "fs");
 	}
 }

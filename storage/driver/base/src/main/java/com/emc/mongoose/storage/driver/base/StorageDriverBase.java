@@ -207,6 +207,6 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public String toString() {
-		return concurrencyLevel + '-' + jobName;
+		return "storage/driver/%s/" + jobName;
 	}
 }

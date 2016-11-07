@@ -344,6 +344,8 @@ implements HttpStorageDriver<I, O> {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
 				} catch(final URISyntaxException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
+				} catch(final Exception e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
 				}
 				
 				channel

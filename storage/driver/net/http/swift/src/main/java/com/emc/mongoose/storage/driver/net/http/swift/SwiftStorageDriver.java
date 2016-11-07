@@ -12,7 +12,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URISyntaxException;
 
 /**
@@ -50,6 +49,6 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	public final String toString() {
-		return "Swift-" + super.toString();
+		return String.format(super.toString(), "swift");
 	}
 }
