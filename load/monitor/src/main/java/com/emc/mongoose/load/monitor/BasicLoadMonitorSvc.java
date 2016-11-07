@@ -9,7 +9,7 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitorSvc;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
-import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -33,7 +33,7 @@ implements LoadMonitorSvc<I,O> {
 
 	public BasicLoadMonitorSvc(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> storageDrivers,
-		final Config.LoadConfig loadConfig
+		final LoadConfig loadConfig
 	) {
 		super(name, storageDrivers, loadConfig);
 	}

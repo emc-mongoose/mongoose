@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageCsv;
 import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageTable;
 import com.emc.mongoose.model.io.Input;
@@ -76,9 +77,12 @@ implements LoadMonitor<I, O> {
 	) {
 		this.name = name;
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		
+		final Throttle<O> ioTaskThrottle;
 		Output<O> nextGeneratorOutput;
 		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
 			nextGeneratorOutput = new RoundRobinOutput<>(drivers.get(nextGenerator));
+			nextGenerator.setThrottle(ioTaskThrottle);
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 		this.drivers = drivers;
@@ -93,6 +97,7 @@ implements LoadMonitor<I, O> {
 			registerDrivers(nextDrivers);
 		}
 		this.totalConcurrency = concurrencySum;
+		
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
 		ioStatsInitFunc = ioType -> new BasicIoStats(ioType.toString(), metricsPeriodSec);

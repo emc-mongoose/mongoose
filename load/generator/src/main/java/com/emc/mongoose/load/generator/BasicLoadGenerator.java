@@ -2,6 +2,7 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.ConstantStringInput;
 import com.emc.mongoose.model.item.CsvFileItemInput;
@@ -50,6 +51,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
 
+	private volatile Throttle<O> ioTaskThrottle;
 	private volatile Output<O> ioTaskOutput;
 
 	private final LoadType ioType;
@@ -168,7 +170,12 @@ implements LoadGenerator<I, O>, Output<I> {
 		);
 		worker.setDaemon(true);
 	}
-
+	
+	@Override
+	public final void setThrottle(final Throttle<O> ioTaskThrottle) {
+		this.ioTaskThrottle = ioTaskThrottle;
+	}
+	
 	@Override
 	public final void setOutput(final Output<O> ioTaskOutput) {
 		this.ioTaskOutput = ioTaskOutput;
@@ -265,6 +272,13 @@ implements LoadGenerator<I, O>, Output<I> {
 	public final void put(final I item)
 	throws IOException {
 		final O nextIoTask = ioTaskBuilder.getInstance(item, dstPathInput.get());
+		if(ioTaskThrottle != null) {
+			try {
+				ioTaskThrottle.getPassFor(nextIoTask);
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
+		}
 		ioTaskOutput.put(nextIoTask);
 	}
 	
@@ -273,6 +287,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	throws IOException {
 		final int n = to - from;
 		if(n > 0) {
+			
 			final List<O> ioTasks;
 			if(dstPathInput == null) {
 				ioTasks = ioTaskBuilder.getInstances(buffer, from, to);
@@ -284,6 +299,15 @@ implements LoadGenerator<I, O>, Output<I> {
 				dstPathInput.get(dstPaths, n);
 				ioTasks = ioTaskBuilder.getInstances(buffer, dstPaths, from, to);
 			}
+			
+			if(ioTaskThrottle != null) {
+				try {
+					ioTaskThrottle.getPassFor(ioTasks.get(0), n);
+				} catch(final InterruptedException e) {
+					throw new InterruptedIOException();
+				}
+			}
+			
 			return ioTaskOutput.put(ioTasks, 0, ioTasks.size());
 		} else {
 			return 0;
