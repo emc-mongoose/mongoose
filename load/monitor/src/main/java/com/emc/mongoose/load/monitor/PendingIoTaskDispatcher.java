@@ -6,11 +6,11 @@ import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 /**
@@ -28,7 +28,7 @@ implements Output<O> {
 
 	public PendingIoTaskDispatcher(
 		final List<StorageDriver<I, O>> drivers, final double rateLimit,
-		final Map<Object, Integer> weightsMap, Function<O, Object> weightFunc
+		final Object2IntMap<Object> weightsMap, Function<O, Object> weightFunc
 	) {
 		this.drivers = drivers;
 		this.driversCount = drivers.size();

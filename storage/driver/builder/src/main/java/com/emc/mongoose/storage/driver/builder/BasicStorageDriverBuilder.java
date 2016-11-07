@@ -118,8 +118,7 @@ public class BasicStorageDriverBuilder<
 				// TODO directory load driver
 			} else {
 				LOG.info(Markers.MSG, "Work on the files");
-				driver = (T) new BasicFileStorageDriver<>(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag
-				);
+				driver = (T) new BasicFileStorageDriver<>(jobName, loadConfig, verifyFlag);
 			}
 		} else if(StorageType.HTTP.equals(storageType)){
 			final String apiType = storageConfig.getHttpConfig().getApi();
@@ -129,11 +128,13 @@ public class BasicStorageDriverBuilder<
 			} else {
 				switch(apiType.toLowerCase()) {
 					case API_S3:
-						driver = (T) new S3StorageDriver<>(jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+						driver = (T) new S3StorageDriver<>(
+							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
 						);
 						break;
 					case API_SWIFT:
-						driver = (T) new SwiftStorageDriver<>(jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+						driver = (T) new SwiftStorageDriver<>(
+							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
 						);
 						break;
 					default:

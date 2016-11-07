@@ -6,7 +6,6 @@ import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.ConstantStringInput;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -51,7 +50,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
 
-	private volatile LoadMonitor<I, O> monitor;
+	private volatile Output<O> ioTaskOutput;
 
 	private final LoadType ioType;
 	private final Input<I> itemInput;
@@ -171,8 +170,8 @@ implements LoadGenerator<I, O>, Output<I> {
 	}
 
 	@Override
-	public final void setLoadMonitor(final LoadMonitor<I, O> monitor) {
-		this.monitor = monitor;
+	public final void setOutput(final Output<O> ioTaskOutput) {
+		this.ioTaskOutput = ioTaskOutput;
 	}
 
 	private final class GeneratorTask
@@ -183,8 +182,8 @@ implements LoadGenerator<I, O>, Output<I> {
 		@Override
 		public final void run() {
 
-			if(monitor == null) {
-				LOG.warn(Markers.ERR, "No load monitor set, exiting");
+			if(ioTaskOutput == null) {
+				LOG.warn(Markers.ERR, "No load I/O task output set, exiting");
 			}
 
 			if(itemInput == null) {
@@ -266,7 +265,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	public final void put(final I item)
 	throws IOException {
 		final O nextIoTask = ioTaskBuilder.getInstance(item, dstPathInput.get());
-		monitor.put(nextIoTask);
+		ioTaskOutput.put(nextIoTask);
 	}
 	
 	@Override
@@ -285,7 +284,7 @@ implements LoadGenerator<I, O>, Output<I> {
 				dstPathInput.get(dstPaths, n);
 				ioTasks = ioTaskBuilder.getInstances(buffer, dstPaths, from, to);
 			}
-			return monitor.put(ioTasks, 0, ioTasks.size());
+			return ioTaskOutput.put(ioTasks, 0, ioTasks.size());
 		} else {
 			return 0;
 		}

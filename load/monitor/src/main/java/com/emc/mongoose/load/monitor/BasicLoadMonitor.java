@@ -51,6 +51,7 @@ implements LoadMonitor<I, O> {
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
+	private final Output<O> generatorOutput;
 	private final List<LoadGenerator<I, O>> generators;
 	private final List<StorageDriver<I, O>> drivers;
 	private final MetricsConfig metricsConfig;
@@ -75,9 +76,13 @@ implements LoadMonitor<I, O> {
 		final List<StorageDriver<I,O>> drivers, final LoadConfig loadConfig
 	) {
 		this.name = name;
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		generatorOutput = new PendingIoTaskDispatcher<>(
+			drivers, limitConfig.getRate(), null, null
+		);
 		this.generators = generators;
 		for(final LoadGenerator<I, O> nextGenerator : generators) {
-			nextGenerator.setLoadMonitor(this);
+			nextGenerator.setOutput(generatorOutput);
 		}
 		this.drivers = drivers;
 		int concurrencySum = 0;
@@ -92,7 +97,6 @@ implements LoadMonitor<I, O> {
 		this.metricsConfig = loadConfig.getMetricsConfig();
 		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
 		ioStatsInitFunc = ioType -> new BasicIoStats(ioType.toString(), metricsPeriodSec);
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		if(limitConfig.getCount() > 0) {
 			countLimit = limitConfig.getCount();
 		} else {
@@ -113,7 +117,7 @@ implements LoadMonitor<I, O> {
 	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
 		for(final StorageDriver<I, O> nextDriver : drivers) {
 			try {
-				nextDriver.setLoadMonitor(this);
+				nextDriver.setOutput(this);
 			} catch(final RemoteException ignored) {
 			}
 		}

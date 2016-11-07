@@ -103,7 +103,7 @@ extends ClientHandlerBase<HttpObject, I, O> {
 						}
 						ioTask.setRespTimeDone(System.nanoTime() / 1000);
 						ctx.close();
-						monitorRef.get().ioTaskCompleted((O) ioTask);
+						ioTaskOutputRef.get().ioTaskCompleted((O) ioTask);
 					}
 				} catch(final NumberFormatException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Invalid response content length value");

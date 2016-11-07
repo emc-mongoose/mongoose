@@ -12,6 +12,6 @@ import java.rmi.RemoteException;
 public interface StorageDriverSvc<I extends Item, O extends IoTask<I>>
 extends StorageDriver<I, O>, Service {
 
-	void setLoadMonitorSvc(final String addr, final String monitorSvcName)
+	void setOutputSvc(final String addr, final String svcName)
 	throws RemoteException;
 }

@@ -3,12 +3,11 @@ package com.emc.mongoose.storage.driver.service;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadMonitor;
-import com.emc.mongoose.model.load.LoadMonitorSvc;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.Markers;
@@ -52,11 +51,11 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final void setLoadMonitorSvc(final String addr, final String monitorSvcName)
+	public final void setOutputSvc(final String addr, final String svcName)
 	throws RemoteException {
-		final LoadMonitorSvc<I, O> monitorSvc = ServiceUtil.resolve(addr, monitorSvcName);
-		LOG.info(Markers.MSG, "Connected the service \"{}\" @ {}", monitorSvcName, addr);
-		driver.setLoadMonitor(monitorSvc);
+		final Output<O> ioTaskOutputSvc = ServiceUtil.resolve(addr, svcName);
+		LOG.info(Markers.MSG, "Connected the service \"{}\" @ {}", svcName, addr);
+		driver.setOutput(ioTaskOutputSvc);
 	}
 
 	@Override
@@ -163,7 +162,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final void setLoadMonitor(final LoadMonitor<I, O> monitor)
+	public final void setOutput(final Output<O> ioTaskOutput)
 	throws RemoteException {
 		throw new RemoteException();
 	}

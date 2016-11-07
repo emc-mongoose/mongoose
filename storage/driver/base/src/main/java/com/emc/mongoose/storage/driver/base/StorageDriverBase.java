@@ -4,11 +4,12 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.ui.log.LogUtil;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +30,7 @@ implements StorageDriver<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	protected final AtomicReference<LoadMonitor<I, O>> monitorRef = new AtomicReference<>(null);
+	protected final AtomicReference<Output<O>> ioTaskOutputRef = new AtomicReference<>(null);
 	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final boolean isCircular;
@@ -50,9 +51,9 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final void setLoadMonitor(final LoadMonitor<I, O> monitor)
+	public final void setOutput(final Output<O> ioTaskOutput)
 	throws IllegalStateException {
-		if(!monitorRef.compareAndSet(null, monitor)) {
+		if(!ioTaskOutputRef.compareAndSet(null, ioTaskOutput)) {
 			throw new IllegalStateException(
 				"This storage driver is already used by another monitor"
 			);
@@ -90,10 +91,10 @@ implements StorageDriver<I, O> {
 			}
 		}
 		
-		final LoadMonitor<I, O> monitor = monitorRef.get();
-		if(monitor != null) {
+		final Output<O> ioTaskOutput = ioTaskOutputRef.get();
+		if(ioTaskOutput != null) {
 			try {
-				monitorRef.get().put(ioTask);
+				ioTaskOutput.put(ioTask);
 			} catch(final NoSuchObjectException | EOFException e) {
 				if(isClosed() || isInterrupted()) {
 					// ignore
@@ -172,10 +173,10 @@ implements StorageDriver<I, O> {
 			}
 		}
 
-		final LoadMonitor<I, O> monitor = monitorRef.get();
-		if(monitor != null) {
+		final Output<O> ioTaskOutput = ioTaskOutputRef.get();
+		if(ioTaskOutput != null) {
 			try {
-				return monitorRef.get().put(ioTasks, from, to);
+				return ioTaskOutput.put(ioTasks, from, to);
 			} catch(final NoSuchObjectException | EOFException e) {
 				if(isClosed() || isInterrupted()) {
 					// ignore
@@ -201,7 +202,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		monitorRef.set(null);
+		ioTaskOutputRef.set(null);
 	}
 	
 	@Override

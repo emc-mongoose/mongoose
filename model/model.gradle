@@ -6,7 +6,6 @@ dependencies {
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
-		"it.unimi.dsi:fastutil:${depVersion.fastutil}"
 	)
 
 	compileOnly(project(':common'))

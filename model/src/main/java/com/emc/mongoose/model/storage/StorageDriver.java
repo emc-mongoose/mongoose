@@ -4,7 +4,6 @@ import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.model.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadMonitor;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -18,7 +17,7 @@ extends Daemon, Output<O>, Remote {
 	int getConcurrencyLevel()
 	throws RemoteException;
 	
-	void setLoadMonitor(final LoadMonitor<I, O> monitor)
+	void setOutput(final Output<O> ioTaskOutput)
 	throws RemoteException;
 
 	boolean isIdle()

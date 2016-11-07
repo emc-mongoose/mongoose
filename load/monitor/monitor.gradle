@@ -6,6 +6,7 @@ dependencies {
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
+		"it.unimi.dsi:fastutil:${depVersion.fastutil}",
 	)
 
 	compileOnly(

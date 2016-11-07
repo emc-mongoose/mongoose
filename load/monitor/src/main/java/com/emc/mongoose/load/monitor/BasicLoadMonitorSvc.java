@@ -44,7 +44,7 @@ implements LoadMonitorSvc<I,O> {
 			for(final StorageDriver<I, O> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
 					try {
-						((StorageDriverSvc<I, O>) nextDriver).setLoadMonitorSvc(hostName, getName());
+						((StorageDriverSvc<I, O>) nextDriver).setOutputSvc(hostName, getName());
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,

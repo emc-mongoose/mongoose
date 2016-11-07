@@ -1,10 +1,10 @@
 package com.emc.mongoose.load.monitor;
-import com.emc.mongoose.common.concurrent.Throttle;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.emc.mongoose.common.concurrent.Throttle;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  Created by kurila on 29.03.16.
@@ -18,15 +18,13 @@ public class WeightThrottle<K>
 implements Throttle<K> {
 
 	private final Set<K> keySet; // just to not to calculate every time
-	private final Map<K, Integer> weightMap; // initial weight map (constant)
-	private final Map<K, Integer> remainingWeightMap = new HashMap<>();
-	private final AtomicBoolean stopFlag; // TODO refactor to work w/o this field, remove it after
+	private final Object2IntMap<K> weightMap; // initial weight map (constant)
+	private final Object2IntMap<K> remainingWeightMap = new Object2IntOpenHashMap<>();
 
-	public WeightThrottle(final Map<K, Integer> weightMap, final AtomicBoolean stopFlag)
+	public WeightThrottle(final Object2IntMap<K> weightMap)
 	throws IllegalArgumentException {
 		this.keySet = weightMap.keySet();
 		this.weightMap = weightMap;
-		this.stopFlag = stopFlag;
 		resetRemainingWeights();
 	}
 
@@ -41,13 +39,13 @@ implements Throttle<K> {
 	public final boolean waitPassFor(final K key)
 	throws InterruptedException {
 		int remainingWeight;
-		while(!stopFlag.get()) {
+		while(true) {
 			synchronized(remainingWeightMap) {
 				remainingWeight = remainingWeightMap.get(key);
 				if(remainingWeight == 0) {
 					for(final K anotherKey : keySet) {
 						if(!anotherKey.equals(key)) {
-							remainingWeight += remainingWeightMap.get(anotherKey);
+							remainingWeight += remainingWeightMap.getInt(anotherKey);
 						}
 					}
 					if(remainingWeight == 0) {
@@ -73,13 +71,13 @@ implements Throttle<K> {
 			return true;
 		}
 		int remainingWeight;
-		while(!stopFlag.get()) {
+		while(true) {
 			synchronized(remainingWeightMap) {
-				remainingWeight = remainingWeightMap.get(key);
+				remainingWeight = remainingWeightMap.getInt(key);
 				if(remainingWeight == 0) {
 					for(final K anotherKey : keySet) {
 						if(!anotherKey.equals(key)) {
-							remainingWeight += remainingWeightMap.get(anotherKey);
+							remainingWeight += remainingWeightMap.getInt(anotherKey);
 						}
 					}
 					if(remainingWeight == 0) {
