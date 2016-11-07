@@ -88,7 +88,8 @@ implements Serializable {
 		this.loadConfig = new LoadConfig(config.getLoadConfig());
 		this.scenarioConfig = new ScenarioConfig(config.getScenarioConfig());
 		this.storageConfig = new StorageConfig(config.getStorageConfig());
-		this.aliasingConfig = new HashMap<>(config.getAliasingConfig());
+		final Map<String, Object> ac = config.getAliasingConfig();
+		this.aliasingConfig = ac == null ? null : new HashMap<>(config.getAliasingConfig());
 	}
 
 	public final String getVersion() {
