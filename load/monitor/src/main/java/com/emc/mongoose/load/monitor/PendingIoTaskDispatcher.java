@@ -33,7 +33,7 @@ implements Output<O> {
 		this.drivers = drivers;
 		this.driversCount = drivers.size();
 		this.rateThrottle = new RateThrottle<>(rateLimit);
-		this.weightThrottle = new WeightThrottle<>(weightsMap);
+		this.weightThrottle = weightsMap == null ? null : new WeightThrottle<>(weightsMap);
 		this.weightFunc = weightFunc;
 	}
 
