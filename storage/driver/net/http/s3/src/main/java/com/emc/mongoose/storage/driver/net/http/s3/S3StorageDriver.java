@@ -103,10 +103,15 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpMethod httpMethod, final String dstUriPath, final String userName,
 		final String secret, final HttpHeaders httpHeaders
 	) {
-		final String signature = getSignature(
-			getCanonical(httpMethod, dstUriPath, httpHeaders),
-			secretKeys.computeIfAbsent(secret, SECRET_KEY_FUNC)
-		);
+		final String signature;
+		if(secret == null) {
+			signature = null;
+		} else {
+			signature = getSignature(
+				getCanonical(httpMethod, dstUriPath, httpHeaders),
+				secretKeys.computeIfAbsent(secret, SECRET_KEY_FUNC)
+			);
+		}
 		if(signature != null) {
 			httpHeaders.set(
 				HttpHeaderNames.AUTHORIZATION, AUTH_PREFIX + userName + ":" + signature
