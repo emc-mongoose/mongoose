@@ -12,7 +12,9 @@ import com.emc.mongoose.model.item.Item;
 public interface LoadGenerator<I extends Item, O extends IoTask<I>>
 extends Daemon {
 	
-	void setThrottle(final Throttle<O> ioTaskThrottle);
+	void setWeightThrottle(final Throttle<LoadGenerator<I, O>> weightThrottle);
+
+	void setRateThrottle(final Throttle<Object> rateThrottle);
 
 	void setOutput(final Output<O> ioTaskOutput);
 }

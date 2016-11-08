@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 /**
  Created by kurila on 02.02.16.
  */
@@ -176,21 +177,15 @@ extends JobBase {
 				LOG.info(Markers.MSG, "Work on the path items");
 			}
 			
-			final List<LoadGenerator> generators = new ArrayList<>();
-			
-			try {
-				generators.add(
-					new BasicLoadGenerator(itemFactory, ioTaskBuilder, itemConfig, loadConfig)
-				);
-			} catch(final UserShootHisFootException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Looks like configuration failure");
-			}
+			final LoadGenerator loadGenerator = new BasicLoadGenerator(
+				itemFactory, ioTaskBuilder, itemConfig, loadConfig
+			);
 			LOG.info(Markers.MSG, "Load generators initialized");
 			
 			try(
 				final LoadMonitor monitor = remoteDriversFlag ?
-					new BasicLoadMonitorSvc(jobName, generators, drivers, loadConfig) :
-					new BasicLoadMonitor(jobName, generators, drivers, loadConfig)
+					new BasicLoadMonitorSvc(jobName, loadGenerator, drivers, loadConfig) :
+					new BasicLoadMonitor(jobName, loadGenerator, drivers, loadConfig)
 			) {
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {

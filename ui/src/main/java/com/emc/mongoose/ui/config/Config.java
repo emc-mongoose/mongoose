@@ -1264,15 +1264,13 @@ implements Serializable {
 				} catch(final NoSuchMethodException e) {
 					throw new IllegalArgumentNameException(key);
 				}
-			} else if(node instanceof String) {
-				applyField(config, key, (String) node);
 			} else {
-				throw new IllegalStateException();
+				applyField(config, key, node);
 			}
 		}
 	}
 
-	private static void applyField(final Object config, final String key, final String value)
+	private static void applyField(final Object config, final String key, final Object value)
 	throws InvocationTargetException, IllegalAccessException {
 		final Class configCls = config.getClass();
 		try {
@@ -1281,60 +1279,85 @@ implements Serializable {
 			if(fieldType.equals(String.class)) {
 				configCls
 					.getMethod("set" + capitalize(key), String.class)
-					.invoke(config, value);
+					.invoke(config, value == null ? null : value.toString());
 			} else if(fieldType.equals(List.class)) {
-				final List<String> listValue = Arrays.asList(value.split(","));
-				configCls
-					.getMethod("set" + capitalize(key), List.class)
-					.invoke(config, listValue);
+				if(value == null) {
+					configCls
+						.getMethod("set" + capitalize(key), List.class)
+						.invoke(config, (List) null);
+				} else {
+					final List<String> listValue = Arrays.asList(((String) value).split(","));
+					configCls
+						.getMethod("set" + capitalize(key), List.class)
+						.invoke(config, listValue);
+				}
 			} else if(fieldType.equals(Map.class)) {
-				final Map<String, String> field = (Map<String, String>) fieldGetter.invoke(config);
-				final String keyValuePair[] = value.split(":", 2);
-				if(keyValuePair.length == 1) {
-					field.remove(keyValuePair[0]);
-				} else if(keyValuePair.length == 2) {
-					field.put(keyValuePair[0], keyValuePair[1]);
+				if(value == null) {
+					configCls
+						.getMethod("set" + capitalize(key), Map.class)
+						.invoke(config, (Map) null);
+				} else {
+					final Map<String, String>
+						field = (Map<String, String>) fieldGetter.invoke(config);
+					final String keyValuePair[] = ((String) value).split(":", 2);
+					if(keyValuePair.length == 1) {
+						field.remove(keyValuePair[0]);
+					} else if(keyValuePair.length == 2) {
+						field.put(keyValuePair[0], keyValuePair[1]);
+					}
 				}
 			} else if(fieldType.equals(Integer.TYPE)) {
-				final int intValue = Integer.parseInt(value);
+				final int intValue = (int) value;
 				configCls
 					.getMethod("set" + capitalize(key), Integer.TYPE)
 					.invoke(config, intValue);
 			} else if(fieldType.equals(Long.TYPE)) {
 				try {
-					final long longValue = Long.parseLong(value);
+					final long longValue = (long) value;
+					configCls
+						.getMethod("set" + capitalize(key), Long.TYPE)
+						.invoke(config, longValue);
+				} catch(final ClassCastException e) {
+					final long longValue = (int) value;
 					configCls
 						.getMethod("set" + capitalize(key), Long.TYPE)
 						.invoke(config, longValue);
 				} catch(final NumberFormatException e) {
-					final long timeValue = TimeUtil.getTimeInSeconds(value);
+					final long timeValue = TimeUtil.getTimeInSeconds(value.toString());
 					configCls
 						.getMethod("set" + capitalize(key), Long.TYPE)
 						.invoke(config, timeValue);
 				}
 			} else if(fieldType.equals(Double.TYPE)) {
-				final double doubleValue = Double.parseDouble(value);
-				configCls
-					.getMethod("set" + capitalize(key), Double.TYPE)
-					.invoke(config, doubleValue);
+				try {
+					final double doubleValue = (double) value;
+					configCls
+						.getMethod("set" + capitalize(key), Double.TYPE)
+						.invoke(config, doubleValue);
+				} catch(final ClassCastException e) {
+					final double doubleValue = (float) value;
+					configCls
+						.getMethod("set" + capitalize(key), Double.TYPE)
+						.invoke(config, doubleValue);
+				}
 			} else if(fieldType.equals(Boolean.TYPE)) {
-				final boolean flagValue = Boolean.parseBoolean(value);
+				final boolean flagValue = (boolean) value;
 				configCls
 					.getMethod("set" + capitalize(key), Boolean.TYPE)
 					.invoke(config, flagValue);
 			} else if(fieldType.equals(SizeInBytes.class)) {
-				final SizeInBytes sizeValue = new SizeInBytes(value);
+				final SizeInBytes sizeValue = new SizeInBytes(value.toString());
 				configCls
 					.getMethod("set" + capitalize(key), SizeInBytes.class)
 					.invoke(config, sizeValue);
 			} else if(fieldType.equals(DataRangesConfig.class)) {
 				try {
-					final int rangesCount = Integer.parseInt(value);
+					final int rangesCount = (int) value;
 					configCls
 						.getMethod("set" + capitalize(key), DataRangesConfig.class)
 						.invoke(config, new DataRangesConfig(rangesCount));
 				} catch(final NumberFormatException e) {
-					final DataRangesConfig rangesValue = new DataRangesConfig(value);
+					final DataRangesConfig rangesValue = new DataRangesConfig(value.toString());
 					configCls
 						.getMethod("set" + capitalize(key), DataRangesConfig.class)
 						.invoke(config, rangesValue);

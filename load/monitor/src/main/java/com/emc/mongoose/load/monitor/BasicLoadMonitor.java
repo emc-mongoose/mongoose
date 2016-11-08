@@ -6,7 +6,7 @@ import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageCsv;
 import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageTable;
 import com.emc.mongoose.model.io.Input;
 import com.emc.mongoose.model.io.Output;
-import com.emc.mongoose.model.io.RoundRobinOutput;
+import com.emc.mongoose.model.io.RoundRobinListOutput;
 import com.emc.mongoose.model.item.ItemBuffer;
 import com.emc.mongoose.model.item.LimitedQueueItemBuffer;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
@@ -24,6 +24,8 @@ import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +35,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -70,21 +73,84 @@ implements LoadMonitor<I, O> {
 	private volatile Output<I> itemOutput;
 	private volatile boolean isPostProcessDone = false;
 	private final int totalConcurrency;
-	
+
+	/**
+	 Single load job constructor
+	 @param name
+	 @param loadGenerator
+	 @param drivers
+	 @param loadConfig
+	 */
 	public BasicLoadMonitor(
-		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
-		final LoadConfig loadConfig
+		final String name, final LoadGenerator<I, O> loadGenerator,
+		final List<StorageDriver<I, O>> drivers, final LoadConfig loadConfig
+	) {
+		this(
+			name,
+			new HashMap<LoadGenerator<I, O>, List<StorageDriver<I, O>>>() {{
+				put(loadGenerator, drivers);
+			}},
+			new HashMap<LoadGenerator<I, O>, LoadConfig>() {{
+				put(loadGenerator, loadConfig);
+			}},
+			null
+		);
+	}
+
+	/**
+	 Mixed load job constructor
+	 @param name
+	 @param drivers
+	 @param loadConfigs
+	 */
+	public BasicLoadMonitor(
+		final String name,
+		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs
+	) {
+		this(name, drivers, loadConfigs, null);
+	}
+
+	/**
+	 Weighted mixed load job constructor
+	 @param name
+	 @param drivers
+	 @param loadConfigs
+	 @param weightMap
+	 */
+	public BasicLoadMonitor(
+		final String name,
+		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
+		final Object2IntMap<LoadGenerator<I, O>> weightMap
 	) {
 		this.name = name;
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-		
-		final Throttle<O> ioTaskThrottle;
+
+		final LoadConfig firstLoadConfig = loadConfigs.get(loadConfigs.keySet().iterator().next());
+
+		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
+		final Throttle<Object> rateThrottle;
+		if(rateLimit > 0) {
+			rateThrottle = new RateThrottle<>(rateLimit);
+		} else {
+			rateThrottle = null;
+		}
+
+		final Throttle<LoadGenerator<I, O>> weightThrottle;
+		if(weightMap == null || weightMap.size() == 0 || weightMap.size() == 1) {
+			weightThrottle = null;
+		} else {
+			weightThrottle = new WeightThrottle<>(weightMap);
+		}
+
 		Output<O> nextGeneratorOutput;
 		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
-			nextGeneratorOutput = new RoundRobinOutput<>(drivers.get(nextGenerator));
-			nextGenerator.setThrottle(ioTaskThrottle);
+			nextGeneratorOutput = new RoundRobinListOutput<>(drivers.get(nextGenerator));
+			nextGenerator.setWeightThrottle(weightThrottle);
+			nextGenerator.setRateThrottle(rateThrottle);
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
+
 		this.drivers = drivers;
 		int concurrencySum = 0;
 		for(final List<StorageDriver<I, O>> nextDrivers : drivers.values()) {
@@ -98,22 +164,31 @@ implements LoadMonitor<I, O> {
 		}
 		this.totalConcurrency = concurrencySum;
 		
-		this.metricsConfig = loadConfig.getMetricsConfig();
+		this.metricsConfig = firstLoadConfig.getMetricsConfig();
 		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
 		ioStatsInitFunc = ioType -> new BasicIoStats(ioType.toString(), metricsPeriodSec);
-		if(limitConfig.getCount() > 0) {
-			countLimit = limitConfig.getCount();
-		} else {
-			countLimit = Long.MAX_VALUE;
+
+		long countLimitSum = 0;
+		long sizeLimitSum = 0;
+		for(final LoadGenerator<I, O> nextLoadGenerator : loadConfigs.keySet()) {
+			final LimitConfig nextLimitConfig = loadConfigs.get(nextLoadGenerator).getLimitConfig();
+			if(nextLimitConfig.getCount() > 0 && countLimitSum < Long.MAX_VALUE) {
+				countLimitSum += nextLimitConfig.getCount();
+			} else {
+				countLimitSum = Long.MAX_VALUE;
+			}
+			if(nextLimitConfig.getSize().get() > 0 && sizeLimitSum < Long.MAX_VALUE) {
+				sizeLimitSum += nextLimitConfig.getSize().get();
+			} else {
+				sizeLimitSum = Long.MAX_VALUE;
+			}
 		}
-		if(limitConfig.getSize().get() > 0) {
-			sizeLimit = limitConfig.getSize().get();
-		} else {
-			sizeLimit = Long.MAX_VALUE;
-		}
+		this.countLimit = countLimitSum;
+		this.sizeLimit = sizeLimitSum;
+
 		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
 		this.worker.setDaemon(true);
-		final int maxItemQueueSize = loadConfig.getQueueConfig().getSize();
+		final int maxItemQueueSize = firstLoadConfig.getQueueConfig().getSize();
 		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
 		UNCLOSED.add(this);
 	}

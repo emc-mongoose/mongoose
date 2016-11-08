@@ -19,10 +19,10 @@ public interface Throttle<X> {
 	/**
 	 Request a decision about a set of things
 	 @param thing the subject of the decision
-	 @param times how many times the decision is true
-	 @return true if the set of things should be passed, false otherwise
+	 @param times how many acquires is requested
+	 @return how many acquires is got
 	 @throws InterruptedException
 	 */
-	boolean getPassFor(final X thing, int times)
+	int getPassFor(final X thing, int times)
 	throws InterruptedException;
 }

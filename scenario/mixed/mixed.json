@@ -1,0 +1,28 @@
+{
+	"type" : "mixed",
+	"config" : [
+		{
+
+		}, {
+			"item" : {
+				"input" : {
+					"file" : "items2read.csv"
+				}
+			},
+			"load" : {
+				"circular" : true,
+				"type" : "read"
+			}
+		}, {
+			"item" : {
+				"input" : {
+					"file" : "items2update.csv"
+				}
+			},
+			"load" : {
+				"circular" : true,
+				"type" : "update"
+			}
+		}
+	]
+}

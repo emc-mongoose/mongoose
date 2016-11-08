@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  Created by kurila on 29.03.16.
@@ -14,23 +15,23 @@ import java.util.Set;
  The weight is used to pass the things with specific ratio for the different keys.
  This implementation of the barrier never denies the things but blocks until a thing may be passed.
  */
-public class WeightThrottle<K>
+public final class WeightThrottle<K>
 implements Throttle<K> {
 
-	private final Set<K> keySet; // just to not to calculate every time
+	private final Set<K> weightKeys; // just to not to calculate every time
 	private final Object2IntMap<K> weightMap; // initial weight map (constant)
 	private final Object2IntMap<K> remainingWeightMap = new Object2IntOpenHashMap<>();
 
 	public WeightThrottle(final Object2IntMap<K> weightMap)
 	throws IllegalArgumentException {
-		this.keySet = weightMap.keySet();
+		this.weightKeys = weightMap.keySet();
 		this.weightMap = weightMap;
 		resetRemainingWeights();
 	}
 
 	private void resetRemainingWeights()
 	throws IllegalArgumentException {
-		for(final K key : keySet) {
+		for(final K key : weightKeys) {
 			remainingWeightMap.put(key, weightMap.get(key));
 		}
 	}
@@ -43,7 +44,7 @@ implements Throttle<K> {
 			synchronized(remainingWeightMap) {
 				remainingWeight = remainingWeightMap.get(key);
 				if(remainingWeight == 0) {
-					for(final K anotherKey : keySet) {
+					for(final K anotherKey : weightKeys) {
 						if(!anotherKey.equals(key)) {
 							remainingWeight += remainingWeightMap.getInt(anotherKey);
 						}
@@ -64,18 +65,17 @@ implements Throttle<K> {
 	}
 
 	@Override
-	public final boolean getPassFor(final K key, final int times)
+	public final int getPassFor(final K key, final int times)
 	throws InterruptedException {
-		int left = times;
-		if(left == 0) {
-			return true;
+		if(times == 0) {
+			return 0;
 		}
 		int remainingWeight;
 		while(true) {
 			synchronized(remainingWeightMap) {
 				remainingWeight = remainingWeightMap.getInt(key);
 				if(remainingWeight == 0) {
-					for(final K anotherKey : keySet) {
+					for(final K anotherKey : weightKeys) {
 						if(!anotherKey.equals(key)) {
 							remainingWeight += remainingWeightMap.getInt(anotherKey);
 						}
@@ -86,15 +86,14 @@ implements Throttle<K> {
 					} else {
 						remainingWeightMap.wait(1);
 					}
-				} else if(remainingWeight < left) {
+				} else if(remainingWeight < times) {
 					remainingWeightMap.put(key, 0);
-					left -= remainingWeight;
+					return remainingWeight;
 				} else {
-					remainingWeightMap.put(key, remainingWeight - left);
-					break;
+					remainingWeightMap.put(key, remainingWeight - times);
+					return times;
 				}
 			}
 		}
-		return true;
 	}
 }

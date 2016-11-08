@@ -14,6 +14,7 @@ extends Closeable, Runnable {
 	String KEY_NODE_JOBS = "jobs";
 	String KEY_NODE_VALUE = "value";
 	String KEY_NODE_TYPE = "type";
+	String KEY_NODE_WEIGHTS = "weights";
 
 	String NODE_TYPE_PARALLEL = "parallel";
 	String NODE_TYPE_SEQUENTIAL = "sequential";
@@ -21,6 +22,7 @@ extends Closeable, Runnable {
 	String NODE_TYPE_PRECONDITION = "precondition";
 	String NODE_TYPE_COMMAND = "command";
 	String NODE_TYPE_FOR = "for";
+	String NODE_TYPE_MIXED = "mixed";
 
 	Config getConfig();
 }

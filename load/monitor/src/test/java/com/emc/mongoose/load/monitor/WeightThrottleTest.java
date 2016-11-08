@@ -4,6 +4,8 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadType;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -16,8 +18,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 /**
@@ -26,102 +28,21 @@ import static org.junit.Assert.assertEquals;
 
 public class WeightThrottleTest {
 
-	private final Map<LoadType, Integer> weightMap = new HashMap<LoadType, Integer>() {
+	private final Object2IntMap<LoadType> weightMap = new Object2IntOpenHashMap<LoadType>() {
 		{
 			put(LoadType.CREATE, 80);
 			put(LoadType.READ, 20);
 		}
 	};
 
-	private final Map<LoadType, AtomicInteger> resultsMap = new HashMap<LoadType, AtomicInteger>() {
+	private final Map<LoadType, LongAdder> resultsMap = new HashMap<LoadType, LongAdder>() {
 		{
-			put(LoadType.CREATE, new AtomicInteger(0));
-			put(LoadType.READ, new AtomicInteger(0));
+			put(LoadType.CREATE, new LongAdder());
+			put(LoadType.READ, new LongAdder());
 		}
 	};
 
-	private final Throttle<LoadType> fc = new WeightThrottle<>(weightMap, new AtomicBoolean(false));
-
-	private final class IoTaskMock
-	implements IoTask {
-		public LoadType loadType = null;
-		@Override
-		public String getNodeAddr() {
-			return null;
-		}
-		@Override
-		public void setNodeAddr(final String nodeAddr) {
-		}
-		@Override
-		public Item getItem() {
-			return null;
-		}
-		@Override
-		public String getAuthId() {
-			return null;
-		}
-		@Override
-		public String getSecret() {
-			return null;
-		}
-		@Override
-		public IoTask.Status getStatus() {
-			return null;
-		}
-		@Override
-		public void setStatus(final Status status) {
-		}
-		@Override
-		public long getReqTimeStart() {
-			return 0;
-		}
-		@Override
-		public void startRequest() {
-		}
-		@Override
-		public void finishRequest() {
-		}
-		@Override
-		public void startResponse() {
-		}
-		@Override
-		public void finishResponse() {
-		}
-
-		@Override
-		public int getDuration() {
-			return 0;
-		}
-
-		@Override
-		public int getLatency() {
-			return 0;
-		}
-		@Override
-		public String getSrcPath() {
-			return null;
-		}
-		@Override
-		public String getDstPath() {
-			return null;
-		}
-		@Override
-		public void reset() {
-		}
-
-		@Override
-		public LoadType getLoadType() {
-			return loadType;
-		}
-		@Override
-		public void writeExternal(final ObjectOutput out)
-		throws IOException {
-		}
-		@Override
-		public void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-		}
-	}
+	private final Throttle<LoadType> fc = new WeightThrottle<>(weightMap);
 
 	private final class SubmTask
 		implements Runnable {
@@ -133,10 +54,8 @@ public class WeightThrottleTest {
 		public final void run() {
 			while(true) {
 				try {
-					final IoTaskMock ioTask = new IoTaskMock();
-					ioTask.loadType = loadType;
 					if(fc.getPassFor(loadType)) {
-						resultsMap.get(loadType).incrementAndGet();
+						resultsMap.get(loadType).increment();
 					}
 				} catch(final InterruptedException e) {
 					break;
@@ -153,10 +72,10 @@ public class WeightThrottleTest {
 		es.submit(new SubmTask(LoadType.READ));
 		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(LoadType.CREATE).get();
-		final long reads = resultsMap.get(LoadType.READ).get();
+		final double writes = resultsMap.get(LoadType.CREATE).sum();
+		final long reads = resultsMap.get(LoadType.READ).sum();
 		assertEquals(80/20, writes / reads, 0.01);
-		System.out.println("Rate was: " + (writes + reads) / 10 + " per sec");
+		System.out.println("Write rate: " + writes / 10 + " Hz, read rate: " + reads / 10 + " Hz");
 	}
 
 	private final class BatchSubmTask
@@ -167,17 +86,12 @@ public class WeightThrottleTest {
 		}
 		@Override
 		public final void run() {
+			int n;
 			while(true) {
 				try {
-					final List<IoTask> ioTasks = new ArrayList<>();
-					IoTaskMock ioTask;
-					for(int i = 0; i < 128; i ++) {
-						ioTask = new IoTaskMock();
-						ioTask.loadType = loadType;
-						ioTasks.add(ioTask);
-					}
-					if(fc.getPassFor(loadType, 128)) {
-						resultsMap.get(loadType).incrementAndGet();
+					n = fc.getPassFor(loadType, 128);
+					if(n > 0) {
+						resultsMap.get(loadType).add(n);
 					}
 				} catch(final InterruptedException e) {
 					break;
@@ -194,9 +108,9 @@ public class WeightThrottleTest {
 		es.submit(new BatchSubmTask(LoadType.READ));
 		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(LoadType.CREATE).get();
-		final long reads = resultsMap.get(LoadType.READ).get();
+		final double writes = resultsMap.get(LoadType.CREATE).sum();
+		final long reads = resultsMap.get(LoadType.READ).sum();
 		assertEquals(80/20, writes / reads, 0.01);
-		System.out.println("Rate was: " + 128 * (writes + reads) / 10 + " per sec");
+		System.out.println("Write rate: " + writes / 10 + " Hz, read rate: " + reads / 10 + " Hz");
 	}
 }

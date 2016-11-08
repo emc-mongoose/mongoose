@@ -80,6 +80,9 @@ extends JobBase {
 				case NODE_TYPE_SEQUENTIAL:
 					append(new SequentialJob(config, subTree));
 					break;
+				case NODE_TYPE_MIXED:
+					append(new MixedLoadJob(config, subTree));
+					break;
 				default:
 					LOG.warn(
 						Markers.ERR, "{}: unexpected job type value: {}", this, jobType

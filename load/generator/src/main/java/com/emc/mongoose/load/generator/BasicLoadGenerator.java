@@ -51,7 +51,8 @@ implements LoadGenerator<I, O>, Output<I> {
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
 
-	private volatile Throttle<O> ioTaskThrottle;
+	private volatile Throttle<LoadGenerator<I, O>> weightThrottle = null;
+	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 
 	private final LoadType ioType;
@@ -172,10 +173,15 @@ implements LoadGenerator<I, O>, Output<I> {
 	}
 	
 	@Override
-	public final void setThrottle(final Throttle<O> ioTaskThrottle) {
-		this.ioTaskThrottle = ioTaskThrottle;
+	public final void setWeightThrottle(final Throttle<LoadGenerator<I, O>> weightThrottle) {
+		this.weightThrottle = weightThrottle;
 	}
-	
+
+	@Override
+	public final void setRateThrottle(final Throttle<Object> rateThrottle) {
+		this.rateThrottle = rateThrottle;
+	}
+
 	@Override
 	public final void setOutput(final Output<O> ioTaskOutput) {
 		this.ioTaskOutput = ioTaskOutput;
@@ -271,21 +277,32 @@ implements LoadGenerator<I, O>, Output<I> {
 	@Override
 	public final void put(final I item)
 	throws IOException {
+
 		final O nextIoTask = ioTaskBuilder.getInstance(item, dstPathInput.get());
-		if(ioTaskThrottle != null) {
+
+		if(weightThrottle != null) {
 			try {
-				ioTaskThrottle.getPassFor(nextIoTask);
+				weightThrottle.getPassFor(this);
 			} catch(final InterruptedException e) {
 				throw new InterruptedIOException();
 			}
 		}
+
+		if(rateThrottle != null) {
+			try {
+				rateThrottle.getPassFor(nextIoTask);
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
+		}
+
 		ioTaskOutput.put(nextIoTask);
 	}
 	
 	@Override
 	public final int put(final List<I> buffer, final int from, final int to)
 	throws IOException {
-		final int n = to - from;
+		int n = to - from;
 		if(n > 0) {
 			
 			final List<O> ioTasks;
@@ -300,15 +317,23 @@ implements LoadGenerator<I, O>, Output<I> {
 				ioTasks = ioTaskBuilder.getInstances(buffer, dstPaths, from, to);
 			}
 			
-			if(ioTaskThrottle != null) {
+			if(weightThrottle != null) {
 				try {
-					ioTaskThrottle.getPassFor(ioTasks.get(0), n);
+					n = weightThrottle.getPassFor(this, n);
+				} catch(final InterruptedException e) {
+					throw new InterruptedIOException();
+				}
+			}
+
+			if(rateThrottle != null) {
+				try {
+					rateThrottle.getPassFor(this, n);
 				} catch(final InterruptedException e) {
 					throw new InterruptedIOException();
 				}
 			}
 			
-			return ioTaskOutput.put(ioTasks, 0, ioTasks.size());
+			return ioTaskOutput.put(ioTasks, 0, n);
 		} else {
 			return 0;
 		}

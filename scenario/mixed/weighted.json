@@ -2,12 +2,12 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "/weighted-load"
+			"output" : {
+				"path" : "/weighted-load"
 			}
 		},
 		"load" : {
-			"threads" : 100
+			"concurrency" : 100
 		}
 	},
 	"jobs" : [
@@ -42,8 +42,11 @@
 					"item" : {
 						"data" : {
 							"size" : "4KB-16KB"
-						},
-						"src" : {
+						}
+					}
+				}, {
+					"item" : {
+						"input" : {
 							"file" : "weighted-load.csv"
 						}
 					},
@@ -52,13 +55,8 @@
 						"limit" : {
 							"time" : "5m"
 						},
-						"type" : {
-							"create" : 20,
-							"read" : 80
-						}
+						"type" : "read"
 					}
-				}, {
-					
 				}
 			]
 		}

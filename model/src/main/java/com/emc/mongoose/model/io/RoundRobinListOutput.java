@@ -10,14 +10,14 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 06.11.16.
  */
-public final class RoundRobinOutput<T>
+public final class RoundRobinListOutput<T>
 implements Output<T> {
 
 	private final List<? extends Output<T>> outputs;
 	private final int count;
 	private final AtomicLong rrc = new AtomicLong(0);
 
-	public RoundRobinOutput(final List<? extends Output<T>> outputs) {
+	public RoundRobinListOutput(final List<? extends Output<T>> outputs) {
 		this.outputs = outputs;
 		this.count = outputs.size();
 	}
