@@ -2,81 +2,67 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.Throttle;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 04.04.16.
  */
 public class RateThrottle<X>
 implements Throttle<X> {
 
-	public static final int MIN_WAIT_NANO_TIME = 1_000;
-	public static final long MAX_WAIT_BATCH_NANO_TIME = 1_000_000_000;
+	private static final int MILLIS_IN_SEC = 1_000;
 
-	private final long tgtNanoTime;
-	private final int maxTimes;
-	private volatile long lastNanoTime = 0;
-	
+	private final long periodMillis;
+	private final int countPerTime;
+	private volatile int lastCount;
+
 	public RateThrottle(final double rateLimit) {
-		this.tgtNanoTime = rateLimit > 0 && Double.isFinite(rateLimit) ?
-			(long) (TimeUnit.SECONDS.toNanos(1) / rateLimit) :
-			0;
-		this.maxTimes = (int) (MAX_WAIT_BATCH_NANO_TIME / tgtNanoTime);
+
+		if(rateLimit <= 0) {
+			throw new IllegalArgumentException(
+				"Rate limit should be more than 0, but got " + rateLimit
+			);
+		}
+
+		if(rateLimit > MILLIS_IN_SEC) {
+			periodMillis = 1;
+			countPerTime = (int) (rateLimit / MILLIS_IN_SEC);
+		} else {
+			periodMillis = (long) (MILLIS_IN_SEC / rateLimit);
+			countPerTime = 1;
+		}
+
+		lastCount = countPerTime;
 	}
 
-	private void nanoSleep(final long nanoTime) {
-		final long start = System.nanoTime();
-		long remainingNanoTime = nanoTime;
-		while(remainingNanoTime > MIN_WAIT_NANO_TIME) {
-			LockSupport.parkNanos(remainingNanoTime);
-			remainingNanoTime = nanoTime - System.nanoTime() + start;
-		}
-	}
-	
 	@Override
-	public final boolean getPassFor(final X item) {
+	public final boolean getPassFor(final X item)
+	throws InterruptedException {
 		synchronized(this) {
-			long d1 = System.nanoTime() - lastNanoTime;
-			long d2;
-			do {
-				d2 = tgtNanoTime - d1;
-				if(d2 > MIN_WAIT_NANO_TIME) {
-					nanoSleep(d2);
-				} else {
-					break;
-				}
-				d1 = System.nanoTime() - lastNanoTime;
-			} while(true);
-			lastNanoTime = System.nanoTime();
+			if(lastCount == 0) {
+				Thread.sleep(periodMillis);
+				lastCount = countPerTime - 1;
+			} else {
+				lastCount --;
+			}
 		}
 		return true;
 	}
 	
 	@Override
-	public final int getPassFor(final X item, final int times) {
-		final int t;
-		if(times > maxTimes) {
-			t = maxTimes;
-		} else {
-			t = times;
-		}
-		if(tgtNanoTime > 0 && t > 0) {
-			final long reqWaitNanoTime = tgtNanoTime * t;
-			synchronized(this) {
-				long d1 = System.nanoTime() - lastNanoTime;
-				long d2;
-				do {
-					d2 = reqWaitNanoTime - d1;
-					if(d2 > MIN_WAIT_NANO_TIME) {
-						nanoSleep(d2);
-					} else {
-						break;
-					}
-					d1 = System.nanoTime() - lastNanoTime;
-				} while(true);
-				lastNanoTime = System.nanoTime();
+	public final int getPassFor(final X item, final int times)
+	throws InterruptedException {
+		synchronized(this) {
+			if(lastCount == 0) {
+				Thread.sleep(periodMillis);
+				lastCount = countPerTime;
+			}
+			if(times > lastCount) {
+				final int n = lastCount;
+				lastCount = 0;
+				return n;
+			} else {
+				lastCount -= times;
+				return times;
 			}
 		}
-		return t;
 	}
 }

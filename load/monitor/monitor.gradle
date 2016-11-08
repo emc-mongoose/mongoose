@@ -1,4 +1,4 @@
-description = 'mongoose-load-monitor'
+description = "mongoose-load-monitor"
 
 dependencies {
 
@@ -10,9 +10,9 @@ dependencies {
 	)
 
 	compileOnly(
-		project(':common'),
-		project(':ui'),
-		project(':model'),
+		project(":common"),
+		project(":ui"),
+		project(":model"),
 	)
 
 	runtime(
@@ -21,10 +21,10 @@ dependencies {
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
 
-	testCompileOnly(
-		project(':common'),
-		project(':ui'),
-		project(':model'),
+	testCompile(
+		project(":common"),
+		project(":ui"),
+		project(":model"),
 	)
 }
 

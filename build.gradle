@@ -86,6 +86,11 @@ subprojects {
 	}
 }
 
+test {
+	maxParallelForks = 1
+	testLogging.showStandardStreams = true
+}
+
 task dist(type: Tar) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"

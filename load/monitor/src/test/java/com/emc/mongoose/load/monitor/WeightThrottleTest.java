@@ -79,7 +79,7 @@ public class WeightThrottleTest {
 	}
 
 	private final class BatchSubmTask
-		implements Runnable {
+	implements Runnable {
 		private final LoadType loadType;
 		public BatchSubmTask(final LoadType loadType) {
 			this.loadType = loadType;
