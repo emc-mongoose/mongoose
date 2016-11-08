@@ -29,6 +29,7 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentCon
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -163,7 +164,7 @@ extends JobBase {
 			ioTaskBuilder.setSrcPath(itemConfig.getInputConfig().getPath());
 			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
 			
-			final LoadConfig.LimitConfig limitConfig = loadConfig.getLimitConfig();
+			final LimitConfig limitConfig = loadConfig.getLimitConfig();
 			final long t = limitConfig.getTime();
 			final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
 			

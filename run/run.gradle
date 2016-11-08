@@ -4,6 +4,7 @@ dependencies {
 
 	compile(
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		"it.unimi.dsi:fastutil:${depVersion.fastutil}",
 		project(":ui"),
 	)
 
