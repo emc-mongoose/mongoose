@@ -132,7 +132,7 @@ implements HttpStorageDriver<I, O> {
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, dstUriPath, httpHeaders
+			HTTP_1_1, httpMethod, dstUriPath == null ? srcUriPath : dstUriPath, httpHeaders
 		);
 
 		switch(ioType) {

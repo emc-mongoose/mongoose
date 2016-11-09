@@ -213,6 +213,6 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public String toString() {
-		return "storage/driver/%s/" + jobName;
+		return "storage/driver/%s/" + hashCode();
 	}
 }

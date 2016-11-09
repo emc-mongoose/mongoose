@@ -11,8 +11,10 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
@@ -26,14 +28,12 @@ implements StorageDriverSvc<I, O> {
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final StorageDriver<I, O> driver;
-	private final String runId;
 	private final ContentSource contentSrc;
 
 	public WrappingStorageDriverSvc(
-		final StorageDriver<I, O> driver, final String runId, final ContentSource contentSrc
+		final StorageDriver<I, O> driver, final ContentSource contentSrc
 	) {
 		this.driver = driver;
-		this.runId = runId;
 		this.contentSrc = contentSrc;
 		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
 	}

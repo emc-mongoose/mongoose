@@ -35,10 +35,6 @@ public class BasicStorageDriverBuilder<
 	private StorageConfig storageConfig;
 	private SocketConfig socketConfig;
 
-	public String getJobName() {
-		return jobName;
-	}
-	
 	@Override
 	public ContentSource getContentSource() {
 		return contentSrc;

@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class BasicStorageDriverBuilderSvc<
 	I extends Item, O extends IoTask<I>, T extends StorageDriverSvc<I, O>
 > extends BasicStorageDriverBuilder<I, O, T>
-	implements StorageDriverBuilderSvc<I, O, T> {
+implements StorageDriverBuilderSvc<I, O, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -140,9 +140,7 @@ public class BasicStorageDriverBuilderSvc<
 	public final String buildRemotely()
 	throws RemoteException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			driver, getJobName(), getContentSource()
-		);
+		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getContentSource());
 		return wrapper.getName();
 	}
 }

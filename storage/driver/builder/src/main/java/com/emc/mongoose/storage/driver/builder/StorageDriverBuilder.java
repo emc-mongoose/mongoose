@@ -22,9 +22,6 @@ public interface StorageDriverBuilder<
 	String API_S3 = "s3";
 	String API_SWIFT = "swift";
 
-	String getJobName()
-	throws RemoteException;
-	
 	ContentSource getContentSource()
 	throws RemoteException;
 

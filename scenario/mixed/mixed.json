@@ -1,28 +1,56 @@
 {
-	"type" : "mixed",
-	"config" : [
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : 1
+			},
+			"output" : {
+				"path" : "/default"
+			}
+		},
+		"load" : {
+			"concurrency" : 100
+		}
+	},
+	"jobs" : [
 		{
-
-		}, {
-			"item" : {
-				"input" : {
-					"file" : "items2read.csv"
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "items2read.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000000
+					}
 				}
-			},
-			"load" : {
-				"circular" : true,
-				"type" : "read"
 			}
-		}, {
-			"item" : {
-				"input" : {
-					"file" : "items2update.csv"
+		},
+		{
+			"type" : "mixed",
+			"config" : [
+				{
+					"load" : {
+						"limit" : {
+							"count" : 10
+						}
+					}
+				},
+				{
+					"item" : {
+						"input" : {
+							"file" : "items2read.csv"
+						}
+					},
+					"load" : {
+						"circular" : true,
+						"type" : "read"
+					}
 				}
-			},
-			"load" : {
-				"circular" : true,
-				"type" : "update"
-			}
+			]
 		}
 	]
 }
