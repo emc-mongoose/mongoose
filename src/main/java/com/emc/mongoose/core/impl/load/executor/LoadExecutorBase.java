@@ -726,7 +726,7 @@ implements LoadExecutor<T> {
 			} else {
 				// select the target node
 				final String nextNodeAddr = storageNodeAddrs == null ?
-					null : storageNodeAddrs.length > 0 ? storageNodeAddrs[0] : nodeBalancer.getNext();
+					null : storageNodeAddrs.length == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IoTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
 				getIoTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
