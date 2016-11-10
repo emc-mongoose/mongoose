@@ -1,17 +1,17 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.MutableDataItem;
-import com.emc.mongoose.model.io.AsyncCurrentDateInput;
-import com.emc.mongoose.model.io.AsyncPatternDefinedInput;
+import com.emc.mongoose.common.io.AsyncCurrentDateInput;
+import com.emc.mongoose.common.io.pattern.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.load.LoadType;
-import static com.emc.mongoose.model.io.PatternDefinedInput.PATTERN_CHAR;
+import static com.emc.mongoose.common.io.pattern.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;

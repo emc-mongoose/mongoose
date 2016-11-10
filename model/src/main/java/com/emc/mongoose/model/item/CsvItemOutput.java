@@ -1,6 +1,7 @@
 package com.emc.mongoose.model.item;
 
-import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.common.Constants;
+import com.emc.mongoose.common.io.Output;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,7 +21,9 @@ implements Output<I> {
 	//
 	protected CsvItemOutput(final OutputStream out, final ItemFactory<I> itemFactory)
 	throws IOException {
-		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+		itemsDst = new BufferedWriter(
+			new OutputStreamWriter(out, StandardCharsets.UTF_8), Constants.MIB
+		);
 		this.itemFactory = itemFactory;
 	}
 	//

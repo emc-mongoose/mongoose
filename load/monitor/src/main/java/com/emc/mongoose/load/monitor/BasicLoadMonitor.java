@@ -4,11 +4,9 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageCsv;
 import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageTable;
-import com.emc.mongoose.model.io.Input;
-import com.emc.mongoose.model.io.Output;
-import com.emc.mongoose.model.io.RoundRobinListOutput;
-import com.emc.mongoose.model.item.ItemBuffer;
-import com.emc.mongoose.model.item.LimitedQueueItemBuffer;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
 import com.emc.mongoose.model.load.LoadType;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
@@ -38,9 +36,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
@@ -60,8 +56,6 @@ implements LoadMonitor<I, O> {
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final int batchSize = 0x1000;
-	private final ItemBuffer<I> itemOutBuff;
 	private final Thread worker;
 
 	private final Map<LoadType, IoStats>
@@ -71,7 +65,6 @@ implements LoadMonitor<I, O> {
 	private final Function<LoadType, IoStats> ioStatsInitFunc;
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<I> itemOutput;
-	private volatile boolean isPostProcessDone = false;
 	private final int totalConcurrency;
 
 	/**
@@ -145,7 +138,7 @@ implements LoadMonitor<I, O> {
 
 		Output<O> nextGeneratorOutput;
 		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
-			nextGeneratorOutput = new RoundRobinListOutput<>(drivers.get(nextGenerator));
+			nextGeneratorOutput = new RoundRobinOutput<>(drivers.get(nextGenerator));
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
 			nextGenerator.setOutput(nextGeneratorOutput);
@@ -188,8 +181,6 @@ implements LoadMonitor<I, O> {
 
 		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
 		this.worker.setDaemon(true);
-		final int maxItemQueueSize = firstLoadConfig.getQueueConfig().getSize();
-		this.itemOutBuff = new LimitedQueueItemBuffer<>(new ArrayBlockingQueue<>(maxItemQueueSize));
 		UNCLOSED.add(this);
 	}
 
@@ -220,67 +211,27 @@ implements LoadMonitor<I, O> {
 			
 			long nextNanoTimeStamp;
 			
-			try {
-				while(!worker.isInterrupted()) {
-					nextNanoTimeStamp = System.nanoTime();
-					// refresh the stats
-					for(final LoadType nextIoType : ioStats.keySet()) {
-						lastStats.put(nextIoType, ioStats.get(nextIoType).getSnapshot());
-					}
-					//
-					postProcessItems();
-					// output the current measurements periodically
-					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						LOG.info(
-							Markers.METRICS_STDOUT,
-							new MetricsLogMessageTable(name, lastStats, totalConcurrency)
-						);
-						LOG.info(
-							Markers.METRICS_FILE,
-							new MetricsLogMessageCsv(lastStats, totalConcurrency)
-						);
-						prevNanoTimeStamp = nextNanoTimeStamp;
-					}
-					LockSupport.parkNanos(1_000_000);
+			while(!worker.isInterrupted()) {
+				nextNanoTimeStamp = System.nanoTime();
+				// refresh the stats
+				for(final LoadType nextIoType : ioStats.keySet()) {
+					lastStats.put(nextIoType, ioStats.get(nextIoType).getSnapshot());
 				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted by concurrent modification");
-			}
-		}
-	}
-	
-	private void postProcessItems()
-	throws InterruptedException {
-		final List<I> items = new ArrayList<>(batchSize);
-		try {
-			final int n = itemOutBuff.get(items, batchSize);
-			if(n > 0) {
-				if(itemOutput != null) {
-					try {
-						for(int m = 0; m < n; m += itemOutput.put(items, m, n)) {
-							LockSupport.parkNanos(1);
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(
-							LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput
-						);
-					} finally {
-						items.clear();
-					}
+				LockSupport.parkNanos(1_000_000);
+				// output the current measurements periodically
+				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+					LOG.info(
+						Markers.METRICS_STDOUT,
+						new MetricsLogMessageTable(name, lastStats, totalConcurrency)
+					);
+					LOG.info(
+						Markers.METRICS_FILE,
+						new MetricsLogMessageCsv(lastStats, totalConcurrency)
+					);
+					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
-			} else if(isDone() || isIdle()) {
-				isPostProcessDone = true;
+				LockSupport.parkNanos(1_000_000);
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", itemOutput
-			);
-		} catch(final RejectedExecutionException e) {
-			if(LOG.isTraceEnabled(Markers.ERR)) {
-				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", itemOutput);
-			}
-		} catch(final ConcurrentModificationException e) {
-			throw new InterruptedException("Interrupt due to concurrent driver list modification");
 		}
 	}
 	
@@ -405,21 +356,23 @@ implements LoadMonitor<I, O> {
 		final IoStats loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
 		
 		if(IoTask.Status.SUCC == status) {
+
 			// update the metrics with success
 			loadTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
 			if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
 				loadTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 			}
-			// TODO set the destination item path
+
 			// put into the output buffer
 			try {
-				itemOutBuff.put(item);
+				itemOutput.put(item);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
 					getName()
 				);
 			}
+
 		} else {
 			loadTypeStats.markFail();
 			if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
@@ -442,7 +395,7 @@ implements LoadMonitor<I, O> {
 
 		if(n > 0) {
 
-			IoTask<I> ioTask;
+			O ioTask;
 			DataIoTask dataIoTask;
 			I item;
 			IoTask.Status status;
@@ -455,7 +408,9 @@ implements LoadMonitor<I, O> {
 			LoadType ioType;
 			IoStats loadTypeStats, loadTypeMedStats;
 
-			for(int i = from; i < to; i++) {
+			final List<I> itemsToPass = itemOutput == null ? null : new ArrayList<>(n);
+
+			for(int i = from; i < to; i ++) {
 				if(i > from) {
 					ioTask = ioTasks.get(i);
 				}
@@ -483,6 +438,9 @@ implements LoadMonitor<I, O> {
 				loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
 				
 				if(IoTask.Status.SUCC == status) {
+					if(itemOutput != null) {
+						itemsToPass.add(item);
+					}
 					// update the metrics with success
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.warn(
@@ -494,21 +452,25 @@ implements LoadMonitor<I, O> {
 					if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
 						loadTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 					}
-					// TODO set the destination item path
-					// put into the output buffer
-					try {
-						itemOutBuff.put(item);
-					} catch(final IOException e) {
-						LogUtil.exception(
-							LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
-							getName()
-						);
-					}
 				} else {
 					loadTypeStats.markFail();
 					if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
 						loadTypeMedStats.markFail();
 					}
+				}
+			}
+
+			if(itemOutput != null) {
+				final int itemsToPassCount = itemsToPass.size();
+				try {
+					for(
+						int i = 0; i < itemsToPassCount;
+						i += itemOutput.put(itemsToPass, i, itemsToPassCount)
+					);
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to output {} items to {}",
+						itemsToPassCount, itemOutput
+					);
 				}
 			}
 
@@ -685,7 +647,7 @@ implements LoadMonitor<I, O> {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"closed\" state", getName());
 				return true;
 			}
-			if(isPostProcessDone) {
+			if(isDone()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
 				return true;
 			}
@@ -741,7 +703,6 @@ implements LoadMonitor<I, O> {
 		if(itemOutput != null) {
 			itemOutput.close();
 		}
-		itemOutBuff.close();
 		UNCLOSED.remove(this);
 	}
 }

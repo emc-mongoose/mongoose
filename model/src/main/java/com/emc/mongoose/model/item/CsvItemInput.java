@@ -1,6 +1,7 @@
 package com.emc.mongoose.model.item;
 
-import com.emc.mongoose.model.io.Input;
+import com.emc.mongoose.common.Constants;
+import com.emc.mongoose.common.io.Input;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -29,7 +30,7 @@ implements Input<I> {
 	public CsvItemInput(final InputStream in, final ItemFactory<I> itemFactory)
 	throws IOException, NoSuchMethodException {
 		this(
-			new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)),
+			new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8), Constants.MIB),
 			itemFactory
 		);
 	}

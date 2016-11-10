@@ -2,8 +2,8 @@ package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.Input;
-import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.DataItem;

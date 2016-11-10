@@ -1,5 +1,7 @@
 package com.emc.mongoose.model.item;
 
+import com.emc.mongoose.common.io.bin.file.FileItemInput;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

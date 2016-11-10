@@ -10,7 +10,7 @@
 			}
 		},
 		"load" : {
-			"concurrency" : 100
+			"concurrency" : 10
 		}
 	},
 	"jobs" : [

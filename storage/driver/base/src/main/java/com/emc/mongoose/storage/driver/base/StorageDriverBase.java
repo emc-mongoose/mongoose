@@ -4,10 +4,12 @@ import com.emc.mongoose.common.concurrent.DaemonBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import com.emc.mongoose.model.io.Input;
-import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.common.io.collection.IoBuffer;
+import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
 
@@ -15,26 +17,57 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  This mock just passes the submitted tasks to the load monitor em
  */
 public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements StorageDriver<I, O> {
+implements StorageDriver<I, O>, Runnable {
 
 	private static final Logger LOG = LogManager.getLogger();
+	private static final int BATCH_SIZE = 0x1000;
+	private static final Map<String, Runnable> DISPATCH_TASKS = new ConcurrentHashMap<>();
+	private static final Thread IO_TASK_DISPATCHER = new Thread("storageDriverIoTaskDispatcher") {
 
-	protected final AtomicReference<Output<O>> ioTaskOutputRef = new AtomicReference<>(null);
+		{
+			setDaemon(true);
+			start();
+		}
+
+		@Override
+		public final void run() {
+			final Thread currentThread = Thread.currentThread();
+			while(currentThread.isInterrupted()) {
+				for(final Map.Entry<String, Runnable> storageDriverTask : DISPATCH_TASKS.entrySet()) {
+					if(storageDriverTask != null) {
+						try {
+							storageDriverTask.getValue().run();
+						} catch(final Exception e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"Failed to invoke the I/O task dispatching for the storage driver \"{}\"",
+								storageDriverTask.getKey()
+							);
+						}
+					}
+				}
+			}
+		}
+	};
+
+	private volatile Output<O> ioTaskOutput = null;
+	private final IoBuffer<O> ioTaskBuff;
+	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
-	protected final boolean isCircular;
 	protected final String userName;
 	protected final String secret;
 	protected final boolean verifyFlag;
@@ -43,12 +76,16 @@ implements StorageDriver<I, O> {
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
+		this.ioTaskBuff = new LimitedQueueBuffer<>(
+			new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
+		);
 		this.jobName = jobName;
 		this.userName = authConfig == null ? null : authConfig.getId();
 		secret = authConfig == null ? null : authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
+		DISPATCH_TASKS.put(toString(), this);
 	}
 	
 	@Override
@@ -59,16 +96,11 @@ implements StorageDriver<I, O> {
 	@Override
 	public final void setOutput(final Output<O> ioTaskOutput)
 	throws IllegalStateException {
-		if(!ioTaskOutputRef.compareAndSet(null, ioTaskOutput)) {
-			throw new IllegalStateException(
-				"This storage driver is already used by another monitor"
-			);
-		}
+		this.ioTaskOutput = ioTaskOutput;
 	}
 
-	protected final void ioTaskCompleted(final O ioTask) {
-
-		// prepend the path to the item name
+	// prepend the path to the item name
+	private void setItemPath(final O ioTask) {
 		final String dstPath = ioTask.getDstPath();
 		final I item = ioTask.getItem();
 		if(dstPath == null) {
@@ -87,116 +119,74 @@ implements StorageDriver<I, O> {
 				item.setName(dstPath + SLASH + item.getName());
 			}
 		}
+	}
+
+	protected final void ioTaskCompleted(final O ioTask) {
+
+		setItemPath(ioTask);
 
 		if(isCircular) {
 			ioTask.reset();
-			try {
-				put(ioTask);
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to reschedule the I/O task");
-			}
 		}
-		
-		final Output<O> ioTaskOutput = ioTaskOutputRef.get();
-		if(ioTaskOutput != null) {
-			try {
-				ioTaskOutput.put(ioTask);
-			} catch(final NoSuchObjectException | EOFException e) {
-				if(isClosed() || isInterrupted()) {
-					// ignore
-				} else {
-					LogUtil.exception(LOG, Level.WARN, e, "Lost the connection with the monitor");
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to send the I/O task back to the monitor"
-				);
-			}
+
+		try {
+			ioTaskBuff.put(ioTask);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to put the I/O task to the output buffer"
+			);
 		}
 	}
 	
 	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
 
-		String dstPath;
 		O ioTask;
-		I item;
 
 		if(isCircular) {
 			
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				dstPath = ioTask.getDstPath();
-				item = ioTask.getItem();
-				if(dstPath == null) {
-					final String srcPath = ioTask.getSrcPath();
-					if(srcPath != null && !srcPath.isEmpty()) {
-						if(srcPath.endsWith(SLASH)) {
-							item.setName(srcPath + item.getName());
-						} else {
-							item.setName(srcPath + SLASH + item.getName());
-						}
-					}
-				} else {
-					if(dstPath.endsWith(SLASH)) {
-						item.setName(dstPath + item.getName());
-					} else {
-						item.setName(dstPath + SLASH + item.getName());
-					}
-				}
+				setItemPath(ioTask);
 				ioTask.reset();
-			}
-
-			try {
-				put(ioTasks, from, to);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to reschedule {} I/O tasks", to - from
-				);
 			}
 			
 		} else {
 			
 			for(int i = from; i < to; i++) {
-				ioTask = ioTasks.get(i);
-				dstPath = ioTask.getDstPath();
-				item = ioTask.getItem();
-				if(dstPath == null) {
-					final String srcPath = ioTask.getSrcPath();
-					if(srcPath != null && !srcPath.isEmpty()) {
-						if(srcPath.endsWith(SLASH)) {
-							item.setName(srcPath + item.getName());
-						} else {
-							item.setName(srcPath + SLASH + item.getName());
-						}
-					}
-				} else {
-					if(dstPath.endsWith(SLASH)) {
-						item.setName(dstPath + item.getName());
-					} else {
-						item.setName(dstPath + SLASH + item.getName());
-					}
-				}
+				setItemPath(ioTasks.get(i));
 			}
 		}
 
-		final Output<O> ioTaskOutput = ioTaskOutputRef.get();
-		if(ioTaskOutput != null) {
-			try {
-				return ioTaskOutput.put(ioTasks, from, to);
-			} catch(final NoSuchObjectException | EOFException e) {
-				if(isClosed() || isInterrupted()) {
-					// ignore
-				} else {
-					LogUtil.exception(LOG, Level.WARN, e, "Lost the connection with the monitor");
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to send {} I/O tasks back to the monitor", to - from
-				);
+		try {
+			for(int i = from; i < to; i += ioTaskBuff.put(ioTasks, i, to)) {
+				LockSupport.parkNanos(1);
 			}
-			return 0;
-		} else {
-			return 0;
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to put {} I/O tasks to the output buffer", to - from
+			);
+		}
+
+		return to - from;
+	}
+
+	private final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
+	@Override
+	public final void run() {
+		try {
+			final int n = ioTaskBuff.get(ioTasks, BATCH_SIZE);
+			if(ioTaskOutput != null) {
+				for(int i = 0; i < n; i += ioTaskOutput.put(ioTasks, 0, n)) {
+					LockSupport.parkNanos(1);
+				}
+			}
+			if(isCircular) {
+				for(int i = 0; i < n; i += put(ioTasks, 0, n)) {
+					LockSupport.parkNanos(1);
+				}
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to dispatch the completed I/O tasks");
 		}
 	}
 	
@@ -208,7 +198,8 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		ioTaskOutputRef.set(null);
+		DISPATCH_TASKS.remove(toString());
+		ioTaskOutput = null;
 	}
 	
 	@Override

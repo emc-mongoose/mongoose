@@ -2,7 +2,7 @@ package com.emc.mongoose.model.load;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 

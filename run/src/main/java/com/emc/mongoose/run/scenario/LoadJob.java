@@ -7,7 +7,7 @@ import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.model.io.Output;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;

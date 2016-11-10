@@ -3,7 +3,7 @@ package com.emc.mongoose.model.item;
 import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.net.NetUtil;
-import com.emc.mongoose.model.io.BasicValueInput;
+import com.emc.mongoose.common.io.BasicValueInput;
 
 /**
  Created by kurila on 18.12.15.

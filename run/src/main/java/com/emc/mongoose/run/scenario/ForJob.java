@@ -5,7 +5,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import static com.emc.mongoose.model.io.PatternDefinedInput.FORMAT_CHARS;
+import static com.emc.mongoose.common.io.pattern.PatternDefinedInput.FORMAT_CHARS;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
