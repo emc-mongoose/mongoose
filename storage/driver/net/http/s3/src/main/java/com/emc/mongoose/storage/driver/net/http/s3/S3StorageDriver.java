@@ -11,7 +11,7 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_X_AMZ_COPY_SOURCE;
-import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_AMZ;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_X_AMZ;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.URL_ARG_VERSIONING;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -147,6 +147,7 @@ extends HttpStorageDriverBase<I, O> {
 				buffCanonical.append('\n');
 			}
 		}
+
 		// x-amz-*, x-emc-*
 		String headerName;
 		Map<String, String> sortedHeaders = new TreeMap<>();
@@ -154,7 +155,8 @@ extends HttpStorageDriverBase<I, O> {
 			for(final Map.Entry<String, String> header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();
 				if(
-					headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_X_EMC)
+					headerName.startsWith(PREFIX_KEY_X_AMZ) ||
+					headerName.startsWith(PREFIX_KEY_X_EMC)
 				) {
 					sortedHeaders.put(headerName, header.getValue());
 				}
@@ -162,34 +164,34 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		for(final Map.Entry<String, String> header : httpHeaders) {
 			headerName = header.getKey().toLowerCase();
-			if(headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_X_EMC)) {
+			if(headerName.startsWith(PREFIX_KEY_X_AMZ) || headerName.startsWith(PREFIX_KEY_X_EMC)) {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
 		for(final String k : sortedHeaders.keySet()) {
 			buffCanonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
 		}
-		//
+		
 		buffCanonical.append('\n');
 		if(dstUriPath.contains("?") && !dstUriPath.endsWith("?" + URL_ARG_VERSIONING)) {
 			buffCanonical.append(dstUriPath.substring(0, dstUriPath.indexOf("?")));
 		} else {
 			buffCanonical.append(dstUriPath);
 		}
-		//
+		
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffCanonical);
 		}
-		//
+		
 		return buffCanonical.toString();
 	}
 	
 	private String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
-		//
+		
 		if(secretKey == null) {
 			return null;
 		}
-		//
+		
 		final byte sigData[];
 		Mac mac = THREAD_LOCAL_MAC.get();
 		if(mac == null) {

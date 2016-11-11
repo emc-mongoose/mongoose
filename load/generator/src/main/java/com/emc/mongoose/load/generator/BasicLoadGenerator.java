@@ -1,31 +1,17 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
-import com.emc.mongoose.model.item.CsvFileItemInput;
-import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
-import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
-import com.emc.mongoose.model.item.BasicItemNameInput;
-import com.emc.mongoose.model.item.NewDataItemInput;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +20,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +40,6 @@ implements LoadGenerator<I, O>, Output<I> {
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 
-	private final LoadType ioType;
 	private final Input<I> itemInput;
 	private final Input<String> dstPathInput;
 	private final Thread worker;
@@ -69,11 +53,19 @@ implements LoadGenerator<I, O>, Output<I> {
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final ItemFactory<I> itemFactory, final IoTaskBuilder<I, O> ioTaskBuilder,
-		final ItemConfig itemConfig, final LoadConfig loadConfig
+		final Input<I> itemInput, final Input<String> dstPathInput,
+		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final int maxItemQueueSize,
+		final boolean isCircular
 	) throws UserShootHisFootException {
 
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		this.itemInput = itemInput;
+		this.dstPathInput = dstPathInput;
+		this.ioTaskBuilder = ioTaskBuilder;
+		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
+		this.maxItemQueueSize = maxItemQueueSize;
+		this.isCircular = isCircular;
+
+		/*final LimitConfig limitConfig = loadConfig.getLimitConfig();
 
 		try {
 			final long l = limitConfig.getCount();
@@ -159,15 +151,13 @@ implements LoadGenerator<I, O>, Output<I> {
 			}
 		} catch(final Exception e) {
 			throw new UserShootHisFootException(e);
-		}
-
-		this.ioTaskBuilder = ioTaskBuilder;
+		}*/
 		
-		final String ioStr = ioType.toString();
+		final String ioStr = ioTaskBuilder.getIoType().toString();
 		worker = new Thread(
 			new GeneratorTask(),
 			Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
-				(countLimit > 0 ? Long.toString(countLimit) : "")
+				(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "")
 		);
 		worker.setDaemon(true);
 	}

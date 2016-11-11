@@ -2,10 +2,14 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
+
+import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_AUTH_TOKEN;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_COPY_FROM;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.URI_BASE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -53,8 +57,11 @@ extends HttpStorageDriverBase<I, O> {
 		final ChannelPipeline pipeline = channel.pipeline();
 		pipeline.addLast(new BasicClientHandler<>(this, verifyFlag));
 	}
-	
-	// TODO dst path calculation method: /v1/<namespace>/<container>/...
+
+	@Override
+	protected String getUriPath(final I item, final String path, final LoadType ioType) {
+		return URI_BASE + SLASH + namespace + super.getUriPath(item, path, ioType);
+	}
 	
 	@Override
 	protected final void applyMetaDataHeaders(final HttpHeaders httpHeaders) {

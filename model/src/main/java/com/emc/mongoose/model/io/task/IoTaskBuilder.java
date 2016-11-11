@@ -9,7 +9,11 @@ import java.util.List;
  */
 public interface IoTaskBuilder<I extends Item, O extends IoTask<I>> {
 
+	LoadType getIoType();
+
 	IoTaskBuilder<I, O> setIoType(final LoadType ioType);
+
+	String getSrcPath();
 
 	IoTaskBuilder<I, O> setSrcPath(final String srcPath);
 

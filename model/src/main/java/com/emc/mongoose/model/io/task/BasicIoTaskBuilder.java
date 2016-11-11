@@ -14,11 +14,21 @@ implements IoTaskBuilder<I, O> {
 	
 	protected volatile LoadType ioType = LoadType.CREATE; // by default
 	protected volatile String srcPath = null;
-	
+
+	@Override
+	public final LoadType getIoType() {
+		return ioType;
+	}
+
 	@Override
 	public final BasicIoTaskBuilder<I, O> setIoType(final LoadType ioType) {
 		this.ioType = ioType;
 		return this;
+	}
+
+	@Override
+	public final String getSrcPath() {
+		return srcPath;
 	}
 
 	@Override

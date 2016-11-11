@@ -112,7 +112,7 @@ implements HttpStorageDriver<I, O> {
 		pipeline.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true));
 		pipeline.addLast(new ChunkedWriteHandler());
 	}
-	
+
 	@Override
 	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
@@ -121,23 +121,8 @@ implements HttpStorageDriver<I, O> {
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 
-		String srcUriPath = ioTask.getSrcPath();
-		if(srcUriPath != null) {
-			if(srcUriPath.endsWith(SLASH)) {
-				srcUriPath = srcUriPath + item.getName();
-			} else {
-				srcUriPath = srcUriPath + SLASH + item.getName();
-			}
-		}
-
-		String dstUriPath = ioTask.getDstPath();
-		if(dstUriPath != null) {
-			if(dstUriPath.endsWith(SLASH)) {
-				dstUriPath = dstUriPath + item.getName();
-			} else {
-				dstUriPath = dstUriPath + SLASH + item.getName();
-			}
-		}
+		final String srcUriPath = getUriPath(item, ioTask.getSrcPath(), ioType);
+		final String dstUriPath = getUriPath(item, ioTask.getDstPath(), ioType);
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -199,6 +184,7 @@ implements HttpStorageDriver<I, O> {
 		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
+
 		return httpRequest;
 	}
 	
@@ -210,6 +196,16 @@ implements HttpStorageDriver<I, O> {
 				return HttpMethod.DELETE;
 			default:
 				return HttpMethod.PUT;
+		}
+	}
+
+	protected String getUriPath(final I item, final String path, final LoadType ioType) {
+		if(path == null) {
+			return SLASH + item.getName();
+		} else if(path.endsWith(SLASH)) {
+			return path + item.getName();
+		} else {
+			return path + SLASH + item.getName();
 		}
 	}
 
