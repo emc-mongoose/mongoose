@@ -72,7 +72,7 @@ implements HttpStorageDriver<I, O> {
 		}
 	};
 	
-	protected final String authToken;
+	protected volatile String authToken = null;
 	protected final String namespace;
 	protected final boolean fsAccess;
 	protected final boolean versioning;

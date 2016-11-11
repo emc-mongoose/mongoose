@@ -14,6 +14,9 @@ import java.rmi.RemoteException;
 public interface StorageDriver<I extends Item, O extends IoTask<I>>
 extends Daemon, Output<O>, Remote {
 	
+	boolean configureStorage()
+	throws RemoteException;
+	
 	int getConcurrencyLevel()
 	throws RemoteException;
 	

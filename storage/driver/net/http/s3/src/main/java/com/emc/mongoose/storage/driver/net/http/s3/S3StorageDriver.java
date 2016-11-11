@@ -36,6 +36,7 @@ import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -79,6 +80,15 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		}
 		secretKey = tmpKey;
+	}
+	
+	@Override
+	public final boolean configureStorage()
+	throws RemoteException {
+		// TODO check the destination bucket if it exists w/ HEAD request
+		// TODO create the destination bucket if it doesn't exists
+		// TODO take into the account fsAccess and versioning
+		return true;
 	}
 	
 	@Override

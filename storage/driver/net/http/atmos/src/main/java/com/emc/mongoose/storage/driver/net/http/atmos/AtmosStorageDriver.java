@@ -23,6 +23,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.rmi.RemoteException;
 import java.util.Base64;
 
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
@@ -78,6 +79,13 @@ extends HttpStorageDriverBase<I, O> {
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
+	}
+	
+	@Override
+	public final boolean configureStorage()
+	throws RemoteException {
+		// TODO create the subtenant, set the auth token field to the subtenant value
+		return true;
 	}
 	
 	@Override

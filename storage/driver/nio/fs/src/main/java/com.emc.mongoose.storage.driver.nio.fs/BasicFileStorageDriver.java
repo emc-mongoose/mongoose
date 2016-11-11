@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.spi.FileSystemProvider;
+import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -137,6 +138,12 @@ implements StorageDriver<I, O> {
 				return null;
 			}
 		};
+	}
+	
+	@Override
+	public final boolean configureStorage()
+	throws RemoteException {
+		return true;
 	}
 
 	@Override

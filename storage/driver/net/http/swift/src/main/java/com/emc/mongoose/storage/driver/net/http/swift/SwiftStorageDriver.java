@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URISyntaxException;
+import java.rmi.RemoteException;
 
 /**
  Created by andrey on 07.10.16.
@@ -33,6 +34,16 @@ extends HttpStorageDriverBase<I, O> {
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
 		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
+	}
+	
+	@Override
+	public boolean configureStorage()
+	throws RemoteException {
+		// TODO create the auth token and update the field using its value
+		// TODO check the destination container if it exists w/ HEAD request
+		// TODO create the destination container if it doesn't exists
+		// TODO take into the account fsAccess and versioning
+		return false;
 	}
 	
 	@Override
