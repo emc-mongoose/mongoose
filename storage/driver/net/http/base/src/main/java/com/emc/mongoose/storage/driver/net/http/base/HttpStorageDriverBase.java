@@ -71,16 +71,27 @@ implements HttpStorageDriver<I, O> {
 			return null;
 		}
 	};
-
+	
+	protected volatile String authToken = null;
+	protected final String namespace;
+	protected final boolean fsAccess;
+	protected final boolean versioning;
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
-
+	
 	protected HttpStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws IllegalStateException {
 		super(jobName, loadConfig, storageConfig, socketConfig, verifyFlag);
+		
 		final HttpConfig httpConfig = storageConfig.getHttpConfig();
+		
+		authToken = storageConfig.getAuthConfig().getToken();
+		namespace = httpConfig.getNamespace();
+		fsAccess = httpConfig.getFsAccess();
+		versioning = httpConfig.getVersioning();
+		
 		final Map<String, String> headersMap = httpConfig.getHeaders();
 		String headerValue;
 		for(final String headerName : headersMap.keySet()) {

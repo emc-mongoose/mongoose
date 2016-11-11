@@ -156,6 +156,12 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
+	public final boolean configureStorage()
+	throws RemoteException {
+		return driver.configureStorage();
+	}
+	
+	@Override
 	public final int getConcurrencyLevel()
 	throws RemoteException {
 		return driver.getConcurrencyLevel();

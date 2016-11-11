@@ -47,7 +47,15 @@ extends Externalizable {
 	Status getStatus();
 
 	void setStatus(final Status status);
-
+	
+	String getSrcPath();
+	
+	void setSrcPath(final String srcPath);
+	
+	String getDstPath();
+	
+	void setDstPath(final String dstPath);
+	
 	long getReqTimeStart();
 	
 	void startRequest();
@@ -62,9 +70,5 @@ extends Externalizable {
 
 	int getLatency();
 
-	String getSrcPath();
-
-	String getDstPath();
-	
 	void reset();
 }

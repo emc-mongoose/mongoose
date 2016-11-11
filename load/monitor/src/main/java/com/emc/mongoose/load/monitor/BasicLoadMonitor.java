@@ -541,7 +541,15 @@ implements LoadMonitor<I, O> {
 		
 		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
 			
-			for(final StorageDriver<I, O> nextDriver : drivers.get(nextGenerator)) {
+			final List<StorageDriver<I, O>> nextGeneratorDrivers = drivers.get(nextGenerator);
+			
+			try {
+				nextGeneratorDrivers.get(0).configureStorage();
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Preconditions failure");
+			}
+			
+			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
 				try {
 					nextDriver.start();
 				} catch(final RemoteException e) {
