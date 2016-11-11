@@ -8,7 +8,6 @@ import io.netty.util.AsciiString;
  */
 public interface S3Constants {
 	String PREFIX_KEY_AMZ = "x-amz-";
-	String PREFIX_KEY_EMC = "x-emc-";
 	String AUTH_PREFIX = "AWS ";
 	String KEY_X_AMZ_COPY_SOURCE = "x-amz-copy-source";
 	AsciiString HEADERS_CANONICAL[] = {

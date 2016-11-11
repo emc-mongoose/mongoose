@@ -3,13 +3,15 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.storage.driver.net.http.base.BasicClientApiHandler;
+import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
+
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_X_AMZ_COPY_SOURCE;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_AMZ;
-import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_EMC;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.URL_ARG_VERSIONING;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -84,11 +86,14 @@ extends HttpStorageDriverBase<I, O> {
 	throws Exception {
 		super.channelCreated(channel);
 		final ChannelPipeline pipeline = channel.pipeline();
-		pipeline.addLast(new BasicClientApiHandler<>(this, verifyFlag));
+		pipeline.addLast(new BasicClientHandler<>(this, verifyFlag));
 	}
 
 	@Override
 	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
+		if(namespace != null && !namespace.isEmpty()) {
+			httpHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
+		}
 	}
 
 	@Override
@@ -138,14 +143,16 @@ extends HttpStorageDriverBase<I, O> {
 		if(sharedHeaders != null) {
 			for(final Map.Entry<String, String> header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();
-				if(headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_EMC)) {
+				if(
+					headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_X_EMC)
+				) {
 					sortedHeaders.put(headerName, header.getValue());
 				}
 			}
 		}
 		for(final Map.Entry<String, String> header : httpHeaders) {
 			headerName = header.getKey().toLowerCase();
-			if(headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_EMC)) {
+			if(headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_X_EMC)) {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}

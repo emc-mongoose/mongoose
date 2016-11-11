@@ -18,6 +18,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -33,17 +34,65 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public class BasicClientApiHandler<I extends Item, O extends IoTask<I>>
+public class BasicClientHandler<I extends Item, O extends IoTask<I>>
 extends ClientHandlerBase<HttpObject, I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
-	public BasicClientApiHandler(
+	public BasicClientHandler(
 		final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);
 	}
 
+	private boolean handleResponseStatus(
+		final O ioTask, final HttpStatusClass statusClass, final HttpResponseStatus responseStatus
+	) {
+		switch(statusClass) {
+			case INFORMATIONAL:
+				ioTask.setStatus(RESP_FAIL_CLIENT);
+				break;
+			case SUCCESS:
+				ioTask.setStatus(SUCC);
+				return true;
+			case REDIRECTION:
+				ioTask.setStatus(RESP_FAIL_CLIENT);
+				break;
+			case CLIENT_ERROR:
+				if(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.equals(responseStatus)) {
+					ioTask.setStatus(RESP_FAIL_SVC);
+				} else if(HttpResponseStatus.REQUEST_URI_TOO_LONG.equals(responseStatus)) {
+					ioTask.setStatus(RESP_FAIL_SVC);
+				} else if(HttpResponseStatus.UNAUTHORIZED.equals(responseStatus)) {
+					ioTask.setStatus(RESP_FAIL_AUTH);
+				} else if(HttpResponseStatus.FORBIDDEN.equals(responseStatus)) {
+					ioTask.setStatus(RESP_FAIL_AUTH);
+				} else if(HttpResponseStatus.NOT_FOUND.equals(responseStatus)) {
+					ioTask.setStatus(RESP_FAIL_NOT_FOUND);
+				} else {
+					ioTask.setStatus(RESP_FAIL_CLIENT);
+				}
+				break;
+			case SERVER_ERROR:
+				if(HttpResponseStatus.GATEWAY_TIMEOUT.equals(responseStatus)) {
+					ioTask.setStatus(FAIL_TIMEOUT);
+				} else if(HttpResponseStatus.INSUFFICIENT_STORAGE.equals(responseStatus)) {
+					ioTask.setStatus(RESP_FAIL_SPACE);
+				} else {
+					ioTask.setStatus(RESP_FAIL_SVC);
+				}
+				break;
+			case UNKNOWN:
+				ioTask.setStatus(FAIL_UNKNOWN);
+				break;
+		}
+		
+		return false;
+	}
+	
+	protected void handleResponseHeaders(final O ioTask, final HttpHeaders respHeaders) {
+	}
+	
 	@Override
 	protected void handle(final Channel channel, final O ioTask, final HttpObject msg)
 	throws IOException {
@@ -52,65 +101,8 @@ extends ClientHandlerBase<HttpObject, I, O> {
 			ioTask.startResponse();
 			final HttpResponse httpResponse = (HttpResponse) msg;
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
-			final HttpStatusClass statusClass = httpResponseStatus.codeClass();
-			switch(statusClass) {
-				case INFORMATIONAL:
-					ioTask.setStatus(RESP_FAIL_CLIENT);
-					break;
-				case SUCCESS:
-					ioTask.setStatus(SUCC);
-					break;
-				case REDIRECTION:
-					ioTask.setStatus(RESP_FAIL_CLIENT);
-					break;
-				case CLIENT_ERROR:
-					if(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.equals(httpResponseStatus)) {
-						ioTask.setStatus(RESP_FAIL_SVC);
-					} else if(HttpResponseStatus.REQUEST_URI_TOO_LONG.equals(httpResponseStatus)) {
-						ioTask.setStatus(RESP_FAIL_SVC);
-					} else if(HttpResponseStatus.UNAUTHORIZED.equals(httpResponseStatus)) {
-						ioTask.setStatus(RESP_FAIL_AUTH);
-					} else if(HttpResponseStatus.FORBIDDEN.equals(httpResponseStatus)) {
-						ioTask.setStatus(RESP_FAIL_AUTH);
-					} else if(HttpResponseStatus.NOT_FOUND.equals(httpResponseStatus)) {
-						ioTask.setStatus(RESP_FAIL_NOT_FOUND);
-					} else {
-						ioTask.setStatus(RESP_FAIL_CLIENT);
-					}
-					break;
-				case SERVER_ERROR:
-					if(HttpResponseStatus.GATEWAY_TIMEOUT.equals(httpResponseStatus)) {
-						ioTask.setStatus(FAIL_TIMEOUT);
-					} else if(HttpResponseStatus.INSUFFICIENT_STORAGE.equals(httpResponseStatus)) {
-						ioTask.setStatus(RESP_FAIL_SPACE);
-					} else {
-						ioTask.setStatus(RESP_FAIL_SVC);
-					}
-					break;
-				case UNKNOWN:
-					ioTask.setStatus(FAIL_UNKNOWN);
-					break;
-			}
-			
-			/*final String cl = httpResponse.headers().get(HttpHeaderNames.CONTENT_LENGTH);
-			if(cl != null) {
-				try {
-					final int contentLength = Integer.parseInt(cl);
-					if(contentLength < 1) {
-						if(ioTask instanceof DataIoTask) {
-							final DataIoTask dataIoTask = (DataIoTask) ioTask;
-							dataIoTask.setRespDataTimeStart(System.nanoTime() / 1000);
-						}
-						ioTask.setRespTimeDone(System.nanoTime() / 1000);
-						ctx.close();
-						ioTaskOutputRef.get().ioTaskCompleted((O) ioTask);
-					}
-				} catch(final NumberFormatException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Invalid response content length value");
-					ioTask.setStatus(RESP_FAIL_SVC);
-				}
-			}*/
-			
+			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);
+			handleResponseHeaders(ioTask, httpResponse.headers());
 			return;
 		}
 

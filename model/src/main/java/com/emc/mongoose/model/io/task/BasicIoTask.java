@@ -87,6 +87,26 @@ implements IoTask<I> {
 	}
 	
 	@Override
+	public final String getSrcPath() {
+		return srcPath;
+	}
+	
+	@Override
+	public final void setSrcPath(final String srcPath) {
+		this.srcPath = srcPath;
+	}
+	
+	@Override
+	public final String getDstPath() {
+		return dstPath;
+	}
+	
+	@Override
+	public final void setDstPath(final String dstPath) {
+		this.dstPath = dstPath;
+	}
+	
+	@Override
 	public final long getReqTimeStart() {
 		return reqTimeStart;
 	}
@@ -120,16 +140,6 @@ implements IoTask<I> {
 	@Override
 	public final int getLatency() {
 		return (int) (respTimeStart - reqTimeDone);
-	}
-
-	@Override
-	public final String getSrcPath() {
-		return srcPath;
-	}
-
-	@Override
-	public final String getDstPath() {
-		return dstPath;
 	}
 	
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
