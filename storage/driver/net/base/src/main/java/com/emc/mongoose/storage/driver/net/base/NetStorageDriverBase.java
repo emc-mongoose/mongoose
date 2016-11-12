@@ -12,9 +12,10 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -26,6 +27,7 @@ import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
@@ -145,7 +147,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException(e.getMessage());
 		}
-		connPoolMap.get(bestNode).acquire().addListener(getConnectionLeaseCallback(task));
+		connPoolMap.get(bestNode).acquire().addListener(new ConnectionLeaseCallback(task));
 	}
 	
 	@Override
@@ -161,7 +163,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					concurrencyThrottle.acquire();
 					connPoolMap
 						.get(storageNodeAddrs[0]).acquire()
-						.addListener(getConnectionLeaseCallback(nextTask));
+						.addListener(new ConnectionLeaseCallback(nextTask));
 				}
 			} catch(final InterruptedException e) {
 				throw new InterruptedIOException(e.getMessage());
@@ -181,7 +183,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					concurrencyThrottle.acquire();
 					connPoolMap
 						.get(nextNode).acquire()
-						.addListener(getConnectionLeaseCallback(nextTask));
+						.addListener(new ConnectionLeaseCallback(nextTask));
 				}
 			} catch(final InterruptedException e) {
 				throw new InterruptedIOException(e.getMessage());
@@ -195,9 +197,52 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws IOException {
 		return put(tasks, 0, tasks.size());
 	}
-	
-	protected abstract FutureListener<Channel> getConnectionLeaseCallback(final O ioTask);
-	
+
+	private final class ConnectionLeaseCallback
+	implements FutureListener<Channel> {
+
+		private final O ioTask;
+
+		public ConnectionLeaseCallback(final O ioTask) {
+			this.ioTask = ioTask;
+		}
+
+		@Override
+		public final void operationComplete(final Future<Channel> future)
+		throws Exception {
+			final Channel channel = future.getNow();
+			if(channel == null) {
+				if(!isClosed() && !isInterrupted()) {
+					LOG.warn(Markers.ERR, "Failed to obtain the storage node connection");
+				} // else ignore
+			} else {
+				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
+				ioTask.startRequest();
+				sendRequest(channel, ioTask)
+					.addListener(new RequestSentCallback(ioTask));
+			}
+		}
+	}
+
+	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
+
+	protected static final class RequestSentCallback
+		implements FutureListener<Void> {
+
+		private final IoTask ioTask;
+
+		public RequestSentCallback(final IoTask ioTask) {
+			this.ioTask = ioTask;
+		}
+
+		@Override
+		public final void operationComplete(final Future<Void> future)
+		throws Exception {
+			System.out.println("Request sent");
+			ioTask.finishRequest();
+		}
+	}
+
 	@Override
 	public final void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();

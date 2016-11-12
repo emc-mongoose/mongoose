@@ -15,12 +15,12 @@ public class BasicPatternDefinedInput
 implements PatternDefinedInput {
 
 	private static final ThreadLocal<StringBuilder>
-			OUTPUT_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
+		OUTPUT_BUILDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 
 	/**
 	 * A factory for getting of value inputs (see below)

@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 /**
@@ -497,19 +496,19 @@ implements LoadMonitor<I, O> {
 	}
 	
 	private static final ThreadLocal<StringBuilder>
-		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
+		IO_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	private void logTrace(
 		final LoadType ioType, final String nodeAddr, final I item, final IoTask.Status status,
 		final long reqTimeStart, final long reqDuration, final int respLatency,
 		final long countBytesDone, final int respDataLatency
 	) {
 		if(LOG.isInfoEnabled(Markers.IO_TRACE)) {
-			final StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			final StringBuilder strBuilder = IO_TRACE_MSG_BUILDER.get();
 			strBuilder.setLength(0);
 			LOG.info(
 				Markers.IO_TRACE,

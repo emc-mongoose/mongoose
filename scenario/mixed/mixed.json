@@ -8,9 +8,6 @@
 			"output" : {
 				"path" : "/default"
 			}
-		},
-		"load" : {
-			"concurrency" : 10
 		}
 	},
 	"jobs" : [
@@ -24,7 +21,7 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 1000
+						"count" : 10
 					}
 				}
 			}

@@ -55,14 +55,17 @@ implements StorageDriver<I, O>, Runnable {
 		public final void run() {
 			try {
 				while(true) {
-					for(final Map.Entry<String, Runnable> storageDriverTask : DISPATCH_TASKS.entrySet()) {
-						if(storageDriverTask != null) {
+					Runnable nextStorageDriverTask;
+					for(final String storageDriverName : DISPATCH_TASKS.keySet()) {
+						nextStorageDriverTask = DISPATCH_TASKS.get(storageDriverName);
+						if(nextStorageDriverTask != null) {
 							try {
-								storageDriverTask.getValue().run();
+								nextStorageDriverTask.run();
 							} catch(final Exception e) {
-								LogUtil.exception(LOG, Level.WARN, e,
-									"Failed to invoke the I/O task dispatching for the storage driver \"{}\"",
-									storageDriverTask.getKey()
+								LogUtil.exception(
+									LOG, Level.WARN, e,
+									"Failed to invoke the I/O task dispatching for the storage " +
+									"driver \"{}\"", storageDriverName
 								);
 							}
 							Thread.sleep(1);

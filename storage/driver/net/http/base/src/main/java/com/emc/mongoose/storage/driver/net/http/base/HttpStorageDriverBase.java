@@ -36,9 +36,10 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -113,6 +114,14 @@ implements HttpStorageDriver<I, O> {
 		pipeline.addLast(new ChunkedWriteHandler());
 	}
 
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_RANGES_BUILDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
+
 	@Override
 	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
@@ -157,7 +166,8 @@ implements HttpStorageDriver<I, O> {
 				final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, mdIoTask.getUpdatingRangesSize());
 				final BitSet updRangesMaskPair[] = mdIoTask.getUpdRangesMaskPair();
-				final StringBuilder strb = new StringBuilder();
+				final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
+				strb.setLength(0);
 				try {
 					final long baseItemSize = mdi.size();
 					for(int i = 0; i < getRangeCount(baseItemSize); i++) {
@@ -281,98 +291,73 @@ implements HttpStorageDriver<I, O> {
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException;
 	
-	protected final FutureListener<Channel> getConnectionLeaseCallback(final O ioTask) {
-		return new ConnectionLeaseCallback<>(ioTask, this);
-	}
-	
-	private static final class ConnectionLeaseCallback<I extends Item, O extends IoTask<I>>
-	implements FutureListener<Channel> {
-		
-		private final O ioTask;
-		private final HttpStorageDriver<I, O> driver;
-		
-		public ConnectionLeaseCallback(final O ioTask, final HttpStorageDriver<I, O> driver) {
-			this.ioTask = ioTask;
-			this.driver = driver;
-		}
-		
-		@Override
-		public final void operationComplete(final Future<Channel> future)
-		throws Exception {
-			
-			final Channel channel = future.getNow();
-			final LoadType ioType = ioTask.getLoadType();
-			final I item = ioTask.getItem();
-			final String nodeAddr = ioTask.getNodeAddr();
-			
-			if(channel == null) {
-				if(!driver.isClosed() && !driver.isInterrupted()) {
-					LOG.warn(Markers.ERR, "Failed to obtain the connection to {}", nodeAddr);
-				} // else ignore
-			} else {
-				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-				
-				try {
-					ioTask.startRequest();
-					final HttpRequest httpRequest = driver.getHttpRequest(ioTask, nodeAddr);
-					channel.write(httpRequest);
-					if(LoadType.CREATE.equals(ioType)) {
-						if(item instanceof DataItem) {
-							final DataItem dataItem = (DataItem) item;
-							channel
-								.write(new DataItemFileRegion<>(dataItem))
-								.addListener(new RequestSentCallback(ioTask));
-							((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
-						}
-					} else if(LoadType.UPDATE.equals(ioType)) {
-						if(item instanceof MutableDataItem) {
-							final MutableDataItem mdi = (MutableDataItem) item;
-							final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
-							DataItem updatedRange;
-							ChannelFuture reqSentFuture = null;
-							for(int i = 0; i < getRangeCount(mdi.size()); i ++) {
-								mdIoTask.setCurrRangeIdx(i);
-								updatedRange = mdIoTask.getCurrRangeUpdate();
-								if(updatedRange != null) {
-									reqSentFuture = channel.write(
-										new DataItemFileRegion<>(updatedRange)
-									);
-								}
-							}
-							if(reqSentFuture == null) {
-								LOG.error(Markers.ERR, "No ranges scheduled for the update");
-								ioTask.setStatus(IoTask.Status.RESP_FAIL_CLIENT);
-							} else {
-								reqSentFuture.addListener(new RequestSentCallback(mdIoTask));
-							}
-							mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
-							mdi.commitUpdatedRanges(mdIoTask.getUpdRangesMaskPair());
+	@Override
+	protected ChannelFuture sendRequest(final Channel channel, final O ioTask) {
+
+		final String nodeAddr = ioTask.getNodeAddr();
+		final LoadType ioType = ioTask.getLoadType();
+		final I item = ioTask.getItem();
+
+		try {
+			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
+
+			channel.write(httpRequest);
+
+			if(LoadType.CREATE.equals(ioType)) {
+				if(item instanceof DataItem) {
+					final DataItem dataItem = (DataItem) item;
+					channel
+						.write(new DataItemFileRegion<>(dataItem))
+						.addListener(new RequestMaybeSentCallback(ioTask));
+					((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
+				}
+			} else if(LoadType.UPDATE.equals(ioType)) {
+				if(item instanceof MutableDataItem) {
+					final MutableDataItem mdi = (MutableDataItem) item;
+					final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+					DataItem updatedRange;
+					ChannelFuture reqSentFuture = null;
+					for(int i = 0; i < getRangeCount(mdi.size()); i ++) {
+						mdIoTask.setCurrRangeIdx(i);
+						updatedRange = mdIoTask.getCurrRangeUpdate();
+						if(updatedRange != null) {
+							reqSentFuture = channel.write(
+								new DataItemFileRegion<>(updatedRange)
+							);
 						}
 					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
-				} catch(final URISyntaxException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
-				} catch(final Exception e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
+					if(reqSentFuture == null) {
+						LOG.error(Markers.ERR, "No ranges scheduled for the update");
+						ioTask.setStatus(IoTask.Status.RESP_FAIL_CLIENT);
+					} else {
+						reqSentFuture.addListener(new RequestMaybeSentCallback(mdIoTask));
+					}
+					mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
+					mdi.commitUpdatedRanges(mdIoTask.getUpdRangesMaskPair());
 				}
-				
-				channel
-					.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
-					.addListener(new RequestSentCallback(ioTask));
 			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+		} catch(final URISyntaxException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
+		} catch(final Throwable e) {
+			e.printStackTrace(System.err);
 		}
+
+		return channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}
-	
-	private static final class RequestSentCallback
-	implements FutureListener<Void> {
-		
+
+	protected static final class RequestMaybeSentCallback
+		implements FutureListener<Void> {
+
 		private final IoTask ioTask;
-		
-		public RequestSentCallback(final IoTask ioTask) {
+
+		public RequestMaybeSentCallback(final IoTask ioTask) {
 			this.ioTask = ioTask;
 		}
-		
+
 		@Override
 		public final void operationComplete(final Future<Void> future)
 		throws Exception {
