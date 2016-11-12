@@ -2,39 +2,37 @@ package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.load.generator.BasicLoadGenerator;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
-import com.emc.mongoose.model.io.task.BasicMutableDataIoTaskBuilder;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemOutput;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
-import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.run.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.Config.ItemConfig;
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import com.emc.mongoose.ui.config.Config.SocketConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.SocketConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 /**
  Created by andrey on 08.11.16.
  */
@@ -122,20 +121,12 @@ extends JobBase {
 				}
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
-				final IoTaskBuilder ioTaskBuilder;
-				if(ItemType.PATH.equals(itemType)) {
-					// TODO path I/O tasks factory
-					ioTaskBuilder = new BasicIoTaskBuilder();
-				} else {
-					ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
-						.setRangesConfig(dataConfig.getRangesConfig());
-				}
-				ioTaskBuilder.setSrcPath(itemConfig.getInputConfig().getPath());
-				ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
-				
-				final LoadGenerator loadGenerator = new BasicLoadGenerator(
-					itemFactory, ioTaskBuilder, itemConfig, loadConfig
-				);
+				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
+					.setItemConfig(itemConfig)
+					.setItemFactory(itemFactory)
+					.setItemType(itemType)
+					.setLoadConfig(loadConfig)
+					.build();
 				
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();

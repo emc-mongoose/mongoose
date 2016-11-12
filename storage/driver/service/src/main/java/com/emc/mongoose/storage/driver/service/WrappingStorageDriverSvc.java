@@ -62,11 +62,40 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final void close()
 	throws IOException {
-		try {
-			driver.close();
-		} finally {
-			LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
+		driver.close();
+		contentSrc.close();
+		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
+	}
+
+	@Override
+	public final void put(final O ioTask)
+	throws IOException {
+		if(ioTask instanceof DataIoTask) {
+			((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
 		}
+		driver.put(ioTask);
+	}
+
+	@Override
+	public final int put(final List<O> buffer, final int from, final int to)
+	throws IOException {
+		if(buffer.get(from) instanceof DataIoTask) {
+			for(int i = from; i < to; i ++) {
+				((DataItem) buffer.get(i).getItem()).setContentSrc(contentSrc);
+			}
+		}
+		return driver.put(buffer, from, to);
+	}
+
+	@Override
+	public final int put(final List<O> buffer)
+	throws IOException {
+		if(buffer.get(0) instanceof DataItem) {
+			for(final O ioTask : buffer) {
+				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
+			}
+		}
+		return driver.put(buffer);
 	}
 
 	// just wrapping methods below
@@ -117,37 +146,6 @@ implements StorageDriverSvc<I, O> {
 	public final boolean isClosed()
 	throws RemoteException {
 		return driver.isClosed();
-	}
-
-	@Override
-	public final void put(final O ioTask)
-	throws IOException {
-		if(ioTask instanceof DataIoTask) {
-			((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
-		}
-		driver.put(ioTask);
-	}
-
-	@Override
-	public final int put(final List<O> buffer, final int from, final int to)
-	throws IOException {
-		if(buffer.get(from) instanceof DataIoTask) {
-			for(int i = from; i < to; i ++) {
-				((DataItem) buffer.get(i).getItem()).setContentSrc(contentSrc);
-			}
-		}
-		return driver.put(buffer, from, to);
-	}
-
-	@Override
-	public final int put(final List<O> buffer)
-	throws IOException {
-		if(buffer.get(0) instanceof DataItem) {
-			for(final O ioTask : buffer) {
-				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
-			}
-		}
-		return driver.put(buffer);
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.run.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.ui.config.Config;
@@ -151,23 +152,8 @@ extends JobBase {
 				);
 			}
 			LOG.info(Markers.MSG, "Load drivers initialized");
-			
-			final IoTaskBuilder ioTaskBuilder;
+
 			final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-			if(ItemType.PATH.equals(itemType)) {
-				// TODO path I/O tasks factory
-				ioTaskBuilder = new BasicIoTaskBuilder();
-			} else {
-				ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
-					.setRangesConfig(dataConfig.getRangesConfig());
-			}
-			ioTaskBuilder.setSrcPath(itemConfig.getInputConfig().getPath());
-			ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
-			
-			final LimitConfig limitConfig = loadConfig.getLimitConfig();
-			final long t = limitConfig.getTime();
-			final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
-			
 			final ItemFactory itemFactory;
 			if(ItemType.DATA.equals(itemType)) {
 				itemFactory = new BasicMutableDataItemFactory(contentSrc);
@@ -177,11 +163,22 @@ extends JobBase {
 				itemFactory = null;
 				LOG.info(Markers.MSG, "Work on the path items");
 			}
-			
-			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemFactory, ioTaskBuilder, itemConfig, loadConfig
-			);
+
+			final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
+				.setItemConfig(itemConfig)
+				.setLoadConfig(loadConfig)
+				.setItemType(itemType)
+				.setItemFactory(itemFactory)
+				.build();
 			LOG.info(Markers.MSG, "Load generators initialized");
+
+			final long timeLimitSec;
+			long t = loadConfig.getLimitConfig().getTime();
+			if(t > 0) {
+				timeLimitSec = t;
+			} else {
+				timeLimitSec = Long.MAX_VALUE;
+			}
 			
 			try(
 				final LoadMonitor monitor = remoteDriversFlag ?

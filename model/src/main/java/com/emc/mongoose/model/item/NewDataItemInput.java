@@ -58,6 +58,7 @@ implements Input<D> {
 	@Override
 	public final void close()
 	throws IOException {
+		itemFactory.close();
 	}
 	
 	@Override

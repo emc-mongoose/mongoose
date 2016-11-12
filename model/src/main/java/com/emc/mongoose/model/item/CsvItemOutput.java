@@ -53,6 +53,7 @@ implements Output<I> {
 	public void close()
 	throws IOException {
 		itemsDst.close();
+		itemFactory.close();
 	}
 	//
 	@Override

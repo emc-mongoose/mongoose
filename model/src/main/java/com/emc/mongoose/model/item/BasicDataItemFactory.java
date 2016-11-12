@@ -2,6 +2,7 @@ package com.emc.mongoose.model.item;
 
 import com.emc.mongoose.model.data.ContentSource;
 
+import java.io.IOException;
 /**
  Created by kurila on 21.09.16.
  */
@@ -28,5 +29,12 @@ implements ItemFactory<I> {
 	@Override
 	public Class<I> getItemClass() {
 		return (Class<I>) BasicDataItem.class;
+	}
+
+	@Override
+	public void close()
+	throws IOException {
+		super.close();
+		contentSrc.close();
 	}
 }

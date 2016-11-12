@@ -71,7 +71,7 @@ public class BasicStorageDriverBuilder<
 		this.contentSrc = contentSrc;
 		return this;
 	}
-	
+
 	@Override
 	public StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
