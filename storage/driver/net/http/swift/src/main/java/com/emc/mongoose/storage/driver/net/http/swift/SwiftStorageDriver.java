@@ -59,8 +59,10 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected String getUriPath(final I item, final String path, final LoadType ioType) {
-		return URI_BASE + SLASH + namespace + super.getUriPath(item, path, ioType);
+	protected String getUriPath(
+		final I item, final String srcPath, final String dstPath, final LoadType ioType
+	) {
+		return URI_BASE + SLASH + namespace + super.getUriPath(item, srcPath, dstPath, ioType);
 	}
 	
 	@Override

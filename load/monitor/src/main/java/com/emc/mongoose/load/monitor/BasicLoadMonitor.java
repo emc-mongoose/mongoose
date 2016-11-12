@@ -211,26 +211,30 @@ implements LoadMonitor<I, O> {
 			
 			long nextNanoTimeStamp;
 			
-			while(!worker.isInterrupted()) {
-				nextNanoTimeStamp = System.nanoTime();
-				// refresh the stats
-				for(final LoadType nextIoType : ioStats.keySet()) {
-					lastStats.put(nextIoType, ioStats.get(nextIoType).getSnapshot());
+			try {
+				while(true) {
+					nextNanoTimeStamp = System.nanoTime();
+					// refresh the stats
+					for(final LoadType nextIoType : ioStats.keySet()) {
+						lastStats.put(nextIoType, ioStats.get(nextIoType).getSnapshot());
+					}
+					Thread.sleep(1);
+					// output the current measurements periodically
+					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+						LOG.info(
+							Markers.METRICS_STDOUT,
+							new MetricsLogMessageTable(name, lastStats, totalConcurrency)
+						);
+						LOG.info(
+							Markers.METRICS_FILE,
+							new MetricsLogMessageCsv(lastStats, totalConcurrency)
+						);
+						prevNanoTimeStamp = nextNanoTimeStamp;
+					}
+					Thread.sleep(1);
 				}
-				LockSupport.parkNanos(1_000_000);
-				// output the current measurements periodically
-				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-					LOG.info(
-						Markers.METRICS_STDOUT,
-						new MetricsLogMessageTable(name, lastStats, totalConcurrency)
-					);
-					LOG.info(
-						Markers.METRICS_FILE,
-						new MetricsLogMessageCsv(lastStats, totalConcurrency)
-					);
-					prevNanoTimeStamp = nextNanoTimeStamp;
-				}
-				LockSupport.parkNanos(1_000_000);
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
 			}
 		}
 	}

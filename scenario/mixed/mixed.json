@@ -15,7 +15,7 @@
 	},
 	"jobs" : [
 		{
-			"type" : "precondition",
+			"type" : "load",
 			"config" : {
 				"item" : {
 					"output" : {
@@ -24,7 +24,7 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 100000
+						"count" : 1000
 					}
 				}
 			}

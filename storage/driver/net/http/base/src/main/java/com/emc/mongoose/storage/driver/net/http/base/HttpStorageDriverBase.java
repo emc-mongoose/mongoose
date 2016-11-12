@@ -121,19 +121,19 @@ implements HttpStorageDriver<I, O> {
 		final LoadType ioType = ioTask.getLoadType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 
-		final String srcUriPath = getUriPath(item, ioTask.getSrcPath(), ioType);
-		final String dstUriPath = getUriPath(item, ioTask.getDstPath(), ioType);
+		final String srcPath = ioTask.getSrcPath();
+		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), ioType);
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, dstUriPath == null ? srcUriPath : dstUriPath, httpHeaders
+			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);
 
 		switch(ioType) {
 			case CREATE:
-				if(srcUriPath == null) {
+				if(srcPath == null) {
 					if(item instanceof DataItem) {
 						try {
 							httpHeaders.set(
@@ -145,7 +145,7 @@ implements HttpStorageDriver<I, O> {
 						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 					}
 				} else {
-					applyCopyHeaders(httpHeaders, srcUriPath);
+					applyCopyHeaders(httpHeaders, getUriPath(item, srcPath, null, ioType));
 					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				}
 				break;
@@ -181,7 +181,7 @@ implements HttpStorageDriver<I, O> {
 		}
 
 		applyMetaDataHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, dstUriPath, httpHeaders);
+		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
 
@@ -199,13 +199,21 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	protected String getUriPath(final I item, final String path, final LoadType ioType) {
-		if(path == null) {
-			return SLASH + item.getName();
-		} else if(path.endsWith(SLASH)) {
-			return path + item.getName();
+	protected String getUriPath(
+		final I item, final String srcPath, final String dstPath, final LoadType ioType
+	) {
+		if(dstPath == null) {
+			if(srcPath == null) {
+				return SLASH + item.getName();
+			} else if(srcPath.endsWith(SLASH)) {
+				return srcPath + item.getName();
+			} else {
+				return srcPath + SLASH + item.getName();
+			}
+		} else if(dstPath.endsWith(SLASH)) {
+			return dstPath + item.getName();
 		} else {
-			return path + SLASH + item.getName();
+			return dstPath + SLASH + item.getName();
 		}
 	}
 

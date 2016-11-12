@@ -125,13 +125,15 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected String getUriPath(final I item, final String path, final LoadType ioType) {
+	protected String getUriPath(
+		final I item, final String srcPath, final String dstPath, final LoadType ioType
+	) {
 		if(fsAccess) {
-			return NS_URI_BASE + super.getUriPath(item, path, ioType);
+			return NS_URI_BASE + super.getUriPath(item, srcPath, dstPath, ioType);
 		} else if(LoadType.CREATE.equals(ioType)) {
 			return OBJ_URI_BASE;
 		} else {
-			return OBJ_URI_BASE + super.getUriPath(item, path, ioType);
+			return OBJ_URI_BASE + super.getUriPath(item, srcPath, dstPath, ioType);
 		}
 	}
 	

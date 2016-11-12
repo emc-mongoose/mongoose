@@ -24,7 +24,9 @@ implements TaskSequencer {
 	private final int batchSize;
 	private final Collection<Runnable> buff;
 
-	protected BlockingQueueTaskSequencer(final String name, boolean daemonFlag, final int batchSize) {
+	protected BlockingQueueTaskSequencer(
+		final String name, boolean daemonFlag, final int batchSize
+	) {
 		super(name);
 		setDaemon(daemonFlag);
 		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE_LIMIT, false);
@@ -46,7 +48,7 @@ implements TaskSequencer {
 	public final void run() {
 		int n;
 		try {
-			while(!isInterrupted()) {
+			while(! isInterrupted()) {
 				n = queue.drainTo(buff, batchSize);
 				if(n > 0) {
 					for(final Runnable nextTask : buff) {
@@ -58,9 +60,10 @@ implements TaskSequencer {
 					}
 					buff.clear();
 				} else {
-					Thread.yield();
+					Thread.sleep(1);
 				}
 			}
+		} catch(final InterruptedException ignore) {
 		} finally {
 			queue.clear();
 		}

@@ -12,6 +12,7 @@ import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -40,25 +41,36 @@ implements StorageDriver<I, O>, Runnable {
 		{
 			setDaemon(true);
 			start();
+			Runtime.getRuntime().addShutdownHook(
+				new Thread() {
+					public final void run() {
+						IO_TASK_DISPATCHER.interrupt();
+						DISPATCH_TASKS.clear();
+					}
+				}
+			);
 		}
 
 		@Override
 		public final void run() {
-			final Thread currentThread = Thread.currentThread();
-			while(currentThread.isInterrupted()) {
-				for(final Map.Entry<String, Runnable> storageDriverTask : DISPATCH_TASKS.entrySet()) {
-					if(storageDriverTask != null) {
-						try {
-							storageDriverTask.getValue().run();
-						} catch(final Exception e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to invoke the I/O task dispatching for the storage driver \"{}\"",
-								storageDriverTask.getKey()
-							);
+			try {
+				while(true) {
+					for(final Map.Entry<String, Runnable> storageDriverTask : DISPATCH_TASKS.entrySet()) {
+						if(storageDriverTask != null) {
+							try {
+								storageDriverTask.getValue().run();
+							} catch(final Exception e) {
+								LogUtil.exception(LOG, Level.WARN, e,
+									"Failed to invoke the I/O task dispatching for the storage driver \"{}\"",
+									storageDriverTask.getKey()
+								);
+							}
+							Thread.sleep(1);
 						}
 					}
 				}
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
 			}
 		}
 	};
