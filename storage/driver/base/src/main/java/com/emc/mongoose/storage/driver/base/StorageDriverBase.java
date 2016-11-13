@@ -201,7 +201,9 @@ implements StorageDriver<I, O>, Runnable {
 				}
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to dispatch the completed I/O tasks");
+			if(!isInterrupted() && !isClosed()) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to dispatch the completed I/O tasks");
+			} // else ignore
 		}
 	}
 	

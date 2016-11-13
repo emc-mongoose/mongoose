@@ -18,6 +18,11 @@
 					"output" : {
 						"file" : "items2read.csv"
 					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					}
 				}
 			}
 		},
