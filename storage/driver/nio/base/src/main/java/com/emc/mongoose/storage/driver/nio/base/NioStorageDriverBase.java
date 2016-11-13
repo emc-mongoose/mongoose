@@ -202,6 +202,7 @@ implements StorageDriver<I, O> {
 			BlockingQueue<O> nextQueue;
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);
+				nextIoTask.reset();
 				nextQueue = ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount];
 				if(nextQueue != null) {
 					nextQueue.put(nextIoTask);

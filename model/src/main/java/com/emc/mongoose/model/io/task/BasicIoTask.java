@@ -47,6 +47,74 @@ implements IoTask<I> {
 		this.dstPath = dstPath;
 		reset();
 	}
+
+	public class BasicResult
+	implements Result {
+
+		private final LoadType loadType;
+		private final Status status;
+		private final String storageDriverAddr;
+		private final String storageNodeAddr;
+		private final String itemInfo;
+		private final long reqTimeStart;
+		private final long duration;
+		private final long latency;
+
+		public BasicResult(
+			final LoadType loadType, final Status status, final String storageDriverAddr,
+			final String storageNodeAddr, final String itemInfo, final long reqTimeStart,
+			final long duration, final long latency
+		) {
+			this.loadType = loadType;
+			this.status = status;
+			this.storageDriverAddr = storageDriverAddr;
+			this.storageNodeAddr = storageNodeAddr;
+			this.itemInfo = itemInfo;
+			this.reqTimeStart = reqTimeStart;
+			this.duration = duration;
+			this.latency = latency;
+		}
+
+		@Override
+		public LoadType getLoadType() {
+			return loadType;
+		}
+
+		@Override
+		public Status getStatus() {
+			return status;
+		}
+
+		@Override
+		public String getStorageDriverAddr() {
+			return storageDriverAddr;
+		}
+
+		@Override
+		public String getStorageNodeAddr() {
+			return storageNodeAddr;
+		}
+
+		@Override
+		public String getItemInfo() {
+			return itemInfo;
+		}
+
+		@Override
+		public long getTimeStart() {
+			return reqTimeStart;
+		}
+
+		@Override
+		public long getDuration() {
+			return duration;
+		}
+
+		@Override
+		public long getLatency() {
+			return latency;
+		}
+	}
 	
 	@Override
 	public void reset() {
@@ -105,12 +173,7 @@ implements IoTask<I> {
 	public final void setDstPath(final String dstPath) {
 		this.dstPath = dstPath;
 	}
-	
-	@Override
-	public final long getReqTimeStart() {
-		return reqTimeStart;
-	}
-	
+
 	@Override
 	public final void startRequest() {
 		reqTimeStart = System.nanoTime() / 1000;
@@ -131,17 +194,15 @@ implements IoTask<I> {
 	public final void finishResponse() {
 		respTimeDone = System.nanoTime() / 1000;
 	}
-	
+
 	@Override
-	public final int getDuration() {
-		return (int) (respTimeDone - reqTimeStart);
+	public Result getResult() {
+		return new BasicResult(
+			ioType, status, nodeAddr, nodeAddr, item.toString(), reqTimeStart,
+			respTimeDone - reqTimeStart, respTimeStart - reqTimeDone
+		);
 	}
-	
-	@Override
-	public final int getLatency() {
-		return (int) (respTimeStart - reqTimeDone);
-	}
-	
+
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 11.07.16.
  This mock just passes the submitted tasks to the load monitor em
@@ -177,9 +178,6 @@ implements StorageDriver<I, O>, Runnable {
 				}
 			}
 			if(isCircular) {
-				for(int i = 0; i < n; i ++) {
-					ioTasks.get(i).reset();
-				}
 				for(int i = 0; i < n; i += put(ioTasks, 0, n)) {
 					LockSupport.parkNanos(1);
 				}

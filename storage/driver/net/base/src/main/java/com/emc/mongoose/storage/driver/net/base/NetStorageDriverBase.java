@@ -141,6 +141,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(bestNode == null) {
 			return;
 		}
+		task.reset();
 		task.setNodeAddr(bestNode);
 		try {
 			concurrencyThrottle.acquire();
@@ -157,8 +158,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(storageNodeAddrs.length == 1) {
 			O nextTask;
 			try {
-				for(int i = 0; i < n; i++) {
+				for(int i = 0; i < n; i ++) {
 					nextTask = tasks.get(i + from);
+					nextTask.reset();
 					nextTask.setNodeAddr(storageNodeAddrs[0]);
 					concurrencyThrottle.acquire();
 					connPoolMap
@@ -178,6 +180,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			try {
 				for(int i = 0; i < n; i++) {
 					nextTask = tasks.get(i + from);
+					nextTask.reset();
 					nextNode = nodeBuff.get(i);
 					nextTask.setNodeAddr(nextNode);
 					concurrencyThrottle.acquire();

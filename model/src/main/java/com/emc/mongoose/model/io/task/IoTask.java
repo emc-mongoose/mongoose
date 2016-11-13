@@ -4,7 +4,7 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadType;
 
 import java.io.Externalizable;
-
+import java.io.Serializable;
 /**
  Created by kurila on 11.07.16.
  */
@@ -14,6 +14,7 @@ extends Externalizable {
 	String SLASH = "/";
 
 	enum Status {
+
 		PENDING(0, "Pending"),
 		ACTIVE(1, "Active"),
 		CANCELLED(2, "Cancelled"),
@@ -28,12 +29,35 @@ extends Externalizable {
 		RESP_FAIL_AUTH(11, "Authentication/access failure"),
 		RESP_FAIL_CORRUPT(12, "Data item corruption"),
 		RESP_FAIL_SPACE(13, "Not enough space on the storage");
+
 		public final int code;
+
 		public final String description;
+
 		Status(final int code, final String description) {
 			this.code = code;
 			this.description = description;
 		}
+	}
+
+	interface Result
+	extends Serializable {
+
+		LoadType getLoadType();
+
+		Status getStatus();
+
+		String getStorageDriverAddr();
+
+		String getStorageNodeAddr();
+
+		String getItemInfo();
+
+		long getTimeStart();
+
+		long getDuration();
+
+		long getLatency();
 	}
 
 	LoadType getLoadType();
@@ -55,8 +79,6 @@ extends Externalizable {
 	String getDstPath();
 	
 	void setDstPath(final String dstPath);
-	
-	long getReqTimeStart();
 
 	void startRequest();
 
@@ -66,9 +88,7 @@ extends Externalizable {
 
 	void finishResponse();
 
-	int getDuration();
-
-	int getLatency();
+	Result getResult();
 
 	void reset();
 }
