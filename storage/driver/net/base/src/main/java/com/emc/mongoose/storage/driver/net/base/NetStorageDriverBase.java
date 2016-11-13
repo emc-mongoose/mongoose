@@ -238,7 +238,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		@Override
 		public final void operationComplete(final Future<Void> future)
 		throws Exception {
-			System.out.println("Request sent");
 			ioTask.finishRequest();
 		}
 	}

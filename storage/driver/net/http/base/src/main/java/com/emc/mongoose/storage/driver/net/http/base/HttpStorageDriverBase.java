@@ -26,7 +26,9 @@ import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -43,12 +45,14 @@ import io.netty.util.concurrent.FutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Order;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
@@ -104,7 +108,8 @@ implements HttpStorageDriver<I, O> {
 			}
 		}
 	}
-	
+
+	private final AtomicLong counter = new AtomicLong(0);
 	@Override
 	public void channelCreated(final Channel channel)
 	throws Exception {

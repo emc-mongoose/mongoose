@@ -162,14 +162,6 @@ implements LoadGenerator<I, O>, Output<I> {
 					Thread.currentThread().getName(), producedItemsCount, itemInput.toString(), this
 				);
 				try {
-					itemInput.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to close the item source \"{}\"",
-						itemInput.toString()
-					);
-				}
-				try {
 					shutdown();
 				} catch(final IllegalStateException ignored) {
 				}
