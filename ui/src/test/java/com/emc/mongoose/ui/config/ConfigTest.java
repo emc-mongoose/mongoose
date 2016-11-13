@@ -5,6 +5,7 @@ import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +56,6 @@ public class ConfigTest {
 		final Config config = ConfigParser.loadDefaultConfig();
 		config.apply(argTree);
 		
-		assertEquals(argsMap.get("--name"), config.getName());
 		assertEquals(argsMap.get("--version"), config.getVersion());
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertEquals(
