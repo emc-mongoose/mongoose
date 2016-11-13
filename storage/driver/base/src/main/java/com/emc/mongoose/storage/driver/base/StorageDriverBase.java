@@ -137,13 +137,7 @@ implements StorageDriver<I, O>, Runnable {
 	}
 
 	protected final void ioTaskCompleted(final O ioTask) {
-
 		setItemPath(ioTask);
-
-		if(isCircular) {
-			ioTask.reset();
-		}
-
 		try {
 			ioTaskBuff.put(ioTask);
 		} catch(final IOException e) {
@@ -155,21 +149,8 @@ implements StorageDriver<I, O>, Runnable {
 	
 	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
 
-		O ioTask;
-
-		if(isCircular) {
-			
-			for(int i = from; i < to; i++) {
-				ioTask = ioTasks.get(i);
-				setItemPath(ioTask);
-				ioTask.reset();
-			}
-			
-		} else {
-			
-			for(int i = from; i < to; i++) {
-				setItemPath(ioTasks.get(i));
-			}
+		for(int i = from; i < to; i++) {
+			setItemPath(ioTasks.get(i));
 		}
 
 		try {
@@ -196,6 +177,9 @@ implements StorageDriver<I, O>, Runnable {
 				}
 			}
 			if(isCircular) {
+				for(int i = 0; i < n; i ++) {
+					ioTasks.get(i).reset();
+				}
 				for(int i = 0; i < n; i += put(ioTasks, 0, n)) {
 					LockSupport.parkNanos(1);
 				}

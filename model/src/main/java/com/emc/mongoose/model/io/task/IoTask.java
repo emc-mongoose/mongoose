@@ -35,19 +35,19 @@ extends Externalizable {
 			this.description = description;
 		}
 	}
-	
+
 	LoadType getLoadType();
 
 	I getItem();
 
 	String getNodeAddr();
-	
+
 	void setNodeAddr(final String nodeAddr);
 
 	Status getStatus();
 
 	void setStatus(final Status status);
-	
+
 	String getSrcPath();
 	
 	void setSrcPath(final String srcPath);
@@ -57,7 +57,7 @@ extends Externalizable {
 	void setDstPath(final String dstPath);
 	
 	long getReqTimeStart();
-	
+
 	void startRequest();
 
 	void finishRequest();
