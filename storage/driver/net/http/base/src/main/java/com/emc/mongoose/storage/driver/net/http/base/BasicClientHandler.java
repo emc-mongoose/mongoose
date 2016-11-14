@@ -30,17 +30,17 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-
 /**
  Created by kurila on 05.09.16.
  */
-public class BasicClientHandler<I extends Item, O extends IoTask<I>>
-extends ClientHandlerBase<HttpObject, I, O> {
+public class BasicClientHandler<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+extends ClientHandlerBase<HttpObject, I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
 	public BasicClientHandler(
-		final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag
+		final HttpStorageDriverBase<I, O, R> driver,
+		final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);
 	}
@@ -111,7 +111,7 @@ extends ClientHandlerBase<HttpObject, I, O> {
 				if(ioTask instanceof DataIoTask) {
 					final DataIoTask dataIoTask = (DataIoTask) ioTask;
 					final long countBytesDone = dataIoTask.getCountBytesDone();
-					if(dataIoTask.getDataLatency() == -1) { // if not set yet - 1st time
+					if(dataIoTask.isResponseDataStarted()) { // if not set yet - 1st time
 						dataIoTask.startDataResponse();
 					}
 					final ByteBuf contentChunk = ((HttpContent) msg).content();

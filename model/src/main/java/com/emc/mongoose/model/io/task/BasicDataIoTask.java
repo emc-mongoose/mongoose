@@ -15,10 +15,10 @@ implements DataIoTask<T> {
 
 	protected long contentSize;
 	protected long itemDataOffset;
-	protected volatile ContentSource contentSrc;
-	
-	protected volatile long countBytesDone;
-	protected volatile long respDataTimeStart;
+
+	protected transient volatile ContentSource contentSrc;
+	protected transient volatile long countBytesDone;
+	protected transient volatile long respDataTimeStart;
 	
 	public BasicDataIoTask() {
 		super();
@@ -48,6 +48,47 @@ implements DataIoTask<T> {
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 	}
+
+	public static class BasicDataIoResult
+	extends BasicIoResult
+	implements DataIoResult {
+
+		private final long dataLatency;
+		private final long transferredByteCount;
+
+		public BasicDataIoResult(
+			final LoadType loadType, final Status status, final String storageDriverAddr,
+			final String storageNodeAddr, final String itemInfo,
+			final long reqTimeStart, final long duration, final long latency,
+			final long dataLatency, final long transferredByteCount
+		) {
+			super(
+				loadType, status, storageDriverAddr, storageNodeAddr, itemInfo,
+				reqTimeStart, duration, latency
+			);
+			this.dataLatency = dataLatency;
+			this.transferredByteCount = transferredByteCount;
+		}
+
+		@Override
+		public final long getDataLatency() {
+			return dataLatency;
+		}
+
+		@Override
+		public final long getCountBytesDone() {
+			return transferredByteCount;
+		}
+	}
+
+	@Override
+	public BasicDataIoResult getIoResult() {
+		return new BasicDataIoResult(
+			ioType, status, STORAGE_DRIVER_ADDR, nodeAddr, item.toString(getItemPath()),
+			reqTimeStart, respTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
+			respDataTimeStart - reqTimeDone, countBytesDone
+		);
+	}
 	
 	@Override
 	public void reset() {
@@ -67,36 +108,20 @@ implements DataIoTask<T> {
 	}
 
 	@Override
+	public final boolean isResponseDataStarted() {
+		return respDataTimeStart > 0;
+	}
+
+	@Override
 	public final void startDataResponse() {
 		respDataTimeStart = System.nanoTime() / 1000;
 	}
 
 	@Override
-	public final int getDataLatency() {
-		if(respDataTimeStart > respTimeDone) {
-			return (int) (respDataTimeStart - reqTimeDone);
-		} else {
-			return -1;
-		}
-	}
-
-	@Override @SuppressWarnings("ResultOfMethodCallIgnored")
-	public String toString() {
-		super.toString(); // invoked to fill the string builder
-		final StringBuilder strb = STRB.get();
-		return strb
-			.append(',').append(countBytesDone)
-			.append(',').append(getDataLatency())
-			.toString();
-	}
-	
-	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
-		out.writeLong(countBytesDone);
-		out.writeLong(respDataTimeStart);
 	}
 	
 	@Override
@@ -106,7 +131,5 @@ implements DataIoTask<T> {
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 		contentSize = in.readLong();
-		countBytesDone = in.readLong();
-		respDataTimeStart = in.readLong();
 	}
 }

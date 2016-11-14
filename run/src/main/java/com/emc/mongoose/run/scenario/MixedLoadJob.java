@@ -208,7 +208,7 @@ extends JobBase {
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {
 				final Path itemOutputPath = Paths.get(itemOutputFile);
 				final Output itemOutput = new CsvFileItemOutput(itemOutputPath, null); // NOTE: using null as an ItemFactory
-				monitor.setItemOutput(itemOutput);
+				monitor.setItemInfoOutput(itemOutput);
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {

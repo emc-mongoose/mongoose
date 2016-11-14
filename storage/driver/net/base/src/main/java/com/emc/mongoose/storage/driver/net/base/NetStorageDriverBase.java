@@ -48,9 +48,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends StorageDriverBase<I, O>
-implements NetStorageDriver<I, O>, ChannelPoolHandler {
+public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+extends StorageDriverBase<I, O, R>
+implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	
@@ -141,7 +141,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(bestNode == null) {
 			return;
 		}
-		task.reset();
 		task.setNodeAddr(bestNode);
 		try {
 			concurrencyThrottle.acquire();
@@ -160,7 +159,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			try {
 				for(int i = 0; i < n; i ++) {
 					nextTask = tasks.get(i + from);
-					nextTask.reset();
 					nextTask.setNodeAddr(storageNodeAddrs[0]);
 					concurrencyThrottle.acquire();
 					connPoolMap

@@ -16,7 +16,7 @@ import java.rmi.RemoteException;
  Created by andrey on 05.10.16.
  */
 public interface StorageDriverBuilder<
-	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
+	I extends Item, O extends IoTask<I>, R extends IoTask.IoResult, T extends StorageDriver<I, O, R>
 > {
 
 	String API_S3 = "s3";
@@ -37,22 +37,22 @@ public interface StorageDriverBuilder<
 	SocketConfig getSocketConfig()
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setJobName(final String runId)
+	StorageDriverBuilder<I, O, R, T> setJobName(final String runId)
 	throws RemoteException;
 	
-	StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSource)
+	StorageDriverBuilder<I, O, R, T> setContentSource(final ContentSource contentSource)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig)
+	StorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
+	StorageDriverBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)
+	StorageDriverBuilder<I, O, R, T> setStorageConfig(final StorageConfig storageConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setSocketConfig(final SocketConfig socketConfig)
+	StorageDriverBuilder<I, O, R, T> setSocketConfig(final SocketConfig socketConfig)
 	throws RemoteException;
 
 	T build()

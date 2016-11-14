@@ -117,18 +117,29 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static final ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	private static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
+		@Override
+		protected final StringBuilder initialValue() {
+			return new StringBuilder();
+		}
+	};
+
 	@Override
 	public String toString() {
-		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
-		if(strBuilder == null) {
-			strBuilder = new StringBuilder();
-			THR_LOCAL_STR_BUILDER.set(strBuilder);
-		} else {
-			strBuilder.setLength(0); // reset
-		}
-		return strBuilder
+		final StringBuilder strb = STRB.get();
+		strb.setLength(0); // reset
+		return strb
 			.append(super.toString()).append(",")
+			.append(Long.toString(offset, 0x10)).append(",")
+			.append(size).toString();
+	}
+
+	@Override
+	public String toString(final String itemPath) {
+		final StringBuilder strBuilder = STRB.get();
+		strBuilder.setLength(0); // reset
+		return strBuilder
+			.append(super.toString(itemPath)).append(",")
 			.append(Long.toString(offset, 0x10)).append(",")
 			.append(size).toString();
 	}

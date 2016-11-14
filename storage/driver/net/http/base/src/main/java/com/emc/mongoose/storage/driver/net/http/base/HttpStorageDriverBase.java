@@ -60,9 +60,9 @@ import java.util.function.Function;
  Created by kurila on 29.07.16.
  Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
-public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends NetStorageDriverBase<I, O>
-implements HttpStorageDriver<I, O> {
+public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+extends NetStorageDriverBase<I, O, R>
+implements HttpStorageDriver<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	

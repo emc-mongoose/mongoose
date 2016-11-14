@@ -2,22 +2,17 @@ package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.load.generator.BasicLoadGenerator;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
-import com.emc.mongoose.model.io.task.BasicMutableDataIoTaskBuilder;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemOutput;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
-import com.emc.mongoose.model.load.LoadType;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.run.BasicLoadGeneratorBuilder;
@@ -30,7 +25,7 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentCon
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -189,7 +184,7 @@ extends JobBase {
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {
 					final Path itemOutputPath = Paths.get(itemOutputFile);
 					final Output itemOutput = new CsvFileItemOutput(itemOutputPath, itemFactory);
-					monitor.setItemOutput(itemOutput);
+					monitor.setItemInfoOutput(itemOutput);
 				}
 				monitor.start();
 				if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {

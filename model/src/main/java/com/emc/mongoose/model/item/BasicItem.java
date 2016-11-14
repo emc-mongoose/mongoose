@@ -9,29 +9,34 @@ import java.io.ObjectOutput;
  */
 public class BasicItem
 implements Item {
-	//
+	
 	protected String name = null;
-	//
+	
 	public BasicItem() {
 	}
-	//
+	
 	public BasicItem(final String value) {
 		if(value == null || value.isEmpty()) {
 			throw new IllegalArgumentException("Empty/null item value");
 		}
 		this.name = value;
 	}
-	//
+	
 	@Override
 	public String toString() {
 		return name;
 	}
-	//
+
+	@Override
+	public String toString(final String itemPath) {
+		return itemPath;
+	}
+
 	@Override
 	public final String getName() {
 		return name;
 	}
-	//
+	
 	@Override
 	public final void setName(final String name) {
 		this.name = name;
@@ -55,7 +60,7 @@ implements Item {
 		}
 		return name.equals(other.name);
 	}
-	//
+	
 	@Override
 	public int hashCode() {
 		return name == null ? 0 : name.hashCode();

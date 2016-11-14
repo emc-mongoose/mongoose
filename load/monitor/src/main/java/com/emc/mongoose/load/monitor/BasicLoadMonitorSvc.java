@@ -28,9 +28,13 @@ import java.util.function.Function;
 /**
  Created by andrey on 05.10.16.
  */
-public final class BasicLoadMonitorSvc<I extends Item, O extends IoTask<I>>
-extends BasicLoadMonitor<I, O>
-implements LoadMonitorSvc<I,O> {
+public final class BasicLoadMonitorSvc<
+	I extends Item,
+	O extends IoTask<I>,
+	R extends IoTask.IoResult
+>
+extends BasicLoadMonitor<I, O, R>
+implements LoadMonitorSvc<R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -43,7 +47,7 @@ implements LoadMonitorSvc<I,O> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name, final LoadGenerator<I, O> loadGenerator,
-		final List<StorageDriver<I, O>> drivers, final LoadConfig loadConfig
+		final List<StorageDriver<I, O, R>> drivers, final LoadConfig loadConfig
 	) {
 		super(name, loadGenerator, drivers, loadConfig);
 	}
@@ -56,7 +60,7 @@ implements LoadMonitorSvc<I,O> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs
 	) {
 		super(name, drivers, loadConfigs);
@@ -71,7 +75,7 @@ implements LoadMonitorSvc<I,O> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
 		final Object2IntMap<LoadGenerator<I, O>> weightMap
 	) {
@@ -79,15 +83,15 @@ implements LoadMonitorSvc<I,O> {
 	}
 
 	@Override
-	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
+	protected void registerDrivers(final List<StorageDriver<I, O, R>> drivers) {
 		final String hostName;
 		try {
 			LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
 			hostName = NetUtil.getHostAddrString();
-			for(final StorageDriver<I, O> nextDriver : drivers) {
+			for(final StorageDriver<I, O, R> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
 					try {
-						((StorageDriverSvc<I, O>) nextDriver).setOutputSvc(hostName, getName());
+						((StorageDriverSvc<I, O, R>) nextDriver).setOutputSvc(hostName, getName());
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,

@@ -25,44 +25,47 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilderSvc<
-	I extends Item, O extends IoTask<I>, T extends StorageDriverSvc<I, O>
-> extends BasicStorageDriverBuilder<I, O, T>
-implements StorageDriverBuilderSvc<I, O, T> {
+	I extends Item,
+	O extends IoTask<I>,
+	R extends IoTask.IoResult,
+	T extends StorageDriverSvc<I, O, R>
+> extends BasicStorageDriverBuilder<I, O, R, T>
+implements StorageDriverBuilderSvc<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setJobName(final String jobName) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setJobName(final String jobName) {
 		super.setJobName(jobName);
 		return this;
 	}
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setContentSource(final ContentSource contentSrc) {
 		super.setContentSource(contentSrc);
 		return this;
 	}
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		super.setItemConfig(itemConfig);
 		return this;
 	}
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setLoadConfig(final LoadConfig loadConfig) {
 		super.setLoadConfig(loadConfig);
 		return this;
 	}
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setStorageConfig(final StorageConfig storageConfig) {
 		super.setStorageConfig(storageConfig);
 		return this;
 	}
 
 	@Override
-	public StorageDriverBuilderSvc<I, O, T> setSocketConfig(final SocketConfig socketConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setSocketConfig(final SocketConfig socketConfig) {
 		super.setSocketConfig(socketConfig);
 		return this;
 	}
@@ -139,7 +142,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException, UserShootHisFootException {
-		final StorageDriver<I, O> driver = build();
+		final StorageDriver<I, O, R> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getContentSource());
 		return wrapper.getName();
 	}

@@ -4,6 +4,7 @@ import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
+import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
@@ -44,9 +45,9 @@ import java.util.function.Function;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>>
-extends NioStorageDriverBase<I, O>
-implements StorageDriver<I, O> {
+public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>, R extends IoTask.IoResult>
+extends NioStorageDriverBase<I, O, R>
+implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final FileSystem FS = FileSystems.getDefault();

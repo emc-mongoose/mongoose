@@ -13,4 +13,6 @@ extends Externalizable {
 	void setName(final String name);
 
 	void reset();
+
+	String toString(final String itemPath);
 }

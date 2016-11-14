@@ -6,6 +6,7 @@ import com.emc.mongoose.model.load.LoadType;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
 /**
  Created by kurila on 20.10.15.
  */
@@ -48,8 +49,8 @@ implements IoTask<I> {
 		reset();
 	}
 
-	public class BasicResult
-	implements Result {
+	public static class BasicIoResult
+	implements IoResult {
 
 		private final LoadType loadType;
 		private final Status status;
@@ -60,10 +61,10 @@ implements IoTask<I> {
 		private final long duration;
 		private final long latency;
 
-		public BasicResult(
+		public BasicIoResult(
 			final LoadType loadType, final Status status, final String storageDriverAddr,
-			final String storageNodeAddr, final String itemInfo, final long reqTimeStart,
-			final long duration, final long latency
+			final String storageNodeAddr, final String itemInfo,
+			final long reqTimeStart, final long duration, final long latency
 		) {
 			this.loadType = loadType;
 			this.status = status;
@@ -115,7 +116,34 @@ implements IoTask<I> {
 			return latency;
 		}
 	}
-	
+
+	protected final String getItemPath() {
+		if(dstPath == null) {
+			if(srcPath != null) {
+				if(srcPath.endsWith(SLASH)) {
+					return srcPath + item.getName();
+				} else {
+					return srcPath + SLASH + item.getName();
+				}
+			}
+		} else {
+			if(dstPath.endsWith(SLASH)) {
+				return dstPath + item.getName();
+			} else {
+				return dstPath + SLASH + item.getName();
+			}
+		}
+		return SLASH + item.getName();
+	}
+
+	@Override
+	public BasicIoResult getIoResult() {
+		return new BasicIoResult(
+			ioType, status, STORAGE_DRIVER_ADDR, nodeAddr, item.toString(getItemPath()),
+			reqTimeStart, respTimeDone - reqTimeStart, respTimeStart - reqTimeDone
+		);
+	}
+
 	@Override
 	public void reset() {
 		item.reset();
@@ -195,14 +223,6 @@ implements IoTask<I> {
 		respTimeDone = System.nanoTime() / 1000;
 	}
 
-	@Override
-	public Result getResult() {
-		return new BasicResult(
-			ioType, status, nodeAddr, nodeAddr, item.toString(), reqTimeStart,
-			respTimeDone - reqTimeStart, respTimeStart - reqTimeDone
-		);
-	}
-
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
@@ -214,22 +234,10 @@ implements IoTask<I> {
 	public String toString() {
 		final StringBuilder strb = STRB.get();
 		strb.setLength(0);
-		final long respLatency = getLatency();
-		final long reqDuration = getDuration();
 		return strb
-			.append(ioType.ordinal()).append(',')
-			.append(
-				dstPath == null ?
-					item.getName() :
-					dstPath.endsWith(SLASH) ?
-						dstPath + item.getName() :
-						dstPath + SLASH + item.getName()
-			)
-			.append(',')
-			.append(status.code).append(',')
-			.append(reqTimeStart).append(',')
-			.append(respLatency > 0 ? respLatency : 0).append(',')
-			.append(reqDuration)
+			.append(ioType.name()).append(',')
+			.append(item.toString()).append(',')
+			.append(dstPath).append(',')
 			.toString();
 	}
 	
@@ -239,12 +247,6 @@ implements IoTask<I> {
 		out.writeObject(ioType);
 		out.writeObject(item);
 		out.writeObject(dstPath);
-		out.writeObject(nodeAddr);
-		out.writeObject(status);
-		out.writeLong(reqTimeStart);
-		out.writeLong(reqTimeDone);
-		out.writeLong(respTimeStart);
-		out.writeLong(respTimeDone);
 	}
 	
 	@Override
@@ -253,12 +255,6 @@ implements IoTask<I> {
 		ioType = (LoadType) in.readObject();
 		item = (I) in.readObject();
 		dstPath = (String) in.readObject();
-		nodeAddr = (String) in.readObject();
-		status = (Status) in.readObject();
-		reqTimeStart = in.readLong();
-		reqTimeDone = in.readLong();
-		respTimeStart = in.readLong();
-		respTimeDone = in.readLong();
 	}
 
 	@Override

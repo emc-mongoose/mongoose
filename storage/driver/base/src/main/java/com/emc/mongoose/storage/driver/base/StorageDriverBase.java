@@ -28,11 +28,10 @@ import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 11.07.16.
- This mock just passes the submitted tasks to the load monitor em
  */
-public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
 extends DaemonBase
-implements StorageDriver<I, O>, Runnable {
+implements StorageDriver<I, O, R>, Runnable {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
@@ -79,7 +78,7 @@ implements StorageDriver<I, O>, Runnable {
 		}
 	};
 
-	private volatile Output<O> ioTaskOutput = null;
+	private volatile Output<R> ioTaskResultOutput = null;
 	private final IoBuffer<O> ioTaskBuff;
 	private final boolean isCircular;
 	protected final String jobName;
@@ -110,35 +109,12 @@ implements StorageDriver<I, O>, Runnable {
 	}
 
 	@Override
-	public final void setOutput(final Output<O> ioTaskOutput)
+	public final void setOutput(final Output<R> ioTaskResultOutput)
 	throws IllegalStateException {
-		this.ioTaskOutput = ioTaskOutput;
-	}
-
-	// prepend the path to the item name
-	private void setItemPath(final O ioTask) {
-		final String dstPath = ioTask.getDstPath();
-		final I item = ioTask.getItem();
-		if(dstPath == null) {
-			final String srcPath = ioTask.getSrcPath();
-			if(srcPath != null && !srcPath.isEmpty()) {
-				if(srcPath.endsWith(SLASH)) {
-					item.setName(srcPath + item.getName());
-				} else {
-					item.setName(srcPath + SLASH + item.getName());
-				}
-			}
-		} else {
-			if(dstPath.endsWith(SLASH)) {
-				item.setName(dstPath + item.getName());
-			} else {
-				item.setName(dstPath + SLASH + item.getName());
-			}
-		}
+		this.ioTaskResultOutput = ioTaskResultOutput;
 	}
 
 	protected final void ioTaskCompleted(final O ioTask) {
-		setItemPath(ioTask);
 		try {
 			ioTaskBuff.put(ioTask);
 		} catch(final IOException e) {
@@ -149,11 +125,6 @@ implements StorageDriver<I, O>, Runnable {
 	}
 	
 	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
-
-		for(int i = from; i < to; i++) {
-			setItemPath(ioTasks.get(i));
-		}
-
 		try {
 			for(int i = from; i < to; i += ioTaskBuff.put(ioTasks, i, to)) {
 				LockSupport.parkNanos(1);
@@ -163,7 +134,6 @@ implements StorageDriver<I, O>, Runnable {
 				LOG, Level.WARN, e, "Failed to put {} I/O tasks to the output buffer", to - from
 			);
 		}
-
 		return to - from;
 	}
 
@@ -172,15 +142,26 @@ implements StorageDriver<I, O>, Runnable {
 	public final void run() {
 		try {
 			final int n = ioTaskBuff.get(ioTasks, BATCH_SIZE);
-			if(ioTaskOutput != null) {
-				for(int i = 0; i < n; i += ioTaskOutput.put(ioTasks, 0, n)) {
-					LockSupport.parkNanos(1);
+			if(n > 0) {
+				final List<R> ioTaskResults = new ArrayList<>();
+				O nextIoTask;
+				for(int i = 0; i < n; i ++) {
+					nextIoTask = ioTasks.get(i);
+					ioTaskResults.add(nextIoTask.getIoResult());
+					nextIoTask.reset();
 				}
-			}
-			if(isCircular) {
-				for(int i = 0; i < n; i += put(ioTasks, 0, n)) {
-					LockSupport.parkNanos(1);
+				if(ioTaskResultOutput != null) {
+					for(int i = 0; i < n; i += ioTaskResultOutput.put(ioTaskResults, 0, n)) {
+						LockSupport.parkNanos(1);
+					}
 				}
+				if(isCircular) {
+					for(int i = 0; i < n; i += put(ioTasks, 0, n)) {
+						LockSupport.parkNanos(1);
+					}
+				}
+			} else {
+				LockSupport.parkNanos(1);
 			}
 		} catch(final IOException e) {
 			if(!isInterrupted() && !isClosed()) {
@@ -198,7 +179,7 @@ implements StorageDriver<I, O>, Runnable {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		DISPATCH_TASKS.remove(toString());
-		ioTaskOutput = null;
+		ioTaskResultOutput = null;
 	}
 	
 	@Override

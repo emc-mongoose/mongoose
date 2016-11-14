@@ -25,9 +25,9 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 19.07.16.
  The multi-threaded non-blocking I/O storage driver.
  */
-public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends StorageDriverBase<I, O>
-implements StorageDriver<I, O> {
+public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+extends StorageDriverBase<I, O, R>
+implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 

@@ -1,10 +1,12 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadType;
 
 import java.io.Externalizable;
 import java.io.Serializable;
+
 /**
  Created by kurila on 11.07.16.
  */
@@ -12,6 +14,7 @@ public interface IoTask<I extends Item>
 extends Externalizable {
 
 	String SLASH = "/";
+	String STORAGE_DRIVER_ADDR = ServiceUtil.getHostAddr();
 
 	enum Status {
 
@@ -40,7 +43,7 @@ extends Externalizable {
 		}
 	}
 
-	interface Result
+	interface IoResult
 	extends Serializable {
 
 		LoadType getLoadType();
@@ -88,7 +91,7 @@ extends Externalizable {
 
 	void finishResponse();
 
-	Result getResult();
+	<R extends IoResult> R getIoResult();
 
 	void reset();
 }

@@ -78,22 +78,36 @@ implements MutableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static final ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
-	@Override
-	public synchronized String toString() {
-		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
-		if(strBuilder == null) {
-			strBuilder = new StringBuilder();
-			THR_LOCAL_STR_BUILDER.set(strBuilder);
-		} else {
-			strBuilder.setLength(0); // reset
+	private static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
+		@Override
+		protected final StringBuilder initialValue() {
+			return new StringBuilder();
 		}
-		return strBuilder
+	};
+
+	@Override
+	public String toString() {
+		final StringBuilder strb = STRB.get();
+		strb.setLength(0); // reset
+		return strb
 			.append(super.toString()).append(',')
 			.append(Integer.toHexString(layerNum)).append('/')
 			.append(
 				maskRangesRead.isEmpty() ?
 					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesRead.toByteArray())
+			).toString();
+	}
+
+	@Override
+	public String toString(final String itemPath) {
+		final StringBuilder strb = STRB.get();
+		strb.setLength(0); // reset
+		return strb
+			.append(super.toString(itemPath)).append(',')
+			.append(Integer.toHexString(layerNum)).append('/')
+			.append(
+				maskRangesRead.isEmpty() ?
+				STR_EMPTY_MASK : Hex.encodeHexString(maskRangesRead.toByteArray())
 			).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

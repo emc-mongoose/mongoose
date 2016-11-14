@@ -44,14 +44,14 @@ import java.util.function.Function;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
 extends DaemonBase
-implements LoadMonitor<I, O> {
+implements LoadMonitor<R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
-	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers;
+	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers;
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -63,7 +63,7 @@ implements LoadMonitor<I, O> {
 	private volatile Map<LoadType, IoStats.Snapshot> lastStats = new ConcurrentHashMap<>();
 	private final Function<LoadType, IoStats> ioStatsInitFunc;
 	private final LongAdder counterResults = new LongAdder();
-	private volatile Output<I> itemOutput;
+	private volatile Output<String> itemInfoOutput;
 	private final int totalConcurrency;
 
 	/**
@@ -75,11 +75,11 @@ implements LoadMonitor<I, O> {
 	 */
 	public BasicLoadMonitor(
 		final String name, final LoadGenerator<I, O> loadGenerator,
-		final List<StorageDriver<I, O>> drivers, final LoadConfig loadConfig
+		final List<StorageDriver<I, O, R>> drivers, final LoadConfig loadConfig
 	) {
 		this(
 			name,
-			new HashMap<LoadGenerator<I, O>, List<StorageDriver<I, O>>>() {{
+			new HashMap<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>>() {{
 				put(loadGenerator, drivers);
 			}},
 			new HashMap<LoadGenerator<I, O>, LoadConfig>() {{
@@ -97,7 +97,7 @@ implements LoadMonitor<I, O> {
 	 */
 	public BasicLoadMonitor(
 		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs
 	) {
 		this(name, drivers, loadConfigs, null);
@@ -112,7 +112,7 @@ implements LoadMonitor<I, O> {
 	 */
 	public BasicLoadMonitor(
 		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> drivers,
+		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
 		final Object2IntMap<LoadGenerator<I, O>> weightMap
 	) {
@@ -145,8 +145,8 @@ implements LoadMonitor<I, O> {
 
 		this.drivers = drivers;
 		int concurrencySum = 0;
-		for(final List<StorageDriver<I, O>> nextDrivers : drivers.values()) {
-			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
+		for(final List<StorageDriver<I, O, R>> nextDrivers : drivers.values()) {
+			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
 				try {
 					concurrencySum += nextDriver.getConcurrencyLevel();
 				} catch(final RemoteException ignored) {
@@ -183,8 +183,8 @@ implements LoadMonitor<I, O> {
 		UNCLOSED.add(this);
 	}
 
-	protected void registerDrivers(final List<StorageDriver<I, O>> drivers) {
-		for(final StorageDriver<I, O> nextDriver : drivers) {
+	protected void registerDrivers(final List<StorageDriver<I, O, R>> drivers) {
+		for(final StorageDriver<I, O, R> nextDriver : drivers) {
 			try {
 				nextDriver.setOutput(this);
 			} catch(final RemoteException ignored) {
@@ -297,7 +297,7 @@ implements LoadMonitor<I, O> {
 				);
 			}
 			
-			for(final StorageDriver<I, O> nextStorageDriver : drivers.get(nextLoadGenerator)) {
+			for(final StorageDriver<I, O, R> nextStorageDriver : drivers.get(nextLoadGenerator)) {
 				try {
 					if(
 						!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
@@ -326,33 +326,31 @@ implements LoadMonitor<I, O> {
 	
 	
 	@Override
-	public void put(final O ioTask) {
+	public void put(final R ioTaskResult) {
+
 		if(isInterrupted() || isClosed()) {
 			return;
 		}
-		final I item = ioTask.getItem();
-		final LoadType ioType = ioTask.getLoadType();
-		final IoTask.Status status = ioTask.getStatus();
-		final String nodeAddr = ioTask.getNodeAddr();
-		final int reqDuration = ioTask.getDuration();
-		final int respLatency = ioTask.getLatency();
-		final int respDataLatency;
+
+		final LoadType ioType = ioTaskResult.getLoadType();
+		final IoTask.Status status = ioTaskResult.getStatus();
+		final String itemInfo = ioTaskResult.getItemInfo();
+		final long reqDuration = ioTaskResult.getDuration();
+		final long respLatency = ioTaskResult.getLatency();
 		final long countBytesDone;
-		if(ioTask instanceof DataIoTask) {
-			final DataIoTask dataIoTask = (DataIoTask) ioTask;
-			respDataLatency = dataIoTask.getDataLatency();
-			countBytesDone = dataIoTask.getCountBytesDone();
+		if(ioTaskResult instanceof DataIoTask.DataIoResult) {
+			final DataIoTask.DataIoResult dataIoTaskResult = (DataIoTask.DataIoResult) ioTaskResult;
+			countBytesDone = dataIoTaskResult.getCountBytesDone();
 		} else {
-			respDataLatency = 0;
 			countBytesDone = 0;
 		}
 		
-		// perf trace logging
+		// I/O trace logging
 		if(!metricsConfig.getPrecondition()) {
-			logTrace(
-				ioType, nodeAddr, item, status, ioTask.getReqTimeStart(), reqDuration,
-				respLatency, countBytesDone, respDataLatency
-			);
+			/*logTrace(
+				ioType, driverAddr, nodeAddr, itemInfo, status, ioTaskResult.getTimeStart(),
+				reqDuration, respLatency, countBytesDone, respDataLatency
+			);*/
 		}
 		
 		final IoStats loadTypeStats = ioStats.computeIfAbsent(ioType, ioStatsInitFunc);
@@ -368,7 +366,7 @@ implements LoadMonitor<I, O> {
 
 			// put into the output buffer
 			try {
-				itemOutput.put(item);
+				itemInfoOutput.put(itemInfo);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
@@ -387,7 +385,7 @@ implements LoadMonitor<I, O> {
 	}
 
 	@Override
-	public int put(final List<O> ioTasks, final int from, final int to) {
+	public int put(final List<R> ioTaskResults, final int from, final int to) {
 
 		final int n;
 		if(isInterrupted() || isClosed()) {
@@ -398,51 +396,49 @@ implements LoadMonitor<I, O> {
 
 		if(n > 0) {
 
-			O ioTask;
-			DataIoTask dataIoTask;
-			I item;
+			R ioTaskResult;
+			DataIoTask.DataIoResult dataIoTaskResult;
 			IoTask.Status status;
-			String nodeAddr;
-			int reqDuration, respLatency, respDataLatency = -1;
+			String itemInfo;
+			long reqDuration;
+			long respLatency;
 			long countBytesDone = 0;
-			ioTask = ioTasks.get(from);
-			final boolean isDataTransferred = ioTask instanceof DataIoTask;
+			ioTaskResult = ioTaskResults.get(from);
+			final boolean isDataTransferred = ioTaskResult instanceof DataIoTask.DataIoResult;
 			final boolean preconditionFlag = metricsConfig.getPrecondition();
 			LoadType ioType;
 			IoStats loadTypeStats, loadTypeMedStats;
 
-			final List<I> itemsToPass = itemOutput == null ? null : new ArrayList<>(n);
+			final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
 
 			for(int i = from; i < to; i ++) {
 				if(i > from) {
-					ioTask = ioTasks.get(i);
+					ioTaskResult = ioTaskResults.get(i);
 				}
-				item = ioTask.getItem();
-				status = ioTask.getStatus();
-				nodeAddr = ioTask.getNodeAddr();
-				reqDuration = ioTask.getDuration();
-				respLatency = ioTask.getLatency();
+				itemInfo = ioTaskResult.getItemInfo();
+				status = ioTaskResult.getStatus();
+				reqDuration = ioTaskResult.getDuration();
+				respLatency = ioTaskResult.getLatency();
 				if(isDataTransferred) {
-					dataIoTask = (DataIoTask) ioTask;
-					respDataLatency = dataIoTask.getDataLatency();
-					countBytesDone = dataIoTask.getCountBytesDone();
+					dataIoTaskResult = (DataIoTask.DataIoResult) ioTaskResult;
+					countBytesDone = dataIoTaskResult.getCountBytesDone();
 				}
 
 				// perf trace logging
-				ioType = ioTask.getLoadType();
+				ioType = ioTaskResult.getLoadType();
 				if(!preconditionFlag) {
-					logTrace(
-						ioType, nodeAddr, item, status, ioTask.getReqTimeStart(),
+					/*logTrace(
+						ioType, driverAddr, nodeAddr, itemInfo, status, ioTaskResult.getTimeStart(),
 						reqDuration, respLatency, countBytesDone, respDataLatency
-					);
+					);*/
 				}
 				
 				loadTypeStats = ioStats.computeIfAbsent(ioType, ioStatsInitFunc);
 				loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
 				
 				if(IoTask.Status.SUCC == status) {
-					if(itemOutput != null) {
-						itemsToPass.add(item);
+					if(itemInfoOutput != null) {
+						itemsToPass.add(itemInfo);
 					}
 					// update the metrics with success
 					if(respLatency > 0 && respLatency > reqDuration) {
@@ -463,16 +459,16 @@ implements LoadMonitor<I, O> {
 				}
 			}
 
-			if(itemOutput != null) {
+			if(itemInfoOutput != null) {
 				final int itemsToPassCount = itemsToPass.size();
 				try {
 					for(
 						int i = 0; i < itemsToPassCount;
-						i += itemOutput.put(itemsToPass, i, itemsToPassCount)
+						i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
 					);
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to output {} items to {}",
-						itemsToPassCount, itemOutput
+						itemsToPassCount, itemInfoOutput
 					);
 				}
 			}
@@ -484,13 +480,13 @@ implements LoadMonitor<I, O> {
 	}
 	
 	@Override
-	public int put(final List<O> buffer)
+	public int put(final List<R> ioTaskResults)
 	throws IOException {
-		return put(buffer, 0, buffer.size());
+		return put(ioTaskResults, 0, ioTaskResults.size());
 	}
 	
 	@Override
-	public Input<O> getInput()
+	public Input<R> getInput()
 	throws IOException {
 		return null;
 	}
@@ -503,9 +499,9 @@ implements LoadMonitor<I, O> {
 			}
 		};
 	private void logTrace(
-		final LoadType ioType, final String nodeAddr, final I item, final IoTask.Status status,
-		final long reqTimeStart, final long reqDuration, final int respLatency,
-		final long countBytesDone, final int respDataLatency
+		final LoadType ioType, final String driverAddr, final String nodeAddr, final I item,
+		final IoTask.Status status, final long reqTimeStart, final long reqDuration,
+		final int respLatency, final long countBytesDone, final int respDataLatency
 	) {
 		if(LOG.isInfoEnabled(Markers.IO_TRACE)) {
 			final StringBuilder strBuilder = IO_TRACE_MSG_BUILDER.get();
@@ -533,9 +529,8 @@ implements LoadMonitor<I, O> {
 		return name;
 	}
 	
-	@Override
-	public final void setItemOutput(final Output<I> itemOutput) {
-		this.itemOutput = itemOutput;
+	public final void setItemInfoOutput(final Output<String> itemInfoOutput) {
+		this.itemInfoOutput = itemInfoOutput;
 	}
 
 	@Override
@@ -544,7 +539,7 @@ implements LoadMonitor<I, O> {
 		
 		for(final LoadGenerator<I, O> nextGenerator : drivers.keySet()) {
 			
-			final List<StorageDriver<I, O>> nextGeneratorDrivers = drivers.get(nextGenerator);
+			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = drivers.get(nextGenerator);
 			
 			try {
 				nextGeneratorDrivers.get(0).configureStorage();
@@ -552,7 +547,7 @@ implements LoadMonitor<I, O> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Preconditions failure");
 			}
 			
-			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
+			for(final StorageDriver<I, O, R> nextDriver : nextGeneratorDrivers) {
 				try {
 					nextDriver.start();
 				} catch(final RemoteException e) {
@@ -596,7 +591,7 @@ implements LoadMonitor<I, O> {
 				);
 			}
 			
-			for(final StorageDriver<I, O> nextDriver : drivers.get(nextGenerator)) {
+			for(final StorageDriver<I, O, R> nextDriver : drivers.get(nextGenerator)) {
 				try {
 					nextDriver.shutdown();
 				} catch(final RemoteException e) {
@@ -612,8 +607,8 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final List<StorageDriver<I, O>> nextDrivers : drivers.values()) {
-			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
+		for(final List<StorageDriver<I, O, R>> nextDrivers : drivers.values()) {
+			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
 				try {
 					nextDriver.interrupt();
 				} catch(final RemoteException e) {
@@ -681,7 +676,7 @@ implements LoadMonitor<I, O> {
 				);
 			}
 			
-			for(final StorageDriver<I, O> driver : drivers.get(generator)) {
+			for(final StorageDriver<I, O, R> driver : drivers.get(generator)) {
 				try {
 					driver.close();
 				} catch(final IOException e) {
@@ -711,8 +706,8 @@ implements LoadMonitor<I, O> {
 			medIoStats.clear();
 		}
 		
-		if(itemOutput != null) {
-			itemOutput.close();
+		if(itemInfoOutput != null) {
+			itemInfoOutput.close();
 		}
 		UNCLOSED.remove(this);
 	}

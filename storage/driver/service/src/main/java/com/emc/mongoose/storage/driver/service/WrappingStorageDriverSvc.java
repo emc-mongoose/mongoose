@@ -23,16 +23,19 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 05.10.16.
  */
-public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
-implements StorageDriverSvc<I, O> {
+public final class WrappingStorageDriverSvc<
+	I extends Item,
+	O extends IoTask<I>,
+	R extends IoTask.IoResult>
+implements StorageDriverSvc<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private final StorageDriver<I, O> driver;
+	private final StorageDriver<I, O, R> driver;
 	private final ContentSource contentSrc;
 
 	public WrappingStorageDriverSvc(
-		final StorageDriver<I, O> driver, final ContentSource contentSrc
+		final StorageDriver<I, O, R> driver, final ContentSource contentSrc
 	) {
 		this.driver = driver;
 		this.contentSrc = contentSrc;
@@ -54,7 +57,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final void setOutputSvc(final String addr, final String svcName)
 	throws RemoteException {
-		final Output<O> ioTaskOutputSvc = ServiceUtil.resolve(addr, svcName);
+		final Output<R> ioTaskOutputSvc = ServiceUtil.resolve(addr, svcName);
 		LOG.info(Markers.MSG, "Connected the service \"{}\" @ {}", svcName, addr);
 		driver.setOutput(ioTaskOutputSvc);
 	}
@@ -167,7 +170,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final void setOutput(final Output<O> ioTaskOutput)
+	public final void setOutput(final Output<R> ioTaskOutput)
 	throws RemoteException {
 		throw new RemoteException();
 	}

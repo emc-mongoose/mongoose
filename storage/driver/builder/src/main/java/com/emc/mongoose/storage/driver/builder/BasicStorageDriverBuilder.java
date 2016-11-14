@@ -23,8 +23,8 @@ import org.apache.logging.log4j.Logger;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilder<
-	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
-> implements StorageDriverBuilder<I, O, T> {
+	I extends Item, O extends IoTask<I>, R extends IoTask.IoResult, T extends StorageDriver<I, O, R>
+> implements StorageDriverBuilder<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -61,37 +61,37 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public StorageDriverBuilder<I, O, T> setJobName(final String jobName) {
+	public BasicStorageDriverBuilder<I, O, R, T> setJobName(final String jobName) {
 		this.jobName = jobName;
 		return this;
 	}
 	
 	@Override
-	public StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc) {
+	public BasicStorageDriverBuilder<I, O, R, T> setContentSource(final ContentSource contentSrc) {
 		this.contentSrc = contentSrc;
 		return this;
 	}
 
 	@Override
-	public StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 	
 	@Override
-	public StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 	
 	@Override
-	public StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
 	}
 	
 	@Override
-	public StorageDriverBuilder<I, O, T> setSocketConfig(final SocketConfig socketConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setSocketConfig(final SocketConfig socketConfig) {
 		this.socketConfig = socketConfig;
 		return this;
 	}

@@ -11,7 +11,7 @@ import java.rmi.RemoteException;
 /**
  Created on 11.07.16.
  */
-public interface StorageDriver<I extends Item, O extends IoTask<I>>
+public interface StorageDriver<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
 extends Daemon, Output<O>, Remote {
 	
 	boolean configureStorage()
@@ -20,7 +20,7 @@ extends Daemon, Output<O>, Remote {
 	int getConcurrencyLevel()
 	throws RemoteException;
 	
-	void setOutput(final Output<O> ioTaskOutput)
+	void setOutput(final Output<R> ioTaskResultOutput)
 	throws RemoteException;
 
 	boolean isIdle()

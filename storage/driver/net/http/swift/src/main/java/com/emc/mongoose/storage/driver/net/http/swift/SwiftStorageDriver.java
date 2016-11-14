@@ -28,8 +28,8 @@ import java.rmi.RemoteException;
 /**
  Created by andrey on 07.10.16.
  */
-public class SwiftStorageDriver<I extends Item, O extends IoTask<I>>
-extends HttpStorageDriverBase<I, O> {
+public class SwiftStorageDriver<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+extends HttpStorageDriverBase<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 

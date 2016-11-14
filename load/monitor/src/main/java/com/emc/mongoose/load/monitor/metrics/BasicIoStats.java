@@ -399,7 +399,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public void markSucc(final long size, final int duration, final int latency) {
+	public void markSucc(final long size, final long duration, final long latency) {
 		throughputSuccess.mark();
 		reqBytes.mark(size);
 		if(duration > 0) {

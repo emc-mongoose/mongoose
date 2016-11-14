@@ -8,10 +8,10 @@ import com.emc.mongoose.model.item.DataItem;
 public interface DataIoTask<D extends DataItem>
 extends IoTask<D> {
 
-	interface Result
-	extends IoTask.Result {
+	interface DataIoResult
+	extends IoResult {
 
-		int getRespDataLatency();
+		long getDataLatency();
 
 		long getCountBytesDone();
 	}
@@ -22,8 +22,8 @@ extends IoTask<D> {
 	long getCountBytesDone();
 
 	void setCountBytesDone(long n);
-	
-	void startDataResponse();
 
-	int getDataLatency();
+	boolean isResponseDataStarted();
+
+	void startDataResponse();
 }

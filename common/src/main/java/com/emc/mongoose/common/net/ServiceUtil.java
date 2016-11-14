@@ -59,10 +59,7 @@ public abstract class ServiceUtil {
 
 	public static URI getLocalSvcUri(final String svcName)
 	throws URISyntaxException {
-		String hostName = System.getProperty(KEY_RMI_HOSTNAME);
-		if(hostName == null) {
-			hostName = getHostAddr();
-		}
+		final String hostName = getHostAddr();
 		return new URI(RMI_SCHEME, null, hostName, REGISTRY_PORT, "/" + svcName, null, null);
 	}
 
@@ -72,8 +69,13 @@ public abstract class ServiceUtil {
 	}
 
 	public static String getHostAddr() {
+
+		String hostName = System.getProperty(KEY_RMI_HOSTNAME);
+		if(hostName != null) {
+			return hostName;
+		}
+
 		InetAddress addr = null;
-		//
 		try {
 			final Enumeration<NetworkInterface> netIfaces = NetworkInterface.getNetworkInterfaces();
 			NetworkInterface nextNetIface;

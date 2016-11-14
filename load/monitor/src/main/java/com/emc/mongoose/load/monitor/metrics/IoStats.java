@@ -23,7 +23,7 @@ extends Closeable {
 	void start();
 	boolean isStarted();
 
-	void markSucc(final long size, final int duration, final int latency);
+	void markSucc(final long size, final long duration, final long latency);
 	void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	);
