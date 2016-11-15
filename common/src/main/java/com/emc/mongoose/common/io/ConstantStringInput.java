@@ -34,8 +34,9 @@ implements Input<String> {
 	}
 
 	@Override
-	public void skip(final long count)
+	public long skip(final long count)
 	throws IOException {
+		return 0;
 	}
 
 	@Override

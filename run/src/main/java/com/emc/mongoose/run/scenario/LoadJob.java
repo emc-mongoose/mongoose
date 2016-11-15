@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.TextFileOutput;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
@@ -183,7 +184,7 @@ extends JobBase {
 				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 				if(itemOutputFile != null && itemOutputFile.length() > 0) {
 					final Path itemOutputPath = Paths.get(itemOutputFile);
-					final Output itemOutput = new CsvFileItemOutput(itemOutputPath, itemFactory);
+					final Output<String> itemOutput = new TextFileOutput(itemOutputPath);
 					monitor.setItemInfoOutput(itemOutput);
 				}
 				monitor.start();

@@ -47,8 +47,9 @@ implements Input<D> {
 	 * @throws IOException doesn't throw
 	 */
 	@Override
-	public void skip(final long itemsCount)
+	public long skip(final long itemsCount)
 	throws IOException {
+		return idInput.skip(itemsCount);
 	}
 	
 	@Override

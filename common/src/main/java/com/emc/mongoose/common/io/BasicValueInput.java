@@ -52,7 +52,7 @@ implements Input<T> {
 	}
 	
 	@Override
-	public void skip(final long count)
+	public long skip(final long count)
 	throws IOException {
 		try {
 			for(int i = 0; i < count; i++) {
@@ -61,6 +61,7 @@ implements Input<T> {
 		} catch(final Exception e) {
 			throw new IOException("Failed to execute the update action \"{" + updateAction + "\"}");
 		}
+		return count;
 	}
 	
 	@Override

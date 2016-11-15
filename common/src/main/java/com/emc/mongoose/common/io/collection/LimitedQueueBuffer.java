@@ -93,16 +93,18 @@ implements IoBuffer<T> {
 	}
 	
 	@Override
-	public void skip(final long itemsCount)
+	public long skip(final long itemsCount)
 	throws IOException {
 		try {
 			T item;
-			for(int i = 0; i < itemsCount; i++) {
+			int i = 0;
+			for(; i < itemsCount; i++) {
 				item = queue.take();
 				if(item.equals(lastItem)) {
-					return;
+					break;
 				}
 			}
+			return i;
 		} catch (final InterruptedException e) {
 			throw new InterruptedIOException(e.getMessage());
 		}

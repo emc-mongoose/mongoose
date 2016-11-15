@@ -37,7 +37,7 @@ extends Closeable {
 	 * @param count count of items should be skipped from the input stream
 	 * @throws IOException if failed to skip such amount of bytes
 	 */
-	void skip(final long count)
+	long skip(final long count)
 	throws IOException;
 
 	/**

@@ -92,7 +92,7 @@ implements Input<T> {
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	public void skip(final long itemsCount)
+	public long skip(final long itemsCount)
 	throws IOException {
 		try {
 			Object o;
@@ -103,18 +103,19 @@ implements Input<T> {
 					srcBuff = Arrays.asList((T[]) o);
 					if(srcBuff.size() > itemsCount - i) {
 						srcFrom = (int) (itemsCount - i);
-						return;
+						break;
 					} else {
 						i += srcBuff.size();
 						srcBuff = null;
 					}
 				} else {
 					if(o.equals(lastItem)) {
-						return;
+						break;
 					}
 					i ++;
 				}
 			}
+			return i;
 		} catch(final ClassNotFoundException e) {
 			throw new IOException(e);
 		}

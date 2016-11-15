@@ -109,7 +109,6 @@ implements HttpStorageDriver<I, O, R> {
 		}
 	}
 
-	private final AtomicLong counter = new AtomicLong(0);
 	@Override
 	public void channelCreated(final Channel channel)
 	throws Exception {

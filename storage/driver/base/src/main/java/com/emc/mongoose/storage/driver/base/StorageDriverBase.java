@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
-import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.common.io.Input;

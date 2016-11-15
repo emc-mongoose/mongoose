@@ -45,17 +45,13 @@ implements Input<I> {
 	}
 	//
 	@Override
-	public void skip(final long itemsCount)
+	public long skip(final long itemsCount)
 	throws IOException {
-		String item;
-		for(int i = 0; i < itemsCount; i++) {
-			item = itemsSrc.readLine();
-			if(item == null) {
-				throw new IOException("Couldn't skip such amount of data items");
-			} else if(item.equals(lastItem.toString())) {
-				return;
-			}
+		long i = 0;
+		while(i < itemsCount && null != itemsSrc.readLine()) {
+			i ++;
 		}
+		return i;
 	}
 	//
 	@Override

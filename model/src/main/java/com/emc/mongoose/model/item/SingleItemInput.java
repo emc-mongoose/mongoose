@@ -30,7 +30,8 @@ implements Input<T> {
 	}
 	
 	@Override
-	public final void skip(final long count) {
+	public final long skip(final long count) {
+		return count;
 	}
 	
 	@Override

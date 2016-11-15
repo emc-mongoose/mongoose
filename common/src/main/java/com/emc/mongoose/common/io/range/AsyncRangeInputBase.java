@@ -114,9 +114,9 @@ implements Initializable, RangeInput<T> {
 	}
 
 	@Override
-	public final void skip(final long count)
+	public final long skip(final long count)
 	throws IOException {
-		input.skip(count);
+		return input.skip(count);
 	}
 
 	@Override

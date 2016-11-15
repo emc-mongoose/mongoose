@@ -182,7 +182,7 @@ implements PatternDefinedInput {
 	}
 	//
 	@Override
-	public final void skip(final long count) {
+	public final long skip(final long count) {
 		if(inputs != null) {
 			try {
 				for(int i = 0; i < inputs.length; i++) {
@@ -191,6 +191,7 @@ implements PatternDefinedInput {
 			} catch(final IOException ignored) {
 			}
 		}
+		return count;
 	}
 	//
 	@Override

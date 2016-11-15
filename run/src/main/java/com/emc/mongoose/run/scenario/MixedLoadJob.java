@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.TextFileOutput;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
@@ -8,7 +9,6 @@ import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
-import com.emc.mongoose.model.item.CsvFileItemOutput;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
@@ -207,7 +207,7 @@ extends JobBase {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {
 				final Path itemOutputPath = Paths.get(itemOutputFile);
-				final Output itemOutput = new CsvFileItemOutput(itemOutputPath, null); // NOTE: using null as an ItemFactory
+				final Output<String> itemOutput = new TextFileOutput(itemOutputPath); // NOTE: using null as an ItemFactory
 				monitor.setItemInfoOutput(itemOutput);
 			}
 			monitor.start();

@@ -112,8 +112,9 @@ implements Input<S> {
 	}
 	
 	@Override
-	public final void skip(final long count) {
+	public final long skip(final long count) {
 		rrc.addAndGet((int) (count % Integer.MAX_VALUE));
+		return count;
 	}
 	
 	@Override

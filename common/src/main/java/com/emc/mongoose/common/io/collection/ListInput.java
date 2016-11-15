@@ -68,11 +68,16 @@ implements Input<T> {
 	}
 
 	@Override
-	public void skip(final long itemsCount)
+	public long skip(final long itemsCount)
 	throws IOException {
-		if(size < itemsCount)
-			throw new IOException();
-		i = (int) itemsCount;
+		final int remainingCount = size - i;
+		if(itemsCount > remainingCount) {
+			i = 0;
+			return remainingCount;
+		} else {
+			i += (int) itemsCount;
+			return itemsCount;
+		}
 	}
 
 	/**

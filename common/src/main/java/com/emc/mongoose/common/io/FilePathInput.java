@@ -87,10 +87,11 @@ implements Input<String> {
 	}
 	//
 	@Override
-	public void skip(final long count) {
+	public long skip(final long count) {
 		for(long i = 0; i < count; i ++) {
 			RANDOM.nextInt(depth);
 		}
+		return count;
 	}
 	//
 	@Override
