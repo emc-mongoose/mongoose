@@ -443,8 +443,8 @@ implements LoadMonitor<R> {
 					// update the metrics with success
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.warn(
-							Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
-							reqDuration
+							Markers.ERR, "{}: latency {} is more than duration: {}", this.getName(),
+							respLatency, reqDuration
 						);
 					}
 					loadTypeStats.markSucc(countBytesDone, reqDuration, respLatency);

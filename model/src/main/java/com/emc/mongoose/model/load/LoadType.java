@@ -8,19 +8,19 @@ import java.util.Map;
  Created by kurila on 11.07.16.
  */
 public enum LoadType {
-	//
+	
 	CREATE,
 	READ,
 	UPDATE,
 	DELETE;
-	//
+
 	public static Map<LoadType, Integer> getMixedLoadWeights(final List<String> patterns)
 	throws IllegalArgumentException {
-		//
+		
 		if(patterns == null || patterns.size() < 2) {
 			throw new IllegalArgumentException("Load type patterns is null/empty/single");
 		}
-		//
+		
 		String parts[], tailPart;
 		LoadType loadType;
 		int loadWeight;
@@ -40,7 +40,7 @@ public enum LoadType {
 			}
 			loadWeights.put(loadType, loadWeight);
 		}
-		//
+		
 		return loadWeights;
 	}
 }

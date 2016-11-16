@@ -140,9 +140,10 @@ implements StorageDriver<I, O, R>, Runnable {
 	@Override
 	public final void run() {
 		try {
+			ioTasks.clear();
 			final int n = ioTaskBuff.get(ioTasks, BATCH_SIZE);
 			if(n > 0) {
-				final List<R> ioTaskResults = new ArrayList<>();
+				final List<R> ioTaskResults = new ArrayList<>(n);
 				O nextIoTask;
 				for(int i = 0; i < n; i ++) {
 					nextIoTask = ioTasks.get(i);

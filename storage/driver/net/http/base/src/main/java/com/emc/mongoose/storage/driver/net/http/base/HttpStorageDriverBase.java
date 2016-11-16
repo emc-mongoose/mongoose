@@ -42,6 +42,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -296,7 +297,10 @@ implements HttpStorageDriver<I, O, R> {
 	throws URISyntaxException;
 	
 	@Override
-	protected ChannelFuture sendRequest(final Channel channel, final O ioTask) {
+	protected ChannelFuture sendRequest(
+		final Channel channel, final O ioTask,
+		final GenericFutureListener<Future<Void>> reqSentCallback
+	) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
 		final LoadType ioType = ioTask.getLoadType();
@@ -312,7 +316,7 @@ implements HttpStorageDriver<I, O, R> {
 					final DataItem dataItem = (DataItem) item;
 					channel
 						.write(new DataItemFileRegion<>(dataItem))
-						.addListener(new RequestMaybeSentCallback(ioTask));
+						.addListener(reqSentCallback);
 					((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
 				}
 			} else if(LoadType.UPDATE.equals(ioType)) {
@@ -334,7 +338,7 @@ implements HttpStorageDriver<I, O, R> {
 						LOG.error(Markers.ERR, "No ranges scheduled for the update");
 						ioTask.setStatus(IoTask.Status.RESP_FAIL_CLIENT);
 					} else {
-						reqSentFuture.addListener(new RequestMaybeSentCallback(mdIoTask));
+						reqSentFuture.addListener(reqSentCallback);
 					}
 					mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
 					mdi.commitUpdatedRanges(mdIoTask.getUpdRangesMaskPair());
@@ -353,22 +357,6 @@ implements HttpStorageDriver<I, O, R> {
 		return channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}
 
-	protected static final class RequestMaybeSentCallback
-		implements FutureListener<Void> {
-
-		private final IoTask ioTask;
-
-		public RequestMaybeSentCallback(final IoTask ioTask) {
-			this.ioTask = ioTask;
-		}
-
-		@Override
-		public final void operationComplete(final Future<Void> future)
-		throws Exception {
-			ioTask.finishRequest();
-		}
-	}
-	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {

@@ -29,6 +29,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -218,16 +219,19 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 				} // else ignore
 			} else {
 				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
+				final RequestSentCallback reqSentCallback = new RequestSentCallback(ioTask);
 				ioTask.startRequest();
-				sendRequest(channel, ioTask)
-					.addListener(new RequestSentCallback(ioTask));
+				sendRequest(channel, ioTask, reqSentCallback).addListener(reqSentCallback);
 			}
 		}
 	}
 
-	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
+	protected abstract ChannelFuture sendRequest(
+		final Channel channel, final O ioTask,
+		final GenericFutureListener<Future<Void>> reqSentCallback
+	);
 
-	protected static final class RequestSentCallback
+	private static final class RequestSentCallback
 		implements FutureListener<Void> {
 
 		private final IoTask ioTask;
