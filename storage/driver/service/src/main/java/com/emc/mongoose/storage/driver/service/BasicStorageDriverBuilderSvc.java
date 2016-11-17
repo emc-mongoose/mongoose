@@ -4,6 +4,7 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class BasicStorageDriverBuilderSvc<
 	I extends Item,
 	O extends IoTask<I>,
-	R extends IoTask.IoResult,
+	R extends IoResult,
 	T extends StorageDriverSvc<I, O, R>
 > extends BasicStorageDriverBuilder<I, O, R, T>
 implements StorageDriverBuilderSvc<I, O, R, T> {

@@ -4,14 +4,14 @@ import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -45,7 +45,7 @@ import java.util.function.Function;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>, R extends IoTask.IoResult>
+public final class BasicFileStorageDriver<I extends MutableDataItem, O extends MutableDataIoTask<I>, R extends IoResult>
 extends NioStorageDriverBase<I, O, R>
 implements StorageDriver<I, O, R> {
 
@@ -115,7 +115,7 @@ implements StorageDriver<I, O, R> {
 		
 		openDstFileFunc = ioTask -> {
 			final I fileItem = ioTask.getItem();
-			final LoadType ioType = ioTask.getLoadType();
+			final IoType ioType = ioTask.getIoType();
 			final String dstPath = ioTask.getDstPath();
 			final Path itemPath;
 			try {
@@ -126,7 +126,7 @@ implements StorageDriver<I, O, R> {
 					itemPath = FS.getPath(dstPath, fileItem.getName());
 
 				}
-				if(LoadType.CREATE.equals(ioType)) {
+				if(IoType.CREATE.equals(ioType)) {
 					return FS_PROVIDER.newFileChannel(itemPath, CREATE_OPEN_OPT);
 				} else {
 					return FS_PROVIDER.newFileChannel(itemPath, WRITE_OPEN_OPT);
@@ -161,7 +161,7 @@ implements StorageDriver<I, O, R> {
 
 		try {
 
-			final LoadType ioType = ioTask.getLoadType();
+			final IoType ioType = ioTask.getIoType();
 			final I item = ioTask.getItem();
 
 			switch(ioType) {

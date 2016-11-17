@@ -2,17 +2,19 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.MessageBase;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+
 import org.apache.commons.lang.text.StrBuilder;
-import java.util.Map;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 26.10.16.
  */
-public final class MetricsLogMessageTable
+public final class MetricsTableLogMessage
 extends MessageBase {
 	
 	private static final String TABLE_HEADER_LINES[] = new String[] {
@@ -24,11 +26,11 @@ extends MessageBase {
 	};
 	
 	private final String runId;
-	private final Map<LoadType, IoStats.Snapshot> snapshots;
+	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
 	private final int totalConcurrency;
 	
-	public MetricsLogMessageTable(
-		final String runId, final Map<LoadType, IoStats.Snapshot> snapshots,
+	public MetricsTableLogMessage(
+		final String runId, final Int2ObjectMap<IoStats.Snapshot> snapshots,
 		final int totalConcurrency
 	) {
 		this.runId = runId;
@@ -45,9 +47,9 @@ extends MessageBase {
 				strb.append(tableHeaderLine).appendNewLine();
 			}
 			IoStats.Snapshot snapshot;
-			for(final LoadType loadType : snapshots.keySet()) {
-				snapshot = snapshots.get(loadType);
-				strb.appendFixedWidthPadLeft(loadType.name(), 6, ' ').append('|');
+			for(final int ioTypeCode : snapshots.keySet()) {
+				snapshot = snapshots.get(ioTypeCode);
+				strb.appendFixedWidthPadLeft(IoType.values()[ioTypeCode].name(), 6, ' ').append('|');
 				strb.appendFixedWidthPadLeft(totalConcurrency, 7, ' ').append('|');
 				strb.appendFixedWidthPadLeft(snapshot.getSuccCount(), 12, ' ').append(('|'));
 				strb.appendFixedWidthPadLeft(snapshot.getFailCount(), 6, ' ').append('|');

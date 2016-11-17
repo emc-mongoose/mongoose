@@ -4,6 +4,7 @@ import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitorSvc;
@@ -23,15 +24,13 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-
 /**
  Created by andrey on 05.10.16.
  */
 public final class BasicLoadMonitorSvc<
 	I extends Item,
 	O extends IoTask<I>,
-	R extends IoTask.IoResult
+	R extends IoResult
 >
 extends BasicLoadMonitor<I, O, R>
 implements LoadMonitorSvc<R> {

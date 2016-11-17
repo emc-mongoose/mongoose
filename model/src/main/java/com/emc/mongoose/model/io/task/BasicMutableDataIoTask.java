@@ -4,7 +4,7 @@ import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.item.BasicDataItem;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -35,11 +35,11 @@ implements MutableDataIoTask<I> {
 	}
 	
 	public BasicMutableDataIoTask(
-		final LoadType ioType, final I item, final String srcPath, final String dstPath,
+		final IoType ioType, final I item, final String srcPath, final String dstPath,
 		final DataRangesConfig rangesConfig
 	) {
 		super(ioType, item, srcPath, dstPath, rangesConfig);
-		if(LoadType.UPDATE.equals(ioType)) {
+		if(IoType.UPDATE.equals(ioType)) {
 			final int n = rangesConfig.getRandomCount();
 			if(n > 0) {
 				scheduleRandomRangesUpdate(n);

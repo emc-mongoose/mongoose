@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
@@ -49,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoResult>
 extends StorageDriverBase<I, O, R>
 implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	

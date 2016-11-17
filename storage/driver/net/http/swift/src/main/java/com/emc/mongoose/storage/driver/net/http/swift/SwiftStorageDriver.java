@@ -1,8 +1,9 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 
@@ -28,7 +29,7 @@ import java.rmi.RemoteException;
 /**
  Created by andrey on 07.10.16.
  */
-public class SwiftStorageDriver<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+public class SwiftStorageDriver<I extends Item, O extends IoTask<I>, R extends IoResult>
 extends HttpStorageDriverBase<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -60,7 +61,7 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected String getUriPath(
-		final I item, final String srcPath, final String dstPath, final LoadType ioType
+		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		return URI_BASE + SLASH + namespace + super.getUriPath(item, srcPath, dstPath, ioType);
 	}

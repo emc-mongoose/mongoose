@@ -4,6 +4,7 @@ import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.MutableDataItem;
@@ -35,7 +36,7 @@ public abstract class ClientHandlerBase<
 	M,
 	I extends Item,
 	O extends IoTask<I>,
-	R extends IoTask.IoResult
+	R extends IoResult
 >
 extends SimpleChannelInboundHandler<M> {
 	

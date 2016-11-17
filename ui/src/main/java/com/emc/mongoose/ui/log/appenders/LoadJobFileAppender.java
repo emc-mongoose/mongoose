@@ -160,7 +160,9 @@ extends AbstractAppender {
 					manager.flush();
 				}
 			} catch(final AppenderLoggingException ex) {
-				error("Unable to write to stream " + manager.getName() + " for appender " + getName());
+				error(
+					"Unable to write to stream " + manager.getName() + " for appender " + getName()
+				);
 				throw ex;
 			}
 		}

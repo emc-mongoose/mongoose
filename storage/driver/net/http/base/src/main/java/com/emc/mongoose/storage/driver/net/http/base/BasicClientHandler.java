@@ -2,8 +2,9 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
@@ -33,7 +34,7 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public class BasicClientHandler<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+public class BasicClientHandler<I extends Item, O extends IoTask<I>, R extends IoResult>
 extends ClientHandlerBase<HttpObject, I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -107,11 +108,11 @@ extends ClientHandlerBase<HttpObject, I, O, R> {
 		}
 
 		if(msg instanceof HttpContent) {
-			if(LoadType.READ.equals(ioTask.getLoadType())) {
+			if(IoType.READ.equals(ioTask.getIoType())) {
 				if(ioTask instanceof DataIoTask) {
 					final DataIoTask dataIoTask = (DataIoTask) ioTask;
 					final long countBytesDone = dataIoTask.getCountBytesDone();
-					if(dataIoTask.isResponseDataStarted()) { // if not set yet - 1st time
+					if(dataIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
 						dataIoTask.startDataResponse();
 					}
 					final ByteBuf contentChunk = ((HttpContent) msg).content();

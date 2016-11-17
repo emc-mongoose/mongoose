@@ -1,19 +1,19 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
+
 /**
  Created by kurila on 20.10.15.
  */
 public class BasicIoTask<I extends Item>
 implements IoTask<I> {
 	
-	protected LoadType ioType;
+	protected IoType ioType;
 	protected I item;
 	protected String srcPath;
 	protected String dstPath;
@@ -29,7 +29,7 @@ implements IoTask<I> {
 	}
 	
 	public BasicIoTask(
-		final LoadType ioType, final I item, final String srcPath, final String dstPath
+		final IoType ioType, final I item, final String srcPath, final String dstPath
 	) {
 		this.ioType = ioType;
 		this.item = item;
@@ -49,101 +49,6 @@ implements IoTask<I> {
 		reset();
 	}
 
-	public static class BasicIoResult
-	implements IoResult {
-
-		private final LoadType loadType;
-		private final Status status;
-		private final String storageDriverAddr;
-		private final String storageNodeAddr;
-		private final String itemInfo;
-		private final long reqTimeStart;
-		private final long duration;
-		private final long latency;
-
-		public BasicIoResult(
-			final LoadType loadType, final Status status, final String storageDriverAddr,
-			final String storageNodeAddr, final String itemInfo,
-			final long reqTimeStart, final long duration, final long latency
-		) {
-			this.loadType = loadType;
-			this.status = status;
-			this.storageDriverAddr = storageDriverAddr;
-			this.storageNodeAddr = storageNodeAddr;
-			this.itemInfo = itemInfo;
-			this.reqTimeStart = reqTimeStart;
-			this.duration = duration;
-			this.latency = latency;
-		}
-
-		@Override
-		public LoadType getLoadType() {
-			return loadType;
-		}
-
-		@Override
-		public Status getStatus() {
-			return status;
-		}
-
-		@Override
-		public String getStorageDriverAddr() {
-			return storageDriverAddr;
-		}
-
-		@Override
-		public String getStorageNodeAddr() {
-			return storageNodeAddr;
-		}
-
-		@Override
-		public String getItemInfo() {
-			return itemInfo;
-		}
-
-		@Override
-		public long getTimeStart() {
-			return reqTimeStart;
-		}
-
-		@Override
-		public long getDuration() {
-			return duration;
-		}
-
-		@Override
-		public long getLatency() {
-			return latency;
-		}
-	}
-
-	protected final String getItemPath() {
-		if(dstPath == null) {
-			if(srcPath != null) {
-				if(srcPath.endsWith(SLASH)) {
-					return srcPath + item.getName();
-				} else {
-					return srcPath + SLASH + item.getName();
-				}
-			}
-		} else {
-			if(dstPath.endsWith(SLASH)) {
-				return dstPath + item.getName();
-			} else {
-				return dstPath + SLASH + item.getName();
-			}
-		}
-		return SLASH + item.getName();
-	}
-
-	@Override
-	public BasicIoResult getIoResult() {
-		return new BasicIoResult(
-			ioType, status, STORAGE_DRIVER_ADDR, nodeAddr, item.toString(getItemPath()),
-			reqTimeStart, respTimeDone - reqTimeStart, respTimeStart - reqTimeDone
-		);
-	}
-
 	@Override
 	public void reset() {
 		item.reset();
@@ -158,7 +63,7 @@ implements IoTask<I> {
 	}
 	
 	@Override
-	public final LoadType getLoadType() {
+	public final IoType getIoType() {
 		return ioType;
 	}
 
@@ -223,6 +128,26 @@ implements IoTask<I> {
 		respTimeDone = System.nanoTime() / 1000;
 	}
 
+	@Override
+	public final long getReqTimeStart() {
+		return reqTimeStart;
+	}
+
+	@Override
+	public final long getReqTimeDone() {
+		return reqTimeDone;
+	}
+
+	@Override
+	public final long getRespTimeStart() {
+		return respTimeStart;
+	}
+
+	@Override
+	public final long getRespTimeDone() {
+		return respTimeDone;
+	}
+
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
@@ -252,7 +177,7 @@ implements IoTask<I> {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		ioType = (LoadType) in.readObject();
+		ioType = (IoType) in.readObject();
 		item = (I) in.readObject();
 		dstPath = (String) in.readObject();
 	}

@@ -11,7 +11,7 @@ implements Message, StringBuilderFormattable {
 	
 	private static final ThreadLocal<StringBuilder> THRLOC_STRB = new ThreadLocal<StringBuilder>() {
 		@Override
-		protected StringBuilder initialValue() {
+		protected final StringBuilder initialValue() {
 			return new StringBuilder();
 		}
 	};

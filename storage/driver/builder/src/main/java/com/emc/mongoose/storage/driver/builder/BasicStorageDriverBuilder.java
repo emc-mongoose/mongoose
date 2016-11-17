@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.builder;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -23,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilder<
-	I extends Item, O extends IoTask<I>, R extends IoTask.IoResult, T extends StorageDriver<I, O, R>
+	I extends Item, O extends IoTask<I>, R extends IoResult, T extends StorageDriver<I, O, R>
 > implements StorageDriverBuilder<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();

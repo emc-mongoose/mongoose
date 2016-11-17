@@ -5,12 +5,13 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.common.io.pattern.AsyncPatternDefinedInput;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.common.io.pattern.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
@@ -26,9 +27,7 @@ import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -41,19 +40,16 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Order;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
@@ -61,7 +57,7 @@ import java.util.function.Function;
  Created by kurila on 29.07.16.
  Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
-public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoResult>
 extends NetStorageDriverBase<I, O, R>
 implements HttpStorageDriver<I, O, R> {
 	
@@ -132,7 +128,7 @@ implements HttpStorageDriver<I, O, R> {
 	throws URISyntaxException {
 
 		final I item = ioTask.getItem();
-		final LoadType ioType = ioTask.getLoadType();
+		final IoType ioType = ioTask.getIoType();
 		final HttpMethod httpMethod = getHttpMethod(ioType);
 
 		final String srcPath = ioTask.getSrcPath();
@@ -203,8 +199,8 @@ implements HttpStorageDriver<I, O, R> {
 		return httpRequest;
 	}
 	
-	protected HttpMethod getHttpMethod(final LoadType loadType) {
-		switch(loadType) {
+	protected HttpMethod getHttpMethod(final IoType ioType) {
+		switch(ioType) {
 			case READ:
 				return HttpMethod.GET;
 			case DELETE:
@@ -215,7 +211,7 @@ implements HttpStorageDriver<I, O, R> {
 	}
 
 	protected String getUriPath(
-		final I item, final String srcPath, final String dstPath, final LoadType ioType
+		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		if(dstPath == null) {
 			if(srcPath == null) {
@@ -303,7 +299,7 @@ implements HttpStorageDriver<I, O, R> {
 	) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
-		final LoadType ioType = ioTask.getLoadType();
+		final IoType ioType = ioTask.getIoType();
 		final I item = ioTask.getItem();
 
 		try {
@@ -311,7 +307,7 @@ implements HttpStorageDriver<I, O, R> {
 
 			channel.write(httpRequest);
 
-			if(LoadType.CREATE.equals(ioType)) {
+			if(IoType.CREATE.equals(ioType)) {
 				if(item instanceof DataItem) {
 					final DataItem dataItem = (DataItem) item;
 					channel
@@ -319,7 +315,7 @@ implements HttpStorageDriver<I, O, R> {
 						.addListener(reqSentCallback);
 					((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
 				}
-			} else if(LoadType.UPDATE.equals(ioType)) {
+			} else if(IoType.UPDATE.equals(ioType)) {
 				if(item instanceof MutableDataItem) {
 					final MutableDataItem mdi = (MutableDataItem) item;
 					final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;

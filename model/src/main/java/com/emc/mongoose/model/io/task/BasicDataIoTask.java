@@ -3,7 +3,7 @@ package com.emc.mongoose.model.io.task;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,7 +25,7 @@ implements DataIoTask<T> {
 	}
 	
 	public BasicDataIoTask(
-		final LoadType ioType, final T item, final String srcPath, final String dstPath,
+		final IoType ioType, final T item, final String srcPath, final String dstPath,
 		final DataRangesConfig rangesConfig
 	) {
 		super(ioType, item, srcPath, dstPath);
@@ -49,46 +49,6 @@ implements DataIoTask<T> {
 		contentSrc = item.getContentSrc();
 	}
 
-	public static class BasicDataIoResult
-	extends BasicIoResult
-	implements DataIoResult {
-
-		private final long dataLatency;
-		private final long transferredByteCount;
-
-		public BasicDataIoResult(
-			final LoadType loadType, final Status status, final String storageDriverAddr,
-			final String storageNodeAddr, final String itemInfo,
-			final long reqTimeStart, final long duration, final long latency,
-			final long dataLatency, final long transferredByteCount
-		) {
-			super(
-				loadType, status, storageDriverAddr, storageNodeAddr, itemInfo,
-				reqTimeStart, duration, latency
-			);
-			this.dataLatency = dataLatency;
-			this.transferredByteCount = transferredByteCount;
-		}
-
-		@Override
-		public final long getDataLatency() {
-			return dataLatency;
-		}
-
-		@Override
-		public final long getCountBytesDone() {
-			return transferredByteCount;
-		}
-	}
-
-	@Override
-	public BasicDataIoResult getIoResult() {
-		return new BasicDataIoResult(
-			ioType, status, STORAGE_DRIVER_ADDR, nodeAddr, item.toString(getItemPath()),
-			reqTimeStart, respTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
-			respDataTimeStart - reqTimeDone, countBytesDone
-		);
-	}
 	
 	@Override
 	public void reset() {
@@ -108,8 +68,8 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public final boolean isResponseDataStarted() {
-		return respDataTimeStart > 0;
+	public final long getRespDataTimeStart() {
+		return respDataTimeStart;
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,16 +12,16 @@ import java.util.List;
 public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I>>
 implements IoTaskBuilder<I, O> {
 	
-	protected volatile LoadType ioType = LoadType.CREATE; // by default
+	protected volatile IoType ioType = IoType.CREATE; // by default
 	protected volatile String srcPath = null;
 
 	@Override
-	public final LoadType getIoType() {
+	public final IoType getIoType() {
 		return ioType;
 	}
 
 	@Override
-	public final BasicIoTaskBuilder<I, O> setIoType(final LoadType ioType) {
+	public final BasicIoTaskBuilder<I, O> setIoType(final IoType ioType) {
 		this.ioType = ioType;
 		return this;
 	}

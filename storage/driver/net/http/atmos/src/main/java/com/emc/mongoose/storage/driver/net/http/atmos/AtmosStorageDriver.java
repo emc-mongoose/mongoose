@@ -2,13 +2,14 @@ package com.emc.mongoose.storage.driver.net.http.atmos;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.NS_URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.OBJ_URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.SIGN_METHOD;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -17,7 +18,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.util.AsciiString;
@@ -45,7 +45,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosStorageDriver<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+public final class AtmosStorageDriver<I extends Item, O extends IoTask<I>, R extends IoResult>
 extends HttpStorageDriverBase<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();
@@ -109,8 +109,8 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	protected final HttpMethod getHttpMethod(final LoadType loadType) {
-		switch(loadType) {
+	protected final HttpMethod getHttpMethod(final IoType ioType) {
+		switch(ioType) {
 			case CREATE:
 				return HttpMethod.POST;
 			case READ:
@@ -126,11 +126,11 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected String getUriPath(
-		final I item, final String srcPath, final String dstPath, final LoadType ioType
+		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		if(fsAccess) {
 			return NS_URI_BASE + super.getUriPath(item, srcPath, dstPath, ioType);
-		} else if(LoadType.CREATE.equals(ioType)) {
+		} else if(IoType.CREATE.equals(ioType)) {
 			return OBJ_URI_BASE;
 		} else {
 			return OBJ_URI_BASE + super.getUriPath(item, srcPath, dstPath, ioType);

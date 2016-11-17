@@ -2,18 +2,21 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageCsv;
-import com.emc.mongoose.load.monitor.metrics.MetricsLogMessageTable;
+import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
+import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
+import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
+import com.emc.mongoose.load.monitor.metrics.MetricsTableLogMessage;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
-import com.emc.mongoose.model.load.LoadType;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+
+import com.emc.mongoose.model.io.task.result.DataIoResult;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -22,6 +25,8 @@ import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 import org.apache.logging.log4j.Level;
@@ -36,7 +41,6 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
@@ -44,7 +48,7 @@ import java.util.function.Function;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicLoadMonitor<I extends Item, O extends IoTask<I>, R extends IoTask.IoResult>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I>, R extends IoResult>
 extends DaemonBase
 implements LoadMonitor<R> {
 
@@ -57,11 +61,10 @@ implements LoadMonitor<R> {
 	private final long sizeLimit;
 	private final Thread worker;
 
-	private final Map<LoadType, IoStats>
-		ioStats = new ConcurrentHashMap<>(),
-		medIoStats = new ConcurrentHashMap<>();
-	private volatile Map<LoadType, IoStats.Snapshot> lastStats = new ConcurrentHashMap<>();
-	private final Function<LoadType, IoStats> ioStatsInitFunc;
+	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<IoStats> medIoStats = new Int2ObjectOpenHashMap<>();
+	private volatile Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
+	private final Function<Integer, IoStats> ioStatsInitFunc;
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<String> itemInfoOutput;
 	private final int totalConcurrency;
@@ -214,19 +217,19 @@ implements LoadMonitor<R> {
 				while(true) {
 					nextNanoTimeStamp = System.nanoTime();
 					// refresh the stats
-					for(final LoadType nextIoType : ioStats.keySet()) {
-						lastStats.put(nextIoType, ioStats.get(nextIoType).getSnapshot());
+					for(final int nextIoTypeCode : ioStats.keySet()) {
+						lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
 					}
 					Thread.sleep(1);
 					// output the current measurements periodically
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 						LOG.info(
 							Markers.METRICS_STDOUT,
-							new MetricsLogMessageTable(name, lastStats, totalConcurrency)
+							new MetricsTableLogMessage(name, lastStats, totalConcurrency)
 						);
 						LOG.info(
 							Markers.METRICS_FILE,
-							new MetricsLogMessageCsv(lastStats, totalConcurrency)
+							new MetricsCsvLogMessage(lastStats, totalConcurrency)
 						);
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
@@ -245,9 +248,9 @@ implements LoadMonitor<R> {
 			}
 			long succCountSum = 0;
 			long failCountSum = 0;
-			for(final LoadType ioType : lastStats.keySet()) {
-				succCountSum += lastStats.get(ioType).getSuccCount();
-				failCountSum += lastStats.get(ioType).getFailCount();
+			for(final int ioTypeCode : lastStats.keySet()) {
+				succCountSum += lastStats.get(ioTypeCode).getSuccCount();
+				failCountSum += lastStats.get(ioTypeCode).getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					return true;
 				}
@@ -259,8 +262,8 @@ implements LoadMonitor<R> {
 	private boolean isDoneSizeLimit() {
 		if(sizeLimit > 0) {
 			long sizeSum = 0;
-			for(final LoadType ioType : lastStats.keySet()) {
-				sizeSum += lastStats.get(ioType).getByteCount();
+			for(final int ioTypeCode : lastStats.keySet()) {
+				sizeSum += lastStats.get(ioTypeCode).getByteCount();
 				if(sizeSum >= sizeLimit) {
 					return true;
 				}
@@ -332,36 +335,33 @@ implements LoadMonitor<R> {
 			return;
 		}
 
-		final LoadType ioType = ioTaskResult.getLoadType();
-		final IoTask.Status status = ioTaskResult.getStatus();
+		// I/O trace logging
+		if(!metricsConfig.getPrecondition()) {
+			LOG.debug(Markers.IO_TRACE, new IoTraceCsvLogMessage<>(ioTaskResult));
+		}
+
+		final int ioTypeCode = ioTaskResult.getIoTypeCode();
+		final int statusCode = ioTaskResult.getStatusCode();
 		final String itemInfo = ioTaskResult.getItemInfo();
 		final long reqDuration = ioTaskResult.getDuration();
 		final long respLatency = ioTaskResult.getLatency();
 		final long countBytesDone;
-		if(ioTaskResult instanceof DataIoTask.DataIoResult) {
-			final DataIoTask.DataIoResult dataIoTaskResult = (DataIoTask.DataIoResult) ioTaskResult;
+		if(ioTaskResult instanceof DataIoResult) {
+			final DataIoResult dataIoTaskResult = (DataIoResult) ioTaskResult;
 			countBytesDone = dataIoTaskResult.getCountBytesDone();
 		} else {
 			countBytesDone = 0;
 		}
 		
-		// I/O trace logging
-		if(!metricsConfig.getPrecondition()) {
-			/*logTrace(
-				ioType, driverAddr, nodeAddr, itemInfo, status, ioTaskResult.getTimeStart(),
-				reqDuration, respLatency, countBytesDone, respDataLatency
-			);*/
-		}
+		final IoStats ioTypeStats = ioStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
+		final IoStats ioTypeMedStats = medIoStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
 		
-		final IoStats loadTypeStats = ioStats.computeIfAbsent(ioType, ioStatsInitFunc);
-		final IoStats loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
-		
-		if(IoTask.Status.SUCC == status) {
+		if(statusCode == IoTask.Status.SUCC.ordinal()) {
 
 			// update the metrics with success
-			loadTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-			if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
-				loadTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+			ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+			if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+				ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 			}
 
 			// put into the output buffer
@@ -375,9 +375,9 @@ implements LoadMonitor<R> {
 			}
 
 		} else {
-			loadTypeStats.markFail();
-			if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
-				loadTypeMedStats.markFail();
+			ioTypeStats.markFail();
+			if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+				ioTypeMedStats.markFail();
 			}
 		}
 		
@@ -396,18 +396,24 @@ implements LoadMonitor<R> {
 
 		if(n > 0) {
 
+			// I/O trace logging
+			if(!metricsConfig.getPrecondition()) {
+				LOG.debug(
+					Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to)
+				);
+			}
+
 			R ioTaskResult;
-			DataIoTask.DataIoResult dataIoTaskResult;
-			IoTask.Status status;
+			DataIoResult dataIoTaskResult;
+			int ioTypeCode;
+			int statusCode;
 			String itemInfo;
 			long reqDuration;
 			long respLatency;
 			long countBytesDone = 0;
 			ioTaskResult = ioTaskResults.get(from);
-			final boolean isDataTransferred = ioTaskResult instanceof DataIoTask.DataIoResult;
-			final boolean preconditionFlag = metricsConfig.getPrecondition();
-			LoadType ioType;
-			IoStats loadTypeStats, loadTypeMedStats;
+			final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
+			IoStats ioTypeStats, ioTypeMedStats;
 
 			final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
 
@@ -416,27 +422,19 @@ implements LoadMonitor<R> {
 					ioTaskResult = ioTaskResults.get(i);
 				}
 				itemInfo = ioTaskResult.getItemInfo();
-				status = ioTaskResult.getStatus();
+				ioTypeCode = ioTaskResult.getIoTypeCode();
+				statusCode = ioTaskResult.getStatusCode();
 				reqDuration = ioTaskResult.getDuration();
 				respLatency = ioTaskResult.getLatency();
 				if(isDataTransferred) {
-					dataIoTaskResult = (DataIoTask.DataIoResult) ioTaskResult;
+					dataIoTaskResult = (DataIoResult) ioTaskResult;
 					countBytesDone = dataIoTaskResult.getCountBytesDone();
 				}
-
-				// perf trace logging
-				ioType = ioTaskResult.getLoadType();
-				if(!preconditionFlag) {
-					/*logTrace(
-						ioType, driverAddr, nodeAddr, itemInfo, status, ioTaskResult.getTimeStart(),
-						reqDuration, respLatency, countBytesDone, respDataLatency
-					);*/
-				}
 				
-				loadTypeStats = ioStats.computeIfAbsent(ioType, ioStatsInitFunc);
-				loadTypeMedStats = medIoStats.computeIfAbsent(ioType, ioStatsInitFunc);
+				ioTypeStats = ioStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
+				ioTypeMedStats = medIoStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
 				
-				if(IoTask.Status.SUCC == status) {
+				if(statusCode == IoTask.Status.SUCC.ordinal()) {
 					if(itemInfoOutput != null) {
 						itemsToPass.add(itemInfo);
 					}
@@ -447,14 +445,14 @@ implements LoadMonitor<R> {
 							respLatency, reqDuration
 						);
 					}
-					loadTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-					if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
-						loadTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 					}
 				} else {
-					loadTypeStats.markFail();
-					if(loadTypeMedStats != null && loadTypeMedStats.isStarted()) {
-						loadTypeMedStats.markFail();
+					ioTypeStats.markFail();
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markFail();
 					}
 				}
 			}
@@ -491,39 +489,6 @@ implements LoadMonitor<R> {
 		return null;
 	}
 	
-	private static final ThreadLocal<StringBuilder>
-		IO_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
-	private void logTrace(
-		final LoadType ioType, final String driverAddr, final String nodeAddr, final I item,
-		final IoTask.Status status, final long reqTimeStart, final long reqDuration,
-		final int respLatency, final long countBytesDone, final int respDataLatency
-	) {
-		if(LOG.isInfoEnabled(Markers.IO_TRACE)) {
-			final StringBuilder strBuilder = IO_TRACE_MSG_BUILDER.get();
-			strBuilder.setLength(0);
-			LOG.info(
-				Markers.IO_TRACE,
-				strBuilder
-					.append(ioType).append(',')
-					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(item.getName())
-					.append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(reqDuration).append(',')
-					.append(respLatency).append(',')
-					.append(countBytesDone).append(',')
-					.append(respDataLatency)
-					.toString()
-			);
-		}
-	}
-
 	@Override
 	public final String getName() {
 		return name;
@@ -568,8 +533,8 @@ implements LoadMonitor<R> {
 		}
 		
 		if(ioStats != null) {
-			for(final LoadType ioType : ioStats.keySet()) {
-				ioStats.get(ioType).start();
+			for(final int ioTypeCode : ioStats.keySet()) {
+				ioStats.get(ioTypeCode).start();
 			}
 		}
 		
@@ -688,10 +653,10 @@ implements LoadMonitor<R> {
 		drivers.clear();
 
 		LOG.info(
-			Markers.METRICS_STDOUT, new MetricsLogMessageTable(name, lastStats, totalConcurrency)
+			Markers.METRICS_STDOUT, new MetricsTableLogMessage(name, lastStats, totalConcurrency)
 		);
 		LOG.info(
-			Markers.METRICS_FILE_TOTAL, new MetricsLogMessageCsv(lastStats, totalConcurrency)
+			Markers.METRICS_FILE_TOTAL, new MetricsCsvLogMessage(lastStats, totalConcurrency)
 		);
 		
 		for(final IoStats nextStats : ioStats.values()) {

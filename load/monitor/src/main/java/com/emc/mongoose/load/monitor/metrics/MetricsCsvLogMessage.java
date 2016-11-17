@@ -1,7 +1,9 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.MessageBase;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -32,30 +34,30 @@ import java.util.concurrent.TimeUnit;
  LatencyHiQ[us],
  LatencyMax[us]
  */
-public final class MetricsLogMessageCsv
+public final class MetricsCsvLogMessage
 extends MessageBase {
 	
-	private final Map<LoadType, IoStats.Snapshot> snapshots;
+	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
 	private final int totalConcurrency;
 	
-	public MetricsLogMessageCsv(
-		final Map<LoadType, IoStats.Snapshot> snapshots, final int totalConcurrency
+	public MetricsCsvLogMessage(
+		final Int2ObjectMap<IoStats.Snapshot> snapshots, final int totalConcurrency
 	) {
 		this.snapshots = snapshots;
 		this.totalConcurrency = totalConcurrency;
 	}
 	
 	@Override
-	public final void formatTo(final StringBuilder buffer) {
-		final Iterator<Map.Entry<LoadType, IoStats.Snapshot>>
+	public final void formatTo(final StringBuilder strb) {
+		final Iterator<Map.Entry<Integer, IoStats.Snapshot>>
 			entryIter = snapshots.entrySet().iterator();
-		Map.Entry<LoadType, IoStats.Snapshot> nextEntry;
+		Map.Entry<Integer, IoStats.Snapshot> nextEntry;
 		IoStats.Snapshot nextSnapshot;
 		while(entryIter.hasNext()) {
 			nextEntry = entryIter.next();
 			nextSnapshot = nextEntry.getValue();
-			buffer
-				.append(nextEntry.getKey().name()).append(',')
+			strb
+				.append(IoType.values()[nextEntry.getKey()].name()).append(',')
 				.append(totalConcurrency).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
 				.append(nextSnapshot.getFailCount()).append(',')
@@ -76,7 +78,7 @@ extends MessageBase {
 				.append(nextSnapshot.getLatencyMed()).append(',')
 				.append(nextSnapshot.getLatencyHiQ());
 			if(entryIter.hasNext()) {
-				buffer.append(nextSnapshot.getLatencyMax()).append('\n');
+				strb.append(nextSnapshot.getLatencyMax()).append('\n');
 			} else {
 				break;
 			}

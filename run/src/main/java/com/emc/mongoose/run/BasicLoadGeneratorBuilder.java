@@ -16,7 +16,7 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -70,7 +70,7 @@ implements LoadGeneratorBuilder<T> {
 	public T build()
 	throws UserShootHisFootException, IOException {
 
-		final LoadType ioType = LoadType.valueOf(loadConfig.getType().toUpperCase());
+		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 
 		final Input itemInput;
@@ -98,7 +98,7 @@ implements LoadGeneratorBuilder<T> {
 				.setRangesConfig(itemConfig.getDataConfig().getRangesConfig());
 		}
 		ioTaskBuilder.setSrcPath(inputConfig.getPath());
-		ioTaskBuilder.setIoType(LoadType.valueOf(loadConfig.getType().toUpperCase()));
+		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
 
 		final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 			namingType, namingPrefix, namingLength, namingRadix, namingOffset

@@ -289,8 +289,8 @@
 					"type": "loadJobFile",
 					"fileName": "io.trace.csv",
 					"PatternLayout": {
-						"header": "Thread,LoadType,TargetNode,ItemId,TransferSize,StatusCode,ReqTimeStart[us],RespLatency[us],DataLatency[us],Duration[us]\n",
-						"pattern": "%t,%m%n"
+						"header": "StorageDriver,StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
+						"pattern": "%m%n"
 					},
 					"Filters": {
 						"Filter": [

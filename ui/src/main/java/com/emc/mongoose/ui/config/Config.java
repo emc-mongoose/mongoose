@@ -776,14 +776,11 @@ implements Serializable {
 		public static final class MetricsConfig
 		implements Serializable {
 
-			public static final String KEY_THRESHOLD = "threshold";
 			public static final String KEY_PERIOD = "period";
 			public static final String KEY_PRECONDITION= "precondition";
-			
-			public final void setThreshold(final double threshold) {
-				this.threshold = threshold;
-			}
-			
+			public static final String KEY_THRESHOLD = "threshold";
+			public static final String KEY_TRACE = "trace";
+
 			public final void setPeriod(final long period) {
 				this.period = period;
 			}
@@ -791,13 +788,23 @@ implements Serializable {
 			public final void setPrecondition(final boolean precondition) {
 				this.precondition = precondition;
 			}
-			
-			@JsonProperty(KEY_THRESHOLD) private double threshold;
+
+			public final void setThreshold(final double threshold) {
+				this.threshold = threshold;
+			}
+
+			public final void setKeyTrace(final TraceConfig traceConfig) {
+				this.traceConfig = traceConfig;
+			}
 
 			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
 			private long period;
 
 			@JsonProperty(KEY_PRECONDITION) private boolean precondition;
+
+			@JsonProperty(KEY_THRESHOLD) private double threshold;
+
+			@JsonProperty(KEY_TRACE) private TraceConfig traceConfig;
 
 			public MetricsConfig() {
 			}
@@ -806,10 +813,7 @@ implements Serializable {
 				this.threshold = other.getThreshold();
 				this.period = other.getPeriod();
 				this.precondition = other.getPrecondition();
-			}
-
-			public final double getThreshold() {
-				return threshold;
+				this.traceConfig = new TraceConfig(other.getTraceConfig());
 			}
 
 			public final long getPeriod() {
@@ -818,6 +822,117 @@ implements Serializable {
 
 			public final boolean getPrecondition() {
 				return precondition;
+			}
+
+			public final double getThreshold() {
+				return threshold;
+			}
+
+			public final TraceConfig getTraceConfig() {
+				return traceConfig;
+			}
+
+			public final static class TraceConfig
+			implements Serializable {
+
+				public static final String KEY_STORAGE_DRIVER = "storageDriver";
+				public static final String KEY_STORAGE_NODE = "storageNode";
+				public static final String KEY_ITEM_PATH = "itemPath";
+				public static final String KEY_IO_TYPE_CODE = "ioTypeCode";
+				public static final String KEY_STATUS_CODE = "statusCode";
+				public static final String KEY_REQ_TIME_START = "reqTimeStart";
+				public static final String KEY_DURATION = "duration";
+				public static final String KEY_RESP_LATENCY = "respLatency";
+				public static final String KEY_DATA_LATENCY = "dataLatency";
+				public static final String KEY_TRANSFER_SIZE = "transferSize";
+
+				@JsonProperty(KEY_STORAGE_DRIVER) private boolean storageDriver;
+				@JsonProperty(KEY_STORAGE_NODE) private boolean storageNode;
+				@JsonProperty(KEY_ITEM_PATH) private boolean itemPath;
+				@JsonProperty(KEY_IO_TYPE_CODE) private boolean ioTypeCode;
+				@JsonProperty(KEY_STATUS_CODE) private boolean statusCode;
+				@JsonProperty(KEY_REQ_TIME_START) private boolean reqTimeStart;
+				@JsonProperty(KEY_DURATION) private boolean duration;
+				@JsonProperty(KEY_RESP_LATENCY) private boolean respLatency;
+				@JsonProperty(KEY_DATA_LATENCY) private boolean dataLatency;
+				@JsonProperty(KEY_TRANSFER_SIZE) private boolean transferSize;
+
+				public TraceConfig() {
+				}
+
+				public TraceConfig(final TraceConfig other) {
+					this.storageDriver = other.getStorageDriver();
+					this.storageNode = other.getStorageNode();
+					this.itemPath = other.getItemPath();
+					this.ioTypeCode = other.getIoTypeCode();
+					this.statusCode = other.getStatusCode();
+					this.reqTimeStart = other.getReqTimeStart();
+					this.duration = other.getDuration();
+					this.respLatency = other.getRespLatency();
+					this.dataLatency = other.getDataLatency();
+					this.transferSize = other.getTransferSize();
+				}
+				
+				public final boolean getStorageDriver() {
+					return storageDriver;
+				}
+				public final void setStorageDriver(final boolean storageDriver) {
+					this.storageDriver = storageDriver;
+				}
+				public final boolean getStorageNode() {
+					return storageNode;
+				}
+				public final void setStorageNode(final boolean storageNode) {
+					this.storageNode = storageNode;
+				}
+				public final boolean getItemPath() {
+					return itemPath;
+				}
+				public final void setItemPath(final boolean itemPath) {
+					this.itemPath = itemPath;
+				}
+				public final boolean getIoTypeCode() {
+					return ioTypeCode;
+				}
+				public final void setIoTypeCode(final boolean ioTypeCode) {
+					this.ioTypeCode = ioTypeCode;
+				}
+				public final boolean getStatusCode() {
+					return statusCode;
+				}
+				public final void setStatusCode(final boolean statusCode) {
+					this.statusCode = statusCode;
+				}
+				public final boolean getReqTimeStart() {
+					return reqTimeStart;
+				}
+				public final void setReqTimeStart(final boolean reqTimeStart) {
+					this.reqTimeStart = reqTimeStart;
+				}
+				public final boolean getDuration() {
+					return duration;
+				}
+				public final void setDuration(final boolean duration) {
+					this.duration = duration;
+				}
+				public final boolean getRespLatency() {
+					return respLatency;
+				}
+				public final void setRespLatency(final boolean respLatency) {
+					this.respLatency = respLatency;
+				}
+				public final boolean getDataLatency() {
+					return dataLatency;
+				}
+				public final void setDataLatency(final boolean dataLatency) {
+					this.dataLatency = dataLatency;
+				}
+				public final boolean getTransferSize() {
+					return transferSize;
+				}
+				public final void setTransferSize(final boolean transferSize) {
+					this.transferSize = transferSize;
+				}
 			}
 		}
 		

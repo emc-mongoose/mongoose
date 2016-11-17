@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadType;
+import com.emc.mongoose.model.io.IoType;
 
 import java.util.List;
 /**
@@ -9,9 +9,9 @@ import java.util.List;
  */
 public interface IoTaskBuilder<I extends Item, O extends IoTask<I>> {
 
-	LoadType getIoType();
+	IoType getIoType();
 
-	IoTaskBuilder<I, O> setIoType(final LoadType ioType);
+	IoTaskBuilder<I, O> setIoType(final IoType ioType);
 
 	String getSrcPath();
 
