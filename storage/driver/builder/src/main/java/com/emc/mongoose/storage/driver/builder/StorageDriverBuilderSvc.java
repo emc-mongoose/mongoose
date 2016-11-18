@@ -2,14 +2,18 @@ package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
-import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.ItemConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig;
+import com.emc.mongoose.ui.config.Config.SocketConfig;
+import com.emc.mongoose.ui.config.Config.StorageConfig;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
+
 /**
  Created by andrey on 05.10.16.
  */
@@ -27,25 +31,21 @@ public interface StorageDriverBuilderSvc<
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setContentSource(final ContentSource contentSource)
+	StorageDriverBuilderSvc<I, O, R, T> setItemConfig(final ItemConfig itemConfig)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setItemConfig(final Config.ItemConfig itemConfig)
+	StorageDriverBuilderSvc<I, O, R, T> setLoadConfig(final LoadConfig loadConfig)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setLoadConfig(final Config.LoadConfig loadConfig)
+	StorageDriverBuilderSvc<I, O, R, T> setStorageConfig(final StorageConfig storageConfig)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setStorageConfig(final Config.StorageConfig storageConfig)
-	throws RemoteException;
-
-	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setSocketConfig(final Config.SocketConfig socketConfig)
+	StorageDriverBuilderSvc<I, O, R, T> setSocketConfig(final SocketConfig socketConfig)
 	throws RemoteException;
 
 	String buildRemotely()
-	throws RemoteException, UserShootHisFootException;
+	throws IOException, UserShootHisFootException;
 }

@@ -11,6 +11,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 
 /**
@@ -22,9 +23,6 @@ public interface StorageDriverBuilder<
 
 	String API_S3 = "s3";
 	String API_SWIFT = "swift";
-
-	ContentSource getContentSource()
-	throws RemoteException;
 
 	ItemConfig getItemConfig()
 	throws RemoteException;
@@ -39,9 +37,6 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, R, T> setJobName(final String runId)
-	throws RemoteException;
-	
-	StorageDriverBuilder<I, O, R, T> setContentSource(final ContentSource contentSource)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig)

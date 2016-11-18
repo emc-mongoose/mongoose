@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -15,11 +16,13 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
 import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
+import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 /**
  Created by andrey on 05.10.16.
  */
@@ -30,15 +33,17 @@ public class BasicStorageDriverBuilder<
 	private static final Logger LOG = LogManager.getLogger();
 
 	private String jobName;
-	private ContentSource contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private StorageConfig storageConfig;
 	private SocketConfig socketConfig;
 
-	@Override
-	public ContentSource getContentSource() {
-		return contentSrc;
+	protected final ContentSource getContentSource()
+	throws IOException {
+		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+		return ContentSourceUtil.getInstance(
+			contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
+		);
 	}
 
 	@Override
@@ -67,12 +72,6 @@ public class BasicStorageDriverBuilder<
 		return this;
 	}
 	
-	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setContentSource(final ContentSource contentSrc) {
-		this.contentSrc = contentSrc;
-		return this;
-	}
-
 	@Override
 	public BasicStorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;

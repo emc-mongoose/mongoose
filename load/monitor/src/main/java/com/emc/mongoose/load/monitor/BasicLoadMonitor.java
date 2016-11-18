@@ -234,6 +234,17 @@ implements LoadMonitor<R> {
 								new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
 							);
 						}
+						/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
+							for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
+								try {
+									LOG.info(
+										Markers.MSG, "Storage driver \"{}\" active task count: {}",
+										nextDriver.toString(), nextDriver.getActiveTaskCount()
+									);
+								} catch(final RemoteException ignored) {
+								}
+							}
+						}*/
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
 					Thread.sleep(1);
@@ -633,21 +644,21 @@ implements LoadMonitor<R> {
 	throws IOException {
 
 		for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
-			
-			try {
-				generator.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to close the generator {}", generator
-				);
-			}
-			
+
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
 				try {
 					driver.close();
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the driver {}", driver);
 				}
+			}
+
+			try {
+				generator.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to close the generator {}", generator
+				);
 			}
 		}
 		

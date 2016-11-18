@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -18,6 +17,7 @@ import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +38,6 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 	@Override
 	public BasicStorageDriverBuilderSvc<I, O, R, T> setJobName(final String jobName) {
 		super.setJobName(jobName);
-		return this;
-	}
-
-	@Override
-	public BasicStorageDriverBuilderSvc<I, O, R, T> setContentSource(final ContentSource contentSrc) {
-		super.setContentSource(contentSrc);
 		return this;
 	}
 
@@ -142,7 +136,7 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
-	throws RemoteException, UserShootHisFootException {
+	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O, R> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getContentSource());
 		return wrapper.getName();

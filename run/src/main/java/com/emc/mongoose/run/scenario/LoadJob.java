@@ -9,7 +9,6 @@ import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
-import com.emc.mongoose.model.item.CsvFileItemOutput;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
@@ -83,125 +82,138 @@ extends JobBase {
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
 		
-		try(
-			final ContentSource contentSrc = ContentSourceUtil.getInstance(
+		final ContentSource contentSrc;
+		try {
+			contentSrc = ContentSourceUtil.getInstance(
 				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
-			)
-		) {
-			final List<StorageDriver> drivers = new ArrayList<>();
-			final StorageConfig storageConfig = localConfig.getStorageConfig();
-			final DriverConfig driverConfig = storageConfig.getDriverConfig();
-			final boolean remoteDriversFlag = driverConfig.getRemote();
-			
-			if(remoteDriversFlag) {
-				final List<String> driverSvcAddrs = driverConfig.getAddrs();
-				for(final String driverSvcAddr : driverSvcAddrs) {
-					final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
-						driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
+			);
+		} catch(final IOException e) {
+			throw new RuntimeException(e);
+		}
+		final List<StorageDriver> drivers = new ArrayList<>();
+		final StorageConfig storageConfig = localConfig.getStorageConfig();
+		final DriverConfig driverConfig = storageConfig.getDriverConfig();
+		final boolean remoteDriversFlag = driverConfig.getRemote();
+
+		if(remoteDriversFlag) {
+			final List<String> driverSvcAddrs = driverConfig.getAddrs();
+			for(final String driverSvcAddr : driverSvcAddrs) {
+				final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
+					driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
+				);
+				LOG.info(
+					Markers.MSG, "Connected the service \"{}\" @ {}",
+					StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
+				);
+				if(driverBuilderSvc == null) {
+					LOG.warn(
+						Markers.ERR,
+						"Failed to resolve the storage driver builder service @ {}",
+						driverSvcAddr
 					);
-					LOG.info(
-						Markers.MSG, "Connected the service \"{}\" @ {}",
-						StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
-					);
-					if(driverBuilderSvc == null) {
-						LOG.warn(
-							Markers.ERR,
-							"Failed to resolve the storage driver builder service @ {}",
-							driverSvcAddr
-						);
-						continue;
-					}
-					final String driverSvcName = driverBuilderSvc
+					continue;
+				}
+				final String driverSvcName;
+				try {
+					driverSvcName = driverBuilderSvc
 						.setJobName(jobName)
-						.setContentSource(contentSrc)
 						.setItemConfig(itemConfig)
 						.setLoadConfig(loadConfig)
 						.setSocketConfig(localConfig.getSocketConfig())
 						.setStorageConfig(storageConfig)
 						.buildRemotely();
-					final StorageDriverSvc driverSvc = ServiceUtil.resolve(
-						driverSvcAddr, driverSvcName
-					);
-					LOG.info(
-						Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
+				} catch(final IOException | UserShootHisFootException e) {
+					throw new RuntimeException(e);
+				}
+
+				final StorageDriverSvc driverSvc = ServiceUtil.resolve(
+					driverSvcAddr, driverSvcName
+				);
+				LOG.info(
+					Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
+					driverSvcAddr
+				);
+				if(driverSvc != null) {
+					drivers.add(driverSvc);
+				} else {
+					LOG.warn(
+						Markers.ERR, "Failed to resolve the storage driver service @ {}",
 						driverSvcAddr
 					);
-					if(driverSvc != null) {
-						drivers.add(driverSvc);
-					} else {
-						LOG.warn(
-							Markers.ERR, "Failed to resolve the storage driver service @ {}",
-							driverSvcAddr
-						);
-					}
 				}
-			} else {
+			}
+		} else {
+			try {
 				drivers.add(
 					new BasicStorageDriverBuilder<>()
 						.setJobName(jobName)
-						.setContentSource(contentSrc)
 						.setItemConfig(itemConfig)
 						.setLoadConfig(loadConfig)
 						.setSocketConfig(localConfig.getSocketConfig())
 						.setStorageConfig(storageConfig)
 						.build()
 				);
+			} catch(final UserShootHisFootException e) {
+				throw new RuntimeException(e);
 			}
-			LOG.info(Markers.MSG, "Load drivers initialized");
+		}
+		LOG.info(Markers.MSG, "Load drivers initialized");
 
-			final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-			final ItemFactory itemFactory;
-			if(ItemType.DATA.equals(itemType)) {
-				itemFactory = new BasicMutableDataItemFactory(contentSrc);
-				LOG.info(Markers.MSG, "Work on the mutable data items");
-			} else {
-				// TODO path item factory
-				itemFactory = null;
-				LOG.info(Markers.MSG, "Work on the path items");
-			}
+		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+		final ItemFactory itemFactory;
+		if(ItemType.DATA.equals(itemType)) {
+			itemFactory = new BasicMutableDataItemFactory(contentSrc);
+			LOG.info(Markers.MSG, "Work on the mutable data items");
+		} else {
+			// TODO path item factory
+			itemFactory = null;
+			LOG.info(Markers.MSG, "Work on the path items");
+		}
 
-			final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
+		final LoadGenerator loadGenerator;
+		try {
+			loadGenerator = new BasicLoadGeneratorBuilder<>()
 				.setItemConfig(itemConfig)
 				.setLoadConfig(loadConfig)
 				.setItemType(itemType)
 				.setItemFactory(itemFactory)
 				.build();
-			LOG.info(Markers.MSG, "Load generators initialized");
-
-			final long timeLimitSec;
-			long t = loadConfig.getLimitConfig().getTime();
-			if(t > 0) {
-				timeLimitSec = t;
-			} else {
-				timeLimitSec = Long.MAX_VALUE;
-			}
-			
-			try(
-				final LoadMonitor monitor = remoteDriversFlag ?
-					new BasicLoadMonitorSvc(jobName, loadGenerator, drivers, loadConfig) :
-					new BasicLoadMonitor(jobName, loadGenerator, drivers, loadConfig)
-			) {
-				final String itemOutputFile = itemConfig.getOutputConfig().getFile();
-				if(itemOutputFile != null && itemOutputFile.length() > 0) {
-					final Path itemOutputPath = Paths.get(itemOutputFile);
-					final Output<String> itemOutput = new TextFileOutput(itemOutputPath);
-					monitor.setItemInfoOutput(itemOutput);
-				}
-				monitor.start();
-				if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-					LOG.info(Markers.MSG, "Load monitor done");
-				} else {
-					LOG.info(Markers.MSG, "Load monitor timeout");
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Load monitor interrupted");
-			}
 		} catch(final IOException | UserShootHisFootException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Load job configuration/initialization failure");
+			throw new RuntimeException(e);
+		}
+		LOG.info(Markers.MSG, "Load generators initialized");
+
+		final long timeLimitSec;
+		long t = loadConfig.getLimitConfig().getTime();
+		if(t > 0) {
+			timeLimitSec = t;
+		} else {
+			timeLimitSec = Long.MAX_VALUE;
+		}
+
+		try(
+			final LoadMonitor monitor = remoteDriversFlag ?
+				new BasicLoadMonitorSvc(jobName, loadGenerator, drivers, loadConfig) :
+				new BasicLoadMonitor(jobName, loadGenerator, drivers, loadConfig)
+		) {
+			final String itemOutputFile = itemConfig.getOutputConfig().getFile();
+			if(itemOutputFile != null && itemOutputFile.length() > 0) {
+				final Path itemOutputPath = Paths.get(itemOutputFile);
+				final Output<String> itemOutput = new TextFileOutput(itemOutputPath);
+				monitor.setItemInfoOutput(itemOutput);
+			}
+			monitor.start();
+			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
+				LOG.info(Markers.MSG, "Load monitor done");
+			} else {
+				LOG.info(Markers.MSG, "Load monitor timeout");
+			}
+		} catch(final RemoteException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Load monitor interrupted");
 		}
 	}
 	

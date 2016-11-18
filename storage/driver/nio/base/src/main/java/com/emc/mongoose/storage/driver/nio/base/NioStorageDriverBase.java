@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -33,14 +32,14 @@ public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>, 
 extends StorageDriverBase<I, O, R>
 implements StorageDriver<I, O, R> {
 
-	private static final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
+	private final static int MIN_TASK_BUFF_CAPACITY = 0x4000;
 
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
 	private final Runnable ioWorkerTasks[];
 	private final BlockingQueue<O> ioTaskQueues[];
-	private final Semaphore concurrencyThrottle;
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
@@ -50,10 +49,7 @@ implements StorageDriver<I, O, R> {
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
 		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
-		concurrencyThrottle = new Semaphore(concurrencyLevel);
-		ioTaskBuffCapacity = Math.max(
-			1, concurrencyLevel / ThreadUtil.getHardwareConcurrencyLevel()
-		);
+		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskQueues[i] = new ArrayBlockingQueue<>(ioTaskBuffCapacity);
 			ioWorkerTasks[i] = new NioWorkerTask(ioTaskQueues[i]);
@@ -89,44 +85,45 @@ implements StorageDriver<I, O, R> {
 			int ioTaskBuffSize;
 			O ioTask;
 
-			try {
-				while(!isInterrupted() && !isClosed()) {
+			while(!isInterrupted() && !isClosed()) {
 
-					ioTaskBuffSize = ioTaskBuff.size();
-					// get the new I/O tasks from the common queue
-					// if there's a free place for the new I/O tasks
-					if(ioTaskBuffSize < ioTaskBuffCapacity) {
-						ioTaskBuffSize += ioTaskQueue.drainTo(
-							ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
-						);
-					}
-
-					if(ioTaskBuffSize > 0) {
-						ioTaskIterator = ioTaskBuff.iterator();
-						while(ioTaskIterator.hasNext()) {
-							ioTask = ioTaskIterator.next();
-							// check if the task is invoked 1st time
-							if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
-								// respect the configured concurrency level
-								concurrencyThrottle.acquire();
-								// mark the task as active
-								ioTask.startRequest();
-								ioTask.finishRequest();
-							}
-							// perform non blocking I/O for the task
-							invokeNio(ioTask);
-							// remove the task from the buffer if it is not active more
-							if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
-								concurrencyThrottle.release();
-								ioTaskIterator.remove();
-								ioTaskCompleted(ioTask);
-							} // else the task remains in the buffer for the next iteration
-						}
-					} else {
-						LockSupport.parkNanos(1);
-					}
+				ioTaskBuffSize = ioTaskBuff.size();
+				// get the new I/O tasks from the common queue
+				// if there's a free place for the new I/O tasks
+				if(ioTaskBuffSize < ioTaskBuffCapacity) {
+					ioTaskBuffSize += ioTaskQueue.drainTo(
+						ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
+					);
 				}
-			} catch(final InterruptedException ignored) {
+
+				if(ioTaskBuffSize > 0) {
+					ioTaskIterator = ioTaskBuff.iterator();
+					while(ioTaskIterator.hasNext()) {
+						ioTask = ioTaskIterator.next();
+						// check if the task is invoked 1st time
+						if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
+							// respect the configured concurrency level
+							if(!concurrencyThrottle.tryAcquire()) {
+								// do not start the new task if there max count of active tasks
+								// reached
+								continue;
+							}
+							// mark the task as active
+							ioTask.startRequest();
+							ioTask.finishRequest();
+						}
+						// perform non blocking I/O for the task
+						invokeNio(ioTask);
+						// remove the task from the buffer if it is not active more
+						if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+							concurrencyThrottle.release();
+							ioTaskIterator.remove();
+							ioTaskCompleted(ioTask);
+						} // else the task remains in the buffer for the next iteration
+					}
+				} else {
+					LockSupport.parkNanos(1);
+				}
 			}
 		}
 	}

@@ -152,7 +152,6 @@ extends JobBase {
 						}
 						final String driverSvcName = driverBuilderSvc
 							.setJobName(jobName)
-							.setContentSource(contentSrc)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
 							.setSocketConfig(socketConfig)
@@ -178,7 +177,6 @@ extends JobBase {
 					drivers.add(
 						new BasicStorageDriverBuilder<>()
 							.setJobName(jobName)
-							.setContentSource(contentSrc)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
 							.setSocketConfig(socketConfig)

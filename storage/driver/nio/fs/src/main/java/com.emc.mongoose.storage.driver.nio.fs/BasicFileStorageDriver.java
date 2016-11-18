@@ -210,6 +210,11 @@ implements StorageDriver<I, O, R> {
 			ioTask.setStatus(Status.CANCELLED);
 		} catch(final IOException e) {
 			ioTask.setStatus(Status.FAIL_IO);
+		} catch(final NullPointerException e) {
+			if(!isClosed()) { // shared content source may be already closed from the load generator
+				e.printStackTrace(System.out);
+				ioTask.setStatus(Status.FAIL_UNKNOWN);
+			}
 		} catch(final Throwable e) {
 			// should be Throwable here in order to make the closing block further always reachable
 			// the same effect may be reached using "finally" block after this "catch"
