@@ -5,6 +5,7 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.MessageBase;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import org.apache.commons.lang.text.StrBuilder;
@@ -27,15 +28,15 @@ extends MessageBase {
 	
 	private final String runId;
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
-	private final int totalConcurrency;
+	private final Int2IntMap totalConcurrencyMap;
 	
 	public MetricsTableLogMessage(
 		final String runId, final Int2ObjectMap<IoStats.Snapshot> snapshots,
-		final int totalConcurrency
+		final Int2IntMap totalConcurrencyMap
 	) {
 		this.runId = runId;
 		this.snapshots = snapshots;
-		this.totalConcurrency = totalConcurrency;
+		this.totalConcurrencyMap = totalConcurrencyMap;
 	}
 
 	@Override
@@ -50,7 +51,7 @@ extends MessageBase {
 			for(final int ioTypeCode : snapshots.keySet()) {
 				snapshot = snapshots.get(ioTypeCode);
 				strb.appendFixedWidthPadLeft(IoType.values()[ioTypeCode].name(), 6, ' ').append('|');
-				strb.appendFixedWidthPadLeft(totalConcurrency, 7, ' ').append('|');
+				strb.appendFixedWidthPadLeft(totalConcurrencyMap.get(ioTypeCode), 7, ' ').append('|');
 				strb.appendFixedWidthPadLeft(snapshot.getSuccCount(), 12, ' ').append(('|'));
 				strb.appendFixedWidthPadLeft(snapshot.getFailCount(), 6, ' ').append('|');
 				strb

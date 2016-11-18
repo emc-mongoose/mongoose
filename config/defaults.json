@@ -50,15 +50,15 @@
 			"precondition" : false,
 			"threshold" : 0,
 			"trace" : {
-				"storageDriver" : true,
-				"storageNode" : true,
+				"storageDriver" : false,
+				"storageNode" : false,
 				"itemPath" : true,
 				"ioTypeCode" : true,
 				"statusCode" : true,
-				"reqTimeStart" : true,
+				"reqTimeStart" : false,
 				"duration" : true,
 				"respLatency" : true,
-				"dataLatency" : true,
+				"dataLatency" : false,
 				"transferSize" : true
 			}
 		},

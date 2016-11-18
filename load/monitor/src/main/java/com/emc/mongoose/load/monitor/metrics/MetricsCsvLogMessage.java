@@ -3,6 +3,7 @@ package com.emc.mongoose.load.monitor.metrics;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.MessageBase;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.util.Iterator;
@@ -38,13 +39,13 @@ public final class MetricsCsvLogMessage
 extends MessageBase {
 	
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
-	private final int totalConcurrency;
+	private final Int2IntMap totalConcurrencyMap;
 	
 	public MetricsCsvLogMessage(
-		final Int2ObjectMap<IoStats.Snapshot> snapshots, final int totalConcurrency
+		final Int2ObjectMap<IoStats.Snapshot> snapshots, final Int2IntMap totalConcurrencyMap
 	) {
 		this.snapshots = snapshots;
-		this.totalConcurrency = totalConcurrency;
+		this.totalConcurrencyMap = totalConcurrencyMap;
 	}
 	
 	@Override
@@ -58,7 +59,7 @@ extends MessageBase {
 			nextSnapshot = nextEntry.getValue();
 			strb
 				.append(IoType.values()[nextEntry.getKey()].name()).append(',')
-				.append(totalConcurrency).append(',')
+				.append(totalConcurrencyMap.get(nextEntry.getKey())).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
 				.append(nextSnapshot.getFailCount()).append(',')
 				.append(nextSnapshot.getByteCount()).append(',')
