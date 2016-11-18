@@ -44,7 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,7 +58,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	protected final String storageNodeAddrs[];
 	protected final int storageNodePort;
 	protected final Input<String> nodeSelector;
-	protected final Semaphore concurrencyThrottle;
 	protected final EventLoopGroup workerGroup;
 	protected final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	protected final boolean sslFlag;
@@ -79,7 +77,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
 		}
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
-		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		if(SystemUtils.IS_OS_LINUX) {
 			workerGroup = new EpollEventLoopGroup(
 				ThreadUtil.getHardwareConcurrencyLevel(), new NamingThreadFactory("ioWorker", true)
@@ -280,24 +277,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		}
 	}
 
-	@Override
-	public final boolean isIdle() {
-		return !concurrencyThrottle.hasQueuedThreads() &&
-			concurrencyThrottle.availablePermits() == concurrencyLevel;
-	}
-	
-	@Override
-	public final boolean isFullThrottleEntered() {
-		// TODO use full load threshold
-		return concurrencyThrottle.availablePermits() == 0;
-	}
-	
-	@Override
-	public final boolean isFullThrottleExited() {
-		// TODO use full load threshold
-		return isShutdown() && concurrencyThrottle.availablePermits() > 0;
-	}
-	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {

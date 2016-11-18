@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.mock.impl.base;
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.emc.mongoose.common.Constants;
+import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import com.emc.mongoose.model.metrics.CustomMeter;
 import com.emc.mongoose.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -13,6 +14,7 @@ import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -149,7 +151,7 @@ implements StorageIoStats {
 	public final String toString() {
 		long countTotal = storage.getSize();
 		return String.format(
-			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+			LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
 			countTotal, 100.0 * countTotal / storage.getCapacity(), countContainers.getCount(),
 			//

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -88,6 +89,7 @@ implements StorageDriver<I, O, R>, Runnable {
 	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
+	protected final Semaphore concurrencyThrottle;
 	protected final String userName;
 	protected final String secret;
 	protected final boolean verifyFlag;
@@ -114,6 +116,7 @@ implements StorageDriver<I, O, R>, Runnable {
 		this.userName = authConfig == null ? null : authConfig.getId();
 		secret = authConfig == null ? null : authConfig.getSecret();
 		concurrencyLevel = loadConfig.getConcurrency();
+		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
 
@@ -133,8 +136,26 @@ implements StorageDriver<I, O, R>, Runnable {
 	}
 	
 	@Override
-	public int getConcurrencyLevel() {
-		return concurrencyLevel;
+	public int getActiveTaskCount() {
+		return concurrencyLevel - concurrencyThrottle.availablePermits();
+	}
+
+	@Override
+	public final boolean isIdle() {
+		return !concurrencyThrottle.hasQueuedThreads() &&
+			concurrencyThrottle.availablePermits() == concurrencyLevel;
+	}
+
+	@Override
+	public final boolean isFullThrottleEntered() {
+		// TODO use full load threshold
+		return concurrencyThrottle.availablePermits() == 0;
+	}
+
+	@Override
+	public final boolean isFullThrottleExited() {
+		// TODO use full load threshold
+		return isShutdown() && concurrencyThrottle.availablePermits() > 0;
 	}
 
 	@Override

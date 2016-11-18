@@ -165,9 +165,9 @@ implements StorageDriverSvc<I, O, R> {
 	}
 	
 	@Override
-	public final int getConcurrencyLevel()
+	public final int getActiveTaskCount()
 	throws RemoteException {
-		return driver.getConcurrencyLevel();
+		return driver.getActiveTaskCount();
 	}
 	
 	@Override

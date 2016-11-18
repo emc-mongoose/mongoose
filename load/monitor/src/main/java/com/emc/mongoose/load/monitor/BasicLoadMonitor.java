@@ -13,7 +13,6 @@ import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.result.DataIoResult;
 import com.emc.mongoose.model.io.task.result.IoResult;
@@ -25,11 +24,13 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -154,10 +155,7 @@ implements LoadMonitor<R> {
 			concurrencySum = 0;
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
 			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
-				try {
-					concurrencySum += nextDriver.getConcurrencyLevel();
-				} catch(final RemoteException ignored) {
-				}
+				concurrencySum += loadConfigs.get(nextGenerator).getConcurrency();
 			}
 			totalConcurrencyMap.put(
 				IoType.valueOf(loadConfigs.get(nextGenerator).getType().toUpperCase()).ordinal(),
@@ -234,10 +232,12 @@ implements LoadMonitor<R> {
 							Markers.METRICS_STDOUT,
 							new MetricsTableLogMessage(name, lastStats, totalConcurrencyMap)
 						);
-						LOG.info(
-							Markers.METRICS_FILE,
-							new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
-						);
+						if(!metricsConfig.getPrecondition()) {
+							LOG.info(
+								Markers.METRICS_FILE,
+								new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
+							);
+						}
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
 					Thread.sleep(1);
@@ -662,9 +662,11 @@ implements LoadMonitor<R> {
 		LOG.info(
 			Markers.METRICS_STDOUT, new MetricsTableLogMessage(name, lastStats, totalConcurrencyMap)
 		);
-		LOG.info(
-			Markers.METRICS_FILE_TOTAL, new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
-		);
+		if(!metricsConfig.getPrecondition()) {
+			LOG.info(
+				Markers.METRICS_FILE_TOTAL, new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
+			);
+		}
 		
 		for(final IoStats nextStats : ioStats.values()) {
 			nextStats.close();

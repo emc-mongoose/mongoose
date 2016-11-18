@@ -194,7 +194,7 @@
 					"fileName": "metrics.med.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
+						"pattern": "%m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -218,7 +218,7 @@
 					"fileName": "metrics.med.total.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
+						"pattern": "%m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -242,7 +242,7 @@
 					"fileName": "metrics.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
+						"pattern": "%m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -266,7 +266,7 @@
 					"fileName": "metrics.total.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,TypeLoad,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\",%m%n"
+						"pattern": "%m%n"
 					},
 					"Filters": {
 						"Filter": [

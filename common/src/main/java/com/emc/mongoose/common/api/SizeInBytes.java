@@ -1,10 +1,11 @@
 package com.emc.mongoose.common.api;
 
 import java.io.Serializable;
-import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 
 /**
  Created by kurila on 10.02.16.
@@ -54,13 +55,13 @@ implements Serializable {
 		if(x % 1 == 0) {
 			final long y = (long) x;
 			return String.format(
-				Locale.ROOT,
+				LOCALE_DEFAULT,
 				y < 10 ? "%d%sb" : y < 100 ? "%d%sb" : "%d%sb",
 				y, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 			).toUpperCase();
 		} else {
 			return String.format(
-				Locale.ROOT,
+				LOCALE_DEFAULT,
 				x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
 				x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 			).toUpperCase();

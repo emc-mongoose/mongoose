@@ -20,14 +20,14 @@ import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.Locale;
-import java.util.TimeZone;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.emc.mongoose.common.Constants.DIR_CONFIG;
 import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
+import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 
 /**
  Created by kurila on 06.05.14.
@@ -62,8 +62,6 @@ implements ShutdownCallbackRegistry {
 		//
 		MONGOOSE = "mongoose";
 	//
-	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
-	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
 	public static final DatePrinter
 		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
 	// console colors
@@ -87,8 +85,8 @@ implements ShutdownCallbackRegistry {
 	
 	//
 	public static String getDateTimeStamp() {
-		return LogUtil.FMT_DT.format(
-			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
+		return FMT_DT.format(
+			Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime()
 		);
 	}
 	//

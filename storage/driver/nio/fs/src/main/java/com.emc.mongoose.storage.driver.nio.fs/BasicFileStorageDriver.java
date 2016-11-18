@@ -150,12 +150,6 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected final void invokeNio(final O ioTask) {
 
-		if(Status.PENDING.equals(ioTask.getStatus())) {
-			// mark the task as active if it is invoked 1st time
-			ioTask.startRequest();
-			ioTask.finishRequest();
-		}
-
 		FileChannel srcChannel = null;
 		FileChannel dstChannel = null;
 

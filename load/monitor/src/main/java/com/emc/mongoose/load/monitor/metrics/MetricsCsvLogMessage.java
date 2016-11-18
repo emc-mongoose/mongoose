@@ -6,10 +6,12 @@ import com.emc.mongoose.ui.log.MessageBase;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 /**
  Created by kurila on 26.10.16.
  
@@ -54,10 +56,12 @@ extends MessageBase {
 			entryIter = snapshots.entrySet().iterator();
 		Map.Entry<Integer, IoStats.Snapshot> nextEntry;
 		IoStats.Snapshot nextSnapshot;
+		final Date current = new Date();
 		while(entryIter.hasNext()) {
 			nextEntry = entryIter.next();
 			nextSnapshot = nextEntry.getValue();
 			strb
+				.append('"').append(FMT_DATE_ISO8601.format(current)).append('"').append(',')
 				.append(IoType.values()[nextEntry.getKey()].name()).append(',')
 				.append(totalConcurrencyMap.get(nextEntry.getKey())).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
@@ -77,9 +81,10 @@ extends MessageBase {
 				.append(nextSnapshot.getLatencyMin()).append(',')
 				.append(nextSnapshot.getLatencyLoQ()).append(',')
 				.append(nextSnapshot.getLatencyMed()).append(',')
-				.append(nextSnapshot.getLatencyHiQ());
+				.append(nextSnapshot.getLatencyHiQ()).append(',')
+				.append(nextSnapshot.getLatencyMax());
 			if(entryIter.hasNext()) {
-				strb.append(nextSnapshot.getLatencyMax()).append('\n');
+				strb.append('\n');
 			} else {
 				break;
 			}

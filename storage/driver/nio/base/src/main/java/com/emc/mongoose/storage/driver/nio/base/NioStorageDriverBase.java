@@ -12,6 +12,7 @@ import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -19,8 +20,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 19.07.16.
@@ -35,8 +38,9 @@ implements StorageDriver<I, O, R> {
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
-	private final WorkerTask ioWorkerTasks[];
+	private final Runnable ioWorkerTasks[];
 	private final BlockingQueue<O> ioTaskQueues[];
+	private final Semaphore concurrencyThrottle;
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
@@ -44,8 +48,9 @@ implements StorageDriver<I, O, R> {
 	) {
 		super(jobName, null, loadConfig, verifyFlag);
 		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
-		ioWorkerTasks = new WorkerTask[ioWorkerCount];
+		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
+		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		ioTaskBuffCapacity = Math.max(
 			1, concurrencyLevel / ThreadUtil.getHardwareConcurrencyLevel()
 		);
@@ -61,19 +66,13 @@ implements StorageDriver<I, O, R> {
 	}
 
 
-	private interface WorkerTask
-	extends Runnable {
-
-		boolean isIdle();
-	}
-
 	/**
 	 The class represents the non-blocking I/O task execution algorithm.
 	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
 	 So the I/O task may be invoked multiple times (in the reentrant manner).
 	 */
 	private final class NioWorkerTask
-	implements WorkerTask {
+	implements Runnable {
 		
 		@SuppressWarnings("unchecked")
 		private final List<O> ioTaskBuff = new ArrayList<>(ioTaskBuffCapacity);
@@ -83,13 +82,6 @@ implements StorageDriver<I, O, R> {
 			this.ioTaskQueue = ioTaskQueue;
 		}
 
-		private volatile boolean idleFlag = false;
-
-		@Override
-		public final boolean isIdle() {
-			return idleFlag;
-		}
-
 		@Override
 		public final void run() {
 
@@ -97,31 +89,42 @@ implements StorageDriver<I, O, R> {
 			int ioTaskBuffSize;
 			O ioTask;
 
-			while(!isInterrupted() && !isClosed()) {
+			try {
+				while(!isInterrupted() && !isClosed()) {
 
-				ioTaskBuffSize = ioTaskBuff.size();
-				if(ioTaskBuffSize < ioTaskBuffCapacity) {
-					ioTaskBuffSize += ioTaskQueue.drainTo(
-						ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
-					);
-				}
-
-				if(ioTaskBuffSize > 0) {
-					idleFlag = false;
-					ioTaskIterator = ioTaskBuff.iterator();
-					while(ioTaskIterator.hasNext()) {
-						ioTask = ioTaskIterator.next();
-						// perform non blocking I/O for the task
-						invokeNio(ioTask);
-						// remove the task from the buffer if it is not active more
-						if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
-							ioTaskIterator.remove();
-							ioTaskCompleted(ioTask);
-						}
+					ioTaskBuffSize = ioTaskBuff.size();
+					if(ioTaskBuffSize < ioTaskBuffCapacity) {
+						ioTaskBuffSize += ioTaskQueue.drainTo(
+							ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
+						);
 					}
-				} else {
-					idleFlag = true;
+
+					if(ioTaskBuffSize > 0) {
+						ioTaskIterator = ioTaskBuff.iterator();
+						while(ioTaskIterator.hasNext()) {
+							ioTask = ioTaskIterator.next();
+							// check if the task is invoked 1st time
+							if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
+								// respect the configured concurrency level
+								concurrencyThrottle.acquire();
+								// mark the task as active
+								ioTask.startRequest();
+								ioTask.finishRequest();
+							}
+							// perform non blocking I/O for the task
+							invokeNio(ioTask);
+							// remove the task from the buffer if it is not active more
+							if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+								concurrencyThrottle.release();
+								ioTaskIterator.remove();
+								ioTaskCompleted(ioTask);
+							}
+						}
+					} else {
+						LockSupport.parkNanos(1);
+					}
 				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -153,31 +156,6 @@ implements StorageDriver<I, O, R> {
 	throws IllegalStateException {
 		final List<Runnable> interruptedTasks = ioTaskExecutor.shutdownNow();
 		LOG.debug(Markers.MSG, "{} I/O tasks dropped", interruptedTasks.size());
-	}
-
-	@Override
-	public final boolean isIdle() {
-		for(final WorkerTask ioWorkerTask : ioWorkerTasks) {
-			if(isClosed() || isInterrupted()) {
-				return true;
-			}
-			if(!ioWorkerTask.isIdle()) {
-				return false;
-			}
-		}
-		return true; // I/O task queue is empty and all I/O workers are idle
-	}
-
-	@Override
-	public final boolean isFullThrottleEntered() {
-		// TODO
-		return false;
-	}
-
-	@Override
-	public final boolean isFullThrottleExited() {
-		// TODO
-		return false;
 	}
 
 	@Override
