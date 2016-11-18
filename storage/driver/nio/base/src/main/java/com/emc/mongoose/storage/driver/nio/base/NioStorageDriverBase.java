@@ -93,6 +93,8 @@ implements StorageDriver<I, O, R> {
 				while(!isInterrupted() && !isClosed()) {
 
 					ioTaskBuffSize = ioTaskBuff.size();
+					// get the new I/O tasks from the common queue
+					// if there's a free place for the new I/O tasks
 					if(ioTaskBuffSize < ioTaskBuffCapacity) {
 						ioTaskBuffSize += ioTaskQueue.drainTo(
 							ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
@@ -118,7 +120,7 @@ implements StorageDriver<I, O, R> {
 								concurrencyThrottle.release();
 								ioTaskIterator.remove();
 								ioTaskCompleted(ioTask);
-							}
+							} // else the task remains in the buffer for the next iteration
 						}
 					} else {
 						LockSupport.parkNanos(1);
