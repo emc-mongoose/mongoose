@@ -5,7 +5,7 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
-import com.emc.mongoose.load.monitor.metrics.MetricsTableLogMessage;
+import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
 
 /**
  Created by kurila on 12.07.16.
@@ -66,7 +65,6 @@ implements LoadMonitor<R> {
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
 	private final Int2ObjectMap<IoStats> medIoStats = new Int2ObjectOpenHashMap<>();
 	private volatile Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
-	private final Function<Integer, IoStats> ioStatsInitFunc;
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<String> itemInfoOutput;
 	private final Int2IntMap totalConcurrencyMap;
@@ -148,25 +146,23 @@ implements LoadMonitor<R> {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
+		this.metricsConfig = firstLoadConfig.getMetricsConfig();
+		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
+
 		this.driversMap = driversMap;
-		int concurrencySum;
 		totalConcurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			concurrencySum = 0;
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
-			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
-				concurrencySum += loadConfigs.get(nextGenerator).getConcurrency();
-			}
+			final String ioTypeName = loadConfigs.get(nextGenerator).getType().toUpperCase();
+			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			totalConcurrencyMap.put(
-				IoType.valueOf(loadConfigs.get(nextGenerator).getType().toUpperCase()).ordinal(),
-				concurrencySum
+				ioTypeCode, loadConfigs.get(nextGenerator).getConcurrency() * nextDrivers.size()
+			);
+			ioStats.put(
+				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
 			registerDrivers(nextDrivers);
 		}
-		
-		this.metricsConfig = firstLoadConfig.getMetricsConfig();
-		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
-		ioStatsInitFunc = ioType -> new BasicIoStats(ioType.toString(), metricsPeriodSec);
 
 		long countLimitSum = 0;
 		long sizeLimitSum = 0;
@@ -230,7 +226,7 @@ implements LoadMonitor<R> {
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 						LOG.info(
 							Markers.METRICS_STDOUT,
-							new MetricsTableLogMessage(name, lastStats, totalConcurrencyMap)
+							new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
 						);
 						if(!metricsConfig.getPrecondition()) {
 							LOG.info(
@@ -360,8 +356,8 @@ implements LoadMonitor<R> {
 			countBytesDone = 0;
 		}
 		
-		final IoStats ioTypeStats = ioStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
-		final IoStats ioTypeMedStats = medIoStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
+		final IoStats ioTypeStats = ioStats.get(ioTypeCode);
+		final IoStats ioTypeMedStats = medIoStats.get(ioTypeCode);
 		
 		if(statusCode == IoTask.Status.SUCC.ordinal()) {
 
@@ -438,8 +434,8 @@ implements LoadMonitor<R> {
 					countBytesDone = dataIoTaskResult.getCountBytesDone();
 				}
 				
-				ioTypeStats = ioStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
-				ioTypeMedStats = medIoStats.computeIfAbsent(ioTypeCode, ioStatsInitFunc);
+				ioTypeStats = ioStats.get(ioTypeCode);
+				ioTypeMedStats = medIoStats.get(ioTypeCode);
 				
 				if(statusCode == IoTask.Status.SUCC.ordinal()) {
 					if(itemInfoOutput != null) {
@@ -539,10 +535,8 @@ implements LoadMonitor<R> {
 			}
 		}
 		
-		if(ioStats != null) {
-			for(final int ioTypeCode : ioStats.keySet()) {
-				ioStats.get(ioTypeCode).start();
-			}
+		for(final int ioTypeCode : totalConcurrencyMap.keySet()) {
+			ioStats.get(ioTypeCode).start();
 		}
 		
 		worker.start();
@@ -660,7 +654,7 @@ implements LoadMonitor<R> {
 		driversMap.clear();
 
 		LOG.info(
-			Markers.METRICS_STDOUT, new MetricsTableLogMessage(name, lastStats, totalConcurrencyMap)
+			Markers.METRICS_STDOUT, new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
 		);
 		if(!metricsConfig.getPrecondition()) {
 			LOG.info(

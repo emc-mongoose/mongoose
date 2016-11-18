@@ -21,10 +21,10 @@ extends Daemon, Output<O>, Remote {
 	boolean configureStorage()
 	throws RemoteException;
 	
-	int getActiveTaskCount()
-	throws RemoteException;
-	
 	void setOutput(final Output<R> ioTaskResultOutput)
+	throws RemoteException;
+
+	int getActiveTaskCount()
 	throws RemoteException;
 
 	boolean isIdle()

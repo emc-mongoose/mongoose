@@ -105,7 +105,7 @@ implements ValueInputFactory<String, G> {
 						matcher = LONG_PATTERN.matcher(parameters[1]);
 						if(matcher.find()) {
 							return (G) new AsyncLongInput(
-								Long.valueOf(matcher.group(1)), Long.valueOf(matcher.group(2))
+								Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2))
 							);
 						} else {
 							throw new IllegalArgumentException();
@@ -119,7 +119,8 @@ implements ValueInputFactory<String, G> {
 						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
 						if(matcher.find()) {
 							return (G) new AsyncDoubleInput(
-								Double.valueOf(matcher.group(1)), Double.valueOf(matcher.group(2)),
+								Double.parseDouble(matcher.group(1)),
+								Double.parseDouble(matcher.group(2)),
 								parameters[0]
 							);
 						} else {

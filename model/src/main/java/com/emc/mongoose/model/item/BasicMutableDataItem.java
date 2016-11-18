@@ -39,7 +39,7 @@ implements MutableDataItem {
 		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 		try {
 			// extract hexadecimal layer number
-			layerNum = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
+			layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
 			// extract hexadecimal mask, convert into bit set and add to the existing mask
 			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 			final char rangesMaskChars[];

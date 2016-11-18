@@ -45,7 +45,7 @@ public abstract class TimeUtil {
 		}
 		
 		try {
-			return Long.valueOf(timeValueSpec);
+			return Long.parseLong(timeValueSpec);
 		} catch(final NumberFormatException e) {
 			return 0;
 		}

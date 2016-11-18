@@ -112,7 +112,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			final InetSocketAddress nodeAddr;
 			if(na.contains(":")) {
 				final String addrParts[] = na.split(":");
-				nodeAddr = new InetSocketAddress(addrParts[0], Integer.valueOf(addrParts[1]));
+				nodeAddr = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
 			} else {
 				nodeAddr = new InetSocketAddress(na, storageNodePort);
 			}

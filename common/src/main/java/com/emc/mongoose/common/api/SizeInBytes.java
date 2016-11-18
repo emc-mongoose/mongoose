@@ -26,7 +26,7 @@ implements Serializable {
 		double size;
 		long degree;
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
-			size = Double.valueOf(matcher.group(1));
+			size = Double.parseDouble(matcher.group(1));
 			unit = matcher.group(2);
 			if(unit.length() == 0) {
 				degree = 0;
