@@ -192,9 +192,9 @@ implements HttpStorageDriver<I, O, R> {
 		}
 
 		applyMetaDataHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
 
 		return httpRequest;
 	}
@@ -228,7 +228,7 @@ implements HttpStorageDriver<I, O, R> {
 		}
 	}
 
-	private void applySharedHeaders(final HttpHeaders httpHeaders) {
+	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
 		String sharedHeaderName;
 		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
 			sharedHeaderName = sharedHeader.getKey();
@@ -238,7 +238,7 @@ implements HttpStorageDriver<I, O, R> {
 		}
 	}
 
-	private void applyDynamicHeaders(final HttpHeaders httpHeaders) {
+	protected void applyDynamicHeaders(final HttpHeaders httpHeaders) {
 
 		String headerName;
 		String headerValue;

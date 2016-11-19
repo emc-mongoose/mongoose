@@ -519,10 +519,17 @@ implements LoadMonitor<R> {
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			
 			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = driversMap.get(nextGenerator);
-			
+
 			try {
-				nextGeneratorDrivers.get(0).configureStorage();
-			} catch(final RemoteException e) {
+				final String dstPath = nextGenerator.getOutputPath();
+				final int sepPos = dstPath.indexOf('/', 1);
+				if(sepPos > 1) {
+					// create only 1st level path
+					nextGeneratorDrivers.get(0).createPath(dstPath.substring(0, sepPos));
+				} else {
+					nextGeneratorDrivers.get(0).createPath(dstPath);
+				}
+			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Preconditions failure");
 			}
 			

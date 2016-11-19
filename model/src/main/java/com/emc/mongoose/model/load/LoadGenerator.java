@@ -6,6 +6,8 @@ import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 
+import java.io.IOException;
+
 /**
  Created on 11.07.16.
  */
@@ -17,4 +19,7 @@ extends Daemon {
 	void setRateThrottle(final Throttle<Object> rateThrottle);
 
 	void setOutput(final Output<O> ioTaskOutput);
+
+	String getOutputPath()
+	throws IOException;
 }

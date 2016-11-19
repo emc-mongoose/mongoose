@@ -18,7 +18,7 @@ extends Daemon, Output<O>, Remote {
 
 	String HOST_ADDR = ServiceUtil.getHostAddr();
 	
-	boolean configureStorage()
+	boolean createPath(final String path)
 	throws RemoteException;
 	
 	void setOutput(final Output<R> ioTaskResultOutput)

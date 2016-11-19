@@ -17,6 +17,7 @@ import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -56,11 +57,11 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private static final Logger LOG = LogManager.getLogger();
 	
 	protected final String storageNodeAddrs[];
-	protected final int storageNodePort;
-	protected final Input<String> nodeSelector;
-	protected final EventLoopGroup workerGroup;
-	protected final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
-	protected final boolean sslFlag;
+	private final int storageNodePort;
+	private final Input<String> nodeSelector;
+	private final EventLoopGroup workerGroup;
+	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
+	private final boolean sslFlag;
 	
 	protected NetStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig,
@@ -86,13 +87,9 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 				ThreadUtil.getHardwareConcurrencyLevel(), new NamingThreadFactory("ioWorker", true)
 			);
 		}
-		final Bootstrap bootstrap = new Bootstrap();
-		bootstrap.group(workerGroup);
-		if(SystemUtils.IS_OS_LINUX) {
-			bootstrap.channel(EpollSocketChannel.class);
-		} else {
-			bootstrap.channel(NioSocketChannel.class);
-		}
+		final Bootstrap bootstrap = new Bootstrap()
+			.group(workerGroup)
+			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class );
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
@@ -108,7 +105,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.SO_TIMEOUT, socketConfig.getTimeoutMillisec());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
 		for(final String na : storageNodeAddrs) {
-			
 			final InetSocketAddress nodeAddr;
 			if(na.contains(":")) {
 				final String addrParts[] = na.split(":");
@@ -120,7 +116,25 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 				na, new FixedChannelPool(bootstrap.remoteAddress(nodeAddr), this, concurrencyLevel)
 			);
 		}
-		
+	}
+
+	protected Channel getUnpooledChannel()
+	throws InterruptedException {
+
+		final String na = storageNodeAddrs[0];
+		final InetSocketAddress nodeAddr;
+		if(na.contains(":")) {
+			final String addrParts[] = na.split(":");
+			nodeAddr = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
+		} else {
+			nodeAddr = new InetSocketAddress(na, storageNodePort);
+		}
+
+		final Bootstrap bootstrap = new Bootstrap()
+			.group(workerGroup)
+			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class);
+
+		return bootstrap.connect(nodeAddr).sync().channel();
 	}
 	
 	@Override

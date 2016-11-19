@@ -159,9 +159,9 @@ implements StorageDriverSvc<I, O, R> {
 	}
 	
 	@Override
-	public final boolean configureStorage()
+	public final boolean createPath(final String path)
 	throws RemoteException {
-		return driver.configureStorage();
+		return driver.createPath(path);
 	}
 	
 	@Override

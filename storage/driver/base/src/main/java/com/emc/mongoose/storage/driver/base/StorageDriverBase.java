@@ -92,6 +92,7 @@ implements StorageDriver<I, O, R>, Runnable {
 	protected final Semaphore concurrencyThrottle;
 	protected final String userName;
 	protected final String secret;
+	protected final String authToken;
 	protected final boolean verifyFlag;
 
 	private final boolean useStorageDriverResult;
@@ -115,6 +116,7 @@ implements StorageDriver<I, O, R>, Runnable {
 		this.jobName = jobName;
 		this.userName = authConfig == null ? null : authConfig.getId();
 		secret = authConfig == null ? null : authConfig.getSecret();
+		authToken = authConfig == null ? null : authConfig.getToken();
 		concurrencyLevel = loadConfig.getConcurrency();
 		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		isCircular = loadConfig.getCircular();

@@ -91,7 +91,6 @@ implements LoadGeneratorBuilder<T> {
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 
 		if(ItemType.PATH.equals(itemType)) {
-			// TODO path I/O tasks factory
 			ioTaskBuilder = new BasicIoTaskBuilder<>();
 		} else {
 			ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()

@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -22,10 +23,16 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -84,11 +91,56 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 	
 	@Override
-	public final boolean configureStorage()
+	public final boolean createPath(final String path)
 	throws RemoteException {
-		// TODO check the destination bucket if it exists w/ HEAD request
+
+		final Channel channel;
+		try {
+			channel = getUnpooledChannel();
+		} catch(final InterruptedException e) {
+			return false;
+		}
+
+		try {
+			super.channelCreated(channel);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to configure the channel");
+			return false;
+		}
+
+		channel.pipeline().addLast(
+			new SimpleChannelInboundHandler() {
+				@Override
+				protected final void channelRead0(final ChannelHandlerContext ctx, final Object msg)
+				throws Exception {
+					// TODO
+				}
+			}
+		);
+
+		// check the destination bucket if it exists w/ HEAD request
+		final String nodeAddr = storageNodeAddrs[0];
+		final HttpHeaders headReqHeaders = new DefaultHttpHeaders();
+		headReqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		headReqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		headReqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		applyMetaDataHeaders(headReqHeaders);
+		applyDynamicHeaders(headReqHeaders);
+		applySharedHeaders(headReqHeaders);
+		applyAuthHeaders(HttpMethod.HEAD, path, headReqHeaders);
+		final HttpRequest headReq = new DefaultHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, headReqHeaders
+		);
+		try {
+			channel.write(headReq).sync();
+		} catch(final InterruptedException e) {
+			return false;
+		}
+
 		// TODO create the destination bucket if it doesn't exists
+
 		// TODO take into the account fsAccess and versioning
+
 		return true;
 	}
 	

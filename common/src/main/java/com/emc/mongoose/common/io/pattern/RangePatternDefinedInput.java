@@ -50,7 +50,7 @@ extends BasicPatternDefinedInput {
 			final StringBuilder segmentsBuilder = new StringBuilder();
 			final StringBuilder patternBuilder = new StringBuilder(getPattern());
 			int segmentCounter = 0;
-			for(int j = 0; j < patternSymbolsNum; j++) {
+			for(int j = 0; j < patternSymbolsNum; j ++) {
 				int i = 0;
 				while(patternBuilder.charAt(i) != PATTERN_CHAR) {
 					segmentsBuilder.append(patternBuilder.charAt(i)); // building of the segment by character
@@ -60,7 +60,7 @@ extends BasicPatternDefinedInput {
 				segmentsBuilder.setLength(0);
 				patternBuilder.delete(0, i + 1); // cutting the segment of the input string
 				addExpressionParams(patternBuilder, segmentCounter);
-				segmentCounter++;
+				segmentCounter ++;
 			}
 			segments[patternSymbolsNum] = patternBuilder.toString();
 		}

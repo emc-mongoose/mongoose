@@ -142,9 +142,16 @@ implements StorageDriver<I, O, R> {
 	}
 	
 	@Override
-	public final boolean configureStorage()
+	public final boolean createPath(final String path)
 	throws RemoteException {
-		return true;
+		final File pathFile = FS.getPath(path).toFile();
+		if(!pathFile.exists()) {
+			LOG.info(Markers.MSG, "Create the output path: \"{}\"", path);
+			return pathFile.mkdirs();
+		} else {
+			LOG.info(Markers.MSG, "Output path \"{}\" already exists", path);
+			return true;
+		}
 	}
 
 	@Override
