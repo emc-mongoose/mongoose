@@ -154,6 +154,8 @@ extends HttpStorageDriverBase<I, O, R> {
 				LOG.warn(
 					Markers.ERR, "The bucket checking response is: {}", checkBucketResp.toString()
 				);
+			} else {
+				LOG.info(Markers.MSG, "Bucket \"{}\" already exists", path);
 			}
 		}
 
@@ -175,6 +177,8 @@ extends HttpStorageDriverBase<I, O, R> {
 						putBucketResp.toString()
 					);
 					return false;
+				} else {
+					LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
 				}
 			} catch(final InterruptedException e) {
 				return false;
