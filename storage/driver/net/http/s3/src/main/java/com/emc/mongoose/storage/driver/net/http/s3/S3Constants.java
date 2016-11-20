@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  Created by kurila on 02.08.16.
  */
@@ -16,13 +18,12 @@ public interface S3Constants {
 	};
 	String URL_ARG_VERSIONING = "versioning";
 	String SIGN_METHOD = "HmacSHA1";
-
-	String VERSIONING_CONTENT_ENABLED = "<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
-		"<Status>Enabled</Status>" +
-		"<MfaDelete>Disabled</MfaDelete>" +
-		"</VersioningConfiguration>";
-	String VERSIONING_CONTENT_SUSPENDED = "<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
-		"<Status>Suspended</Status>" +
-		"<MfaDelete>Disabled</MfaDelete>" +
-		"</VersioningConfiguration>";
+	byte[] VERSIONING_ENABLE_CONTENT = (
+		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+			"<Status>Enabled</Status></VersioningConfiguration>"
+		).getBytes(StandardCharsets.US_ASCII);
+	byte[] VERSIONING_DISABLE_CONTENT = (
+		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+			"<Status>Suspended</Status></VersioningConfiguration>"
+		).getBytes(StandardCharsets.US_ASCII);
 }

@@ -27,13 +27,19 @@ import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -51,6 +57,7 @@ import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
@@ -105,6 +112,29 @@ implements HttpStorageDriver<I, O, R> {
 				sharedHeaders.add(headerName, headerValue);
 			}
 		}
+	}
+
+	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
+	throws InterruptedException {
+		final Channel channel = getChannel();
+		final ChannelPipeline pipeline = channel.pipeline();
+		pipeline.removeLast(); // remove the API specific handler
+		final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
+		pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
+		pipeline.addLast(
+			new SimpleChannelInboundHandler<HttpObject>() {
+				@Override
+				protected final void channelRead0(
+					final ChannelHandlerContext ctx, final HttpObject msg
+				) throws Exception {
+					if(msg instanceof FullHttpResponse) {
+						fullRespSync.put((FullHttpResponse) msg);
+					}
+				}
+			}
+		);
+		channel.writeAndFlush(request).sync();
+		return fullRespSync.take();
 	}
 
 	@Override

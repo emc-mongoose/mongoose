@@ -6,6 +6,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
+import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
@@ -15,28 +16,28 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_X_AMZ_
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_X_AMZ;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.URL_ARG_VERSIONING;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.VERSIONING_ENABLE_CONTENT;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.VERSIONING_DISABLE_CONTENT;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AsciiString;
 
 import org.apache.logging.log4j.Level;
@@ -49,13 +50,13 @@ import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.SynchronousQueue;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -66,7 +67,6 @@ public final class S3StorageDriver<I extends Item, O extends IoTask<I>, R extend
 extends HttpStorageDriverBase<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();
-	
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
 			@Override
@@ -74,10 +74,9 @@ extends HttpStorageDriverBase<I, O, R> {
 				return new StringBuilder();
 			}
 		};
-		
 	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
-	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final ByteBuf EMPTY_CONTENT = Unpooled.buffer(0);
 
 	private final SecretKeySpec secretKey;
 	
@@ -101,29 +100,6 @@ extends HttpStorageDriverBase<I, O, R> {
 	public final boolean createPath(final String path)
 	throws RemoteException {
 
-		final Channel channel;
-		try {
-			channel = getChannel();
-		} catch(final InterruptedException e) {
-			return false;
-		}
-
-		final SynchronousQueue<HttpResponse> respSync = new SynchronousQueue<>();
-		final ChannelPipeline pipeline = channel.pipeline();
-		pipeline.removeLast();
-		pipeline.addLast(
-			new SimpleChannelInboundHandler<HttpObject>() {
-				@Override
-				protected final void channelRead0(
-					final ChannelHandlerContext ctx, final HttpObject msg
-				) throws Exception {
-					if(msg instanceof HttpResponse) {
-						respSync.put((HttpResponse) msg);
-					}
-				}
-			}
-		);
-
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -134,14 +110,13 @@ extends HttpStorageDriverBase<I, O, R> {
 		applySharedHeaders(reqHeaders);
 		applyAuthHeaders(HttpMethod.HEAD, path, reqHeaders);
 
-		final HttpRequest checkBucketReq = new DefaultHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, reqHeaders
+		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, EMPTY_CONTENT, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
 		);
-		HttpResponse checkBucketResp;
-		channel.write(checkBucketReq);
+		final FullHttpResponse checkBucketResp;
 		try {
-			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).sync();
-			checkBucketResp = respSync.take();
+			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch(final InterruptedException e) {
 			return false;
 		}
@@ -161,55 +136,112 @@ extends HttpStorageDriverBase<I, O, R> {
 
 		// create the destination bucket if it doesn't exists
 		if(!bucketExistedBefore) {
+			if(fsAccess) {
+				reqHeaders.add(
+					EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true)
+				);
+			}
 			applyMetaDataHeaders(reqHeaders);
 			applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
-			final HttpRequest putBucketReq = new DefaultHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, reqHeaders
+			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, EMPTY_CONTENT, reqHeaders,
+				EmptyHttpHeaders.INSTANCE
 			);
-			HttpResponse putBucketResp;
-			channel.write(putBucketReq);
+			final FullHttpResponse putBucketResp;
 			try {
-				channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).sync();
-				putBucketResp = respSync.take();
-				if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
-					LOG.warn(
-						Markers.ERR, "The bucket creating response is: {}",
-						putBucketResp.toString()
-					);
-					return false;
-				} else {
-					LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
-				}
+				putBucketResp = executeHttpRequest(putBucketReq);
 			} catch(final InterruptedException e) {
 				return false;
 			}
-		}
-
-		/* check the bucket versioning state
-		final String getBucketVersioningReqUri = path.endsWith("/") ?
-			path + "?" + URL_ARG_VERSIONING : path + "/?" + URL_ARG_VERSIONING;
-		applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
-		final HttpRequest getBucketVersioningReq = new DefaultHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.PUT, getBucketVersioningReqUri, reqHeaders
-		);
-		HttpResponse getBucketVersioningResp;
-		channel.write(getBucketVersioningReq);
-		try {
-			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).sync();
-			getBucketVersioningResp = respSync.take();
-			if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
+			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
 				LOG.warn(
-					Markers.ERR, "The bucket versioning checking response is: {}",
-					getBucketVersioningResp.toString()
+					Markers.ERR, "The bucket creating response is: {}",
+					putBucketResp.toString()
 				);
 				return false;
 			} else {
-
+				LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
 			}
+		}
+
+		// check the bucket versioning state
+		final String bucketVersioningReqUri = path.endsWith("/") ?
+			path + "?" + URL_ARG_VERSIONING : path + "/?" + URL_ARG_VERSIONING;
+		applyAuthHeaders(HttpMethod.GET, path, reqHeaders);
+		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, EMPTY_CONTENT,
+			reqHeaders, EmptyHttpHeaders.INSTANCE
+		);
+		final FullHttpResponse getBucketVersioningResp;
+		try {
+			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
 		} catch(final InterruptedException e) {
 			return false;
 		}
-		*/
+
+		final boolean versioningEnabled;
+		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
+			LOG.warn(
+				Markers.ERR, "The bucket versioning checking response is: {}",
+				getBucketVersioningResp.toString()
+			);
+			return false;
+		} else {
+			final String content = getBucketVersioningResp
+				.content()
+				.toString(StandardCharsets.US_ASCII);
+			if(content.contains("Enabled")) {
+				versioningEnabled = true;
+			} else {
+				versioningEnabled = false;
+			}
+		}
+
+		final FullHttpRequest putBucketVersioningReq;
+		if(!versioning && versioningEnabled) {
+			// disable bucket versioning
+			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_DISABLE_CONTENT.length);
+			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
+			putBucketVersioningReq = new DefaultFullHttpRequest(
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
+				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT), reqHeaders,
+				EmptyHttpHeaders.INSTANCE
+			);
+			final FullHttpResponse putBucketVersioningResp;
+			try {
+				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
+			} catch(final InterruptedException e) {
+				return false;
+			}
+			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
+				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
+					putBucketVersioningResp.toString()
+				);
+				return false;
+			}
+		} else if(versioning && !versioningEnabled) {
+			// enable bucket versioning
+			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_ENABLE_CONTENT.length);
+			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
+			putBucketVersioningReq = new DefaultFullHttpRequest(
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
+				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT), reqHeaders,
+				EmptyHttpHeaders.INSTANCE
+			);
+			final FullHttpResponse putBucketVersioningResp;
+			try {
+				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
+			} catch(final InterruptedException e) {
+				return false;
+			}
+
+			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
+				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
+					putBucketVersioningResp.toString()
+				);
+				return false;
+			}
+		}
 
 		return true;
 	}
