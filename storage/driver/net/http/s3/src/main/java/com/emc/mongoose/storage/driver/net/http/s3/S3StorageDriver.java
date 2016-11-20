@@ -25,6 +25,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.EmptyByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -76,7 +77,6 @@ extends HttpStorageDriverBase<I, O, R> {
 		};
 	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
-	private static final ByteBuf EMPTY_CONTENT = Unpooled.buffer(0);
 
 	private final SecretKeySpec secretKey;
 	
@@ -111,7 +111,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		applyAuthHeaders(HttpMethod.HEAD, path, reqHeaders);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, EMPTY_CONTENT, reqHeaders,
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse checkBucketResp;
@@ -144,7 +144,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			applyMetaDataHeaders(reqHeaders);
 			applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, EMPTY_CONTENT, reqHeaders,
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketResp;
@@ -162,6 +162,9 @@ extends HttpStorageDriverBase<I, O, R> {
 			} else {
 				LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
 			}
+			if(fsAccess) {
+				reqHeaders.remove(EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED);
+			}
 		}
 
 		// check the bucket versioning state
@@ -169,7 +172,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			path + "?" + URL_ARG_VERSIONING : path + "/?" + URL_ARG_VERSIONING;
 		applyAuthHeaders(HttpMethod.GET, path, reqHeaders);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, EMPTY_CONTENT,
+			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
 			reqHeaders, EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse getBucketVersioningResp;
@@ -204,7 +207,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
-				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT), reqHeaders,
+				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketVersioningResp;
@@ -225,7 +228,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
-				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT), reqHeaders,
+				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketVersioningResp;
