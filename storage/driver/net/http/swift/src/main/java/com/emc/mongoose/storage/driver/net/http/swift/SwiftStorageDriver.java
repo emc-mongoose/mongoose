@@ -42,7 +42,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 	
 	@Override
-	public boolean configureStorage()
+	public final boolean createPath(final String path)
 	throws RemoteException {
 		// TODO create the auth token and update the field using its value
 		// TODO check the destination container if it exists w/ HEAD request
@@ -50,12 +50,10 @@ extends HttpStorageDriverBase<I, O, R> {
 		// TODO take into the account fsAccess and versioning
 		return false;
 	}
-	
+
 	@Override
-	public final void channelCreated(final Channel channel)
-	throws Exception {
-		super.channelCreated(channel);
-		final ChannelPipeline pipeline = channel.pipeline();
+	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
+		super.appendSpecificHandlers(pipeline);
 		pipeline.addLast(new BasicClientHandler<>(this, verifyFlag));
 	}
 

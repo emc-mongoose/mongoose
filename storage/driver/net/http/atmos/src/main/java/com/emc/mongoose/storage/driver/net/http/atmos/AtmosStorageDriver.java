@@ -94,17 +94,15 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 	
 	@Override
-	public final boolean configureStorage()
+	public final boolean createPath(final String path)
 	throws RemoteException {
 		// TODO create the subtenant, set the auth token field to the subtenant value
 		return true;
 	}
-	
+
 	@Override
-	public final void channelCreated(final Channel channel)
-	throws Exception {
-		super.channelCreated(channel);
-		final ChannelPipeline pipeline = channel.pipeline();
+	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
+		super.appendSpecificHandlers(pipeline);
 		pipeline.addLast(new AtmosClientHandler<>(this, verifyFlag));
 	}
 

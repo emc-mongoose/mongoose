@@ -39,6 +39,7 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import io.netty.util.AsciiString;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.Level;
@@ -107,10 +108,8 @@ implements HttpStorageDriver<I, O, R> {
 	}
 
 	@Override
-	public void channelCreated(final Channel channel)
-	throws Exception {
-		super.channelCreated(channel);
-		final ChannelPipeline pipeline = channel.pipeline();
+	protected void appendSpecificHandlers(final ChannelPipeline pipeline) {
+		super.appendSpecificHandlers(pipeline);
 		pipeline.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true));
 		pipeline.addLast(new ChunkedWriteHandler());
 	}
@@ -233,7 +232,7 @@ implements HttpStorageDriver<I, O, R> {
 		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
 			sharedHeaderName = sharedHeader.getKey();
 			if(!httpHeaders.contains(sharedHeaderName)) {
-				httpHeaders.add(sharedHeaderName, sharedHeader.getValue());
+				httpHeaders.add(new AsciiString(sharedHeaderName), sharedHeader.getValue());
 			}
 		}
 	}
@@ -279,7 +278,7 @@ implements HttpStorageDriver<I, O, R> {
 				continue;
 			}
 			// put the generated header value into the request
-			httpHeaders.set(headerName, headerValue);
+			httpHeaders.set(new AsciiString(headerName), headerValue);
 		}
 	}
 

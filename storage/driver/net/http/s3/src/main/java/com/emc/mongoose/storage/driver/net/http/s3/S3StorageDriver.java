@@ -7,7 +7,6 @@ import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
-
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
@@ -31,9 +30,15 @@ import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AsciiString;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +55,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.SynchronousQueue;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -96,59 +103,116 @@ extends HttpStorageDriverBase<I, O, R> {
 
 		final Channel channel;
 		try {
-			channel = getUnpooledChannel();
+			channel = getChannel();
 		} catch(final InterruptedException e) {
 			return false;
 		}
 
-		try {
-			super.channelCreated(channel);
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to configure the channel");
-			return false;
-		}
-
-		channel.pipeline().addLast(
-			new SimpleChannelInboundHandler() {
+		final SynchronousQueue<HttpResponse> respSync = new SynchronousQueue<>();
+		final ChannelPipeline pipeline = channel.pipeline();
+		pipeline.removeLast();
+		pipeline.addLast(
+			new SimpleChannelInboundHandler<HttpObject>() {
 				@Override
-				protected final void channelRead0(final ChannelHandlerContext ctx, final Object msg)
-				throws Exception {
-					// TODO
+				protected final void channelRead0(
+					final ChannelHandlerContext ctx, final HttpObject msg
+				) throws Exception {
+					if(msg instanceof HttpResponse) {
+						respSync.put((HttpResponse) msg);
+					}
 				}
 			}
 		);
 
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
-		final HttpHeaders headReqHeaders = new DefaultHttpHeaders();
-		headReqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		headReqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		headReqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-		applyMetaDataHeaders(headReqHeaders);
-		applyDynamicHeaders(headReqHeaders);
-		applySharedHeaders(headReqHeaders);
-		applyAuthHeaders(HttpMethod.HEAD, path, headReqHeaders);
-		final HttpRequest headReq = new DefaultHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, headReqHeaders
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		applyDynamicHeaders(reqHeaders);
+		applySharedHeaders(reqHeaders);
+		applyAuthHeaders(HttpMethod.HEAD, path, reqHeaders);
+
+		final HttpRequest checkBucketReq = new DefaultHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, reqHeaders
 		);
+		HttpResponse checkBucketResp;
+		channel.write(checkBucketReq);
 		try {
-			channel.write(headReq).sync();
+			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).sync();
+			checkBucketResp = respSync.take();
 		} catch(final InterruptedException e) {
 			return false;
 		}
 
-		// TODO create the destination bucket if it doesn't exists
+		boolean bucketExistedBefore = true;
+		if(checkBucketResp != null) {
+			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
+				bucketExistedBefore = false;
+			} else if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
+				LOG.warn(
+					Markers.ERR, "The bucket checking response is: {}", checkBucketResp.toString()
+				);
+			}
+		}
 
-		// TODO take into the account fsAccess and versioning
+		// create the destination bucket if it doesn't exists
+		if(!bucketExistedBefore) {
+			applyMetaDataHeaders(reqHeaders);
+			applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
+			final HttpRequest putBucketReq = new DefaultHttpRequest(
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, reqHeaders
+			);
+			HttpResponse putBucketResp;
+			channel.write(putBucketReq);
+			try {
+				channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).sync();
+				putBucketResp = respSync.take();
+				if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
+					LOG.warn(
+						Markers.ERR, "The bucket creating response is: {}",
+						putBucketResp.toString()
+					);
+					return false;
+				}
+			} catch(final InterruptedException e) {
+				return false;
+			}
+		}
+
+		/* check the bucket versioning state
+		final String getBucketVersioningReqUri = path.endsWith("/") ?
+			path + "?" + URL_ARG_VERSIONING : path + "/?" + URL_ARG_VERSIONING;
+		applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
+		final HttpRequest getBucketVersioningReq = new DefaultHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.PUT, getBucketVersioningReqUri, reqHeaders
+		);
+		HttpResponse getBucketVersioningResp;
+		channel.write(getBucketVersioningReq);
+		try {
+			channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).sync();
+			getBucketVersioningResp = respSync.take();
+			if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
+				LOG.warn(
+					Markers.ERR, "The bucket versioning checking response is: {}",
+					getBucketVersioningResp.toString()
+				);
+				return false;
+			} else {
+
+			}
+		} catch(final InterruptedException e) {
+			return false;
+		}
+		*/
 
 		return true;
 	}
 	
 	@Override
-	public final void channelCreated(final Channel channel)
-	throws Exception {
-		super.channelCreated(channel);
-		final ChannelPipeline pipeline = channel.pipeline();
+	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
+		super.appendSpecificHandlers(pipeline);
 		pipeline.addLast(new BasicClientHandler<>(this, verifyFlag));
 	}
 

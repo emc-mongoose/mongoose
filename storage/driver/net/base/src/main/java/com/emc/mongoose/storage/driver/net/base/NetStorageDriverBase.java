@@ -18,6 +18,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -27,6 +28,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.pool.FixedChannelPool;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
@@ -118,7 +120,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		}
 	}
 
-	protected Channel getUnpooledChannel()
+	protected Channel getChannel()
 	throws InterruptedException {
 
 		final String na = storageNodeAddrs[0];
@@ -132,7 +134,16 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 
 		final Bootstrap bootstrap = new Bootstrap()
 			.group(workerGroup)
-			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class);
+			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class)
+			.handler(
+				new ChannelInitializer<SocketChannel>() {
+					@Override
+					protected final void initChannel(final SocketChannel channel)
+					throws Exception {
+						appendSpecificHandlers(channel.pipeline());
+					}
+				}
+			);
 
 		return bootstrap.connect(nodeAddr).sync().channel();
 	}
@@ -281,9 +292,12 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	public void channelCreated(final Channel channel)
+	public final void channelCreated(final Channel channel)
 	throws Exception {
-		final ChannelPipeline pipeline = channel.pipeline();
+		appendSpecificHandlers(channel.pipeline());
+	}
+
+	protected void appendSpecificHandlers(final ChannelPipeline pipeline) {
 		if(sslFlag) {
 			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setUseClientMode(true);

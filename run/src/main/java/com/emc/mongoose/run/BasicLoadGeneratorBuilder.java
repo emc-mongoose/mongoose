@@ -135,9 +135,11 @@ implements LoadGeneratorBuilder<T> {
 
 				final String t = itemConfig.getOutputConfig().getPath();
 				if(t == null || t.isEmpty()) {
-					dstPathInput = new ConstantStringInput(LogUtil.getDateTimeStamp());
+					dstPathInput = new ConstantStringInput("/" + LogUtil.getDateTimeStamp());
 				} else {
-					dstPathInput = new RangePatternDefinedInput(t);
+					dstPathInput = new RangePatternDefinedInput(
+						t.startsWith("/") ? t : "/" + t
+					);
 				}
 
 				break;
