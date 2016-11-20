@@ -515,7 +515,9 @@ implements LoadMonitor<R> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		
+
+		String authToken = null;
+
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			
 			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = driversMap.get(nextGenerator);
@@ -532,9 +534,15 @@ implements LoadMonitor<R> {
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Preconditions failure");
 			}
-			
+
 			for(final StorageDriver<I, O, R> nextDriver : nextGeneratorDrivers) {
 				try {
+					if(authToken == null) {
+						authToken = nextDriver.getAuthToken();
+					} else {
+						// distribute the auth token among the storage drivers
+						nextDriver.setAuthToken(authToken);
+					}
 					nextDriver.start();
 				} catch(final RemoteException e) {
 					LogUtil.exception(

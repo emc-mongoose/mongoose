@@ -155,6 +155,17 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
+	public final String getAuthToken()
+	throws RemoteException {
+		return null;
+	}
+
+	@Override
+	public final void setAuthToken(final String authToken)
+	throws RemoteException {
+	}
+
+	@Override
 	protected final void invokeNio(final O ioTask) {
 
 		FileChannel srcChannel = null;

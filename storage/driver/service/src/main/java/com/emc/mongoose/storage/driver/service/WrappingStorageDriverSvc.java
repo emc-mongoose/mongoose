@@ -163,7 +163,19 @@ implements StorageDriverSvc<I, O, R> {
 	throws RemoteException {
 		return driver.createPath(path);
 	}
-	
+
+	@Override
+	public final String getAuthToken()
+	throws RemoteException {
+		return driver.getAuthToken();
+	}
+
+	@Override
+	public final void setAuthToken(final String authToken)
+	throws RemoteException {
+		driver.setAuthToken(authToken);
+	}
+
 	@Override
 	public final int getActiveTaskCount()
 	throws RemoteException {

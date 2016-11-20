@@ -1,14 +1,21 @@
 package com.emc.mongoose.storage.driver.net.http.atmos;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
-
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.HEADERS_CANONICAL;
+import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.KEY_SUBTENANT_ID;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.NS_URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.OBJ_URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.SIGN_METHOD;
+import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.SUBTENANT_URI_BASE;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SIGNATURE;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -16,11 +23,21 @@ import com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import io.netty.channel.Channel;
+
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpStatusClass;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,11 +52,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
-
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SIGNATURE;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -69,7 +81,6 @@ extends HttpStorageDriverBase<I, O, R> {
 		final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
-		
 		SecretKeySpec tmpKey = null;
 		if(secret != null) {
 			try {
@@ -79,7 +90,13 @@ extends HttpStorageDriverBase<I, O, R> {
 			}
 		}
 		secretKey = tmpKey;
-		
+		refreshUidHeader();
+		if(namespace != null && !namespace.isEmpty()) {
+			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
+		}
+	}
+
+	private void refreshUidHeader() {
 		if(userName != null && !userName.isEmpty()) {
 			if(authToken != null && !authToken.isEmpty()) {
 				sharedHeaders.set(KEY_X_EMC_UID, authToken + "/" + userName);
@@ -87,17 +104,68 @@ extends HttpStorageDriverBase<I, O, R> {
 				sharedHeaders.set(KEY_X_EMC_UID, userName);
 			}
 		}
-		
-		if(namespace != null && !namespace.isEmpty()) {
-			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
-		}
 	}
 	
 	@Override
 	public final boolean createPath(final String path)
 	throws RemoteException {
-		// TODO create the subtenant, set the auth token field to the subtenant value
 		return true;
+	}
+
+	@Override
+	public final String getAuthToken()
+	throws RemoteException {
+
+		if(authToken == null || authToken.isEmpty()) {
+
+			final String nodeAddr = storageNodeAddrs[0];
+			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+			if(fsAccess) {
+				reqHeaders.set(
+					KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true)
+				);
+			}
+			applyDynamicHeaders(reqHeaders);
+			applySharedHeaders(reqHeaders);
+			applyAuthHeaders(HttpMethod.PUT, SUBTENANT_URI_BASE, reqHeaders);
+
+			final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
+				reqHeaders, EmptyHttpHeaders.INSTANCE
+			);
+
+			final FullHttpResponse getSubtenantResp;
+			try {
+				getSubtenantResp = executeHttpRequest(getSubtenantReq);
+			} catch(final InterruptedException e) {
+				return null;
+			}
+
+			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
+				final String subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
+				if(subtenantId != null && !subtenantId.isEmpty()) {
+					setAuthToken(subtenantId);
+				} else {
+					LOG.warn(Markers.ERR, "Creating the subtenant: got empty subtenantID");
+				}
+			} else {
+				LOG.warn(
+					Markers.ERR, "Creating the subtenant: got response {}",
+					getSubtenantResp.status().toString()
+				);
+			}
+		}
+
+		return authToken;
+	}
+
+	@Override
+	public final void setAuthToken(final String authToken) {
+		this.authToken = authToken;
+		refreshUidHeader();
 	}
 
 	@Override

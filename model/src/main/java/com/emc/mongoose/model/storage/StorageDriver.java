@@ -20,7 +20,13 @@ extends Daemon, Output<O>, Remote {
 	
 	boolean createPath(final String path)
 	throws RemoteException;
-	
+
+	String getAuthToken()
+	throws RemoteException;
+
+	void setAuthToken(final String authToken)
+	throws RemoteException;
+
 	void setOutput(final Output<R> ioTaskResultOutput)
 	throws RemoteException;
 

@@ -21,6 +21,7 @@ public interface StorageDriverBuilder<
 	I extends Item, O extends IoTask<I>, R extends IoResult, T extends StorageDriver<I, O, R>
 > {
 
+	String API_ATMOS = "atmos";
 	String API_S3 = "s3";
 	String API_SWIFT = "swift";
 

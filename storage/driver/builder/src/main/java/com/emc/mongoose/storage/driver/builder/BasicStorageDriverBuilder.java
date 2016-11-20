@@ -13,6 +13,8 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+
+import com.emc.mongoose.storage.driver.net.http.atmos.AtmosStorageDriver;
 import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
 import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
@@ -23,6 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+
 /**
  Created by andrey on 05.10.16.
  */
@@ -122,6 +125,11 @@ public class BasicStorageDriverBuilder<
 				// TODO container/bucket load driver
 			} else {
 				switch(apiType.toLowerCase()) {
+					case API_ATMOS:
+						driver = (T) new AtmosStorageDriver<>(
+							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+						);
+						break;
 					case API_S3:
 						driver = (T) new S3StorageDriver<>(
 							jobName, loadConfig, storageConfig, verifyFlag, socketConfig

@@ -24,8 +24,6 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.EmptyByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -47,8 +45,6 @@ import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.security.auth.DestroyFailedException;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -248,6 +244,17 @@ extends HttpStorageDriverBase<I, O, R> {
 
 		return true;
 	}
+
+	@Override
+	public final String getAuthToken()
+	throws RemoteException {
+		return null;
+	}
+
+	@Override
+	public final void setAuthToken(final String authToken)
+	throws RemoteException {
+	}
 	
 	@Override
 	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
@@ -366,18 +373,5 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	public final String toString() {
 		return String.format(super.toString(), "s3");
-	}
-
-	@Override
-	public final void close()
-	throws IOException {
-		super.close();
-		if(secretKey != null && !secretKey.isDestroyed()) {
-			try {
-				secretKey.destroy();
-			} catch(final DestroyFailedException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failure");
-			}
-		}
 	}
 }
