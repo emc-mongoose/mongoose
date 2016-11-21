@@ -522,19 +522,6 @@ implements LoadMonitor<R> {
 			
 			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = driversMap.get(nextGenerator);
 
-			try {
-				final String dstPath = nextGenerator.getOutputPath();
-				final int sepPos = dstPath.indexOf('/', 1);
-				if(sepPos > 1) {
-					// create only 1st level path
-					nextGeneratorDrivers.get(0).createPath(dstPath.substring(0, sepPos));
-				} else {
-					nextGeneratorDrivers.get(0).createPath(dstPath);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Preconditions failure");
-			}
-
 			for(final StorageDriver<I, O, R> nextDriver : nextGeneratorDrivers) {
 				try {
 					if(authToken == null) {
@@ -550,11 +537,18 @@ implements LoadMonitor<R> {
 					);
 				}
 			}
-			
-			
+
 			try {
+				final String dstPath = nextGenerator.getOutputPath();
+				final int sepPos = dstPath.indexOf('/', 1);
+				if(sepPos > 1) {
+					// create only 1st level path
+					nextGeneratorDrivers.get(0).createPath(dstPath.substring(0, sepPos));
+				} else {
+					nextGeneratorDrivers.get(0).createPath(dstPath);
+				}
 				nextGenerator.start();
-			} catch(final RemoteException e) {
+			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
 				);

@@ -116,7 +116,7 @@ implements HttpStorageDriver<I, O, R> {
 
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException {
-		final Channel channel = getChannel();
+		final Channel channel = getUnpooledConnection();
 		final ChannelPipeline pipeline = channel.pipeline();
 		pipeline.removeLast(); // remove the API specific handler
 		final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();

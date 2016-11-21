@@ -120,7 +120,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		}
 	}
 
-	protected Channel getChannel()
+	protected Channel getUnpooledConnection()
 	throws InterruptedException {
 
 		final String na = storageNodeAddrs[0];
