@@ -320,6 +320,7 @@ implements Serializable {
 			public static final String KEY_CONTENT = "content";
 			public static final String KEY_RANGES = "ranges";
 			public static final String KEY_SIZE = "size";
+			public static final String KEY_THRESHOLD = "threshold";
 			public static final String KEY_VERIFY = "verify";
 			
 			public final void setContentConfig(final ContentConfig contentConfig) {
@@ -333,6 +334,10 @@ implements Serializable {
 			public final void setSize(final SizeInBytes size) {
 				this.size = size;
 			}
+
+			public final void setThreshold(final SizeInBytes threshold) {
+				this.threshold = threshold;
+			}
 			
 			public final void setVerify(final boolean verify) {
 				this.verify = verify;
@@ -343,6 +348,8 @@ implements Serializable {
 			private DataRangesConfig rangesConfig;
 			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
 			private SizeInBytes size;
+			@JsonProperty(KEY_THRESHOLD) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+			private SizeInBytes threshold;
 			@JsonProperty(KEY_VERIFY) private boolean verify;
 
 			public DataConfig() {
@@ -352,6 +359,7 @@ implements Serializable {
 				this.contentConfig = new ContentConfig(other.getContentConfig());
 				this.rangesConfig = new DataRangesConfig(other.getRangesConfig());
 				this.size = new SizeInBytes(other.getSize());
+				this.threshold = new SizeInBytes(other.getThreshold());
 				this.verify = other.getVerify();
 			}
 
@@ -365,6 +373,10 @@ implements Serializable {
 
 			public final SizeInBytes getSize() {
 				return size;
+			}
+
+			public final SizeInBytes getThreshold() {
+				return threshold;
 			}
 
 			public final boolean getVerify() {

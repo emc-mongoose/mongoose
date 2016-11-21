@@ -8,6 +8,7 @@
 			},
 			"ranges" : 0,
 			"size" : "1MB",
+			"threshold" : 0,
 			"verify" : false
 		},
 		"input" : {
