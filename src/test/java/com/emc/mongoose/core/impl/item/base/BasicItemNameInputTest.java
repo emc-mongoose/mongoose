@@ -26,7 +26,7 @@ public class BasicItemNameInputTest {
 		long nextVal;
 		for(int i = 0; i < N; i ++) {
 			if(i % (N / 100) == 0) {
-				System.out.println(i + " subsequent IDs are unique");
+				System.out.println("At least " + i + " subsequent IDs are unique");
 			}
 			nameInput.get();
 			nextVal = nameInput.getLastValue();
