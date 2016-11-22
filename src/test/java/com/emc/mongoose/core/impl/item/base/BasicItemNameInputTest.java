@@ -23,8 +23,9 @@ public class BasicItemNameInputTest {
 		
 		long nextVal;
 		for(int i = 0; i < N; i ++) {
-			if(i % (N / 100) == 0) {
+			if(i % (N / 1000) == 0) {
 				System.out.print(".");
+				System.out.flush();
 			}
 			nameInput.get();
 			nextVal = nameInput.getLastValue();
