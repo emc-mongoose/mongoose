@@ -239,7 +239,7 @@ sourceSets {
 
 	unitTest {
 		java {
-			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose', 'unit'].join(File.separator))
+			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose', 'core', 'impl', 'item', 'base'].join(File.separator))
 			include(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.main.output
@@ -461,7 +461,7 @@ dependencies {
 	unitTestCompile (
 		library.junit,
 		library.junit_mockito,
-		library.json_schema_validator,
+		library.json_schema_validator
 	)
 
 	systemTestCompile(
@@ -1176,6 +1176,8 @@ task unitTest(type: Test) {
 	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
 	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
+	minHeapSize = "1g"
+	maxHeapSize = "100g"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }
