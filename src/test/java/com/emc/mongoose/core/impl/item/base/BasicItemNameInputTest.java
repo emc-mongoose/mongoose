@@ -7,6 +7,8 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.fail;
+
 /**
  Created by kurila on 22.11.16.
  */
@@ -18,29 +20,20 @@ public class BasicItemNameInputTest {
 		final BasicItemNameInput nameInput = new BasicItemNameInput(
 			ItemNamingType.RANDOM, null, 13, 36, 0
 		);
-		final int N = 100_000_000;
+		final int N = 1_000_000_000;
 		final Map<Long, Integer> freqMap = new HashMap<>(N);
 		
 		long nextVal;
 		for(int i = 0; i < N; i ++) {
 			if(i % (N / 100) == 0) {
-				System.out.print((100.0 * i) / N + " %");
-				System.out.flush();
+				System.out.println(i + " subsequent IDs are unique");
 			}
 			nameInput.get();
 			nextVal = nameInput.getLastValue();
 			if(freqMap.containsKey(nextVal)) {
-				freqMap.put(nextVal, freqMap.get(nextVal) + 1);
+				fail(Long.toString(nextVal, Character.MAX_RADIX));
 			} else {
 				freqMap.put(nextVal, 1);
-			}
-		}
-		
-		long nextFreq;
-		for(final long k : freqMap.keySet()) {
-			nextFreq = freqMap.get(k);
-			if(nextFreq > 1) {
-				System.out.println("Number " + k + " occured " + freqMap.get(k) + " times");
 			}
 		}
 	}
