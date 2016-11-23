@@ -1,7 +1,6 @@
 package com.emc.mongoose.ui.config;
 
 import com.emc.mongoose.common.reflection.TypeUtil;
-import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
@@ -47,20 +46,6 @@ implements Serializable {
 			final JsonParser p, final DeserializationContext ctx
 		) throws IOException {
 			return new SizeInBytes(p.getValueAsString());
-		}
-	}
-
-	private static final class DataRangesConfigDeserializer
-	extends JsonDeserializer<DataRangesConfig> {
-		@Override
-		public final DataRangesConfig deserialize(
-			final JsonParser p, final DeserializationContext ctx
-		) throws IOException {
-			try {
-				return new DataRangesConfig(p.getValueAsInt());
-			} catch(final IOException ignored) {
-				return new DataRangesConfig(p.getValueAsString());
-			}
 		}
 	}
 
@@ -320,14 +305,13 @@ implements Serializable {
 			public static final String KEY_CONTENT = "content";
 			public static final String KEY_RANGES = "ranges";
 			public static final String KEY_SIZE = "size";
-			public static final String KEY_THRESHOLD = "threshold";
 			public static final String KEY_VERIFY = "verify";
 			
 			public final void setContentConfig(final ContentConfig contentConfig) {
 				this.contentConfig = contentConfig;
 			}
 			
-			public final void setRangesConfig(final DataRangesConfig rangesConfig) {
+			public final void setRangesConfig(final RangesConfig rangesConfig) {
 				this.rangesConfig = rangesConfig;
 			}
 			
@@ -335,21 +319,14 @@ implements Serializable {
 				this.size = size;
 			}
 
-			public final void setThreshold(final SizeInBytes threshold) {
-				this.threshold = threshold;
-			}
-			
 			public final void setVerify(final boolean verify) {
 				this.verify = verify;
 			}
 			
 			@JsonProperty(KEY_CONTENT) private ContentConfig contentConfig;
-			@JsonProperty(KEY_RANGES) @JsonDeserialize(using = DataRangesConfigDeserializer.class)
-			private DataRangesConfig rangesConfig;
+			@JsonProperty(KEY_RANGES) private RangesConfig rangesConfig;
 			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
 			private SizeInBytes size;
-			@JsonProperty(KEY_THRESHOLD) @JsonDeserialize(using = SizeInBytesDeserializer.class)
-			private SizeInBytes threshold;
 			@JsonProperty(KEY_VERIFY) private boolean verify;
 
 			public DataConfig() {
@@ -357,9 +334,8 @@ implements Serializable {
 
 			public DataConfig(final DataConfig other) {
 				this.contentConfig = new ContentConfig(other.getContentConfig());
-				this.rangesConfig = new DataRangesConfig(other.getRangesConfig());
+				this.rangesConfig = new RangesConfig(other.getRangesConfig());
 				this.size = new SizeInBytes(other.getSize());
-				this.threshold = new SizeInBytes(other.getThreshold());
 				this.verify = other.getVerify();
 			}
 
@@ -367,7 +343,7 @@ implements Serializable {
 				return contentConfig;
 			}
 
-			public final DataRangesConfig getRangesConfig() {
+			public final RangesConfig getRangesConfig() {
 				return rangesConfig;
 			}
 
@@ -375,9 +351,6 @@ implements Serializable {
 				return size;
 			}
 
-			public final SizeInBytes getThreshold() {
-				return threshold;
-			}
 
 			public final boolean getVerify() {
 				return verify;
@@ -426,6 +399,52 @@ implements Serializable {
 
 				public final SizeInBytes getRingSize() {
 					return ringSize;
+				}
+			}
+
+			public static final class RangesConfig
+			implements Serializable {
+
+				public static final String KEY_FIXED = "fixed";
+				public static final String KEY_RANDOM = "random";
+				public static final String KEY_THRESHOLD = "threshold";
+
+				@JsonProperty(KEY_FIXED) private String fixed;
+				@JsonProperty(KEY_RANDOM) private int random;
+				@JsonProperty(KEY_THRESHOLD) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+				private SizeInBytes threshold;
+
+				public RangesConfig() {
+				}
+
+				public RangesConfig(final RangesConfig other) {
+					this.fixed = other.getFixed();
+					this.random = other.getRandom();
+					this.threshold = new SizeInBytes(other.getThreshold());
+				}
+
+				public final String getFixed() {
+					return fixed;
+				}
+
+				public final void setFixed(final String fixed) {
+					this.fixed = fixed;
+				}
+
+				public final int getRandom() {
+					return random;
+				}
+
+				public final void setRandom(final int random) {
+					this.random = random;
+				}
+
+				public final SizeInBytes getThreshold() {
+					return threshold;
+				}
+
+				public final void setThreshold(final SizeInBytes threshold) {
+					this.threshold = threshold;
 				}
 			}
 		}
@@ -1466,16 +1485,6 @@ implements Serializable {
 						configCls
 							.getMethod("set" + capitalize(key), SizeInBytes.class)
 							.invoke(config, sizeValue);
-					} else if(fieldType.equals(DataRangesConfig.class)) {
-						DataRangesConfig rangesValue;
-						try {
-							rangesValue = new DataRangesConfig(Integer.parseInt((String) value));
-						} catch(final NumberFormatException e) {
-							rangesValue = new DataRangesConfig((String) value);
-						}
-						configCls
-							.getMethod("set" + capitalize(key), DataRangesConfig.class)
-							.invoke(config, rangesValue);
 					} else {
 						throw new IllegalStateException(
 							"Field type is \"" + fieldType.getName() + "\" for key: " + key
@@ -1488,10 +1497,6 @@ implements Serializable {
 							configCls
 								.getMethod("set" + capitalize(key), SizeInBytes.class)
 								.invoke(config, new SizeInBytes(intValue));
-						} else if(DataRangesConfig.class.equals(fieldType)) {
-							configCls
-								.getMethod("set" + capitalize(key), DataRangesConfig.class)
-								.invoke(config, new DataRangesConfig(intValue));
 						} else if(Long.class.equals(fieldType) || Long.TYPE.equals(fieldType)) {
 							configCls
 								.getMethod("set" + capitalize(key), Long.TYPE)

@@ -1,5 +1,6 @@
 package com.emc.mongoose.run;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.ConstantStringInput;
@@ -22,6 +23,8 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+
+import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.apache.logging.log4j.LogManager;
@@ -93,8 +96,11 @@ implements LoadGeneratorBuilder<T> {
 		if(ItemType.PATH.equals(itemType)) {
 			ioTaskBuilder = new BasicIoTaskBuilder<>();
 		} else {
+			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			ioTaskBuilder = new BasicMutableDataIoTaskBuilder<>()
-				.setRangesConfig(itemConfig.getDataConfig().getRangesConfig());
+				.setFixedRanges(ByteRange.parseList(rangesConfig.getFixed()))
+				.setRandomRangesCount(rangesConfig.getRandom())
+				.setSizeThreshold(rangesConfig.getThreshold().get());
 		}
 		ioTaskBuilder.setSrcPath(inputConfig.getPath());
 		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));

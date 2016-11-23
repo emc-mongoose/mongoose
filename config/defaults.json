@@ -6,7 +6,11 @@
 				"seed" : "7a42d9c483244167",
 				"ringSize" : "4MB"
 			},
-			"ranges" : 0,
+			"ranges" : {
+				"random" : 0,
+				"fixed" : null,
+				"threshold" : 0
+			},
 			"size" : "1MB",
 			"threshold" : 0,
 			"verify" : false

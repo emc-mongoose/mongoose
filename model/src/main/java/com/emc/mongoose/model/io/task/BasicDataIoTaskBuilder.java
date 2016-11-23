@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
-import com.emc.mongoose.model.data.DataRangesConfig;
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.item.DataItem;
 
 import java.util.ArrayList;
@@ -12,25 +12,44 @@ import java.util.List;
 public class BasicDataIoTaskBuilder<I extends DataItem, O extends DataIoTask<I>>
 extends BasicIoTaskBuilder<I, O>
 implements DataIoTaskBuilder<I, O> {
-	
-	protected volatile DataRangesConfig rangesConfig = null;
-	
+
+	protected volatile List<ByteRange> fixedRanges = null;
+	protected volatile int randomRangesCount = 0;
+	protected volatile long sizeThreshold = 0;
+
 	@Override
-	public BasicDataIoTaskBuilder<I, O> setRangesConfig(final DataRangesConfig rangesConfig) {
-		this.rangesConfig = rangesConfig;
+	public BasicDataIoTaskBuilder<I, O> setFixedRanges(final List<ByteRange> fixedRanges) {
+		this.fixedRanges = fixedRanges;
+		return this;
+	}
+	@Override
+	public BasicDataIoTaskBuilder<I, O> setRandomRangesCount(final int count) {
+		this.randomRangesCount = count;
+		return this;
+	}
+	@Override
+	public BasicDataIoTaskBuilder<I, O> setSizeThreshold(final long sizeThreshold) {
+		this.sizeThreshold = sizeThreshold;
 		return this;
 	}
 	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem, final String dstPath) {
-		return (O) new BasicDataIoTask<>(ioType, dataItem, srcPath, dstPath, rangesConfig);
+		return (O) new BasicDataIoTask<>(
+			ioType, dataItem, srcPath, dstPath, fixedRanges, randomRangesCount, sizeThreshold
+		);
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items, final int from, final int to) {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
-			tasks.add((O) new BasicDataIoTask<>(ioType, items.get(i), srcPath, null, rangesConfig));
+			tasks.add(
+				(O) new BasicDataIoTask<>(
+					ioType, items.get(i), srcPath, null, fixedRanges, randomRangesCount,
+					sizeThreshold
+				)
+			);
 		}
 		return tasks;
 	}
@@ -42,7 +61,10 @@ implements DataIoTaskBuilder<I, O> {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
 			tasks.add(
-				(O) new BasicDataIoTask<>(ioType, items.get(i), srcPath, dstPath, rangesConfig)
+				(O) new BasicDataIoTask<>(
+					ioType, items.get(i), srcPath, dstPath, fixedRanges, randomRangesCount,
+					sizeThreshold
+				)
 			);
 		}
 		return tasks;
@@ -56,7 +78,8 @@ implements DataIoTaskBuilder<I, O> {
 		for(int i = from; i < to; i ++) {
 			tasks.add(
 				(O) new BasicDataIoTask<>(
-					ioType, items.get(i), srcPath, dstPaths.get(i), rangesConfig
+					ioType, items.get(i), srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
+					sizeThreshold
 				)
 			);
 		}

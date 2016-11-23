@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.item.BasicDataItem;
 import com.emc.mongoose.model.io.IoType;
@@ -19,7 +18,7 @@ import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 /**
  Created by andrey on 25.09.16.
  */
-public final class BasicMutableDataIoTask<I extends MutableDataItem>
+public class BasicMutableDataIoTask<I extends MutableDataItem>
 extends BasicDataIoTask<I>
 implements MutableDataIoTask<I> {
 	
@@ -36,15 +35,16 @@ implements MutableDataIoTask<I> {
 	
 	public BasicMutableDataIoTask(
 		final IoType ioType, final I item, final String srcPath, final String dstPath,
-		final DataRangesConfig rangesConfig
+		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
 	) {
-		super(ioType, item, srcPath, dstPath, rangesConfig);
+		super(ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount, sizeThreshold);
 		if(IoType.UPDATE.equals(ioType)) {
-			final int n = rangesConfig.getRandomCount();
-			if(n > 0) {
-				scheduleRandomRangesUpdate(n);
+			if(randomRangesCount > 0) {
+				scheduleRandomRangesUpdate(randomRangesCount);
+			} else if(fixedRanges != null && !fixedRanges.isEmpty()){
+				scheduleFixedRangesUpdate(fixedRanges);
 			} else {
-				scheduleFixedRangesUpdate(rangesConfig.getFixedByteRanges());
+				throw new IllegalStateException("Range update is not configured");
 			}
 			contentSize = getUpdatingRangesSize();
 		}

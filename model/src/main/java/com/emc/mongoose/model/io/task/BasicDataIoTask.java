@@ -1,19 +1,21 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.DataRangesConfig;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.List;
 
 public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
 
 	protected long contentSize;
+	protected long sizeThreshold;
 	protected long itemDataOffset;
 
 	protected transient volatile ContentSource contentSrc;
@@ -26,9 +28,10 @@ implements DataIoTask<T> {
 	
 	public BasicDataIoTask(
 		final IoType ioType, final T item, final String srcPath, final String dstPath,
-		final DataRangesConfig rangesConfig
+		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
 	) {
 		super(ioType, item, srcPath, dstPath);
+		this.sizeThreshold = sizeThreshold;
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
@@ -82,6 +85,7 @@ implements DataIoTask<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
+		out.writeLong(sizeThreshold);
 	}
 	
 	@Override
@@ -91,5 +95,6 @@ implements DataIoTask<T> {
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 		contentSize = in.readLong();
+		sizeThreshold = in.readLong();
 	}
 }

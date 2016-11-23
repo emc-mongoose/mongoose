@@ -15,7 +15,7 @@ implements MutableDataIoTaskBuilder<I, O> {
 	@Override @SuppressWarnings("unchecked")
 	public final O getInstance(final I item, final String dstPath) {
 		return (O) new BasicMutableDataIoTask<>(
-			ioType, item, srcPath, dstPath, rangesConfig
+			ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount, sizeThreshold
 		);
 	}
 
@@ -25,7 +25,8 @@ implements MutableDataIoTaskBuilder<I, O> {
 		for(int i = from; i < to; i ++) {
 			tasks.add(
 				(O) new BasicMutableDataIoTask<>(
-					ioType, items.get(i), srcPath, null, rangesConfig
+					ioType, items.get(i), srcPath, null, fixedRanges, randomRangesCount,
+					sizeThreshold
 				)
 			);
 		}
@@ -40,7 +41,8 @@ implements MutableDataIoTaskBuilder<I, O> {
 		for(int i = from; i < to; i ++) {
 			tasks.add(
 				(O) new BasicMutableDataIoTask<>(
-					ioType, items.get(i), srcPath, dstPath, rangesConfig
+					ioType, items.get(i), srcPath, dstPath, fixedRanges, randomRangesCount,
+					sizeThreshold
 				)
 			);
 		}
@@ -55,7 +57,8 @@ implements MutableDataIoTaskBuilder<I, O> {
 		for(int i = from; i < to; i ++) {
 			tasks.add(
 				(O) new BasicMutableDataIoTask<>(
-					ioType, items.get(i), srcPath, dstPaths.get(i), rangesConfig
+					ioType, items.get(i), srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
+					sizeThreshold
 				)
 			);
 		}
