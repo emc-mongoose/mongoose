@@ -181,6 +181,10 @@ implements LoadExecutor<T> {
 				while(!currThread.isInterrupted()) {
 					postProcessItems();
 					LockSupport.parkNanos(1_000);
+					if(isDone()) {
+						isPostProcessDone = true;
+					}
+					LockSupport.parkNanos(1_000);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
@@ -211,8 +215,8 @@ implements LoadExecutor<T> {
 				} else {
 					postProcessUniqueItemsFinally(items);
 				}
-			} else if(isDone()) {
-				isPostProcessDone = true;
+			} else {
+				LockSupport.parkNanos(1_000);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(
