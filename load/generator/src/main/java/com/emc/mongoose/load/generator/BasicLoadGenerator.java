@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.common.io.Input;
@@ -30,14 +31,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 11.07.16.
  */
-public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
+public class BasicLoadGenerator<I extends Item, R extends IoResult, O extends IoTask<I, R>>
 extends DaemonBase
-implements LoadGenerator<I, O>, Output<I> {
+implements LoadGenerator<I, R, O>, Output<I> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
 
-	private volatile Throttle<LoadGenerator<I, O>> weightThrottle = null;
+	private volatile Throttle<LoadGenerator<I, R, O>> weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 
@@ -48,14 +49,14 @@ implements LoadGenerator<I, O>, Output<I> {
 	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
 	private final boolean isCircular;
-	private final IoTaskBuilder<I, O> ioTaskBuilder;
+	private final IoTaskBuilder<I, R, O> ioTaskBuilder;
 
 	private long producedItemsCount = 0;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final Input<String> dstPathInput,
-		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final int maxItemQueueSize,
+		final IoTaskBuilder<I, R, O> ioTaskBuilder, final long countLimit, final int maxItemQueueSize,
 		final boolean isCircular
 	) throws UserShootHisFootException {
 
@@ -76,7 +77,7 @@ implements LoadGenerator<I, O>, Output<I> {
 	}
 	
 	@Override
-	public final void setWeightThrottle(final Throttle<LoadGenerator<I, O>> weightThrottle) {
+	public final void setWeightThrottle(final Throttle<LoadGenerator<I, R, O>> weightThrottle) {
 		this.weightThrottle = weightThrottle;
 	}
 

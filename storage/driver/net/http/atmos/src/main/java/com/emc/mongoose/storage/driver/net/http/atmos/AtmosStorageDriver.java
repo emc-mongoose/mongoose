@@ -57,8 +57,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosStorageDriver<I extends Item, O extends IoTask<I>, R extends IoResult>
-extends HttpStorageDriverBase<I, O, R> {
+public final class AtmosStorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+extends HttpStorageDriverBase<I, R, O> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	

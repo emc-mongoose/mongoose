@@ -19,31 +19,31 @@ import java.rmi.RemoteException;
  */
 public interface StorageDriverBuilderSvc<
 	I extends Item,
-	O extends IoTask<I>,
 	R extends IoResult,
-	T extends StorageDriverSvc<I, O, R>
-> extends StorageDriverBuilder<I, O, R, T>, Service {
+	O extends IoTask<I, R>,
+	T extends StorageDriverSvc<I, R, O>
+> extends StorageDriverBuilder<I, R, O, T>, Service {
 
 	String SVC_NAME = "storage/driver/builder";
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setJobName(final String jobName)
+	StorageDriverBuilderSvc<I, R, O, T> setJobName(final String jobName)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setItemConfig(final ItemConfig itemConfig)
+	StorageDriverBuilderSvc<I, R, O, T> setItemConfig(final ItemConfig itemConfig)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setLoadConfig(final LoadConfig loadConfig)
+	StorageDriverBuilderSvc<I, R, O, T> setLoadConfig(final LoadConfig loadConfig)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setStorageConfig(final StorageConfig storageConfig)
+	StorageDriverBuilderSvc<I, R, O, T> setStorageConfig(final StorageConfig storageConfig)
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setSocketConfig(final SocketConfig socketConfig)
+	StorageDriverBuilderSvc<I, R, O, T> setSocketConfig(final SocketConfig socketConfig)
 	throws RemoteException;
 
 	String buildRemotely()

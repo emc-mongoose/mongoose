@@ -33,19 +33,16 @@ import java.nio.ByteBuffer;
  Created by kurila on 04.10.16.
  */
 public abstract class ClientHandlerBase<
-	M,
-	I extends Item,
-	O extends IoTask<I>,
-	R extends IoResult
+	M, I extends Item, R extends IoResult, O extends IoTask<I, R>
 >
 extends SimpleChannelInboundHandler<M> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 
-	protected final NetStorageDriverBase<I, O, R> driver;
+	protected final NetStorageDriverBase<I, R, O> driver;
 	protected final boolean verifyFlag;
 	
-	protected ClientHandlerBase(final NetStorageDriverBase<I, O, R> driver, boolean verifyFlag) {
+	protected ClientHandlerBase(final NetStorageDriverBase<I, R, O> driver, boolean verifyFlag) {
 		this.driver = driver;
 		this.verifyFlag = verifyFlag;
 	}

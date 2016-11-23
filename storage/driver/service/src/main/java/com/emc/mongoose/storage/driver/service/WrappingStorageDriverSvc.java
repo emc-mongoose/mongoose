@@ -25,18 +25,17 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 05.10.16.
  */
 public final class WrappingStorageDriverSvc<
-	I extends Item,
-	O extends IoTask<I>,
-	R extends IoResult>
-implements StorageDriverSvc<I, O, R> {
+	I extends Item, R extends IoResult, O extends IoTask<I, R>
+>
+implements StorageDriverSvc<I, R, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private final StorageDriver<I, O, R> driver;
+	private final StorageDriver<I, R, O> driver;
 	private final ContentSource contentSrc;
 
 	public WrappingStorageDriverSvc(
-		final StorageDriver<I, O, R> driver, final ContentSource contentSrc
+		final StorageDriver<I, R, O> driver, final ContentSource contentSrc
 	) {
 		this.driver = driver;
 		this.contentSrc = contentSrc;

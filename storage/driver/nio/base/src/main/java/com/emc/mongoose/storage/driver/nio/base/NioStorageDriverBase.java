@@ -28,9 +28,9 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 19.07.16.
  The multi-threaded non-blocking I/O storage driver.
  */
-public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoResult>
-extends StorageDriverBase<I, O, R>
-implements StorageDriver<I, O, R> {
+public abstract class NioStorageDriverBase<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+extends StorageDriverBase<I, R, O>
+implements StorageDriver<I, R, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int MIN_TASK_BUFF_CAPACITY = 0x4000;

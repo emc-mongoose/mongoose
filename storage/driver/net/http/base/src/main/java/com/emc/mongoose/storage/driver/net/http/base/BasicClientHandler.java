@@ -34,13 +34,13 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public class BasicClientHandler<I extends Item, O extends IoTask<I>, R extends IoResult>
-extends ClientHandlerBase<HttpObject, I, O, R> {
+public class BasicClientHandler<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+extends ClientHandlerBase<HttpObject, I, R, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
 	public BasicClientHandler(
-		final HttpStorageDriverBase<I, O, R> driver,
+		final HttpStorageDriverBase<I, R, O> driver,
 		final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);

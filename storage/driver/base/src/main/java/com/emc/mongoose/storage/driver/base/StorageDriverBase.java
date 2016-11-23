@@ -8,9 +8,11 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.PartialDataIoTask;
 import com.emc.mongoose.model.io.task.result.BasicDataIoResult;
 import com.emc.mongoose.model.io.task.result.BasicIoResult;
 import com.emc.mongoose.model.io.task.result.IoResult;
+import com.emc.mongoose.model.io.task.result.PartialDataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.collection.IoBuffer;
@@ -35,9 +37,9 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  */
-public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoResult>
+public abstract class StorageDriverBase<I extends Item, R extends IoResult, O extends IoTask<I, R>>
 extends DaemonBase
-implements StorageDriver<I, O, R>, Runnable {
+implements StorageDriver<I, R, O>, Runnable {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
@@ -218,7 +220,7 @@ implements StorageDriver<I, O, R>, Runnable {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "ConstantConditions" })
 	private void buildResults(final List<O> ioTasks, final List<R> ioResults, final int n) {
 
 		if(n > 0) {
@@ -234,16 +236,14 @@ implements StorageDriver<I, O, R>, Runnable {
 				DataIoTask nextDataIoTask;
 				DataItem nextDataItem;
 
-				for(int i = 0; i < n; i ++) {
+				for(int i = 0; i < n; i++) {
 					nextDataIoTask = dataIoTasks.get(i);
 					nextDataItem = nextDataIoTask.getItem();
 					if(useItemPathResult) {
 						nextItemPath = nextDataItem.toString(
-							getItemPath(
-								nextDataItem.getName(), nextDataIoTask.getSrcPath(),
+							getItemPath(nextDataItem.getName(), nextDataIoTask.getSrcPath(),
 								nextDataIoTask.getDstPath()
-							)
-						);
+							));
 					} else {
 						nextItemPath = null;
 					}
@@ -252,17 +252,18 @@ implements StorageDriver<I, O, R>, Runnable {
 						useStorageDriverResult ? HOST_ADDR : null,
 						useStorageNodeResult ? nextDataIoTask.getNodeAddr() : null,
 						nextItemPath,
-						useIoTypeCodeResult ? nextDataIoTask.getIoType().ordinal() : -1,
-						useStatusCodeResult ? nextDataIoTask.getStatus().ordinal() : -1,
-						useReqTimeStartResult ? nextReqTimeStart : -1,
-						useDurationResult ?
-							nextDataIoTask.getRespTimeDone() - nextReqTimeStart : -1,
+						useIoTypeCodeResult ? nextDataIoTask.getIoType().ordinal() : - 1,
+						useStatusCodeResult ? nextDataIoTask.getStatus().ordinal() : - 1,
+						useReqTimeStartResult ?
+							nextReqTimeStart : - 1, useDurationResult ?
+								nextDataIoTask.getRespTimeDone() - nextReqTimeStart : - 1,
 						useRespLatencyResult ?
-							nextDataIoTask.getRespTimeStart() - nextDataIoTask.getReqTimeDone() : -1,
+							nextDataIoTask.getRespTimeStart() - nextDataIoTask.getReqTimeDone() :
+							- 1,
 						useDataLatencyResult ?
-							nextDataIoTask.getRespDataTimeStart() - nextDataIoTask.getReqTimeDone() : -1,
-						useTransferSizeResult ?
-							nextDataIoTask.getCountBytesDone() : -1
+							nextDataIoTask.getRespDataTimeStart() - nextDataIoTask.getReqTimeDone() :
+							- 1,
+						useTransferSizeResult ? nextDataIoTask.getCountBytesDone() : - 1
 					);
 					ioResults.add(nextIoResult);
 					nextDataIoTask.reset();
@@ -271,31 +272,21 @@ implements StorageDriver<I, O, R>, Runnable {
 			} else {
 
 				O nextIoTask;
-				I nextItem;
 
 				for(int i = 0; i < n; i ++) {
 					nextIoTask = ioTasks.get(i);
-					nextItem = nextIoTask.getItem();
-					if(useItemPathResult) {
-						nextItemPath = nextItem.toString(
-							getItemPath(
-								nextItem.getName(), nextIoTask.getSrcPath(), nextIoTask.getDstPath()
-							)
-						);
-					} else {
-						nextItemPath = null;
-					}
-					nextReqTimeStart = nextIoTask.getReqTimeStart();
-					nextIoResult = (R) new BasicIoResult(
-						useStorageDriverResult ? HOST_ADDR : null,
-						useStorageNodeResult ? nextIoTask.getNodeAddr() : null,
-						nextItemPath,
-						useIoTypeCodeResult ? nextIoTask.getIoType().ordinal() : -1,
-						useStatusCodeResult ? nextIoTask.getStatus().ordinal() : -1,
-						useReqTimeStartResult ? nextReqTimeStart : -1,
-						useDurationResult ? nextIoTask.getRespTimeDone() - nextReqTimeStart : -1,
-						useRespLatencyResult ?
-							nextIoTask.getRespTimeStart() - nextIoTask.getReqTimeDone() : -1
+					nextIoResult = (R) nextIoTask.getResult(
+						HOST_ADDR,
+						useStorageDriverResult,
+						useStorageNodeResult,
+						useItemPathResult,
+						useIoTypeCodeResult,
+						useStatusCodeResult,
+						useReqTimeStartResult,
+						useDurationResult,
+						useRespLatencyResult,
+						useDataLatencyResult,
+						useTransferSizeResult
 					);
 					ioResults.add(nextIoResult);
 					nextIoTask.reset();

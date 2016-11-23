@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.model.io.task.result.DataIoResult;
 import com.emc.mongoose.model.item.MutableDataItem;
 
 import java.util.ArrayList;
@@ -8,9 +9,11 @@ import java.util.List;
 /**
  Created by andrey on 25.09.16.
  */
-public class BasicMutableDataIoTaskBuilder<I extends MutableDataItem, O extends MutableDataIoTask<I>>
-extends BasicDataIoTaskBuilder<I, O>
-implements MutableDataIoTaskBuilder<I, O> {
+public class BasicMutableDataIoTaskBuilder<
+	I extends MutableDataItem, R extends DataIoResult, O extends MutableDataIoTask<I, R>
+>
+extends BasicDataIoTaskBuilder<I, R, O>
+implements MutableDataIoTaskBuilder<I, R, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public final O getInstance(final I item, final String dstPath) {

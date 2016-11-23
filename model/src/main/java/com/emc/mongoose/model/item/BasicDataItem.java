@@ -167,6 +167,11 @@ implements DataItem {
 	}
 	//
 	@Override
+	public final void layer(final int layerNum) {
+		this.layerNum = layerNum;
+	}
+	//
+	@Override
 	public final void size(final long size) {
 		this.size = size;
 	}
@@ -180,6 +185,20 @@ implements DataItem {
 	public final void offset(final long offset) {
 		this.offset = offset < 0 ? Long.MAX_VALUE + offset + 1 : offset;
 		position = 0;
+	}
+	//
+	@Override
+	public final BasicDataItem slice(final long from, final long partSize) {
+		if(from < 0) {
+			throw new IllegalArgumentException();
+		}
+		if(partSize < 1) {
+			throw new IllegalArgumentException();
+		}
+		if(from + partSize > size) {
+			throw new IllegalArgumentException();
+		}
+		return new BasicDataItem(offset + from, partSize, layerNum, contentSrc);
 	}
 	//
 	public long position() {

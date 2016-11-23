@@ -1,6 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.model.io.task.result.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
 
@@ -10,8 +11,8 @@ import java.util.List;
 /**
  Created by andrey on 25.09.16.
  */
-public interface MutableDataIoTask<I extends MutableDataItem>
-extends DataIoTask<I> {
+public interface MutableDataIoTask<I extends MutableDataItem, R extends DataIoResult>
+extends DataIoTask<I, R> {
 
 	@Override
 	I getItem();

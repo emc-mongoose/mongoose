@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
@@ -8,7 +9,7 @@ import java.io.Externalizable;
 /**
  Created by kurila on 11.07.16.
  */
-public interface IoTask<I extends Item>
+public interface IoTask<I extends Item, R extends IoResult>
 extends Externalizable {
 
 	String SLASH = "/";
@@ -64,6 +65,20 @@ extends Externalizable {
 	long getRespTimeStart();
 
 	long getRespTimeDone();
+
+	R getResult(
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemPathResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
+		final boolean useTransferSizeResult
+	);
 
 	void reset();
 }

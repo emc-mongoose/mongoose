@@ -27,12 +27,16 @@ extends Item, SeekableByteChannel {
 	void reset();
 	
 	int layer();
+
+	void layer(final int layerNum);
 	
 	void size(final long size);
 	
 	long offset();
 	
 	void offset(final long offset);
+
+	DataItem slice(final long from, final long to);
 	
 	/**
 	 * @return The number of bytes written, possibly zero

@@ -11,13 +11,11 @@ import io.netty.handler.codec.http.HttpHeaders;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosClientHandler<
-	I extends Item, O extends IoTask<I>, R extends IoResult
->
-extends BasicClientHandler<I, O, R> {
+public final class AtmosClientHandler<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+extends BasicClientHandler<I, R, O> {
 	
 	public AtmosClientHandler(
-		final HttpStorageDriverBase<I, O, R> driver, final boolean verifyFlag
+		final HttpStorageDriverBase<I, R, O> driver, final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);
 	}

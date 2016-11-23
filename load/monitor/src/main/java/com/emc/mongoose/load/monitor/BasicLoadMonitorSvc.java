@@ -28,11 +28,10 @@ import java.util.Map;
  Created by andrey on 05.10.16.
  */
 public final class BasicLoadMonitorSvc<
-	I extends Item,
-	O extends IoTask<I>,
-	R extends IoResult
+	I extends Item, R extends IoResult, O extends IoTask<I, R>
+
 >
-extends BasicLoadMonitor<I, O, R>
+extends BasicLoadMonitor<I, R, O>
 implements LoadMonitorSvc<R> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -45,8 +44,8 @@ implements LoadMonitorSvc<R> {
 	 @param loadConfig
 	 */
 	public BasicLoadMonitorSvc(
-		final String name, final LoadGenerator<I, O> loadGenerator,
-		final List<StorageDriver<I, O, R>> drivers, final LoadConfig loadConfig
+		final String name, final LoadGenerator<I, R, O> loadGenerator,
+		final List<StorageDriver<I, R, O>> drivers, final LoadConfig loadConfig
 	) {
 		super(name, loadGenerator, drivers, loadConfig);
 	}
@@ -59,8 +58,8 @@ implements LoadMonitorSvc<R> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers,
-		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs
+		final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> drivers,
+		final Map<LoadGenerator<I, R, O>, LoadConfig> loadConfigs
 	) {
 		super(name, drivers, loadConfigs);
 	}
@@ -74,23 +73,23 @@ implements LoadMonitorSvc<R> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O, R>>> drivers,
-		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final Object2IntMap<LoadGenerator<I, O>> weightMap
+		final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> drivers,
+		final Map<LoadGenerator<I, R, O>, LoadConfig> loadConfigs,
+		final Object2IntMap<LoadGenerator<I, R, O>> weightMap
 	) {
 		super(name, drivers, loadConfigs, weightMap);
 	}
 
 	@Override
-	protected void registerDrivers(final List<StorageDriver<I, O, R>> drivers) {
+	protected void registerDrivers(final List<StorageDriver<I, R, O>> drivers) {
 		final String hostName;
 		try {
 			LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
 			hostName = NetUtil.getHostAddrString();
-			for(final StorageDriver<I, O, R> nextDriver : drivers) {
+			for(final StorageDriver<I, R, O> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
 					try {
-						((StorageDriverSvc<I, O, R>) nextDriver).setOutputSvc(hostName, getName());
+						((StorageDriverSvc<I, R, O>) nextDriver).setOutputSvc(hostName, getName());
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,

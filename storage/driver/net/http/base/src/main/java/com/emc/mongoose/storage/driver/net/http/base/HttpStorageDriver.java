@@ -11,8 +11,8 @@ import java.net.URISyntaxException;
 /**
  Created by kurila on 30.08.16.
  */
-public interface HttpStorageDriver<I extends Item, O extends IoTask<I>, R extends IoResult>
-extends NetStorageDriver<I, O, R> {
+public interface HttpStorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+extends NetStorageDriver<I, R, O> {
 	
 	int REQ_LINE_LEN = 1024;
 	int HEADERS_LEN = 2048;

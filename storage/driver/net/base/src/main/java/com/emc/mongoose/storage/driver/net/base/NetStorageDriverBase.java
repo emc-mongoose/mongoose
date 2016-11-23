@@ -4,20 +4,25 @@ import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.io.task.BasicPartialDataIoTask;
+import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.result.IoResult;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
+
+import com.emc.mongoose.model.io.task.PartialDataIoTask;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
@@ -52,9 +57,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>, R extends IoResult>
-extends StorageDriverBase<I, O, R>
-implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
+public abstract class NetStorageDriverBase<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+extends StorageDriverBase<I, R, O>
+implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	
@@ -174,7 +179,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		connPoolMap.get(bestNode).acquire().addListener(new ConnectionLeaseCallback(task));
 	}
 	
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final int put(final List<O> tasks, final int from, final int to)
 	throws IOException {
 		final int n = to - from;
@@ -183,11 +188,18 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			try {
 				for(int i = 0; i < n; i ++) {
 					nextTask = tasks.get(i + from);
-					nextTask.setNodeAddr(storageNodeAddrs[0]);
-					concurrencyThrottle.acquire();
-					connPoolMap
-						.get(storageNodeAddrs[0]).acquire()
-						.addListener(new ConnectionLeaseCallback(nextTask));
+					if(nextTask instanceof DataIoTask) {
+						final DataIoTask dataIoTask = (DataIoTask) nextTask;
+						if(dataIoTask.isMultiPart()) {
+							putMultipartIoTask(nextTask);
+						}
+					} else {
+						nextTask.setNodeAddr(storageNodeAddrs[0]);
+						concurrencyThrottle.acquire();
+						connPoolMap
+							.get(storageNodeAddrs[0]).acquire()
+							.addListener(new ConnectionLeaseCallback(nextTask));
+					}
 				}
 			} catch(final InterruptedException e) {
 				throw new InterruptedIOException(e.getMessage());
@@ -247,6 +259,26 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 				sendRequest(channel, ioTask, reqSentCallback).addListener(reqSentCallback);
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void putMultipartIoTask(final O multipartIoTask)
+	throws IOException {
+
+		final IoType ioType = multipartIoTask.getIoType();
+		final String srcPath = multipartIoTask.getSrcPath();
+		final String dstPath = multipartIoTask.getDstPath();
+
+		final List<? extends DataItem> parts = ((DataIoTask) multipartIoTask).getParts();
+		final int subTasksCount = parts.size();
+		final List<O> partialIoTasks = new ArrayList<>(subTasksCount);
+
+		O nextSubTask;
+		for(int i = 0; i < subTasksCount; i ++) {
+			nextSubTask = (O) new BasicPartialDataIoTask(ioType, parts.get(i), srcPath, dstPath, i);
+			partialIoTasks.add(nextSubTask);
+		}
+		for(int i = 0; i < subTasksCount; i += put(partialIoTasks, i, subTasksCount));
 	}
 
 	protected abstract ChannelFuture sendRequest(

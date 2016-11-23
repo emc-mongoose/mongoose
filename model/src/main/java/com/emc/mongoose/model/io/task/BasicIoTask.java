@@ -1,5 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.model.io.task.result.BasicIoResult;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
@@ -10,8 +12,8 @@ import java.io.ObjectOutput;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIoTask<I extends Item>
-implements IoTask<I> {
+public class BasicIoTask<I extends Item, R extends IoResult>
+implements IoTask<I, R> {
 	
 	protected IoType ioType;
 	protected I item;
@@ -146,6 +148,53 @@ implements IoTask<I> {
 	@Override
 	public final long getRespTimeDone() {
 		return respTimeDone;
+	}
+
+	protected static String getItemPath(
+		final String itemName, final String srcPath, final String dstPath
+	) {
+		if(dstPath == null) {
+			if(srcPath != null) {
+				if(srcPath.endsWith("/")) {
+					return srcPath + itemName;
+				} else {
+					return srcPath + "/" + itemName;
+				}
+			}
+		} else {
+			if(dstPath.endsWith("/")) {
+				return dstPath + itemName;
+			} else {
+				return dstPath + "/" + itemName;
+			}
+		}
+		return "/" + itemName;
+	}
+
+	@Override @SuppressWarnings("unchecked")
+	public R getResult(
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemPathResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
+		final boolean useTransferSizeResult
+	) {
+		return (R) new BasicIoResult(
+			useStorageDriverResult ? hostAddr : null,
+			useStorageNodeResult ? nodeAddr : null,
+			useItemPathResult ? getItemPath(item.getName(), srcPath, dstPath) : null,
+			useIoTypeCodeResult ? ioType.ordinal() : - 1,
+			useStatusCodeResult ? status.ordinal() : - 1,
+			useReqTimeStartResult ? reqTimeStart : - 1,
+			useDurationResult ? respTimeDone - reqTimeStart : - 1,
+			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1
+		);
 	}
 
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {

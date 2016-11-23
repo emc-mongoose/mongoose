@@ -1,8 +1,9 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.model.io.task.result.DataIoResult;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
-import com.emc.mongoose.model.item.BasicDataItem;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
@@ -18,15 +19,15 @@ import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 /**
  Created by andrey on 25.09.16.
  */
-public class BasicMutableDataIoTask<I extends MutableDataItem>
-extends BasicDataIoTask<I>
-implements MutableDataIoTask<I> {
+public class BasicMutableDataIoTask<I extends MutableDataItem, R extends DataIoResult>
+extends BasicDataIoTask<I, R>
+implements MutableDataIoTask<I, R> {
 	
 	private final BitSet[] updRangesMaskPair = new BitSet[] {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
 	
-	private volatile BasicDataItem currRange;
+	private volatile DataItem currRange;
 	private volatile int currRangeIdx;
 	
 	public BasicMutableDataIoTask() {
@@ -139,22 +140,15 @@ implements MutableDataIoTask<I> {
 	}
 	
 	@Override
-	public final BasicDataItem getCurrRange() {
+	public final DataItem getCurrRange() {
 		try {
 			if(currRange == null && currRangeIdx < getRangeCount(item.size())) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
 				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				final int layerIdx = item.layer();
+				currRange = item.slice(currRangeOffset, currRangeSize);
 				if(item.isRangeUpdated(currRangeIdx)) {
-					currRange = new BasicDataItem(
-						itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 1,
-						contentSrc
-					);
-				} else {
-					currRange = new BasicDataItem(
-						itemDataOffset + currRangeOffset, currRangeSize, layerIdx,
-						contentSrc
-					);
+					currRange.layer(layerIdx + 1);
 				}
 			}
 		} catch(final IOException e) {
@@ -164,21 +158,19 @@ implements MutableDataIoTask<I> {
 	}
 	
 	@Override
-	public final BasicDataItem getCurrRangeUpdate() {
+	public final DataItem getCurrRangeUpdate() {
 		if(currRange == null) {
 			final int layerIdx = item.layer();
 			if(updRangesMaskPair[0].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
 				final long currRangeOffset = getRangeOffset(currRangeIdx);
-				currRange = new BasicDataItem(
-					itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 1, contentSrc
-				);
+				currRange = item.slice(currRangeOffset, currRangeSize);
+				currRange.layer(layerIdx + 1);
 			} else if(updRangesMaskPair[1].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
 				final long currRangeOffset = getRangeOffset(currRangeIdx);
-				currRange = new BasicDataItem(
-					itemDataOffset + currRangeOffset, currRangeSize, layerIdx + 2, contentSrc
-				);
+				currRange = item.slice(currRangeOffset, currRangeSize);
+				currRange.layer(layerIdx + 2);
 			} else {
 				currRange = null;
 			}

@@ -30,8 +30,8 @@ import java.io.IOException;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilder<
-	I extends Item, O extends IoTask<I>, R extends IoResult, T extends StorageDriver<I, O, R>
-> implements StorageDriverBuilder<I, O, R, T> {
+	I extends Item, R extends IoResult, O extends IoTask<I, R>, T extends StorageDriver<I, R, O>
+> implements StorageDriverBuilder<I, R, O, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -70,31 +70,31 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setJobName(final String jobName) {
+	public BasicStorageDriverBuilder<I, R, O, T> setJobName(final String jobName) {
 		this.jobName = jobName;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilder<I, R, O, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilder<I, R, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilder<I, R, O, T> setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setSocketConfig(final SocketConfig socketConfig) {
+	public BasicStorageDriverBuilder<I, R, O, T> setSocketConfig(final SocketConfig socketConfig) {
 		this.socketConfig = socketConfig;
 		return this;
 	}

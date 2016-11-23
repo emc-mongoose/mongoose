@@ -13,7 +13,7 @@ import java.rmi.RemoteException;
 /**
  Created on 11.07.16.
  */
-public interface StorageDriver<I extends Item, O extends IoTask<I>, R extends IoResult>
+public interface StorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
 extends Daemon, Output<O>, Remote {
 
 	String HOST_ADDR = ServiceUtil.getHostAddr();

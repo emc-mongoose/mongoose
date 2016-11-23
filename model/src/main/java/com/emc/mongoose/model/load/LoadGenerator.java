@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.result.IoResult;
 import com.emc.mongoose.model.item.Item;
 
 import java.io.IOException;
@@ -11,10 +12,10 @@ import java.io.IOException;
 /**
  Created on 11.07.16.
  */
-public interface LoadGenerator<I extends Item, O extends IoTask<I>>
+public interface LoadGenerator<I extends Item, R extends IoResult, O extends IoTask<I, R>>
 extends Daemon {
 	
-	void setWeightThrottle(final Throttle<LoadGenerator<I, O>> weightThrottle);
+	void setWeightThrottle(final Throttle<LoadGenerator<I, R, O>> weightThrottle);
 
 	void setRateThrottle(final Throttle<Object> rateThrottle);
 
