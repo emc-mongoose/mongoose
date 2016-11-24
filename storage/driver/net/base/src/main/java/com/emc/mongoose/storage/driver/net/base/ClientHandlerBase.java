@@ -4,7 +4,7 @@ import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.MutableDataItem;
@@ -33,16 +33,16 @@ import java.nio.ByteBuffer;
  Created by kurila on 04.10.16.
  */
 public abstract class ClientHandlerBase<
-	M, I extends Item, R extends IoResult, O extends IoTask<I, R>
+	M, I extends Item, O extends IoTask<I, R>, R extends IoResult
 >
 extends SimpleChannelInboundHandler<M> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 
-	protected final NetStorageDriverBase<I, R, O> driver;
+	protected final NetStorageDriverBase<I, O, R> driver;
 	protected final boolean verifyFlag;
 	
-	protected ClientHandlerBase(final NetStorageDriverBase<I, R, O> driver, boolean verifyFlag) {
+	protected ClientHandlerBase(final NetStorageDriverBase<I, O, R> driver, boolean verifyFlag) {
 		this.driver = driver;
 		this.verifyFlag = verifyFlag;
 	}

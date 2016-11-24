@@ -5,10 +5,10 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.BasicPartialDataIoTask;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import com.emc.mongoose.model.io.task.partial.BasicPartialDataIoTask;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.UniformOptionSelector;
@@ -16,10 +16,9 @@ import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
-
-import com.emc.mongoose.model.io.task.PartialDataIoTask;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -38,8 +37,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
-import io.netty.util.concurrent.GenericFutureListener;
+
 import org.apache.commons.lang.SystemUtils;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,9 +57,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<I extends Item, R extends IoResult, O extends IoTask<I, R>>
-extends StorageDriverBase<I, R, O>
-implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
+public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends StorageDriverBase<I, O, R>
+implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	
@@ -170,13 +170,7 @@ implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 		if(bestNode == null) {
 			return;
 		}
-		task.setNodeAddr(bestNode);
-		try {
-			concurrencyThrottle.acquire();
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException(e.getMessage());
-		}
-		connPoolMap.get(bestNode).acquire().addListener(new ConnectionLeaseCallback(task));
+		submitConnectAndExecute(bestNode, task);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -185,24 +179,9 @@ implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 		final int n = to - from;
 		if(storageNodeAddrs.length == 1) {
 			O nextTask;
-			try {
-				for(int i = 0; i < n; i ++) {
-					nextTask = tasks.get(i + from);
-					if(nextTask instanceof DataIoTask) {
-						final DataIoTask dataIoTask = (DataIoTask) nextTask;
-						if(dataIoTask.isMultiPart()) {
-							putMultipartIoTask(nextTask);
-						}
-					} else {
-						nextTask.setNodeAddr(storageNodeAddrs[0]);
-						concurrencyThrottle.acquire();
-						connPoolMap
-							.get(storageNodeAddrs[0]).acquire()
-							.addListener(new ConnectionLeaseCallback(nextTask));
-					}
-				}
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException(e.getMessage());
+			for(int i = 0; i < n; i ++) {
+				nextTask = tasks.get(i + from);
+				submitConnectAndExecute(storageNodeAddrs[0], nextTask);
 			}
 		} else {
 			final List<String> nodeBuff = new ArrayList<>(n);
@@ -211,19 +190,11 @@ implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 			}
 			O nextTask;
 			String nextNode;
-			try {
-				for(int i = 0; i < n; i++) {
-					nextTask = tasks.get(i + from);
-					nextTask.reset();
-					nextNode = nodeBuff.get(i);
-					nextTask.setNodeAddr(nextNode);
-					concurrencyThrottle.acquire();
-					connPoolMap
-						.get(nextNode).acquire()
-						.addListener(new ConnectionLeaseCallback(nextTask));
-				}
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException(e.getMessage());
+			for(int i = 0; i < n; i++) {
+				nextTask = tasks.get(i + from);
+				nextTask.reset();
+				nextNode = nodeBuff.get(i);
+				submitConnectAndExecute(nextNode, nextTask);
 			}
 		}
 		return n;
@@ -234,7 +205,18 @@ implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 	throws IOException {
 		return put(tasks, 0, tasks.size());
 	}
-
+	
+	private void submitConnectAndExecute(final String endpoint, final O task)
+	throws InterruptedIOException {
+		task.setNodeAddr(endpoint);
+		try {
+			concurrencyThrottle.acquire();
+		} catch(final InterruptedException e) {
+			throw new InterruptedIOException();
+		}
+		connPoolMap.get(endpoint).acquire().addListener(new ConnectionLeaseCallback(task));
+	}
+	
 	private final class ConnectionLeaseCallback
 	implements FutureListener<Channel> {
 
@@ -254,37 +236,13 @@ implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 				} // else ignore
 			} else {
 				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-				final RequestSentCallback reqSentCallback = new RequestSentCallback(ioTask);
 				ioTask.startRequest();
-				sendRequest(channel, ioTask, reqSentCallback).addListener(reqSentCallback);
+				sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
 			}
 		}
 	}
-
-	@SuppressWarnings("unchecked")
-	private void putMultipartIoTask(final O multipartIoTask)
-	throws IOException {
-
-		final IoType ioType = multipartIoTask.getIoType();
-		final String srcPath = multipartIoTask.getSrcPath();
-		final String dstPath = multipartIoTask.getDstPath();
-
-		final List<? extends DataItem> parts = ((DataIoTask) multipartIoTask).getParts();
-		final int subTasksCount = parts.size();
-		final List<O> partialIoTasks = new ArrayList<>(subTasksCount);
-
-		O nextSubTask;
-		for(int i = 0; i < subTasksCount; i ++) {
-			nextSubTask = (O) new BasicPartialDataIoTask(ioType, parts.get(i), srcPath, dstPath, i);
-			partialIoTasks.add(nextSubTask);
-		}
-		for(int i = 0; i < subTasksCount; i += put(partialIoTasks, i, subTasksCount));
-	}
-
-	protected abstract ChannelFuture sendRequest(
-		final Channel channel, final O ioTask,
-		final GenericFutureListener<Future<Void>> reqSentCallback
-	);
+	
+	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
 
 	private static final class RequestSentCallback
 		implements FutureListener<Void> {
@@ -301,16 +259,48 @@ implements NetStorageDriver<I, R, O>, ChannelPoolHandler {
 			ioTask.finishRequest();
 		}
 	}
-
-	@Override
-	public final void complete(final Channel channel, final O ioTask) {
+	
+	@Override @SuppressWarnings("unchecked")
+	public final void complete(final Channel channel, final O ioTask)
+	throws IOException {
+		
 		ioTask.finishResponse();
 		final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
 		if(connPool != null) {
 			connPool.release(channel);
 		}
-		ioTaskCompleted(ioTask);
+		
+		if(ioTask instanceof DataIoTask) {
+			final DataIoTask dataIoTask = (DataIoTask) ioTask;
+			if(dataIoTask.isMultiPart()) {
+				final IoType ioType = ioTask.getIoType();
+				final String srcPath = ioTask.getSrcPath();
+				final String dstPath = ioTask.getDstPath();
+				final List<? extends DataItem> parts = dataIoTask.getParts();
+				final int subTasksCount = parts.size();
+				final List<O> partialIoTasks = new ArrayList<>(subTasksCount);
+				O nextSubTask;
+				for(int i = 0; i < subTasksCount; i++) {
+					nextSubTask = (O) new BasicPartialDataIoTask(
+						ioType, parts.get(i), srcPath, dstPath, i
+					);
+					partialIoTasks.add(nextSubTask);
+				}
+				for(int i = 0; i < subTasksCount; i += put(partialIoTasks, i, subTasksCount));
+			}
+			
+		} else {
+			ioTaskCompleted(ioTask);
+		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	private void putMultipartIoTask(final O multipartIoTask)
+	throws IOException {
+		
+		
+	}
+	
 	
 	@Override
 	public final void channelReleased(final Channel channel)

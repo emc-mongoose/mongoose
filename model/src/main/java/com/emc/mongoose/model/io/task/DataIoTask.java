@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
-import com.emc.mongoose.model.io.task.result.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
 
 import java.util.List;
 
@@ -10,12 +10,20 @@ import java.util.List;
  */
 public interface DataIoTask<D extends DataItem, R extends DataIoResult>
 extends IoTask<D, R> {
-
+	
+	interface DataIoResult
+	extends IoTask.IoResult {
+		
+		long getDataLatency();
+		
+		long getCountBytesDone();
+	}
+	
 	@Override D getItem();
 
 	boolean isMultiPart();
 
-	List<DataItem> getParts();
+	List<D> getParts();
 
 	long getCountBytesDone();
 

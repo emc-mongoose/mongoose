@@ -2,7 +2,7 @@ package com.emc.mongoose.model.load;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 
 import java.rmi.RemoteException;
 

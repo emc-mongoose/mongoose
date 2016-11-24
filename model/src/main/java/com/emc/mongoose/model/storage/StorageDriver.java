@@ -4,7 +4,7 @@ import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 
 import java.rmi.Remote;
@@ -13,7 +13,7 @@ import java.rmi.RemoteException;
 /**
  Created on 11.07.16.
  */
-public interface StorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+public interface StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends Daemon, Output<O>, Remote {
 
 	String HOST_ADDR = ServiceUtil.getHostAddr();

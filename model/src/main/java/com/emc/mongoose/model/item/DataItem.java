@@ -36,7 +36,7 @@ extends Item, SeekableByteChannel {
 	
 	void offset(final long offset);
 
-	DataItem slice(final long from, final long to);
+	<D extends DataItem> D slice(final long from, final long to);
 	
 	/**
 	 * @return The number of bytes written, possibly zero

@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.model.io.task.result.DataIoResult;
+import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 
 import java.util.ArrayList;
@@ -11,27 +11,27 @@ import java.util.List;
  Created by kurila on 14.07.16.
  */
 public class BasicDataIoTaskBuilder<
-	I extends DataItem, R extends DataIoResult, O extends DataIoTask<I, R>
+	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoResult
 >
-extends BasicIoTaskBuilder<I, R, O>
-implements DataIoTaskBuilder<I, R, O> {
+extends BasicIoTaskBuilder<I, O, R>
+implements DataIoTaskBuilder<I, O, R> {
 
 	protected volatile List<ByteRange> fixedRanges = null;
 	protected volatile int randomRangesCount = 0;
 	protected volatile long sizeThreshold = 0;
 
 	@Override
-	public BasicDataIoTaskBuilder<I, R, O> setFixedRanges(final List<ByteRange> fixedRanges) {
+	public BasicDataIoTaskBuilder<I, O, R> setFixedRanges(final List<ByteRange> fixedRanges) {
 		this.fixedRanges = fixedRanges;
 		return this;
 	}
 	@Override
-	public BasicDataIoTaskBuilder<I, R, O> setRandomRangesCount(final int count) {
+	public BasicDataIoTaskBuilder<I, O, R> setRandomRangesCount(final int count) {
 		this.randomRangesCount = count;
 		return this;
 	}
 	@Override
-	public BasicDataIoTaskBuilder<I, R, O> setSizeThreshold(final long sizeThreshold) {
+	public BasicDataIoTaskBuilder<I, O, R> setSizeThreshold(final long sizeThreshold) {
 		this.sizeThreshold = sizeThreshold;
 		return this;
 	}

@@ -75,6 +75,20 @@ implements MutableDataItem {
 	) {
 		super(name, offset, size, layerNum, contentSrc);
 	}
+	
+	@Override
+	public BasicMutableDataItem slice(final long from, final long partSize) {
+		if(from < 0) {
+			throw new IllegalArgumentException();
+		}
+		if(partSize < 1) {
+			throw new IllegalArgumentException();
+		}
+		if(from + partSize > size) {
+			throw new IllegalArgumentException();
+		}
+		return new BasicMutableDataItem(name, offset + from, partSize, layerNum, getContentSrc());
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////

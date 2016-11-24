@@ -34,7 +34,7 @@ implements Input<S> {
 		}
 	}
 	
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final S get() {
 		
 		if(options == null) {
@@ -44,7 +44,7 @@ implements Input<S> {
 			return options[0];
 		}
 		
-		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
+		final List<S> bestChoices = (List<S>) BEST_CHOICES.get();
 		bestChoices.clear();
 		final S bestChoice;
 		
@@ -72,7 +72,7 @@ implements Input<S> {
 		return bestChoice;
 	}
 	
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final int get(final List<S> buffer, final int limit) {
 		
 		if(options == null) {
@@ -85,7 +85,7 @@ implements Input<S> {
 			}
 		}
 		
-		final List<S> bestChoices = (List<S>) this.BEST_CHOICES.get();
+		final List<S> bestChoices = (List<S>) BEST_CHOICES.get();
 		bestChoices.clear();
 		int minLeaseCount = Integer.MAX_VALUE, nextLeaseCount;
 		

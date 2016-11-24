@@ -1,8 +1,7 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import com.emc.mongoose.model.io.task.result.DataIoResult;
-
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.ui.log.MessageBase;
 
 /**

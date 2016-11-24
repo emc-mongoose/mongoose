@@ -7,12 +7,11 @@
 				"ringSize" : "4MB"
 			},
 			"ranges" : {
-				"random" : 0,
 				"fixed" : null,
+				"random" : 0,
 				"threshold" : 0
 			},
 			"size" : "1MB",
-			"threshold" : 0,
 			"verify" : false
 		},
 		"input" : {

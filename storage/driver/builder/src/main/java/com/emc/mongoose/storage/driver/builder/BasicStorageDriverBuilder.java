@@ -4,7 +4,7 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -30,8 +30,8 @@ import java.io.IOException;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilder<
-	I extends Item, R extends IoResult, O extends IoTask<I, R>, T extends StorageDriver<I, R, O>
-> implements StorageDriverBuilder<I, R, O, T> {
+	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends StorageDriver<I, O, R>
+> implements StorageDriverBuilder<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -70,31 +70,31 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, R, O, T> setJobName(final String jobName) {
+	public BasicStorageDriverBuilder<I, O, R, T> setJobName(final String jobName) {
 		this.jobName = jobName;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, R, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, R, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, R, O, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, R, O, T> setSocketConfig(final SocketConfig socketConfig) {
+	public BasicStorageDriverBuilder<I, O, R, T> setSocketConfig(final SocketConfig socketConfig) {
 		this.socketConfig = socketConfig;
 		return this;
 	}

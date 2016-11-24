@@ -188,7 +188,7 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final BasicDataItem slice(final long from, final long partSize) {
+	public BasicDataItem slice(final long from, final long partSize) {
 		if(from < 0) {
 			throw new IllegalArgumentException();
 		}
@@ -198,7 +198,7 @@ implements DataItem {
 		if(from + partSize > size) {
 			throw new IllegalArgumentException();
 		}
-		return new BasicDataItem(offset + from, partSize, layerNum, contentSrc);
+		return new BasicDataItem(name, offset + from, partSize, layerNum, contentSrc);
 	}
 	//
 	public long position() {

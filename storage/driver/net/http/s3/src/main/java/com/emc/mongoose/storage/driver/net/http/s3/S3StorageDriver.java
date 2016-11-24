@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
 import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
@@ -60,8 +60,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 01.08.16.
  */
-public final class S3StorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
-extends HttpStorageDriverBase<I, R, O> {
+public final class S3StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends HttpStorageDriverBase<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	private static final ThreadLocal<StringBuilder>

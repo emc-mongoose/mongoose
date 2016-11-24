@@ -6,13 +6,10 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig.TraceConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
+import static com.emc.mongoose.model.io.task.BasicDataIoTask.BasicDataIoResult;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.PartialDataIoTask;
-import com.emc.mongoose.model.io.task.result.BasicDataIoResult;
-import com.emc.mongoose.model.io.task.result.BasicIoResult;
-import com.emc.mongoose.model.io.task.result.IoResult;
-import com.emc.mongoose.model.io.task.result.PartialDataIoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.collection.IoBuffer;
@@ -37,9 +34,9 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  */
-public abstract class StorageDriverBase<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+public abstract class StorageDriverBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends DaemonBase
-implements StorageDriver<I, R, O>, Runnable {
+implements StorageDriver<I, O, R>, Runnable {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
@@ -275,7 +272,7 @@ implements StorageDriver<I, R, O>, Runnable {
 
 				for(int i = 0; i < n; i ++) {
 					nextIoTask = ioTasks.get(i);
-					nextIoResult = (R) nextIoTask.getResult(
+					nextIoResult = nextIoTask.getResult(
 						HOST_ADDR,
 						useStorageDriverResult,
 						useStorageNodeResult,

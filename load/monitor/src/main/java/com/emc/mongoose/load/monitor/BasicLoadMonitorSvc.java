@@ -4,7 +4,7 @@ import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitorSvc;
@@ -27,11 +27,8 @@ import java.util.Map;
 /**
  Created by andrey on 05.10.16.
  */
-public final class BasicLoadMonitorSvc<
-	I extends Item, R extends IoResult, O extends IoTask<I, R>
-
->
-extends BasicLoadMonitor<I, R, O>
+public final class BasicLoadMonitorSvc<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends BasicLoadMonitor<I, O, R>
 implements LoadMonitorSvc<R> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -44,8 +41,8 @@ implements LoadMonitorSvc<R> {
 	 @param loadConfig
 	 */
 	public BasicLoadMonitorSvc(
-		final String name, final LoadGenerator<I, R, O> loadGenerator,
-		final List<StorageDriver<I, R, O>> drivers, final LoadConfig loadConfig
+		final String name, final LoadGenerator<I, O, R> loadGenerator,
+		final List<StorageDriver<I, O, R>> drivers, final LoadConfig loadConfig
 	) {
 		super(name, loadGenerator, drivers, loadConfig);
 	}
@@ -58,8 +55,8 @@ implements LoadMonitorSvc<R> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name,
-		final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> drivers,
-		final Map<LoadGenerator<I, R, O>, LoadConfig> loadConfigs
+		final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> drivers,
+		final Map<LoadGenerator<I, O, R>, LoadConfig> loadConfigs
 	) {
 		super(name, drivers, loadConfigs);
 	}
@@ -73,23 +70,23 @@ implements LoadMonitorSvc<R> {
 	 */
 	public BasicLoadMonitorSvc(
 		final String name,
-		final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> drivers,
-		final Map<LoadGenerator<I, R, O>, LoadConfig> loadConfigs,
-		final Object2IntMap<LoadGenerator<I, R, O>> weightMap
+		final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> drivers,
+		final Map<LoadGenerator<I, O, R>, LoadConfig> loadConfigs,
+		final Object2IntMap<LoadGenerator<I, O, R>> weightMap
 	) {
 		super(name, drivers, loadConfigs, weightMap);
 	}
 
 	@Override
-	protected void registerDrivers(final List<StorageDriver<I, R, O>> drivers) {
+	protected void registerDrivers(final List<StorageDriver<I, O, R>> drivers) {
 		final String hostName;
 		try {
 			LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
 			hostName = NetUtil.getHostAddrString();
-			for(final StorageDriver<I, R, O> nextDriver : drivers) {
+			for(final StorageDriver<I, O, R> nextDriver : drivers) {
 				if(nextDriver instanceof StorageDriverSvc) {
 					try {
-						((StorageDriverSvc<I, R, O>) nextDriver).setOutputSvc(hostName, getName());
+						((StorageDriverSvc<I, O, R>) nextDriver).setOutputSvc(hostName, getName());
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,

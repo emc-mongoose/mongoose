@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
@@ -8,15 +8,15 @@ import java.util.List;
 /**
  Created by kurila on 14.07.16.
  */
-public interface IoTaskBuilder<I extends Item, R extends IoResult, O extends IoTask<I, R>> {
+public interface IoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult> {
 
 	IoType getIoType();
 
-	IoTaskBuilder<I, R, O> setIoType(final IoType ioType);
+	IoTaskBuilder<I, O, R> setIoType(final IoType ioType);
 
 	String getSrcPath();
 
-	IoTaskBuilder<I, R, O> setSrcPath(final String srcPath);
+	IoTaskBuilder<I, O, R> setSrcPath(final String srcPath);
 
 	O getInstance(final I item, final String dstPath);
 

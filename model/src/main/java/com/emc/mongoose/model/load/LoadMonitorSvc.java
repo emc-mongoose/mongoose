@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.load;
 
 import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 /**
  Created by andrey on 05.10.16.
  */

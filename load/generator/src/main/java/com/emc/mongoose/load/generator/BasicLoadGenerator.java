@@ -5,7 +5,7 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.common.io.Input;
@@ -31,14 +31,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 11.07.16.
  */
-public class BasicLoadGenerator<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+public class BasicLoadGenerator<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends DaemonBase
-implements LoadGenerator<I, R, O>, Output<I> {
+implements LoadGenerator<I, O, R>, Output<I> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final int BATCH_SIZE = 0x1000;
 
-	private volatile Throttle<LoadGenerator<I, R, O>> weightThrottle = null;
+	private volatile Throttle<LoadGenerator<I, O, R>> weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 
@@ -49,14 +49,14 @@ implements LoadGenerator<I, R, O>, Output<I> {
 	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
 	private final boolean isCircular;
-	private final IoTaskBuilder<I, R, O> ioTaskBuilder;
+	private final IoTaskBuilder<I, O, R> ioTaskBuilder;
 
 	private long producedItemsCount = 0;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final Input<String> dstPathInput,
-		final IoTaskBuilder<I, R, O> ioTaskBuilder, final long countLimit, final int maxItemQueueSize,
+		final IoTaskBuilder<I, O, R> ioTaskBuilder, final long countLimit, final int maxItemQueueSize,
 		final boolean isCircular
 	) throws UserShootHisFootException {
 
@@ -77,7 +77,7 @@ implements LoadGenerator<I, R, O>, Output<I> {
 	}
 	
 	@Override
-	public final void setWeightThrottle(final Throttle<LoadGenerator<I, R, O>> weightThrottle) {
+	public final void setWeightThrottle(final Throttle<LoadGenerator<I, O, R>> weightThrottle) {
 		this.weightThrottle = weightThrottle;
 	}
 

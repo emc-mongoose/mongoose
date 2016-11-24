@@ -69,12 +69,12 @@ implements Item {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeObject(name);
+		out.writeUTF(name);
 	}
 	
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		name = (String) in.readObject();
+		name = in.readUTF();
 	}
 }

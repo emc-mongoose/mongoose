@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
@@ -34,13 +34,13 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public class BasicClientHandler<I extends Item, R extends IoResult, O extends IoTask<I, R>>
-extends ClientHandlerBase<HttpObject, I, R, O> {
+public class BasicClientHandler<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends ClientHandlerBase<HttpObject, I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
 	public BasicClientHandler(
-		final HttpStorageDriverBase<I, R, O> driver,
+		final HttpStorageDriverBase<I, O, R> driver,
 		final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);

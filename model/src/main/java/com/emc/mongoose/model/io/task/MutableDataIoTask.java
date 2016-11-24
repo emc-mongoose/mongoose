@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.model.io.task.result.DataIoResult;
+import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
 

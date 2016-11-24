@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
@@ -45,8 +45,8 @@ import java.rmi.RemoteException;
 /**
  Created by andrey on 07.10.16.
  */
-public class SwiftStorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
-extends HttpStorageDriverBase<I, R, O> {
+public class SwiftStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends HttpStorageDriverBase<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 

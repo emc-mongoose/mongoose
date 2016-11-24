@@ -14,8 +14,8 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.result.DataIoResult;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -49,14 +49,14 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicLoadMonitor<I extends Item, R extends IoResult, O extends IoTask<I, R>>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends DaemonBase
 implements LoadMonitor<R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
-	private final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> driversMap;
+	private final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> driversMap;
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -77,15 +77,15 @@ implements LoadMonitor<R> {
 	 @param loadConfig
 	 */
 	public BasicLoadMonitor(
-		final String name, final LoadGenerator<I, R, O> loadGenerator,
-		final List<StorageDriver<I, R, O>> driversMap, final LoadConfig loadConfig
+		final String name, final LoadGenerator<I, O, R> loadGenerator,
+		final List<StorageDriver<I, O, R>> driversMap, final LoadConfig loadConfig
 	) {
 		this(
 			name,
-			new HashMap<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>>() {{
+			new HashMap<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>>() {{
 				put(loadGenerator, driversMap);
 			}},
-			new HashMap<LoadGenerator<I, R, O>, LoadConfig>() {{
+			new HashMap<LoadGenerator<I, O, R>, LoadConfig>() {{
 				put(loadGenerator, loadConfig);
 			}},
 			null
@@ -100,8 +100,8 @@ implements LoadMonitor<R> {
 	 */
 	public BasicLoadMonitor(
 		final String name,
-		final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> driversMap,
-		final Map<LoadGenerator<I, R, O>, LoadConfig> loadConfigs
+		final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> driversMap,
+		final Map<LoadGenerator<I, O, R>, LoadConfig> loadConfigs
 	) {
 		this(name, driversMap, loadConfigs, null);
 	}
@@ -115,9 +115,9 @@ implements LoadMonitor<R> {
 	 */
 	public BasicLoadMonitor(
 		final String name,
-		final Map<LoadGenerator<I, R, O>, List<StorageDriver<I, R, O>>> driversMap,
-		final Map<LoadGenerator<I, R, O>, LoadConfig> loadConfigs,
-		final Object2IntMap<LoadGenerator<I, R, O>> weightMap
+		final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> driversMap,
+		final Map<LoadGenerator<I, O, R>, LoadConfig> loadConfigs,
+		final Object2IntMap<LoadGenerator<I, O, R>> weightMap
 	) {
 		this.name = name;
 
@@ -131,7 +131,7 @@ implements LoadMonitor<R> {
 			rateThrottle = null;
 		}
 
-		final Throttle<LoadGenerator<I, R, O>> weightThrottle;
+		final Throttle<LoadGenerator<I, O, R>> weightThrottle;
 		if(weightMap == null || weightMap.size() == 0 || weightMap.size() == 1) {
 			weightThrottle = null;
 		} else {
@@ -139,7 +139,7 @@ implements LoadMonitor<R> {
 		}
 
 		Output<O> nextGeneratorOutput;
-		for(final LoadGenerator<I, R, O> nextGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			nextGeneratorOutput = new RoundRobinOutput<>(driversMap.get(nextGenerator));
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
@@ -151,8 +151,8 @@ implements LoadMonitor<R> {
 
 		this.driversMap = driversMap;
 		totalConcurrencyMap = new Int2IntOpenHashMap(driversMap.size());
-		for(final LoadGenerator<I, R, O> nextGenerator : driversMap.keySet()) {
-			final List<StorageDriver<I, R, O>> nextDrivers = driversMap.get(nextGenerator);
+		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
+			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
 			final String ioTypeName = loadConfigs.get(nextGenerator).getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			totalConcurrencyMap.put(
@@ -166,7 +166,7 @@ implements LoadMonitor<R> {
 
 		long countLimitSum = 0;
 		long sizeLimitSum = 0;
-		for(final LoadGenerator<I, R, O> nextLoadGenerator : loadConfigs.keySet()) {
+		for(final LoadGenerator<I, O, R> nextLoadGenerator : loadConfigs.keySet()) {
 			final LimitConfig nextLimitConfig = loadConfigs.get(nextLoadGenerator).getLimitConfig();
 			if(nextLimitConfig.getCount() > 0 && countLimitSum < Long.MAX_VALUE) {
 				countLimitSum += nextLimitConfig.getCount();
@@ -187,8 +187,8 @@ implements LoadMonitor<R> {
 		UNCLOSED.add(this);
 	}
 
-	protected void registerDrivers(final List<StorageDriver<I, R, O>> drivers) {
-		for(final StorageDriver<I, R, O> nextDriver : drivers) {
+	protected void registerDrivers(final List<StorageDriver<I, O, R>> drivers) {
+		for(final StorageDriver<I, O, R> nextDriver : drivers) {
 			try {
 				nextDriver.setOutput(this);
 			} catch(final RemoteException ignored) {
@@ -234,8 +234,8 @@ implements LoadMonitor<R> {
 								new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
 							);
 						}
-						/*for(final List<StorageDriver<I, R, O>> nextDrivers : driversMap.values()) {
-							for(final StorageDriver<I, R, O> nextDriver : nextDrivers) {
+						/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
+							for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
 								try {
 									LOG.info(
 										Markers.MSG, "Storage driver \"{}\" active task count: {}",
@@ -301,7 +301,7 @@ implements LoadMonitor<R> {
 	private boolean isIdle()
 	throws ConcurrentModificationException {
 
-		for(final LoadGenerator<I, R, O> nextLoadGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O, R> nextLoadGenerator : driversMap.keySet()) {
 
 			try {
 				if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
@@ -314,7 +314,7 @@ implements LoadMonitor<R> {
 				);
 			}
 
-			for(final StorageDriver<I, R, O> nextStorageDriver : driversMap.get(nextLoadGenerator)) {
+			for(final StorageDriver<I, O, R> nextStorageDriver : driversMap.get(nextLoadGenerator)) {
 				try {
 					if(
 						!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
@@ -518,11 +518,11 @@ implements LoadMonitor<R> {
 
 		String authToken = null;
 
-		for(final LoadGenerator<I, R, O> nextGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 
-			final List<StorageDriver<I, R, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
+			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = driversMap.get(nextGenerator);
 
-			for(final StorageDriver<I, R, O> nextDriver : nextGeneratorDrivers) {
+			for(final StorageDriver<I, O, R> nextDriver : nextGeneratorDrivers) {
 				try {
 					if(authToken == null) {
 						authToken = nextDriver.getAuthToken();
@@ -568,7 +568,7 @@ implements LoadMonitor<R> {
 	protected void doShutdown()
 	throws IllegalStateException {
 
-		for(final LoadGenerator<I, R, O> nextGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 
 			try {
 				nextGenerator.interrupt();
@@ -579,7 +579,7 @@ implements LoadMonitor<R> {
 				);
 			}
 
-			for(final StorageDriver<I, R, O> nextDriver : driversMap.get(nextGenerator)) {
+			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
 				try {
 					nextDriver.shutdown();
 				} catch(final RemoteException e) {
@@ -595,8 +595,8 @@ implements LoadMonitor<R> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		for(final List<StorageDriver<I, R, O>> nextDrivers : driversMap.values()) {
-			for(final StorageDriver<I, R, O> nextDriver : nextDrivers) {
+		for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
+			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
 				try {
 					nextDriver.interrupt();
 				} catch(final RemoteException e) {
@@ -654,9 +654,9 @@ implements LoadMonitor<R> {
 	protected void doClose()
 	throws IOException {
 
-		for(final LoadGenerator<I, R, O> generator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 
-			for(final StorageDriver<I, R, O> driver : driversMap.get(generator)) {
+			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
 				try {
 					driver.close();
 				} catch(final IOException e) {

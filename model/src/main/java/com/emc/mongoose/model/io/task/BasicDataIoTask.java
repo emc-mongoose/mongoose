@@ -2,8 +2,7 @@ package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.result.BasicDataIoResult;
-import com.emc.mongoose.model.io.task.result.DataIoResult;
+import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 
@@ -54,7 +53,55 @@ implements DataIoTask<T, R> {
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 	}
-
+	
+	public static class BasicDataIoResult
+	extends BasicIoResult
+	implements DataIoResult {
+		
+		private long dataLatency;
+		private long transferredByteCount;
+		
+		public BasicDataIoResult(
+			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
+			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final long duration, final long latency, final long dataLatency,
+			final long transferredByteCount
+		) {
+			super(
+				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode, reqTimeStart,
+				duration, latency
+			);
+			this.dataLatency = dataLatency;
+			this.transferredByteCount = transferredByteCount;
+		}
+		
+		@Override
+		public final long getDataLatency() {
+			return dataLatency;
+		}
+		
+		@Override
+		public final long getCountBytesDone() {
+			return transferredByteCount;
+		}
+		
+		@Override
+		public void writeExternal(final ObjectOutput out)
+		throws IOException {
+			super.writeExternal(out);
+			out.writeLong(dataLatency);
+			out.writeLong(transferredByteCount);
+		}
+		
+		@Override
+		public void readExternal(final ObjectInput in)
+		throws IOException, ClassNotFoundException {
+			super.readExternal(in);
+			dataLatency = in.readLong();
+			transferredByteCount = in.readLong();
+		}
+	}
+	
 	@Override @SuppressWarnings("unchecked")
 	public R getResult(
 		final String hostAddr,
@@ -89,19 +136,19 @@ implements DataIoTask<T, R> {
 		countBytesDone = 0;
 		respDataTimeStart = 0;
 	}
-
-	@Override
-	public final List<DataItem> getParts() {
-		final List<DataItem> parts = new ArrayList<>();
+	
+	@Override @SuppressWarnings("unchecked")
+	public final List<T> getParts() {
+		final List<T> parts = new ArrayList<>();
 		final int equalPartsCount = sizeThreshold > 0 ? (int) (contentSize / sizeThreshold) : 0;
 		final long tailPartSize = contentSize % sizeThreshold;
-		DataItem nextPart;
+		T nextPart;
 		for(int i = 0; i < equalPartsCount; i ++) {
-			nextPart = item.slice(i * sizeThreshold, sizeThreshold);
+			nextPart = (T) item.slice(i * sizeThreshold, sizeThreshold);
 			parts.add(nextPart);
 		}
 		if(tailPartSize > 0) {
-			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
+			nextPart = (T) item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			parts.add(nextPart);
 		}
 		return parts;

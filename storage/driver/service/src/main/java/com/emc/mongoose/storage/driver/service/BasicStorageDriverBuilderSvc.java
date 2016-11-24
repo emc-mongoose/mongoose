@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.service;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
@@ -26,41 +26,38 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilderSvc<
-	I extends Item,
-	R extends IoResult,
-	O extends IoTask<I, R>,
-	T extends StorageDriverSvc<I, R, O>
-> extends BasicStorageDriverBuilder<I, R, O, T>
-implements StorageDriverBuilderSvc<I, R, O, T> {
+	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends StorageDriverSvc<I, O, R>
+> extends BasicStorageDriverBuilder<I, O, R, T>
+implements StorageDriverBuilderSvc<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, R, O, T> setJobName(final String jobName) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setJobName(final String jobName) {
 		super.setJobName(jobName);
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, R, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		super.setItemConfig(itemConfig);
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, R, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setLoadConfig(final LoadConfig loadConfig) {
 		super.setLoadConfig(loadConfig);
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, R, O, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setStorageConfig(final StorageConfig storageConfig) {
 		super.setStorageConfig(storageConfig);
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, R, O, T> setSocketConfig(final SocketConfig socketConfig) {
+	public BasicStorageDriverBuilderSvc<I, O, R, T> setSocketConfig(final SocketConfig socketConfig) {
 		super.setSocketConfig(socketConfig);
 		return this;
 	}
@@ -137,7 +134,7 @@ implements StorageDriverBuilderSvc<I, R, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws IOException, UserShootHisFootException {
-		final StorageDriver<I, R, O> driver = build();
+		final StorageDriver<I, O, R> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getContentSource());
 		return wrapper.getName();
 	}

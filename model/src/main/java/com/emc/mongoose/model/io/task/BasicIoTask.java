@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
-import com.emc.mongoose.model.io.task.result.BasicIoResult;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
@@ -170,7 +169,102 @@ implements IoTask<I, R> {
 		}
 		return "/" + itemName;
 	}
-
+	
+	public static class BasicIoResult
+	implements IoResult {
+		
+		private String storageDriverAddr;
+		private String storageNodeAddr;
+		private String itemInfo;
+		private int ioTypeCode;
+		private int statusCode;
+		private long reqTimeStart;
+		private long duration;
+		private long latency;
+		
+		public BasicIoResult(
+			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
+			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final long duration, final long latency
+		) {
+			this.storageDriverAddr = storageDriverAddr;
+			this.storageNodeAddr = storageNodeAddr;
+			this.itemInfo = itemInfo;
+			this.ioTypeCode = ioTypeCode;
+			this.statusCode = statusCode;
+			this.reqTimeStart = reqTimeStart;
+			this.duration = duration;
+			this.latency = latency;
+		}
+		
+		@Override
+		public final String getStorageDriverAddr() {
+			return storageDriverAddr;
+		}
+		
+		@Override
+		public final String getStorageNodeAddr() {
+			return storageNodeAddr;
+		}
+		
+		@Override
+		public final String getItemInfo() {
+			return itemInfo;
+		}
+		
+		@Override
+		public final int getIoTypeCode() {
+			return ioTypeCode;
+		}
+		
+		@Override
+		public final int getStatusCode() {
+			return statusCode;
+		}
+		
+		@Override
+		public final long getTimeStart() {
+			return reqTimeStart;
+		}
+		
+		@Override
+		public final long getDuration() {
+			return duration;
+		}
+		
+		@Override
+		public final long getLatency() {
+			return latency;
+		}
+		
+		@Override
+		public void writeExternal(final ObjectOutput out)
+		throws IOException {
+			out.writeUTF(storageDriverAddr);
+			out.writeUTF(storageNodeAddr);
+			out.writeUTF(itemInfo);
+			out.writeInt(ioTypeCode);
+			out.writeInt(statusCode);
+			out.writeLong(reqTimeStart);
+			out.writeLong(duration);
+			out.writeLong(latency);
+		}
+		
+		@Override
+		public void readExternal(final ObjectInput in)
+		throws IOException, ClassNotFoundException {
+			storageDriverAddr = in.readUTF();
+			storageNodeAddr = in.readUTF();
+			itemInfo = in.readUTF();
+			ioTypeCode = in.readInt();
+			statusCode = in.readInt();
+			reqTimeStart = in.readLong();
+			duration = in.readLong();
+			latency = in.readLong();
+		}
+	}
+	
+	
 	@Override @SuppressWarnings("unchecked")
 	public R getResult(
 		final String hostAddr,
@@ -218,17 +312,17 @@ implements IoTask<I, R> {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeObject(ioType);
+		out.writeInt(ioType.ordinal());
 		out.writeObject(item);
-		out.writeObject(dstPath);
+		out.writeUTF(dstPath);
 	}
 	
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		ioType = (IoType) in.readObject();
+		ioType = IoType.values()[in.readInt()];
 		item = (I) in.readObject();
-		dstPath = (String) in.readObject();
+		dstPath = in.readUTF();
 	}
 
 	@Override

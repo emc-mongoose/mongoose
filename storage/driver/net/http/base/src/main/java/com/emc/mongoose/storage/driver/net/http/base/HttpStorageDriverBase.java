@@ -5,7 +5,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.MutableDataIoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.MutableDataItem;
@@ -23,7 +23,6 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -46,8 +45,6 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import io.netty.util.AsciiString;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,9 +62,9 @@ import java.util.function.Function;
  Created by kurila on 29.07.16.
  Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
-public abstract class HttpStorageDriverBase<I extends Item, R extends IoResult, O extends IoTask<I, R>>
-extends NetStorageDriverBase<I, R, O>
-implements HttpStorageDriver<I, R, O> {
+public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends NetStorageDriverBase<I, O, R>
+implements HttpStorageDriver<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	
@@ -322,10 +319,7 @@ implements HttpStorageDriver<I, R, O> {
 	throws URISyntaxException;
 	
 	@Override
-	protected ChannelFuture sendRequest(
-		final Channel channel, final O ioTask,
-		final GenericFutureListener<Future<Void>> reqSentCallback
-	) {
+	protected ChannelFuture sendRequest(final Channel channel, final O ioTask) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
 		final IoType ioType = ioTask.getIoType();
@@ -339,31 +333,24 @@ implements HttpStorageDriver<I, R, O> {
 			if(IoType.CREATE.equals(ioType)) {
 				if(item instanceof DataItem) {
 					final DataItem dataItem = (DataItem) item;
-					channel
-						.write(new DataItemFileRegion<>(dataItem))
-						.addListener(reqSentCallback);
-					((DataIoTask) ioTask).setCountBytesDone(dataItem.size());
+					final DataIoTask dataIoTask = (DataIoTask) ioTask;
+					final String srcPath = dataIoTask.getSrcPath();
+					if(!dataIoTask.isMultiPart() || null == srcPath || srcPath.isEmpty()) {
+						channel.write(new DataItemFileRegion<>(dataItem));
+					}
+					dataIoTask.setCountBytesDone(dataItem.size());
 				}
 			} else if(IoType.UPDATE.equals(ioType)) {
 				if(item instanceof MutableDataItem) {
 					final MutableDataItem mdi = (MutableDataItem) item;
 					final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
 					DataItem updatedRange;
-					ChannelFuture reqSentFuture = null;
 					for(int i = 0; i < getRangeCount(mdi.size()); i ++) {
 						mdIoTask.setCurrRangeIdx(i);
 						updatedRange = mdIoTask.getCurrRangeUpdate();
 						if(updatedRange != null) {
-							reqSentFuture = channel.write(
-								new DataItemFileRegion<>(updatedRange)
-							);
+							channel.write(new DataItemFileRegion<>(updatedRange));
 						}
-					}
-					if(reqSentFuture == null) {
-						LOG.error(Markers.ERR, "No ranges scheduled for the update");
-						ioTask.setStatus(IoTask.Status.RESP_FAIL_CLIENT);
-					} else {
-						reqSentFuture.addListener(reqSentCallback);
 					}
 					mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
 					mdi.commitUpdatedRanges(mdIoTask.getUpdRangesMaskPair());

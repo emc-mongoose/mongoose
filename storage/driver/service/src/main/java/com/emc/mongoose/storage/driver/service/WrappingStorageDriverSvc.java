@@ -6,7 +6,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -25,17 +25,17 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 05.10.16.
  */
 public final class WrappingStorageDriverSvc<
-	I extends Item, R extends IoResult, O extends IoTask<I, R>
+	I extends Item, O extends IoTask<I, R>, R extends IoResult
 >
-implements StorageDriverSvc<I, R, O> {
+implements StorageDriverSvc<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private final StorageDriver<I, R, O> driver;
+	private final StorageDriver<I, O, R> driver;
 	private final ContentSource contentSrc;
 
 	public WrappingStorageDriverSvc(
-		final StorageDriver<I, R, O> driver, final ContentSource contentSrc
+		final StorageDriver<I, O, R> driver, final ContentSource contentSrc
 	) {
 		this.driver = driver;
 		this.contentSrc = contentSrc;

@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.net.http.atmos;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosConstants.KEY_SUBTENANT_ID;
@@ -57,8 +57,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosStorageDriver<I extends Item, R extends IoResult, O extends IoTask<I, R>>
-extends HttpStorageDriverBase<I, R, O> {
+public final class AtmosStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends HttpStorageDriverBase<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	

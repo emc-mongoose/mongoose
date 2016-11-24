@@ -1,8 +1,8 @@
-package com.emc.mongoose.model.io.task;
+package com.emc.mongoose.model.io.task.partial;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.result.BasicPartialDataIoResult;
-import com.emc.mongoose.model.io.task.result.PartialDataIoResult;
+import com.emc.mongoose.model.io.task.BasicDataIoTask;
+import static com.emc.mongoose.model.io.task.partial.PartialDataIoTask.PartialDataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 
 /**
@@ -26,7 +26,24 @@ implements PartialDataIoTask<I, R> {
 	public final int getPartNumber() {
 		return partNumber;
 	}
-
+	
+	public static class BasicPartialDataIoResult
+	extends BasicDataIoResult
+	implements PartialDataIoResult {
+		
+		public BasicPartialDataIoResult(
+			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
+			final int ioTypeCode, final int statusCode, final long reqTimeStart, final long duration,
+			final long latency, final long dataLatency, final long transferredByteCount
+		) {
+			super(
+				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode, reqTimeStart,
+				duration, latency, dataLatency, transferredByteCount
+			);
+		}
+	}
+	
+	
 	@Override @SuppressWarnings("unchecked")
 	public R getResult(
 		final String hostAddr,

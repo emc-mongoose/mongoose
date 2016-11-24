@@ -1,8 +1,7 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import com.emc.mongoose.model.io.task.result.DataIoResult;
-
-import com.emc.mongoose.model.io.task.result.IoResult;
+import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.ui.log.MessageBase;
 
 import java.util.List;
@@ -23,7 +22,7 @@ extends MessageBase {
 		this.to = to;
 	}
 
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final void formatTo(final StringBuilder strb) {
 		if(to > from) {
 			final R anyIoResult = ioResults.get(0);
