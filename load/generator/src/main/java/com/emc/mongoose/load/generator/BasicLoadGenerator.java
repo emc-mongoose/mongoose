@@ -93,8 +93,13 @@ implements LoadGenerator<I, O>, Output<I> {
 	@Override
 	public final String getOutputPath()
 	throws IOException {
-		final String dstPath = dstPathInput.get();
-		dstPathInput.reset();
+		final String dstPath;
+		if(dstPathInput == null) {
+			dstPath = null;
+		} else {
+			 dstPath = dstPathInput.get();
+			dstPathInput.reset();
+		}
 		return dstPath;
 	}
 
@@ -181,7 +186,9 @@ implements LoadGenerator<I, O>, Output<I> {
 	public final void put(final I item)
 	throws IOException {
 
-		final O nextIoTask = ioTaskBuilder.getInstance(item, dstPathInput.get());
+		final O nextIoTask = ioTaskBuilder.getInstance(
+			item, dstPathInput == null ? null : dstPathInput.get()
+		);
 
 		if(weightThrottle != null) {
 			try {
@@ -282,6 +289,9 @@ implements LoadGenerator<I, O>, Output<I> {
 	throws IOException {
 		if(itemInput != null) {
 			itemInput.close();
+		}
+		if(dstPathInput != null) {
+			dstPathInput.close();
 		}
 	}
 	

@@ -157,6 +157,8 @@ extends HttpStorageDriverBase<I, O, R> {
 					getSubtenantResp.status().toString()
 				);
 			}
+			
+			getSubtenantResp.release();
 		}
 
 		return authToken;

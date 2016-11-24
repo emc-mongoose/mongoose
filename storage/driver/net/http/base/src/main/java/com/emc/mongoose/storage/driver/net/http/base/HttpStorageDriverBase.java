@@ -128,7 +128,7 @@ implements HttpStorageDriver<I, O, R> {
 					final ChannelHandlerContext ctx, final HttpObject msg
 				) throws Exception {
 					if(msg instanceof FullHttpResponse) {
-						fullRespSync.put((FullHttpResponse) msg);
+						fullRespSync.put(((FullHttpResponse) msg).retain());
 					}
 				}
 			}
