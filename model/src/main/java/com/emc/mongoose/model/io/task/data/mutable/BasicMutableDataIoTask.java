@@ -1,7 +1,9 @@
-package com.emc.mongoose.model.io.task;
+package com.emc.mongoose.model.io.task.data.mutable;
 
 import com.emc.mongoose.common.api.ByteRange;
-import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
+import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
+
+import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.io.IoType;
@@ -36,9 +38,9 @@ implements MutableDataIoTask<I, R> {
 	
 	public BasicMutableDataIoTask(
 		final IoType ioType, final I item, final String srcPath, final String dstPath,
-		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
+		final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
-		super(ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount, sizeThreshold);
+		super(ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
 		if(IoType.UPDATE.equals(ioType)) {
 			if(randomRangesCount > 0) {
 				scheduleRandomRangesUpdate(randomRangesCount);
@@ -184,7 +186,7 @@ implements MutableDataIoTask<I, R> {
 	}
 	
 	@Override
-	public final void writeExternal(final ObjectOutput out)
+	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(

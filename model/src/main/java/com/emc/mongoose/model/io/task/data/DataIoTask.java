@@ -1,10 +1,8 @@
-package com.emc.mongoose.model.io.task;
+package com.emc.mongoose.model.io.task.data;
 
+import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
-
-import java.util.List;
-
+import com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 /**
  Created by kurila on 11.07.16.
  */
@@ -20,10 +18,6 @@ extends IoTask<D, R> {
 	}
 	
 	@Override D getItem();
-
-	boolean isMultiPart();
-
-	List<D> getParts();
 
 	long getCountBytesDone();
 

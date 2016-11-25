@@ -1,8 +1,10 @@
-package com.emc.mongoose.model.io.task.partial;
+package com.emc.mongoose.model.io.task.partial.data;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.BasicDataIoTask;
-import static com.emc.mongoose.model.io.task.partial.PartialDataIoTask.PartialDataIoResult;
+import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
+import static com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask.PartialDataIoResult;
+
 import com.emc.mongoose.model.item.DataItem;
 
 /**
@@ -13,20 +15,27 @@ extends BasicDataIoTask<I, R>
 implements PartialDataIoTask<I, R> {
 
 	private final int partNumber;
+	private CompositeDataIoTask<I, ? extends DataIoResult> parent;
 
 	public BasicPartialDataIoTask(
 		final IoType ioType, final I part, final String srcPath, final String dstPath,
-		final int partNumber
+		final int partNumber, final CompositeDataIoTask<I, ? extends DataIoResult> parent
 	) {
-		super(ioType, part, srcPath, dstPath, null, 0, 0);
+		super(ioType, part, srcPath, dstPath, null, 0);
 		this.partNumber = partNumber;
+		this.parent = parent;
 	}
 
 	@Override
 	public final int getPartNumber() {
 		return partNumber;
 	}
-	
+
+	@Override
+	public CompositeDataIoTask<I, ? extends DataIoResult> getParent() {
+		return parent;
+	}
+
 	public static class BasicPartialDataIoResult
 	extends BasicDataIoResult
 	implements PartialDataIoResult {

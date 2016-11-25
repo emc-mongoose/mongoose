@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
-import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.storage.driver.net.base.ClientHandlerBase;
+import com.emc.mongoose.storage.driver.net.base.ResponseHandlerBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_AUTH;
@@ -34,19 +34,19 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public class BasicClientHandler<I extends Item, O extends IoTask<I, R>, R extends IoResult>
-extends ClientHandlerBase<HttpObject, I, O, R> {
+public abstract class HttpResponseHandlerBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends ResponseHandlerBase<HttpObject, I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
-	public BasicClientHandler(
+	protected HttpResponseHandlerBase(
 		final HttpStorageDriverBase<I, O, R> driver,
 		final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);
 	}
 
-	private boolean handleResponseStatus(
+	protected boolean handleResponseStatus(
 		final O ioTask, final HttpStatusClass statusClass, final HttpResponseStatus responseStatus
 	) {
 		switch(statusClass) {
@@ -91,11 +91,43 @@ extends ClientHandlerBase<HttpObject, I, O, R> {
 		return false;
 	}
 	
-	protected void handleResponseHeaders(final O ioTask, final HttpHeaders respHeaders) {
+	protected abstract void handleResponseHeaders(final O ioTask, final HttpHeaders respHeaders);
+
+	protected void handleResponseContentChunk(
+		final Channel channel, final O ioTask, final ByteBuf contentChunk
+	) {
+		if(IoType.READ.equals(ioTask.getIoType())) {
+			if(ioTask instanceof DataIoTask) {
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				final long countBytesDone = dataIoTask.getCountBytesDone();
+				if(dataIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
+					dataIoTask.startDataResponse();
+				}
+				final int chunkSize = contentChunk.readableBytes();
+				if(chunkSize > 0) {
+					if(verifyFlag) {
+						try {
+							verifyChunk(channel, ioTask, contentChunk, chunkSize);
+						} catch(final InterruptedException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"Failed to schedule the chunk verification task"
+							);
+						}
+					} else {
+						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+					}
+				}
+			}
+		}
+	}
+
+	protected void handleResponseContentFinish(final Channel channel, final O ioTask) {
+		driver.complete(channel, ioTask);
 	}
 	
 	@Override
-	protected void handle(final Channel channel, final O ioTask, final HttpObject msg)
+	protected final void handle(final Channel channel, final O ioTask, final HttpObject msg)
 	throws IOException {
 		
 		if(msg instanceof HttpResponse) {
@@ -108,35 +140,11 @@ extends ClientHandlerBase<HttpObject, I, O, R> {
 		}
 
 		if(msg instanceof HttpContent) {
-			if(IoType.READ.equals(ioTask.getIoType())) {
-				if(ioTask instanceof DataIoTask) {
-					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-					final long countBytesDone = dataIoTask.getCountBytesDone();
-					if(dataIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
-						dataIoTask.startDataResponse();
-					}
-					final ByteBuf contentChunk = ((HttpContent) msg).content();
-					final int chunkSize = contentChunk.readableBytes();
-					if(chunkSize > 0) {
-						if(verifyFlag) {
-							try {
-								verifyChunk(channel, ioTask, contentChunk, chunkSize);
-							} catch(final InterruptedException e) {
-								LogUtil.exception(
-									LOG, Level.WARN, e,
-									"Failed to schedule the chunk verification task"
-								);
-							}
-						} else {
-							dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-						}
-					}
-				}
+			if(msg instanceof LastHttpContent) {
+				handleResponseContentFinish(channel, ioTask);
+			} else {
+				handleResponseContentChunk(channel, ioTask, ((HttpContent) msg).content());
 			}
-		}
-
-		if(msg instanceof LastHttpContent) {
-			driver.complete(channel, ioTask);
 		}
 	}
 }

@@ -1,23 +1,21 @@
-package com.emc.mongoose.model.io.task;
+package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.data.ContentSource;
-import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
+import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.List;
 
-public class BasicDataIoTask<T extends DataItem, R extends DataIoResult>
+public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult>
 extends BasicIoTask<T, R>
 implements DataIoTask<T, R> {
 
 	protected long contentSize;
-	protected long sizeThreshold;
 	protected long itemDataOffset;
 
 	protected transient volatile ContentSource contentSrc;
@@ -30,10 +28,9 @@ implements DataIoTask<T, R> {
 	
 	public BasicDataIoTask(
 		final IoType ioType, final T item, final String srcPath, final String dstPath,
-		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
+		final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
 		super(ioType, item, srcPath, dstPath);
-		this.sizeThreshold = sizeThreshold;
 		item.reset();
 		//currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
@@ -136,28 +133,6 @@ implements DataIoTask<T, R> {
 		countBytesDone = 0;
 		respDataTimeStart = 0;
 	}
-	
-	@Override @SuppressWarnings("unchecked")
-	public final List<T> getParts() {
-		final List<T> parts = new ArrayList<>();
-		final int equalPartsCount = sizeThreshold > 0 ? (int) (contentSize / sizeThreshold) : 0;
-		final long tailPartSize = contentSize % sizeThreshold;
-		T nextPart;
-		for(int i = 0; i < equalPartsCount; i ++) {
-			nextPart = (T) item.slice(i * sizeThreshold, sizeThreshold);
-			parts.add(nextPart);
-		}
-		if(tailPartSize > 0) {
-			nextPart = (T) item.slice(equalPartsCount * sizeThreshold , tailPartSize);
-			parts.add(nextPart);
-		}
-		return parts;
-	}
-
-	@Override
-	public final boolean isMultiPart() {
-		return contentSize > sizeThreshold || sizeThreshold > 0;
-	}
 
 	@Override
 	public final long getCountBytesDone() {
@@ -184,7 +159,6 @@ implements DataIoTask<T, R> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
-		out.writeLong(sizeThreshold);
 	}
 	
 	@Override
@@ -194,6 +168,5 @@ implements DataIoTask<T, R> {
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 		contentSize = in.readLong();
-		sizeThreshold = in.readLong();
 	}
 }

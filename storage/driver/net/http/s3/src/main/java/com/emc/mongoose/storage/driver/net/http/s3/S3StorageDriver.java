@@ -2,16 +2,26 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
 import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.AUTH_PREFIX;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.COMPLETE_MPU_FOOTER;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.COMPLETE_MPU_HEADER;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.COMPLETE_MPU_PART_ETAG_END;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.COMPLETE_MPU_PART_NUM_END;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.COMPLETE_MPU_PART_NUM_START;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.HEADERS_CANONICAL;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_ATTR_UPLOAD_ID;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_UPLOAD_ID;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_X_AMZ_COPY_SOURCE;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.PREFIX_KEY_X_AMZ;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.SIGN_METHOD;
@@ -25,19 +35,23 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -45,6 +59,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -52,9 +67,9 @@ import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -250,6 +265,162 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
+	protected final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	throws URISyntaxException {
+
+		final HttpRequest httpRequest;
+		final IoType ioType = ioTask.getIoType();
+
+		if(ioTask instanceof CompositeDataIoTask) {
+			if(IoType.CREATE.equals(ioType)) {
+				final CompositeDataIoTask mpuTask = (CompositeDataIoTask) ioTask;
+				if(mpuTask.allSubTasksDone()) {
+					httpRequest = getCompleteMpuRequest(mpuTask, nodeAddr);
+				} else { // this is the initial state of the task
+					httpRequest = getInitMpuRequest(ioTask, nodeAddr);
+				}
+			} else {
+				throw new IllegalStateException(
+					"Non-create multipart operations are not implemented yet"
+				);
+			}
+		} else if(ioTask instanceof PartialDataIoTask) {
+			if(IoType.CREATE.equals(ioType)) {
+				httpRequest = getUploadPartRequest((PartialDataIoTask) ioTask, nodeAddr);
+			} else {
+				throw new IllegalStateException(
+					"Non-create multipart operations are not implemented yet"
+				);
+			}
+		} else {
+			httpRequest = super.getHttpRequest(ioTask, nodeAddr);
+		}
+
+		return httpRequest;
+	}
+
+	private HttpRequest getInitMpuRequest(final O ioTask, final String nodeAddr) {
+		final I item = ioTask.getItem();
+		final String srcPath = ioTask.getSrcPath();
+		if(srcPath != null) {
+			throw new IllegalStateException(
+				"Multipart copy operation is not implemented yet"
+			);
+		}
+		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
+			"?uploads";
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		final HttpMethod httpMethod = HttpMethod.PUT;
+		final HttpRequest httpRequest = new DefaultHttpRequest(
+			HTTP_1_1, httpMethod, uriPath, httpHeaders
+		);
+		applyMetaDataHeaders(httpHeaders);
+		applyDynamicHeaders(httpHeaders);
+		applySharedHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		return httpRequest;
+	}
+
+	private HttpRequest getUploadPartRequest(
+		final PartialDataIoTask ioTask, final String nodeAddr
+	) {
+		final I item = (I) ioTask.getItem();
+
+		final String srcPath = ioTask.getSrcPath();
+		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
+			"?partNumber=" + (ioTask.getPartNumber() + 1) +
+			"&uploadId=" + ioTask.getParent().get(KEY_UPLOAD_ID);
+
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		final HttpMethod httpMethod = HttpMethod.PUT;
+		final HttpRequest httpRequest = new DefaultHttpRequest(
+			HTTP_1_1, httpMethod, uriPath, httpHeaders
+		);
+		try {
+			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
+		} catch(final IOException ignored) {
+		}
+		applyMetaDataHeaders(httpHeaders);
+		applyDynamicHeaders(httpHeaders);
+		applySharedHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		return httpRequest;
+	}
+
+	private final static ThreadLocal<StringBuilder>
+		THREAD_LOCAL_STRB = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
+
+	private HttpRequest getCompleteMpuRequest(
+		final CompositeDataIoTask mpuTask, final String nodeAddr
+	) {
+		final StringBuilder content = THREAD_LOCAL_STRB.get();
+		content.setLength(0);
+		content.append(COMPLETE_MPU_HEADER);
+
+		final List<PartialDataIoTask> subTasks = mpuTask.getSubTasks();
+		int nextPartNum;
+		String nextEtag;
+		for(final PartialDataIoTask subTask : subTasks) {
+			nextPartNum = subTask.getPartNumber() + 1;
+			nextEtag = mpuTask.get(Integer.toString(nextPartNum));
+			content
+				.append(COMPLETE_MPU_PART_NUM_START)
+				.append(nextPartNum)
+				.append(COMPLETE_MPU_PART_NUM_END)
+				.append(nextEtag)
+				.append(COMPLETE_MPU_PART_ETAG_END);
+		}
+		content.append(COMPLETE_MPU_FOOTER);
+		mpuTask.put(KEY_CONTENT, content.toString());
+
+		final String srcPath = mpuTask.getSrcPath();
+		final I item = (I) mpuTask.getItem();
+		final String uploadId = mpuTask.get(KEY_UPLOAD_ID);
+		final String uriPath = getUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE) +
+			"?uploadId=" + uploadId;
+
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		final HttpMethod httpMethod = HttpMethod.PUT;
+		final HttpRequest httpRequest = new DefaultHttpRequest(
+			HTTP_1_1, httpMethod, uriPath, httpHeaders
+		);
+		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, content.length());
+		applyMetaDataHeaders(httpHeaders);
+		applyDynamicHeaders(httpHeaders);
+		applySharedHeaders(httpHeaders);
+		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+
+		return httpRequest;
+	}
+
+	@Override
+	public final void complete(final Channel channel, final O ioTask) {
+		if(ioTask instanceof CompositeDataIoTask) {
+			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
+			final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();
+			if(uploadId == null) {
+				ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
+			} else {
+				// multipart upload has been initialized as a result of this I/O task
+				compositeIoTask.put(KEY_UPLOAD_ID, uploadId);
+			}
+		}
+		super.complete(channel, ioTask);
+	}
+
+	@Override
 	public final String getAuthToken()
 	throws RemoteException {
 		return null;
@@ -263,7 +434,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
 		super.appendSpecificHandlers(pipeline);
-		pipeline.addLast(new BasicClientHandler<>(this, verifyFlag));
+		pipeline.addLast(new S3ResponseHandler<>(this, verifyFlag));
 	}
 
 	@Override

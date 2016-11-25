@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 

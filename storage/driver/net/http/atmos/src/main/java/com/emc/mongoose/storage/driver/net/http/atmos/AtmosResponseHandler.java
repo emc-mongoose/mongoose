@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.net.http.atmos;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
+import com.emc.mongoose.storage.driver.net.http.base.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -11,10 +11,10 @@ import io.netty.handler.codec.http.HttpHeaders;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosClientHandler<I extends Item, O extends IoTask<I, R>, R extends IoResult>
-extends BasicClientHandler<I, O, R> {
+public final class AtmosResponseHandler<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+extends HttpResponseHandlerBase<I, O, R> {
 	
-	public AtmosClientHandler(
+	public AtmosResponseHandler(
 		final HttpStorageDriverBase<I, O, R> driver, final boolean verifyFlag
 	) {
 		super(driver, verifyFlag);

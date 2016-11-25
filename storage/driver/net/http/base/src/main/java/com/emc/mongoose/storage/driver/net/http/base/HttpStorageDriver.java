@@ -17,7 +17,6 @@ extends NetStorageDriver<I, O, R> {
 	int REQ_LINE_LEN = 1024;
 	int HEADERS_LEN = 2048;
 	int CHUNK_SIZE = 8192;
-	
-	HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
-	throws URISyntaxException;
+
+	String KEY_CONTENT = "content";
 }

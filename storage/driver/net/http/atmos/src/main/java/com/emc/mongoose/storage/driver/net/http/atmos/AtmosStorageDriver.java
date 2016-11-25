@@ -173,7 +173,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
 		super.appendSpecificHandlers(pipeline);
-		pipeline.addLast(new AtmosClientHandler<>(this, verifyFlag));
+		pipeline.addLast(new AtmosResponseHandler<>(this, verifyFlag));
 	}
 
 	@Override
@@ -193,7 +193,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	protected String getUriPath(
+	protected final String getUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		if(fsAccess) {

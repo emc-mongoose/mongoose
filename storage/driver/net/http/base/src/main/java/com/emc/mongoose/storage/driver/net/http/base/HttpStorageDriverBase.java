@@ -2,10 +2,12 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.MutableDataIoTask;
+import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.MutableDataItem;
@@ -43,8 +45,8 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
 import io.netty.util.AsciiString;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -149,8 +151,7 @@ implements HttpStorageDriver<I, O, R> {
 			}
 		};
 
-	@Override
-	public final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
 
 		final I item = ioTask.getItem();
@@ -332,13 +333,20 @@ implements HttpStorageDriver<I, O, R> {
 
 			if(IoType.CREATE.equals(ioType)) {
 				if(item instanceof DataItem) {
-					final DataItem dataItem = (DataItem) item;
 					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-					final String srcPath = dataIoTask.getSrcPath();
-					if(!dataIoTask.isMultiPart() || null == srcPath || srcPath.isEmpty()) {
-						channel.write(new DataItemFileRegion<>(dataItem));
+					if(dataIoTask instanceof CompositeDataIoTask) {
+						final String content = ((CompositeDataIoTask) dataIoTask).get(KEY_CONTENT);
+						if(content != null && !content.isEmpty()) {
+							channel.write(content); !!!
+						}
+					} else {
+						final DataItem dataItem = (DataItem) item;
+						final String srcPath = dataIoTask.getSrcPath();
+						if(null == srcPath || srcPath.isEmpty()) {
+							channel.write(new DataItemFileRegion<>(dataItem));
+						}
+						dataIoTask.setCountBytesDone(dataItem.size());
 					}
-					dataIoTask.setCountBytesDone(dataItem.size());
 				}
 			} else if(IoType.UPDATE.equals(ioType)) {
 				if(item instanceof MutableDataItem) {

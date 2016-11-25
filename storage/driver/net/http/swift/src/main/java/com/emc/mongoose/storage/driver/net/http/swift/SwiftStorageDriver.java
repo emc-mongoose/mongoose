@@ -5,7 +5,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.storage.driver.net.http.base.BasicClientHandler;
+import com.emc.mongoose.storage.driver.net.http.base.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
@@ -195,11 +195,11 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
 		super.appendSpecificHandlers(pipeline);
-		pipeline.addLast(new BasicClientHandler<>(this, verifyFlag));
+		pipeline.addLast(new SwiftResponseHandler<>(this, verifyFlag));
 	}
 
 	@Override
-	protected String getUriPath(
+	protected final String getUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		return namespacePath + super.getUriPath(item, srcPath, dstPath, ioType);

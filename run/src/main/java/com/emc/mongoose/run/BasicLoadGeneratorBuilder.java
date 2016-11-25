@@ -8,7 +8,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
 import com.emc.mongoose.load.generator.BasicLoadGenerator;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
-import com.emc.mongoose.model.io.task.BasicMutableDataIoTaskBuilder;
+import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.BasicItemNameInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;

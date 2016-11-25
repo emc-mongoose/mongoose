@@ -17,6 +17,5 @@ extends StorageDriver<I, O, R> {
 	
 	AttributeKey<IoTask> ATTR_KEY_IOTASK = AttributeKey.valueOf("ioTask");
 
-	void complete(final Channel channel, final O ioTask)
-	throws IOException;
+	void complete(final Channel channel, final O ioTask);
 }

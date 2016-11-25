@@ -6,10 +6,14 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig.TraceConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import static com.emc.mongoose.model.io.task.BasicDataIoTask.BasicDataIoResult;
-import com.emc.mongoose.model.io.task.DataIoTask;
+import static com.emc.mongoose.model.io.task.data.BasicDataIoTask.BasicDataIoResult;
+
+import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+
+import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.collection.IoBuffer;
@@ -23,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +89,8 @@ implements StorageDriver<I, O, R>, Runnable {
 	};
 
 	private volatile Output<R> ioTaskResultOutput = null;
-	private final IoBuffer<O> ioTaskBuff;
+	private final IoBuffer<O> ioTaskInBuff;
+	private final IoBuffer<O> ioTaskOutBuff;
 	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
@@ -109,7 +115,10 @@ implements StorageDriver<I, O, R>, Runnable {
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
-		this.ioTaskBuff = new LimitedQueueBuffer<>(
+		this.ioTaskInBuff = new LimitedQueueBuffer<>(
+			new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
+		);
+		this.ioTaskOutBuff = new LimitedQueueBuffer<>(
 			new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
 		);
 		this.jobName = jobName;
@@ -134,6 +143,24 @@ implements StorageDriver<I, O, R>, Runnable {
 		useTransferSizeResult = traceConfig.getTransferSize();
 
 		DISPATCH_TASKS.put(toString(), this);
+	}
+
+	@Override
+	public final void put(final O task)
+	throws IOException {
+		ioTaskInBuff.put(task);
+	}
+
+	@Override
+	public final int put(final List<O> tasks, final int from, final int to)
+	throws IOException {
+		return ioTaskInBuff.put(tasks, from, to);
+	}
+
+	@Override
+	public final int put(final List<O> tasks)
+	throws IOException {
+		return ioTaskInBuff.put(tasks);
 	}
 	
 	@Override
@@ -166,8 +193,33 @@ implements StorageDriver<I, O, R>, Runnable {
 	}
 
 	protected final void ioTaskCompleted(final O ioTask) {
+
 		try {
-			ioTaskBuff.put(ioTask);
+			if(isCircular) {
+				ioTaskInBuff.put(ioTask);
+			} else if(ioTask instanceof CompositeIoTask) {
+				final List<O> subTasks = ((CompositeIoTask) ioTask).getSubTasks();
+				final int n = subTasks.size();
+				for(int i = 0; i < n; i += ioTaskInBuff.put(subTasks, i, n)) {
+					LockSupport.parkNanos(1);
+				}
+			} else if(ioTask instanceof PartialIoTask) {
+				final PartialIoTask subTask = (PartialIoTask) ioTask;
+				final O parentTask = (O) subTask.getParent();
+				if(subTask.getParent().allSubTasksDone()) {
+					// execute once again to finalize the things if necessary:
+					// complete the multipart upload, for example
+					ioTaskInBuff.put(parentTask);
+				}
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to enqueue the I/O task for the next execution"
+			);
+		}
+
+		try {
+			ioTaskOutBuff.put(ioTask);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to put the I/O task to the output buffer"
@@ -175,9 +227,25 @@ implements StorageDriver<I, O, R>, Runnable {
 		}
 	}
 	
-	protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
+	/*protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
+
+		int i;
+
+		if(isCircular) {
+			try {
+				for(i = from; i < to; i += ioTaskInBuff.put(ioTasks, i, to)) {
+					LockSupport.parkNanos(1);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to enqueue {} I/O tasks for the next execution",
+					to - from
+				);
+			}
+		}
+
 		try {
-			for(int i = from; i < to; i += ioTaskBuff.put(ioTasks, i, to)) {
+			for(i = from; i < to; i += ioTaskOutBuff.put(ioTasks, i, to)) {
 				LockSupport.parkNanos(1);
 			}
 		} catch(final IOException e) {
@@ -185,25 +253,38 @@ implements StorageDriver<I, O, R>, Runnable {
 				LOG, Level.WARN, e, "Failed to put {} I/O tasks to the output buffer", to - from
 			);
 		}
+
 		return to - from;
-	}
+	}*/
 
 	private final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
 	@Override
 	public final void run() {
+
+		int n;
+
 		try {
 			ioTasks.clear();
-			final int n = ioTaskBuff.get(ioTasks, BATCH_SIZE);
+			n = ioTaskInBuff.get(ioTasks, BATCH_SIZE);
+			if(n > 0) {
+				for(int i = 0; i < n; i += submit(ioTasks, i, n)) {
+					LockSupport.parkNanos(1);
+				}
+			}
+		} catch(final IOException e) {
+			if(!isInterrupted() && !isClosed()) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to dispatch the input I/O tasks");
+			} // else ignore
+		}
+
+		try {
+			ioTasks.clear();
+			n = ioTaskOutBuff.get(ioTasks, BATCH_SIZE);
 			if(n > 0) {
 				final List<R> ioTaskResults = new ArrayList<>(n);
 				buildResults(ioTasks, ioTaskResults, n);
 				if(ioTaskResultOutput != null) {
-					for(int i = 0; i < n; i += ioTaskResultOutput.put(ioTaskResults, 0, n)) {
-						LockSupport.parkNanos(1);
-					}
-				}
-				if(isCircular) {
-					for(int i = 0; i < n; i += put(ioTasks, 0, n)) {
+					for(int i = 0; i < n; i += ioTaskResultOutput.put(ioTaskResults, i, n)) {
 						LockSupport.parkNanos(1);
 					}
 				}
@@ -216,6 +297,15 @@ implements StorageDriver<I, O, R>, Runnable {
 			} // else ignore
 		}
 	}
+
+	protected abstract void submit(final O task)
+	throws InterruptedIOException;
+
+	protected abstract int submit(final List<O> tasks, final int from, final int to)
+	throws InterruptedIOException;
+
+	protected abstract int submit(final List<O> tasks)
+	throws InterruptedIOException;
 
 	@SuppressWarnings({ "unchecked", "ConstantConditions" })
 	private void buildResults(final List<O> ioTasks, final List<R> ioResults, final int n) {

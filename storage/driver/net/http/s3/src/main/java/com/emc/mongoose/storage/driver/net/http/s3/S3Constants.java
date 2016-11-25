@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
+import io.netty.util.AttributeKey;
 
 import java.nio.charset.StandardCharsets;
 
@@ -36,4 +37,14 @@ public interface S3Constants {
 		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
 			"<Status>Suspended</Status></VersioningConfiguration>"
 		).getBytes(StandardCharsets.US_ASCII);
+
+	String KEY_UPLOAD_ID = "uploadId";
+
+	AttributeKey<String> KEY_ATTR_UPLOAD_ID = AttributeKey.newInstance(KEY_UPLOAD_ID);
+
+	String COMPLETE_MPU_HEADER = "<CompleteMultipartUpload>\n";
+	String COMPLETE_MPU_PART_NUM_START = "\t<Part>\n\t\t<PartNumber>";
+	String COMPLETE_MPU_PART_NUM_END = "</PartNumber>\n\t\t<ETag>";
+	String COMPLETE_MPU_PART_ETAG_END = "</ETag>\n\t</Part>\n";
+	String COMPLETE_MPU_FOOTER = "</CompleteMultipartUpload>";
 }

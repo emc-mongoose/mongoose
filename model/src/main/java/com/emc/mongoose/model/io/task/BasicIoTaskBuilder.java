@@ -4,6 +4,7 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,12 +40,14 @@ implements IoTaskBuilder<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public O getInstance(final I item, final String dstPath) {
+	public O getInstance(final I item, final String dstPath)
+	throws IOException {
 		return (O) new BasicIoTask<>(ioType, item, srcPath, dstPath);
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final int from, final int to) {
+	public List<O> getInstances(final List<I> items, final int from, final int to)
+	throws IOException {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
 			tasks.add((O) new BasicIoTask<>(ioType, items.get(i), srcPath, null));
@@ -55,7 +58,7 @@ implements IoTaskBuilder<I, O, R> {
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(
 		final List<I> items, final String dstPath, final int from, final int to
-	) {
+	) throws IOException {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
 			tasks.add((O) new BasicIoTask<>(ioType, items.get(i), srcPath, dstPath));
@@ -66,7 +69,7 @@ implements IoTaskBuilder<I, O, R> {
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(
 		final List<I> items, final List<String> dstPaths, final int from, final int to
-	) {
+	) throws IOException {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
 			tasks.add((O) new BasicIoTask<>(ioType, items.get(i), srcPath, dstPaths.get(i)));

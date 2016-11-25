@@ -14,7 +14,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.model.io.task.DataIoTask.DataIoResult;
+import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;

@@ -4,7 +4,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.DataIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;

@@ -158,7 +158,7 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public void put(final O ioTask)
+	protected final void submit(final O ioTask)
 	throws InterruptedIOException {
 		final BlockingQueue<O> nextQueue = ioTaskQueues[
 			Math.abs(ioTask.hashCode()) % ioWorkerCount
@@ -173,7 +173,7 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public int put(final List<O> ioTasks, final int from, final int to)
+	protected final int submit(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedIOException {
 		try {
 			O nextIoTask;
@@ -193,9 +193,9 @@ implements StorageDriver<I, O, R> {
 	}
 	
 	@Override
-	public int put(final List<O> ioTasks)
+	protected final int submit(final List<O> ioTasks)
 	throws InterruptedIOException {
-		return put(ioTasks, 0, ioTasks.size());
+		return submit(ioTasks, 0, ioTasks.size());
 	}
 
 	@Override
