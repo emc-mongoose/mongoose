@@ -106,8 +106,10 @@ extends HttpStorageDriverBase<I, R, O> {
 				Markers.ERR, "Unexpected container checking response: {}",
 				checkContainerRespStatus.toString()
 			);
+			checkContainerResp.release();
 			return false;
 		}
+		checkContainerResp.release();
 
 		// create or update the destination container if it doesn't exists
 		if(
@@ -136,8 +138,10 @@ extends HttpStorageDriverBase<I, R, O> {
 					Markers.ERR, "Create/update container response: {}",
 					putContainerRespStatus.toString()
 				);
+				putContainerResp.release();
 				return false;
 			}
+			putContainerResp.release();
 		}
 
 		return true;

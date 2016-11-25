@@ -116,7 +116,6 @@ extends HttpStorageDriverBase<I, R, O> {
 		} catch(final InterruptedException e) {
 			return false;
 		}
-
 		boolean bucketExistedBefore = true;
 		if(checkBucketResp != null) {
 			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
@@ -128,6 +127,7 @@ extends HttpStorageDriverBase<I, R, O> {
 			} else {
 				LOG.info(Markers.MSG, "Bucket \"{}\" already exists", path);
 			}
+			checkBucketResp.release();
 		}
 
 		// create the destination bucket if it doesn't exists
@@ -158,6 +158,7 @@ extends HttpStorageDriverBase<I, R, O> {
 			} else {
 				LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
 			}
+			putBucketResp.release();
 			if(fsAccess) {
 				reqHeaders.remove(EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED);
 			}
@@ -177,7 +178,6 @@ extends HttpStorageDriverBase<I, R, O> {
 		} catch(final InterruptedException e) {
 			return false;
 		}
-
 		final boolean versioningEnabled;
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			LOG.warn(
@@ -195,6 +195,7 @@ extends HttpStorageDriverBase<I, R, O> {
 				versioningEnabled = false;
 			}
 		}
+		getBucketVersioningResp.release();
 
 		final FullHttpRequest putBucketVersioningReq;
 		if(!versioning && versioningEnabled) {
@@ -216,8 +217,10 @@ extends HttpStorageDriverBase<I, R, O> {
 				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
 					putBucketVersioningResp.toString()
 				);
+				putBucketVersioningResp.release();
 				return false;
 			}
+			putBucketVersioningResp.release();
 		} else if(versioning && !versioningEnabled) {
 			// enable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_ENABLE_CONTENT.length);
@@ -233,13 +236,14 @@ extends HttpStorageDriverBase<I, R, O> {
 			} catch(final InterruptedException e) {
 				return false;
 			}
-
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
 					putBucketVersioningResp.toString()
 				);
+				putBucketVersioningResp.release();
 				return false;
 			}
+			putBucketVersioningResp.release();
 		}
 
 		return true;
