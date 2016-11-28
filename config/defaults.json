@@ -95,6 +95,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "keep-alive",
+				"Content-Type" : "application/octet-stream",
 				"User-Agent" : "mongoose/next"
 			},
 			"namespace" : null,

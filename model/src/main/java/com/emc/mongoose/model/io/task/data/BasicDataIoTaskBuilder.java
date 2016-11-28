@@ -34,7 +34,7 @@ implements DataIoTaskBuilder<I, O, R> {
 	}
 	@Override
 	public BasicDataIoTaskBuilder<I, O, R> setSizeThreshold(final long sizeThreshold) {
-		this.sizeThreshold = sizeThreshold;
+		this.sizeThreshold = sizeThreshold > 0 ? sizeThreshold : Long.MAX_VALUE;
 		return this;
 	}
 	

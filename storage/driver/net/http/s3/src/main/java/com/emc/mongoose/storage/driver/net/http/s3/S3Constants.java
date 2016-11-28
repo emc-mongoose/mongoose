@@ -20,7 +20,9 @@ public interface S3Constants {
 	String KEY_X_AMZ_SECURITY_TOKEN = PREFIX_KEY_X_AMZ + "security-token";
 
 	AsciiString HEADERS_CANONICAL[] = {
-		HttpHeaderNames.CONTENT_MD5, HttpHeaderNames.CONTENT_TYPE, HttpHeaderNames.RANGE,
+		HttpHeaderNames.CONTENT_MD5,
+		HttpHeaderNames.CONTENT_TYPE,
+		//HttpHeaderNames.RANGE,
 		HttpHeaderNames.DATE
 	};
 

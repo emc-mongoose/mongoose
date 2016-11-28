@@ -159,8 +159,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 							break;
 						}
 					} catch(
-						final EOFException | ClosedByInterruptException | IllegalStateException |
-							InterruptedIOException e
+						final EOFException | ClosedByInterruptException | InterruptedIOException e
 					) {
 						break;
 					} catch(final Exception e) {

@@ -21,7 +21,9 @@ public interface AtmosConstants {
 	String KEY_SUBTENANT_ID = "subtenantID";
 
 	AsciiString HEADERS_CANONICAL[] = {
-		HttpHeaderNames.CONTENT_MD5, HttpHeaderNames.CONTENT_TYPE, HttpHeaderNames.RANGE,
+		//HttpHeaderNames.CONTENT_MD5,
+		HttpHeaderNames.CONTENT_TYPE,
+		HttpHeaderNames.RANGE,
 		HttpHeaderNames.DATE
 	};
 

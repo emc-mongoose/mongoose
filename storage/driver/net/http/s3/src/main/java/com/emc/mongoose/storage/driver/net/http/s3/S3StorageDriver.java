@@ -137,7 +137,8 @@ extends HttpStorageDriverBase<I, O, R> {
 				bucketExistedBefore = false;
 			} else if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
 				LOG.warn(
-					Markers.ERR, "The bucket checking response is: {}", checkBucketResp.toString()
+					Markers.ERR, "The bucket checking response is: {}",
+					checkBucketResp.status().toString()
 				);
 			} else {
 				LOG.info(Markers.MSG, "Bucket \"{}\" already exists", path);
@@ -167,7 +168,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
 				LOG.warn(
 					Markers.ERR, "The bucket creating response is: {}",
-					putBucketResp.toString()
+					putBucketResp.status().toString()
 				);
 				return false;
 			} else {
@@ -182,7 +183,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		// check the bucket versioning state
 		final String bucketVersioningReqUri = path.endsWith("/") ?
 			path + "?" + URL_ARG_VERSIONING : path + "/?" + URL_ARG_VERSIONING;
-		applyAuthHeaders(HttpMethod.GET, path, reqHeaders);
+		applyAuthHeaders(HttpMethod.GET, bucketVersioningReqUri, reqHeaders);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
 			reqHeaders, EmptyHttpHeaders.INSTANCE
@@ -197,7 +198,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			LOG.warn(
 				Markers.ERR, "The bucket versioning checking response is: {}",
-				getBucketVersioningResp.toString()
+				getBucketVersioningResp.status().toString()
 			);
 			return false;
 		} else {
@@ -230,7 +231,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			}
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
-					putBucketVersioningResp.toString()
+					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
 				return false;
@@ -242,7 +243,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
-				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
+				Unpooled.wrappedBuffer(VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketVersioningResp;
@@ -253,7 +254,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			}
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
-					putBucketVersioningResp.toString()
+					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
 				return false;
