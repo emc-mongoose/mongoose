@@ -94,8 +94,7 @@
 			"api" : "S3",
 			"fsAccess" : false,
 			"headers" : {
-				"Connection" : "keep-alive",
-				"Content-Type" : "application/octet-stream",
+				"Connection" : "Keep-Alive",
 				"User-Agent" : "mongoose/next"
 			},
 			"namespace" : null,

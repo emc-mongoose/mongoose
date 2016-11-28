@@ -17,7 +17,6 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -121,14 +120,14 @@ extends HttpStorageDriverBase<I, O, R> {
 
 			final String nodeAddr = storageNodeAddrs[0];
 			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
-			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(EmcConstants.KEY_X_EMC_DATE, AsyncCurrentDateInput.INSTANCE.get());
-			if(fsAccess) {
+			reqHeaders.set("Host", nodeAddr);
+			reqHeaders.set("Content-Length", 0);
+			reqHeaders.set("Date", AsyncCurrentDateInput.INSTANCE.get());
+			//if(fsAccess) {
 				reqHeaders.set(
-					KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true)
+					KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess)
 				);
-			}
+			//}
 			applyDynamicHeaders(reqHeaders);
 			applySharedHeaders(reqHeaders);
 			applyAuthHeaders(HttpMethod.PUT, SUBTENANT_URI_BASE, reqHeaders);
