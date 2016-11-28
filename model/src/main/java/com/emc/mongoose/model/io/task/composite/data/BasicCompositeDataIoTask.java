@@ -27,7 +27,7 @@ implements CompositeDataIoTask<I, R> {
 
 	private transient final Map<String, String> contextData = new HashMap<>();
 	private transient final List<PartialDataIoTask> subTasks = new ArrayList<>();
-	private transient AtomicInteger pendingSubTasksCount = new AtomicInteger();
+	private transient AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
 
 	public BasicCompositeDataIoTask() {
 		super();
@@ -72,7 +72,7 @@ implements CompositeDataIoTask<I, R> {
 		if(tailPartSize > 0) {
 			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				ioType, nextPart, srcPath, dstPath, equalPartsCount + 1, this
+				ioType, nextPart, srcPath, dstPath, equalPartsCount, this
 			);
 			subTasks.add(nextSubTask);
 		}

@@ -9,6 +9,8 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import static com.emc.mongoose.storage.mock.impl.http.request.XmlShortcuts.appendElement;
+
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -17,6 +19,8 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,10 +38,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
-import static com.emc.mongoose.storage.mock.impl.http.request.XmlShortcuts.appendElement;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
@@ -75,13 +80,38 @@ extends RequestHandlerBase<T> {
 	protected void doHandle(
 		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
 	) {
-		final String[] uriParams = getUriParameters(uri, 2);
-		final String containerName = uriParams[0];
-		final String objectId = uriParams[1];
+		final int uriPathEnd = uri.indexOf('?');
+		final String uriPath;
+		final Map<String, String> queryParams;
+		if(uriPathEnd > 0) {
+			uriPath = uri.substring(0, uriPathEnd);
+			final String queryParamsStr = uri.substring(uriPathEnd + 1);
+			final String queryParamPairs[] = queryParamsStr.split("&");
+			queryParams = new HashMap<>();
+			String nextKeyValuePair[];
+			for(final String queryParamPair : queryParamPairs) {
+				nextKeyValuePair = queryParamPair.split("=");
+				if(nextKeyValuePair.length == 2) {
+					queryParams.put(nextKeyValuePair[0], nextKeyValuePair[1]);
+				} else if(nextKeyValuePair.length == 1){
+					queryParams.put(nextKeyValuePair[0], "");
+				}
+			}
+		} else {
+			uriPath = uri;
+			queryParams = null;
+		}
+		final String uriPathParts[] = uriPath.split("/");
+		final String containerName = uriPathParts[1];
+		final String objectId = uriPathParts.length > 2 ? uriPathParts[2] : null;
 		final Channel channel = ctx.channel();
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(containerName != null) {
-			handleItemRequest(uri, method, containerName, objectId, size, ctx);
+			if(objectId != null && queryParams != null && queryParams.containsKey("uploads")) {
+				handleMpuInitRequest(containerName, objectId, ctx);
+			} else {
+				handleItemRequest(uri, method, containerName, objectId, size, ctx);
+			}
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
@@ -89,11 +119,42 @@ extends RequestHandlerBase<T> {
 			writeEmptyResponse(ctx);
 		}
 	}
+	
+	private void handleMpuInitRequest(
+		final String containerName, final String objectId, final ChannelHandlerContext ctx
+	) {
+		final Document xml = DOM_BUILDER.newDocument();
+		final Element rootElem = xml.createElementNS(
+			S3_NAMESPACE_URI, "InitiateMultipartUploadResult"
+		);
+		xml.appendChild(rootElem);
+		appendElement(xml, rootElem, "Bucket", containerName);
+		appendElement(xml, rootElem, "Key", objectId);
+		appendElement(xml, rootElem, "UploadId", generateBase64Id(0x10));
+		
+		final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		final StreamResult streamResult = new StreamResult(stream);
+		try {
+			TRANSFORMER_FACTORY.newTransformer().transform(new DOMSource(xml), streamResult);
+		} catch (final TransformerException e) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build bucket XML listing");
+			return;
+		}
+		final byte[] content = stream.toByteArray();
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
+		final FullHttpResponse response = new DefaultFullHttpResponse(
+			HTTP_1_1, OK, Unpooled.copiedBuffer(content)
+		);
+		response.headers().set(CONTENT_TYPE, "application/xml");
+		HttpUtil.setContentLength(response, content.length);
+		ctx.write(response);
+	}
 
 	private static final String MAX_COUNT_KEY = "max-keys";
 
 	@Override
-	protected void handleContainerList(
+	protected final void handleContainerList(
 		final String name, final QueryStringDecoder queryStringDecoder,
 		final ChannelHandlerContext ctx
 	) {
@@ -103,8 +164,10 @@ extends RequestHandlerBase<T> {
 		if(parameters.containsKey(MAX_COUNT_KEY)) {
 			maxCount = Integer.parseInt(parameters.get(MAX_COUNT_KEY).get(0));
 		} else {
-			LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI {}",
-					queryStringDecoder.uri());
+			LOG.warn(
+				Markers.ERR, "Failed to parse max keys argument value in the URI {}",
+				queryStringDecoder.uri()
+			);
 		}
 		if(parameters.containsKey(MARKER_KEY)) {
 			marker = parameters.get(MARKER_KEY).get(0);
@@ -151,8 +214,7 @@ extends RequestHandlerBase<T> {
 		}
 		final byte[] content = stream.toByteArray();
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
-		final FullHttpResponse
-				response = new DefaultFullHttpResponse(
+		final FullHttpResponse response = new DefaultFullHttpResponse(
 			HTTP_1_1, OK, Unpooled.copiedBuffer(content)
 		);
 		response.headers().set(CONTENT_TYPE, "application/xml");

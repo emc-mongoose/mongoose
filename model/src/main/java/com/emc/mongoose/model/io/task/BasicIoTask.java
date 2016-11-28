@@ -47,7 +47,6 @@ implements IoTask<I, R> {
 			this.srcPath = srcPath;
 		}
 		this.dstPath = dstPath;
-		reset();
 	}
 
 	@Override

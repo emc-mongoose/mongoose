@@ -23,7 +23,7 @@ implements MutableDataIoTaskBuilder<I, O, R> {
 	throws IOException {
 		if(item.size() > sizeThreshold) {
 			return (O) new BasicCompositeMutableDataIoTask<>(
-				ioType, item, srcPath, null, fixedRanges, randomRangesCount, sizeThreshold
+				ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount, sizeThreshold
 			);
 		} else {
 			return (O) new BasicMutableDataIoTask<>(
@@ -67,7 +67,8 @@ implements MutableDataIoTaskBuilder<I, O, R> {
 			if(item.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeMutableDataIoTask<>(
-						ioType, item, srcPath, null, fixedRanges, randomRangesCount, sizeThreshold
+						ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount,
+						sizeThreshold
 					)
 				);
 			} else {
@@ -92,7 +93,8 @@ implements MutableDataIoTaskBuilder<I, O, R> {
 			if(item.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeMutableDataIoTask<>(
-						ioType, item, srcPath, null, fixedRanges, randomRangesCount, sizeThreshold
+						ioType, item, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
+						sizeThreshold
 					)
 				);
 			} else {

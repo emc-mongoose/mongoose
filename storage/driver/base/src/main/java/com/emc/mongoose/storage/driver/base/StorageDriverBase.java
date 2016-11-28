@@ -89,8 +89,9 @@ implements StorageDriver<I, O, R>, Runnable {
 	};
 
 	private volatile Output<R> ioTaskResultOutput = null;
-	private final IoBuffer<O> ioTaskInBuff;
-	private final IoBuffer<O> ioTaskOutBuff;
+	private final IoBuffer<O> ownTasksQueue;
+	private final IoBuffer<O> inTasksQueue;
+	private final IoBuffer<O> outTasksQueue;
 	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
@@ -115,12 +116,10 @@ implements StorageDriver<I, O, R>, Runnable {
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
-		this.ioTaskInBuff = new LimitedQueueBuffer<>(
-			new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
-		);
-		this.ioTaskOutBuff = new LimitedQueueBuffer<>(
-			new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
-		);
+		final int queueCapacity = loadConfig.getQueueConfig().getSize();
+		this.ownTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
+		this.inTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
+		this.outTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
 		this.jobName = jobName;
 		this.userName = authConfig == null ? null : authConfig.getId();
 		secret = authConfig == null ? null : authConfig.getSecret();
@@ -148,19 +147,19 @@ implements StorageDriver<I, O, R>, Runnable {
 	@Override
 	public final void put(final O task)
 	throws IOException {
-		ioTaskInBuff.put(task);
+		inTasksQueue.put(task);
 	}
 
 	@Override
 	public final int put(final List<O> tasks, final int from, final int to)
 	throws IOException {
-		return ioTaskInBuff.put(tasks, from, to);
+		return inTasksQueue.put(tasks, from, to);
 	}
 
 	@Override
 	public final int put(final List<O> tasks)
 	throws IOException {
-		return ioTaskInBuff.put(tasks);
+		return inTasksQueue.put(tasks);
 	}
 	
 	@Override
@@ -196,12 +195,15 @@ implements StorageDriver<I, O, R>, Runnable {
 
 		try {
 			if(isCircular) {
-				ioTaskInBuff.put(ioTask);
+				ownTasksQueue.put(ioTask);
 			} else if(ioTask instanceof CompositeIoTask) {
-				final List<O> subTasks = ((CompositeIoTask) ioTask).getSubTasks();
-				final int n = subTasks.size();
-				for(int i = 0; i < n; i += ioTaskInBuff.put(subTasks, i, n)) {
-					LockSupport.parkNanos(1);
+				final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
+				if(!parentTask.allSubTasksDone()) {
+					final List<O> subTasks = ((CompositeIoTask) ioTask).getSubTasks();
+					final int n = subTasks.size();
+					for(int i = 0; i < n; i += ownTasksQueue.put(subTasks, i, n)) {
+						LockSupport.parkNanos(1);
+					}
 				}
 			} else if(ioTask instanceof PartialIoTask) {
 				final PartialIoTask subTask = (PartialIoTask) ioTask;
@@ -209,7 +211,7 @@ implements StorageDriver<I, O, R>, Runnable {
 				if(subTask.getParent().allSubTasksDone()) {
 					// execute once again to finalize the things if necessary:
 					// complete the multipart upload, for example
-					ioTaskInBuff.put(parentTask);
+					ownTasksQueue.put(parentTask);
 				}
 			}
 		} catch(final IOException e) {
@@ -219,7 +221,7 @@ implements StorageDriver<I, O, R>, Runnable {
 		}
 
 		try {
-			ioTaskOutBuff.put(ioTask);
+			outTasksQueue.put(ioTask);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to put the I/O task to the output buffer"
@@ -233,7 +235,7 @@ implements StorageDriver<I, O, R>, Runnable {
 
 		if(isCircular) {
 			try {
-				for(i = from; i < to; i += ioTaskInBuff.put(ioTasks, i, to)) {
+				for(i = from; i < to; i += inTasksQueue.put(ioTasks, i, to)) {
 					LockSupport.parkNanos(1);
 				}
 			} catch(final IOException e) {
@@ -245,7 +247,7 @@ implements StorageDriver<I, O, R>, Runnable {
 		}
 
 		try {
-			for(i = from; i < to; i += ioTaskOutBuff.put(ioTasks, i, to)) {
+			for(i = from; i < to; i += outTasksQueue.put(ioTasks, i, to)) {
 				LockSupport.parkNanos(1);
 			}
 		} catch(final IOException e) {
@@ -265,7 +267,10 @@ implements StorageDriver<I, O, R>, Runnable {
 
 		try {
 			ioTasks.clear();
-			n = ioTaskInBuff.get(ioTasks, BATCH_SIZE);
+			n = ownTasksQueue.get(ioTasks, BATCH_SIZE);
+			if(n < BATCH_SIZE) {
+				n = inTasksQueue.get(ioTasks, BATCH_SIZE - n);
+			}
 			if(n > 0) {
 				for(int i = 0; i < n; i += submit(ioTasks, i, n)) {
 					LockSupport.parkNanos(1);
@@ -279,7 +284,7 @@ implements StorageDriver<I, O, R>, Runnable {
 
 		try {
 			ioTasks.clear();
-			n = ioTaskOutBuff.get(ioTasks, BATCH_SIZE);
+			n = outTasksQueue.get(ioTasks, BATCH_SIZE);
 			if(n > 0) {
 				final List<R> ioTaskResults = new ArrayList<>(n);
 				buildResults(ioTasks, ioTaskResults, n);
@@ -353,7 +358,6 @@ implements StorageDriver<I, O, R>, Runnable {
 						useTransferSizeResult ? nextDataIoTask.getCountBytesDone() : - 1
 					);
 					ioResults.add(nextIoResult);
-					nextDataIoTask.reset();
 				}
 
 			} else {
@@ -376,7 +380,6 @@ implements StorageDriver<I, O, R>, Runnable {
 						useTransferSizeResult
 					);
 					ioResults.add(nextIoResult);
-					nextIoTask.reset();
 				}
 			}
 		}
@@ -413,6 +416,9 @@ implements StorageDriver<I, O, R>, Runnable {
 	throws IOException, IllegalStateException {
 		DISPATCH_TASKS.remove(toString());
 		ioTaskResultOutput = null;
+		ownTasksQueue.close();
+		inTasksQueue.close();
+		outTasksQueue.close();
 	}
 	
 	@Override

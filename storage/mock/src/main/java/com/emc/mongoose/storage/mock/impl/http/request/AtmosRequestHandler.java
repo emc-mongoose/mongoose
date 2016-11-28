@@ -125,13 +125,13 @@ extends RequestHandlerBase<T> {
 		}
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(uri.startsWith(OBJ_PATH)) {
-			final String[] uriParams = getUriParameters(uri, 3);
-			String objectId = uriParams[2];
+			final String uriPathParts[] = uri.split("/");
+			String objectId = uriPathParts[2]; // FIXME: doesn't support query params
 			long offset = -1;
 			String subtenantName = getSubtenant(requestHeaders, uri);
 			if(objectId == null) {
 				if(method.equals(POST)) {
-					objectId = generateId();
+					objectId = generateHexId(22);
 					final String processResult = processMetaDataList(metaDataList, "offset");
 					try {
 						if(processResult != null) {
@@ -166,7 +166,7 @@ extends RequestHandlerBase<T> {
 		} else if(uri.startsWith(ST_PATH)) {
 			final String subtenantName;
 			if(method.equals(PUT)) {
-				subtenantName = generateSubtenant();
+				subtenantName = generateHexId(0x10);
 			} else {
 				subtenantName = getSubtenant(requestHeaders, uri);
 			}
@@ -184,12 +184,6 @@ extends RequestHandlerBase<T> {
 		}
 	}
 	
-	private static String generateId() {
-		final byte buff[] = new byte[22];
-		ThreadLocalRandom.current().nextBytes(buff);
-		return Hex.encodeHexString(buff);
-	}
-
 	private static final String KEY_EMC_UID = "x-emc-uid";
 	private static final String UID_DELIMITER = "/";
 	private static final String KEY_SUBTENANT_ID = "subtenantID";
@@ -210,12 +204,6 @@ extends RequestHandlerBase<T> {
 			return headers.get(KEY_SUBTENANT_ID);
 		}
 		return null;
-	}
-
-	private static String generateSubtenant() {
-		final byte buff[] = new byte[0x10];
-		ThreadLocalRandom.current().nextBytes(buff);
-		return Hex.encodeHexString(buff);
 	}
 
 	private void handleContainerRequest(

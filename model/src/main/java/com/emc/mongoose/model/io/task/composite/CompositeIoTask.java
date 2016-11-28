@@ -20,6 +20,7 @@ extends IoTask<I, R> {
 
 	List<? extends PartialIoTask> getSubTasks();
 
+	/** Should be invoked only after getSubTasks() **/
 	void subTaskCompleted();
 
 	boolean allSubTasksDone();

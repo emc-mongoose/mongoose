@@ -25,7 +25,8 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -46,13 +47,15 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import io.netty.util.AsciiString;
-
+import io.netty.util.CharsetUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -337,7 +340,9 @@ implements HttpStorageDriver<I, O, R> {
 					if(dataIoTask instanceof CompositeDataIoTask) {
 						final String content = ((CompositeDataIoTask) dataIoTask).get(KEY_CONTENT);
 						if(content != null && !content.isEmpty()) {
-							channel.write(content); !!!
+							final ByteBuf contentByteBuff = Unpooled
+								.wrappedBuffer(content.getBytes(StandardCharsets.US_ASCII));
+							channel.write(contentByteBuff);
 						}
 					} else {
 						final DataItem dataItem = (DataItem) item;

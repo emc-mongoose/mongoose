@@ -88,7 +88,7 @@ implements DataIoTaskBuilder<I, O, R> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount,
+						ioType, nextItem, srcPath, dstPath, fixedRanges, randomRangesCount,
 						sizeThreshold
 					)
 				);
@@ -114,7 +114,7 @@ implements DataIoTaskBuilder<I, O, R> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount,
+						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
 						sizeThreshold
 					)
 				);

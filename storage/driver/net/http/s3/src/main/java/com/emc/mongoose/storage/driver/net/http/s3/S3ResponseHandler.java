@@ -10,7 +10,7 @@ import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.KEY_ATTR_UPLOAD_ID;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -36,7 +36,7 @@ extends HttpResponseHandlerBase<I, O, R> {
 	private static final int MIN_CONTENT_SIZE = 0x100;
 	private static final int MAX_CONTENT_SIZE = 0x400;
 	private static final Pattern PATTERN_UPLOAD_ID = Pattern.compile(
-		"<UploadId>([a-zA-Z\\d]+)</UploadId>", Pattern.MULTILINE
+		"<UploadId>([a-zA-Z\\d\\-_+=/]+)</UploadId>", Pattern.MULTILINE
 	);
 
 	public S3ResponseHandler(final S3StorageDriver<I, O, R> driver, final boolean verifyFlag) {
@@ -70,10 +70,7 @@ extends HttpResponseHandlerBase<I, O, R> {
 	) {
 		// expect the XML data which is not large (up to 1KB)
 		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
-		contentAttr.compareAndSet(
-			null,
-			PooledByteBufAllocator.DEFAULT.directBuffer(MIN_CONTENT_SIZE, MAX_CONTENT_SIZE)
-		);
+		contentAttr.compareAndSet(null, Unpooled.buffer(MIN_CONTENT_SIZE));
 		final ByteBuf content = contentAttr.get();
 		try {
 			content.writeBytes(contentChunk);

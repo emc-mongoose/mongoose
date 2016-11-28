@@ -4,7 +4,6 @@ import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTask;
-import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.mutable.BasicPartialMutableDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.mutable.PartialMutableDataIoTask;
 import com.emc.mongoose.model.item.MutableDataItem;
@@ -28,7 +27,7 @@ implements CompositeMutableDataIoTask<I, R> {
 
 	private transient final Map<String, String> contextData = new HashMap<>();
 	private transient final List<PartialMutableDataIoTask> subTasks = new ArrayList<>();
-	private transient AtomicInteger pendingSubTasksCount = new AtomicInteger();
+	private transient AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
 
 	public BasicCompositeMutableDataIoTask() {
 		super();
@@ -73,7 +72,7 @@ implements CompositeMutableDataIoTask<I, R> {
 		if(tailPartSize > 0) {
 			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			nextSubTask = new BasicPartialMutableDataIoTask<>(
-				ioType, nextPart, srcPath, dstPath, equalPartsCount + 1, this
+				ioType, nextPart, srcPath, dstPath, equalPartsCount, this
 			);
 			subTasks.add(nextSubTask);
 		}

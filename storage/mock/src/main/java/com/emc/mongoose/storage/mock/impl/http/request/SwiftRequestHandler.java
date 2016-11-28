@@ -91,10 +91,10 @@ extends RequestHandlerBase<T> {
 				setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
 			}
 		} else {
-			final String[] uriParams = getUriParameters(uri, 4);
-			final String account = uriParams[1];
-			final String containerName = uriParams[2];
-			final String objectId = uriParams[3];
+			final String uriPathParts[] = uri.split("/"); // FIXME: doesn't support query params
+			final String account = uriPathParts[1];
+			final String containerName = uriPathParts[2];
+			final String objectId = uriPathParts[3];
 			if(containerName != null) {
 				handleItemRequest(uri, method, containerName, objectId, size, ctx);
 			} else if(account != null) {

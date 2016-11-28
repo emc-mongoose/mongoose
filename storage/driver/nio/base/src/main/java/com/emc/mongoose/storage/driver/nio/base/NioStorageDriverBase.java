@@ -46,7 +46,7 @@ implements StorageDriver<I, O, R> {
 		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
 		super(jobName, null, loadConfig, verifyFlag);
-		ioWorkerCount = ThreadUtil.getHardwareConcurrencyLevel();
+		ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
 		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
@@ -163,6 +163,7 @@ implements StorageDriver<I, O, R> {
 		final BlockingQueue<O> nextQueue = ioTaskQueues[
 			Math.abs(ioTask.hashCode()) % ioWorkerCount
 		];
+		ioTask.reset();
 		if(nextQueue != null) {
 			try {
 				nextQueue.put(ioTask);

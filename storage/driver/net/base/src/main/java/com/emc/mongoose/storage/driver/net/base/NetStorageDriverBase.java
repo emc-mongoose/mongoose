@@ -83,11 +83,13 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		if(SystemUtils.IS_OS_LINUX) {
 			workerGroup = new EpollEventLoopGroup(
-				ThreadUtil.getHardwareConcurrencyLevel(), new NamingThreadFactory("ioWorker", true)
+				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
+				new NamingThreadFactory("ioWorker", true)
 			);
 		} else {
 			workerGroup = new NioEventLoopGroup(
-				ThreadUtil.getHardwareConcurrencyLevel(), new NamingThreadFactory("ioWorker", true)
+				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
+				new NamingThreadFactory("ioWorker", true)
 			);
 		}
 		final Bootstrap bootstrap = new Bootstrap()
@@ -166,6 +168,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		if(bestNode == null) {
 			return;
 		}
+		task.reset();
 		submitToNode(task, bestNode);
 	}
 	

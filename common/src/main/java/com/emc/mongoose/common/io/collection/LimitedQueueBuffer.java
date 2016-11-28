@@ -136,6 +136,7 @@ implements IoBuffer<T> {
 	@Override
 	public void close()
 	throws IOException {
+		queue.clear();
 	}
 	
 	@Override

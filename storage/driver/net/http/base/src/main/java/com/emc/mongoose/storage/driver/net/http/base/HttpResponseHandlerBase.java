@@ -18,6 +18,7 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
@@ -136,14 +137,16 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);
 			handleResponseHeaders(ioTask, httpResponse.headers());
-			return;
+			if(msg instanceof FullHttpResponse) {
+				final ByteBuf fullRespContent = ((FullHttpResponse) msg).content();
+				handleResponseContentChunk(channel, ioTask, fullRespContent);
+			}
 		}
 
 		if(msg instanceof HttpContent) {
+			handleResponseContentChunk(channel, ioTask, ((HttpContent) msg).content());
 			if(msg instanceof LastHttpContent) {
 				handleResponseContentFinish(channel, ioTask);
-			} else {
-				handleResponseContentChunk(channel, ioTask, ((HttpContent) msg).content());
 			}
 		}
 	}

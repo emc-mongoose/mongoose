@@ -31,6 +31,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +40,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -180,9 +184,10 @@ extends ChannelInboundHandlerAdapter {
 		doHandle(uri, method, size, ctx);
 	}
 
-	protected void handleItemRequest(
+	protected final void handleItemRequest(
 		final String uri, final HttpMethod method, final String containerName,
-		final String objectId, final long size, final ChannelHandlerContext ctx
+		final String objectId, final long size,
+		final ChannelHandlerContext ctx
 	) {
 		if(objectId != null) {
 			final long offset;
@@ -204,14 +209,6 @@ extends ChannelInboundHandlerAdapter {
 	protected abstract void doHandle(
 		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
 	);
-
-	protected final String[] getUriParameters(final String uri, final int maxNumOfParams) {
-		final String[] result = new String[maxNumOfParams];
-		final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
-		final String[] queryStringChunks = queryStringDecoder.path().split("/");
-		System.arraycopy(queryStringChunks, 1, result, 0, queryStringChunks.length - 1);
-		return result;
-	}
 
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
 		final DefaultFullHttpResponse
@@ -465,5 +462,17 @@ extends ChannelInboundHandlerAdapter {
 	throws Exception {
 		LogUtil.exception(LOG, Level.DEBUG, cause, "Handler was interrupted");
 		ctx.close();
+	}
+	
+	protected static String generateHexId(final int byteCount) {
+		final byte buff[] = new byte[byteCount];
+		ThreadLocalRandom.current().nextBytes(buff);
+		return Hex.encodeHexString(buff);
+	}
+	
+	protected static String generateBase64Id(final int byteCount) {
+		final byte buff[] = new byte[byteCount];
+		ThreadLocalRandom.current().nextBytes(buff);
+		return Base64.encodeBase64URLSafeString(buff);
 	}
 }
