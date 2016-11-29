@@ -1,8 +1,9 @@
 package com.emc.mongoose.model.io.task.composite.data.mutable;
 
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.IoType;
+import static com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask.CompositeDataIoResult;
+import static com.emc.mongoose.model.io.task.composite.data.BasicCompositeDataIoTask.BasicCompositeDataIoResult;
 import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.mutable.BasicPartialMutableDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.mutable.PartialMutableDataIoTask;
@@ -19,7 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by andrey on 25.11.16.
  */
-public class BasicCompositeMutableDataIoTask<I extends MutableDataItem, R extends DataIoResult>
+public class BasicCompositeMutableDataIoTask<
+	I extends MutableDataItem, R extends CompositeDataIoResult
+>
 extends BasicMutableDataIoTask<I, R>
 implements CompositeMutableDataIoTask<I, R> {
 
@@ -90,6 +93,35 @@ implements CompositeMutableDataIoTask<I, R> {
 	@Override
 	public final boolean allSubTasksDone() {
 		return pendingSubTasksCount.get() == 0;
+	}
+	
+	@Override @SuppressWarnings("unchecked")
+	public final R getResult(
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemPathResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
+		final boolean useTransferSizeResult
+	) {
+		return (R) new BasicCompositeDataIoResult(
+			useStorageDriverResult ? hostAddr : null,
+			useStorageNodeResult ? nodeAddr : null,
+			useItemPathResult ? getItemPath(item.getName(), srcPath, dstPath) : null,
+			useIoTypeCodeResult ? ioType.ordinal() : - 1,
+			useStatusCodeResult ? status.ordinal() : - 1,
+			useReqTimeStartResult ? reqTimeStart : - 1,
+			useDurationResult ? respTimeDone - reqTimeStart : - 1,
+			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1,
+			useDataLatencyResult ? respDataTimeStart - reqTimeDone : - 1,
+			useTransferSizeResult ? 0 : -1,
+			allSubTasksDone()
+		);
 	}
 
 	@Override

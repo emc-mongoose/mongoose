@@ -505,11 +505,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		}
 		
 		buffCanonical.append('\n');
-		if(dstUriPath.contains("?") && !dstUriPath.endsWith("?" + URL_ARG_VERSIONING)) {
-			buffCanonical.append(dstUriPath.substring(0, dstUriPath.indexOf("?")));
-		} else {
-			buffCanonical.append(dstUriPath);
-		}
+		buffCanonical.append(dstUriPath);
 		
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffCanonical);

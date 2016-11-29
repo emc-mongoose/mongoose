@@ -16,6 +16,11 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+
+import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
+import com.emc.mongoose.model.io.task.composite.CompositeIoTask.CompositeIoResult;
+import com.emc.mongoose.model.io.task.partial.PartialIoTask;
+import com.emc.mongoose.model.io.task.partial.PartialIoTask.PartialIoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -348,6 +353,13 @@ implements LoadMonitor<R> {
 		if(isInterrupted() || isClosed()) {
 			return;
 		}
+		
+		if( // account only completed composite I/O tasks
+			ioTaskResult instanceof CompositeIoResult &&
+			!((CompositeIoResult) ioTaskResult).getCompleteFlag()
+		) {
+			return;
+		}
 
 		// I/O trace logging
 		if(!metricsConfig.getPrecondition()) {
@@ -372,20 +384,29 @@ implements LoadMonitor<R> {
 
 		if(statusCode == IoTask.Status.SUCC.ordinal()) {
 
-			// update the metrics with success
-			ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-			if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-				ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
-			}
-
-			// put into the output buffer
-			try {
-				itemInfoOutput.put(itemInfo);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
-					getName()
-				);
+			if(ioTaskResult instanceof PartialIoResult) {
+				
+				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+					ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+				}
+				
+			} else {
+				
+				ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+					ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+				}
+				
+				// put into the output buffer
+				try {
+					itemInfoOutput.put(itemInfo);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
+						getName()
+					);
+				}
 			}
 
 		} else {
@@ -432,9 +453,18 @@ implements LoadMonitor<R> {
 			final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
 
 			for(int i = from; i < to; i ++) {
+				
 				if(i > from) {
 					ioTaskResult = ioTaskResults.get(i);
 				}
+				
+				if( // account only completed composite I/O tasks
+					ioTaskResult instanceof CompositeIoResult &&
+					!((CompositeIoResult) ioTaskResult).getCompleteFlag()
+				) {
+					continue;
+				}
+				
 				itemInfo = ioTaskResult.getItemInfo();
 				ioTypeCode = ioTaskResult.getIoTypeCode();
 				statusCode = ioTaskResult.getStatusCode();
@@ -449,20 +479,30 @@ implements LoadMonitor<R> {
 				ioTypeMedStats = medIoStats.get(ioTypeCode);
 
 				if(statusCode == IoTask.Status.SUCC.ordinal()) {
-					if(itemInfoOutput != null) {
-						itemsToPass.add(itemInfo);
-					}
-					// update the metrics with success
+					
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.warn(
-							Markers.ERR, "{}: latency {} is more than duration: {}", this.getName(),
-							respLatency, reqDuration
+							Markers.ERR, "{}: latency {} is more than duration: {}",
+							this.getName(), respLatency, reqDuration
 						);
 					}
-					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					
+					if(ioTaskResult instanceof PartialIoResult) {
+						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+							ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+						}
+					} else {
+						if(itemInfoOutput != null) {
+							itemsToPass.add(itemInfo);
+						}
+						// update the metrics with success
+						ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+							ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+						}
 					}
+					
 				} else {
 					ioTypeStats.markFail();
 					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {

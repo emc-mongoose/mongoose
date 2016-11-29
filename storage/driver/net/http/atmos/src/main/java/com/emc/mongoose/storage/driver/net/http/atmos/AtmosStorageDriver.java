@@ -63,11 +63,11 @@ extends HttpStorageDriverBase<I, O, R> {
 	
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	
 	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
 	
@@ -214,9 +214,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders), secretKey);
 		}
 		if(signature != null) {
-			httpHeaders.set(
-				KEY_X_EMC_SIGNATURE, signature
-			);
+			httpHeaders.set(KEY_X_EMC_SIGNATURE, signature);
 		}
 	}
 

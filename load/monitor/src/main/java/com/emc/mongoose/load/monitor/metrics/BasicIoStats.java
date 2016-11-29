@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 15.09.15.
  */
-public class BasicIoStats
+public final class BasicIoStats
 implements IoStats {
 
 	protected final String name;
@@ -23,7 +23,7 @@ implements IoStats {
 	protected final Histogram reqDuration, respLatency;
 	protected final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
-	protected LongAdder reqDurationSum, respLatencySum;
+	protected final LongAdder reqDurationSum, respLatencySum;
 	//
 	public BasicIoStats(final String name, final int updateIntervalSec) {
 		this.name = name;
@@ -37,7 +37,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public void start() {
+	public final void start() {
 		tsStartMicroSec = TimeUnit.NANOSECONDS.toMicros(System.nanoTime());
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
@@ -399,7 +399,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public void markSucc(final long size, final long duration, final long latency) {
+	public final void markSucc(final long size, final long duration, final long latency) {
 		throughputSuccess.mark();
 		reqBytes.mark(size);
 		if(duration > 0) {
@@ -413,7 +413,20 @@ implements IoStats {
 	}
 	//
 	@Override
-	public void markSucc(
+	public final void markPartSucc(final long size, final long duration, final long latency) {
+		reqBytes.mark(size);
+		if(duration > 0) {
+			reqDuration.update(duration);
+			reqDurationSum.add(duration);
+		}
+		if(latency > 0 && latency < duration) {
+			respLatencySum.add(latency);
+			respLatency.update(latency);
+		}
+	}
+	//
+	@Override
+	public final void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	) {
 		throughputSuccess.mark(count);
@@ -429,17 +442,32 @@ implements IoStats {
 	}
 	//
 	@Override
-	public void markFail() {
+	public final void markPartSucc(
+		final long bytes, final long durationValues[], final long latencyValues[]
+	) {
+		reqBytes.mark(bytes);
+		for(final long duration : durationValues) {
+			reqDuration.update(duration);
+			reqDurationSum.add(duration);
+		}
+		for(final long latency : latencyValues) {
+			respLatency.update(latency);
+			respLatencySum.add(latency);
+		}
+	}
+	//
+	@Override
+	public final void markFail() {
 		throughputFail.mark();
 	}
 	//
 	@Override
-	public void markFail(final long count) {
+	public final void markFail(final long count) {
 		throughputFail.mark(count);
 	}
 	//
 	@Override
-	public Snapshot getSnapshot() {
+	public final Snapshot getSnapshot() {
 		final long currElapsedTime = tsStartMicroSec > 0 ?
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
