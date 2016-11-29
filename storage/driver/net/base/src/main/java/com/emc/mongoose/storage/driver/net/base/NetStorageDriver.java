@@ -7,8 +7,6 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 
-import java.io.IOException;
-
 /**
  Created by kurila on 30.09.16.
  */

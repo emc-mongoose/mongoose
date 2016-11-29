@@ -4,9 +4,6 @@ import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriver;
-import io.netty.handler.codec.http.HttpRequest;
-
-import java.net.URISyntaxException;
 
 /**
  Created by kurila on 30.08.16.

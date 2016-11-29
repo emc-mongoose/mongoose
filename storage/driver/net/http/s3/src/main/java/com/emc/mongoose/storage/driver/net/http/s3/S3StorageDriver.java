@@ -31,7 +31,6 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.VERSIONING
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.Unpooled;
@@ -53,14 +52,12 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
@@ -96,15 +93,11 @@ extends HttpStorageDriverBase<I, O, R> {
 		final StorageConfig storageConfig, final boolean verifyFlag, final SocketConfig socketConfig
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
-		SecretKeySpec tmpKey = null;
 		if(secret != null) {
-			try {
-				tmpKey = new SecretKeySpec(secret.getBytes(UTF_8.name()), SIGN_METHOD);
-			} catch(final UnsupportedEncodingException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failure");
-			}
+			secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
+		} else {
+			secretKey = null;
 		}
-		secretKey = tmpKey;
 	}
 	
 	@Override
