@@ -9,10 +9,11 @@ import java.util.Map;
  */
 public enum IoType {
 	
-	CREATE,
-	READ,
-	UPDATE,
-	DELETE;
+	CREATE, // 0
+	READ, // 1
+	UPDATE, // 2
+	DELETE, // 3
+	QUERY; // 4
 
 	public static Map<IoType, Integer> getMixedLoadWeights(final List<String> patterns)
 	throws IllegalArgumentException {

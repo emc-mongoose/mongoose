@@ -403,12 +403,14 @@ extends HttpStorageDriverBase<I, O, R> {
 	public final void complete(final Channel channel, final O ioTask) {
 		if(ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
-			final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();
-			if(uploadId == null) {
-				ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
-			} else {
-				// multipart upload has been initialized as a result of this I/O task
-				compositeIoTask.put(KEY_UPLOAD_ID, uploadId);
+			if(!compositeIoTask.allSubTasksDone()) {
+				final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();
+				if(uploadId == null) {
+					ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
+				} else {
+					// multipart upload has been initialized as a result of this I/O task
+					compositeIoTask.put(KEY_UPLOAD_ID, uploadId);
+				}
 			}
 		}
 		super.complete(channel, ioTask);

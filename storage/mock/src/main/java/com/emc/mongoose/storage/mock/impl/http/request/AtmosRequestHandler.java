@@ -22,7 +22,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.Attribute;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +42,6 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static com.emc.mongoose.storage.mock.impl.http.request.XmlShortcuts.appendElement;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;

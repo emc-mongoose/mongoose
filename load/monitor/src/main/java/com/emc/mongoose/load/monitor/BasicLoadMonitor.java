@@ -385,12 +385,10 @@ implements LoadMonitor<R> {
 		if(statusCode == IoTask.Status.SUCC.ordinal()) {
 
 			if(ioTaskResult instanceof PartialIoResult) {
-				
 				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 					ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 				}
-				
 			} else {
 				
 				ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
@@ -430,6 +428,8 @@ implements LoadMonitor<R> {
 		}
 
 		if(n > 0) {
+			
+			int m = n; // count of complete whole tasks
 
 			// I/O trace logging
 			if(!metricsConfig.getPrecondition()) {
@@ -462,6 +462,7 @@ implements LoadMonitor<R> {
 					ioTaskResult instanceof CompositeIoResult &&
 					!((CompositeIoResult) ioTaskResult).getCompleteFlag()
 				) {
+					m --;
 					continue;
 				}
 				
@@ -479,19 +480,18 @@ implements LoadMonitor<R> {
 				ioTypeMedStats = medIoStats.get(ioTypeCode);
 
 				if(statusCode == IoTask.Status.SUCC.ordinal()) {
-					
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.warn(
 							Markers.ERR, "{}: latency {} is more than duration: {}",
 							this.getName(), respLatency, reqDuration
 						);
 					}
-					
 					if(ioTaskResult instanceof PartialIoResult) {
 						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 							ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 						}
+						m --;
 					} else {
 						if(itemInfoOutput != null) {
 							itemsToPass.add(itemInfo);
@@ -525,7 +525,7 @@ implements LoadMonitor<R> {
 				}
 			}
 
-			counterResults.add(n);
+			counterResults.add(m);
 		}
 
 		return n;
