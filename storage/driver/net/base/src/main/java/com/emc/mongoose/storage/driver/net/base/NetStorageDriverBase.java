@@ -152,7 +152,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected final void submit(final O task)
+	protected void submit(final O task)
 	throws InterruptedIOException {
 		final String bestNode;
 		if(storageNodeAddrs.length == 1) {
@@ -173,7 +173,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	protected final int submit(final List<O> tasks, final int from, final int to)
+	protected int submit(final List<O> tasks, final int from, final int to)
 	throws InterruptedIOException {
 		final int n = to - from;
 		if(storageNodeAddrs.length == 1) {
@@ -204,7 +204,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected final int submit(final List<O> tasks)
+	protected int submit(final List<O> tasks)
 	throws InterruptedIOException {
 		return submit(tasks, 0, tasks.size());
 	}

@@ -8,6 +8,7 @@ public interface SwiftConstants {
 	String KEY_X_AUTH_TOKEN = "X-Auth-Token";
 	String KEY_X_AUTH_USER = "X-Auth-User";
 	String KEY_X_COPY_FROM = "X-Copy-From";
+	String KEY_X_OBJECT_MANIFEST = "X-Object-Manifest";
 	String KEY_X_VERSIONS_LOCATION = "X-Versions-Location";
 
 	String URI_BASE = "/v1";
