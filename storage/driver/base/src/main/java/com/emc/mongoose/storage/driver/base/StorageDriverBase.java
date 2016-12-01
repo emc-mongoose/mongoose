@@ -221,6 +221,7 @@ implements StorageDriver<I, O, R> {
 		this.ioTaskResultOutput = ioTaskResultOutput;
 	}
 
+	@SuppressWarnings("unchecked")
 	protected final void ioTaskCompleted(final O ioTask) {
 
 		try {
@@ -229,7 +230,7 @@ implements StorageDriver<I, O, R> {
 			} else if(ioTask instanceof CompositeIoTask) {
 				final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
 				if(!parentTask.allSubTasksDone()) {
-					final List<O> subTasks = ((CompositeIoTask) ioTask).getSubTasks();
+					final List<O> subTasks = parentTask.getSubTasks();
 					final int n = subTasks.size();
 					for(int i = 0; i < n; i += ownTasksQueue.put(subTasks, i, n)) {
 						LockSupport.parkNanos(1);
@@ -237,11 +238,11 @@ implements StorageDriver<I, O, R> {
 				}
 			} else if(ioTask instanceof PartialIoTask) {
 				final PartialIoTask subTask = (PartialIoTask) ioTask;
-				final O parentTask = (O) subTask.getParent();
-				if(subTask.getParent().allSubTasksDone()) {
+				final CompositeIoTask parentTask = subTask.getParent();
+				if(parentTask.allSubTasksDone()) {
 					// execute once again to finalize the things if necessary:
 					// complete the multipart upload, for example
-					ownTasksQueue.put(parentTask);
+					ownTasksQueue.put((O) parentTask);
 				}
 			}
 		} catch(final IOException e) {

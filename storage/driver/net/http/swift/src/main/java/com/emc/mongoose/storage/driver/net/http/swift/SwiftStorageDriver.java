@@ -163,11 +163,18 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final void submit(final O task)
 	throws InterruptedIOException {
 		if(task instanceof CompositeDataIoTask) {
-			final List<O> subTasks = ((CompositeDataIoTask) task).getSubTasks();
-			final int n = subTasks.size();
-			for(int i = 0; i < n; i += super.submit(subTasks, i, n)) {
-				LockSupport.parkNanos(1);
+			final CompositeDataIoTask compositeTask = (CompositeDataIoTask) task;
+			if(compositeTask.allSubTasksDone()) {
+				super.submit(task);
+			} else {
+				final List<O> subTasks = compositeTask.getSubTasks();
+				final int n = subTasks.size();
+				for(int i = 0; i < n; i += super.submit(subTasks, i, n)) {
+					LockSupport.parkNanos(1);
+				}
 			}
+		} else {
+			super.submit(task);
 		}
 	}
 	
@@ -178,10 +185,15 @@ extends HttpStorageDriverBase<I, O, R> {
 		for(int i = from; i < to; i ++) {
 			nextIoTask = tasks.get(i);
 			if(nextIoTask instanceof CompositeDataIoTask) {
-				final List<O> subTasks = ((CompositeDataIoTask) nextIoTask).getSubTasks();
-				final int n = subTasks.size();
-				for(int j = 0; j < n; j += super.submit(subTasks, j, n)) {
-					LockSupport.parkNanos(1);
+				final CompositeDataIoTask compositeTask = (CompositeDataIoTask) nextIoTask;
+				if(compositeTask.allSubTasksDone()) {
+					super.submit(nextIoTask);
+				} else {
+					final List<O> subTasks = compositeTask.getSubTasks();
+					final int n = subTasks.size();
+					for(int j = 0; j < n; j += super.submit(subTasks, j, n)) {
+						LockSupport.parkNanos(1);
+					}
 				}
 			} else {
 				super.submit(nextIoTask);
@@ -196,7 +208,6 @@ extends HttpStorageDriverBase<I, O, R> {
 		
 		final HttpRequest httpRequest;
 		final IoType ioType = ioTask.getIoType();
-		
 		if(ioTask instanceof CompositeDataIoTask) {
 			if(IoType.CREATE.equals(ioType)) {
 				final CompositeDataIoTask mpuTask = (CompositeDataIoTask) ioTask;
@@ -223,7 +234,6 @@ extends HttpStorageDriverBase<I, O, R> {
 		} else {
 			httpRequest = super.getHttpRequest(ioTask, nodeAddr);
 		}
-		
 		return httpRequest;
 	}
 	
@@ -231,7 +241,6 @@ extends HttpStorageDriverBase<I, O, R> {
 		final CompositeDataIoTask mpuTask, final String nodeAddr
 	) {
 		final I item = (I) mpuTask.getItem();
-		
 		final String srcPath = mpuTask.getSrcPath();
 		final String uriPath = getUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
@@ -260,7 +269,6 @@ extends HttpStorageDriverBase<I, O, R> {
 		final PartialDataIoTask ioTask, final String nodeAddr
 	) {
 		final I item = (I) ioTask.getItem();
-		
 		final String srcPath = ioTask.getSrcPath();
 		final String partNumStr = Integer.toString(ioTask.getPartNumber() + 1);
 		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +

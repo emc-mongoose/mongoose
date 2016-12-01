@@ -92,9 +92,9 @@ extends RequestHandlerBase<T> {
 			}
 		} else {
 			final String uriPathParts[] = uri.split("/"); // FIXME: doesn't support query params
-			final String account = uriPathParts[1];
-			final String containerName = uriPathParts[2];
-			final String objectId = uriPathParts[3];
+			final String account = uriPathParts.length > 2 ? uriPathParts[2] : null;
+			final String containerName = uriPathParts.length > 3 ? uriPathParts[3] : null;
+			final String objectId = uriPathParts.length > 4 ? uriPathParts[4] : null;
 			if(containerName != null) {
 				handleItemRequest(uri, method, containerName, objectId, size, ctx);
 			} else if(account != null) {

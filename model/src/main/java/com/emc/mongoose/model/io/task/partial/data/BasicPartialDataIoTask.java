@@ -32,8 +32,14 @@ implements PartialDataIoTask<I, R> {
 	}
 
 	@Override
-	public CompositeDataIoTask<I, ? extends DataIoResult> getParent() {
+	public final CompositeDataIoTask<I, ? extends DataIoResult> getParent() {
 		return parent;
+	}
+
+	@Override
+	public final void finishResponse() {
+		super.finishResponse();
+		parent.subTaskCompleted();
 	}
 
 	public static class BasicPartialDataIoResult

@@ -50,7 +50,6 @@ extends HttpResponseHandlerBase<I, O, R> {
 			final String eTag = respHeaders.get(HttpHeaderNames.ETAG);
 			final CompositeDataIoTask mpuTask = subTask.getParent();
 			mpuTask.put(Integer.toString(subTask.getPartNumber() + 1), eTag);
-			mpuTask.subTaskCompleted();
 		}
 	}
 

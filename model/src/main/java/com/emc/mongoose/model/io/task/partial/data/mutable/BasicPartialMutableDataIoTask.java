@@ -37,6 +37,12 @@ implements PartialMutableDataIoTask<I, R> {
 		return parent;
 	}
 
+	@Override
+	public final void finishResponse() {
+		super.finishResponse();
+		parent.subTaskCompleted();
+	}
+
 	@Override @SuppressWarnings("unchecked")
 	public R getResult(
 		final String hostAddr,

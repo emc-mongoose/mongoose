@@ -124,7 +124,7 @@ implements IoTask<I, R> {
 	}
 
 	@Override
-	public final void finishResponse() {
+	public void finishResponse() {
 		respTimeDone = System.nanoTime() / 1000;
 	}
 
