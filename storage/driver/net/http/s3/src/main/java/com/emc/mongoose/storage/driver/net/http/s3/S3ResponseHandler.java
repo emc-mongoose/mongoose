@@ -83,7 +83,7 @@ extends HttpResponseHandlerBase<I, O, R> {
 	}
 
 	@Override
-	protected void handleResponseContentFinish(final Channel channel, final O ioTask) {
+	protected final void handleResponseContentFinish(final Channel channel, final O ioTask) {
 		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
 		final ByteBuf content = contentAttr.get();
 		if(content != null && content.readableBytes() > 0) {

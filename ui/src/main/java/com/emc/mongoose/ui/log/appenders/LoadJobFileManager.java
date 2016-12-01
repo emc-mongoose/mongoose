@@ -1,8 +1,5 @@
 package com.emc.mongoose.ui.log.appenders;
-//
 
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -22,7 +19,9 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-//
+
+import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static java.io.File.separatorChar;
 
 /** Created by andrey on 13.03.15. */
 public final class LoadJobFileManager
@@ -87,7 +86,7 @@ extends AbstractManager {
 	/**
 	 * Factory to create a FileManager.
 	 */
-	private static final class RunIdFileManagerFactory
+	private static final class LoadJobFileManagerFactory
 	implements ManagerFactory<LoadJobFileManager, FactoryData> {
 		/**
 		 * Create a FileManager.
@@ -104,7 +103,7 @@ extends AbstractManager {
 		}
 	}
 	//
-	private static final RunIdFileManagerFactory FACTORY = new RunIdFileManagerFactory();
+	private static final LoadJobFileManagerFactory FACTORY = new LoadJobFileManagerFactory();
 	//
 	public static LoadJobFileManager getRunIdFileManager(
 		final String fileName,
@@ -146,7 +145,8 @@ extends AbstractManager {
 			outStream.write(buff, offset, len);
 		} catch (final Exception e) {
 			throw new AppenderLoggingException(
-				"Failed to write to the stream \""+getName()+"\" for job name \""+jobName+"\"", e
+				"Failed to write to the stream \"" + getName() + "\" for job name \""+jobName+"\"",
+				e
 			);
 		}
 	}
@@ -160,8 +160,8 @@ extends AbstractManager {
 		final File
 			outPutFile = new File(
 				jobName == null ?
-					PathUtil.getBaseDir() + File.separatorChar + "log" + File.separator + fileName :
-					PathUtil.getBaseDir() + File.separatorChar + "log" + File.separator + jobName + File.separator + fileName
+					getBaseDir() + separatorChar + "log" + separatorChar + fileName :
+					getBaseDir() + separatorChar + "log" + separatorChar + jobName + separatorChar + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();

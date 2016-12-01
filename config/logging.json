@@ -201,7 +201,7 @@
 							{
 								"type": "MarkerFilter",
 								"marker": "metricsMedFile",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							},
 							{
@@ -225,7 +225,7 @@
 							{
 								"type": "MarkerFilter",
 								"marker": "metricsMedFileTotal",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							},
 							{
@@ -249,7 +249,7 @@
 							{
 								"type": "MarkerFilter",
 								"marker": "metricsFile",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							},
 							{
@@ -273,7 +273,7 @@
 							{
 								"type": "MarkerFilter",
 								"marker": "metricsFileTotal",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							},
 							{
@@ -297,7 +297,7 @@
 							{
 								"type": "MarkerFilter",
 								"marker": "ioTrace",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							},
 							{
@@ -320,7 +320,7 @@
 							{
 								"type": "MarkerFilter",
 								"marker": "cfg",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							}, {
 								"type": "ThresholdFilter",
