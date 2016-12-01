@@ -177,8 +177,9 @@ extends JobBase {
 				.setLoadConfig(loadConfig)
 				.setItemType(itemType)
 				.setItemFactory(itemFactory)
+				.setStorageDriver(drivers.get(0))
 				.build();
-		} catch(final IOException | UserShootHisFootException e) {
+		} catch(final UserShootHisFootException e) {
 			throw new RuntimeException(e);
 		}
 		LOG.info(Markers.MSG, "Load generators initialized");

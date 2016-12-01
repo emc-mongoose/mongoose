@@ -8,7 +8,9 @@ import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.DataItemFactory;
 import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.Markers;
@@ -161,6 +163,17 @@ implements StorageDriverSvc<I, O, R> {
 	public final boolean createPath(final String path)
 	throws RemoteException {
 		return driver.createPath(path);
+	}
+
+	@Override
+	public final Input<I> getPathListingInput(
+		final String path, final ItemFactory<I> itemFactory, final int idRadix,
+		final String idPrefix
+	) throws RemoteException {
+		if(itemFactory instanceof DataItemFactory) {
+			((DataItemFactory) itemFactory).setContentSource(contentSrc);
+		}
+		return driver.getPathListingInput(path, itemFactory, idRadix, idPrefix);
 	}
 
 	@Override

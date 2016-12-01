@@ -119,15 +119,9 @@ extends JobBase {
 					itemFactory = null;
 					LOG.info(Markers.MSG, "Work on the path items");
 				}
-				
+
 				final LoadConfig loadConfig = config.getLoadConfig();
-				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
-					.setItemConfig(itemConfig)
-					.setItemFactory(itemFactory)
-					.setItemType(itemType)
-					.setLoadConfig(loadConfig)
-					.build();
-				
+
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final DriverConfig driverConfig = storageConfig.getDriverConfig();
@@ -184,6 +178,14 @@ extends JobBase {
 							.build()
 					);
 				}
+
+				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
+					.setItemConfig(itemConfig)
+					.setItemFactory(itemFactory)
+					.setItemType(itemType)
+					.setLoadConfig(loadConfig)
+					.setStorageDriver(drivers.get(0))
+					.build();
 				
 				driverMap.put(loadGenerator, drivers);
 				if(weightMap != null) {

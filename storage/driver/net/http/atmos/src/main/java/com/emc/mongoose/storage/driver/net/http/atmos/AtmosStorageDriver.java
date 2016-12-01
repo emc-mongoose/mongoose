@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.atmos;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -19,6 +20,7 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -105,6 +107,14 @@ extends HttpStorageDriverBase<I, O, R> {
 	public final boolean createPath(final String path)
 	throws RemoteException {
 		return true;
+	}
+
+	@Override
+	public final Input<I> getPathListingInput(
+		final String path, final ItemFactory<I> itemFactory, final int idRadix,
+		final String idPrefix
+	) throws RemoteException {
+		return null;
 	}
 
 	@Override

@@ -9,7 +9,8 @@ import com.emc.mongoose.common.io.BasicValueInput;
  Created by kurila on 18.12.15.
  */
 public class BasicItemNameInput
-extends BasicValueInput<String> {
+extends BasicValueInput<String>
+implements IdStringInput {
 	//
 	protected final ItemNamingType namingType;
 	protected final int length, prefixLength, radix;
@@ -106,6 +107,7 @@ extends BasicValueInput<String> {
 		}
 		return strb.toString();
 	}
+
 	// yes, this is very ugly bandage
 	public long getLastValue() {
 		return lastValue;

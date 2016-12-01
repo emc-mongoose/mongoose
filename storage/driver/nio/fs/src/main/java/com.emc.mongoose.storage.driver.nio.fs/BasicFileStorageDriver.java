@@ -3,12 +3,14 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
+
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.MutableDataItem;
-import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.io.IoType;
@@ -27,14 +29,11 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.spi.FileSystemProvider;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,13 +44,12 @@ import java.util.function.Function;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileStorageDriver<I extends MutableDataItem, R extends DataIoResult, O extends MutableDataIoTask<I, R>>
-extends NioStorageDriverBase<I, O, R>
-implements StorageDriver<I, O, R> {
+public final class BasicFileStorageDriver<
+	I extends MutableDataItem, O extends MutableDataIoTask<I, R>, R extends DataIoResult
+>extends NioStorageDriverBase<I, O, R>
+implements FileStorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final FileSystem FS = FileSystems.getDefault();
-	private static final FileSystemProvider FS_PROVIDER = FS.provider();
 	private static final Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
 		{
 			add(StandardOpenOption.CREATE_NEW);
@@ -151,6 +149,17 @@ implements StorageDriver<I, O, R> {
 		} else {
 			LOG.info(Markers.MSG, "Output path \"{}\" already exists", path);
 			return true;
+		}
+	}
+
+	@Override
+	public final Input<I> getPathListingInput(
+		final String path, final ItemFactory<I> itemFactory, final int idRadix, final String idPrefix
+	) throws RemoteException {
+		try {
+			return new DirectoryListingInput<>(path, itemFactory, idRadix, idPrefix);
+		} catch(final IOException e) {
+			throw new RemoteException("Failed to create the directory listing input", e);
 		}
 	}
 

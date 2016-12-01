@@ -1,11 +1,13 @@
 package com.emc.mongoose.model.storage;
 
 import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -20,6 +22,11 @@ extends Daemon, Output<O>, Remote {
 	
 	boolean createPath(final String path)
 	throws RemoteException;
+
+	Input<I> getPathListingInput(
+		final String path, final ItemFactory<I> itemFactory, final int idRadix,
+		final String idPrefix
+	) throws RemoteException;
 
 	String getAuthToken()
 	throws RemoteException;
