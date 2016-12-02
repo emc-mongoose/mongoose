@@ -8,12 +8,12 @@ import java.util.Map;
  Created by kurila on 11.07.16.
  */
 public enum IoType {
-	
-	CREATE, // 0
-	READ, // 1
-	UPDATE, // 2
-	DELETE, // 3
-	QUERY; // 4
+
+	NOOP, // 0
+	CREATE, // 1
+	READ, // 2
+	UPDATE, // 3
+	DELETE; // 4
 
 	public static Map<IoType, Integer> getMixedLoadWeights(final List<String> patterns)
 	throws IllegalArgumentException {

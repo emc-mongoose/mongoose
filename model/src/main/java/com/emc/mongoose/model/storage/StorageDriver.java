@@ -27,7 +27,7 @@ extends Daemon, Output<O>, Remote {
 
 	List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final String startName, final int count
+		final I lastPrevItem, final int count
 	) throws IOException;
 
 	String getAuthToken()

@@ -128,7 +128,7 @@ implements FileStorageDriver<I, O, R> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to open the source channel for the path \"{}\"",
+					LOG, Level.WARN, e, "Failed to open the output channel for the path \"{}\"",
 					dstPath
 				);
 				return null;
@@ -172,20 +172,28 @@ implements FileStorageDriver<I, O, R> {
 			final I item = ioTask.getItem();
 
 			switch(ioType) {
+
+				case NOOP:
+					finishIoTask(ioTask);
+					break;
 				
 				case CREATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
-					if(srcChannel != null) { // copy mode
-						invokeCopy(item, ioTask, srcChannel, dstChannel);
-					} else {
+					if(dstChannel == null) {
+						ioTask.setStatus(Status.CANCELLED);
+					} else if(srcChannel == null) {
 						invokeCreate(item, ioTask, dstChannel);
+					} else { // copy the data from the src channel to the dst channel
+						invokeCopy(item, ioTask, srcChannel, dstChannel);
 					}
 					break;
 				
 				case READ:
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
-					if(verifyFlag) {
+					if(srcChannel == null) {
+						ioTask.setStatus(Status.CANCELLED);
+					} else if(verifyFlag) {
 						try {
 							invokeReadAndVerify(item, ioTask, srcChannel);
 						} catch(final DataSizeException e) {
@@ -203,7 +211,11 @@ implements FileStorageDriver<I, O, R> {
 				
 				case UPDATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
-					invokeUpdate(item, ioTask, dstChannel);
+					if(dstChannel == null) {
+						ioTask.setStatus(Status.CANCELLED);
+					} else {
+						invokeUpdate(item, ioTask, dstChannel);
+					}
 					break;
 				
 				case DELETE:

@@ -19,17 +19,21 @@ extends ListInput<T> {
 		this.capacity = capacity;
 	}
 
-	private int loadMore() {
+	private int loadMore()
+	throws IOException {
+		final T lastItem = size > 0 ? items.get(size - 1) : null;
 		i = 0;
 		items.clear();
-		return size = loadMoreItems();
+		return size = loadMoreItems(lastItem);
 	}
+
 	/**
 	 Called when the "items" buffer is exhausted. Should put more (but not more than "capacity")
 	 new items into the empty "items" buffer.
 	 @return the count of the items was actually loaded into the "items" buffer or 0 if no more items are available.
 	 */
-	protected abstract int loadMoreItems();
+	protected abstract int loadMoreItems(final T lastItem)
+	throws IOException;
 
 	@Override
 	public final T get()

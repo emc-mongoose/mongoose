@@ -69,6 +69,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
@@ -279,7 +280,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final String startName, final int count
+		final I lastPrevItem, final int count
 	) throws IOException {
 
 		final String nodeAddr = storageNodeAddrs[0];
@@ -298,11 +299,11 @@ extends HttpStorageDriverBase<I, O, R> {
 		if(prefix != null && !prefix.isEmpty()) {
 			queryBuilder.append("prefix=").append(prefix);
 		}
-		if(startName != null && !startName.isEmpty()) {
+		if(lastPrevItem != null) {
 			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
 				queryBuilder.append('&');
 			}
-			queryBuilder.append("marker=").append(startName);
+			queryBuilder.append("marker=").append(lastPrevItem.getName());
 		}
 		if(count > 0) {
 			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
@@ -315,7 +316,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		applyAuthHeaders(HttpMethod.GET, query, reqHeaders);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.GET, path, Unpooled.EMPTY_BUFFER, reqHeaders,
+			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
 		final List<I> buff = new ArrayList<>(count > 0 ? count : BATCH_SIZE);
@@ -333,7 +334,10 @@ extends HttpStorageDriverBase<I, O, R> {
 			final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<I>(
 				buff, itemFactory, idRadix
 			);
-			listRespParser.parse(new ByteBufInputStream(listRespContent), listingHandler);
+			try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
+				listRespParser.parse(contentStream, listingHandler);
+			}
+			listRespContent.release();
 			if(buff.size() == 0) {
 				throw new EOFException();
 			}

@@ -5,7 +5,6 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.collection.BufferingInputBase;
 import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -21,7 +20,6 @@ import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -38,7 +36,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
+
 /**
  Created by andrey on 12.11.16.
  */
@@ -113,11 +111,14 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 				.setRandomRangesCount(rangesConfig.getRandom())
 				.setSizeThreshold(rangesConfig.getThreshold().get());
 		}
-		ioTaskBuilder.setSrcPath(inputConfig.getPath());
+		String itemInputPath = inputConfig.getPath();
+		if(itemInputPath != null && !itemInputPath.startsWith("/")) {
+			itemInputPath = "/" + itemInputPath;
+		}
+		ioTaskBuilder.setSrcPath(itemInputPath);
 		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
 
 		final String itemInputFile = inputConfig.getFile();
-		final String itemInputPath = inputConfig.getPath();
 
 		itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
 		dstPathInput = getDstPathInput(ioType);
@@ -130,13 +131,50 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private Input<String> getDstPathInput(final IoType ioType)
 	throws UserShootHisFootException {
 		Input<String> dstPathInput = null;
-		if(!IoType.CREATE.equals(ioType)) {
-			final String t = itemConfig.getOutputConfig().getPath();
-			if(t == null || t.isEmpty()) {
-				dstPathInput = new ConstantStringInput("/" + LogUtil.getDateTimeStamp());
-			} else {
-				dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
-			}
+		final String t = itemConfig.getOutputConfig().getPath();
+		switch(ioType) {
+			case CREATE:
+				if(t == null || t.isEmpty()) {
+					final String dstPath = "/" + LogUtil.getDateTimeStamp();
+					dstPathInput = new ConstantStringInput(dstPath);
+					try {
+						storageDriver.createPath(dstPath);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
+							dstPath
+						);
+					}
+				} else { // copy mode
+					dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
+					String dstPath = null;
+					try {
+						dstPath = dstPathInput.get();
+						dstPathInput.reset();
+						if(dstPath != null) {
+							final int sepPos = dstPath.indexOf('/', 1);
+							if(sepPos > 1) {
+								// create only 1st level path
+								dstPath = dstPath.substring(0, sepPos);
+							}
+							storageDriver.createPath(dstPath);
+						}
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
+							dstPath
+						);
+					}
+				}
+				break;
+			case NOOP:
+			case READ:
+			case UPDATE:
+			case DELETE:
+				if(t != null && !t.isEmpty()) {
+					dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
+				}
+				break;
 		}
 		return dstPathInput;
 	}
@@ -178,27 +216,13 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 					);
 				}
 			} else {
-				try {
-					itemInput = new BufferingInputBase<I>(BATCH_SIZE) {
-						@Override
-						protected int loadMoreItems() {
-							return storageDriver.list(
-								itemFactory, null, namingPrefix, namingRadix, null, BATCH_SIZE
-							);
-						}
-					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e,
-						"Failed to get the item path listing input from the storage driver"
-					);
-				}
+				itemInput = new StorageItemInput<>(
+					storageDriver, itemFactory, itemInputPath, namingPrefix, namingRadix
+				);
 			}
 		} else {
 			try {
-				itemInput = new CsvFileItemInput<>(
-					Paths.get(itemInputFile), itemFactory
-				);
+				itemInput = new CsvFileItemInput<>(Paths.get(itemInputFile), itemFactory);
 			} catch(final NoSuchMethodException e) {
 				throw new RuntimeException(e);
 			} catch(final IOException e) {

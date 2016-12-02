@@ -168,9 +168,9 @@ implements StorageDriverSvc<I, O, R> {
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final String startName, final int count
+		final I lastPrevItem, final int count
 	) throws IOException {
-		return driver.list(itemFactory, path, prefix, idRadix, startName, count);
+		return driver.list(itemFactory, path, prefix, idRadix, lastPrevItem, count);
 	}
 
 	@Override

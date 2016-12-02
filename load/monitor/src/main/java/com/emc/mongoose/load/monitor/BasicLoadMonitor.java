@@ -571,7 +571,7 @@ implements LoadMonitor<R> {
 						nextDriver.setAuthToken(authToken);
 					}
 					nextDriver.start();
-				} catch(final RemoteException e) {
+				} catch(final IllegalStateException | RemoteException e) {
 					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
 					);
@@ -579,18 +579,8 @@ implements LoadMonitor<R> {
 			}
 
 			try {
-				final String dstPath = nextGenerator.getOutputPath();
-				if(dstPath != null) {
-					final int sepPos = dstPath.indexOf('/', 1);
-					if(sepPos > 1) {
-						// create only 1st level path
-						nextGeneratorDrivers.get(0).createPath(dstPath.substring(0, sepPos));
-					} else {
-						nextGeneratorDrivers.get(0).createPath(dstPath);
-					}
-				}
 				nextGenerator.start();
-			} catch(final IOException e) {
+			} catch(final IllegalStateException | RemoteException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
 				);

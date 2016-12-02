@@ -91,19 +91,6 @@ implements LoadGenerator<I, O, R>, Output<I> {
 		this.ioTaskOutput = ioTaskOutput;
 	}
 
-	@Override
-	public final String getOutputPath()
-	throws IOException {
-		final String dstPath;
-		if(dstPathInput == null) {
-			dstPath = null;
-		} else {
-			 dstPath = dstPathInput.get();
-			dstPathInput.reset();
-		}
-		return dstPath;
-	}
-
 	private final class GeneratorTask
 	implements Runnable {
 

@@ -162,13 +162,13 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	public final Input<I> getPathListingInput(
-		final String path, final ItemFactory<I> itemFactory, final int idRadix,
-		final String idPrefix
-	) throws RemoteException {
+	public final List<I> list(
+		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+		final I lastPrevItem, final int count
+	) throws IOException {
 		return null;
 	}
-	
+
 	@Override @SuppressWarnings("unchecked")
 	protected final void submit(final O task)
 	throws InterruptedIOException {

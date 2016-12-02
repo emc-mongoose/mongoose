@@ -51,19 +51,20 @@ public interface FileStorageDriver<
 	@Override
 	default List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final String startName, final int count
+		final I lastPrevItem, final int count
 	) throws IOException {
-		return _list(itemFactory, path, prefix, idRadix, startName, count);
+		return _list(itemFactory, path, prefix, idRadix, lastPrevItem, count);
 	}
 
 	static <I extends Item> List<I> _list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final String startName, final int count
+		final I lastPrevItem, final int count
 	) throws IOException {
 
 		final Filter<Path> filter = (prefix == null || prefix.isEmpty()) ?
 			ACCEPT_ALL_PATHS_FILTER : new PrefixDirectoryStreamFilter(prefix);
 		final List<I> buff = new ArrayList<>(count);
+
 		try(
 			final DirectoryStream<Path> dirStream = FS_PROVIDER.newDirectoryStream(
 				Paths.get(path), filter
@@ -76,13 +77,21 @@ public interface FileStorageDriver<
 			File nextFile;
 			String nextFileName;
 			I nextItem;
-			boolean startNameFound = startName == null || startName.isEmpty();
+
+			final String lastPrevItemName;
+			boolean lastPrevItemNameFound;
+			if(lastPrevItem == null) {
+				lastPrevItemName = null;
+				lastPrevItemNameFound = true;
+			} else {
+				lastPrevItemName = lastPrevItem.getName();
+				lastPrevItemNameFound = false;
+			}
 
 			for(final Path nextPath : dirStream) {
-				nextFullPath = nextPath.toString();
-				nextFile = new File(nextFullPath);
+				nextFile = new File(nextPath.toString());
 				nextFileName = nextFile.getName();
-				if(startNameFound) {
+				if(lastPrevItemNameFound) {
 					try {
 						final long offset;
 						if(prefixLength > 0) {
@@ -91,22 +100,23 @@ public interface FileStorageDriver<
 						} else {
 							offset = Long.parseLong(nextFileName, idRadix);
 						}
-						nextItem = itemFactory.getItem(nextFullPath, offset, nextFile.length());
+						nextItem = itemFactory.getItem(nextFileName, offset, nextFile.length());
 					} catch(final NumberFormatException e) {
-						// try to not use the offset (verification may be disabled)
-						nextItem = itemFactory.getItem(nextFullPath, 0, nextFile.length());
+						// try to not use the offset (read verification should be disabled)
+						nextItem = itemFactory.getItem(nextFileName, 0, nextFile.length());
 					}
 					buff.add(nextItem);
 					if(count == buff.size()) {
 						break;
 					}
 				} else {
-					startNameFound = nextFileName.equals(startName);
+					lastPrevItemNameFound = nextFileName.equals(lastPrevItemName);
 				}
 			}
 		} catch(final DirectoryIteratorException e) {
 			throw e.getCause(); // according the JDK documentation
 		}
+
 		return buff;
 	}
 }
