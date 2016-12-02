@@ -20,4 +20,6 @@ public interface Constants {
 	double M = 1e6;
 
 	Locale LOCALE_DEFAULT = Locale.ROOT;
+
+	int BATCH_SIZE = 0x1000;
 }

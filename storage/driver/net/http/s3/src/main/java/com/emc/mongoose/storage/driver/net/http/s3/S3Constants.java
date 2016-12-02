@@ -49,4 +49,9 @@ public interface S3Constants {
 	String COMPLETE_MPU_PART_NUM_END = "</PartNumber>\n\t\t<ETag>";
 	String COMPLETE_MPU_PART_ETAG_END = "</ETag>\n\t</Part>\n";
 	String COMPLETE_MPU_FOOTER = "</CompleteMultipartUpload>";
+
+	String QNAME_ITEM = "Contents";
+	String QNAME_ITEM_ID = "Key";
+	String QNAME_ITEM_SIZE = "Size";
+	String QNAME_IS_TRUNCATED = "IsTruncated";
 }

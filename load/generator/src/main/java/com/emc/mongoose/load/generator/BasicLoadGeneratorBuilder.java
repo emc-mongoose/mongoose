@@ -1,12 +1,12 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.collection.BufferingInputBase;
 import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
-import com.emc.mongoose.load.generator.BasicLoadGenerator;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTask.IoResult;
@@ -21,6 +21,7 @@ import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -178,9 +179,14 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 				}
 			} else {
 				try {
-					itemInput = storageDriver.getPathListingInput(
-						itemInputPath, itemFactory, namingRadix, namingPrefix
-					);
+					itemInput = new BufferingInputBase<I>(BATCH_SIZE) {
+						@Override
+						protected int loadMoreItems() {
+							return storageDriver.list(
+								itemFactory, null, namingPrefix, namingRadix, null, BATCH_SIZE
+							);
+						}
+					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(
 						LOG, Level.ERROR, e,

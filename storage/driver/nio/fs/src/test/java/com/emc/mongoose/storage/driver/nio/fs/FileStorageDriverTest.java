@@ -1,11 +1,9 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.math.Random;
 import com.emc.mongoose.model.item.BasicItemFactory;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.MutableDataItem;
 import org.apache.commons.io.FileUtils;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,20 +12,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 /**
- Created by andrey on 01.12.16.
+ Created by andrey on 02.12.16.
  */
-public class DirectoryListingInputTest {
+public class FileStorageDriverTest {
 
 	private static Path TMP_DIR_PATH = null;
 
 	@BeforeClass
-	public static void setUpClass() {
+	public static void setUpClass()
+	throws Exception {
 		try {
 			TMP_DIR_PATH = Files.createTempDirectory(null);
 		} catch(final IOException e) {
@@ -36,18 +34,20 @@ public class DirectoryListingInputTest {
 	}
 
 	@AfterClass
-	public static void tearDownClass() {
+	public static void tearDownClass()
+	throws Exception {
 		if(TMP_DIR_PATH != null) {
 			try {
 				FileUtils.deleteDirectory(TMP_DIR_PATH.toFile());
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
 			}
+			TMP_DIR_PATH = null;
 		}
 	}
 
 	@Test
-	public final void testListingWithPrefix()
+	public final void testList()
 	throws Exception {
 
 		final String prefix = "yohoho";
@@ -72,8 +72,19 @@ public class DirectoryListingInputTest {
 				.createNewFile();
 		}
 
-		final Input<Item> in = new DirectoryListingInput<>(TMP_DIR_PATH.toString(), new BasicItemFactory<>(), 10, prefix);
-		final List<Item> inBuff = new ArrayList<>(count);
-		assertEquals(count, in.get(inBuff, count));
+		List<MutableDataItem> items = FileStorageDriver._list(
+			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10, "yohoho0099", count
+		);
+		assertEquals(99, items.size());
+
+		items = FileStorageDriver._list(
+			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100
+		);
+		assertEquals(100, items.size());
+
+		items = FileStorageDriver._list(
+			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count
+		);
+		assertEquals(2 * count, items.size());
 	}
 }

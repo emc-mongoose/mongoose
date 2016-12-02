@@ -9,8 +9,10 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 
+import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.List;
 
 /**
  Created on 11.07.16.
@@ -23,10 +25,10 @@ extends Daemon, Output<O>, Remote {
 	boolean createPath(final String path)
 	throws RemoteException;
 
-	Input<I> getPathListingInput(
-		final String path, final ItemFactory<I> itemFactory, final int idRadix,
-		final String idPrefix
-	) throws RemoteException;
+	List<I> list(
+		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+		final String startName, final int count
+	) throws IOException;
 
 	String getAuthToken()
 	throws RemoteException;

@@ -2,9 +2,9 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
@@ -33,8 +33,11 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.VERSIONING
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.log.Markers;
 
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Markers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -54,17 +57,24 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.xml.sax.SAXException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -84,9 +94,16 @@ extends HttpStorageDriverBase<I, O, R> {
 			protected final StringBuilder initialValue() {
 				return new StringBuilder();
 			}
+		},
+		BUCKET_LIST_QUERY = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
 		};
 	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
 
 	private final SecretKeySpec secretKey;
 	
@@ -176,8 +193,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		}
 
 		// check the bucket versioning state
-		final String bucketVersioningReqUri = path.endsWith("/") ?
-			path + "?" + URL_ARG_VERSIONING : path + "/?" + URL_ARG_VERSIONING;
+		final String bucketVersioningReqUri = path + "?" + URL_ARG_VERSIONING;
 		applyAuthHeaders(HttpMethod.GET, bucketVersioningReqUri, reqHeaders);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
@@ -261,11 +277,72 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	public final Input<I> getPathListingInput(
-		final String path, final ItemFactory<I> itemFactory, final int idRadix,
-		final String idPrefix
-	) throws RemoteException {
-		return null;
+	public final List<I> list(
+		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+		final String startName, final int count
+	) throws IOException {
+
+		final String nodeAddr = storageNodeAddrs[0];
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+
+		applyDynamicHeaders(reqHeaders);
+		applySharedHeaders(reqHeaders);
+
+		final StringBuilder queryBuilder = BUCKET_LIST_QUERY.get();
+		queryBuilder.setLength(0);
+		queryBuilder.append(path).append('?');
+		if(prefix != null && !prefix.isEmpty()) {
+			queryBuilder.append("prefix=").append(prefix);
+		}
+		if(startName != null && !startName.isEmpty()) {
+			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
+				queryBuilder.append('&');
+			}
+			queryBuilder.append("marker=").append(startName);
+		}
+		if(count > 0) {
+			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
+				queryBuilder.append('&');
+			}
+			queryBuilder.append("max-keys=").append(count);
+		}
+		final String query = queryBuilder.toString();
+
+		applyAuthHeaders(HttpMethod.GET, query, reqHeaders);
+
+		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.GET, path, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
+		);
+		final List<I> buff = new ArrayList<>(count > 0 ? count : BATCH_SIZE);
+		final FullHttpResponse listResp;
+		try {
+			listResp = executeHttpRequest(checkBucketReq);
+			final ByteBuf listRespContent = listResp.content();
+			SAXParser listRespParser = THREAD_LOCAL_XML_PARSER.get();
+			if(listRespParser == null) {
+				listRespParser = SAXParserFactory.newInstance().newSAXParser();
+				THREAD_LOCAL_XML_PARSER.set(listRespParser);
+			} else {
+				listRespParser.reset();
+			}
+			final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<I>(
+				buff, itemFactory, idRadix
+			);
+			listRespParser.parse(new ByteBufInputStream(listRespContent), listingHandler);
+			if(buff.size() == 0) {
+				throw new EOFException();
+			}
+		} catch(final InterruptedException ignored) {
+		} catch(final SAXException | ParserConfigurationException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the XML response parser");
+		}
+
+		return buff;
 	}
 
 	@Override

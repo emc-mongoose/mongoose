@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig.TraceConfig;
@@ -9,13 +10,13 @@ import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,8 +39,6 @@ extends DaemonBase
 implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final int BATCH_SIZE = 0x1000;
-	
 	private static final Map<String, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
 	private static final Thread INBOUND_IO_TASKS_DISPATCHER = new Thread(
 		new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "inboundIoTasksDispatcher"

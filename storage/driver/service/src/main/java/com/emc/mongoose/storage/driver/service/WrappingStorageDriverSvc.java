@@ -166,14 +166,11 @@ implements StorageDriverSvc<I, O, R> {
 	}
 
 	@Override
-	public final Input<I> getPathListingInput(
-		final String path, final ItemFactory<I> itemFactory, final int idRadix,
-		final String idPrefix
-	) throws RemoteException {
-		if(itemFactory instanceof DataItemFactory) {
-			((DataItemFactory) itemFactory).setContentSource(contentSrc);
-		}
-		return driver.getPathListingInput(path, itemFactory, idRadix, idPrefix);
+	public final List<I> list(
+		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+		final String startName, final int count
+	) throws IOException {
+		return driver.list(itemFactory, path, prefix, idRadix, startName, count);
 	}
 
 	@Override

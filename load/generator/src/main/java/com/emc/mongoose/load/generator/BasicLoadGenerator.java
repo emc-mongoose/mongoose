@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -36,7 +37,6 @@ extends DaemonBase
 implements LoadGenerator<I, O, R>, Output<I> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final int BATCH_SIZE = 0x1000;
 
 	private volatile Throttle<LoadGenerator<I, O, R>> weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;

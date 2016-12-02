@@ -7,14 +7,14 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- Readable collection of the data items.
+ Readable collection of the data items. Not thread safe.
  */
 public class ListInput<T>
 implements Input<T> {
 	
 	protected final List<T> items;
-	protected final int size;
-	protected volatile int i = 0;
+	protected int size;
+	protected int i = 0;
 	
 	public ListInput(final List<T> items) {
 		this.items = items;

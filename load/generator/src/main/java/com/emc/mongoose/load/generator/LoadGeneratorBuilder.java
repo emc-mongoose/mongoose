@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.io.task.IoTask;

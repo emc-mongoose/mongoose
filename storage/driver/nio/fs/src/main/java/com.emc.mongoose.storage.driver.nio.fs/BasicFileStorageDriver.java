@@ -3,13 +3,10 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
-
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
@@ -149,17 +146,6 @@ implements FileStorageDriver<I, O, R> {
 		} else {
 			LOG.info(Markers.MSG, "Output path \"{}\" already exists", path);
 			return true;
-		}
-	}
-
-	@Override
-	public final Input<I> getPathListingInput(
-		final String path, final ItemFactory<I> itemFactory, final int idRadix, final String idPrefix
-	) throws RemoteException {
-		try {
-			return new DirectoryListingInput<>(path, itemFactory, idRadix, idPrefix);
-		} catch(final IOException e) {
-			throw new RemoteException("Failed to create the directory listing input", e);
 		}
 	}
 
