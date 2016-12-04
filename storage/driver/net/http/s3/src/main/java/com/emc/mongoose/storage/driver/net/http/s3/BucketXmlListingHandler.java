@@ -13,10 +13,10 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.List;
 
-import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.QNAME_IS_TRUNCATED;
-import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.QNAME_ITEM;
-import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.QNAME_ITEM_ID;
-import static com.emc.mongoose.storage.driver.net.http.s3.S3Constants.QNAME_ITEM_SIZE;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.QNAME_IS_TRUNCATED;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.QNAME_ITEM;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.QNAME_ITEM_ID;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.QNAME_ITEM_SIZE;
 /**
  Created by andrey on 02.12.16.
  */

@@ -111,7 +111,8 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected void doHandle(
-		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+		final String uriPath, final Map<String, String> queryParams, final HttpMethod method,
+		final long size, final ChannelHandlerContext ctx
 	) {
 		final Channel channel = ctx.channel();
 		FullHttpResponse response = null;
@@ -122,11 +123,11 @@ extends RequestHandlerBase<T> {
 			metaDataList = requestHeaders.get(KEY_EMC_TAGS).split(",");
 		}
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
-		if(uri.startsWith(OBJ_PATH)) {
-			final String uriPathParts[] = uri.split("/");
-			String objectId = uriPathParts[2]; // FIXME: doesn't support query params
+		if(uriPath.startsWith(OBJ_PATH)) {
+			final String uriPathParts[] = uriPath.split("/");
+			String objectId = uriPathParts[2];
 			long offset = -1;
-			String subtenantName = getSubtenant(requestHeaders, uri);
+			String subtenantName = getSubtenant(requestHeaders, uriPath);
 			if(objectId == null) {
 				if(method.equals(POST)) {
 					objectId = generateHexId(22);
@@ -159,17 +160,17 @@ extends RequestHandlerBase<T> {
 			} else {
 				handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
 			}
-		} else if(uri.startsWith(NS_PATH) || (uri.startsWith(AT_PATH))) {
+		} else if(uriPath.startsWith(NS_PATH) || (uriPath.startsWith(AT_PATH))) {
 			setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
-		} else if(uri.startsWith(ST_PATH)) {
+		} else if(uriPath.startsWith(ST_PATH)) {
 			final String subtenantName;
 			if(method.equals(PUT)) {
 				subtenantName = generateHexId(0x10);
 			} else {
-				subtenantName = getSubtenant(requestHeaders, uri);
+				subtenantName = getSubtenant(requestHeaders, uriPath);
 			}
 			response = newEmptyResponse();
-			handleContainerRequest(response, uri, method, subtenantName, ctx);
+			handleContainerRequest(method, subtenantName, queryParams, ctx);
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
@@ -204,28 +205,11 @@ extends RequestHandlerBase<T> {
 		return null;
 	}
 
-	private void handleContainerRequest(
-		final HttpResponse response, final String uri, final HttpMethod method,
-		final String name, final ChannelHandlerContext ctx
-	) {
-		if(method.equals(PUT)) {
-			handleContainerCreate(response, name);
-		} else {
-			super.handleContainerRequest(uri, method, name, ctx);
-		}
-	}
-
-	private void handleContainerCreate(final HttpResponse response, final String name) {
-		super.handleContainerCreate(name);
-		response.headers().set(KEY_SUBTENANT_ID, name);
-	}
-
 	@Override
 	protected void handleContainerList(
-			final String name,
-			final QueryStringDecoder queryStringDecoder,
-			final ChannelHandlerContext ctx) {
-		// there is a distinguish behavior for Atmos Protocol
+		final String name, final Map<String, String> queryParams, final ChannelHandlerContext ctx
+	) {
+		// TODO
 	}
 
 	private static final String KEY_EMC_LIMIT = "x-emc-limit";

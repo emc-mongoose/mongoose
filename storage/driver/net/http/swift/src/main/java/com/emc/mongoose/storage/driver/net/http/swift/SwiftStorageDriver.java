@@ -1,10 +1,9 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -14,21 +13,24 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.AUTH_URI;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.DEFAULT_VERSIONS_LOCATION;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_AUTH_KEY;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_AUTH_TOKEN;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_AUTH_USER;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_COPY_FROM;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_OBJECT_MANIFEST;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.KEY_X_VERSIONS_LOCATION;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftConstants.URI_BASE;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.AUTH_URI;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.DEFAULT_VERSIONS_LOCATION;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_AUTH_KEY;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_AUTH_TOKEN;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_AUTH_USER;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_COPY_FROM;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_OBJECT_MANIFEST;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_VERSIONS_LOCATION;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.URI_BASE;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseContainerListingContent;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.Markers;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -48,10 +50,13 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 
@@ -63,6 +68,13 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final String PART_NUM_MASK = "0000000";
+	private static final ThreadLocal<StringBuilder>
+		CONTAINER_LIST_QUERY = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 
 	private final String namespacePath;
 
@@ -166,7 +178,60 @@ extends HttpStorageDriverBase<I, O, R> {
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws IOException {
-		return null;
+
+		final String nodeAddr = storageNodeAddrs[0];
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+
+		applyDynamicHeaders(reqHeaders);
+		applySharedHeaders(reqHeaders);
+
+		final StringBuilder queryBuilder = CONTAINER_LIST_QUERY.get();
+		queryBuilder.setLength(0);
+		queryBuilder.append(namespacePath).append(path).append("?format=json");
+		if(prefix != null && !prefix.isEmpty()) {
+			queryBuilder.append("&prefix=").append(prefix);
+		}
+		if(lastPrevItem != null) {
+			queryBuilder.append("&marker=").append(lastPrevItem.getName());
+		}
+		if(count > 0) {
+			queryBuilder.append("&limit=").append(count);
+		}
+		final String query = queryBuilder.toString();
+
+		applyAuthHeaders(HttpMethod.GET, query, reqHeaders);
+
+		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
+		);
+		final List<I> buff = new ArrayList<>(count > 0 ? count : BATCH_SIZE);
+		final FullHttpResponse listResp;
+		try {
+			listResp = executeHttpRequest(checkBucketReq);
+			final HttpResponseStatus respStatus = listResp.status();
+			if(HttpStatusClass.SUCCESS.equals(respStatus.codeClass())) {
+				if(HttpResponseStatus.NO_CONTENT.equals(respStatus)) {
+					throw new EOFException();
+				} else {
+					final ByteBuf listRespContent = listResp.content();
+					try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
+						parseContainerListingContent(buff, contentStream, itemFactory, idRadix);
+					}
+				}
+			} else {
+				LOG.warn(
+					Markers.ERR, "Failed to get the container listing, response: \"{}\"", respStatus
+				);
+			}
+		} catch(final InterruptedException ignored) {
+		}
+
+		return buff;
 	}
 
 	@Override @SuppressWarnings("unchecked")

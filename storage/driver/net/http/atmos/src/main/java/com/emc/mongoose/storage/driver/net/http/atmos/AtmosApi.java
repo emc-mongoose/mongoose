@@ -6,7 +6,7 @@ import io.netty.util.AsciiString;
 /**
  Created by kurila on 11.11.16.
  */
-public interface AtmosConstants {
+public interface AtmosApi {
 
 	String URI_BASE = "/rest";
 

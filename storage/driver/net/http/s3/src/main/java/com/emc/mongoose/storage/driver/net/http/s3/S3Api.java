@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 02.08.16.
  */
-public interface S3Constants {
+public interface S3Api {
 
 	String PREFIX_KEY_X_AMZ = "x-amz-";
 

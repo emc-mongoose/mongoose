@@ -73,12 +73,13 @@ extends RequestHandlerBase<T> {
 
     @Override
 	protected void doHandle(
-		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+		final String uriPath, final Map<String, String> queryParams, final HttpMethod method,
+		final long size, final ChannelHandlerContext ctx
 	) {
 		FullHttpResponse response = null;
 		final Channel channel = ctx.channel();
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
-		if(uri.startsWith(AUTH, 1)) {
+		if(uriPath.startsWith(AUTH, 1)) {
 			if(method.equals(GET)) {
 				final String authToken = randomString(0x10);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -91,12 +92,12 @@ extends RequestHandlerBase<T> {
 				setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
 			}
 		} else {
-			final String uriPathParts[] = uri.split("/"); // FIXME: doesn't support query params
+			final String uriPathParts[] = uriPath.split("/");
 			final String account = uriPathParts.length > 2 ? uriPathParts[2] : null;
 			final String containerName = uriPathParts.length > 3 ? uriPathParts[3] : null;
 			final String objectId = uriPathParts.length > 4 ? uriPathParts[4] : null;
 			if(containerName != null) {
-				handleItemRequest(uri, method, containerName, objectId, size, ctx);
+				handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
 			} else if(account != null) {
 				setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
 			} else {
@@ -122,21 +123,15 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected void handleContainerList(
-			final String name,
-			final QueryStringDecoder queryStringDecoder,
-			final ChannelHandlerContext ctx
+		final String name, final Map<String, String> queryParams, final ChannelHandlerContext ctx
 	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
-		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
-		if(parameters.containsKey(LIMIT_KEY)) {
-			maxCount = Integer.parseInt(parameters.get(LIMIT_KEY).get(0));
-		} else {
-			LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI: " +
-				queryStringDecoder.uri());
+		if(queryParams.containsKey(LIMIT_KEY)) {
+			maxCount = Integer.parseInt(queryParams.get(LIMIT_KEY));
 		}
-		if(parameters.containsKey(MARKER_KEY)) {
-			marker = parameters.get(MARKER_KEY).get(0);
+		if(queryParams.containsKey(MARKER_KEY)) {
+			marker = queryParams.get(MARKER_KEY);
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
 		final T lastObject;

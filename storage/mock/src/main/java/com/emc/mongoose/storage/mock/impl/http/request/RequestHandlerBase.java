@@ -39,6 +39,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -181,12 +182,33 @@ extends ChannelInboundHandlerAdapter {
 			size = 0;
 		}
 		setHttpResponseStatusInContext(ctx, OK); // OK response assumption
-		doHandle(uri, method, size, ctx);
+		final int uriPathEnd = uri.indexOf('?');
+		final String uriPath;
+		final Map<String, String> queryParams;
+		if(uriPathEnd > 0) {
+			uriPath = uri.substring(0, uriPathEnd);
+			final String queryParamsStr = uri.substring(uriPathEnd + 1);
+			final String queryParamPairs[] = queryParamsStr.split("&");
+			queryParams = new HashMap<>();
+			String nextKeyValuePair[];
+			for(final String queryParamPair : queryParamPairs) {
+				nextKeyValuePair = queryParamPair.split("=");
+				if(nextKeyValuePair.length == 2) {
+					queryParams.put(nextKeyValuePair[0], nextKeyValuePair[1]);
+				} else if(nextKeyValuePair.length == 1){
+					queryParams.put(nextKeyValuePair[0], "");
+				}
+			}
+		} else {
+			uriPath = uri;
+			queryParams = null;
+		}
+		doHandle(uriPath, queryParams, method, size, ctx);
 	}
 
 	protected final void handleItemRequest(
-		final String uri, final HttpMethod method, final String containerName,
-		final String objectId, final long size,
+		final HttpMethod method, final Map<String, String> queryParams,
+		final String containerName, final String objectId, final long size,
 		final ChannelHandlerContext ctx
 	) {
 		if(objectId != null) {
@@ -202,12 +224,13 @@ extends ChannelInboundHandlerAdapter {
 			}
 			handleObjectRequest(method, containerName, objectId, offset, size, ctx);
 		} else {
-			handleContainerRequest(uri, method, containerName, ctx);
+			handleContainerRequest(method, containerName, queryParams, ctx);
 		}
 	}
 
 	protected abstract void doHandle(
-		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+		final String uriPath, final Map<String, String> queryParams, final HttpMethod method,
+		final long size, final ChannelHandlerContext ctx
 	);
 
 	protected FullHttpResponse newEmptyResponse(final HttpResponseStatus status) {
@@ -410,13 +433,13 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected void handleContainerRequest(
-		final String uri, final HttpMethod method, final String name,
+		final HttpMethod method, final String name, final Map<String, String> queryParams,
 		final ChannelHandlerContext ctx
 	) {
 		if(method.equals(PUT)) {
 			handleContainerCreate(name);
 		} else if(method.equals(GET)) {
-			handleContainerList(name, new QueryStringDecoder(uri), ctx);
+			handleContainerList(name, queryParams, ctx);
 		} else if(method.equals(HEAD)) {
 			handleContainerExist(name, ctx);
 		} else if(method.equals(DELETE)) {
@@ -429,8 +452,7 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	protected abstract void handleContainerList(
-		final String name, final QueryStringDecoder queryStringDecoder,
-		final ChannelHandlerContext ctx
+		final String name, final Map<String, String> queryParams, final ChannelHandlerContext ctx
 	);
 
 	protected final T listContainer(

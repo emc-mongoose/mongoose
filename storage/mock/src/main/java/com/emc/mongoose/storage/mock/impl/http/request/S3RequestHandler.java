@@ -75,29 +75,9 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected void doHandle(
-		final String uri, final HttpMethod method, final long size, final ChannelHandlerContext ctx
+		final String uriPath, final Map<String, String> queryParams, final HttpMethod method,
+		final long size, final ChannelHandlerContext ctx
 	) {
-		final int uriPathEnd = uri.indexOf('?');
-		final String uriPath;
-		final Map<String, String> queryParams;
-		if(uriPathEnd > 0) {
-			uriPath = uri.substring(0, uriPathEnd);
-			final String queryParamsStr = uri.substring(uriPathEnd + 1);
-			final String queryParamPairs[] = queryParamsStr.split("&");
-			queryParams = new HashMap<>();
-			String nextKeyValuePair[];
-			for(final String queryParamPair : queryParamPairs) {
-				nextKeyValuePair = queryParamPair.split("=");
-				if(nextKeyValuePair.length == 2) {
-					queryParams.put(nextKeyValuePair[0], nextKeyValuePair[1]);
-				} else if(nextKeyValuePair.length == 1){
-					queryParams.put(nextKeyValuePair[0], "");
-				}
-			}
-		} else {
-			uriPath = uri;
-			queryParams = null;
-		}
 		final String uriPathParts[] = uriPath.split("/");
 		final String containerName = uriPathParts[1];
 		final String objectId = uriPathParts.length > 2 ? uriPathParts[2] : null;
@@ -107,7 +87,7 @@ extends RequestHandlerBase<T> {
 			if(objectId != null && queryParams != null && queryParams.containsKey("uploads")) {
 				handleMpuInitRequest(containerName, objectId, ctx);
 			} else {
-				handleItemRequest(uri, method, containerName, objectId, size, ctx);
+				handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
 			}
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
@@ -152,22 +132,15 @@ extends RequestHandlerBase<T> {
 
 	@Override
 	protected final void handleContainerList(
-		final String name, final QueryStringDecoder queryStringDecoder,
-		final ChannelHandlerContext ctx
+		final String name, final Map<String, String> queryParams, final ChannelHandlerContext ctx
 	) {
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
-		final Map<String, List<String>> parameters = queryStringDecoder.parameters();
-		if(parameters.containsKey(MAX_COUNT_KEY)) {
-			maxCount = Integer.parseInt(parameters.get(MAX_COUNT_KEY).get(0));
-		} else {
-			LOG.warn(
-				Markers.ERR, "Failed to parse max keys argument value in the URI {}",
-				queryStringDecoder.uri()
-			);
+		if(queryParams.containsKey(MAX_COUNT_KEY)) {
+			maxCount = Integer.parseInt(queryParams.get(MAX_COUNT_KEY));
 		}
-		if(parameters.containsKey(MARKER_KEY)) {
-			marker = parameters.get(MARKER_KEY).get(0);
+		if(queryParams.containsKey(MARKER_KEY)) {
+			marker = queryParams.get(MARKER_KEY);
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
 		T lastObject;
@@ -218,6 +191,4 @@ extends RequestHandlerBase<T> {
 		HttpUtil.setContentLength(response, content.length);
 		ctx.write(response);
 	}
-
-
 }
