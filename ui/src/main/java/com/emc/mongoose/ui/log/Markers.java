@@ -17,4 +17,5 @@ public interface Markers {
 	Marker METRICS_MED_FILE_TOTAL = MarkerManager.getMarker("metricsMedFileTotal");
 	Marker IO_TRACE = MarkerManager.getMarker("ioTrace");
 	Marker CFG = MarkerManager.getMarker("cfg");
+	Marker MPU = MarkerManager.getMarker("mpu");
 }

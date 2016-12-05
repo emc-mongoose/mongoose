@@ -72,6 +72,11 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
+								"type": "MarkerFilter",
+								"marker": "mpu",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "ACCEPT",
@@ -153,6 +158,11 @@
 							}, {
 								"type": "MarkerFilter",
 								"marker": "ioTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "mpu",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
@@ -331,6 +341,28 @@
 						]
 					}
 				}, {
+					"name": "partsUploadFile",
+					"type": "loadJobFile",
+					"fileName": "parts.upload.log",
+					"PatternLayout": {
+						"pattern": "%m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "mpu",
+								"onMatch": "NEUTRAL",
+								"onMismatch": "DENY"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
@@ -359,6 +391,8 @@
 							"ref": "WebUI"
 						}, {
 							"ref": "cfgFile"
+						}, {
+							"ref": "partsUploadFile"
 						}
 					]
 				}

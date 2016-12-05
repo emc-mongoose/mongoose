@@ -11,12 +11,19 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.storage.mock.impl.http.request.XmlShortcuts.appendElement;
 
+import io.netty.buffer.EmptyByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.logging.log4j.Level;
@@ -84,10 +91,18 @@ extends RequestHandlerBase<T> {
 		final Channel channel = ctx.channel();
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(containerName != null) {
-			if(objectId != null && queryParams != null && queryParams.containsKey("uploads")) {
-				handleMpuInitRequest(containerName, objectId, ctx);
-			} else {
-				handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
+			if(objectId != null) {
+				if(queryParams != null) {
+					if(queryParams.containsKey("uploads")) {
+						handleMpuInitRequest(containerName, objectId, ctx);
+					} else if(queryParams.containsKey("uploadId")) {
+						handlePartRequest(queryParams, containerName, objectId, size, ctx);
+					} else {
+						handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
+					}
+				} else {
+					handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
+				}
 			}
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
@@ -126,6 +141,20 @@ extends RequestHandlerBase<T> {
 		response.headers().set(CONTENT_TYPE, "application/xml");
 		HttpUtil.setContentLength(response, content.length);
 		ctx.write(response);
+	}
+	
+	private void handlePartRequest(
+		final Map<String, String> queryParams, final String containerName, final String objectId,
+		final long size, final ChannelHandlerContext ctx
+	) {
+		final HttpHeaders respHeaders = new DefaultHttpHeaders();
+		respHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		respHeaders.set(HttpHeaderNames.ETAG, generateHexId(0x10));
+		final FullHttpResponse resp = new DefaultFullHttpResponse(
+			HTTP_1_1, OK, Unpooled.buffer(0), respHeaders, EmptyHttpHeaders.INSTANCE
+		);
+		ctx.write(resp);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 	}
 
 	private static final String MAX_COUNT_KEY = "max-keys";

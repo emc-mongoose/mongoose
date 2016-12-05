@@ -445,7 +445,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			}
 		};
 
-	private HttpRequest getCompleteMpuRequest(
+	private FullHttpRequest getCompleteMpuRequest(
 		final CompositeDataIoTask mpuTask, final String nodeAddr
 	) {
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
@@ -466,7 +466,6 @@ extends HttpStorageDriverBase<I, O, R> {
 				.append(COMPLETE_MPU_PART_ETAG_END);
 		}
 		content.append(COMPLETE_MPU_FOOTER);
-		mpuTask.put(KEY_CONTENT, content.toString());
 
 		final String srcPath = mpuTask.getSrcPath();
 		final I item = (I) mpuTask.getItem();
@@ -478,8 +477,10 @@ extends HttpStorageDriverBase<I, O, R> {
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
-		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, uriPath, httpHeaders
+		final String contentStr = content.toString();
+		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
+			HTTP_1_1, httpMethod, uriPath, Unpooled.wrappedBuffer(contentStr.getBytes()),
+			httpHeaders, EmptyHttpHeaders.INSTANCE
 		);
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, content.length());
 		applyMetaDataHeaders(httpHeaders);
@@ -494,7 +495,12 @@ extends HttpStorageDriverBase<I, O, R> {
 	public final void complete(final Channel channel, final O ioTask) {
 		if(ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
-			if(!compositeIoTask.allSubTasksDone()) {
+			if(compositeIoTask.allSubTasksDone()) {
+				LOG.info(
+					Markers.MPU, "{},{}", compositeIoTask.getItem().getName(),
+					compositeIoTask.get(KEY_UPLOAD_ID)
+				);
+			} else {
 				final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();
 				if(uploadId == null) {
 					ioTask.setStatus(IoTask.Status.RESP_FAIL_NOT_FOUND);
