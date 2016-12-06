@@ -152,11 +152,7 @@ implements StorageDriver<I, O, R> {
 				n = outTasksQueue.get(ioTasks, BATCH_SIZE);
 				if(n > 0) {
 					final List<R> ioTaskResults = new ArrayList<>(n);
-					try {
-						buildResults(ioTasks, ioTaskResults, n);
-					} catch(final Throwable cause) {
-						cause.printStackTrace(System.err);
-					}
+					buildResults(ioTasks, ioTaskResults, n);
 					if(ioTaskResultOutput != null) {
 						for(int i = 0; i < n; i += ioTaskResultOutput.put(ioTaskResults, i, n)) {
 							LockSupport.parkNanos(1);
