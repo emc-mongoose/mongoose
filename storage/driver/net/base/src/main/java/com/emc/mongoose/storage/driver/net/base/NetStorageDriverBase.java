@@ -4,17 +4,18 @@ import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
+import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -35,7 +36,6 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 
 import org.apache.commons.lang.SystemUtils;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -217,9 +217,33 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();
 		}
-		connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
+		if(IoType.NOOP.equals(task.getIoType())) {
+			new DummyConnectionLeaseCallback(task).operationComplete(null);
+		} else {
+			connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
+		}
 	}
-	
+
+	private final class DummyConnectionLeaseCallback
+	implements FutureListener<Channel> {
+
+		private final O ioTask;
+
+		public DummyConnectionLeaseCallback(final O ioTask) {
+			this.ioTask = ioTask;
+		}
+
+		@Override
+		public final void operationComplete(final Future<Channel> future) {
+			ioTask.startRequest();
+			sendRequest(null, ioTask);
+			ioTask.finishRequest();
+			concurrencyThrottle.release();
+			ioTask.setStatus(SUCC);
+			complete(null, ioTask);
+		}
+	}
+
 	private final class ConnectionLeaseCallback
 	implements FutureListener<Channel> {
 
@@ -267,7 +291,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	public void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
 		final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
-		if(connPool != null) {
+		if(connPool != null && channel != null) {
 			connPool.release(channel);
 		}
 		ioTaskCompleted(ioTask);

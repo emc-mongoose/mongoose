@@ -320,7 +320,7 @@ implements HttpStorageDriver<I, O, R> {
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException;
-	
+
 	@Override
 	protected ChannelFuture sendRequest(final Channel channel, final O ioTask) {
 
@@ -329,9 +329,13 @@ implements HttpStorageDriver<I, O, R> {
 		final I item = ioTask.getItem();
 
 		try {
-			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 
-			channel.write(httpRequest);
+			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
+			if(channel == null) {
+				return null;
+			} else {
+				channel.write(httpRequest);
+			}
 
 			if(IoType.CREATE.equals(ioType)) {
 				if(item instanceof DataItem) {

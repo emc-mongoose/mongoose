@@ -198,7 +198,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 			final long namingOffset = namingConfig.getOffset();
 
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
-				if(IoType.CREATE.equals(ioType)) {
+				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
 					final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 						namingType, namingPrefix, namingLength, namingRadix, namingOffset
 					);

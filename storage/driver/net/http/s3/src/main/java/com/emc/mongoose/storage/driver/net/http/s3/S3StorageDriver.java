@@ -492,7 +492,7 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	public final void complete(final Channel channel, final O ioTask) {
-		if(ioTask instanceof CompositeDataIoTask) {
+		if(channel != null && ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
 			if(!compositeIoTask.allSubTasksDone()) {
 				final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();
