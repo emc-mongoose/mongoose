@@ -97,6 +97,7 @@ extends HttpResponseHandlerBase<I, O, R> {
 					contentStr
 				);
 			}
+			content.clear();
 		}
 		super.handleResponseContentFinish(channel, ioTask);
 	}

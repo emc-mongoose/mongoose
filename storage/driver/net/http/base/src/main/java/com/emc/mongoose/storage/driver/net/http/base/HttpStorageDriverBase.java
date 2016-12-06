@@ -340,14 +340,7 @@ implements HttpStorageDriver<I, O, R> {
 			if(IoType.CREATE.equals(ioType)) {
 				if(item instanceof DataItem) {
 					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-					if(dataIoTask instanceof CompositeDataIoTask) {
-						final String content = ((CompositeDataIoTask) dataIoTask).get(KEY_CONTENT);
-						if(content != null && !content.isEmpty()) {
-							final ByteBuf contentByteBuff = Unpooled
-								.wrappedBuffer(content.getBytes(StandardCharsets.US_ASCII));
-							channel.write(contentByteBuff);
-						}
-					} else {
+					if(!(dataIoTask instanceof CompositeDataIoTask)) {
 						final DataItem dataItem = (DataItem) item;
 						final String srcPath = dataIoTask.getSrcPath();
 						if(null == srcPath || srcPath.isEmpty()) {
