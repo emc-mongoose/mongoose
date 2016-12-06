@@ -2,24 +2,23 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
+import com.emc.mongoose.common.io.collection.IoBuffer;
+import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
-import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-
-import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask.CompositeIoResult;
-import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask.PartialIoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -48,6 +47,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -73,6 +73,7 @@ implements LoadMonitor<R> {
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<String> itemInfoOutput;
 	private final Int2IntMap totalConcurrencyMap;
+	private final IoBuffer<R> ioTaskResultsQueue;
 
 	/**
 	 Single load job constructor
@@ -186,9 +187,13 @@ implements LoadMonitor<R> {
 		}
 		this.countLimit = countLimitSum;
 		this.sizeLimit = sizeLimitSum;
+		ioTaskResultsQueue = new LimitedQueueBuffer<>(
+			new ArrayBlockingQueue<>(firstLoadConfig.getQueueConfig().getSize())
+		);
 
 		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
 		this.worker.setDaemon(true);
+
 		UNCLOSED.add(this);
 	}
 
@@ -218,45 +223,161 @@ implements LoadMonitor<R> {
 		public final void run() {
 
 			long nextNanoTimeStamp;
+			int n;
+			final List<R> ioTaskResultsBuff = new ArrayList<>(BATCH_SIZE);
 
 			try {
 				while(true) {
-					nextNanoTimeStamp = System.nanoTime();
-					// refresh the stats
-					for(final int nextIoTypeCode : ioStats.keySet()) {
-						lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
+					ioTaskResultsBuff.clear();
+					n = ioTaskResultsQueue.get(ioTaskResultsBuff, BATCH_SIZE);
+					if(n > 0) {
+						ioTaskResultsDispatch(ioTaskResultsBuff, n);
 					}
-					Thread.sleep(1);
-					// output the current measurements periodically
+					refreshStats();
+					nextNanoTimeStamp = System.nanoTime();
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						LOG.info(
-							Markers.METRICS_STDOUT,
-							new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
-						);
-						if(!metricsConfig.getPrecondition()) {
-							LOG.info(
-								Markers.METRICS_FILE,
-								new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
-							);
-						}
-						/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
-							for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
-								try {
-									LOG.info(
-										Markers.MSG, "Storage driver \"{}\" active task count: {}",
-										nextDriver.toString(), nextDriver.getActiveTaskCount()
-									);
-								} catch(final RemoteException ignored) {
-								}
-							}
-						}*/
+						outputCurrentMetrics();
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
 					Thread.sleep(1);
 				}
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "Interrupted");
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to dispatch the I/O tasks results");
 			}
+		}
+
+		private void ioTaskResultsDispatch(final List<R> ioTaskResults, final int n) {
+
+
+			int m = n; // count of complete whole tasks
+
+			// I/O trace logging
+			if(!metricsConfig.getPrecondition()) {
+				LOG.debug(
+					Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n)
+				);
+			}
+
+			R ioTaskResult;
+			DataIoResult dataIoTaskResult;
+			int ioTypeCode;
+			int statusCode;
+			String itemInfo;
+			long reqDuration;
+			long respLatency;
+			long countBytesDone = 0;
+			ioTaskResult = ioTaskResults.get(0);
+			final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
+			IoStats ioTypeStats, ioTypeMedStats;
+
+			final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
+
+			for(int i = 0; i < n; i ++) {
+
+				if(i > 0) {
+					ioTaskResult = ioTaskResults.get(i);
+				}
+
+				if( // account only completed composite I/O tasks
+					ioTaskResult instanceof CompositeIoResult &&
+						!((CompositeIoResult) ioTaskResult).getCompleteFlag()
+					) {
+					m --;
+					continue;
+				}
+
+				itemInfo = ioTaskResult.getItemInfo();
+				ioTypeCode = ioTaskResult.getIoTypeCode();
+				statusCode = ioTaskResult.getStatusCode();
+				reqDuration = ioTaskResult.getDuration();
+				respLatency = ioTaskResult.getLatency();
+				if(isDataTransferred) {
+					dataIoTaskResult = (DataIoResult) ioTaskResult;
+					countBytesDone = dataIoTaskResult.getCountBytesDone();
+				}
+
+				ioTypeStats = ioStats.get(ioTypeCode);
+				ioTypeMedStats = medIoStats.get(ioTypeCode);
+
+				if(statusCode == IoTask.Status.SUCC.ordinal()) {
+					if(respLatency > 0 && respLatency > reqDuration) {
+						LOG.warn(
+							Markers.ERR, "{}: latency {} is more than duration: {}",
+							BasicLoadMonitor.this.getName(), respLatency, reqDuration
+						);
+					}
+					if(ioTaskResult instanceof PartialIoResult) {
+						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+							ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+						}
+						m --;
+					} else {
+						if(itemInfoOutput != null) {
+							itemsToPass.add(itemInfo);
+						}
+						// update the metrics with success
+						ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+							ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+						}
+					}
+
+				} else {
+					ioTypeStats.markFail();
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markFail();
+					}
+				}
+			}
+
+			if(itemInfoOutput != null) {
+				final int itemsToPassCount = itemsToPass.size();
+				try {
+					for(
+						int i = 0; i < itemsToPassCount;
+						i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
+						);
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to output {} items to {}",
+						itemsToPassCount, itemInfoOutput
+					);
+				}
+			}
+
+			counterResults.add(m);
+		}
+
+		private void refreshStats() {
+			for(final int nextIoTypeCode : ioStats.keySet()) {
+				lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
+			}
+		}
+
+		private void outputCurrentMetrics() {
+			LOG.info(
+				Markers.METRICS_STDOUT,
+				new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
+			);
+			if(!metricsConfig.getPrecondition()) {
+				LOG.info(
+					Markers.METRICS_FILE,
+					new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
+				);
+			}
+			/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
+				for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
+					try {
+						LOG.info(
+							Markers.MSG, "Storage driver \"{}\" active task count: {}",
+							nextDriver.toString(), nextDriver.getActiveTaskCount()
+						);
+					} catch(final RemoteException ignored) {
+					}
+				}
+			}*/
 		}
 	}
 
@@ -348,187 +469,15 @@ implements LoadMonitor<R> {
 
 
 	@Override
-	public void put(final R ioTaskResult) {
-
-		if(isInterrupted() || isClosed()) {
-			return;
-		}
-		
-		if( // account only completed composite I/O tasks
-			ioTaskResult instanceof CompositeIoResult &&
-			!((CompositeIoResult) ioTaskResult).getCompleteFlag()
-		) {
-			return;
-		}
-
-		// I/O trace logging
-		if(!metricsConfig.getPrecondition()) {
-			LOG.debug(Markers.IO_TRACE, new IoTraceCsvLogMessage<>(ioTaskResult));
-		}
-
-		final int ioTypeCode = ioTaskResult.getIoTypeCode();
-		final int statusCode = ioTaskResult.getStatusCode();
-		final String itemInfo = ioTaskResult.getItemInfo();
-		final long reqDuration = ioTaskResult.getDuration();
-		final long respLatency = ioTaskResult.getLatency();
-		final long countBytesDone;
-		if(ioTaskResult instanceof DataIoResult) {
-			final DataIoResult dataIoTaskResult = (DataIoResult) ioTaskResult;
-			countBytesDone = dataIoTaskResult.getCountBytesDone();
-		} else {
-			countBytesDone = 0;
-		}
-
-		final IoStats ioTypeStats = ioStats.get(ioTypeCode);
-		final IoStats ioTypeMedStats = medIoStats.get(ioTypeCode);
-
-		if(statusCode == IoTask.Status.SUCC.ordinal()) {
-
-			if(ioTaskResult instanceof PartialIoResult) {
-				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-					ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-				}
-			} else {
-				
-				ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-					ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
-				}
-				
-				// put into the output buffer
-				try {
-					itemInfoOutput.put(itemInfo);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
-						getName()
-					);
-				}
-			}
-
-		} else {
-			ioTypeStats.markFail();
-			if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-				ioTypeMedStats.markFail();
-			}
-		}
-
-		counterResults.increment();
+	public void put(final R ioTaskResult)
+	throws IOException {
+		ioTaskResultsQueue.put(ioTaskResult);
 	}
 
 	@Override
-	public int put(final List<R> ioTaskResults, final int from, final int to) {
-
-		final int n;
-		if(isInterrupted() || isClosed()) {
-			n = 0;
-		} else {
-			n = to - from;
-		}
-
-		if(n > 0) {
-			
-			int m = n; // count of complete whole tasks
-
-			// I/O trace logging
-			if(!metricsConfig.getPrecondition()) {
-				LOG.debug(
-					Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to)
-				);
-			}
-
-			R ioTaskResult;
-			DataIoResult dataIoTaskResult;
-			int ioTypeCode;
-			int statusCode;
-			String itemInfo;
-			long reqDuration;
-			long respLatency;
-			long countBytesDone = 0;
-			ioTaskResult = ioTaskResults.get(from);
-			final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
-			IoStats ioTypeStats, ioTypeMedStats;
-
-			final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
-
-			for(int i = from; i < to; i ++) {
-				
-				if(i > from) {
-					ioTaskResult = ioTaskResults.get(i);
-				}
-				
-				if( // account only completed composite I/O tasks
-					ioTaskResult instanceof CompositeIoResult &&
-					!((CompositeIoResult) ioTaskResult).getCompleteFlag()
-				) {
-					m --;
-					continue;
-				}
-				
-				itemInfo = ioTaskResult.getItemInfo();
-				ioTypeCode = ioTaskResult.getIoTypeCode();
-				statusCode = ioTaskResult.getStatusCode();
-				reqDuration = ioTaskResult.getDuration();
-				respLatency = ioTaskResult.getLatency();
-				if(isDataTransferred) {
-					dataIoTaskResult = (DataIoResult) ioTaskResult;
-					countBytesDone = dataIoTaskResult.getCountBytesDone();
-				}
-
-				ioTypeStats = ioStats.get(ioTypeCode);
-				ioTypeMedStats = medIoStats.get(ioTypeCode);
-
-				if(statusCode == IoTask.Status.SUCC.ordinal()) {
-					if(respLatency > 0 && respLatency > reqDuration) {
-						LOG.warn(
-							Markers.ERR, "{}: latency {} is more than duration: {}",
-							this.getName(), respLatency, reqDuration
-						);
-					}
-					if(ioTaskResult instanceof PartialIoResult) {
-						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-							ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-						}
-						m --;
-					} else {
-						if(itemInfoOutput != null) {
-							itemsToPass.add(itemInfo);
-						}
-						// update the metrics with success
-						ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-							ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
-						}
-					}
-					
-				} else {
-					ioTypeStats.markFail();
-					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-						ioTypeMedStats.markFail();
-					}
-				}
-			}
-
-			if(itemInfoOutput != null) {
-				final int itemsToPassCount = itemsToPass.size();
-				try {
-					for(
-						int i = 0; i < itemsToPassCount;
-						i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to output {} items to {}",
-						itemsToPassCount, itemInfoOutput
-					);
-				}
-			}
-
-			counterResults.add(m);
-		}
-
-		return n;
+	public int put(final List<R> ioTaskResults, final int from, final int to)
+	throws IOException {
+		return ioTaskResultsQueue.put(ioTaskResults, from, to);
 	}
 
 	@Override
@@ -725,7 +674,8 @@ implements LoadMonitor<R> {
 			}
 			medIoStats.clear();
 		}
-		
+
+		ioTaskResultsQueue.close();
 		if(itemInfoOutput != null) {
 			itemInfoOutput.close();
 		}

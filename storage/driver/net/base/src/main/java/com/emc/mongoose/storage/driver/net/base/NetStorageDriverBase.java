@@ -43,6 +43,7 @@ import org.apache.logging.log4j.Logger;
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,7 +125,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 
 	protected Channel getUnpooledConnection()
-	throws InterruptedException {
+	throws ConnectException, InterruptedException {
 
 		final String na = storageNodeAddrs[0];
 		final InetSocketAddress nodeAddr;

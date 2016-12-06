@@ -70,6 +70,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
@@ -143,7 +144,11 @@ extends HttpStorageDriverBase<I, O, R> {
 			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch(final InterruptedException e) {
 			return false;
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			return false;
 		}
+
 		boolean bucketExistedBefore = true;
 		if(checkBucketResp != null) {
 			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
@@ -177,7 +182,11 @@ extends HttpStorageDriverBase<I, O, R> {
 				putBucketResp = executeHttpRequest(putBucketReq);
 			} catch(final InterruptedException e) {
 				return false;
+			} catch(final ConnectException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				return false;
 			}
+
 			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
 				LOG.warn(
 					Markers.ERR, "The bucket creating response is: {}",
@@ -205,7 +214,11 @@ extends HttpStorageDriverBase<I, O, R> {
 			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
 		} catch(final InterruptedException e) {
 			return false;
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			return false;
 		}
+
 		final boolean versioningEnabled;
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			LOG.warn(
@@ -240,7 +253,11 @@ extends HttpStorageDriverBase<I, O, R> {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
 				return false;
+			} catch(final ConnectException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				return false;
 			}
+
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
 					putBucketVersioningResp.status().toString()
@@ -263,7 +280,11 @@ extends HttpStorageDriverBase<I, O, R> {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
 				return false;
+			} catch(final ConnectException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				return false;
 			}
+
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
 					putBucketVersioningResp.status().toString()
@@ -344,6 +365,8 @@ extends HttpStorageDriverBase<I, O, R> {
 		} catch(final InterruptedException ignored) {
 		} catch(final SAXException | ParserConfigurationException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the XML response parser");
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
 		}
 
 		return buff;

@@ -25,8 +25,6 @@ import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -53,8 +51,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -116,7 +114,7 @@ implements HttpStorageDriver<I, O, R> {
 	}
 
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
-	throws InterruptedException {
+	throws InterruptedException, ConnectException {
 		final Channel channel = getUnpooledConnection();
 		final ChannelPipeline pipeline = channel.pipeline();
 		pipeline.removeLast(); // remove the API specific handler
