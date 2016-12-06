@@ -308,4 +308,9 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
 	}
+
+	@Override
+	public final String toString() {
+		return String.format(super.toString(), "atmos");
+	}
 }
