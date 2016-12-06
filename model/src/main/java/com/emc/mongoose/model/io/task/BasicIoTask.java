@@ -239,9 +239,9 @@ implements IoTask<I, R> {
 		@Override
 		public void writeExternal(final ObjectOutput out)
 		throws IOException {
-			out.writeUTF(storageDriverAddr);
-			out.writeUTF(storageNodeAddr);
-			out.writeUTF(itemInfo);
+			out.writeUTF(storageDriverAddr == null ? "" : storageDriverAddr);
+			out.writeUTF(storageNodeAddr == null ? "" : storageNodeAddr);
+			out.writeUTF(itemInfo == null ? "" : itemInfo);
 			out.writeInt(ioTypeCode);
 			out.writeInt(statusCode);
 			out.writeLong(reqTimeStart);

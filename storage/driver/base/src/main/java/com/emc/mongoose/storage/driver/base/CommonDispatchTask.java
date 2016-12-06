@@ -34,7 +34,6 @@ implements Runnable {
 						try {
 							nextDispatchTask.run();
 						} catch(final Exception e) {
-							e.printStackTrace(System.err);
 							LogUtil.exception(
 								LOG, Level.WARN, e,
 								"Failed to invoke the I/O task dispatching for the \"{}\"",
