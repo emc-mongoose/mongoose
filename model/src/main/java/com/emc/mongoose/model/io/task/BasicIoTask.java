@@ -304,7 +304,7 @@ implements IoTask<I, R> {
 		return strb
 			.append(ioType.name()).append(',')
 			.append(item.toString()).append(',')
-			.append(dstPath).append(',')
+			.append(dstPath == null ? "" : dstPath).append(',')
 			.toString();
 	}
 	
@@ -313,7 +313,7 @@ implements IoTask<I, R> {
 	throws IOException {
 		out.writeInt(ioType.ordinal());
 		out.writeObject(item);
-		out.writeUTF(dstPath);
+		out.writeUTF(dstPath == null ? "" : dstPath);
 	}
 	
 	@Override

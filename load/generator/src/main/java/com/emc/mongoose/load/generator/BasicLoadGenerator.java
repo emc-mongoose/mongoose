@@ -150,7 +150,6 @@ implements LoadGenerator<I, O, R>, Output<I> {
 					) {
 						break;
 					} catch(final Exception e) {
-						e.printStackTrace(System.err);
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
 							"batch size = {}, batch offset = {}", producedItemsCount, n, m
