@@ -45,7 +45,11 @@ implements PartialDataIoTask<I, R> {
 	public static class BasicPartialDataIoResult
 	extends BasicDataIoResult
 	implements PartialDataIoResult {
-		
+
+		public BasicPartialDataIoResult() {
+			super();
+		}
+
 		public BasicPartialDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
 			final int ioTypeCode, final int statusCode, final long reqTimeStart, final long duration,

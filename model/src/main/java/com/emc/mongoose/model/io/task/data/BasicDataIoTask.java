@@ -57,6 +57,10 @@ implements DataIoTask<T, R> {
 		
 		private long dataLatency;
 		private long transferredByteCount;
+
+		public BasicDataIoResult() {
+			super();
+		}
 		
 		public BasicDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,

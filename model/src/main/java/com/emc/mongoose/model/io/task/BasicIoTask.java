@@ -180,6 +180,9 @@ implements IoTask<I, R> {
 		private long reqTimeStart;
 		private long duration;
 		private long latency;
+
+		public BasicIoResult() {
+		}
 		
 		public BasicIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
