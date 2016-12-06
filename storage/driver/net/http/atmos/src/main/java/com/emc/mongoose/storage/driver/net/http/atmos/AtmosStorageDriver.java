@@ -189,6 +189,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final HttpMethod getHttpMethod(final IoType ioType) {
 		switch(ioType) {
 			case CREATE:
+			case NOOP:
 				return HttpMethod.POST;
 			case READ:
 				return HttpMethod.GET;
