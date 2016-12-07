@@ -97,6 +97,10 @@ implements CompositeDataIoTask<I, R> {
 	implements CompositeDataIoResult {
 		
 		private boolean completeFlag;
+
+		public BasicCompositeDataIoResult() {
+			super();
+		}
 		
 		public BasicCompositeDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,

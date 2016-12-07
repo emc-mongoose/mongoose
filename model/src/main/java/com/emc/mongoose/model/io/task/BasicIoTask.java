@@ -180,6 +180,9 @@ implements IoTask<I, R> {
 		private long reqTimeStart;
 		private long duration;
 		private long latency;
+
+		public BasicIoResult() {
+		}
 		
 		public BasicIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
@@ -239,9 +242,9 @@ implements IoTask<I, R> {
 		@Override
 		public void writeExternal(final ObjectOutput out)
 		throws IOException {
-			out.writeUTF(storageDriverAddr);
-			out.writeUTF(storageNodeAddr);
-			out.writeUTF(itemInfo);
+			out.writeUTF(storageDriverAddr == null ? "" : storageDriverAddr);
+			out.writeUTF(storageNodeAddr == null ? "" : storageNodeAddr);
+			out.writeUTF(itemInfo == null ? "" : itemInfo);
 			out.writeInt(ioTypeCode);
 			out.writeInt(statusCode);
 			out.writeLong(reqTimeStart);
@@ -304,7 +307,7 @@ implements IoTask<I, R> {
 		return strb
 			.append(ioType.name()).append(',')
 			.append(item.toString()).append(',')
-			.append(dstPath).append(',')
+			.append(dstPath == null ? "" : dstPath).append(',')
 			.toString();
 	}
 	
@@ -313,7 +316,7 @@ implements IoTask<I, R> {
 	throws IOException {
 		out.writeInt(ioType.ordinal());
 		out.writeObject(item);
-		out.writeUTF(dstPath);
+		out.writeUTF(dstPath == null ? "" : dstPath);
 	}
 	
 	@Override

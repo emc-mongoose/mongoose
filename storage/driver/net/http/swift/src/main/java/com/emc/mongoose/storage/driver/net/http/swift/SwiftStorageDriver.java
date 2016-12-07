@@ -26,6 +26,7 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseConta
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -46,7 +47,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
-
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,6 +55,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -110,6 +112,9 @@ extends HttpStorageDriverBase<I, O, R> {
 			checkContainerResp = executeHttpRequest(checkContainerReq);
 		} catch(final InterruptedException e) {
 			return false;
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			return false;
 		}
 
 		final boolean containerExists, versioningEnabled;
@@ -157,7 +162,11 @@ extends HttpStorageDriverBase<I, O, R> {
 				putContainerResp = executeHttpRequest(putContainerReq);
 			} catch(final InterruptedException e) {
 				return false;
+			} catch(final ConnectException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				return false;
 			}
+
 			final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
 			if(!HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
 				LOG.warn(
@@ -229,6 +238,8 @@ extends HttpStorageDriverBase<I, O, R> {
 				);
 			}
 		} catch(final InterruptedException ignored) {
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
 		}
 
 		return buff;
@@ -391,7 +402,11 @@ extends HttpStorageDriverBase<I, O, R> {
 				getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
 			} catch(final InterruptedException e) {
 				return null;
+			} catch(final ConnectException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				return null;
 			}
+
 			authToken = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
 			if(authToken == null || authToken.isEmpty()) {
 				LOG.warn(

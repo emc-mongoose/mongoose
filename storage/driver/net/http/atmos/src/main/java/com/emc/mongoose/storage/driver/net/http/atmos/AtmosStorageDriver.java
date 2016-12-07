@@ -23,6 +23,7 @@ import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.Unpooled;
@@ -38,13 +39,14 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
-
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
@@ -146,6 +148,9 @@ extends HttpStorageDriverBase<I, O, R> {
 				getSubtenantResp = executeHttpRequest(getSubtenantReq);
 			} catch(final InterruptedException e) {
 				return null;
+			} catch(final ConnectException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				return null;
 			}
 
 			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
@@ -184,6 +189,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final HttpMethod getHttpMethod(final IoType ioType) {
 		switch(ioType) {
 			case CREATE:
+			case NOOP:
 				return HttpMethod.POST;
 			case READ:
 				return HttpMethod.GET;
@@ -301,5 +307,10 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
+	}
+
+	@Override
+	public final String toString() {
+		return String.format(super.toString(), "atmos");
 	}
 }
