@@ -167,7 +167,6 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 					}
 				}
 				break;
-			case NOOP:
 			case READ:
 			case UPDATE:
 			case DELETE:
@@ -198,7 +197,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 			final long namingOffset = namingConfig.getOffset();
 
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
-				if(IoType.CREATE.equals(ioType)) {
+				if(IoType.NOOP.equals(ioType) || IoType.CREATE.equals(ioType)) {
 					final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 						namingType, namingPrefix, namingLength, namingRadix, namingOffset
 					);

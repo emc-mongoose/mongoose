@@ -327,7 +327,7 @@ implements HttpStorageDriver<I, O, R> {
 		final String nodeAddr = ioTask.getNodeAddr();
 		final IoType ioType = ioTask.getIoType();
 		final I item = ioTask.getItem();
-
+		
 		try {
 			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 

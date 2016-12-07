@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -217,7 +218,15 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		} catch(final InterruptedException e) {
 			throw new InterruptedIOException();
 		}
-		connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
+		if(IoType.NOOP.equals(task.getIoType())) {
+			task.startRequest();
+			task.finishRequest();
+			task.startResponse();
+			task.finishResponse();
+			ioTaskCompleted(task);
+		} else {
+			connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
+		}
 	}
 	
 	private final class ConnectionLeaseCallback
