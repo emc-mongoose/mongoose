@@ -23,12 +23,11 @@ public class Main {
 		
 		LogUtil.init();
 
-		final Map<String, Object> cliArgs = CliArgParser.parseArgs(args);
 		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
-			throw new UserShootHisFootException("Config is null");
+			throw new IllegalStateException();
 		}
-		config.apply(cliArgs);
+		config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
 
 		final String scenarioValue = config.getScenarioConfig().getFile();
 		final Path scenarioPath;

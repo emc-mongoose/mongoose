@@ -51,7 +51,7 @@ public class ConfigTest {
 				args.add(argName + '=' + argsMap.get(argName));
 			}
 		}
-		final Map<String, Object> argTree = CliArgParser.parseArgs(args.toArray(new String[]{}));
+		final Map<String, Object> argTree = CliArgParser.parseArgs(null, args.toArray(new String[]{}));
 		
 		final Config config = ConfigParser.loadDefaultConfig();
 		config.apply(argTree);
@@ -70,7 +70,7 @@ public class ConfigTest {
 			"16MB",
 			dataConfig.getContentConfig().getRingSize().toString()
 		);
-		assertEquals(1, dataConfig.getRangesConfig().getRandomCount());
+		assertEquals(1, dataConfig.getRangesConfig().getRandom());
 		final Config.LoadConfig loadConfig = config.getLoadConfig();
 		assertEquals(1000, loadConfig.getLimitConfig().getCount());
 		assertEquals(12.345, loadConfig.getLimitConfig().getRate());

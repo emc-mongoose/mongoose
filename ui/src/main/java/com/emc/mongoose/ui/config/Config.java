@@ -63,7 +63,7 @@ implements Serializable {
 	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
 	@JsonProperty(KEY_VERSION) private String version;
-	@JsonProperty(KEY_ALIASING) private Map<String, Object> aliasingConfig;
+	@JsonProperty(KEY_ALIASING) private List<Map<String, Object>> aliasingConfig;
 
 	public Config() {}
 
@@ -74,8 +74,8 @@ implements Serializable {
 		this.loadConfig = new LoadConfig(config.getLoadConfig());
 		this.scenarioConfig = new ScenarioConfig(config.getScenarioConfig());
 		this.storageConfig = new StorageConfig(config.getStorageConfig());
-		final Map<String, Object> ac = config.getAliasingConfig();
-		this.aliasingConfig = ac == null ? null : new HashMap<>(config.getAliasingConfig());
+		final List<Map<String, Object>> ac = config.getAliasingConfig();
+		this.aliasingConfig = ac == null ? null : new ArrayList<>(config.getAliasingConfig());
 	}
 
 	public final String getVersion() {
@@ -102,7 +102,7 @@ implements Serializable {
 		return itemConfig;
 	}
 
-	public final Map<String, Object> getAliasingConfig() {
+	public final List<Map<String, Object>> getAliasingConfig() {
 		return aliasingConfig;
 	}
 	
@@ -130,7 +130,7 @@ implements Serializable {
 		this.itemConfig = itemConfig;
 	}
 	
-	public final void setAliasingConfig(final Map<String, Object> aliasingConfig) {
+	public final void setAliasingConfig(final List<Map<String, Object>> aliasingConfig) {
 		this.aliasingConfig = aliasingConfig;
 	}
 	

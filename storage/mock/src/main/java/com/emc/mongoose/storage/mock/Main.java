@@ -35,7 +35,7 @@ public class Main {
 		if(config == null) {
 			throw new IllegalStateException();
 		}
-		config.apply(CliArgParser.parseArgs(args));
+		config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
 
 		final LoadConfig loadConfig = config.getLoadConfig();
 		final JobConfig jobConfig = loadConfig.getJobConfig();

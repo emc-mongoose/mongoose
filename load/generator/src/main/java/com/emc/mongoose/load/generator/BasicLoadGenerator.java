@@ -56,8 +56,8 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final Input<String> dstPathInput,
-		final IoTaskBuilder<I, O, R> ioTaskBuilder, final long countLimit, final int maxItemQueueSize,
-		final boolean isCircular
+		final IoTaskBuilder<I, O, R> ioTaskBuilder, final long countLimit,
+		final int maxItemQueueSize, final boolean isCircular
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;

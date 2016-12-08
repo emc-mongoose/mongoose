@@ -1,4 +1,56 @@
 {
+	"aliasing" : [
+		{
+			"name" : "load-threads",
+			"deprecated" : true,
+			"target" : "load-concurrency"
+		},
+		{
+			"name" : "run-id",
+			"deprecated" : true,
+			"target" : "load-job-name"
+		},
+		{
+			"name" : "noop",
+			"target" : "load-type=noop"
+		},
+		{
+			"name" : "create",
+			"target" : "load-type=create"
+		},
+		{
+			"name" : "read",
+			"target" : "load-type=read"
+		},
+		{
+			"name" : "update",
+			"target" : "load-type=update"
+		},
+		{
+			"name" : "delete",
+			"target" : "load-type=delete"
+		},
+		{
+			"name" : "atmos-subtenant",
+			"target" : "storage-auth-token"
+		},
+		{
+			"name" : "s3-input-bucket",
+			"target" : "item-input-path"
+		},
+		{
+			"name" : "s3-output-bucket",
+			"target" : "item-output-path"
+		},
+		{
+			"name" : "swift-input-container",
+			"target" : "item-input-path"
+		},
+		{
+			"name" : "swift-output-container",
+			"target" : "item-output-path"
+		}
+	],
 	"item" : {
 		"data" : {
 			"content" : {

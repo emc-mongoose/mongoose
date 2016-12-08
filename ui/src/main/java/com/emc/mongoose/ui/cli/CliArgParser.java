@@ -1,6 +1,11 @@
 package com.emc.mongoose.ui.cli;
 
+import com.emc.mongoose.ui.log.Markers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,23 +13,62 @@ import java.util.Map;
  */
 public final class CliArgParser {
 	
+	private static final Logger LOG = LogManager.getLogger();
+
 	public static final String ARG_PREFIX = "--";
 	public static final String ARG_SEP = "-";
+
+	private static final String KEY_NAME = "name";
+	private static final String KEY_DEPRECATED = "deprecated";
+	private static final String KEY_TARGET = "target";
 	
 	public static void main(final String... args)
 	throws IllegalArgumentException {
-		final Map<String, Object> argTree = parseArgs(args);
+		final Map<String, Object> argTree = parseArgs(null, args);
 		System.out.println(argTree);
 	}
 	
-	public static Map<String, Object> parseArgs(final String... args)
-	throws IllegalArgumentException {
+	public static Map<String, Object> parseArgs(
+		final List<Map<String, Object>> aliasingConfig, final String... args
+	) throws IllegalArgumentException {
 
 		final Map<String, Object> tree = new HashMap<>();
 
 		String argValPair[];
+		String aliasArgValPair[];
+		String nextAliasName;
+		String nextAliasTarget;
+		boolean nextDeprecatedFlag;
+
 		for(final String arg : args) {
+
 			argValPair = arg.split("=", 2);
+
+			for(final Map<String, Object> aliasingNode : aliasingConfig) {
+				nextAliasName = ARG_PREFIX + aliasingNode.get(KEY_NAME);
+				nextAliasTarget = ARG_PREFIX + aliasingNode.get(KEY_TARGET);
+				nextDeprecatedFlag = aliasingNode.containsKey(KEY_DEPRECATED) ?
+					(boolean) aliasingNode.get(KEY_DEPRECATED) : false;
+				if(arg.startsWith(nextAliasName)) {
+					if(nextDeprecatedFlag) {
+						LOG.warn(
+							Markers.ERR, "The argument \"{}\" is deprecated, use \"{}\" instead",
+							nextAliasName, nextAliasTarget
+						);
+					}
+					aliasArgValPair = nextAliasTarget.split("=", 2);
+					argValPair[0] = aliasArgValPair[0];
+					if(aliasArgValPair.length == 2) {
+						if(argValPair.length == 2) {
+							argValPair[1] = aliasArgValPair[1];
+						} else {
+							argValPair = new String[] { argValPair[0], aliasArgValPair[1] };
+						}
+					}
+					break;
+				}
+			}
+
 			if(argValPair.length > 1) {
 				parseArg(tree, argValPair[0], argValPair[1]);
 			} else {

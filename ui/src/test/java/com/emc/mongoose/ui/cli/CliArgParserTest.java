@@ -26,7 +26,7 @@ public class CliArgParserTest {
 		for(final String argName : argsMap.keySet()) {
 			args.add(argName + '=' + argsMap.get(argName));
 		}
-		final Map<String, Object> argTree = CliArgParser.parseArgs(args.toArray(new String[]{}));
+		final Map<String, Object> argTree = CliArgParser.parseArgs(null, args.toArray(new String[]{}));
 		
 		assertEquals(argsMap.get("--name"), argTree.get("name"));
 		assertEquals(
