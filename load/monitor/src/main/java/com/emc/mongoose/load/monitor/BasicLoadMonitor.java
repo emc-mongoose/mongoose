@@ -705,6 +705,7 @@ implements LoadMonitor<R> {
 				LOG.debug(
 					Markers.MSG, "{}: await exit due to IO Tasks have been completed", getName()
 				);
+				return true;
 			}
 		}
 		LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
