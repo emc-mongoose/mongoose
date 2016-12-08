@@ -20,4 +20,6 @@ extends Daemon {
 	void setRateThrottle(final Throttle<Object> rateThrottle);
 
 	void setOutput(final Output<O> ioTaskOutput);
+
+	long getProducedItemsCount();
 }

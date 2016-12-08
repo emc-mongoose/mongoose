@@ -249,6 +249,11 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	}
 
 	@Override
+	public long getProducedItemsCount() {
+		return producedItemsCount;
+	}
+
+	@Override
 	protected void doStart()
 	throws IllegalStateException {
 		worker.start();

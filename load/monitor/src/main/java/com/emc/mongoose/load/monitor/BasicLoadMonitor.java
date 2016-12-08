@@ -291,6 +291,32 @@ implements LoadMonitor<R> {
 		return false;
 	}
 
+	private boolean ioTasksCompleted() {
+		for(final LoadGenerator<I, O, R> nextLoadGenerator : driversMap.keySet()) {
+			try {
+				if(nextLoadGenerator.isShutdown()) {
+					long producedItemsCount = nextLoadGenerator.getProducedItemsCount();
+					long completedTasksCount = 0;
+					for(final StorageDriver<I, O, R> nextStorageDriver
+							: driversMap.get(nextLoadGenerator)) {
+						completedTasksCount += nextStorageDriver.getCompletedTaskCount();
+					}
+
+					if(completedTasksCount < producedItemsCount) {
+						return false;
+					}
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					nextLoadGenerator
+				);
+			}
+		}
+
+		return true;
+	}
+
 	private boolean isDone() {
 		if(isDoneCountLimit()) {
 			LOG.debug(Markers.MSG, "{}: done due to max count done state", getName());
@@ -674,6 +700,11 @@ implements LoadMonitor<R> {
 			if(isDone()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
 				return true;
+			}
+			if(ioTasksCompleted()) {
+				LOG.debug(
+					Markers.MSG, "{}: await exit due to IO Tasks have been completed", getName()
+				);
 			}
 		}
 		LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
