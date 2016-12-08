@@ -180,8 +180,8 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	protected final void appendSpecificHandlers(final ChannelPipeline pipeline) {
-		super.appendSpecificHandlers(pipeline);
+	protected final void appendHandlers(final ChannelPipeline pipeline) {
+		super.appendHandlers(pipeline);
 		pipeline.addLast(new AtmosResponseHandler<>(this, verifyFlag));
 	}
 

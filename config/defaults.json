@@ -127,14 +127,16 @@
 		"file" : "scenario/default.json"
 	},
 	"socket" : {
-		"timeoutMilliSec" : 1000000,
-		"reuseAddr" : true,
-		"keepAlive" : true,
-		"tcpNoDelay" : true,
-		"linger" : 0,
 		"bindBacklogSize" : 0,
 		"interestOpQueued" : false,
-		"selectInterval" : 100
+		"keepAlive" : true,
+		"linger" : 0,
+		"reuseAddr" : true,
+		"rcvBuf" : "4KB",
+		"selectInterval" : 100,
+		"sndBuf" : "4KB",
+		"tcpNoDelay" : true,
+		"timeoutMilliSec" : 0
 	},
 	"storage" : {
 		"auth" : {

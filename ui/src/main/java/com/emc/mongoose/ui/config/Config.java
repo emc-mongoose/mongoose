@@ -145,6 +145,8 @@ implements Serializable {
 		public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
 		public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
 		public static final String KEY_SELECT_INTERVAL = "selectInterval";
+		public static final String KEY_RCVBUF = "rcvBuf";
+		public static final String KEY_SNDBUF = "sndBuf";
 		
 		public final void setTimeoutMilliSec(final int timeoutMilliSec) {
 			this.timeoutMilliSec = timeoutMilliSec;
@@ -177,6 +179,10 @@ implements Serializable {
 		public final void setSelectInterval(final int selectInterval) {
 			this.selectInterval = selectInterval;
 		}
+
+		public final void setRcvBuf(final SizeInBytes rcvBuf) {
+			this.rcvBuf = rcvBuf;
+		}
 		
 		@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
 		@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
@@ -186,6 +192,8 @@ implements Serializable {
 		@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
 		@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
 		@JsonProperty(KEY_SELECT_INTERVAL) private int selectInterval;
+		@JsonProperty(KEY_RCVBUF) private SizeInBytes rcvBuf;
+		@JsonProperty(KEY_SNDBUF) private SizeInBytes sndBuf;
 
 		public SocketConfig() {}
 
@@ -198,6 +206,8 @@ implements Serializable {
 			this.bindBackLogSize = other.getBindBackLogSize();
 			this.interestOpQueued = other.getInterestOpQueued();
 			this.selectInterval = other.getSelectInterval();
+			this.rcvBuf = new SizeInBytes(other.getRcvBuf());
+			this.sndBuf = new SizeInBytes(other.getSndBuf());
 		}
 
 		public final int getTimeoutMilliSec() {
@@ -230,6 +240,14 @@ implements Serializable {
 
 		public final int getSelectInterval() {
 			return selectInterval;
+		}
+
+		public final SizeInBytes getRcvBuf() {
+			return rcvBuf;
+		}
+
+		public final SizeInBytes getSndBuf() {
+			return sndBuf;
 		}
 	}
 

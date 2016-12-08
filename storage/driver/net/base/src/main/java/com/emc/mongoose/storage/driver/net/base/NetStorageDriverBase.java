@@ -32,6 +32,7 @@ import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 
@@ -66,6 +67,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Input<String> nodeSelector;
 	private final EventLoopGroup workerGroup;
 	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
+	private final int socketTimeout;
 	private final boolean sslFlag;
 	
 	protected NetStorageDriverBase(
@@ -74,6 +76,15 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	) {
 		super(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag);
 		sslFlag = storageConfig.getSsl();
+		final long sto = socketConfig.getTimeoutMilliSec();
+		if(sto < 0 || sto > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException(
+				"Socket timeout shouldn't be more than " + Integer.MAX_VALUE +
+				" seconds and less than 0"
+			);
+		} else {
+			this.socketTimeout = (int) sto;
+		}
 		storageNodePort = storageConfig.getPort();
 		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
@@ -102,14 +113,13 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
 		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
 		//bootstrap.option(ChannelOption.AUTO_READ)
-		//bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS)
-		//bootstrap.option(ChannelOption.SO_RCVBUF);
-		//bootstrap.option(ChannelOption.SO_SNDBUF);
+		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, socketConfig.getTimeoutMilliSec());
+		bootstrap.option(ChannelOption.SO_RCVBUF, (int) socketConfig.getRcvBuf().get());
+		bootstrap.option(ChannelOption.SO_SNDBUF, (int) socketConfig.getSndBuf().get());
 		//bootstrap.option(ChannelOption.SO_BACKLOG, socketConfig.getBindBackLogSize());
 		bootstrap.option(ChannelOption.SO_KEEPALIVE, socketConfig.getKeepAlive());
 		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
-		//bootstrap.option(ChannelOption.SO_TIMEOUT, socketConfig.getTimeoutMillisec());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
 		for(final String na : storageNodeAddrs) {
 			final InetSocketAddress nodeAddr;
@@ -145,7 +155,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 					@Override
 					protected final void initChannel(final SocketChannel channel)
 					throws Exception {
-						appendSpecificHandlers(channel.pipeline());
+						appendHandlers(channel.pipeline());
 					}
 				}
 			);
@@ -313,10 +323,17 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	public final void channelCreated(final Channel channel)
 	throws Exception {
-		appendSpecificHandlers(channel.pipeline());
+		appendHandlers(channel.pipeline());
 	}
 
-	protected void appendSpecificHandlers(final ChannelPipeline pipeline) {
+	protected void appendHandlers(final ChannelPipeline pipeline) {
+		if(socketTimeout > 0) {
+			pipeline.addLast(
+				new IdleStateHandler(
+					socketTimeout, socketTimeout, socketTimeout, TimeUnit.MILLISECONDS
+				)
+			);
+		}
 		if(sslFlag) {
 			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setUseClientMode(true);

@@ -137,8 +137,8 @@ implements HttpStorageDriver<I, O, R> {
 	}
 
 	@Override
-	protected void appendSpecificHandlers(final ChannelPipeline pipeline) {
-		super.appendSpecificHandlers(pipeline);
+	protected void appendHandlers(final ChannelPipeline pipeline) {
+		super.appendHandlers(pipeline);
 		pipeline.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true));
 		pipeline.addLast(new ChunkedWriteHandler());
 	}

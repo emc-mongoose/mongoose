@@ -22,11 +22,13 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.PrematureChannelClosureException;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 
 /**
@@ -70,6 +72,14 @@ extends SimpleChannelInboundHandler<M> {
 			final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 			ioTask.setStatus(FAIL_UNKNOWN);
 			driver.complete(channel, ioTask);
+		}
+	}
+
+	@Override
+	public final void userEventTriggered(final ChannelHandlerContext ctx, final Object evt)
+	throws Exception {
+		if(evt instanceof IdleStateEvent) {
+			throw new SocketTimeoutException();
 		}
 	}
 	
