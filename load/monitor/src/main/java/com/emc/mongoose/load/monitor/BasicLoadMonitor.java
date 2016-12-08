@@ -305,6 +305,8 @@ implements LoadMonitor<R> {
 					if(completedTasksCount < producedItemsCount) {
 						return false;
 					}
+				} else {
+					return false;
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
