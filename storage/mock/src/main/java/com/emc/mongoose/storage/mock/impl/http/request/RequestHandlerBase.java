@@ -76,7 +76,7 @@ extends ChannelInboundHandlerAdapter {
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
 	private final StorageMockClient<T> remoteStorage;
-	private final StorageMock<T> localStorage;
+	protected final StorageMock<T> localStorage;
 	private final StorageIoStats ioStats;
 	private final String apiClsName;
 
@@ -161,6 +161,7 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	private void handle(final ChannelHandlerContext ctx) {
+
 		if(rateLimit > 0) {
 			if(ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
@@ -173,6 +174,13 @@ extends ChannelInboundHandlerAdapter {
 			}
 		}
 		final Channel channel = ctx.channel();
+
+		if(localStorage.dropConnection()) {
+			LOG.warn(Markers.MSG, "Dropped the connection \"{}\"", channel);
+			channel.close();
+			return;
+		}
+
 		final String uri = channel.attr(ATTR_KEY_REQUEST).get().uri();
 		final HttpMethod method = channel.attr(ATTR_KEY_REQUEST).get().method();
 		final long size;
@@ -203,6 +211,7 @@ extends ChannelInboundHandlerAdapter {
 			uriPath = uri;
 			queryParams = null;
 		}
+
 		doHandle(uriPath, queryParams, method, size, ctx);
 	}
 
@@ -394,6 +403,9 @@ extends ChannelInboundHandlerAdapter {
 		ioStats.markRead(true, size);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
+		}
+		if(localStorage.missResponse()) {
+			return;
 		}
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);

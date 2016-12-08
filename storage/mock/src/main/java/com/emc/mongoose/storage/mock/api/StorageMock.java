@@ -17,25 +17,31 @@ extends Daemon {
 	String DEFAULT_CONTAINER_NAME = "default";
 
 	long getSize();
+
 	long getCapacity();
+
+	boolean dropConnection();
+
+	boolean missResponse();
+
 	StorageIoStats getStats();
-	//
+
 	void putIntoDefaultContainer(final List<T> dataItems);
-	//
+
 	void createContainer(final String name);
-	//
+
 	ObjectContainerMock<T> getContainer(final String name);
-	//
+
 	void deleteContainer(final String name);
-	//
+
 	T getObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException;
-	//
+
 	void createObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException;
-	//
+
 	void deleteObject(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException;

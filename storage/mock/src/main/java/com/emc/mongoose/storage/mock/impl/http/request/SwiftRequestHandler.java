@@ -76,6 +76,9 @@ extends RequestHandlerBase<T> {
 		final String uriPath, final Map<String, String> queryParams, final HttpMethod method,
 		final long size, final ChannelHandlerContext ctx
 	) {
+		if(localStorage.missResponse()) {
+			return;
+		}
 		FullHttpResponse response = null;
 		final Channel channel = ctx.channel();
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
@@ -125,6 +128,9 @@ extends RequestHandlerBase<T> {
 	protected void handleContainerList(
 		final String name, final Map<String, String> queryParams, final ChannelHandlerContext ctx
 	) {
+		if(localStorage.missResponse()) {
+			return;
+		}
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
 		if(queryParams.containsKey(LIMIT_KEY)) {

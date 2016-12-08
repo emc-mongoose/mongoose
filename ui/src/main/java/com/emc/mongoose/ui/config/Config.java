@@ -1288,9 +1288,10 @@ implements Serializable {
 		public static final class MockConfig
 		implements Serializable {
 
-			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_CAPACITY = "capacity";
 			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_FAIL = "fail";
+			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_NODE = "node";
 			
 			public final void setHeadCount(final int headCount) {
@@ -1301,10 +1302,12 @@ implements Serializable {
 				this.capacity = capacity;
 			}
 			
-			public final void setContainerConfig(
-				final ContainerConfig containerConfig
-			) {
+			public final void setContainerConfig(final ContainerConfig containerConfig) {
 				this.containerConfig = containerConfig;
+			}
+
+			public final void setFailConfig(final FailConfig failConfig) {
+				this.failConfig = failConfig;
 			}
 
 			public final void setNode(final boolean node) {
@@ -1314,6 +1317,7 @@ implements Serializable {
 			@JsonProperty(KEY_HEAD_COUNT) private int headCount;
 			@JsonProperty(KEY_CAPACITY) private int capacity;
 			@JsonProperty(KEY_CONTAINER) private ContainerConfig containerConfig;
+			@JsonProperty(KEY_FAIL) private FailConfig failConfig;
 			@JsonProperty(KEY_NODE) private boolean node;
 
 			public MockConfig() {
@@ -1323,6 +1327,7 @@ implements Serializable {
 				this.headCount = other.getHeadCount();
 				this.capacity = other.getCapacity();
 				this.containerConfig = new ContainerConfig(other.getContainerConfig());
+				this.failConfig = new FailConfig(other.getFailConfig());
 				this.node = other.getNode();
 			}
 
@@ -1336,6 +1341,10 @@ implements Serializable {
 
 			public ContainerConfig getContainerConfig() {
 				return containerConfig;
+			}
+
+			public FailConfig getFailConfig() {
+				return failConfig;
 			}
 
 			public boolean getNode() {
@@ -1373,6 +1382,39 @@ implements Serializable {
 
 				public int getCountLimit() {
 					return countLimit;
+				}
+			}
+
+			public static final class FailConfig
+			implements Serializable {
+
+				public static final String KEY_CONNECTIONS = "connections";
+				public static final String KEY_RESPONSES = "responses";
+				@JsonProperty(KEY_CONNECTIONS) private long connections;
+				@JsonProperty(KEY_RESPONSES) private long responses;
+
+				public FailConfig() {
+				}
+
+				public FailConfig(final FailConfig other) {
+					this.connections = other.getConnections();
+					this.responses = other.getResponses();
+				}
+
+				public final long getConnections() {
+					return connections;
+				}
+
+				public final void setConnections(final long connections) {
+					this.connections = connections;
+				}
+
+				public final long getResponses() {
+					return responses;
+				}
+
+				public final void setResponses(final long responses) {
+					this.responses = responses;
 				}
 			}
 

@@ -175,10 +175,12 @@ extends RequestHandlerBase<T> {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if(channel.attr(ATTR_KEY_CTX_WRITE_FLAG).get()) {
-			if (response == null) {
-				writeEmptyResponse(ctx);
-			} else {
-				writeResponse(ctx, response);
+			if(!localStorage.missResponse()) {
+				if(response == null) {
+					writeEmptyResponse(ctx);
+				} else {
+					writeResponse(ctx, response);
+				}
 			}
 		}
 	}

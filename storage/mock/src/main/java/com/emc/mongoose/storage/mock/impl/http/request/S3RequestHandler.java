@@ -103,9 +103,15 @@ extends RequestHandlerBase<T> {
 				} else {
 					handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
 				}
+			} else {
+				handleContainerRequest(method, containerName, queryParams, ctx);
 			}
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
+		}
+
+		if(localStorage.missResponse()) {
+			return;
 		}
 		if(channel.attr(ATTR_KEY_CTX_WRITE_FLAG).get()) {
 			writeEmptyResponse(ctx);
@@ -134,6 +140,10 @@ extends RequestHandlerBase<T> {
 			return;
 		}
 		final byte[] content = stream.toByteArray();
+
+		if(localStorage.missResponse()) {
+			return;
+		}
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final FullHttpResponse response = new DefaultFullHttpResponse(
 			HTTP_1_1, OK, Unpooled.copiedBuffer(content)
@@ -147,6 +157,9 @@ extends RequestHandlerBase<T> {
 		final Map<String, String> queryParams, final String containerName, final String objectId,
 		final long size, final ChannelHandlerContext ctx
 	) {
+		if(localStorage.missResponse()) {
+			return;
+		}
 		final HttpHeaders respHeaders = new DefaultHttpHeaders();
 		respHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		respHeaders.set(HttpHeaderNames.ETAG, generateHexId(0x10));
@@ -212,6 +225,10 @@ extends RequestHandlerBase<T> {
 			return;
 		}
 		final byte[] content = stream.toByteArray();
+
+		if(localStorage.missResponse()) {
+			return;
+		}
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final FullHttpResponse response = new DefaultFullHttpResponse(
 			HTTP_1_1, OK, Unpooled.copiedBuffer(content)

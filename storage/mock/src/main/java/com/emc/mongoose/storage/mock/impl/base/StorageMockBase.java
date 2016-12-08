@@ -17,8 +17,10 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.FailConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +35,7 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -48,9 +51,12 @@ implements StorageMock<I> {
 	private final StorageIoStats ioStats;
 	protected final ContentSource contentSrc;
 	private final int storageCapacity, containerCapacity;
+	private final long dropEveryConnection, missEveryResponse;
 
 	private final ListingLRUMap<String, ObjectContainerMock<I>> storageMap;
 	private final ObjectContainerMock<I> defaultContainer;
+	private final AtomicLong connCounter = new AtomicLong();
+	private final AtomicLong respCounter = new AtomicLong(0);
 
 	private volatile boolean isCapacityExhausted = false;
 
@@ -67,6 +73,9 @@ implements StorageMock<I> {
 		this.ioStats = new BasicStorageIoStats(this, (int) metricsConfig.getPeriod());
 		this.storageCapacity = mockConfig.getCapacity();
 		this.containerCapacity = containerConfig.getCapacity();
+		final FailConfig failConfig = mockConfig.getFailConfig();
+		this.dropEveryConnection = failConfig.getConnections();
+		this.missEveryResponse = failConfig.getResponses();
 		this.defaultContainer = new BasicObjectContainerMock<>(containerCapacity);
 		storageMap.put(DEFAULT_CONTAINER_NAME, defaultContainer);
 	}
@@ -246,6 +255,26 @@ implements StorageMock<I> {
 	@Override
 	public long getCapacity() {
 		return storageCapacity;
+	}
+
+	@Override
+	public final boolean dropConnection() {
+		if(dropEveryConnection > 0) {
+			if(0 == connCounter.incrementAndGet() % dropEveryConnection) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public final boolean missResponse() {
+		if(missEveryResponse > 0) {
+			if(0 == respCounter.incrementAndGet() % missEveryResponse) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

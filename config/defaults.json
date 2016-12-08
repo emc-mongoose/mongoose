@@ -167,12 +167,16 @@
 		"ssl" : false,
 		"type" : "http",
 		"mock" : {
-			"headCount" : 5,
 			"capacity" : 1000000,
 			"container" : {
 				"capacity" : 1000000,
 				"countLimit" : 1000000
 			},
+			"fail" : {
+				"connections" : 0,
+				"responses" : 0
+			},
+			"headCount" : 5,
 			"node": false
 		}
 	},
