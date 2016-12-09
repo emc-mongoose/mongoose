@@ -122,11 +122,7 @@ implements StorageDriver<I, O, R> {
 						} // else the task remains in the buffer for the next iteration
 					}
 				} else {
-					try {
-						Thread.sleep(1);
-					} catch(final InterruptedException e) {
-						break;
-					}
+					LockSupport.parkNanos(1);
 				}
 			}
 		}
