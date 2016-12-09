@@ -132,11 +132,14 @@ implements StorageDriver<I, O, R> {
 					for(int i = 0; i < n; i += submit(ioTasks, i, n)) {
 						LockSupport.parkNanos(1);
 					}
+				} else {
+					Thread.sleep(1);
 				}
 			} catch(final IOException e) {
 				if(!isInterrupted() && !isClosed()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to dispatch the input I/O tasks");
-				} // else ignore
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -159,14 +162,15 @@ implements StorageDriver<I, O, R> {
 						}
 					}
 				} else {
-					LockSupport.parkNanos(1);
+					Thread.sleep(1);
 				}
 			} catch(final IOException e) {
 				if(!isInterrupted() && !isClosed()) {
 					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to dispatch the completed I/O tasks"
 					);
-				} // else ignore
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}

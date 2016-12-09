@@ -240,10 +240,10 @@ implements LoadMonitor<R> {
 						outputCurrentMetrics();
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
-					LockSupport.parkNanos(1);
+					Thread.sleep(1);
 				}
-			/*} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");*/
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to dispatch the I/O tasks results");
 			}

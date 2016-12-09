@@ -41,12 +41,12 @@ implements Runnable {
 								taskOwnerName
 							);
 						}
-						LockSupport.parkNanos(1);
+						Thread.sleep(1);
 					}
 				}
 			}
-		/*} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted");*/
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted");
 		} finally {
 			dispatchTasks.clear();
 		}
