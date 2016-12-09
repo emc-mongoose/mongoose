@@ -199,11 +199,6 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public long getCompletedTaskCount() {
-		return completedTasks.get();
-	}
-
-	@Override
 	public final boolean isIdle() {
 		return !concurrencyThrottle.hasQueuedThreads() &&
 			concurrencyThrottle.availablePermits() == concurrencyLevel;

@@ -42,9 +42,6 @@ extends Daemon, Output<O>, Remote {
 	int getActiveTaskCount()
 	throws RemoteException;
 
-	long getCompletedTaskCount()
-	throws RemoteException;
-
 	boolean isIdle()
 	throws RemoteException;
 

@@ -190,12 +190,6 @@ implements StorageDriverSvc<I, O, R> {
 	throws RemoteException {
 		return driver.getActiveTaskCount();
 	}
-
-	@Override
-	public final long getCompletedTaskCount()
-	throws RemoteException {
-		return driver.getCompletedTaskCount();
-	}
 	
 	@Override
 	public final void setOutput(final Output<R> ioTaskOutput)

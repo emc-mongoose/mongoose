@@ -292,31 +292,23 @@ implements LoadMonitor<R> {
 	}
 
 	private boolean ioTasksCompleted() {
+		long producedIOTasksCount = 0;
 		for(final LoadGenerator<I, O, R> nextLoadGenerator : driversMap.keySet()) {
 			try {
-				if(nextLoadGenerator.isShutdown()) {
-					long producedItemsCount = nextLoadGenerator.getProducedItemsCount();
-					long completedTasksCount = 0;
-					for(final StorageDriver<I, O, R> nextStorageDriver
-							: driversMap.get(nextLoadGenerator)) {
-						completedTasksCount += nextStorageDriver.getCompletedTaskCount();
-					}
-
-					if(completedTasksCount < producedItemsCount) {
-						return false;
-					}
+				if(nextLoadGenerator.isInterrupted()) {
+					producedIOTasksCount += nextLoadGenerator.getProducedIOTasksCount();
 				} else {
 					return false;
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
-					nextLoadGenerator
+						LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+						nextLoadGenerator
 				);
 			}
 		}
 
-		return true;
+		return counterResults.longValue() >= producedIOTasksCount;
 	}
 
 	private boolean isDone() {
