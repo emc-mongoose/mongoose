@@ -410,6 +410,26 @@ implements LoadMonitor<R> {
 		return false;
 	}
 
+	private boolean ioTasksCompleted() {
+		long producedIOTasksCount = 0;
+		for(final LoadGenerator<I, O, R> nextLoadGenerator : driversMap.keySet()) {
+			try {
+				if(nextLoadGenerator.isInterrupted()) {
+					producedIOTasksCount += nextLoadGenerator.getProducedIOTasksCount();
+				} else {
+					return false;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					nextLoadGenerator
+				);
+			}
+		}
+
+		return counterResults.longValue() >= producedIOTasksCount;
+	}
+
 	private boolean isDone() {
 		if(isDoneCountLimit()) {
 			LOG.debug(Markers.MSG, "{}: done due to max count done state", getName());
@@ -609,6 +629,12 @@ implements LoadMonitor<R> {
 			}
 			if(isDone()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
+				return true;
+			}
+			if(ioTasksCompleted()) {
+				LOG.debug(
+					Markers.MSG, "{}: await exit due to IO Tasks have been completed", getName()
+				);
 				return true;
 			}
 		}

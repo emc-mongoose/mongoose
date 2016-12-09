@@ -51,7 +51,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	private final boolean isCircular;
 	private final IoTaskBuilder<I, O, R> ioTaskBuilder;
 
-	private long producedItemsCount = 0;
+	private long producedIOTasksCount = 0;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
@@ -113,7 +113,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 			try {
 				List<I> buff;
 				while(!worker.isInterrupted()) {
-					remaining = countLimit - producedItemsCount;
+					remaining = countLimit - producedIOTasksCount;
 					if(remaining <= 0) {
 						break;
 					}
@@ -133,7 +133,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 							for(m = 0; m < n && !worker.isInterrupted(); ) {
 								m += put(buff, m, n);
 							}
-							producedItemsCount += n;
+							producedIOTasksCount += n;
 						} else {
 							if(worker.isInterrupted()) {
 								break;
@@ -142,7 +142,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 						// CIRCULARITY FEATURE:
 						// produce only <maxItemQueueSize> items in order to make it possible to
 						// enqueue them infinitely
-						if(isCircular && producedItemsCount >= maxItemQueueSize) {
+						if(isCircular && producedIOTasksCount >= maxItemQueueSize) {
 							break;
 						}
 					} catch(
@@ -152,14 +152,14 @@ implements LoadGenerator<I, O, R>, Output<I> {
 					} catch(final Exception e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
-							"batch size = {}, batch offset = {}", producedItemsCount, n, m
+							"batch size = {}, batch offset = {}", producedIOTasksCount, n, m
 						);
 					}
 				}
 			} finally {
 				LOG.debug(
 					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					Thread.currentThread().getName(), producedItemsCount, itemInput.toString(), this
+					Thread.currentThread().getName(), producedIOTasksCount, itemInput.toString(), this
 				);
 				try {
 					shutdown();
@@ -246,6 +246,11 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	public final Input<I> getInput()
 	throws IOException {
 		return itemInput;
+	}
+
+	@Override
+	public long getProducedIOTasksCount() {
+		return producedIOTasksCount;
 	}
 
 	@Override
