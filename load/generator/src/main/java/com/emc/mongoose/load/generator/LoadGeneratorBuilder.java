@@ -12,6 +12,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  Created by andrey on 12.11.16.
@@ -28,7 +29,9 @@ public interface LoadGeneratorBuilder<
 
 	LoadGeneratorBuilder<I, O, R, T> setItemFactory(final ItemFactory<I> itemFactory);
 
-	LoadGeneratorBuilder<I, O, R, T> setStorageDriver(final StorageDriver<I, O, R> storageDriver);
+	LoadGeneratorBuilder<I, O, R, T> setStorageDrivers(
+		final List<StorageDriver<I, O, R>> storageDrivers
+	);
 
 	T build()
 	throws UserShootHisFootException, IOException;

@@ -337,7 +337,7 @@ implements LoadMonitor<R> {
 					for(
 						int i = 0; i < itemsToPassCount;
 						i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
-						);
+					);
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to output {} items to {}",
 						itemsToPassCount, itemInfoOutput
@@ -503,20 +503,10 @@ implements LoadMonitor<R> {
 	protected void doStart()
 	throws IllegalStateException {
 
-		String authToken = null;
-
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
-
 			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = driversMap.get(nextGenerator);
-
 			for(final StorageDriver<I, O, R> nextDriver : nextGeneratorDrivers) {
 				try {
-					if(authToken == null) {
-						authToken = nextDriver.getAuthToken();
-					} else {
-						// distribute the auth token among the storage drivers
-						nextDriver.setAuthToken(authToken);
-					}
 					nextDriver.start();
 				} catch(final IllegalStateException | RemoteException e) {
 					LogUtil.exception(
@@ -524,7 +514,6 @@ implements LoadMonitor<R> {
 					);
 				}
 			}
-
 			try {
 				nextGenerator.start();
 			} catch(final IllegalStateException | RemoteException e) {

@@ -184,7 +184,7 @@ extends JobBase {
 					.setItemFactory(itemFactory)
 					.setItemType(itemType)
 					.setLoadConfig(loadConfig)
-					.setStorageDriver(drivers.get(0))
+					.setStorageDrivers(drivers)
 					.build();
 				
 				driverMap.put(loadGenerator, drivers);

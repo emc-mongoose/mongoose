@@ -156,6 +156,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 				final String subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 				if(subtenantId != null && !subtenantId.isEmpty()) {
+					LOG.info(Markers.MSG, "Got the subtenant id: \"{}\"", authToken);
 					setAuthToken(subtenantId);
 				} else {
 					LOG.warn(Markers.ERR, "Creating the subtenant: got empty subtenantID");

@@ -29,13 +29,15 @@ import com.emc.mongoose.model.item.NewItemInput;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
+import java.util.List;
 
 /**
  Created by andrey on 12.11.16.
@@ -52,7 +54,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private volatile LoadConfig loadConfig;
 	private volatile ItemType itemType;
 	private volatile ItemFactory<I> itemFactory;
-	private volatile StorageDriver<I, O, R> storageDriver;
+	private volatile List<StorageDriver<I, O, R>> storageDrivers;
 
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
@@ -79,10 +81,10 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, R, T> setStorageDriver(
-		final StorageDriver<I, O, R> storageDriver
+	public BasicLoadGeneratorBuilder<I, O, R, T> setStorageDrivers(
+		final List<StorageDriver<I, O, R>> storageDrivers
 	) {
-		this.storageDriver = storageDriver;
+		this.storageDrivers = storageDrivers;
 		return this;
 	}
 
@@ -117,9 +119,24 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		}
 		ioTaskBuilder.setSrcPath(itemInputPath);
 		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
-
+		
+		String authToken = null;
+		try {
+			for(final StorageDriver<I, O, R> nextDriver : storageDrivers) {
+				if(authToken == null) {
+					authToken = nextDriver.getAuthToken();
+				} else {
+					// distribute the auth token among the storage drivers
+					nextDriver.setAuthToken(authToken);
+				}
+			}
+		} catch(final RemoteException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to communicate with remote storage driver"
+			);
+		}
+		
 		final String itemInputFile = inputConfig.getFile();
-
 		itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
 		dstPathInput = getDstPathInput(ioType);
 
@@ -138,7 +155,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 					final String dstPath = "/" + LogUtil.getDateTimeStamp();
 					dstPathInput = new ConstantStringInput(dstPath);
 					try {
-						storageDriver.createPath(dstPath);
+						storageDrivers.get(0).createPath(dstPath);
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
@@ -157,7 +174,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 								// create only 1st level path
 								dstPath = dstPath.substring(0, sepPos);
 							}
-							storageDriver.createPath(dstPath);
+							storageDrivers.get(0).createPath(dstPath);
 						}
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -217,7 +234,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 				}
 			} else {
 				itemInput = new StorageItemInput<>(
-					storageDriver, itemFactory, itemInputPath, namingPrefix, namingRadix
+					storageDrivers.get(0), itemFactory, itemInputPath, namingPrefix, namingRadix
 				);
 			}
 		} else {

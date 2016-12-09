@@ -123,6 +123,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			containerExists = false;
 			versioningEnabled = false;
 		} else if(HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
+			LOG.info(Markers.MSG, "Container \"{}\" already exists", path);
 			containerExists = true;
 			final String versionsLocation = checkContainerResp
 				.headers()
@@ -168,7 +169,9 @@ extends HttpStorageDriverBase<I, O, R> {
 			}
 
 			final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
-			if(!HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
+			if(HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
+				LOG.info(Markers.MSG, "Container \"{}\" created", path);
+			} else {
 				LOG.warn(
 					Markers.ERR, "Create/update container response: {}",
 					putContainerRespStatus.toString()
@@ -414,6 +417,7 @@ extends HttpStorageDriverBase<I, O, R> {
 					getAuthTokenResp.status().toString()
 				);
 			} else {
+				LOG.info(Markers.MSG, "Got the auth token \"{}\"", authToken);
 				setAuthToken(authToken);
 			}
 		}

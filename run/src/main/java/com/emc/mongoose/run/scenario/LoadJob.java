@@ -177,7 +177,7 @@ extends JobBase {
 				.setLoadConfig(loadConfig)
 				.setItemType(itemType)
 				.setItemFactory(itemFactory)
-				.setStorageDriver(drivers.get(0))
+				.setStorageDrivers(drivers)
 				.build();
 		} catch(final UserShootHisFootException e) {
 			throw new RuntimeException(e);
