@@ -302,8 +302,8 @@ implements LoadMonitor<R> {
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
-						nextLoadGenerator
+					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					nextLoadGenerator
 				);
 			}
 		}

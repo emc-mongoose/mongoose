@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -61,7 +60,6 @@ implements StorageDriver<I, O, R> {
 	};
 
 	private volatile Output<R> ioTaskResultOutput = null;
-	private final AtomicLong completedTasks = new AtomicLong(0);
 	private final IoBuffer<O> ownTasksQueue;
 	private final IoBuffer<O> inTasksQueue;
 	private final IoBuffer<O> outTasksQueue;
@@ -259,8 +257,6 @@ implements StorageDriver<I, O, R> {
 				LOG, Level.WARN, e, "Failed to put the I/O task to the output buffer"
 			);
 		}
-
-		completedTasks.incrementAndGet();
 	}
 	
 	/*protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
