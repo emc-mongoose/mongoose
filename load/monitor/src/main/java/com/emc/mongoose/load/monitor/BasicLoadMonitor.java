@@ -304,10 +304,7 @@ implements LoadMonitor<R> {
 
 				if(statusCode == IoTask.Status.SUCC.ordinal()) {
 					if(respLatency > 0 && respLatency > reqDuration) {
-						LOG.warn(
-							Markers.ERR, "{}: latency {} is more than duration: {}",
-							BasicLoadMonitor.this.getName(), respLatency, reqDuration
-						);
+						LOG.debug(Markers.ERR, "Dropping invalid latency value {}", respLatency);
 					}
 					if(ioTaskResult instanceof PartialIoResult) {
 						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
