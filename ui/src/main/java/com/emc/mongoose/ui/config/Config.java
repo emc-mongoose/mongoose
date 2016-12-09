@@ -179,9 +179,13 @@ implements Serializable {
 		public final void setSelectInterval(final int selectInterval) {
 			this.selectInterval = selectInterval;
 		}
-
+		
 		public final void setRcvBuf(final SizeInBytes rcvBuf) {
 			this.rcvBuf = rcvBuf;
+		}
+		
+		public final void setSndBuf(final SizeInBytes sndBuf) {
+			this.sndBuf = sndBuf;
 		}
 		
 		@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
