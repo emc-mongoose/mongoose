@@ -85,7 +85,9 @@ extends HttpStorageDriverBase<I, O, R> {
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
 		if(secret != null) {
-			secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
+			secretKey = new SecretKeySpec(
+				Base64.getDecoder().decode(secret.getBytes(UTF_8)), SIGN_METHOD
+			);
 		} else {
 			secretKey = null;
 		}
@@ -129,11 +131,11 @@ extends HttpStorageDriverBase<I, O, R> {
 			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-			reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
-			if(fsAccess) {
-				reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
-			}
+			reqHeaders.set(HttpHeaderNames.DATE, /*AsyncCurrentDateInput.INSTANCE.get()*/"Fri, 09 Dec 2016 21:36:35 UTC");
+			//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
+			//if(fsAccess) {
+			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
+			//}
 			applyDynamicHeaders(reqHeaders);
 			applySharedHeaders(reqHeaders);
 			applyAuthHeaders(HttpMethod.PUT, SUBTENANT_URI_BASE, reqHeaders);
@@ -156,7 +158,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 				final String subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 				if(subtenantId != null && !subtenantId.isEmpty()) {
-					LOG.info(Markers.MSG, "Got the subtenant id: \"{}\"", authToken);
+					LOG.info(Markers.MSG, "Got the subtenant id: \"{}\"", subtenantId);
 					setAuthToken(subtenantId);
 				} else {
 					LOG.warn(Markers.ERR, "Creating the subtenant: got empty subtenantID");
