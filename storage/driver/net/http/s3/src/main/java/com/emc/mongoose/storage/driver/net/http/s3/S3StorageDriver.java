@@ -334,7 +334,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		}
 		final String query = queryBuilder.toString();
 
-		applyAuthHeaders(HttpMethod.GET, query, reqHeaders);
+		applyAuthHeaders(HttpMethod.GET, path, reqHeaders);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
