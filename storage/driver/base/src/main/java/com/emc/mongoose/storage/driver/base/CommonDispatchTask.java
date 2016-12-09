@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 30.11.16.
@@ -40,12 +41,12 @@ implements Runnable {
 								taskOwnerName
 							);
 						}
-						Thread.sleep(1);
+						LockSupport.parkNanos(1);
 					}
 				}
 			}
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted");
+		/*} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted");*/
 		} finally {
 			dispatchTasks.clear();
 		}

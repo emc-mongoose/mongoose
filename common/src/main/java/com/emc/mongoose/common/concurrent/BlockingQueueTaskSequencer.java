@@ -9,22 +9,21 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by andrey on 04.08.15.
  */
+@Deprecated
 public final class BlockingQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
+	@Deprecated
 	public static final BlockingQueueTaskSequencer INSTANCE = new BlockingQueueTaskSequencer(
 		"blockingQueueTaskSequencer", true, DEFAULT_TASK_QUEUE_SIZE_LIMIT
 	);
-	static {
-		INSTANCE.start();
-	}
 
 	private final BlockingQueue<Runnable> queue;
 	private final int batchSize;
 	private final Collection<Runnable> buff;
 
-	protected BlockingQueueTaskSequencer(
+	private BlockingQueueTaskSequencer(
 		final String name, boolean daemonFlag, final int batchSize
 	) {
 		super(name);
@@ -34,7 +33,7 @@ implements TaskSequencer {
 		buff = new ArrayList<>(batchSize);
 	}
 
-	@Override
+	@Deprecated @Override
 	public final <V> Future<V> submit(final RunnableFuture<V> task) {
 		try {
 			queue.put(task);

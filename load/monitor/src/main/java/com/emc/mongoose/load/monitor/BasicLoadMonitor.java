@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 12.07.16.
@@ -239,10 +240,10 @@ implements LoadMonitor<R> {
 						outputCurrentMetrics();
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
-					Thread.sleep(1);
+					LockSupport.parkNanos(1);
 				}
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
+			/*} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");*/
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to dispatch the I/O tasks results");
 			}
