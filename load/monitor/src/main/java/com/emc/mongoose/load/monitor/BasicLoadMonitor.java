@@ -304,6 +304,9 @@ implements LoadMonitor<R> {
 		private void postProcessIoResults(final List<IoResult> ioTaskResults) {
 
 			final int n = ioTaskResults.size();
+			if(n == 0) {
+				return;
+			}
 			int m = n; // count of complete whole tasks
 
 			// I/O trace logging
