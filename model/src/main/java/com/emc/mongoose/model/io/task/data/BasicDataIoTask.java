@@ -108,7 +108,7 @@ implements DataIoTask<T, R> {
 		final String hostAddr,
 		final boolean useStorageDriverResult,
 		final boolean useStorageNodeResult,
-		final boolean useItemPathResult,
+		final boolean useItemInfoResult,
 		final boolean useIoTypeCodeResult,
 		final boolean useStatusCodeResult,
 		final boolean useReqTimeStartResult,
@@ -120,7 +120,7 @@ implements DataIoTask<T, R> {
 		return (R) new BasicDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemPathResult ? getItemPath(item.getName(), srcPath, dstPath) : null,
+			useItemInfoResult ? getInfoWithPath(item.toString(), srcPath, dstPath) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

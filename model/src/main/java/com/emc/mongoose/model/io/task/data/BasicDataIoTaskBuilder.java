@@ -114,14 +114,15 @@ implements DataIoTaskBuilder<I, O, R> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
-						sizeThreshold
+						ioType, nextItem, srcPath, dstPaths.get(i - from), fixedRanges,
+						randomRangesCount, sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicDataIoTask<>(
-						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount
+						ioType, nextItem, srcPath, dstPaths.get(i - from), fixedRanges,
+						randomRangesCount
 					)
 				);
 			}

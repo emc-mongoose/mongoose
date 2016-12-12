@@ -75,8 +75,8 @@ implements LoadMonitor<R> {
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<String> itemInfoOutput;
 	private final Int2IntMap concurrencyMap;
+	private final Int2IntMap driversCountMap;
 	private final IoBuffer<R> ioTaskResultsQueue;
-	private int driversCount = 0;
 
 	/**
 	 Single load job constructor
@@ -160,11 +160,14 @@ implements LoadMonitor<R> {
 
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
+		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
+		int driversCount = 0;
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
 			driversCount += nextDrivers.size();
 			final String ioTypeName = loadConfigs.get(nextGenerator).getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
+			driversCountMap.put(ioTypeCode, nextDrivers.size());
 			concurrencyMap.put(ioTypeCode, loadConfigs.get(nextGenerator).getConcurrency());
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
@@ -207,7 +210,7 @@ implements LoadMonitor<R> {
 		private final Int2ObjectMap<IoStats> ioStats;
 		private final Int2ObjectMap<IoStats.Snapshot> lastStats;
 		private final String jobName;
-		private final int driversCount;
+		private final Int2IntMap driversCountMap;
 		private final Int2IntMap concurrencyMap;
 		private final boolean fileOutputFlag;
 
@@ -216,7 +219,7 @@ implements LoadMonitor<R> {
 		private MetricsSvcTask(
 			final String jobName, final int metricsPeriodSec, final boolean fileOutputFlag,
 			final Int2ObjectMap<IoStats> ioStats, Int2ObjectMap<IoStats.Snapshot> lastStats,
-			final int driversCount, final Int2IntMap concurrencyMap
+			final Int2IntMap driversCountMap, final Int2IntMap concurrencyMap
 		) {
 			this.jobName = jobName;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec > 0 ?
@@ -226,7 +229,7 @@ implements LoadMonitor<R> {
 			this.ioStats = ioStats;
 			this.lastStats = lastStats;
 			this.concurrencyMap = concurrencyMap;
-			this.driversCount = driversCount;
+			this.driversCountMap = driversCountMap;
 		}
 		@Override
 
@@ -252,12 +255,12 @@ implements LoadMonitor<R> {
 		private void outputCurrentMetrics() {
 			LOG.info(
 				Markers.METRICS_STDOUT,
-				new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCount)
+				new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
 			);
 			if(!fileOutputFlag) {
 				LOG.info(
 					Markers.METRICS_FILE,
-					new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCount)
+					new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
 				);
 			}
 			/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
@@ -598,7 +601,7 @@ implements LoadMonitor<R> {
 		svcTaskExecutor.submit(
 			new MetricsSvcTask(
 				name, (int) metricsConfig.getPeriod(), metricsConfig.getPrecondition(), ioStats,
-				lastStats, driversCount, concurrencyMap
+				lastStats, driversCountMap, concurrencyMap
 			)
 		);
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
@@ -733,12 +736,12 @@ implements LoadMonitor<R> {
 
 		LOG.info(
 			Markers.METRICS_STDOUT,
-			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCount)
+			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
 		);
 		if(!metricsConfig.getPrecondition()) {
 			LOG.info(
 				Markers.METRICS_FILE_TOTAL,
-				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCount)
+				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
 			);
 		}
 		

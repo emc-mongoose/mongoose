@@ -1,7 +1,8 @@
 package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.ui.log.MessageBase;
+import com.emc.mongoose.ui.log.LogMessageBase;
+import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -11,7 +12,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 /**
  Created by kurila on 26.10.16.
  
@@ -38,19 +38,19 @@ import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
  LatencyMax[us]
  */
 public final class MetricsCsvLogMessage
-extends MessageBase {
+extends LogMessageBase {
 	
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
 	private final Int2IntMap concurrencyMap;
-	private final int driversCount;
+	private final Int2IntMap driversCountMap;
 	
 	public MetricsCsvLogMessage(
 		final Int2ObjectMap<IoStats.Snapshot> snapshots, final Int2IntMap concurrencyMap,
-		final int driversCount
+		final Int2IntMap driversCountMap
 	) {
 		this.snapshots = snapshots;
 		this.concurrencyMap = concurrencyMap;
-		this.driversCount = driversCount;
+		this.driversCountMap = driversCountMap;
 	}
 	
 	@Override
@@ -67,7 +67,7 @@ extends MessageBase {
 				.append('"').append(FMT_DATE_ISO8601.format(current)).append('"').append(',')
 				.append(IoType.values()[nextEntry.getKey()].name()).append(',')
 				.append(concurrencyMap.get(nextEntry.getKey())).append('x')
-				.append(driversCount).append(',')
+				.append(driversCountMap.get(nextEntry.getKey())).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
 				.append(nextSnapshot.getFailCount()).append(',')
 				.append(nextSnapshot.getByteCount()).append(',')

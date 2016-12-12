@@ -2,7 +2,7 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.ui.log.MessageBase;
+import com.emc.mongoose.ui.log.LogMessageBase;
 
 /**
  Created by andrey on 17.11.16.
@@ -19,7 +19,7 @@ import com.emc.mongoose.ui.log.MessageBase;
  TransferSize
  */
 public final class IoTraceCsvLogMessage<R extends IoResult>
-extends MessageBase {
+extends LogMessageBase {
 
 	private final String storageDriver;
 	private final String storageNode;

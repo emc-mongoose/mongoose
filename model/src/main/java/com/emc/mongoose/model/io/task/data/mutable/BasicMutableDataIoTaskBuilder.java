@@ -93,14 +93,15 @@ implements MutableDataIoTaskBuilder<I, O, R> {
 			if(item.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeMutableDataIoTask<>(
-						ioType, item, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
-						sizeThreshold
+						ioType, item, srcPath, dstPaths.get(i - from), fixedRanges,
+						randomRangesCount, sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicMutableDataIoTask<>(
-						ioType, item, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount
+						ioType, item, srcPath, dstPaths.get(i - from), fixedRanges,
+						randomRangesCount
 					)
 				);
 			}

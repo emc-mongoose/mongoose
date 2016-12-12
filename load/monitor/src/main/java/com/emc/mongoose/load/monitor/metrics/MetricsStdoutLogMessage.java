@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.ui.log.MessageBase;
+import com.emc.mongoose.ui.log.LogMessageBase;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
@@ -15,29 +15,29 @@ import org.apache.commons.lang.text.StrBuilder;
  Created by kurila on 26.10.16.
  */
 public final class MetricsStdoutLogMessage
-extends MessageBase {
+extends LogMessageBase {
 	
 	private static final String TABLE_HEADER_LINES[] = new String[] {
-		"______________________________________________________________________________________________________________",
-		" Load | Total |       Count       |  Job  |    TP [op/s]    |        |  BW [MB/s]  |Latency [us]|Duration [us]",
-		" Type | Concur|-------------------| Time  |-----------------|  Size  |-------------|------------|-------------",
-		"      | rency |   Success  |Failed|  [s]  |  Mean  |  Last  |        | Mean | Last |    Mean    |    Mean     ",
-		"------|-------|------------|------|-------|--------|--------|--------|------|------|------------|-------------"
+		"______________________________________________________________________________________________________________________",
+		" Load | Concur| Driver|       Count       |  Job  |    TP [op/s]    |        |  BW [MB/s]  |Latency [us]|Duration [us]",
+		" Type | rency | Count |-------------------| Time  |-----------------|  Size  |-------------|------------|-------------",
+		"      |       |       |   Success  |Failed|  [s]  |  Mean  |  Last  |        | Mean | Last |    Mean    |    Mean     ",
+		"------|-------|-------|------------|------|-------|--------|--------|--------|------|------|------------|-------------"
 	};
 	
 	private final String jobName;
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
-	private final Int2IntMap totalConcurrencyMap;
-	private final int driversCount;
+	private final Int2IntMap concurrencyMap;
+	private final Int2IntMap driversCountMap;
 	
 	public MetricsStdoutLogMessage(
 		final String jobName, final Int2ObjectMap<IoStats.Snapshot> snapshots,
-		final Int2IntMap totalConcurrencyMap, final int driversCount
+		final Int2IntMap concurrencyMap, final Int2IntMap driversCountMap
 	) {
 		this.jobName = jobName;
 		this.snapshots = snapshots;
-		this.totalConcurrencyMap = totalConcurrencyMap;
-		this.driversCount = driversCount;
+		this.concurrencyMap = concurrencyMap;
+		this.driversCountMap = driversCountMap;
 	}
 
 	@Override
@@ -46,7 +46,7 @@ extends MessageBase {
 			final int ioTypeCode = snapshots.keySet().iterator().nextInt();
 			formatSingleSnapshot(
 				buffer, jobName, ioTypeCode, snapshots.get(ioTypeCode),
-				totalConcurrencyMap.get(ioTypeCode), driversCount
+				concurrencyMap.get(ioTypeCode), driversCountMap.values().iterator().nextInt()
 			);
 		} else {
 			formatMultiSnapshot(buffer);
@@ -55,12 +55,12 @@ extends MessageBase {
 
 	private static void formatSingleSnapshot(
 		final StringBuilder buffer, final String runId, final int ioTypeCode,
-		final IoStats.Snapshot snapshot, final int totalConcurrency, final int driversCount
+		final IoStats.Snapshot snapshot, final int concurrency, final int driversCount
 	) {
 		buffer
 			.append(runId).append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
-			.append(totalConcurrency).append('x').append(driversCount)
+			.append(concurrency).append('x').append(driversCount)
 			.append(": n=(").append(snapshot.getSuccCount()).append('/')
 			.append(snapshot.getFailCount()).append("); t[s]=(")
 			.append(formatFixedWidth(snapshot.getElapsedTime() / M, 7)).append('/')
@@ -91,9 +91,8 @@ extends MessageBase {
 				strb
 					.appendFixedWidthPadLeft(IoType.values()[ioTypeCode].name(), 6, ' ')
 					.append('|');
-				strb
-					.appendFixedWidthPadLeft(totalConcurrencyMap.get(ioTypeCode), 7, ' ')
-					.append('|');
+				strb.appendFixedWidthPadLeft(concurrencyMap.get(ioTypeCode), 7, ' ').append('|');
+				strb.appendFixedWidthPadLeft(driversCountMap.get(ioTypeCode), 7, ' ').append('|');
 				strb.appendFixedWidthPadLeft(snapshot.getSuccCount(), 12, ' ').append(('|'));
 				strb.appendFixedWidthPadLeft(snapshot.getFailCount(), 6, ' ').append('|');
 				strb
@@ -112,7 +111,7 @@ extends MessageBase {
 				strb.appendFixedWidthPadLeft((long) snapshot.getDurationAvg(), 12, ' ');
 				strb.appendNewLine();
 			}
-			strb.appendPadding(110, '-');
+			strb.appendPadding(118, '-');
 		} else {
 			strb.append(" not available yet");
 		}

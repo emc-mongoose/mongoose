@@ -6,7 +6,7 @@ import org.apache.logging.log4j.util.StringBuilderFormattable;
 /**
  Created by kurila on 26.10.16.
  */
-public abstract class MessageBase
+public abstract class LogMessageBase
 implements Message, StringBuilderFormattable {
 	
 	private static final ThreadLocal<StringBuilder> THRLOC_STRB = new ThreadLocal<StringBuilder>() {

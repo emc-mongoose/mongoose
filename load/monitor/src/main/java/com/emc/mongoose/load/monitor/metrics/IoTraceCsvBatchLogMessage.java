@@ -2,7 +2,7 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.ui.log.MessageBase;
+import com.emc.mongoose.ui.log.LogMessageBase;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import java.util.List;
  Created by andrey on 17.11.16.
  */
 public final class IoTraceCsvBatchLogMessage<R extends IoResult>
-extends MessageBase {
+extends LogMessageBase {
 
 	private final List<R> ioResults;
 	private final int from;

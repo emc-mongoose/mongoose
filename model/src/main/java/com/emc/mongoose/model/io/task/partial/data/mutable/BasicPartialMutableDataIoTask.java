@@ -2,7 +2,6 @@ package com.emc.mongoose.model.io.task.partial.data.mutable;
 
 import static com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask.PartialDataIoResult;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.composite.data.mutable.CompositeMutableDataIoTask;
 import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTask;
 import static com.emc.mongoose.model.io.task.partial.data.BasicPartialDataIoTask.BasicPartialDataIoResult;
@@ -48,7 +47,7 @@ implements PartialMutableDataIoTask<I, R> {
 		final String hostAddr,
 		final boolean useStorageDriverResult,
 		final boolean useStorageNodeResult,
-		final boolean useItemPathResult,
+		final boolean useItemInfoResult,
 		final boolean useIoTypeCodeResult,
 		final boolean useStatusCodeResult,
 		final boolean useReqTimeStartResult,
@@ -60,7 +59,7 @@ implements PartialMutableDataIoTask<I, R> {
 		return (R) new BasicPartialDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemPathResult ? getItemPath(item.getName(), srcPath, dstPath) : null,
+			useItemInfoResult ? getInfoWithPath(item.getName(), srcPath, dstPath) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

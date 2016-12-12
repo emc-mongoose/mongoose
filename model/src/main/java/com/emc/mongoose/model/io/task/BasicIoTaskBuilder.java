@@ -61,7 +61,7 @@ implements IoTaskBuilder<I, O, R> {
 	) throws IOException {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
-			tasks.add((O) new BasicIoTask<>(ioType, items.get(i), srcPath, dstPath));
+			tasks.add((O) new BasicIoTask<>(ioType, items.get(i - from), srcPath, dstPath));
 		}
 		return tasks;
 	}
@@ -72,7 +72,7 @@ implements IoTaskBuilder<I, O, R> {
 	) throws IOException {
 		final List<O> tasks = new ArrayList<>(to - from);
 		for(int i = from; i < to; i ++) {
-			tasks.add((O) new BasicIoTask<>(ioType, items.get(i), srcPath, dstPaths.get(i)));
+			tasks.add((O) new BasicIoTask<>(ioType, items.get(i - from), srcPath, dstPaths.get(i)));
 		}
 		return tasks;
 	}
