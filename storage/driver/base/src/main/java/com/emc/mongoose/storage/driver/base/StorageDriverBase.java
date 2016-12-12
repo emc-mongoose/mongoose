@@ -38,7 +38,7 @@ extends DaemonBase
 implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<String, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
+	private static final Map<StorageDriver, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
 	static {
 		new Thread(
 			new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher"
@@ -103,7 +103,7 @@ implements StorageDriver<I, O, R> {
 		useDataLatencyResult = traceConfig.getDataLatency();
 		useTransferSizeResult = traceConfig.getTransferSize();
 
-		DISPATCH_INBOUND_TASKS.put(toString(), new IoTasksDispatch());
+		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch());
 	}
 	
 	public final class IoTasksDispatch

@@ -368,7 +368,9 @@ implements HttpStorageDriver<I, O, R> {
 		} catch(final URISyntaxException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
+			if(!isInterrupted() && !isClosed()) {
+				LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
+			}
 		} catch(final Throwable e) {
 			e.printStackTrace(System.err);
 		}

@@ -41,13 +41,16 @@ public final class MetricsCsvLogMessage
 extends MessageBase {
 	
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
-	private final Int2IntMap totalConcurrencyMap;
+	private final Int2IntMap concurrencyMap;
+	private final int driversCount;
 	
 	public MetricsCsvLogMessage(
-		final Int2ObjectMap<IoStats.Snapshot> snapshots, final Int2IntMap totalConcurrencyMap
+		final Int2ObjectMap<IoStats.Snapshot> snapshots, final Int2IntMap concurrencyMap,
+		final int driversCount
 	) {
 		this.snapshots = snapshots;
-		this.totalConcurrencyMap = totalConcurrencyMap;
+		this.concurrencyMap = concurrencyMap;
+		this.driversCount = driversCount;
 	}
 	
 	@Override
@@ -63,7 +66,8 @@ extends MessageBase {
 			strb
 				.append('"').append(FMT_DATE_ISO8601.format(current)).append('"').append(',')
 				.append(IoType.values()[nextEntry.getKey()].name()).append(',')
-				.append(totalConcurrencyMap.get(nextEntry.getKey())).append(',')
+				.append(concurrencyMap.get(nextEntry.getKey())).append('x')
+				.append(driversCount).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
 				.append(nextSnapshot.getFailCount()).append(',')
 				.append(nextSnapshot.getByteCount()).append(',')

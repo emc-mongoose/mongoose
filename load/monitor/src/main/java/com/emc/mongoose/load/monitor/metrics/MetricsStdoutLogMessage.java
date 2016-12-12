@@ -28,14 +28,16 @@ extends MessageBase {
 	private final String jobName;
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
 	private final Int2IntMap totalConcurrencyMap;
+	private final int driversCount;
 	
 	public MetricsStdoutLogMessage(
 		final String jobName, final Int2ObjectMap<IoStats.Snapshot> snapshots,
-		final Int2IntMap totalConcurrencyMap
+		final Int2IntMap totalConcurrencyMap, final int driversCount
 	) {
 		this.jobName = jobName;
 		this.snapshots = snapshots;
 		this.totalConcurrencyMap = totalConcurrencyMap;
+		this.driversCount = driversCount;
 	}
 
 	@Override
@@ -44,7 +46,7 @@ extends MessageBase {
 			final int ioTypeCode = snapshots.keySet().iterator().nextInt();
 			formatSingleSnapshot(
 				buffer, jobName, ioTypeCode, snapshots.get(ioTypeCode),
-				totalConcurrencyMap.get(ioTypeCode)
+				totalConcurrencyMap.get(ioTypeCode), driversCount
 			);
 		} else {
 			formatMultiSnapshot(buffer);
@@ -53,13 +55,13 @@ extends MessageBase {
 
 	private static void formatSingleSnapshot(
 		final StringBuilder buffer, final String runId, final int ioTypeCode,
-		final IoStats.Snapshot snapshot, final int totalConcurrency
+		final IoStats.Snapshot snapshot, final int totalConcurrency, final int driversCount
 	) {
 		buffer
 			.append(runId).append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
-			.append(totalConcurrency).append(": n=(")
-			.append(snapshot.getSuccCount()).append('/')
+			.append(totalConcurrency).append('x').append(driversCount)
+			.append(": n=(").append(snapshot.getSuccCount()).append('/')
 			.append(snapshot.getFailCount()).append("); t[s]=(")
 			.append(formatFixedWidth(snapshot.getElapsedTime() / M, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
