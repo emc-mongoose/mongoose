@@ -25,15 +25,15 @@ extends MessageBase {
 		"------|-------|------------|------|-------|--------|--------|--------|------|------|------------|-------------"
 	};
 	
-	private final String runId;
+	private final String jobName;
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
 	private final Int2IntMap totalConcurrencyMap;
 	
 	public MetricsStdoutLogMessage(
-		final String runId, final Int2ObjectMap<IoStats.Snapshot> snapshots,
+		final String jobName, final Int2ObjectMap<IoStats.Snapshot> snapshots,
 		final Int2IntMap totalConcurrencyMap
 	) {
-		this.runId = runId;
+		this.jobName = jobName;
 		this.snapshots = snapshots;
 		this.totalConcurrencyMap = totalConcurrencyMap;
 	}
@@ -43,7 +43,7 @@ extends MessageBase {
 		if(snapshots.size() == 1) {
 			final int ioTypeCode = snapshots.keySet().iterator().nextInt();
 			formatSingleSnapshot(
-				buffer, runId, ioTypeCode, snapshots.get(ioTypeCode),
+				buffer, jobName, ioTypeCode, snapshots.get(ioTypeCode),
 				totalConcurrencyMap.get(ioTypeCode)
 			);
 		} else {
@@ -77,7 +77,7 @@ extends MessageBase {
 	}
 
 	private void formatMultiSnapshot(final StringBuilder buffer) {
-		final StrBuilder strb = new StrBuilder(runId).append(" metrics:");
+		final StrBuilder strb = new StrBuilder(jobName).append(" metrics:");
 		if(snapshots.size() > 0) {
 			strb.appendNewLine();
 			for(final String tableHeaderLine : TABLE_HEADER_LINES) {

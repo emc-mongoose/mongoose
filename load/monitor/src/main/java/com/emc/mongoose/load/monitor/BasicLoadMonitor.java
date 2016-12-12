@@ -202,16 +202,31 @@ implements LoadMonitor<R> {
 		UNCLOSED.add(this);
 	}
 
-	private final class MetricsSvcTask
+	private final static class MetricsSvcTask
 	implements Runnable {
 
 		private final long metricsPeriodNanoSec;
+		private final Int2ObjectMap<IoStats> ioStats;
+		private final Int2ObjectMap<IoStats.Snapshot> lastStats;
+		private final String jobName;
+		private final Int2IntMap totalConcurrencyMap;
+		private final boolean fileOutputFlag;
+
 		private long prevNanoTimeStamp;
 
-		private MetricsSvcTask(final int metricsPeriodSec) {
+		private MetricsSvcTask(
+			final String jobName, final int metricsPeriodSec, final boolean fileOutputFlag,
+			final Int2ObjectMap<IoStats> ioStats, Int2ObjectMap<IoStats.Snapshot> lastStats,
+			final Int2IntMap totalConcurrencyMap
+		) {
+			this.jobName = jobName;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec > 0 ?
 				metricsPeriodSec : Long.MAX_VALUE);
 			this.prevNanoTimeStamp = - 1;
+			this.fileOutputFlag = fileOutputFlag;
+			this.ioStats = ioStats;
+			this.lastStats = lastStats;
+			this.totalConcurrencyMap = totalConcurrencyMap;
 		}
 		@Override
 
@@ -237,9 +252,9 @@ implements LoadMonitor<R> {
 		private void outputCurrentMetrics() {
 			LOG.info(
 				Markers.METRICS_STDOUT,
-				new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
+				new MetricsStdoutLogMessage(jobName, lastStats, totalConcurrencyMap)
 			);
-			if(!metricsConfig.getPrecondition()) {
+			if(!fileOutputFlag) {
 				LOG.info(
 					Markers.METRICS_FILE,
 					new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
@@ -574,7 +589,12 @@ implements LoadMonitor<R> {
 			ioStats.get(ioTypeCode).start();
 		}
 
-		svcTaskExecutor.submit(new MetricsSvcTask((int) metricsConfig.getPeriod()));
+		svcTaskExecutor.submit(
+			new MetricsSvcTask(
+				name, (int) metricsConfig.getPeriod(), metricsConfig.getPrecondition(), ioStats,
+				lastStats, totalConcurrencyMap
+			)
+		);
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
 				svcTaskExecutor.submit(
