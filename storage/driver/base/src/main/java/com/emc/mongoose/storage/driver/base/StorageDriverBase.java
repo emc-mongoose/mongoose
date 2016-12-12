@@ -6,7 +6,6 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig.TraceConfig;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
@@ -40,29 +39,20 @@ implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final Map<String, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
-	private static final Thread INBOUND_IO_TASKS_DISPATCHER = new Thread(
-		new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "inboundIoTasksDispatcher"
-	) {
-		{
-			setDaemon(true);
-			start();
-		}
-	};
-	
-	private static final Map<String, Runnable> DISPATCH_OUTBOUND_TASKS = new ConcurrentHashMap<>();
-	private static final Thread OUTBOUND_IO_TASKS_DISPATCHER = new Thread(
-		new CommonDispatchTask(DISPATCH_OUTBOUND_TASKS), "outboundIoTasksDispatcher"
-	) {
-		{
-			setDaemon(true);
-			start();
-		}
-	};
+	static {
+		new Thread(
+			new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher"
+		) {
+			{
+				setDaemon(true);
+				start();
+			}
+		};
+	}
 
-	private volatile Output<R> ioTaskResultOutput = null;
 	private final IoBuffer<O> ownTasksQueue;
 	private final IoBuffer<O> inTasksQueue;
-	private final IoBuffer<O> outTasksQueue;
+	private final IoBuffer<R> ioResultsQueue;
 	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
@@ -90,7 +80,7 @@ implements StorageDriver<I, O, R> {
 		final int queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.ownTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
 		this.inTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(BATCH_SIZE));
-		this.outTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
+		this.ioResultsQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
 		this.jobName = jobName;
 		this.userName = authConfig == null ? null : authConfig.getId();
 		secret = authConfig == null ? null : authConfig.getSecret();
@@ -112,11 +102,10 @@ implements StorageDriver<I, O, R> {
 		useDataLatencyResult = traceConfig.getDataLatency();
 		useTransferSizeResult = traceConfig.getTransferSize();
 
-		DISPATCH_INBOUND_TASKS.put(toString(), new InboundIoTasksDispatch());
-		DISPATCH_OUTBOUND_TASKS.put(toString(), new OutboundIoTasksDispatch());
+		DISPATCH_INBOUND_TASKS.put(toString(), new IoTasksDispatch());
 	}
 	
-	public final class InboundIoTasksDispatch
+	public final class IoTasksDispatch
 	implements Runnable {
 		@Override
 		public final void run() {
@@ -143,39 +132,6 @@ implements StorageDriver<I, O, R> {
 			}
 		}
 	}
-	
-	private final class OutboundIoTasksDispatch
-	implements Runnable {
-		@Override
-		public final void run() {
-			int n;
-			final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
-			try {
-				ioTasks.clear();
-				n = outTasksQueue.get(ioTasks, BATCH_SIZE);
-				if(n > 0) {
-					final List<R> ioTaskResults = new ArrayList<>(n);
-					buildResults(ioTasks, ioTaskResults, n);
-					if(ioTaskResultOutput != null) {
-						for(int i = 0; i < n; i += ioTaskResultOutput.put(ioTaskResults, i, n)) {
-							LockSupport.parkNanos(1);
-						}
-					}
-				} else {
-					Thread.sleep(1);
-				}
-			} catch(final IOException e) {
-				if(!isInterrupted() && !isClosed()) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to dispatch the completed I/O tasks"
-					);
-				}
-			} catch(final InterruptedException ignored) {
-			}
-		}
-	}
-	
-	
 	
 	@Override
 	public final void put(final O task)
@@ -219,9 +175,11 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public final void setOutput(final Output<R> ioTaskResultOutput)
-	throws IllegalStateException {
-		this.ioTaskResultOutput = ioTaskResultOutput;
+	public List<R> getResults()
+	throws IOException {
+		final List<R> ioTaskResults = new ArrayList<>(BATCH_SIZE);
+		ioResultsQueue.get(ioTaskResults, BATCH_SIZE);
+		return ioTaskResults;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -255,7 +213,21 @@ implements StorageDriver<I, O, R> {
 		}
 
 		try {
-			outTasksQueue.put(ioTask);
+			ioResultsQueue.put(
+				ioTask.getResult(
+					HOST_ADDR,
+					useStorageDriverResult,
+					useStorageNodeResult,
+					useItemPathResult,
+					useIoTypeCodeResult,
+					useStatusCodeResult,
+					useReqTimeStartResult,
+					useDurationResult,
+					useRespLatencyResult,
+					useDataLatencyResult,
+					useTransferSizeResult
+				)
+			);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to put the I/O task to the output buffer"
@@ -302,29 +274,6 @@ implements StorageDriver<I, O, R> {
 	protected abstract int submit(final List<O> tasks)
 	throws InterruptedIOException;
 
-	@SuppressWarnings({ "unchecked", "ConstantConditions" })
-	private void buildResults(final List<O> ioTasks, final List<R> ioResults, final int n) {
-		if(n > 0) {
-			for(int i = 0; i < n; i ++) {
-				ioResults.add(
-					ioTasks.get(i).getResult(
-						HOST_ADDR,
-						useStorageDriverResult,
-						useStorageNodeResult,
-						useItemPathResult,
-						useIoTypeCodeResult,
-						useStatusCodeResult,
-						useReqTimeStartResult,
-						useDurationResult,
-						useRespLatencyResult,
-						useDataLatencyResult,
-						useTransferSizeResult
-					)
-				);
-			}
-		}
-	}
-
 	@Override
 	public Input<O> getInput() {
 		return null;
@@ -334,10 +283,9 @@ implements StorageDriver<I, O, R> {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		DISPATCH_INBOUND_TASKS.remove(toString());
-		ioTaskResultOutput = null;
 		ownTasksQueue.close();
 		inTasksQueue.close();
-		outTasksQueue.close();
+		ioResultsQueue.close();
 	}
 	
 	@Override

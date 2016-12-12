@@ -57,11 +57,9 @@ implements StorageDriverSvc<I, O, R> {
 	}
 
 	@Override
-	public final void setOutputSvc(final String addr, final String svcName)
-	throws RemoteException {
-		final Output<R> ioTaskOutputSvc = ServiceUtil.resolve(addr, svcName);
-		LOG.info(Markers.MSG, "Connected the service \"{}\" @ {}", svcName, addr);
-		driver.setOutput(ioTaskOutputSvc);
+	public final List<R> getResults()
+	throws IOException {
+		return driver.getResults();
 	}
 
 	@Override
@@ -189,12 +187,6 @@ implements StorageDriverSvc<I, O, R> {
 	public final int getActiveTaskCount()
 	throws RemoteException {
 		return driver.getActiveTaskCount();
-	}
-	
-	@Override
-	public final void setOutput(final Output<R> ioTaskOutput)
-	throws RemoteException {
-		throw new RemoteException();
 	}
 
 	@Override

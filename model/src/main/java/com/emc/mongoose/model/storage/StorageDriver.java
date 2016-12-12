@@ -36,8 +36,8 @@ extends Daemon, Output<O>, Remote {
 	void setAuthToken(final String authToken)
 	throws RemoteException;
 
-	void setOutput(final Output<R> ioTaskResultOutput)
-	throws RemoteException;
+	List<R> getResults()
+	throws IOException;
 
 	int getActiveTaskCount()
 	throws RemoteException;

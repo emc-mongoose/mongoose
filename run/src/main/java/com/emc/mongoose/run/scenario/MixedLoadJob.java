@@ -4,7 +4,6 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.TextFileOutput;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
-import com.emc.mongoose.load.monitor.BasicLoadMonitorSvc;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
@@ -200,9 +199,9 @@ extends JobBase {
 		}
 		
 		try(
-			final LoadMonitor monitor = remoteDriversFlag ?
-				new BasicLoadMonitorSvc(jobName, driverMap, loadConfigMap, weightMap) :
-				new BasicLoadMonitor(jobName, driverMap, loadConfigMap, weightMap)
+			final LoadMonitor monitor = new BasicLoadMonitor(
+				jobName, driverMap, loadConfigMap, weightMap
+			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {

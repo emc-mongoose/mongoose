@@ -249,7 +249,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	}
 
 	@Override
-	public long getProducedIOTasksCount() {
+	public long getGeneratedIoTasksCount() {
 		return producedIOTasksCount;
 	}
 

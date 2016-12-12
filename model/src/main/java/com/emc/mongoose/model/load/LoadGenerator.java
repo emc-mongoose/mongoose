@@ -21,5 +21,5 @@ extends Daemon {
 
 	void setOutput(final Output<O> ioTaskOutput);
 
-	long getProducedIOTasksCount();
+	long getGeneratedIoTasksCount();
 }

@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
@@ -11,7 +12,6 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
@@ -66,7 +67,7 @@ implements LoadMonitor<R> {
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final Thread worker;
+	private final ThreadPoolExecutor svcTaskExecutor;
 
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
 	private final Int2ObjectMap<IoStats> medIoStats = new Int2ObjectOpenHashMap<>();
@@ -158,8 +159,10 @@ implements LoadMonitor<R> {
 
 		this.driversMap = driversMap;
 		totalConcurrencyMap = new Int2IntOpenHashMap(driversMap.size());
+		int driversCount = 0;
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
+			driversCount += nextDrivers.size();
 			final String ioTypeName = loadConfigs.get(nextGenerator).getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			totalConcurrencyMap.put(
@@ -168,7 +171,6 @@ implements LoadMonitor<R> {
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
-			registerDrivers(nextDrivers);
 		}
 
 		long countLimitSum = 0;
@@ -192,76 +194,126 @@ implements LoadMonitor<R> {
 			new ArrayBlockingQueue<>(firstLoadConfig.getQueueConfig().getSize())
 		);
 
-		this.worker = new Thread(new ServiceTask(metricsPeriodSec), name);
-		this.worker.setDaemon(true);
+		this.svcTaskExecutor = new ThreadPoolExecutor(
+			driversCount + 1, driversCount + 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
+			new NamingThreadFactory("svcTasksExecutor", true)
+		);
 
 		UNCLOSED.add(this);
 	}
 
-	protected void registerDrivers(final List<StorageDriver<I, O, R>> drivers) {
-		for(final StorageDriver<I, O, R> nextDriver : drivers) {
-			try {
-				nextDriver.setOutput(this);
-			} catch(final RemoteException ignored) {
-			}
-		}
-	}
-
-	private final class ServiceTask
+	private final class MetricsSvcTask
 	implements Runnable {
 
 		private final long metricsPeriodNanoSec;
 		private long prevNanoTimeStamp;
 
-		private ServiceTask(final int metricsPeriodSec) {
-			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
-				metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
+		private MetricsSvcTask(final int metricsPeriodSec) {
+			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec > 0 ?
+				metricsPeriodSec : Long.MAX_VALUE);
+			this.prevNanoTimeStamp = - 1;
+		}
+		@Override
+
+		public final void run() {
+			long nextNanoTimeStamp;
+			while(true) {
+				refreshStats();
+				nextNanoTimeStamp = System.nanoTime();
+				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+					outputCurrentMetrics();
+					prevNanoTimeStamp = nextNanoTimeStamp;
+				}
+				LockSupport.parkNanos(1);
+			}
+		}
+
+		private void refreshStats() {
+			for(final int nextIoTypeCode : ioStats.keySet()) {
+				lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
+			}
+		}
+
+		private void outputCurrentMetrics() {
+			LOG.info(
+				Markers.METRICS_STDOUT,
+				new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
 			);
-			this.prevNanoTimeStamp = -1;
+			if(!metricsConfig.getPrecondition()) {
+				LOG.info(
+					Markers.METRICS_FILE,
+					new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
+				);
+			}
+			/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
+				for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
+					try {
+						LOG.info(
+							Markers.MSG, "Storage driver \"{}\" active task count: {}",
+							nextDriver.toString(), nextDriver.getActiveTaskCount()
+						);
+					} catch(final RemoteException ignored) {
+					}
+				}
+			}*/
+		}
+	}
+
+	private final static class GetIoResultsSvcTask
+	implements Runnable {
+
+		private final StorageDriver driver;
+		private final Output<String> itemInfoOutput;
+		private final Int2ObjectMap<IoStats> ioStats;
+		private final Int2ObjectMap<IoStats> medIoStats;
+		private final LongAdder counterResults;
+		private final boolean ioTraceOutputFlag;
+
+		public GetIoResultsSvcTask(
+			final StorageDriver driver, final Output<String> itemInfoOutput,
+			final Int2ObjectMap<IoStats> ioStats, final Int2ObjectMap<IoStats> medIoStats,
+			final LongAdder counterResults, final boolean ioTraceOutputFlag
+		) {
+			this.driver = driver;
+			this.itemInfoOutput = itemInfoOutput;
+			this.ioStats = ioStats;
+			this.medIoStats = medIoStats;
+			this.counterResults = counterResults;
+			this.ioTraceOutputFlag = ioTraceOutputFlag;
 		}
 
 		@Override
 		public final void run() {
-
-			long nextNanoTimeStamp;
-			int n;
-			final List<R> ioTaskResultsBuff = new ArrayList<>(BATCH_SIZE);
-
-			try {
-				while(true) {
-					ioTaskResultsBuff.clear();
-					n = ioTaskResultsQueue.get(ioTaskResultsBuff, BATCH_SIZE);
-					if(n > 0) {
-						ioTaskResultsDispatch(ioTaskResultsBuff, n);
+			while(true) {
+				try {
+					postProcessIoResults(driver.getResults());
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to fetch the I/O results from the storage driver \"{}\"", driver
+					);
+					try {
+						Thread.sleep(1);
+					} catch(final InterruptedException ee) {
+						break;
 					}
-					refreshStats();
-					nextNanoTimeStamp = System.nanoTime();
-					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						outputCurrentMetrics();
-						prevNanoTimeStamp = nextNanoTimeStamp;
-					}
-					LockSupport.parkNanos(1);
 				}
-			/*} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");*/
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to dispatch the I/O tasks results");
 			}
 		}
 
-		private void ioTaskResultsDispatch(final List<R> ioTaskResults, final int n) {
+		private void postProcessIoResults(final List<IoResult> ioTaskResults) {
 
-
+			final int n = ioTaskResults.size();
 			int m = n; // count of complete whole tasks
 
 			// I/O trace logging
-			if(!metricsConfig.getPrecondition()) {
+			if(!ioTraceOutputFlag) {
 				LOG.debug(
 					Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n)
 				);
 			}
 
-			R ioTaskResult;
+			IoResult ioTaskResult;
 			DataIoResult dataIoTaskResult;
 			int ioTypeCode;
 			int statusCode;
@@ -348,35 +400,7 @@ implements LoadMonitor<R> {
 			counterResults.add(m);
 		}
 
-		private void refreshStats() {
-			for(final int nextIoTypeCode : ioStats.keySet()) {
-				lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
-			}
-		}
 
-		private void outputCurrentMetrics() {
-			LOG.info(
-				Markers.METRICS_STDOUT,
-				new MetricsStdoutLogMessage(name, lastStats, totalConcurrencyMap)
-			);
-			if(!metricsConfig.getPrecondition()) {
-				LOG.info(
-					Markers.METRICS_FILE,
-					new MetricsCsvLogMessage(lastStats, totalConcurrencyMap)
-				);
-			}
-			/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
-				for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
-					try {
-						LOG.info(
-							Markers.MSG, "Storage driver \"{}\" active task count: {}",
-							nextDriver.toString(), nextDriver.getActiveTaskCount()
-						);
-					} catch(final RemoteException ignored) {
-					}
-				}
-			}*/
-		}
 	}
 
 	private boolean isDoneCountLimit() {
@@ -410,12 +434,12 @@ implements LoadMonitor<R> {
 		return false;
 	}
 
-	private boolean ioTasksCompleted() {
-		long producedIOTasksCount = 0;
+	private boolean allIoTasksCompleted() {
+		long generatedIoTasks = 0;
 		for(final LoadGenerator<I, O, R> nextLoadGenerator : driversMap.keySet()) {
 			try {
 				if(nextLoadGenerator.isInterrupted()) {
-					producedIOTasksCount += nextLoadGenerator.getProducedIOTasksCount();
+					generatedIoTasks += nextLoadGenerator.getGeneratedIoTasksCount();
 				} else {
 					return false;
 				}
@@ -427,7 +451,7 @@ implements LoadMonitor<R> {
 			}
 		}
 
-		return counterResults.longValue() >= producedIOTasksCount;
+		return counterResults.longValue() >= generatedIoTasks;
 	}
 
 	private boolean isDone() {
@@ -547,7 +571,18 @@ implements LoadMonitor<R> {
 			ioStats.get(ioTypeCode).start();
 		}
 
-		worker.start();
+		svcTaskExecutor.submit(new MetricsSvcTask((int) metricsConfig.getPeriod()));
+		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
+			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
+				svcTaskExecutor.submit(
+					new GetIoResultsSvcTask(
+						driver, itemInfoOutput, ioStats, medIoStats, counterResults,
+						metricsConfig.getPrecondition()
+					)
+				);
+			}
+		}
+		svcTaskExecutor.shutdown();
 	}
 
 	@Override
@@ -593,7 +628,7 @@ implements LoadMonitor<R> {
 				}
 			}
 		}
-		worker.interrupt();
+		svcTaskExecutor.shutdownNow();
 	}
 
 	@Override
@@ -631,7 +666,7 @@ implements LoadMonitor<R> {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
 				return true;
 			}
-			if(ioTasksCompleted()) {
+			if(allIoTasksCompleted()) {
 				LOG.debug(
 					Markers.MSG, "{}: await exit due to IO Tasks have been completed", getName()
 				);
@@ -692,6 +727,7 @@ implements LoadMonitor<R> {
 		if(itemInfoOutput != null) {
 			itemInfoOutput.close();
 		}
+
 		UNCLOSED.remove(this);
 	}
 }
