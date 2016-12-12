@@ -421,7 +421,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		final HttpMethod httpMethod = HttpMethod.PUT;
+		final HttpMethod httpMethod = HttpMethod.POST;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);
@@ -499,7 +499,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-		final HttpMethod httpMethod = HttpMethod.PUT;
+		final HttpMethod httpMethod = HttpMethod.POST;
 		final String contentStr = content.toString();
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, Unpooled.wrappedBuffer(contentStr.getBytes()),

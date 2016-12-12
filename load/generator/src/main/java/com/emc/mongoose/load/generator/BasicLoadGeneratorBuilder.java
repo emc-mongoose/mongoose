@@ -120,22 +120,23 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		ioTaskBuilder.setSrcPath(itemInputPath);
 		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
 		
-		String authToken = null;
-		try {
-			for(final StorageDriver<I, O, R> nextDriver : storageDrivers) {
-				if(authToken == null) {
-					authToken = nextDriver.getAuthToken();
-				} else {
-					// distribute the auth token among the storage drivers
-					nextDriver.setAuthToken(authToken);
+		if(!IoType.NOOP.equals(ioType)) { // prevent the storage connections if noop
+			String authToken = null;
+			try {
+				for(final StorageDriver<I, O, R> nextDriver : storageDrivers) {
+					if(authToken == null) {
+						authToken = nextDriver.getAuthToken();
+					} else {
+						// distribute the auth token among the storage drivers
+						nextDriver.setAuthToken(authToken);
+					}
 				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to communicate with remote storage driver");
 			}
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to communicate with remote storage driver"
-			);
 		}
-		
+
 		final String itemInputFile = inputConfig.getFile();
 		itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
 		dstPathInput = getDstPathInput(ioType);
