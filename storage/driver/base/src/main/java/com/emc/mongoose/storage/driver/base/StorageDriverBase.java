@@ -50,6 +50,7 @@ implements StorageDriver<I, O, R> {
 		};
 	}
 
+	private final int queueCapacity;
 	private final IoBuffer<O> ownTasksQueue;
 	private final IoBuffer<O> inTasksQueue;
 	private final IoBuffer<R> ioResultsQueue;
@@ -77,7 +78,7 @@ implements StorageDriver<I, O, R> {
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
-		final int queueCapacity = loadConfig.getQueueConfig().getSize();
+		queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.ownTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
 		this.inTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(BATCH_SIZE));
 		this.ioResultsQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
@@ -177,8 +178,8 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public List<R> getResults()
 	throws IOException {
-		final List<R> ioTaskResults = new ArrayList<>(BATCH_SIZE);
-		ioResultsQueue.get(ioTaskResults, BATCH_SIZE);
+		final List<R> ioTaskResults = new ArrayList<>(queueCapacity);
+		ioResultsQueue.get(ioTaskResults, queueCapacity);
 		return ioTaskResults;
 	}
 
