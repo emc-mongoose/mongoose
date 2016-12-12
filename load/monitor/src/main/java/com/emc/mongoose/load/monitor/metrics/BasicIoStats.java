@@ -74,14 +74,14 @@ implements IoStats {
 		private transient com.codahale.metrics.Snapshot latSnapshot = null;
 		private final long sumDur;
 		private final long sumLat;
+		private final long startTime;
 		private final long elapsedTime;
 		//
 		public BasicSnapshot(
-			final long countSucc, final double succRateLast,
-			final long countFail, final double failRate,
-			final long countByte, final double byteRate,
-			final long elapsedTime, final long sumDur, final long sumLat,
-			final com.codahale.metrics.Snapshot durSnapshot,
+			final long countSucc, final double succRateLast, final long countFail,
+			final double failRate, final long countByte, final double byteRate,
+			final long startTime, final long elapsedTime, final long sumDur,
+			final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
 		) {
 			this.countSucc = countSucc;
@@ -92,6 +92,7 @@ implements IoStats {
 			this.byteRateLast = byteRate;
 			this.sumDur = sumDur;
 			this.sumLat = sumLat;
+			this.startTime = startTime;
 			this.elapsedTime = elapsedTime;
 			this.durSnapshot = durSnapshot;
 			this.durValues = durSnapshot.getValues();
@@ -260,142 +261,14 @@ implements IoStats {
 		}
 		//
 		@Override
+		public final long getStartTime() {
+			return startTime;
+		}
+
+		@Override
 		public final long getElapsedTime() {
 			return elapsedTime;
 		}
-		/*
-		@Override
-		public final String toCountsString() {
-			return countSucc + "/" + countFail;
-		}
-		//
-		@Override
-		public final String toDurString() {
-			return (int) durSnapshot.getMean() + "/" +
-				(int) durSnapshot.getMin() + "/" +
-				(int) durSnapshot.getMax();
-		}
-		//
-		@Override
-		public final String toDurSummaryString() {
-			return (int) durSnapshot.getMean() + "/" +
-				(int) durSnapshot.getMin() + "/" +
-				(int) durSnapshot.getValue(0.25) + "/" +
-				(int) durSnapshot.getValue(0.5) + "/" +
-				(int) durSnapshot.getValue(0.75) + "/" +
-				(int) durSnapshot.getMax();
-		}
-		//
-		@Override
-		public final String toLatString() {
-			return (int) latSnapshot.getMean() + "/" +
-				(int) latSnapshot.getMin() + "/" +
-				(int) latSnapshot.getMax();
-		}
-		//
-		@Override
-		public final String toLatSummaryString() {
-			return (int) latSnapshot.getMean() + "/" +
-				(int) latSnapshot.getMin() + "/" +
-				(int) latSnapshot.getValue(0.25) + "/" +
-				(int) latSnapshot.getValue(0.5) + "/" +
-				(int) latSnapshot.getValue(0.75) + "/" +
-				(int) latSnapshot.getMax();
-		}
-		//
-		@Override
-		public final String toString() {
-
-			if(durSnapshot == null) {
-				durSnapshot = new UniformSnapshot(durValues);
-			}
-			if(latSnapshot == null) {
-				latSnapshot = new UniformSnapshot(latValues);
-			}
-
-			final double elapsedTime = getElapsedTime() / Constants.M;
-			final String elapsedTimeStr;
-			if(0 < elapsedTime && elapsedTime < 1) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
-			} else if(elapsedTime < 10 ) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
-			} else if(elapsedTime < 100) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
-			} else if(elapsedTime < 1000){
-				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
-			} else {
-				elapsedTimeStr = Long.toString((long) elapsedTime);
-			}
-
-			final double durationSum = getDurationSum() / Constants.M;
-			final String durationSumStr;
-			if(0 < durationSum && durationSum < 1) {
-				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
-			} else if(durationSum < 10 ) {
-				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
-			} else if(durationSum < 100) {
-				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
-			} else if(durationSum < 1000){
-				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
-			} else {
-				durationSumStr = Long.toString((long) durationSum);
-			}
-
-			return String.format(
-				Locale.ROOT, MSG_FMT_METRICS,
-				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
-				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
-				getByteRateMean() / Constants.MIB, getByteRateLast() / Constants.MIB,
-				toDurString(), toLatString()
-			);
-		}
-		//
-		@Override
-		public final String toSummaryString() {
-
-			if(durSnapshot == null) {
-				durSnapshot = new UniformSnapshot(durValues);
-			}
-			if(latSnapshot == null) {
-				latSnapshot = new UniformSnapshot(latValues);
-			}
-
-			final double elapsedTime = getElapsedTime() / Constants.M;
-			final String elapsedTimeStr;
-			if(elapsedTime < 1) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.4f", elapsedTime);
-			} else if(elapsedTime < 10 ) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.3f", elapsedTime);
-			} else if(elapsedTime < 100) {
-				elapsedTimeStr = String.format(Locale.ROOT, "%.2f", elapsedTime);
-			} else if(elapsedTime < 1000){
-				elapsedTimeStr = String.format(Locale.ROOT, "%.1f", elapsedTime);
-			} else {
-				elapsedTimeStr = Long.toString((long) elapsedTime);
-			}
-
-			final double durationSum = getDurationSum() / Constants.M;
-			final String durationSumStr;
-			if(durationSum < 1) {
-				durationSumStr = String.format(Locale.ROOT, "%.4f", durationSum);
-			} else if(durationSum < 10 ) {
-				durationSumStr = String.format(Locale.ROOT, "%.3f", durationSum);
-			} else if(durationSum < 100) {
-				durationSumStr = String.format(Locale.ROOT, "%.2f", durationSum);
-			} else if(durationSum < 1000){
-				durationSumStr = String.format(Locale.ROOT, "%.1f", durationSum);
-			} else {
-				durationSumStr = Long.toString((long) durationSum);
-			}
-
-			return String.format(
-				Locale.ROOT, MSG_FMT_METRICS,
-				getSuccCount(), getFailCount(), elapsedTimeStr, durationSumStr,
-				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
-				getByteRateMean() / Constants.MIB, getByteRateLast() / Constants.MIB,
-				toDurSummaryString(), toLatSummaryString()
-			);
-		}*/
 	}
 	//
 	@Override
@@ -473,10 +346,10 @@ implements IoStats {
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
 		return new BasicSnapshot(
-			throughputSuccess.getCount(), throughputSuccess.getLastRate(), throughputFail.getCount(),
-			throughputFail.getLastRate(), reqBytes.getCount(), reqBytes.getLastRate(),
-			prevElapsedTimeMicroSec + currElapsedTime, reqDurationSum.sum(), respLatencySum.sum(),
-			reqDurSnapshot, respLatSnapshot
+			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
+			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
+			reqBytes.getLastRate(), tsStartMicroSec, prevElapsedTimeMicroSec + currElapsedTime,
+			reqDurationSum.sum(), respLatencySum.sum(), reqDurSnapshot, respLatSnapshot
 		);
 	}
 }

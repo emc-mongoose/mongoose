@@ -39,6 +39,9 @@ extends Closeable {
 	
 	interface Snapshot
 	extends Serializable {
+
+		/** @return microseconds */
+		long getStartTime();
 		//
 		long getSuccCount();
 		double getSuccRateMean();

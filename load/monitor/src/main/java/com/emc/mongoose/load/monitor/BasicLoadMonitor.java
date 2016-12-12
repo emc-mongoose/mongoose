@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
+import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
@@ -742,6 +743,10 @@ implements LoadMonitor<R> {
 			LOG.info(
 				Markers.METRICS_FILE_TOTAL,
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
+			);
+			LOG.info(
+				Markers.METRICS_EXT_RESULTS,
+				new ExtResultsXmlLogMessage(name, lastStats, concurrencyMap, driversCountMap)
 			);
 		}
 		
