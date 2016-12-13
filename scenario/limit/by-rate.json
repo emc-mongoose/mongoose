@@ -7,7 +7,7 @@
 			}
 		},
 		"load" : {
-			"threads" : 1000,
+			"concurrency" : 1000,
 			"limit" : {
 				"rate" : 1234.5
 			}

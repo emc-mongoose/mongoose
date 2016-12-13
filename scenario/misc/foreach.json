@@ -29,12 +29,12 @@
 			],
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "${size}_${threads}threads"
+					"output" : {
+						"path" : "${size}_${threads}threads"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -42,45 +42,48 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"dst" : {
+							"output" : {
 								"file" : "${size}_${threads}threads.csv"
 							}
 						},
 						"load" : {
+							"job" : {
+								"name" : "C${threads}_${size}"
+							},
 							"type" : "create"
 						},
 						"run" : {
-							"id" : "C${threads}_${size}"
+							
 						}
 					}
 				}, {
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "${size}_${threads}threads.csv"
 							}
 						},
 						"load" : {
+							"job" : {
+								"name" : "R${threads}_${size}"
+							},
 							"type" : "read"
-						},
-						"run" : {
-							"id" : "R${threads}_${size}"
 						}
 					}
 				}, {
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "${size}_${threads}threads.csv"
 							}
 						},
 						"load" : {
+							"job" : {
+								"name" : "D${threads}_${size}"
+							},
 							"type" : "delete"
-						},
-						"run" : {
-							"id" : "D${threads}_${size}"
 						}
 					}
 				}

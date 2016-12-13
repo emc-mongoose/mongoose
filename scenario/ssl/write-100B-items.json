@@ -6,11 +6,9 @@
 				"size" : 100
 			}
 		},
-		"network" : {
-			"ssl" : true
-		},
 		"storage" : {
-			"port" : 9021
+			"port" : 9021,
+			"ssl" : true
 		}
 	}
 }

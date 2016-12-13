@@ -2,15 +2,15 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "read-container-listing"
+			"output" : {
+				"path" : "read-container-listing"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"count" : 100000
 			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"storage" : {
 			"http" : {
@@ -27,8 +27,8 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
-						"container" : "read-container-listing"
+					"input" : {
+						"path" : "read-container-listing"
 					}
 				},
 				"load" : {

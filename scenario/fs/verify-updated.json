@@ -2,15 +2,15 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "fs-verify-updated"
+			"output" : {
+				"path" : "fs-verify-updated"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"count" : 100
 			},
-			"threads" : 2
+			"concurrency" : 2
 		},
 		"storage" : {
 			"type" : "fs"
@@ -22,7 +22,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "fs-verify-updated-0.csv"
 					}
 				}
@@ -33,12 +33,15 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 10 // update 10 random byte ranges per request
+						"ranges" : {
+							// update 10 random byte ranges per request
+							"random" : 10
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "fs-verify-updated-0.csv"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "fs-verify-updated-1.csv"
 					}
 				},
@@ -51,7 +54,7 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "fs-verify-updated-1.csv"
 					}
 				},

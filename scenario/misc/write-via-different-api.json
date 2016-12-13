@@ -1,10 +1,10 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"auth" : {
-			"id" : "wuser1@sanity.local"
-		},
 		"storage" : {
+			"auth" : {
+				"id" : "wuser1@sanity.local"
+			},
 			"http" : {
 				"namespace" : "s3"
 			}
@@ -23,7 +23,7 @@
 					"limit" : {
 						"count" : 1000
 					},
-					"threads" : 5
+					"concurrency" : 5
 				}
 			},
 			"jobs" : [

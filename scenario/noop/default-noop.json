@@ -2,7 +2,7 @@
 	"type" : "load",
 	"config" : {
 		"load" : {
-			"concurrency" : 1000
+			"type" : "noop"
 		}
 	}
 }

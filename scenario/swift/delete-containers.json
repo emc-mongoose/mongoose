@@ -2,7 +2,7 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"type" : "container"
+			"type" : "path"
 		},
 		"load" : {
 			"limit" : {
@@ -22,7 +22,7 @@
 			"type": "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "swift-delete-containers.csv"
 					}
 				}
@@ -31,7 +31,7 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "swift-delete-containers.csv"
 					}
 				},

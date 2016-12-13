@@ -2,15 +2,15 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "partial-update-multiple-random-ranges"
+			"output" : {
+				"path" : "partial-update-multiple-random-ranges"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"count" : 100
 			},
-			"threads" : 2
+			"concurrency" : 2
 		}
 	},
 	"jobs": [
@@ -19,7 +19,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "partial-update-multiple-random-ranges-0.csv"
 					}
 				}
@@ -31,12 +31,14 @@
 				"item" : {
 					"data" : {
 						// update 10 random byte ranges per request
-						"ranges" : 10
+						"ranges" : {
+							"random" : 10
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "partial-update-multiple-random-ranges-0.csv"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "partial-update-multiple-random-ranges-1.csv"
 					}
 				},
@@ -49,7 +51,7 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "partial-update-multiple-random-ranges-1.csv"
 					}
 				},

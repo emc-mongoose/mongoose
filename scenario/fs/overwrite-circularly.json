@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "circular-file-overwrite"
+			"output" : {
+				"path" : "circular-file-overwrite"
 			},
 			"data" : {
 				"size" : "64KB"
@@ -23,7 +23,7 @@
 			"type": "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "circular-file-overwrite.csv"
 					}
 				}
@@ -32,7 +32,7 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "circular-file-overwrite.csv"
 					}
 				},

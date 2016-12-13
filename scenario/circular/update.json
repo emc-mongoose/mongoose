@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "circular-update"
+			"output" : {
+				"path" : "circular-update"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 10
+			"concurrency" : 10
 		}
 	},
 	"jobs" : [
@@ -21,7 +21,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "circular-update.csv"
 					}
 				}
@@ -32,10 +32,11 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						// partial write or random ranges update
-						"ranges" : 5
+						"ranges" : {
+							"random" : 5
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "circular-update.csv"
 					}
 				},

@@ -7,15 +7,15 @@
 			"data" : {
 				"size" : "${ITEM_DATA_SIZE}"
 			},
-			"dst" : {
-				"container" : "${ITEM_DST_CONTAINER}"
+			"output" : {
+				"path" : "${ITEM_DST_CONTAINER}"
 			},
-			"src" : {
+			"input" : {
 				"file" : "${ITEM_SRC_FILE}"
 			}
 		},
 		"load" : {
-			"threads" : "${LOAD_THREADS}",
+			"concurrency" : "${LOAD_THREADS}",
 			"type" : "${LOAD_TYPE}"
 		}
 	}

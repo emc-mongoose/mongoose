@@ -2,8 +2,8 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "existingBucketName"
+			"output" : {
+				"path" : "existingBucketName"
 			}
 		}
 	}

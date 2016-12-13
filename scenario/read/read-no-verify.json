@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "read-no-verify"
+			"output" : {
+				"path" : "read-no-verify"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -15,7 +15,7 @@
 			"type": "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "read-no-verify.csv"
 					}
 				},
@@ -30,9 +30,11 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 1
+						"ranges" : {
+							"random" : 1
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "read-no-verify.csv"
 					}
 				}
@@ -44,7 +46,7 @@
 					"data" : {
 						"verify" : false
 					},
-					"src" : {
+					"input" : {
 						"file" : "read-no-verify.csv"
 					}
 				},

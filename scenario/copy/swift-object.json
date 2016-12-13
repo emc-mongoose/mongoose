@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "copy-swift-object"
+			"output" : {
+				"path" : "copy-swift-object"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"storage" : {
 			"http" : {
@@ -27,7 +27,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "copy-swift-object.csv"
 					}
 				}
@@ -36,11 +36,11 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "copy-swift-object_"
+					"output" : {
+						"path" : "copy-swift-object_"
 					},
-					"src" : {
-						"container" : "copy-swift-object",
+					"input" : {
+						"path" : "copy-swift-object",
 						"file" : "copy-swift-object.csv"
 					}
 				}

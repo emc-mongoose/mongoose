@@ -2,29 +2,32 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "distributed-update"
+			"output" : {
+				"path" : "distributed-update"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 10,
-			"server" : {
-				"addrs": [
-					"10.249.237.71",
-					"10.249.237.72"
-				]
-			}
+			"concurrency" : 10
 		},
 		"run" : {
 			"mode" : "client"
 		},
 		"storage" : {
-			"addrs" : [
-				"10.249.237.73"
-			]
+			"driver" : {
+				"remote" : true,
+				"addrs": [
+					"10.249.237.71",
+					"10.249.237.72"
+				]
+			},
+			"node" : {
+				"addrs" : [
+					"10.249.237.73"
+				]
+			}
 		}
 	},
 	"jobs": [
@@ -35,7 +38,7 @@
 					"data" : {
 						"size" : "8KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "distributed-update.csv"
 					}
 				}
@@ -46,9 +49,11 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 2
+						"ranges" : {
+							"random" : 2
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "distributed-update.csv"
 					}
 				}

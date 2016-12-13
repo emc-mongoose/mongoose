@@ -2,13 +2,13 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "copy-directory"
+			"output" : {
+				"path" : "copy-directory"
 			},
 			"data" : {
 				"size" : "10KB"
 			},
-			"type" : "container"
+			"type" : "path"
 		},
 		"storage" : {
 			"type" : "fs"
@@ -19,7 +19,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "copy-directory.json"
 					},
 					"naming" : {
@@ -37,8 +37,8 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "copy-directory/1"
+					"output" : {
+						"path" : "copy-directory/1"
 					},
 					"type" : "data"
 				},
@@ -46,18 +46,18 @@
 					"limit" : {
 						"count" : 100
 					},
-					"threads" : 10
+					"concurrency" : 10
 				}
 			}
 		}, {
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "copy-directory_"
+					"output" : {
+						"path" : "copy-directory_"
 					},
-					"src" : {
-						"container" : "copy-directory",
+					"input" : {
+						"path" : "copy-directory",
 						"file" : "copy-directory.json"
 					}
 				},
@@ -65,7 +65,7 @@
 					"limit" : {
 						"count" : 100
 					},
-					"threads" : 5
+					"concurrency" : 5
 				}
 			}
 		}

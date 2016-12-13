@@ -2,8 +2,8 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "write-to-custom-dir"
+			"output" : {
+				"path" : "write-to-custom-dir"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 5
+			"concurrency" : 5
 		},
 		"storage" : {
 			"type" : "fs"

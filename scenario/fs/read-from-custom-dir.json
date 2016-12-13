@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "read-from-custom-dir"
+			"output" : {
+				"path" : "read-from-custom-dir"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 5
+			"concurrency" : 5
 		},
 		"storage" : {
 			"type" : "fs"
@@ -24,7 +24,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "read-from-custom-dir.csv"
 					}
 				}
@@ -33,7 +33,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "read-from-custom-dir.csv"
 					}
 				},

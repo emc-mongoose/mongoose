@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "copy-s3-object"
+			"output" : {
+				"path" : "copy-s3-object"
 			},
 			"data" : {
 				"size" : "10KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 10
+			"concurrency" : 10
 		}
 	},
 	"jobs" : [
@@ -21,7 +21,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "copy-s3-object.csv"
 					}
 				}
@@ -30,11 +30,11 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "copy-s3-object_"
+					"output" : {
+						"path" : "copy-s3-object_"
 					},
-					"src" : {
-						"container" : "copy-s3-object",
+					"input" : {
+						"path" : "copy-s3-object",
 						"file" : "copy-s3-object.csv"
 					}
 				}

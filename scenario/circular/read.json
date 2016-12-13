@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "circular-read"
+			"output" : {
+				"path" : "circular-read"
 			}
 		},
 		"load" : {
@@ -17,7 +17,7 @@
 			"type": "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "circular-read.csv"
 					}
 				}
@@ -26,7 +26,7 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "circular-read.csv"
 					}
 				},

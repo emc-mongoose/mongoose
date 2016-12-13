@@ -2,13 +2,13 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"type" : "container"
+			"type" : "path"
 		},
 		"load" : {
 			"limit" : {
 				"count" : 100000
 			},
-			"threads" : 100
+			"concurrency" : 100
 		}
 	}
 }

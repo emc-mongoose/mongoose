@@ -2,28 +2,31 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "read-bucket-listing-distributed"
+			"output" : {
+				"path" : "read-bucket-listing-distributed"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"count" : 100000
 			},
-			"server" : {
-				"addrs" : [
-					"10.249.237.72", "10.249.237.73"
-				]
-			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"run" : {
 			"mode" : "client"
 		},
 		"storage" : {
-			"addrs" : [
-				"10.249.237.71"
-			]
+			"driver" : {
+				"remote" : true,
+				"addrs" : [
+					"10.249.237.72", "10.249.237.73"
+				]
+			},
+			"node" : {
+				"addrs" : [
+					"10.249.237.71"
+				]
+			}
 		}
 	},
 	"jobs": [
@@ -33,8 +36,8 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
-						"container" : "read-bucket-listing-distributed"
+					"input" : {
+						"path" : "read-bucket-listing-distributed"
 					}
 				},
 				"load" : {

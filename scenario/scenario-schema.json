@@ -128,7 +128,7 @@
 								{
 									"type" : "string",
 									"enum" : [
-										"container",
+										"path",
 										"data",
 										"token"
 									]
@@ -212,11 +212,11 @@
 								}
 							}
 						},
-						"dst": {
+						"output": {
 							"type": "object",
 							"additionalProperties" : false,
 							"properties": {
-								"container": {
+								"path": {
 									"type": [
 										"null",
 										"string"
@@ -230,11 +230,11 @@
 								}
 							}
 						},
-						"src": {
+						"input": {
 							"type": "object",
 							"additionalProperties" : false,
 							"properties": {
-								"container": {
+								"path": {
 									"type": [
 										"null",
 										"string"
@@ -389,7 +389,7 @@
 								}
 							]
 						},
-						"threads": {
+						"concurrency" : {
 							"oneOf" : [
 								{
 									"type" : "integer",
@@ -792,7 +792,7 @@
 										}
 									]
 								},
-								"container": {
+								"path": {
 									"type": "object",
 									"additionalProperties" : false,
 									"properties": {

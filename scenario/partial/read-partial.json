@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "linear-read-partial"
+			"output" : {
+				"path" : "linear-read-partial"
 			}
 		},
 		"load" : {
@@ -17,7 +17,7 @@
 			"type": "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "linear-read-partial.csv"
 					}
 				}
@@ -27,10 +27,11 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						// TODO implement
-						"ranges" : 1
+						"ranges" : {
+							"random" : 1
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "linear-read-partial.csv"
 					}
 				},

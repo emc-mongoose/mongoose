@@ -20,7 +20,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "content-read-zerobytes-0.csv"
 					}
 				}
@@ -30,12 +30,14 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 10
+						"ranges" : {
+							"random" : 10
+						}
 					},
-					"dst" : {
+					"output" : {
 						"file" : "content-read-zerobytes-1.csv"
 					},
-					"src" : {
+					"input" : {
 						"file" : "content-read-zerobytes-0.csv"
 					}
 				}
@@ -44,7 +46,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "content-read-zerobytes-1.csv"
 					}
 				},

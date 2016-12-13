@@ -5,15 +5,15 @@
 			"data" : {
 				"size" : "10KB"
 			},
-			"dst" : {
-				"container" : "test-bucket"
+			"output" : {
+				"path" : "test-bucket"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"time" : "5m"
 			},
-			"threads" : 100
+			"concurrency" : 100
 		}
 	},
 	"jobs" : [
@@ -22,7 +22,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "pre_10KB_items.csv"
 					}
 				},
@@ -36,7 +36,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "pre_10KB_items.csv"
 					}
 				},
@@ -50,9 +50,11 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 1
+						"ranges" : {
+							"random" : 1
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "pre_10KB_items.csv"
 					}
 				},
@@ -74,12 +76,12 @@
 					"data" :  {
 						"size" : "10KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "10KB_items.csv"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -98,12 +100,12 @@
 					"data" :  {
 						"size" : "100KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "100KB_items.csv"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -122,12 +124,12 @@
 					"data" :  {
 						"size" : "1MB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "1MB_items.csv"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -146,12 +148,12 @@
 					"data" :  {
 						"size" : "10MB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "10MB_items.csv"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -170,12 +172,12 @@
 					"data" :  {
 						"size" : "100MB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "100MB_items.csv"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -194,12 +196,12 @@
 					"data" :  {
 						"size" : "200MB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "200MB_items.csv"
 					}
 				},
 				"load" : {
-					"threads" : "${threads}"
+					"concurrency" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -232,12 +234,12 @@
 							"data" :  {
 								"size" : "10KB"
 							},
-							"src" : {
+							"input" : {
 								"file" : "10KB_items.csv"
 							}
 						},
 						"load" : {
-							"threads" : "${threads}"
+							"concurrency" : "${threads}"
 						}
 					},
 					"jobs" : [
@@ -256,12 +258,12 @@
 							"data" :  {
 								"size" : "100KB"
 							},
-							"src" : {
+							"input" : {
 								"file" : "100KB_items.csv"
 							}
 						},
 						"load" : {
-							"threads" : "${threads}"
+							"concurrency" : "${threads}"
 						}
 					},
 					"jobs" : [
@@ -280,12 +282,12 @@
 							"data" :  {
 								"size" : "1MB"
 							},
-							"src" : {
+							"input" : {
 								"file" : "1MB_items.csv"
 							}
 						},
 						"load" : {
-							"threads" : "${threads}"
+							"concurrency" : "${threads}"
 						}
 					},
 					"jobs" : [
@@ -304,12 +306,12 @@
 							"data" :  {
 								"size" : "10MB"
 							},
-							"src" : {
+							"input" : {
 								"file" : "10MB_items.csv"
 							}
 						},
 						"load" : {
-							"threads" : "${threads}"
+							"concurrency" : "${threads}"
 						}
 					},
 					"jobs" : [
@@ -328,12 +330,12 @@
 							"data" :  {
 								"size" : "100MB"
 							},
-							"src" : {
+							"input" : {
 								"file" : "100MB_items.csv"
 							}
 						},
 						"load" : {
-							"threads" : "${threads}"
+							"concurrency" : "${threads}"
 						}
 					},
 					"jobs" : [
@@ -352,12 +354,12 @@
 							"data" :  {
 								"size" : "200MB"
 							},
-							"src" : {
+							"input" : {
 								"file" : "200MB_items.csv"
 							}
 						},
 						"load" : {
-							"threads" : "${threads}"
+							"concurrency" : "${threads}"
 						}
 					},
 					"jobs" : [

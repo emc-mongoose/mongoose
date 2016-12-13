@@ -5,8 +5,8 @@
 			"data" : {
 				"size" : "8KB"
 			},
-			"dst" : {
-				"container" : "weighted2-load",
+			"output" : {
+				"path" : "weighted2-load",
 				"file" : "weighted2-read-input.csv"
 			}
 		},
@@ -17,7 +17,7 @@
 			"metrics" : {
 				"period" : 0
 			},
-			"threads" : 100
+			"concurrency" : 100
 		}
 	},
 	"jobs" : [
@@ -28,7 +28,7 @@
 					"data" : {
 						"size" : "8KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "weighted2-read-input.csv"
 					}
 				}
@@ -40,7 +40,7 @@
 					"data" : {
 						"size" : "1KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "weighted2-delete-input.csv"
 					}
 				}
@@ -52,7 +52,7 @@
 					"data" : {
 						"size" : "64KB"
 					},
-					"src" : {
+					"input" : {
 						// new item generator will be used for write,
 						// one CSV file will be used for read,
 						// and the other CSV file will be used for delete

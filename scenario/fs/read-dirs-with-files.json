@@ -2,16 +2,16 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"type" : "container",
-			"dst" : {
-				"container" : "read-dirs-with-files"
+			"type" : "path",
+			"output" : {
+				"path" : "read-dirs-with-files"
 			}
 		},
 		"load" : {
 			"limit" : {
 				"count" : 10
 			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"storage" : {
 			"type" : "fs"
@@ -23,7 +23,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "read-dirs-with-files.json"
 					},
 					"naming" : {
@@ -44,7 +44,7 @@
 					"limit" : {
 						"count" : 100
 					},
-					"threads" : 1
+					"concurrency" : 1
 				}
 			},
 			"jobs" : [
@@ -52,8 +52,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/0"
+							"output" : {
+								"path" : "read-dirs-with-files/0"
 							}
 						}
 					}
@@ -61,8 +61,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/1"
+							"output" : {
+								"path" : "read-dirs-with-files/1"
 							}
 						}
 					}
@@ -70,8 +70,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/2"
+							"output" : {
+								"path" : "read-dirs-with-files/2"
 							}
 						}
 					}
@@ -79,8 +79,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/3"
+							"output" : {
+								"path" : "read-dirs-with-files/3"
 							}
 						}
 					}
@@ -88,8 +88,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/4"
+							"output" : {
+								"path" : "read-dirs-with-files/4"
 							}
 						}
 					}
@@ -97,8 +97,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/5"
+							"output" : {
+								"path" : "read-dirs-with-files/5"
 							}
 						}
 					}
@@ -106,8 +106,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/6"
+							"output" : {
+								"path" : "read-dirs-with-files/6"
 							}
 						}
 					}
@@ -115,8 +115,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/7"
+							"output" : {
+								"path" : "read-dirs-with-files/7"
 							}
 						}
 					}
@@ -124,8 +124,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/8"
+							"output" : {
+								"path" : "read-dirs-with-files/8"
 							}
 						}
 					}
@@ -133,8 +133,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "read-dirs-with-files/9"
+							"output" : {
+								"path" : "read-dirs-with-files/9"
 							}
 						}
 					}
@@ -145,7 +145,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "read-dirs-with-files.json"
 					}
 				},

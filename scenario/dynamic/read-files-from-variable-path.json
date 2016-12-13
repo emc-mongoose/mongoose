@@ -10,7 +10,7 @@
 			"limit" : {
 				"count" : 10000
 			},
-			"threads" : 4
+			"concurrency" : 4
 		},
 		"storage" : {
 			"type" : "fs"
@@ -21,8 +21,8 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "read-files-from-variable-path/$p{16;2}",
+					"output" : {
+						"path" : "read-files-from-variable-path/$p{16;2}",
 						"file" : "read-files-from-variable-path.csv"
 					},
 					"data" : {
@@ -34,7 +34,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "read-files-from-variable-path.csv"
 					}
 				},

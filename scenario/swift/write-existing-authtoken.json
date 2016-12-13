@@ -1,10 +1,10 @@
 {
 	"type" : "load",
 	"config" : {
-		"auth" : {
-			"token" : "existingAuthToken"
-		},
 		"storage" : {
+			"auth" : {
+				"token" : "existingAuthToken"
+			},
 			"http" : {
 				"api" : "Swift",
 				"namespace" : "test"

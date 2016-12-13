@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "src-dir"
+			"output" : {
+				"path" : "src-dir"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"storage" : {
 			"type" : "fs"
@@ -26,11 +26,11 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"dst" : {
-						"container" : "dst-dir"
+					"output" : {
+						"path" : "dst-dir"
 					},
-					"src" : {
-						"container" : "src-dir"
+					"input" : {
+						"path" : "src-dir"
 					}
 				}
 			}

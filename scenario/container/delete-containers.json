@@ -2,13 +2,13 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"type" : "container"
+			"type" : "path"
 		},
 		"load" : {
 			"limit" : {
 				"count" : 100000
 			},
-			"threads" : 100
+			"concurrency" : 100
 		}
 	},
 	"jobs" : [
@@ -16,7 +16,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "read-containers.json"
 					}
 				}
@@ -25,7 +25,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "read-containers.json"
 					}
 				},

@@ -2,7 +2,7 @@
 	"type" : "for",
 	"config" : {
 		"load" : {
-			"threads" : 100,
+			"concurrency" : 100,
 			"limit" : {
 				"count" : 10000
 			}

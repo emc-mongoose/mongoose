@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "fs-circular-read-from-custom-dir"
+			"output" : {
+				"path" : "fs-circular-read-from-custom-dir"
 			}
 		},
 		"load" : {
@@ -22,8 +22,8 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
-						"container" : "fs-circular-read-from-custom-dir"
+					"input" : {
+						"path" : "fs-circular-read-from-custom-dir"
 					}
 				},
 				"load" : {

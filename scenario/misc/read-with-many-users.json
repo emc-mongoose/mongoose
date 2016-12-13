@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "read-with-many-users"
+			"output" : {
+				"path" : "read-with-many-users"
 			}
 		},
 		"load" : {
@@ -17,7 +17,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "read-with-many-users.csv"
 					}
 				}
@@ -28,12 +28,14 @@
 				{
 					"type" : "load",
 					"config" : {
-						"auth" : {
-							"id" : "user1",
-							"secret" : "secret1"
+						"storage" : {
+							"auth" : {
+								"id" : "user1",
+								"secret" : "secret1"
+							}
 						},
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "read-with-many-users.csv"
 							}
 						},
@@ -45,12 +47,14 @@
 				{
 					"type" : "load",
 					"config" : {
-						"auth" : {
-							"id" : "user2",
-							"secret" : "secret2"
+						"storage" : {
+							"auth" : {
+								"id" : "user2",
+								"secret" : "secret2"
+							}
 						},
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "read-with-many-users.csv"
 							}
 						},
@@ -61,12 +65,14 @@
 				}, {
 					"type" : "load",
 					"config" : {
-						"auth" : {
-							"id" : "user3",
-							"secret" : "secret3"
+						"storage" : {
+							"auth" : {
+								"id" : "user3",
+								"secret" : "secret3"
+							}
 						},
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "read-with-many-users.csv"
 							}
 						},

@@ -12,7 +12,7 @@
 					}
 				},
 				"load" : {
-					"threads" : "${i}",
+					"concurrency" : "${i}",
 					"limit" : {
 						"time" : "15s"
 					}

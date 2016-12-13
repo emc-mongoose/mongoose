@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "circular-update"
+			"output" : {
+				"path" : "circular-update"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -13,20 +13,23 @@
 			"limit" : {
 				"count" : 1000
 			},
-			"server" : {
-				"addrs" : [
-					"10.249.237.72", "10.249.237.73"
-				]
-			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"run" : {
 			"mode" : "client"
 		},
 		"storage" : {
-			"addrs" : [
-				"10.249.237.71"
-			]
+			"driver" : {
+				"remote" : true,
+				"addrs" : [
+					"10.249.237.72", "10.249.237.73"
+				]
+			},
+			"node" : {
+				"addrs" : [
+					"10.249.237.71"
+				]
+			}
 		}
 	},
 	"jobs" : [
@@ -34,7 +37,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "circular-update.csv"
 					}
 				}
@@ -45,10 +48,11 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						// partial write or random ranges update
-						"ranges" : 5
+						"ranges" : {
+							"random" : 5
+						}
 					},
-					"src" : {
+					"input" : {
 						"file" : "circular-update.csv"
 					}
 				},

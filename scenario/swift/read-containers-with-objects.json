@@ -2,13 +2,13 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"type" : "container"
+			"type" : "path"
 		},
 		"load" : {
 			"limit" : {
 				"count" : 10
 			},
-			"threads" : 10
+			"concurrency" : 10
 		},
 		"storage" : {
 			"http" : {
@@ -24,7 +24,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "swift-read-containers-with-objects.json"
 					},
 					"naming" : {
@@ -45,7 +45,7 @@
 					"limit" : {
 						"count" : 100000
 					},
-					"threads" : 10
+					"concurrency" : 10
 				}
 			},
 			"jobs" : [
@@ -53,8 +53,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "0"
+							"output" : {
+								"path" : "0"
 							}
 						}
 					}
@@ -62,8 +62,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "1"
+							"output" : {
+								"path" : "1"
 							}
 						}
 					}
@@ -71,8 +71,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "2"
+							"output" : {
+								"path" : "2"
 							}
 						}
 					}
@@ -80,8 +80,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "3"
+							"output" : {
+								"path" : "3"
 							}
 						}
 					}
@@ -89,8 +89,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "4"
+							"output" : {
+								"path" : "4"
 							}
 						}
 					}
@@ -98,8 +98,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "5"
+							"output" : {
+								"path" : "5"
 							}
 						}
 					}
@@ -107,8 +107,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "6"
+							"output" : {
+								"path" : "6"
 							}
 						}
 					}
@@ -116,8 +116,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "7"
+							"output" : {
+								"path" : "7"
 							}
 						}
 					}
@@ -125,8 +125,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "8"
+							"output" : {
+								"path" : "8"
 							}
 						}
 					}
@@ -134,8 +134,8 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
-								"container" : "9"
+							"output" : {
+								"path" : "9"
 							}
 						}
 					}
@@ -146,7 +146,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "swift-read-containers-with-objects.json"
 					}
 				},

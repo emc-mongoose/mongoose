@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "linear-delete"
+			"output" : {
+				"path" : "linear-delete"
 			}
 		},
 		"load" : {
@@ -17,7 +17,7 @@
 			"type": "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "linear-delete.csv"
 					}
 				}
@@ -27,7 +27,7 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "linear-delete.csv"
 					}
 				},

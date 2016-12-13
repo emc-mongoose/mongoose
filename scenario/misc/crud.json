@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "mixed-crud"
+			"output" : {
+				"path" : "mixed-crud"
 			},
 			"data" : {
 				"size" : "8KB"
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 100000
 			},
-			"threads" : 20
+			"concurrency" : 20
 		}
 	},
 	"jobs" : [
@@ -24,7 +24,7 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
+							"output" : {
 								"file" : "mixed-crud-0.csv"
 							}
 						}
@@ -33,7 +33,7 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
+							"output" : {
 								"file" : "mixed-crud-1.csv"
 							}
 						}
@@ -42,7 +42,7 @@
 					"type" : "precondition",
 					"config" : {
 						"item" : {
-							"dst" : {
+							"output" : {
 								"file" : "mixed-crud-2.csv"
 							}
 						}
@@ -61,7 +61,7 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "mixed-crud-0.csv"
 							}
 						},
@@ -74,9 +74,11 @@
 					"config" : {
 						"item" : {
 							"data" : {
-								"ranges" : 1
+								"ranges" : {
+									"random" : 1
+								}
 							},
-							"src" : {
+							"input" : {
 								"file" : "mixed-crud-1.csv"
 							}
 						}
@@ -85,7 +87,7 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "mixed-crud-2.csv"
 							}
 						},

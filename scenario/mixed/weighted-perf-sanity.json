@@ -5,8 +5,8 @@
 			"data" : {
 				"size" : "10KB"
 			},
-			"dst" : {
-				"container" : "weighted-perf-sanity"
+			"output" : {
+				"path" : "weighted-perf-sanity"
 			}
 		},
 		"load" : {
@@ -14,7 +14,7 @@
 			"limit" : {
 				"time" : "1m"
 			},
-			"threads" : 2
+			"concurrency" : 2
 		}
 	},
 	"jobs" : [
@@ -22,7 +22,7 @@
 			"type" : "precondition",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "weighted-load.csv"
 					}
 				},
@@ -39,7 +39,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"src" : {
+					"input" : {
 						"file" : "weighted-load.csv"
 					}
 				},
@@ -56,7 +56,7 @@
 			"type" : "parallel",
 			"config" : {
 				"load" : {
-					"threads" : 1
+					"concurrency" : 1
 				}
 			},
 			"jobs" : [
@@ -71,7 +71,7 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"src" : {
+							"input" : {
 								"file" : "weighted-load.csv"
 							}
 						},

@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "circular-read-from-container"
+			"output" : {
+				"path" : "circular-read-from-container"
 			}
 		},
 		"load" : {
@@ -19,8 +19,8 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
-						"container" : "circular-read-from-container"
+					"input" : {
+						"path" : "circular-read-from-container"
 					}
 				},
 				"load" : {

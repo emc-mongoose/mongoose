@@ -5,7 +5,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "${MONGOOSE_DIR}/log/INIT/items.csv"
 					}
 				}
@@ -14,7 +14,7 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"dst" : {
+					"output" : {
 						"file" : "${MONGOOSE_DIR}/log/INIT/items.csv"
 					}
 				}

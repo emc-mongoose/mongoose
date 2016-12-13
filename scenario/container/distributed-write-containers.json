@@ -2,7 +2,7 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"type" : "container"
+			"type" : "path"
 		},
 		"load" : {
 			"limit" : {
@@ -13,15 +13,17 @@
 					"10.249.237.72", "10.249.237.73"
 				]
 			},
-			"threads" : 100
+			"concurrency" : 100
 		},
 		"run" : {
 			"mode" : "client"
 		},
 		"storage" : {
-			"addrs" : [
-				"10.249.237.71"
-			]
+			"node" : {
+				"addrs" : [
+					"10.249.237.71"
+				]
+			}
 		}
 	}
 }

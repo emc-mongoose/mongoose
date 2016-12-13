@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "read-bucket-listing"
+			"output" : {
+				"path" : "read-bucket-listing"
 			},
 			"data" : {
 				"size" : 0
@@ -13,7 +13,7 @@
 			"limit" : {
 				"count" : 100000
 			},
-			"threads" : 10
+			"concurrency" : 10
 		}
 	},
 	"jobs": [
@@ -23,8 +23,8 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"src" : {
-						"container" : "read-bucket-listing"
+					"input" : {
+						"path" : "read-bucket-listing"
 					}
 				},
 				"load" : {

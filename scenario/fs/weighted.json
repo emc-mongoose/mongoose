@@ -2,12 +2,12 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"dst" : {
-				"container" : "weighted-load"
+			"output" : {
+				"path" : "weighted-load"
 			}
 		},
 		"load" : {
-			"threads" : 5
+			"concurrency" : 5
 		},
 		"storage" : {
 			"type" : "fs"
@@ -21,7 +21,7 @@
 					"data" : {
 						"size" : "1KB"
 					},
-					"dst" : {
+					"output" : {
 						"file" : "weighted-load.csv"
 					}
 				},
@@ -42,7 +42,7 @@
 					"data" : {
 						"size" : "4KB-16KB"
 					},
-					"src" : {
+					"input" : {
 						"file" : "weighted-load.csv"
 					}
 				},
