@@ -63,7 +63,7 @@ extends LogMessageBase {
 			.append(concurrency).append('x').append(driversCount)
 			.append(": n=(").append(snapshot.getSuccCount()).append('/')
 			.append(snapshot.getFailCount()).append("); t[s]=(")
-			.append(formatFixedWidth(snapshot.getElapsedTime() / M, 7)).append('/')
+			.append(formatFixedWidth(snapshot.getElapsedTime() / 1000, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
 			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
 			.append(formatFixedWidth(snapshot.getSuccRateMean(), 7)).append('/')
@@ -97,7 +97,7 @@ extends LogMessageBase {
 				strb.appendFixedWidthPadLeft(snapshot.getFailCount(), 6, ' ').append('|');
 				strb
 					.appendFixedWidthPadLeft(
-						formatFixedWidth(snapshot.getElapsedTime() / M, 7), 7, ' '
+						formatFixedWidth(snapshot.getElapsedTime() / 1000, 7), 7, ' '
 					)
 					.append('|');
 				strb.appendFixedWidthPadRight(snapshot.getSuccRateMean(), 8, ' ').append('|');

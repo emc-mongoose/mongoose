@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.load.monitor.metrics.IoStats.Snapshot;
 
@@ -15,7 +14,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
+
 /**
  Created by andrey on 12.12.16.
  */
@@ -57,11 +56,11 @@ extends LogMessageBase {
 			driversCount = driversCountMap.get(ioTypeCode);
 
 			buffer.append("<result id=\"").append(jobName).append("\" ");
-			final long startTimeMillis = TimeUnit.MICROSECONDS.toMillis(snapshot.getStartTime());
+			final long startTimeMillis = snapshot.getStartTime();
 			final Date startDate = new Date(startTimeMillis);
 			buffer.append("StartDate=\"").append(FMT_DATE_RESULTS.format(startDate)).append("\" ");
 			buffer.append("StartTimestamp=\"").append(startTimeMillis).append("\" ");
-			final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toMillis(snapshot.getElapsedTime());
+			final long elapsedTimeMillis = snapshot.getElapsedTime();
 			final long endTimeStamp = startTimeMillis + elapsedTimeMillis;
 			final Date endDate = new Date(endTimeStamp);
 			buffer.append("EndDate=\"").append(FMT_DATE_RESULTS.format(endDate)).append("\" ");
@@ -71,12 +70,14 @@ extends LogMessageBase {
 			buffer.append("RequestThreads=\"").append(concurrency).append("\" ");
 			buffer.append("clients=\"").append(driversCount).append("\" ");
 			buffer.append("error=\"").append(snapshot.getFailCount()).append("\" ");
-			buffer.append("runtime=\"").append(((float) snapshot.getElapsedTime()) / M).append("\" ");
-			final double tp = snapshot.getSuccRateMean();
-			final double bw = snapshot.getByteRateMean();
-			buffer.append("filesize=\"").append(SizeInBytes.formatFixedSize(tp > 0 ? (long) (bw / tp) : 0)).append("\" ");
-			buffer.append("tps=\"").append(tp).append("\" tps_unit=\"Fileps\" ");
-			buffer.append("bw=\"").append(bw / MIB).append("\" bw_unit=\"MBps\" ");
+			buffer.append("runtime=\"").append(((float) elapsedTimeMillis) / 1000).append("\" ");
+			final long itemCount = snapshot.getSuccCount();
+			final long byteCount = snapshot.getByteCount();
+			System.out.println(byteCount + ", " + itemCount);
+			final String avgSize = SizeInBytes.formatFixedSize(itemCount > 0 ? byteCount / itemCount : 0);
+			buffer.append("filesize=\"").append(avgSize).append("\" ");
+			buffer.append("tps=\"").append(snapshot.getSuccRateMean()).append("\" tps_unit=\"Fileps\" ");
+			buffer.append("bw=\"").append(snapshot.getByteRateMean() / MIB).append("\" bw_unit=\"MBps\" ");
 			buffer.append("latency=\"").append(snapshot.getLatencyAvg()).append("\" latency_unit=\"us\" ");
 			buffer.append("latency_min=\"").append(snapshot.getLatencyMin()).append("\" ");
 			buffer.append("latency_loq=\"").append(snapshot.getLatencyLoQ()).append("\" ");
@@ -85,11 +86,11 @@ extends LogMessageBase {
 			buffer.append("latency_max=\"").append(snapshot.getLatencyMax()).append("\" ");
 			buffer.append("duration=\"").append(snapshot.getDurationAvg()).append("\" duration_unit=\"us\" ");
 			buffer.append("duration_min=\"").append(snapshot.getDurationMin()).append("\" ");
-			buffer.append("duration_loq=\"").append(snapshot.getDurationHiQ()).append("\" ");
+			buffer.append("duration_loq=\"").append(snapshot.getDurationLoQ()).append("\" ");
 			buffer.append("duration_med=\"").append(snapshot.getDurationMed()).append("\" ");
 			buffer.append("duration_hiq=\"").append(snapshot.getDurationHiQ()).append("\" ");
 			buffer.append("duration_max=\"").append(snapshot.getDurationMax()).append("\" ");
-			buffer.append("/>");
+			buffer.append("/>\n");
 		}
 	}
 }

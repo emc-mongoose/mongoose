@@ -40,7 +40,7 @@ extends Closeable {
 	interface Snapshot
 	extends Serializable {
 
-		/** @return microseconds */
+		/** @return value in milliseconds */
 		long getStartTime();
 		//
 		long getSuccCount();
@@ -54,8 +54,10 @@ extends Closeable {
 		long getByteCount();
 		double getByteRateMean();
 		double getByteRateLast();
-		//
+		
+		/** @return value in milliseconds */
 		long getElapsedTime();
+		
 		long getDurationSum();
 		long getLatencySum();
 		//
@@ -74,12 +76,5 @@ extends Closeable {
 		long getLatencyMax();
 		long[] getLatencyValues();
 		double getLatencyAvg();
-		/*
-		String toCountsString();
-		String toDurString();
-		String toDurSummaryString();
-		String toLatString();
-		String toLatSummaryString();
-		String toSummaryString();*/
 	}
 }

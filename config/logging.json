@@ -376,7 +376,7 @@
 					"PatternLayout": {
 						"header": "<result>\n",
 						"footer": "</result>\n",
-						"pattern": "%m%n",
+						"pattern": "%m",
 						"noConsoleNoAnsi": true
 					},
 					"Filters": {
@@ -427,8 +427,8 @@
 							"ref": "cfgFile"
 						}, {
 							"ref": "partsUploadFile"
-						}, {
-							"ref": "extResultsFile"
+						//}, {
+						//	"ref": "extResultsFile"
 						}
 					]
 				}

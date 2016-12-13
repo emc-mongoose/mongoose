@@ -3,17 +3,16 @@ package com.emc.mongoose.load.monitor.metrics;
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.UniformSnapshot;
-import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.model.metrics.CustomMeter;
 import com.emc.mongoose.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.model.metrics.UnsafeButFasterUniformReservoir;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by kurila on 15.09.15.
+ Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
 public final class BasicIoStats
 implements IoStats {
@@ -22,7 +21,7 @@ implements IoStats {
 	protected final Clock clock = new ResumableUserTimeClock();
 	protected final Histogram reqDuration, respLatency;
 	protected final CustomMeter throughputSuccess, throughputFail, reqBytes;
-	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
+	protected volatile long tsStart = -1, prevElapsedTime = 0;
 	protected final LongAdder reqDurationSum, respLatencySum;
 	//
 	public BasicIoStats(final String name, final int updateIntervalSec) {
@@ -38,7 +37,7 @@ implements IoStats {
 	//
 	@Override
 	public final void start() {
-		tsStartMicroSec = TimeUnit.NANOSECONDS.toMicros(System.nanoTime());
+		tsStart = System.currentTimeMillis();
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
 		reqBytes.resetStartTime();
@@ -46,12 +45,12 @@ implements IoStats {
 	//
 	@Override
 	public final boolean isStarted() {
-		return tsStartMicroSec > -1;
+		return tsStart > -1;
 	}
 	//
 	@Override
-	public final void markElapsedTime(final long usec) {
-		prevElapsedTimeMicroSec = usec;
+	public final void markElapsedTime(final long millis) {
+		prevElapsedTime = millis;
 	}
 	//
 	@Override
@@ -107,7 +106,7 @@ implements IoStats {
 		//
 		@Override
 		public final double getSuccRateMean() {
-			return elapsedTime == 0 ? 0 : Constants.M * countSucc / elapsedTime;
+			return elapsedTime == 0 ? 0 : 1000 * countSucc / elapsedTime;
 		}
 		//
 		@Override
@@ -122,7 +121,7 @@ implements IoStats {
 		//
 		@Override
 		public final double getFailRateMean() {
-			return elapsedTime == 0 ? 0 : Constants.M * countFail / elapsedTime;
+			return elapsedTime == 0 ? 0 : 1000 * countFail / elapsedTime;
 		}
 		//
 		@Override
@@ -137,7 +136,7 @@ implements IoStats {
 		//
 		@Override
 		public final double getByteRateMean() {
-			return elapsedTime == 0 ? 0 : Constants.M * countByte / elapsedTime;
+			return elapsedTime == 0 ? 0 : 1000 * countByte / elapsedTime;
 		}
 		//
 		@Override
@@ -341,14 +340,13 @@ implements IoStats {
 	//
 	@Override
 	public final Snapshot getSnapshot() {
-		final long currElapsedTime = tsStartMicroSec > 0 ?
-			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
+		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
 		return new BasicSnapshot(
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
-			reqBytes.getLastRate(), tsStartMicroSec, prevElapsedTimeMicroSec + currElapsedTime,
+			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
 			reqDurationSum.sum(), respLatencySum.sum(), reqDurSnapshot, respLatSnapshot
 		);
 	}
