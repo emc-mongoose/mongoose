@@ -7,8 +7,6 @@ import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 
-import java.io.IOException;
-
 /**
  Created on 11.07.16.
  */

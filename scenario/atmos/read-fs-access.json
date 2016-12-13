@@ -8,10 +8,8 @@
 		},
 		"storage" : {
 			"auth" : {
-				"id" : "wuser1@sanity.local",
-				"token" : "1ff8da66af94ebbfcaf2ff63079fce29"
+				"token" : "e3f86c95e6af49099aa1e6de386dbe54"
 			},
-			"port" : 9022,
 			"http" : {
 				"api" : "atmos",
 				"fsAccess" : true

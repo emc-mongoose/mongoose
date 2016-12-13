@@ -13,10 +13,8 @@
 		},
 		"storage" : {
 			"auth" : {
-				"id" : "wuser1@sanity.local",
 				"token" : "5cc597535ed747f09b5d273154216339"
 			},
-			"port" : 9022,
 			"http" : {
 				"api" : "atmos"
 			}

@@ -12,10 +12,6 @@
 			}
 		},
 		"storage" : {
-			"auth" : {
-				"id" : "wuser1@sanity.local"
-			},
-			"port" : 9022,
 			"http" : {
 				"api" : "atmos",
 				"fsAccess" : true

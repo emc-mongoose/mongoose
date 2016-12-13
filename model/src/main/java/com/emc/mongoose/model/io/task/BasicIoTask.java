@@ -166,7 +166,11 @@ implements IoTask<I, R> {
 				return dstPath + "/" + itemInfo;
 			}
 		}
-		return "/" + itemInfo;
+		if(itemInfo.startsWith("/")) {
+			return itemInfo;
+		} else {
+			return "/" + itemInfo;
+		}
 	}
 	
 	public static class BasicIoResult

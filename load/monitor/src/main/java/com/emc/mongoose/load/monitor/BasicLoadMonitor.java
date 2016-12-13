@@ -68,6 +68,7 @@ implements LoadMonitor<R> {
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
+	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
 
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
@@ -163,10 +164,15 @@ implements LoadMonitor<R> {
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		int driversCount = 0;
+		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
 			driversCount += nextDrivers.size();
-			final String ioTypeName = loadConfigs.get(nextGenerator).getType().toUpperCase();
+			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
+			if(nextLoadConfig.getCircular()) {
+				anyCircularFlag = true;
+			}
+			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			driversCountMap.put(ioTypeCode, nextDrivers.size());
 			concurrencyMap.put(ioTypeCode, loadConfigs.get(nextGenerator).getConcurrency());
@@ -174,6 +180,7 @@ implements LoadMonitor<R> {
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
 		}
+		this.isAnyCircular = anyCircularFlag;
 
 		long countLimitSum = 0;
 		long sizeLimitSum = 0;
@@ -236,7 +243,8 @@ implements LoadMonitor<R> {
 
 		public final void run() {
 			long nextNanoTimeStamp;
-			while(true) {
+			final Thread currThread = Thread.currentThread();
+			while(!currThread.isInterrupted()) {
 				refreshStats();
 				nextNanoTimeStamp = System.nanoTime();
 				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
@@ -699,7 +707,7 @@ implements LoadMonitor<R> {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
 				return true;
 			}
-			if(allIoTasksCompleted()) {
+			if(!isAnyCircular && allIoTasksCompleted()) {
 				LOG.debug(
 					Markers.MSG, "{}: await exit due to IO Tasks have been completed", getName()
 				);

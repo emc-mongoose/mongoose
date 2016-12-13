@@ -15,6 +15,7 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SIGNATURE;
+import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SUBTENANT_ID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.model.io.IoType;
@@ -124,27 +125,26 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	public final String getAuthToken()
 	throws RemoteException {
-
+		
 		if(authToken == null || authToken.isEmpty()) {
-
 			final String nodeAddr = storageNodeAddrs[0];
 			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, /*AsyncCurrentDateInput.INSTANCE.get()*/"Fri, 09 Dec 2016 21:36:35 UTC");
+			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 			//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
-			//if(fsAccess) {
-			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
-			//}
+			if(fsAccess) {
+				reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
+			}
 			applyDynamicHeaders(reqHeaders);
 			applySharedHeaders(reqHeaders);
 			applyAuthHeaders(HttpMethod.PUT, SUBTENANT_URI_BASE, reqHeaders);
-
+			
 			final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
 				reqHeaders, EmptyHttpHeaders.INSTANCE
 			);
-
+			
 			final FullHttpResponse getSubtenantResp;
 			try {
 				getSubtenantResp = executeHttpRequest(getSubtenantReq);
@@ -154,18 +154,17 @@ extends HttpStorageDriverBase<I, O, R> {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
-
+			
 			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 				final String subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 				if(subtenantId != null && !subtenantId.isEmpty()) {
-					LOG.info(Markers.MSG, "Got the subtenant id: \"{}\"", subtenantId);
+					LOG.info(Markers.MSG, "Using the subtenant id: \"{}\"", subtenantId);
 					setAuthToken(subtenantId);
 				} else {
 					LOG.warn(Markers.ERR, "Creating the subtenant: got empty subtenantID");
 				}
 			} else {
-				LOG.warn(
-					Markers.ERR, "Creating the subtenant: got response {}",
+				LOG.warn(Markers.ERR, "Creating the subtenant: got response {}",
 					getSubtenantResp.status().toString()
 				);
 			}
@@ -185,7 +184,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	@Override
 	protected final void appendHandlers(final ChannelPipeline pipeline) {
 		super.appendHandlers(pipeline);
-		pipeline.addLast(new AtmosResponseHandler<>(this, verifyFlag));
+		pipeline.addLast(new AtmosResponseHandler<>(this, verifyFlag, fsAccess));
 	}
 
 	@Override
