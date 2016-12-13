@@ -73,7 +73,6 @@ extends LogMessageBase {
 			buffer.append("runtime=\"").append(((float) elapsedTimeMillis) / 1000).append("\" ");
 			final long itemCount = snapshot.getSuccCount();
 			final long byteCount = snapshot.getByteCount();
-			System.out.println(byteCount + ", " + itemCount);
 			final String avgSize = SizeInBytes.formatFixedSize(itemCount > 0 ? byteCount / itemCount : 0);
 			buffer.append("filesize=\"").append(avgSize).append("\" ");
 			buffer.append("tps=\"").append(snapshot.getSuccRateMean()).append("\" tps_unit=\"Fileps\" ");
