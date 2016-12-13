@@ -10,9 +10,6 @@
 			}
 		},
 		"load" : {
-			"limit" : {
-				"count" : 1000
-			},
 			"concurrency" : 10
 		}
 	},
@@ -24,6 +21,11 @@
 					"output" : {
 						"file" : "circular-read-updated-0.csv"
 					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
 				}
 			}
 		}, {
@@ -32,7 +34,7 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"random" : 3
+							"random" : 1
 						}
 					},
 					"output" : {
@@ -46,7 +48,6 @@
 					"type" : "update",
 					"circular" : true,
 					"limit" : {
-						// count -> infinity instead of inherited value of 1, time -> 1 minute
 						"count" : 0,
 						"time" : "1m"
 					}
@@ -67,8 +68,6 @@
 					"type" : "read",
 					"circular" : true,
 					"limit" : {
-						// count -> infinity instead of inherited value, time -> 1 minute
-						"count" : 0,
 						"time" : "1m"
 					}
 				}
