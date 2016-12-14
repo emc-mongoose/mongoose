@@ -190,7 +190,7 @@ extends ChannelInboundHandlerAdapter {
 			size = 0;
 		}
 		setHttpResponseStatusInContext(ctx, OK); // OK response assumption
-		final int uriPathEnd = uri.indexOf('?');
+		final int uriPathEnd = uri.indexOf('?', 0);
 		final String uriPath;
 		final Map<String, String> queryParams;
 		if(uriPathEnd > 0) {

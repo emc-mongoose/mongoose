@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  Created by andrey on 25.11.16.
  */
@@ -152,7 +153,8 @@ implements CompositeDataIoTask<I, R> {
 		return (R) new BasicCompositeDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? getInfoWithPath(item.toString(), srcPath, dstPath) : null,
+			useItemInfoResult ?
+				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

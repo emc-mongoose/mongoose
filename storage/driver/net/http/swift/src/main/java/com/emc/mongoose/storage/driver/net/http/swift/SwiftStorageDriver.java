@@ -249,34 +249,43 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	protected final void submit(final O task)
-	throws InterruptedIOException {
+	protected final boolean submit(final O task)
+	throws InterruptedException {
+		if(isClosed() || isInterrupted()) {
+			throw new InterruptedException();
+		}
 		if(task instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeTask = (CompositeDataIoTask) task;
 			if(compositeTask.allSubTasksDone()) {
-				super.submit(task);
+				return super.submit(task);
 			} else {
 				final List<O> subTasks = compositeTask.getSubTasks();
 				final int n = subTasks.size();
 				for(int i = 0; i < n; i += super.submit(subTasks, i, n)) {
 					LockSupport.parkNanos(1);
 				}
+				return true;
 			}
 		} else {
-			super.submit(task);
+			return super.submit(task);
 		}
 	}
 	
 	@Override @SuppressWarnings("unchecked")
 	protected final int submit(final List<O> tasks, final int from, final int to)
-	throws InterruptedIOException {
+	throws InterruptedException {
+		if(isClosed() || isInterrupted()) {
+			throw new InterruptedException();
+		}
 		O nextIoTask;
 		for(int i = from; i < to; i ++) {
 			nextIoTask = tasks.get(i);
 			if(nextIoTask instanceof CompositeDataIoTask) {
 				final CompositeDataIoTask compositeTask = (CompositeDataIoTask) nextIoTask;
 				if(compositeTask.allSubTasksDone()) {
-					super.submit(nextIoTask);
+					if(!super.submit(nextIoTask)) {
+						return i - from;
+					}
 				} else {
 					final List<O> subTasks = compositeTask.getSubTasks();
 					final int n = subTasks.size();
@@ -285,7 +294,9 @@ extends HttpStorageDriverBase<I, O, R> {
 					}
 				}
 			} else {
-				super.submit(nextIoTask);
+				if(!super.submit(nextIoTask)) {
+					return i - from;
+				}
 			}
 		}
 		return to - from;

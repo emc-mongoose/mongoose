@@ -75,8 +75,8 @@ implements Serializable {
 	
 	public SizeInBytes(final String sizeInfo) {
 		final int
-			sep1pos = sizeInfo.indexOf(SEP1),
-			sep2pos = sizeInfo.indexOf(SEP2);
+			sep1pos = sizeInfo.indexOf(SEP1, 0),
+			sep2pos = sizeInfo.indexOf(SEP2, 0);
 		if(sep1pos < 0) {
 			min = toFixedSize(sizeInfo);
 		} else {

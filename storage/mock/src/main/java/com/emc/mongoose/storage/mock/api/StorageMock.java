@@ -26,9 +26,9 @@ extends Daemon {
 
 	StorageIoStats getStats();
 
-	void putIntoDefaultContainer(final List<T> dataItems);
+	void put(final List<T> dataItems);
 
-	void createContainer(final String name);
+	ObjectContainerMock<T> createContainer(final String name);
 
 	ObjectContainerMock<T> getContainer(final String name);
 

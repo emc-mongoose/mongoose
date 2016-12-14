@@ -17,6 +17,8 @@ implements DataIoTask<T, R> {
 
 	protected long contentSize;
 	protected long itemDataOffset;
+	protected int randomRangesCount;
+	protected List<ByteRange> fixedRanges;
 
 	protected transient volatile ContentSource contentSrc;
 	protected transient volatile long countBytesDone;
@@ -31,22 +33,9 @@ implements DataIoTask<T, R> {
 		final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
 		super(ioType, item, srcPath, dstPath);
+		this.fixedRanges = fixedRanges;
+		this.randomRangesCount = randomRangesCount;
 		item.reset();
-		//currDataLayerIdx = item.getCurrLayerIndex();
-		switch(ioType) {
-			case CREATE:
-			case READ:
-				// TODO partial read support, use rangesConfig
-				try {
-					contentSize = item.size();
-				} catch(IOException e) {
-					throw new IllegalStateException();
-				}
-				break;
-			default:
-				contentSize = 0;
-				break;
-		}
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 	}
@@ -120,7 +109,8 @@ implements DataIoTask<T, R> {
 		return (R) new BasicDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? getInfoWithPath(item.toString(), srcPath, dstPath) : null,
+			useItemInfoResult ?
+				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,
@@ -134,6 +124,20 @@ implements DataIoTask<T, R> {
 	@Override
 	public void reset() {
 		super.reset();
+		switch(ioType) {
+			case CREATE:
+			case READ:
+				// TODO partial read support, use rangesConfig
+				try {
+					contentSize = item.size();
+				} catch(IOException e) {
+					throw new IllegalStateException();
+				}
+				break;
+			default:
+				contentSize = 0;
+				break;
+		}
 		countBytesDone = 0;
 		respDataTimeStart = 0;
 	}
@@ -163,14 +167,18 @@ implements DataIoTask<T, R> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
+		out.writeObject(fixedRanges);
+		out.writeInt(randomRangesCount);
 	}
-	
-	@Override
+
+	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		itemDataOffset = item.offset();
 		contentSrc = item.getContentSrc();
 		contentSize = in.readLong();
+		fixedRanges = (List<ByteRange>) in.readObject();
+		randomRangesCount = in.readInt();
 	}
 }

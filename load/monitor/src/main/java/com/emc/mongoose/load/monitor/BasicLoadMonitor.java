@@ -34,6 +34,8 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 import org.apache.logging.log4j.Level;
@@ -53,7 +55,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
-
 /**
  Created by kurila on 12.07.16.
  */
@@ -68,6 +69,7 @@ implements LoadMonitor<R> {
 	private final MetricsConfig metricsConfig;
 	private final long countLimit;
 	private final long sizeLimit;
+	private final Map<String, String> uniqueItems;
 	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
 
@@ -79,6 +81,7 @@ implements LoadMonitor<R> {
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 	private final IoBuffer<R> ioTaskResultsQueue;
+	private final Object2BooleanMap<LoadGenerator<I, O, R>> circularityMap;
 
 	/**
 	 Single load job constructor
@@ -133,7 +136,6 @@ implements LoadMonitor<R> {
 		this.name = name;
 
 		final LoadConfig firstLoadConfig = loadConfigs.get(loadConfigs.keySet().iterator().next());
-
 		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
 		final Throttle<Object> rateThrottle;
 		if(rateLimit > 0) {
@@ -163,13 +165,15 @@ implements LoadMonitor<R> {
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
+		circularityMap = new Object2BooleanArrayMap<>(driversMap.size());
 		int driversCount = 0;
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
 			driversCount += nextDrivers.size();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
-			if(nextLoadConfig.getCircular()) {
+			circularityMap.put(nextGenerator, nextLoadConfig.getCircular());
+			if(circularityMap.getBoolean(nextGenerator)) {
 				anyCircularFlag = true;
 			}
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
@@ -181,6 +185,12 @@ implements LoadMonitor<R> {
 			);
 		}
 		this.isAnyCircular = anyCircularFlag;
+
+		if(isAnyCircular) {
+			uniqueItems = new HashMap<>(firstLoadConfig.getQueueConfig().getSize());
+		} else {
+			uniqueItems = null;
+		}
 
 		long countLimitSum = 0;
 		long sizeLimitSum = 0;
@@ -243,15 +253,18 @@ implements LoadMonitor<R> {
 
 		public final void run() {
 			long nextNanoTimeStamp;
-			final Thread currThread = Thread.currentThread();
-			while(!currThread.isInterrupted()) {
+			while(true) {
 				refreshStats();
 				nextNanoTimeStamp = System.nanoTime();
 				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 					outputCurrentMetrics();
 					prevNanoTimeStamp = nextNanoTimeStamp;
 				}
-				LockSupport.parkNanos(1);
+				try {
+					Thread.sleep(1);
+				} catch(final InterruptedException e) {
+					break;
+				}
 			}
 		}
 
@@ -286,7 +299,7 @@ implements LoadMonitor<R> {
 		}
 	}
 
-	private final static class GetIoResultsSvcTask
+	private final static class PostProcessIoResultsSvcTask
 	implements Runnable {
 
 		private final StorageDriver driver;
@@ -294,29 +307,36 @@ implements LoadMonitor<R> {
 		private final Int2ObjectMap<IoStats> ioStats;
 		private final Int2ObjectMap<IoStats> medIoStats;
 		private final LongAdder counterResults;
+		private final Map<String, String> uniqueItems;
+		private final boolean isCircular;
 		private final boolean ioTraceOutputFlag;
 
-		public GetIoResultsSvcTask(
+		public PostProcessIoResultsSvcTask(
 			final StorageDriver driver, final Output<String> itemInfoOutput,
 			final Int2ObjectMap<IoStats> ioStats, final Int2ObjectMap<IoStats> medIoStats,
-			final LongAdder counterResults, final boolean ioTraceOutputFlag
+			final LongAdder counterResults, final Map<String, String> uniqueItems,
+			final boolean isCircular, final boolean ioTraceOutputFlag
 		) {
 			this.driver = driver;
 			this.itemInfoOutput = itemInfoOutput;
 			this.ioStats = ioStats;
 			this.medIoStats = medIoStats;
 			this.counterResults = counterResults;
+			this.uniqueItems = uniqueItems;
+			this.isCircular = isCircular;
 			this.ioTraceOutputFlag = ioTraceOutputFlag;
 		}
 
 		@Override
 		public final void run() {
-			while(true) {
+			final Thread currThread = Thread.currentThread();
+			while(!currThread.isInterrupted()) {
 				try {
 					postProcessIoResults(driver.getResults());
+					LockSupport.parkNanos(1);
 				} catch(final IOException e) {
 					try {
-						if(!driver.isInterrupted() && !driver.isClosed()) {
+						if(!driver.isInterrupted() && ! driver.isClosed()) {
 							LogUtil.exception(
 								LOG, Level.WARN, e,
 								"Failed to get the I/O results from the storage driver \"{}\"",
@@ -327,8 +347,11 @@ implements LoadMonitor<R> {
 							} catch(final InterruptedException ee) {
 								break;
 							}
+						} else {
+							break;
 						}
-					} catch(final RemoteException ignored) {
+					} catch(final RemoteException ee) {
+						break;
 					}
 				}
 			}
@@ -341,6 +364,7 @@ implements LoadMonitor<R> {
 				return;
 			}
 			int m = n; // count of complete whole tasks
+			int itemInfoCommaPos;
 
 			// I/O trace logging
 			if(!ioTraceOutputFlag) {
@@ -377,7 +401,6 @@ implements LoadMonitor<R> {
 					continue;
 				}
 
-				itemInfo = ioTaskResult.getItemInfo();
 				ioTypeCode = ioTaskResult.getIoTypeCode();
 				statusCode = ioTaskResult.getStatusCode();
 				reqDuration = ioTaskResult.getDuration();
@@ -401,7 +424,15 @@ implements LoadMonitor<R> {
 						}
 						m --;
 					} else {
-						if(itemInfoOutput != null) {
+						itemInfo = ioTaskResult.getItemInfo();
+						if(isCircular) {
+							itemInfoCommaPos = itemInfo.indexOf(',', 0);
+							if(itemInfoCommaPos > 0) {
+								uniqueItems.put(itemInfo.substring(0, itemInfoCommaPos), itemInfo);
+							} else {
+								uniqueItems.put(itemInfo, itemInfo);
+							}
+						} else if(itemInfoOutput != null) {
 							itemsToPass.add(itemInfo);
 						}
 						// update the metrics with success
@@ -419,7 +450,7 @@ implements LoadMonitor<R> {
 				}
 			}
 
-			if(itemInfoOutput != null) {
+			if(!isCircular && itemInfoOutput != null) {
 				final int itemsToPassCount = itemsToPass.size();
 				try {
 					for(
@@ -435,8 +466,6 @@ implements LoadMonitor<R> {
 
 			counterResults.add(m);
 		}
-
-
 	}
 
 	private boolean isDoneCountLimit() {
@@ -616,9 +645,9 @@ implements LoadMonitor<R> {
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
 				svcTaskExecutor.submit(
-					new GetIoResultsSvcTask(
-						driver, itemInfoOutput, ioStats, medIoStats, counterResults,
-						metricsConfig.getPrecondition()
+					new PostProcessIoResultsSvcTask(
+						driver, itemInfoOutput, ioStats, medIoStats, counterResults, uniqueItems,
+						circularityMap.getBoolean(generator), metricsConfig.getPrecondition()
 					)
 				);
 			}
@@ -670,6 +699,12 @@ implements LoadMonitor<R> {
 			}
 		}
 		svcTaskExecutor.shutdownNow();
+		try {
+			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				LOG.error(Markers.ERR, "Failed to terminate the service tasks in 1 second");
+			}
+		} catch(final InterruptedException ignored) {
+		}
 	}
 
 	@Override
@@ -771,6 +806,14 @@ implements LoadMonitor<R> {
 		}
 
 		ioTaskResultsQueue.close();
+
+		if(uniqueItems != null && itemInfoOutput != null) {
+			for(final String itemInfo : uniqueItems.values()) {
+				itemInfoOutput.put(itemInfo);
+			}
+			uniqueItems.clear();
+		}
+
 		if(itemInfoOutput != null) {
 			itemInfoOutput.close();
 		}

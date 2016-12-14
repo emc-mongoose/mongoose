@@ -52,12 +52,13 @@ implements PartialDataIoTask<I, R> {
 
 		public BasicPartialDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart, final long duration,
-			final long latency, final long dataLatency, final long transferredByteCount
+			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final long duration, final long latency, final long dataLatency,
+			final long transferredByteCount
 		) {
 			super(
-				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency, dataLatency, transferredByteCount
+				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode,
+				reqTimeStart, duration, latency, dataLatency, transferredByteCount
 			);
 		}
 	}
@@ -80,7 +81,8 @@ implements PartialDataIoTask<I, R> {
 		return (R) new BasicPartialDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? getInfoWithPath(item.toString(), srcPath, dstPath) : null,
+			useItemInfoResult ?
+				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

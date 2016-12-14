@@ -59,7 +59,8 @@ implements PartialMutableDataIoTask<I, R> {
 		return (R) new BasicPartialDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? getInfoWithPath(item.getName(), srcPath, dstPath) : null,
+			useItemInfoResult ?
+				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

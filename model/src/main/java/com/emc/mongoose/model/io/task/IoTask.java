@@ -71,7 +71,7 @@ extends Externalizable {
 		String getStorageDriverAddr();
 		
 		String getStorageNodeAddr();
-		
+
 		String getItemInfo();
 		
 		int getIoTypeCode();
@@ -84,12 +84,28 @@ extends Externalizable {
 		
 		long getLatency();
 	}
+
+	default String buildItemInfo(final String itemPath, final String itemInfo) {
+		if(itemPath == null || itemPath.isEmpty()) {
+			if(itemInfo.startsWith("/")) {
+				return itemInfo;
+			} else {
+				return "/" + itemInfo;
+			}
+		} else {
+			if(itemPath.endsWith("/")) {
+				return itemPath + itemInfo;
+			} else {
+				return itemPath + "/" + itemInfo;
+			}
+		}
+	}
 	
 	R getResult(
 		final String hostAddr,
 		final boolean useStorageDriverResult,
 		final boolean useStorageNodeResult,
-		final boolean useItemPathResult,
+		final boolean useItemInfoResult,
 		final boolean useIoTypeCodeResult,
 		final boolean useStatusCodeResult,
 		final boolean useReqTimeStartResult,

@@ -28,7 +28,7 @@ implements MutableDataIoTask<I, R> {
 	private final BitSet[] updRangesMaskPair = new BitSet[] {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
-	
+
 	private volatile DataItem currRange;
 	private volatile int currRangeIdx;
 	
@@ -41,6 +41,13 @@ implements MutableDataIoTask<I, R> {
 		final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
 		super(ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
+	}
+
+	@Override
+	public final void reset() {
+		super.reset();
+		updRangesMaskPair[0].clear();
+		updRangesMaskPair[1].clear();
 		if(IoType.UPDATE.equals(ioType)) {
 			if(randomRangesCount > 0) {
 				scheduleRandomRangesUpdate(randomRangesCount);
@@ -51,11 +58,6 @@ implements MutableDataIoTask<I, R> {
 			}
 			contentSize = getUpdatingRangesSize();
 		}
-	}
-
-	@Override
-	public final void reset() {
-		super.reset();
 		currRange = null;
 		currRangeIdx = 0;
 	}
@@ -67,7 +69,7 @@ implements MutableDataIoTask<I, R> {
 			if(count < 1 || count > countRangesTotal) {
 				throw new IllegalArgumentException(
 					"Range count should be more than 0 and less than max " + countRangesTotal +
-						" for the item size"
+					" for the item size"
 				);
 			}
 			for(int i = 0; i < count; i++) {
@@ -81,10 +83,7 @@ implements MutableDataIoTask<I, R> {
 	private void scheduleRandomUpdate(final int countRangesTotal) {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
-		if(
-			countRangesTotal > item.getUpdatedRangesCount() +
-				updRangesMaskPair[0].cardinality()
-		) {
+		if(countRangesTotal > item.getUpdatedRangesCount() + updRangesMaskPair[0].cardinality()) {
 			// current layer has not updated yet ranges
 			for(int i = 0; i < countRangesTotal; i++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;

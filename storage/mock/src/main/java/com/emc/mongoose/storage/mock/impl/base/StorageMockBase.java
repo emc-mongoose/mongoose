@@ -85,11 +85,13 @@ implements StorageMock<I> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
-	public final void createContainer(final String name) {
+	public final ObjectContainerMock<I> createContainer(final String name) {
+		final ObjectContainerMock<I> container = new BasicObjectContainerMock<>(containerCapacity);
 		synchronized(storageMap) {
-			storageMap.put(name, new BasicObjectContainerMock<>(containerCapacity));
+			storageMap.put(name, container);
 		}
 		ioStats.containerCreate();
+		return container;
 	}
 
 	@Override
@@ -278,9 +280,28 @@ implements StorageMock<I> {
 	}
 
 	@Override
-	public final void putIntoDefaultContainer(final List<I> dataItems) {
+	public final void put(final List<I> dataItems) {
+		String objNameParts[];
+		ObjectContainerMock<I> container;
 		for(final I object : dataItems) {
-			defaultContainer.put(object.getName(), object);
+			objNameParts = object.getName().split("/");
+			if(objNameParts.length == 1) {
+				defaultContainer.put(objNameParts[0], object);
+			} else if(objNameParts.length == 2) {
+				container = getContainer(objNameParts[0]);
+				if(container == null) {
+					container = createContainer(objNameParts[0]);
+				}
+				container.put(objNameParts[1], object);
+			} else if(objNameParts.length == 3) {
+				if(objNameParts[0].isEmpty()) {
+					container = getContainer(objNameParts[1]);
+					if(container == null) {
+						container = createContainer(objNameParts[1]);
+					}
+					container.put(objNameParts[2], object);
+				}
+			}
 		}
 	}
 
@@ -328,7 +349,7 @@ implements StorageMock<I> {
 					buff = new ArrayList<>(4096);
 					n = csvFileItemInput.get(buff, 4096);
 					if(n > 0) {
-						putIntoDefaultContainer(buff);
+						put(buff);
 						count.add(n);
 					} else {
 						break;

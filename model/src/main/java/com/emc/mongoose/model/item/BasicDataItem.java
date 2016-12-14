@@ -129,8 +129,8 @@ implements DataItem {
 		final StringBuilder strb = STRB.get();
 		strb.setLength(0); // reset
 		return strb
-			.append(super.toString()).append(",")
-			.append(Long.toString(offset, 0x10)).append(",")
+			.append(super.toString()).append(',')
+			.append(Long.toString(offset, 0x10)).append(',')
 			.append(size).toString();
 	}
 

@@ -46,7 +46,16 @@ implements IoTask<I, R> {
 		} else {
 			this.srcPath = srcPath;
 		}
-		this.dstPath = dstPath;
+		if(dstPath == null) {
+			if(
+				IoType.READ.equals(ioType) || IoType.UPDATE.equals(ioType) ||
+				IoType.DELETE.equals(ioType)
+			) {
+				this.dstPath = this.srcPath;
+			}
+		} else {
+			this.dstPath = dstPath;
+		}
 	}
 
 	@Override
@@ -147,31 +156,6 @@ implements IoTask<I, R> {
 	public final long getRespTimeDone() {
 		return respTimeDone;
 	}
-
-	protected static String getInfoWithPath(
-		final String itemInfo, final String srcPath, final String dstPath
-	) {
-		if(dstPath == null) {
-			if(srcPath != null) {
-				if(srcPath.endsWith("/")) {
-					return srcPath + itemInfo;
-				} else {
-					return srcPath + "/" + itemInfo;
-				}
-			}
-		} else {
-			if(dstPath.endsWith("/")) {
-				return dstPath + itemInfo;
-			} else {
-				return dstPath + "/" + itemInfo;
-			}
-		}
-		if(itemInfo.startsWith("/")) {
-			return itemInfo;
-		} else {
-			return "/" + itemInfo;
-		}
-	}
 	
 	public static class BasicIoResult
 	implements IoResult {
@@ -212,7 +196,7 @@ implements IoTask<I, R> {
 		public final String getStorageNodeAddr() {
 			return storageNodeAddr;
 		}
-		
+
 		@Override
 		public final String getItemInfo() {
 			return itemInfo;
@@ -288,7 +272,8 @@ implements IoTask<I, R> {
 		return (R) new BasicIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? getInfoWithPath(item.toString(), srcPath, dstPath) : null,
+			useItemInfoResult ?
+				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

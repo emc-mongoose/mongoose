@@ -108,7 +108,7 @@
 			"trace" : {
 				"storageDriver" : false,
 				"storageNode" : false,
-				"itemPath" : true,
+				"itemInfo" : true,
 				"ioTypeCode" : true,
 				"statusCode" : true,
 				"reqTimeStart" : false,

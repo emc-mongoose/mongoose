@@ -24,7 +24,7 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 100
+						"count" : 1000
 					}
 				}
 			}
@@ -55,11 +55,14 @@
 			}
 		}, {
 			"type" : "command",
-			"value" : "sleep 20"
+			"value" : "sleep 10"
 		}, {
 			"type": "load",
 			"config" : {
 				"item" : {
+					"data" : {
+						"verify" : true
+					},
 					"input" : {
 						"file" : "circular-read-updated-1.csv"
 					}

@@ -15,7 +15,7 @@ import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,7 +65,7 @@ implements StorageDriver<I, O, R> {
 
 	private final boolean useStorageDriverResult;
 	private final boolean useStorageNodeResult;
-	private final boolean useItemPathResult;
+	private final boolean useItemInfoResult;
 	private final boolean useIoTypeCodeResult;
 	private final boolean useStatusCodeResult;
 	private final boolean useReqTimeStartResult;
@@ -94,7 +94,7 @@ implements StorageDriver<I, O, R> {
 		final TraceConfig traceConfig = loadConfig.getMetricsConfig().getTraceConfig();
 		useStorageDriverResult = traceConfig.getStorageDriver();
 		useStorageNodeResult = traceConfig.getStorageNode();
-		useItemPathResult = traceConfig.getItemPath();
+		useItemInfoResult = traceConfig.getItemInfo();
 		useIoTypeCodeResult = traceConfig.getIoTypeCode();
 		useStatusCodeResult = traceConfig.getStatusCode();
 		useReqTimeStartResult = traceConfig.getReqTimeStart();
@@ -188,7 +188,9 @@ implements StorageDriver<I, O, R> {
 
 		try {
 			if(isCircular) {
-				ownTasksQueue.put(ioTask);
+				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
+					ownTasksQueue.put(ioTask);
+				}
 			} else if(ioTask instanceof CompositeIoTask) {
 				final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
 				if(!parentTask.allSubTasksDone()) {
@@ -219,7 +221,7 @@ implements StorageDriver<I, O, R> {
 					HOST_ADDR,
 					useStorageDriverResult,
 					useStorageNodeResult,
-					useItemPathResult,
+					useItemInfoResult,
 					useIoTypeCodeResult,
 					useStatusCodeResult,
 					useReqTimeStartResult,
@@ -266,14 +268,14 @@ implements StorageDriver<I, O, R> {
 		return to - from;
 	}*/
 
-	protected abstract void submit(final O task)
-	throws InterruptedIOException;
+	protected abstract boolean submit(final O task)
+	throws InterruptedException;
 
 	protected abstract int submit(final List<O> tasks, final int from, final int to)
-	throws InterruptedIOException;
+	throws InterruptedException;
 
 	protected abstract int submit(final List<O> tasks)
-	throws InterruptedIOException;
+	throws InterruptedException;
 
 	@Override
 	public Input<O> getInput() {
@@ -283,7 +285,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		DISPATCH_INBOUND_TASKS.remove(toString());
+		DISPATCH_INBOUND_TASKS.remove(this);
 		ownTasksQueue.close();
 		inTasksQueue.close();
 		ioResultsQueue.close();

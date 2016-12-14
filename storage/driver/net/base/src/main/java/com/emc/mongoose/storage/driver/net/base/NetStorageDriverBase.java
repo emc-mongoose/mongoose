@@ -164,8 +164,11 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected void submit(final O task)
-	throws InterruptedIOException {
+	protected boolean submit(final O task)
+	throws InterruptedException {
+		if(isClosed() || isInterrupted()) {
+			throw new InterruptedException();
+		}
 		final String bestNode;
 		if(storageNodeAddrs.length == 1) {
 			bestNode = storageNodeAddrs[0];
@@ -174,25 +177,33 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 				bestNode = nodeSelector.get();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the best node");
-				return;
+				return false;
 			}
 		}
 		if(bestNode == null) {
-			return;
+			return false;
 		}
 		task.reset();
-		submitToNode(task, bestNode);
+		task.setNodeAddr(bestNode);
+		return submitToNode(task, bestNode);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> tasks, final int from, final int to)
-	throws InterruptedIOException {
+	throws InterruptedException {
+		if(isClosed() || isInterrupted()) {
+			throw new InterruptedException();
+		}
 		final int n = to - from;
 		if(storageNodeAddrs.length == 1) {
 			O nextTask;
 			for(int i = 0; i < n; i ++) {
 				nextTask = tasks.get(from + i);
-				submitToNode(nextTask, storageNodeAddrs[0]);
+				nextTask.reset();
+				nextTask.setNodeAddr(storageNodeAddrs[0]);
+				if(!submitToNode(nextTask, storageNodeAddrs[0])) {
+					return i;
+				}
 			}
 		} else {
 			final List<String> nodeBuff = new ArrayList<>(n);
@@ -207,9 +218,12 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			String nextNode;
 			for(int i = 0; i < n; i++) {
 				nextTask = tasks.get(from + i);
-				nextTask.reset();
 				nextNode = nodeBuff.get(i);
-				submitToNode(nextTask, nextNode);
+				nextTask.reset();
+				nextTask.setNodeAddr(nextNode);
+				if(!submitToNode(nextTask, nextNode)) {
+					return i;
+				}
 			}
 		}
 		return n;
@@ -217,22 +231,20 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	
 	@Override
 	protected int submit(final List<O> tasks)
-	throws InterruptedIOException {
+	throws InterruptedException {
 		return submit(tasks, 0, tasks.size());
 	}
 	
-	private void submitToNode(final O task, final String nodeAddr)
-	throws InterruptedIOException {
-		task.setNodeAddr(nodeAddr);
-		try {
-			concurrencyThrottle.acquire();
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
-		}
-		if(IoType.NOOP.equals(task.getIoType())) {
-			new DummyConnectionLeaseCallback(task).operationComplete(null);
+	private boolean submitToNode(final O task, final String nodeAddr) {
+		if(concurrencyThrottle.tryAcquire()) {
+			if(IoType.NOOP.equals(task.getIoType())) {
+				new DummyConnectionLeaseCallback(task).operationComplete(null);
+			} else {
+				connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
+			}
+			return true;
 		} else {
-			connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
+			return false;
 		}
 	}
 

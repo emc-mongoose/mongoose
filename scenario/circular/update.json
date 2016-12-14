@@ -10,9 +10,6 @@
 			}
 		},
 		"load" : {
-			"limit" : {
-				"count" : 1000
-			},
 			"concurrency" : 10
 		}
 	},
@@ -23,6 +20,11 @@
 				"item" : {
 					"output" : {
 						"file" : "circular-update.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
 					}
 				}
 			}

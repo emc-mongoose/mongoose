@@ -36,7 +36,7 @@ implements MutableDataItem {
 		super(value.substring(0, value.lastIndexOf(",")), contentSrc);
 		//
 		final String rangesInfo = value.substring(value.lastIndexOf(",") + 1, value.length());
-		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
+		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
 		try {
 			// extract hexadecimal layer number
 			layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
@@ -164,12 +164,12 @@ implements MutableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public boolean isUpdated() {
+	public final boolean isUpdated() {
 		return !maskRangesRead.isEmpty();
 	}
 	
 	@Override
-	public void commitUpdatedRanges(final BitSet[] updatingRangesMaskPair) {
+	public final void commitUpdatedRanges(final BitSet[] updatingRangesMaskPair) {
 		if(updatingRangesMaskPair[1].isEmpty()) {
 			maskRangesRead.or(updatingRangesMaskPair[0]);
 		} else {
@@ -178,17 +178,17 @@ implements MutableDataItem {
 			layerNum ++;
 		}
 	}
-	
+
 	@Override
-	public boolean isRangeUpdated(final int rangeIdx) {
+	public final boolean isRangeUpdated(final int rangeIdx) {
 		return maskRangesRead.get(rangeIdx);
 	}
-	
+
 	@Override
-	public int getUpdatedRangesCount() {
+	public final int getUpdatedRangesCount() {
 		return maskRangesRead.cardinality();
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////

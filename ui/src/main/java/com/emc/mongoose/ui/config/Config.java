@@ -891,6 +891,7 @@ implements Serializable {
 				public static final String KEY_STORAGE_DRIVER = "storageDriver";
 				public static final String KEY_STORAGE_NODE = "storageNode";
 				public static final String KEY_ITEM_PATH = "itemPath";
+				public static final String KEY_ITEM_INFO = "itemInfo";
 				public static final String KEY_IO_TYPE_CODE = "ioTypeCode";
 				public static final String KEY_STATUS_CODE = "statusCode";
 				public static final String KEY_REQ_TIME_START = "reqTimeStart";
@@ -902,6 +903,7 @@ implements Serializable {
 				@JsonProperty(KEY_STORAGE_DRIVER) private boolean storageDriver;
 				@JsonProperty(KEY_STORAGE_NODE) private boolean storageNode;
 				@JsonProperty(KEY_ITEM_PATH) private boolean itemPath;
+				@JsonProperty(KEY_ITEM_INFO) private boolean itemInfo;
 				@JsonProperty(KEY_IO_TYPE_CODE) private boolean ioTypeCode;
 				@JsonProperty(KEY_STATUS_CODE) private boolean statusCode;
 				@JsonProperty(KEY_REQ_TIME_START) private boolean reqTimeStart;
@@ -917,6 +919,7 @@ implements Serializable {
 					this.storageDriver = other.getStorageDriver();
 					this.storageNode = other.getStorageNode();
 					this.itemPath = other.getItemPath();
+					this.itemInfo = other.getItemInfo();
 					this.ioTypeCode = other.getIoTypeCode();
 					this.statusCode = other.getStatusCode();
 					this.reqTimeStart = other.getReqTimeStart();
@@ -943,6 +946,12 @@ implements Serializable {
 				}
 				public final void setItemPath(final boolean itemPath) {
 					this.itemPath = itemPath;
+				}
+				public final boolean getItemInfo() {
+					return itemInfo;
+				}
+				public final void setItemInfo(final boolean itemInfo) {
+					this.itemInfo = itemInfo;
 				}
 				public final boolean getIoTypeCode() {
 					return ioTypeCode;

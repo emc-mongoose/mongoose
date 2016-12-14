@@ -158,44 +158,45 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	protected final void submit(final O ioTask)
-	throws InterruptedIOException {
+	protected final boolean submit(final O ioTask)
+	throws InterruptedException {
+		if(isClosed() || isInterrupted()) {
+			throw new InterruptedException();
+		}
 		final BlockingQueue<O> nextQueue = ioTaskQueues[
 			Math.abs(ioTask.hashCode()) % ioWorkerCount
 		];
 		ioTask.reset();
 		if(nextQueue != null) {
-			try {
-				nextQueue.put(ioTask);
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException();
-			}
+			return nextQueue.offer(ioTask);
 		}
+		return false;
 	}
 
 	@Override
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedIOException {
-		try {
-			O nextIoTask;
-			BlockingQueue<O> nextQueue;
-			for(int i = from; i < to; i ++) {
-				nextIoTask = ioTasks.get(i);
-				nextIoTask.reset();
-				nextQueue = ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount];
-				if(nextQueue != null) {
-					nextQueue.put(nextIoTask);
+	throws InterruptedException {
+		if(isClosed() || isInterrupted()) {
+			throw new InterruptedException();
+		}
+		O nextIoTask;
+		BlockingQueue<O> nextQueue;
+		for(int i = from; i < to; i ++) {
+			nextIoTask = ioTasks.get(i);
+			nextIoTask.reset();
+			nextQueue = ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount];
+			if(nextQueue != null) {
+				if(!nextQueue.offer(nextIoTask)) {
+					return i - from;
 				}
 			}
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
 		}
 		return to - from;
 	}
 	
 	@Override
 	protected final int submit(final List<O> ioTasks)
-	throws InterruptedIOException {
+	throws InterruptedException {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 

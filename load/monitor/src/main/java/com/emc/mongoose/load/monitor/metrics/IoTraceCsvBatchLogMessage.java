@@ -36,7 +36,7 @@ extends LogMessageBase {
 					nextDataIoResult = dataIoResults.get(i);
 					nextItemInfo = nextDataIoResult.getItemInfo();
 					if(nextItemInfo != null) {
-						commaPos = nextItemInfo.indexOf(',');
+						commaPos = nextItemInfo.indexOf(',', 0);
 						if(commaPos > 0) {
 							nextItemInfo = nextItemInfo.substring(0, commaPos);
 						}
@@ -64,7 +64,7 @@ extends LogMessageBase {
 					nextIoResult = ioResults.get(i);
 					nextItemInfo = nextIoResult.getItemInfo();
 					if(nextItemInfo != null) {
-						commaPos = nextItemInfo.indexOf(',');
+						commaPos = nextItemInfo.indexOf(',', 0);
 						if(commaPos > 0) {
 							nextItemInfo = nextItemInfo.substring(0, commaPos);
 						}

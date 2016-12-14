@@ -320,7 +320,7 @@ implements HttpStorageDriver<I, O, R> {
 	throws URISyntaxException;
 
 	@Override
-	protected ChannelFuture sendRequest(final Channel channel, final O ioTask) {
+	protected final ChannelFuture sendRequest(final Channel channel, final O ioTask) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
 		final IoType ioType = ioTask.getIoType();

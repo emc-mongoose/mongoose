@@ -37,9 +37,9 @@ extends LogMessageBase {
 		storageNode = ioResult.getStorageNodeAddr();
 		final String itemInfo = ioResult.getItemInfo();
 		if(itemInfo != null) {
-			final int commaPos = itemInfo.indexOf(',');
+			final int commaPos = itemInfo.indexOf(',', 0);
 			if(commaPos > 0) {
-				itemPath = itemInfo.substring(0, itemInfo.indexOf(','));
+				itemPath = itemInfo.substring(0, itemInfo.indexOf(',', 0));
 			} else {
 				itemPath = itemInfo;
 			}
