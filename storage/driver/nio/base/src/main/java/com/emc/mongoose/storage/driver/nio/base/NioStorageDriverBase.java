@@ -8,8 +8,9 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -153,8 +154,15 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
-		final List<Runnable> interruptedTasks = ioTaskExecutor.shutdownNow();
-		LOG.debug(Markers.MSG, "{} I/O tasks dropped", interruptedTasks.size());
+		super.doInterrupt();
+		ioTaskExecutor.shutdownNow();
+		try {
+			if(!ioTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 1 second");
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");
+		}
 	}
 
 	@Override

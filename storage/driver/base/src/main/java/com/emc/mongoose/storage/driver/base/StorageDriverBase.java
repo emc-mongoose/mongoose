@@ -178,7 +178,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public List<R> getResults()
 	throws IOException {
-		final List<R> ioTaskResults = new ArrayList<>(queueCapacity);
+		final List<R> ioTaskResults = new ArrayList<>(BATCH_SIZE);
 		ioResultsQueue.get(ioTaskResults, queueCapacity);
 		return ioTaskResults;
 	}
@@ -281,11 +281,15 @@ implements StorageDriver<I, O, R> {
 	public Input<O> getInput() {
 		return null;
 	}
-	
+
+	@Override
+	protected void doInterrupt() {
+		DISPATCH_INBOUND_TASKS.remove(this);
+	}
+
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		DISPATCH_INBOUND_TASKS.remove(this);
 		ownTasksQueue.close();
 		inTasksQueue.close();
 		ioResultsQueue.close();

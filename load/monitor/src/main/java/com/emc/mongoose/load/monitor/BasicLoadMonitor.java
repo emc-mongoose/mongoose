@@ -686,6 +686,7 @@ implements LoadMonitor<R> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
+
 		for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
 			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
 				try {
@@ -698,6 +699,7 @@ implements LoadMonitor<R> {
 				}
 			}
 		}
+
 		svcTaskExecutor.shutdownNow();
 		try {
 			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {

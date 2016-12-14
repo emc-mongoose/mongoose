@@ -372,6 +372,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
+		super.doInterrupt();
 		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
 	}
 	
