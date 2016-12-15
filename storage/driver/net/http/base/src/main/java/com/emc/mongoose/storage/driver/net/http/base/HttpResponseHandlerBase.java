@@ -10,6 +10,7 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_AUTH;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_CLIENT;
+import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_CORRUPT;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SPACE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SVC;
@@ -96,7 +97,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 
 	protected void handleResponseContentChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk
-	) {
+	) throws IOException {
 		if(IoType.READ.equals(ioTask.getIoType())) {
 			if(ioTask instanceof DataIoTask) {
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
@@ -106,15 +107,8 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
-					if(verifyFlag) {
-						try {
-							verifyChunk(channel, ioTask, contentChunk, chunkSize);
-						} catch(final InterruptedException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to schedule the chunk verification task"
-							);
-						}
+					if(verifyFlag && !RESP_FAIL_CORRUPT.equals(ioTask.getStatus())) {
+						verifyChunk(ioTask, contentChunk, chunkSize);
 					} else {
 						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 					}

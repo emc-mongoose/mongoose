@@ -7,13 +7,13 @@ import java.io.IOException;
  */
 public abstract class DataVerificationException
 extends IOException {
-	
+
 	private final long offset;
 	
 	public DataVerificationException(final long offset) {
 		this.offset = offset;
 	}
-	
+
 	public long getOffset() {
 		return offset;
 	}

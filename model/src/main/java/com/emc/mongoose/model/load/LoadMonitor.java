@@ -9,8 +9,8 @@ import java.rmi.RemoteException;
 /**
  Created on 11.07.16.
  */
-public interface LoadMonitor<R extends IoResult>
-extends Daemon, Output<R> {
+public interface LoadMonitor
+extends Daemon {
 	
 	String getName()
 	throws RemoteException;

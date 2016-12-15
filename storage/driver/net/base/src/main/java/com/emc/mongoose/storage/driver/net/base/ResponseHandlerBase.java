@@ -67,10 +67,34 @@ extends SimpleChannelInboundHandler<M> {
 			return;
 		}
 		if(!driver.isInterrupted() && !driver.isClosed()) {
-			LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
 			final Channel channel = ctx.channel();
 			final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-			ioTask.setStatus(FAIL_UNKNOWN);
+			if(cause instanceof DataVerificationException) {
+				final DataVerificationException ee = (DataVerificationException) cause;
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				final DataItem dataItem = dataIoTask.getItem();
+				dataIoTask.setCountBytesDone(ee.getOffset());
+				dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
+				if(cause instanceof DataSizeException) {
+					try {
+						LOG.warn(
+							Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
+							dataItem.getName(), dataItem.size(), ee.getOffset()
+						);
+					} catch(final IOException ignored) {
+					}
+				} else if(cause instanceof DataCorruptionException) {
+					final DataCorruptionException eee = (DataCorruptionException) ee;
+					LOG.warn(
+						Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+						dataItem.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
+						String.format("\"0x%X\"", eee.actual)
+					);
+				}
+			} else {
+				LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
+				ioTask.setStatus(FAIL_UNKNOWN);
+			}
 			driver.complete(channel, ioTask);
 		}
 	}
@@ -84,51 +108,25 @@ extends SimpleChannelInboundHandler<M> {
 	}
 	
 	protected final void verifyChunk(
-		final Channel channel, final O ioTask, final ByteBuf contentChunk, final int chunkSize
-	) throws InterruptedException {
+		final O ioTask, final ByteBuf contentChunk, final int chunkSize
+	) throws IOException {
 		final DataIoTask dataIoTask = (DataIoTask) ioTask;
 		final DataItem item = dataIoTask.getItem();
 		final long countBytesDone = dataIoTask.getCountBytesDone();
-		try {
-			if(item instanceof MutableDataItem) {
-				final MutableDataItem mdi = (MutableDataItem)item;
-				if(mdi.isUpdated()) {
-					verifyChunkUpdatedData(
-						mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
-					);
-					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-				} else {
-					verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
-					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-				}
+		if(item instanceof MutableDataItem) {
+			final MutableDataItem mdi = (MutableDataItem)item;
+			if(mdi.isUpdated()) {
+				verifyChunkUpdatedData(
+					mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
+				);
+				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			} else {
-				verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+				verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
 				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			}
-		} catch(final IOException e) {
-			if(e instanceof DataVerificationException) {
-				final DataVerificationException ee = (DataVerificationException)e;
-				dataIoTask.setCountBytesDone(ee.getOffset());
-				dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
-				if(e instanceof DataSizeException) {
-					try {
-						LOG.warn(
-							Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
-							item.getName(), item.size(), ee.getOffset()
-						);
-					} catch(final IOException ignored) {
-					}
-				} else if(e instanceof DataCorruptionException) {
-					final DataCorruptionException eee = (DataCorruptionException)ee;
-					LOG.warn(
-						Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-						item.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
-						String.format("\"0x%X\"", eee.actual)
-					);
-				}
-			}
-			
-			driver.complete(channel, ioTask);
+		} else {
+			verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+			dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 		}
 	}
 
@@ -169,8 +167,8 @@ extends SimpleChannelInboundHandler<M> {
 			currRange = ioTask.getCurrRange();
 			
 			try {
-				remainingSize = (int)Math.min(chunkSize - chunkCountDone,
-					nextRangeOffset - countBytesDone - chunkCountDone
+				remainingSize = (int) Math.min(
+					chunkSize - chunkCountDone, nextRangeOffset - countBytesDone - chunkCountDone
 				);
 				verifyChunkData(currRange, chunkData, chunkCountDone, remainingSize);
 				chunkCountDone += remainingSize;

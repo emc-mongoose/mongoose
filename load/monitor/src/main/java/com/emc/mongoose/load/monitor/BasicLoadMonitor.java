@@ -6,10 +6,8 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
-import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
@@ -17,10 +15,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.model.io.task.composite.CompositeIoTask.CompositeIoResult;
-import com.emc.mongoose.model.io.task.partial.PartialIoTask.PartialIoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -45,7 +40,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -54,13 +48,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 12.07.16.
  */
 public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends DaemonBase
-implements LoadMonitor<R> {
+implements LoadMonitor {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -185,7 +179,6 @@ implements LoadMonitor<R> {
 			);
 		}
 		this.isAnyCircular = anyCircularFlag;
-
 		if(isAnyCircular) {
 			uniqueItems = new HashMap<>(firstLoadConfig.getQueueConfig().getSize());
 		} else {
@@ -214,258 +207,11 @@ implements LoadMonitor<R> {
 		);
 
 		this.svcTaskExecutor = new ThreadPoolExecutor(
-			driversCount + 1, driversCount + 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
+			driversCount + 2, driversCount + 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
 			new NamingThreadFactory("svcTasksExecutor", true)
 		);
 
 		UNCLOSED.add(this);
-	}
-
-	private final static class MetricsSvcTask
-	implements Runnable {
-
-		private final long metricsPeriodNanoSec;
-		private final Int2ObjectMap<IoStats> ioStats;
-		private final Int2ObjectMap<IoStats.Snapshot> lastStats;
-		private final String jobName;
-		private final Int2IntMap driversCountMap;
-		private final Int2IntMap concurrencyMap;
-		private final boolean fileOutputFlag;
-
-		private long prevNanoTimeStamp;
-
-		private MetricsSvcTask(
-			final String jobName, final int metricsPeriodSec, final boolean fileOutputFlag,
-			final Int2ObjectMap<IoStats> ioStats, Int2ObjectMap<IoStats.Snapshot> lastStats,
-			final Int2IntMap driversCountMap, final Int2IntMap concurrencyMap
-		) {
-			this.jobName = jobName;
-			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec > 0 ?
-				metricsPeriodSec : Long.MAX_VALUE);
-			this.prevNanoTimeStamp = - 1;
-			this.fileOutputFlag = fileOutputFlag;
-			this.ioStats = ioStats;
-			this.lastStats = lastStats;
-			this.concurrencyMap = concurrencyMap;
-			this.driversCountMap = driversCountMap;
-		}
-		@Override
-
-		public final void run() {
-			long nextNanoTimeStamp;
-			while(true) {
-				refreshStats();
-				nextNanoTimeStamp = System.nanoTime();
-				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-					outputCurrentMetrics();
-					prevNanoTimeStamp = nextNanoTimeStamp;
-				}
-				try {
-					Thread.sleep(1);
-				} catch(final InterruptedException e) {
-					break;
-				}
-			}
-		}
-
-		private void refreshStats() {
-			for(final int nextIoTypeCode : ioStats.keySet()) {
-				lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
-			}
-		}
-
-		private void outputCurrentMetrics() {
-			LOG.info(
-				Markers.METRICS_STDOUT,
-				new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
-			);
-			if(!fileOutputFlag) {
-				LOG.info(
-					Markers.METRICS_FILE,
-					new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
-				);
-			}
-			/*for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
-				for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
-					try {
-						LOG.info(
-							Markers.MSG, "Storage driver \"{}\" active task count: {}",
-							nextDriver.toString(), nextDriver.getActiveTaskCount()
-						);
-					} catch(final RemoteException ignored) {
-					}
-				}
-			}*/
-		}
-	}
-
-	private final static class PostProcessIoResultsSvcTask
-	implements Runnable {
-
-		private final StorageDriver driver;
-		private final Output<String> itemInfoOutput;
-		private final Int2ObjectMap<IoStats> ioStats;
-		private final Int2ObjectMap<IoStats> medIoStats;
-		private final LongAdder counterResults;
-		private final Map<String, String> uniqueItems;
-		private final boolean isCircular;
-		private final boolean ioTraceOutputFlag;
-
-		public PostProcessIoResultsSvcTask(
-			final StorageDriver driver, final Output<String> itemInfoOutput,
-			final Int2ObjectMap<IoStats> ioStats, final Int2ObjectMap<IoStats> medIoStats,
-			final LongAdder counterResults, final Map<String, String> uniqueItems,
-			final boolean isCircular, final boolean ioTraceOutputFlag
-		) {
-			this.driver = driver;
-			this.itemInfoOutput = itemInfoOutput;
-			this.ioStats = ioStats;
-			this.medIoStats = medIoStats;
-			this.counterResults = counterResults;
-			this.uniqueItems = uniqueItems;
-			this.isCircular = isCircular;
-			this.ioTraceOutputFlag = ioTraceOutputFlag;
-		}
-
-		@Override
-		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			while(!currThread.isInterrupted()) {
-				try {
-					postProcessIoResults(driver.getResults());
-					LockSupport.parkNanos(1);
-				} catch(final IOException e) {
-					try {
-						if(!driver.isInterrupted() && ! driver.isClosed()) {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to get the I/O results from the storage driver \"{}\"",
-								driver
-							);
-							try {
-								Thread.sleep(1);
-							} catch(final InterruptedException ee) {
-								break;
-							}
-						} else {
-							break;
-						}
-					} catch(final RemoteException ee) {
-						break;
-					}
-				}
-			}
-		}
-
-		private void postProcessIoResults(final List<IoResult> ioTaskResults) {
-
-			final int n = ioTaskResults.size();
-			if(n == 0) {
-				return;
-			}
-			int m = n; // count of complete whole tasks
-			int itemInfoCommaPos;
-
-			// I/O trace logging
-			if(!ioTraceOutputFlag) {
-				LOG.debug(
-					Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n)
-				);
-			}
-
-			IoResult ioTaskResult;
-			DataIoResult dataIoTaskResult;
-			int ioTypeCode;
-			int statusCode;
-			String itemInfo;
-			long reqDuration;
-			long respLatency;
-			long countBytesDone = 0;
-			ioTaskResult = ioTaskResults.get(0);
-			final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
-			IoStats ioTypeStats, ioTypeMedStats;
-
-			final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
-
-			for(int i = 0; i < n; i ++) {
-
-				if(i > 0) {
-					ioTaskResult = ioTaskResults.get(i);
-				}
-
-				if( // account only completed composite I/O tasks
-					ioTaskResult instanceof CompositeIoResult &&
-						!((CompositeIoResult) ioTaskResult).getCompleteFlag()
-					) {
-					m --;
-					continue;
-				}
-
-				ioTypeCode = ioTaskResult.getIoTypeCode();
-				statusCode = ioTaskResult.getStatusCode();
-				reqDuration = ioTaskResult.getDuration();
-				respLatency = ioTaskResult.getLatency();
-				if(isDataTransferred) {
-					dataIoTaskResult = (DataIoResult) ioTaskResult;
-					countBytesDone = dataIoTaskResult.getCountBytesDone();
-				}
-
-				ioTypeStats = ioStats.get(ioTypeCode);
-				ioTypeMedStats = medIoStats.get(ioTypeCode);
-
-				if(statusCode == IoTask.Status.SUCC.ordinal()) {
-					if(respLatency > 0 && respLatency > reqDuration) {
-						LOG.debug(Markers.ERR, "Dropping invalid latency value {}", respLatency);
-					}
-					if(ioTaskResult instanceof PartialIoResult) {
-						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-							ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-						}
-						m --;
-					} else {
-						itemInfo = ioTaskResult.getItemInfo();
-						if(isCircular) {
-							itemInfoCommaPos = itemInfo.indexOf(',', 0);
-							if(itemInfoCommaPos > 0) {
-								uniqueItems.put(itemInfo.substring(0, itemInfoCommaPos), itemInfo);
-							} else {
-								uniqueItems.put(itemInfo, itemInfo);
-							}
-						} else if(itemInfoOutput != null) {
-							itemsToPass.add(itemInfo);
-						}
-						// update the metrics with success
-						ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-							ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
-						}
-					}
-
-				} else {
-					ioTypeStats.markFail();
-					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-						ioTypeMedStats.markFail();
-					}
-				}
-			}
-
-			if(!isCircular && itemInfoOutput != null) {
-				final int itemsToPassCount = itemsToPass.size();
-				try {
-					for(
-						int i = 0; i < itemsToPassCount;
-						i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to output {} items to {}",
-						itemsToPassCount, itemInfoOutput
-					);
-				}
-			}
-
-			counterResults.add(m);
-		}
 	}
 
 	private boolean isDoneCountLimit() {
@@ -574,31 +320,6 @@ implements LoadMonitor<R> {
 		return true;
 	}
 
-
-	@Override
-	public void put(final R ioTaskResult)
-	throws IOException {
-		ioTaskResultsQueue.put(ioTaskResult);
-	}
-
-	@Override
-	public int put(final List<R> ioTaskResults, final int from, final int to)
-	throws IOException {
-		return ioTaskResultsQueue.put(ioTaskResults, from, to);
-	}
-
-	@Override
-	public int put(final List<R> ioTaskResults)
-	throws IOException {
-		return put(ioTaskResults, 0, ioTaskResults.size());
-	}
-
-	@Override
-	public Input<R> getInput()
-	throws IOException {
-		return null;
-	}
-
 	@Override
 	public final String getName() {
 		return name;
@@ -644,14 +365,15 @@ implements LoadMonitor<R> {
 		);
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
-				svcTaskExecutor.submit(
-					new PostProcessIoResultsSvcTask(
-						driver, itemInfoOutput, ioStats, medIoStats, counterResults, uniqueItems,
-						circularityMap.getBoolean(generator), metricsConfig.getPrecondition()
-					)
-				);
+				svcTaskExecutor.submit(new GetIoResultsSvcTask<>(driver, ioTaskResultsQueue));
 			}
 		}
+		svcTaskExecutor.submit(
+			new PostProcessIoResultsSvcTask<>(
+				this, ioTaskResultsQueue, metricsConfig.getPrecondition(), itemInfoOutput,
+				uniqueItems, ioStats, medIoStats, counterResults
+			)
+		);
 		svcTaskExecutor.shutdown();
 	}
 
@@ -684,33 +406,7 @@ implements LoadMonitor<R> {
 	}
 
 	@Override
-	protected void doInterrupt()
-	throws IllegalStateException {
-
-		for(final List<StorageDriver<I, O, R>> nextDrivers : driversMap.values()) {
-			for(final StorageDriver<I, O, R> nextDriver : nextDrivers) {
-				try {
-					nextDriver.interrupt();
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
-						nextDriver.toString()
-					);
-				}
-			}
-		}
-
-		svcTaskExecutor.shutdownNow();
-		try {
-			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.error(Markers.ERR, "Failed to terminate the service tasks in 1 second");
-			}
-		} catch(final InterruptedException ignored) {
-		}
-	}
-
-	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		/*if(loadedPrevState != null) {
@@ -756,7 +452,33 @@ implements LoadMonitor<R> {
 	}
 
 	@Override
-	protected void doClose()
+	protected void doInterrupt()
+	throws IllegalStateException {
+
+		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
+			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
+				try {
+					nextDriver.interrupt();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
+						nextDriver.toString()
+					);
+				}
+			}
+		}
+
+		svcTaskExecutor.shutdownNow();
+		try {
+			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				LOG.error(Markers.ERR, "Failed to terminate the service tasks in 1 second");
+			}
+		} catch(final InterruptedException ignored) {
+		}
+	}
+
+	@Override
+	protected final void doClose()
 	throws IOException {
 
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {

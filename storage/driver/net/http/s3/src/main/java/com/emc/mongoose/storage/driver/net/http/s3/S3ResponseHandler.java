@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -56,7 +57,7 @@ extends HttpResponseHandlerBase<I, O, R> {
 	@Override
 	protected final void handleResponseContentChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk
-	) {
+	) throws IOException {
 		if(ioTask instanceof CompositeDataIoTask) {
 			handleInitMultipartUploadResponseContentChunk(channel, contentChunk);
 		} else {

@@ -16,6 +16,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -44,7 +45,6 @@ import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -373,7 +373,11 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	protected final void doInterrupt()
 	throws IllegalStateException {
 		super.doInterrupt();
-		workerGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
+		try {
+			workerGroup.shutdownGracefully(1, 1, TimeUnit.MILLISECONDS).sync();
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
+		}
 	}
 	
 	@Override
@@ -398,6 +402,5 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		}
 		connPoolMap.clear();
 		nodeSelector.close();
-		workerGroup.shutdownGracefully(1, 1, TimeUnit.NANOSECONDS);
 	}
 }

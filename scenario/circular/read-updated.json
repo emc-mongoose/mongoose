@@ -48,7 +48,6 @@
 					"type" : "update",
 					"circular" : true,
 					"limit" : {
-						"count" : 0,
 						"time" : "1m"
 					}
 				}
