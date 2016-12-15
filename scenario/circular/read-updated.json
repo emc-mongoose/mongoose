@@ -34,7 +34,7 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"random" : 5
+							"random" : 1
 						}
 					},
 					"output" : {

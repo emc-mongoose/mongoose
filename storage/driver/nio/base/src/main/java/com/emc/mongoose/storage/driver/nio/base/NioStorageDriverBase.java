@@ -15,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +22,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -41,6 +41,7 @@ implements StorageDriver<I, O, R> {
 	private final int ioTaskBuffCapacity;
 	private final Runnable ioWorkerTasks[];
 	private final BlockingQueue<O> ioTaskQueues[];
+	private final LongAdder activeTasksCount = new LongAdder();
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
@@ -86,12 +87,12 @@ implements StorageDriver<I, O, R> {
 			int ioTaskBuffSize;
 			O ioTask;
 
-			while(!isStarted()) {
+			while(isStarted() || isShutdown()) {
 
 				ioTaskBuffSize = ioTaskBuff.size();
-				// get the new I/O tasks from the common queue
-				// if there's a free place for the new I/O tasks
-				if(ioTaskBuffSize < ioTaskBuffCapacity) {
+				// get the new I/O tasks from the common queue if there's a free place for the new
+				// I/O tasks and the state is active (not yet shutdown)
+				if(isStarted() && ioTaskBuffSize < ioTaskBuffCapacity) {
 					ioTaskBuffSize += ioTaskQueue.drainTo(
 						ioTaskBuff, ioTaskBuffCapacity - ioTaskBuffSize
 					);
@@ -103,10 +104,12 @@ implements StorageDriver<I, O, R> {
 						ioTask = ioTaskIterator.next();
 						// check if the task is invoked 1st time
 						if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
+							// do not start the new task if the state is not more active
+							if(!isStarted()) {
+								continue;
+							}
 							// respect the configured concurrency level
 							if(!concurrencyThrottle.tryAcquire()) {
-								// do not start the new task if there max count of active tasks
-								// reached
 								continue;
 							}
 							// mark the task as active
@@ -138,7 +141,7 @@ implements StorageDriver<I, O, R> {
 	protected abstract void invokeNio(final O ioTask);
 	
 	@Override
-	protected void doStart()
+	protected final void doStart()
 	throws IllegalStateException {
 		for(final Runnable ioWorkerTask : ioWorkerTasks) {
 			ioTaskExecutor.execute(ioWorkerTask);
@@ -146,16 +149,15 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	protected void doShutdown()
+	protected final void doShutdown()
 	throws IllegalStateException {
 		ioTaskExecutor.shutdown();
 	}
 
 	@Override
-	protected void doInterrupt()
+	protected final void doInterrupt()
 	throws IllegalStateException {
-		super.doInterrupt();
-		ioTaskExecutor.shutdownNow();
+
 		try {
 			if(!ioTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 1 second");
@@ -163,6 +165,17 @@ implements StorageDriver<I, O, R> {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");
 		}
+
+		try {
+			while(concurrencyThrottle.availablePermits() < concurrencyLevel) {
+				Thread.sleep(1);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");
+		}
+
+		ioTaskExecutor.shutdownNow();
+		assert ioTaskExecutor.isTerminated();
 	}
 
 	@Override
@@ -209,7 +222,7 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return ioTaskExecutor.awaitTermination(timeout, timeUnit);
 	}

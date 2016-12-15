@@ -25,7 +25,8 @@ import java.util.List;
  */
 public interface FileStorageDriver<
 	I extends Item, O extends IoTask<I, R>, R extends IoResult
-> extends StorageDriver<I, O, R> {
+>
+extends StorageDriver<I, O, R> {
 
 	FileSystem FS = FileSystems.getDefault();
 	FileSystemProvider FS_PROVIDER = FS.provider();

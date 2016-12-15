@@ -38,7 +38,6 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 
 import org.apache.commons.lang.SystemUtils;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by kurila on 30.09.16.
@@ -69,6 +69,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	private final int socketTimeout;
 	private final boolean sslFlag;
+	private final LongAdder activeTasksCounter = new LongAdder();
 	
 	protected NetStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig,
@@ -288,31 +289,17 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 					channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 					ioTask.startRequest();
 					sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
+					activeTasksCounter.increment();
 				}
 			}
 		}
 	}
-	
+
 	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
-
-	private static final class RequestSentCallback
-		implements FutureListener<Void> {
-
-		private final IoTask ioTask;
-
-		public RequestSentCallback(final IoTask ioTask) {
-			this.ioTask = ioTask;
-		}
-
-		@Override
-		public final void operationComplete(final Future<Void> future)
-		throws Exception {
-			ioTask.finishRequest();
-		}
-	}
 	
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
+		activeTasksCounter.decrement();
 		ioTask.finishResponse();
 		final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
 		if(connPool != null && channel != null) {
@@ -359,11 +346,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected void doShutdown()
-	throws IllegalStateException {
-	}
-	
-	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return false;
@@ -372,7 +354,18 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
-		super.doInterrupt();
+
+		try {
+			while(activeTasksCounter.sum() > 0) {
+				Thread.sleep(1);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Interrupted while got response count is less than issued request count"
+			);
+		}
+
 		try {
 			workerGroup.shutdownGracefully(1, 1, TimeUnit.MILLISECONDS).sync();
 		} catch(final InterruptedException e) {

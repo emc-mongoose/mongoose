@@ -43,7 +43,8 @@ import java.util.function.Function;
  */
 public final class BasicFileStorageDriver<
 	I extends MutableDataItem, O extends MutableDataIoTask<I, R>, R extends DataIoResult
->extends NioStorageDriverBase<I, O, R>
+>
+extends NioStorageDriverBase<I, O, R>
 implements FileStorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -417,6 +418,22 @@ implements FileStorageDriver<I, O, R> {
 			dstPath == null ? Paths.get(fileItem.getName()) : Paths.get(dstPath, fileItem.getName())
 		);
 		finishIoTask(ioTask);
+	}
+
+	@Override
+	protected final void doClose()
+	throws IOException {
+		super.doClose();
+		for(final FileChannel srcChannel : srcOpenFiles.values()) {
+			if(srcChannel.isOpen()) {
+				srcChannel.close();
+			}
+		}
+		for(final FileChannel dstChannel : dstOpenFiles.values()) {
+			if(dstChannel.isOpen()) {
+				dstChannel.close();
+			}
+		}
 	}
 	
 	@Override

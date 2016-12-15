@@ -58,7 +58,7 @@ implements StorageDriver<I, O, R> {
 	protected final Semaphore concurrencyThrottle;
 	protected final String userName;
 	protected final String secret;
-	protected final String authToken;
+	private final String authToken;
 	protected final boolean verifyFlag;
 
 	private final boolean useStorageDriverResult;
@@ -104,7 +104,7 @@ implements StorageDriver<I, O, R> {
 		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch());
 	}
 
-	public final class IoTasksDispatch
+	private final class IoTasksDispatch
 	implements Runnable {
 		@Override
 		public final void run() {
@@ -290,7 +290,7 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	protected void doInterrupt() {
+	protected void doShutdown() {
 		DISPATCH_INBOUND_TASKS.remove(this);
 	}
 
