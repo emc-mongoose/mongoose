@@ -34,7 +34,7 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"random" : 1
+							"random" : 5
 						}
 					},
 					"output" : {
@@ -70,7 +70,7 @@
 					"type" : "read",
 					"circular" : true,
 					"limit" : {
-						"time" : "1m"
+						"time" : 20
 					}
 				}
 			}

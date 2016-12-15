@@ -166,7 +166,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	protected boolean submit(final O task)
 	throws InterruptedException {
-		if(isClosed() || isInterrupted()) {
+		if(!isStarted()) {
 			throw new InterruptedException();
 		}
 		final String bestNode;
@@ -191,7 +191,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> tasks, final int from, final int to)
 	throws InterruptedException {
-		if(isClosed() || isInterrupted()) {
+		if(!isStarted()) {
 			throw new InterruptedException();
 		}
 		final int n = to - from;
@@ -280,15 +280,15 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		@Override
 		public final void operationComplete(final Future<Channel> future)
 		throws Exception {
-			final Channel channel = future.getNow();
-			if(channel == null) {
-				if(!isClosed() && !isInterrupted()) {
+			if(isStarted()) {
+				final Channel channel = future.getNow();
+				if(channel == null) {
 					LOG.warn(Markers.ERR, "Failed to obtain the storage node connection");
-				} // else ignore
-			} else {
-				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-				ioTask.startRequest();
-				sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
+				} else {
+					channel.attr(ATTR_KEY_IOTASK).set(ioTask);
+					ioTask.startRequest();
+					sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
+				}
 			}
 		}
 	}

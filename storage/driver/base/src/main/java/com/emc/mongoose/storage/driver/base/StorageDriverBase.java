@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +40,7 @@ implements StorageDriver<I, O, R> {
 	private static final Logger LOG = LogManager.getLogger();
 	private static final Map<StorageDriver, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
 	static {
-		new Thread(
-			new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher"
-		) {
+		new Thread(new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher") {
 			{
 				setDaemon(true);
 				start();
@@ -104,7 +103,7 @@ implements StorageDriver<I, O, R> {
 
 		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch());
 	}
-	
+
 	public final class IoTasksDispatch
 	implements Runnable {
 		@Override
@@ -136,18 +135,27 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public final void put(final O task)
 	throws IOException {
+		if(!isStarted()) {
+			throw new EOFException();
+		}
 		inTasksQueue.put(task);
 	}
 
 	@Override
 	public final int put(final List<O> tasks, final int from, final int to)
 	throws IOException {
+		if(!isStarted()) {
+			throw new EOFException();
+		}
 		return inTasksQueue.put(tasks, from, to);
 	}
 
 	@Override
 	public final int put(final List<O> tasks)
 	throws IOException {
+		if(!isStarted()) {
+			throw new EOFException();
+		}
 		return inTasksQueue.put(tasks);
 	}
 	

@@ -86,7 +86,7 @@ implements StorageDriver<I, O, R> {
 			int ioTaskBuffSize;
 			O ioTask;
 
-			while(!isInterrupted() && !isClosed()) {
+			while(!isStarted()) {
 
 				ioTaskBuffSize = ioTaskBuff.size();
 				// get the new I/O tasks from the common queue
@@ -168,7 +168,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected final boolean submit(final O ioTask)
 	throws InterruptedException {
-		if(isClosed() || isInterrupted()) {
+		if(!isStarted()) {
 			throw new InterruptedException();
 		}
 		final BlockingQueue<O> nextQueue = ioTaskQueues[
@@ -184,7 +184,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedException {
-		if(isClosed() || isInterrupted()) {
+		if(!isStarted()) {
 			throw new InterruptedException();
 		}
 		O nextIoTask;

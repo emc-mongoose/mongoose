@@ -3,9 +3,8 @@ package com.emc.mongoose.load.monitor;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.common.io.collection.IoBuffer;
-import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
+import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Output;
@@ -16,6 +15,9 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -40,30 +42,34 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 12.07.16.
  */
 public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends DaemonBase
-implements LoadMonitor {
+implements LoadMonitor<R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final String name;
 	private final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> driversMap;
-	private final MetricsConfig metricsConfig;
+	private final boolean preconditionJobFlag;
+	private final int metricsPeriodSec;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final Map<String, String> uniqueItems;
+	private final ConcurrentMap<String, String> uniqueItems;
 	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
 
@@ -74,7 +80,6 @@ implements LoadMonitor {
 	private volatile Output<String> itemInfoOutput;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
-	private final IoBuffer<R> ioTaskResultsQueue;
 	private final Object2BooleanMap<LoadGenerator<I, O, R>> circularityMap;
 
 	/**
@@ -153,8 +158,9 @@ implements LoadMonitor {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
-		this.metricsConfig = firstLoadConfig.getMetricsConfig();
-		final int metricsPeriodSec = (int) metricsConfig.getPeriod();
+		final MetricsConfig metricsConfig = firstLoadConfig.getMetricsConfig();
+		preconditionJobFlag = metricsConfig.getPrecondition();
+		metricsPeriodSec = (int) metricsConfig.getPeriod();
 
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
@@ -180,7 +186,7 @@ implements LoadMonitor {
 		}
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
-			uniqueItems = new HashMap<>(firstLoadConfig.getQueueConfig().getSize());
+			uniqueItems = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
 		} else {
 			uniqueItems = null;
 		}
@@ -202,12 +208,9 @@ implements LoadMonitor {
 		}
 		this.countLimit = countLimitSum;
 		this.sizeLimit = sizeLimitSum;
-		ioTaskResultsQueue = new LimitedQueueBuffer<>(
-			new ArrayBlockingQueue<>(firstLoadConfig.getQueueConfig().getSize())
-		);
 
 		this.svcTaskExecutor = new ThreadPoolExecutor(
-			driversCount + 2, driversCount + 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
+			driversCount + 1, driversCount + 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
 			new NamingThreadFactory("svcTasksExecutor", true)
 		);
 
@@ -325,8 +328,119 @@ implements LoadMonitor {
 		return name;
 	}
 
+	@Override
 	public final void setItemInfoOutput(final Output<String> itemInfoOutput) {
 		this.itemInfoOutput = itemInfoOutput;
+	}
+
+	@Override
+	public final void processIoResults(
+		final List<R> ioTaskResults, final int n, final boolean isCircular
+	) {
+
+		int m = n; // count of complete whole tasks
+		int itemInfoCommaPos;
+
+		// I/O trace logging
+		if(LOG.isDebugEnabled(Markers.IO_TRACE)) {
+			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n));
+		}
+
+		R ioTaskResult;
+		DataIoTask.DataIoResult dataIoTaskResult;
+		int ioTypeCode;
+		int statusCode;
+		String itemInfo;
+		long reqDuration;
+		long respLatency;
+		long countBytesDone = 0;
+		ioTaskResult = ioTaskResults.get(0);
+		final boolean isDataTransferred = ioTaskResult instanceof DataIoTask.DataIoResult;
+		IoStats ioTypeStats, ioTypeMedStats;
+
+		final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
+
+		for(int i = 0; i < n; i ++) {
+
+			if(i > 0) {
+				ioTaskResult = ioTaskResults.get(i);
+			}
+
+			if( // account only completed composite I/O tasks
+				ioTaskResult instanceof CompositeIoTask.CompositeIoResult &&
+					!((CompositeIoTask.CompositeIoResult) ioTaskResult).getCompleteFlag()
+				) {
+				m --;
+				continue;
+			}
+
+			ioTypeCode = ioTaskResult.getIoTypeCode();
+			statusCode = ioTaskResult.getStatusCode();
+			reqDuration = ioTaskResult.getDuration();
+			respLatency = ioTaskResult.getLatency();
+			if(isDataTransferred) {
+				dataIoTaskResult = (DataIoTask.DataIoResult) ioTaskResult;
+				countBytesDone = dataIoTaskResult.getCountBytesDone();
+			}
+
+			ioTypeStats = ioStats.get(ioTypeCode);
+			ioTypeMedStats = medIoStats.get(ioTypeCode);
+
+			if(statusCode == IoTask.Status.SUCC.ordinal()) {
+				if(respLatency > 0 && respLatency > reqDuration) {
+					LOG.debug(Markers.ERR, "Dropping invalid latency value {}", respLatency);
+				}
+				if(ioTaskResult instanceof PartialIoTask.PartialIoResult) {
+					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+					}
+					m --;
+				} else {
+					itemInfo = ioTaskResult.getItemInfo();
+					if(isCircular) {
+						itemInfoCommaPos = itemInfo.indexOf(',', 0);
+						if(itemInfoCommaPos > 0) {
+							uniqueItems.put(itemInfo.substring(0, itemInfoCommaPos), itemInfo);
+						} else {
+							uniqueItems.put(itemInfo, itemInfo);
+						}
+					} else if(itemInfoOutput != null) {
+						itemsToPass.add(itemInfo);
+					}
+					// update the metrics with success
+					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
+				}
+
+			} else {
+				ioTypeStats.markFail();
+				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+					ioTypeMedStats.markFail();
+				}
+			}
+		}
+
+		if(!isCircular && itemInfoOutput != null) {
+			final int itemsToPassCount = itemsToPass.size();
+			try {
+				for(
+					int i = 0; i < itemsToPassCount;
+					i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
+					) {
+					LockSupport.parkNanos(1);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to output {} items to {}", itemsToPassCount,
+					itemInfoOutput
+				);
+			}
+		}
+
+		counterResults.add(m);
 	}
 
 	@Override
@@ -359,21 +473,17 @@ implements LoadMonitor {
 
 		svcTaskExecutor.submit(
 			new MetricsSvcTask(
-				name, (int) metricsConfig.getPeriod(), metricsConfig.getPrecondition(), ioStats,
-				lastStats, driversCountMap, concurrencyMap
+				name, (int) metricsPeriodSec, preconditionJobFlag, ioStats, lastStats,
+				driversCountMap, concurrencyMap
 			)
 		);
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
-				svcTaskExecutor.submit(new GetIoResultsSvcTask<>(driver, ioTaskResultsQueue));
+				svcTaskExecutor.submit(
+					new GetAndProcessIoResultsSvcTask<>(this, driver, circularityMap.get(generator))
+				);
 			}
 		}
-		svcTaskExecutor.submit(
-			new PostProcessIoResultsSvcTask<>(
-				this, ioTaskResultsQueue, metricsConfig.getPrecondition(), itemInfoOutput,
-				uniqueItems, ioStats, medIoStats, counterResults
-			)
-		);
 		svcTaskExecutor.shutdown();
 	}
 
@@ -484,6 +594,24 @@ implements LoadMonitor {
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
+
+				try {
+					final List<R> finalResults = driver.getResults();
+					if(finalResults != null) {
+						final int finalResultsCount = finalResults.size();
+						if(finalResultsCount > 0) {
+							processIoResults(
+								finalResults, finalResultsCount, circularityMap.get(generator)
+							);
+						}
+					}
+				} catch(final Throwable cause) {
+					LogUtil.exception(
+						LOG, Level.WARN, cause,
+						"Failed to process the final results for the driver {}", driver
+					);
+				}
+
 				try {
 					driver.close();
 				} catch(final IOException e) {
@@ -506,7 +634,7 @@ implements LoadMonitor {
 			Markers.METRICS_STDOUT,
 			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
 		);
-		if(!metricsConfig.getPrecondition()) {
+		if(!preconditionJobFlag) {
 			LOG.info(
 				Markers.METRICS_FILE_TOTAL,
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
@@ -528,8 +656,6 @@ implements LoadMonitor {
 			}
 			medIoStats.clear();
 		}
-
-		ioTaskResultsQueue.close();
 
 		if(uniqueItems != null && itemInfoOutput != null) {
 			for(final String itemInfo : uniqueItems.values()) {
