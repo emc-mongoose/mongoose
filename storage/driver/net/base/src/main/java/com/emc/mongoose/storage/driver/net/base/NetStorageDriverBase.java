@@ -15,7 +15,6 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -52,7 +51,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-
 /**
  Created by kurila on 30.09.16.
  */
@@ -69,7 +67,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	private final int socketTimeout;
 	private final boolean sslFlag;
-	private final LongAdder activeTasksCounter = new LongAdder();
 	
 	protected NetStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig,
@@ -283,14 +280,12 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		throws Exception {
 			if(isStarted()) {
 				final Channel channel = future.getNow();
-				if(channel == null) {
-					LOG.warn(Markers.ERR, "Failed to obtain the storage node connection");
-				} else {
-					channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-					ioTask.startRequest();
-					sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
-					activeTasksCounter.increment();
-				}
+				assert channel != null;
+				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
+				ioTask.startRequest();
+				sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
+			} else {
+				concurrencyThrottle.release();
 			}
 		}
 	}
@@ -299,7 +294,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
-		activeTasksCounter.decrement();
 		ioTask.finishResponse();
 		final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
 		if(connPool != null && channel != null) {
@@ -354,18 +348,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
-
-		try {
-			while(activeTasksCounter.sum() > 0) {
-				Thread.sleep(1);
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"Interrupted while got response count is less than issued request count"
-			);
-		}
-
+		super.doInterrupt();
 		try {
 			workerGroup.shutdownGracefully(1, 1, TimeUnit.MILLISECONDS).sync();
 		} catch(final InterruptedException e) {

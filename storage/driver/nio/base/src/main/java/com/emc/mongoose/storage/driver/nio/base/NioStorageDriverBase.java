@@ -106,6 +106,7 @@ implements StorageDriver<I, O, R> {
 						if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
 							// do not start the new task if the state is not more active
 							if(!isStarted()) {
+								ioTaskIterator.remove();
 								continue;
 							}
 							// respect the configured concurrency level
@@ -129,6 +130,18 @@ implements StorageDriver<I, O, R> {
 					LockSupport.parkNanos(1);
 				}
 			}
+
+			ioTaskBuffSize = ioTaskBuff.size();
+			LOG.debug(Markers.MSG, "Finish {} remaining active tasks finally", ioTaskBuffSize);
+			for(int i = 0; i < ioTaskBuffSize; i ++) {
+				ioTask = ioTaskBuff.get(i);
+				while(IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+					invokeNio(ioTask);
+				}
+				concurrencyThrottle.release();
+				ioTaskCompleted(ioTask);
+			}
+			LOG.debug(Markers.MSG, "Finish the remaining active tasks done");
 		}
 	}
 
@@ -157,7 +170,6 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
-
 		try {
 			if(!ioTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 1 second");
@@ -165,17 +177,9 @@ implements StorageDriver<I, O, R> {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");
 		}
-
-		try {
-			while(concurrencyThrottle.availablePermits() < concurrencyLevel) {
-				Thread.sleep(1);
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");
-		}
-
 		ioTaskExecutor.shutdownNow();
 		assert ioTaskExecutor.isTerminated();
+		super.doInterrupt();
 	}
 
 	@Override

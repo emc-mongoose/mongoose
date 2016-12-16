@@ -85,7 +85,7 @@ implements StorageDriver<I, O, R> {
 		secret = authConfig == null ? null : authConfig.getSecret();
 		authToken = authConfig == null ? null : authConfig.getToken();
 		concurrencyLevel = loadConfig.getConcurrency();
-		concurrencyThrottle = new Semaphore(concurrencyLevel);
+		concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
 
@@ -167,7 +167,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public final boolean isIdle() {
 		return !concurrencyThrottle.hasQueuedThreads() &&
-			concurrencyThrottle.availablePermits() == concurrencyLevel;
+			concurrencyThrottle.availablePermits() >= concurrencyLevel;
 	}
 
 	@Override
@@ -292,6 +292,17 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doShutdown() {
 		DISPATCH_INBOUND_TASKS.remove(this);
+	}
+
+	@Override
+	protected void doInterrupt() {
+		try {
+			while(!isIdle()) {
+				Thread.sleep(1);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to await the idle state");
+		}
 	}
 
 	@Override

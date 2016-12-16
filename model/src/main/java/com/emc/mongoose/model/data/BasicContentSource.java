@@ -78,6 +78,7 @@ implements ContentSource {
 			return zeroByteLayer;
 		}
 		// else fast check if layer exists
+		assert byteLayersMap != null;
 		ByteBuffer layer = byteLayersMap.get(layerIndex);
 		if(layer == null) {
 			// else lock, recheck and (possibly) generate
