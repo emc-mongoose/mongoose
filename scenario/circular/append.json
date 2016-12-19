@@ -1,0 +1,55 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"output" : {
+				"path" : "circular-append"
+			},
+			"data" : {
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"concurrency" : 10
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "circular-append.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"fixed" : "-4KB"
+						}
+					},
+					"input" : {
+						"file" : "circular-append.csv"
+					}
+				},
+				"load" : {
+					"type" : "update",
+					"circular" : true,
+					"limit" : {
+						"time" : "1m"
+					}
+				}
+			}
+		}
+	]
+}
