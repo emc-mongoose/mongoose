@@ -110,7 +110,7 @@ public class FileStorageDriverTest {
 				}
 			), count
 		);
-		assertEquals(99, items.size());
+		assertEquals(items.size(), 99, items.size());
 
 		items = FileStorageDriver._list(
 			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100
