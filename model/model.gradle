@@ -7,7 +7,13 @@ dependencies {
 		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
 	)
 
-	compileOnly(project(':common'))
+	compileOnly(
+		project(":common"),
+	)
+
+	testCompile(
+		project(":common"),
+	)
 }
 
 configurations.compileOnly.dependencies.each { it.transitive = false }

@@ -44,28 +44,31 @@ public final class CliArgParser {
 
 			argValPair = arg.split("=", 2);
 
-			for(final Map<String, Object> aliasingNode : aliasingConfig) {
-				nextAliasName = ARG_PREFIX + aliasingNode.get(KEY_NAME);
-				nextAliasTarget = ARG_PREFIX + aliasingNode.get(KEY_TARGET);
-				nextDeprecatedFlag = aliasingNode.containsKey(KEY_DEPRECATED) ?
-					(boolean) aliasingNode.get(KEY_DEPRECATED) : false;
-				if(arg.startsWith(nextAliasName)) {
-					if(nextDeprecatedFlag) {
-						LOG.warn(
-							Markers.ERR, "The argument \"{}\" is deprecated, use \"{}\" instead",
-							nextAliasName, nextAliasTarget
-						);
-					}
-					aliasArgValPair = nextAliasTarget.split("=", 2);
-					argValPair[0] = aliasArgValPair[0];
-					if(aliasArgValPair.length == 2) {
-						if(argValPair.length == 2) {
-							argValPair[1] = aliasArgValPair[1];
-						} else {
-							argValPair = new String[] { argValPair[0], aliasArgValPair[1] };
+			if(aliasingConfig != null) {
+				for(final Map<String, Object> aliasingNode : aliasingConfig) {
+					nextAliasName = ARG_PREFIX + aliasingNode.get(KEY_NAME);
+					nextAliasTarget = ARG_PREFIX + aliasingNode.get(KEY_TARGET);
+					nextDeprecatedFlag = aliasingNode.containsKey(KEY_DEPRECATED) ?
+						(boolean) aliasingNode.get(KEY_DEPRECATED) : false;
+					if(arg.startsWith(nextAliasName)) {
+						if(nextDeprecatedFlag) {
+							LOG.warn(
+								Markers.ERR,
+								"The argument \"{}\" is deprecated, use \"{}\" instead",
+								nextAliasName, nextAliasTarget
+							);
 						}
+						aliasArgValPair = nextAliasTarget.split("=", 2);
+						argValPair[0] = aliasArgValPair[0];
+						if(aliasArgValPair.length == 2) {
+							if(argValPair.length == 2) {
+								argValPair[1] = aliasArgValPair[1];
+							} else {
+								argValPair = new String[] { argValPair[0], aliasArgValPair[1] };
+							}
+						}
+						break;
 					}
-					break;
 				}
 			}
 

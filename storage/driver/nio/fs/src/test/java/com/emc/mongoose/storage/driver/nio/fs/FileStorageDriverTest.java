@@ -1,7 +1,10 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
 import com.emc.mongoose.common.math.Random;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.item.BasicItemFactory;
+import com.emc.mongoose.model.item.BasicMutableDataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
@@ -10,6 +13,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -73,7 +79,36 @@ public class FileStorageDriverTest {
 		}
 
 		List<MutableDataItem> items = FileStorageDriver._list(
-			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10, "yohoho0099", count
+			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10,
+			new BasicMutableDataItem(
+				"yohoho0099", 0, 0,
+				new ContentSource() {
+					@Override
+					public int getSize() {
+						return 0;
+					}
+					
+					@Override
+					public ByteBuffer getLayer(final int layerIndex) {
+						return null;
+					}
+					
+					@Override
+					public void close()
+					throws IOException {
+					}
+					
+					@Override
+					public void writeExternal(final ObjectOutput out)
+					throws IOException {
+					}
+					
+					@Override
+					public void readExternal(final ObjectInput in)
+					throws IOException, ClassNotFoundException {
+					}
+				}
+			), count
 		);
 		assertEquals(99, items.size());
 

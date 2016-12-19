@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.impl.load;
 
-import com.emc.mongoose.model.io.Input;
-import com.emc.mongoose.model.io.UniformOptionSelector;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.UniformOptionSelector;
 import org.junit.Test;
 
 import java.util.ArrayList;
