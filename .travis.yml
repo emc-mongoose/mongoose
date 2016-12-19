@@ -4,7 +4,7 @@ services:
 - docker
 jdk:
 - oraclejdk8
-script: "./gradlew clean dist test"
+script: "./gradlew clean test dist"
 deploy:
   provider: releases
   api_key:
