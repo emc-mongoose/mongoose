@@ -21,12 +21,23 @@ implements Serializable {
 			final String[] pair = rawRange.split("-");
 			if(pair.length == 2) {
 				try {
-					beg = Long.parseLong(pair[0]);
-					end = Long.parseLong(pair[1]);
+					if(pair[0].isEmpty()) { // append support
+						beg = - 1;
+					} else {
+						beg = Long.parseLong(pair[0]);
+					}
+					if(pair[1].isEmpty()) {
+						end = - 1;
+					} else {
+						end = Long.parseLong(pair[1]);
+					}
+					if(beg == -1 && end == -1) {
+						throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
+					}
 				} catch(final NumberFormatException e) {
 					throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
 				}
-				if(beg > end) {
+				if(beg > end && end != -1) {
 					throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
 				}
 			} else {
@@ -67,6 +78,12 @@ implements Serializable {
 	}
 	
 	public final String toString() {
-		return Long.toString(beg) + '-' + end;
+		if(beg == -1) {
+			return "-" + end;
+		} else if(end == -1) {
+			return beg + "-";
+		} else {
+			return beg + "-" + end;
+		}
 	}
 }

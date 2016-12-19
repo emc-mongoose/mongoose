@@ -52,9 +52,7 @@ implements MutableDataIoTask<I, R> {
 		if(IoType.UPDATE.equals(ioType)) {
 			if(randomRangesCount > 0) {
 				scheduleRandomRangesUpdate(randomRangesCount);
-			} else if(fixedRanges != null && !fixedRanges.isEmpty()){
-				scheduleFixedRangesUpdate(fixedRanges);
-			} else {
+			} else if(fixedRanges == null || fixedRanges.isEmpty()){
 				throw new IllegalStateException("Range update is not configured");
 			}
 			contentSize = getUpdatingRangesSize();
@@ -111,21 +109,37 @@ implements MutableDataIoTask<I, R> {
 	
 	@Override
 	public final void scheduleFixedRangesUpdate(final List<ByteRange> ranges) {
-		// TODO
-		throw new IllegalStateException("Not implemented yet");
+		for(final ByteRange nextByteRange : ranges) {
+			if(-1 == nextByteRange.getBeg()) {
+
+			}
+		}
 	}
 	
 	@Override
 	public final long getUpdatingRangesSize() {
 		long sumSize = 0;
-		try {
-			for(int i = 0; i < getRangeCount(item.size()); i++) {
-				if(updRangesMaskPair[0].get(i) || updRangesMaskPair[1].get(i)) {
-					sumSize += item.getRangeSize(i);
+		if(fixedRanges == null || fixedRanges.isEmpty()) {
+			try {
+				for(int i = 0; i < getRangeCount(item.size()); i++) {
+					if(updRangesMaskPair[0].get(i) || updRangesMaskPair[1].get(i)) {
+						sumSize += item.getRangeSize(i);
+					}
+				}
+			} catch(final IOException e) {
+				throw new IllegalStateException(e);
+			}
+		} else {
+			long nextBeg, nextEnd;
+			for(final ByteRange nextByteRange : fixedRanges) {
+				nextBeg = nextByteRange.getBeg();
+				nextEnd = nextByteRange.getEnd();
+				if(nextBeg == -1) {
+					sumSize += nextEnd;
+				} else {
+					sumSize += (nextEnd - nextBeg + 1);
 				}
 			}
-		} catch(final IOException e) {
-			throw new IllegalStateException(e);
 		}
 		return sumSize;
 	}

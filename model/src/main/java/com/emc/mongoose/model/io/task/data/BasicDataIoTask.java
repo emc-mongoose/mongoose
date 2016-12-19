@@ -143,6 +143,11 @@ implements DataIoTask<T, R> {
 	}
 
 	@Override
+	public final List<ByteRange> getFixedRanges() {
+		return fixedRanges;
+	}
+
+	@Override
 	public final long getCountBytesDone() {
 		return countBytesDone;
 	}

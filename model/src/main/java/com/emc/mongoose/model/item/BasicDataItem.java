@@ -195,9 +195,9 @@ implements DataItem {
 		if(partSize < 1) {
 			throw new IllegalArgumentException();
 		}
-		if(from + partSize > size) {
+		/*if(from + partSize > size) {
 			throw new IllegalArgumentException();
-		}
+		}*/
 		return new BasicDataItem(name, offset + from, partSize, layerNum, contentSrc);
 	}
 	//
