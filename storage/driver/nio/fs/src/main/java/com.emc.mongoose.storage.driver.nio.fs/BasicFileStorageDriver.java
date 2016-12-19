@@ -385,7 +385,7 @@ implements FileStorageDriver<I, O, R> {
 				if(currRangeIdx < getRangeCount(fileItem.size())) {
 					updatingRange = ioTask.getCurrRangeUpdate();
 					if(updatingRange == null) {
-						ioTask.setCurrRangeIdx(++currRangeIdx);
+						ioTask.setCurrRangeIdx(++ currRangeIdx);
 					} else {
 						break;
 					}

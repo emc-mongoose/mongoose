@@ -198,8 +198,21 @@ implements HttpStorageDriver<I, O, R> {
 				strb.setLength(0);
 				try {
 					final long baseItemSize = mdi.size();
+					// current layer updates first
 					for(int i = 0; i < getRangeCount(baseItemSize); i++) {
-						if(updRangesMaskPair[0].get(i) || updRangesMaskPair[1].get(i)) {
+						if(updRangesMaskPair[0].get(i)) {
+							if(strb.length() > 0) {
+								strb.append(',');
+							}
+							strb
+								.append(getRangeOffset(i))
+								.append('-')
+								.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
+						}
+					}
+					// then next layer updates if any
+					for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+						if(updRangesMaskPair[1].get(i)) {
 							if(strb.length() > 0) {
 								strb.append(',');
 							}
@@ -349,16 +362,32 @@ implements HttpStorageDriver<I, O, R> {
 				}
 			} else if(IoType.UPDATE.equals(ioType)) {
 				if(item instanceof MutableDataItem) {
+					
 					final MutableDataItem mdi = (MutableDataItem) item;
 					final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+					final BitSet updRangesMaskPair[] = mdIoTask.getUpdRangesMaskPair();
+					final int rangeCount = getRangeCount(mdi.size());
 					DataItem updatedRange;
-					for(int i = 0; i < getRangeCount(mdi.size()); i ++) {
-						mdIoTask.setCurrRangeIdx(i);
-						updatedRange = mdIoTask.getCurrRangeUpdate();
-						if(updatedRange != null) {
+					
+					// current layer updates first
+					for(int i = 0; i < rangeCount; i ++) {
+						if(updRangesMaskPair[0].get(i)) {
+							mdIoTask.setCurrRangeIdx(i);
+							updatedRange = mdIoTask.getCurrRangeUpdate();
+							assert updatedRange != null;
 							channel.write(new DataItemFileRegion<>(updatedRange));
 						}
 					}
+					// then next layer updates if any
+					for(int i = 0; i < rangeCount; i ++) {
+						if(updRangesMaskPair[1].get(i)) {
+							mdIoTask.setCurrRangeIdx(i);
+							updatedRange = mdIoTask.getCurrRangeUpdate();
+							assert updatedRange != null;
+							channel.write(new DataItemFileRegion<>(updatedRange));
+						}
+					}
+					
 					mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
 					mdi.commitUpdatedRanges(mdIoTask.getUpdRangesMaskPair());
 				}

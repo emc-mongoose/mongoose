@@ -22,7 +22,7 @@ implements MutableDataItem {
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final BitSet maskRangesRead = new BitSet(Long.SIZE);
+	public final BitSet maskRangesRead = new BitSet(Long.SIZE);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicMutableDataItem() {
 		super();
