@@ -73,14 +73,9 @@ implements MutableDataItemMock {
 		}
 	}
 	//
-	public final synchronized void append(final long offset, final long size) {
+	public final synchronized void append(final long size) {
 		if(size < 0) {
 			throw new IllegalArgumentException(name + ": range size should not be negative");
-		}
-		if(this.size != offset) {
-			throw new IllegalArgumentException(
-				name + ": append offset " + offset + " should be equal to the current size " + this.size
-			);
 		}
 		final int
 			lastCellPos = this.size > 0 ? getRangeCount(this.size) - 1 : 0,

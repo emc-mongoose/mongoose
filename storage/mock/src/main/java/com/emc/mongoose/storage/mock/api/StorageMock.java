@@ -50,9 +50,8 @@ extends Daemon {
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException;
 	//
-	void appendObject(
-		final String containerName, final String id, final long offset, final long size
-	) throws ContainerMockException, ObjectMockNotFoundException;
+	void appendObject(final String containerName, final String id, final long size)
+	throws ContainerMockException, ObjectMockNotFoundException;
 	//
 	T listObjects(
 		final String containerName, final String marker,

@@ -9,6 +9,6 @@ public interface MutableDataItemMock extends MutableDataItem {
 
 	void update(final long offset, final long size);
 
-	void append(final long offset, final long size);
+	void append(final long size);
 
 }

@@ -136,8 +136,14 @@ implements MutableDataIoTask<I, R> {
 				nextEnd = nextByteRange.getEnd();
 				if(nextBeg == -1) {
 					sumSize += nextEnd;
+				} else if(nextEnd == -1){
+					try {
+						sumSize += item.size() - nextBeg;
+					} catch(final IOException e) {
+						throw new IllegalStateException(e);
+					}
 				} else {
-					sumSize += (nextEnd - nextBeg + 1);
+					sumSize += nextEnd - nextBeg + 1;
 				}
 			}
 		}

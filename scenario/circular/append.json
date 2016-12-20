@@ -2,9 +2,6 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"output" : {
-				"path" : "circular-append"
-			},
 			"data" : {
 				"size" : "4KB"
 			}
@@ -19,7 +16,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "circular-append.csv"
+						"file" : "circular-append-before.csv"
 					}
 				},
 				"load" : {
@@ -39,14 +36,17 @@
 						}
 					},
 					"input" : {
-						"file" : "circular-append.csv"
+						"file" : "circular-append-before.csv"
+					},
+					"output" : {
+						"file" : "circular-append-after.csv"
 					}
 				},
 				"load" : {
 					"type" : "update",
 					"circular" : true,
 					"limit" : {
-						"time" : "1m"
+						"count" : 1023
 					}
 				}
 			}

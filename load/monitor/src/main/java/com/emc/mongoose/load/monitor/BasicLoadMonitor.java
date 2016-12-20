@@ -429,7 +429,7 @@ implements LoadMonitor<R> {
 				for(
 					int i = 0; i < itemsToPassCount;
 					i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
-					) {
+				) {
 					LockSupport.parkNanos(1);
 				}
 			} catch(final IOException e) {
@@ -473,7 +473,7 @@ implements LoadMonitor<R> {
 
 		svcTaskExecutor.submit(
 			new MetricsSvcTask(
-				name, (int) metricsPeriodSec, preconditionJobFlag, ioStats, lastStats,
+				name, metricsPeriodSec, preconditionJobFlag, ioStats, lastStats,
 				driversCountMap, concurrencyMap
 			)
 		);

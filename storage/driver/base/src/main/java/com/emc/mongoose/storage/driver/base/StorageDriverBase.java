@@ -15,7 +15,7 @@ import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -85,7 +86,7 @@ implements StorageDriver<I, O, R> {
 		secret = authConfig == null ? null : authConfig.getSecret();
 		authToken = authConfig == null ? null : authConfig.getToken();
 		concurrencyLevel = loadConfig.getConcurrency();
-		concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		concurrencyThrottle = new Semaphore(concurrencyLevel);
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
 
@@ -297,8 +298,8 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doInterrupt() {
 		try {
-			while(!isIdle()) {
-				Thread.sleep(1);
+			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 1, TimeUnit.SECONDS)) {
+				LOG.warn(Markers.ERR, "Failed to await the idle state");
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to await the idle state");

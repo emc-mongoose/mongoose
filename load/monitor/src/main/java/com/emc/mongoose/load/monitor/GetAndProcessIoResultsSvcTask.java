@@ -64,6 +64,7 @@ implements Runnable {
 						monitor.processIoResults(results, resultsCount, isCircular);
 					}
 				}
+				Thread.sleep(1);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to get the results from the driver \"{}\"",
@@ -79,6 +80,8 @@ implements Runnable {
 					LogUtil.exception(LOG, Level.WARN, e, "Failure");
 					break;
 				}
+			} catch(final InterruptedException e) {
+				break;
 			}
 		}
 	}

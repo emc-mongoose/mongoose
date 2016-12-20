@@ -148,14 +148,13 @@ implements StorageMock<I> {
 	}
 	//
 	@Override
-	public final void appendObject(
-		final String containerName, final String id, final long offset, final long size
-	) throws ContainerMockException, ObjectMockNotFoundException {
+	public final void appendObject(final String containerName, final String id, final long size)
+	throws ContainerMockException, ObjectMockNotFoundException {
 		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
 			final I obj = c.get(id);
 			if(obj != null) {
-				obj.append(offset, size);
+				obj.append(size);
 			} else {
 				throw new ObjectMockNotFoundException(id);
 			}

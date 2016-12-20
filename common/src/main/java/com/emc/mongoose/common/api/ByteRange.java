@@ -24,22 +24,18 @@ implements Serializable {
 					if(pair[0].isEmpty()) { // append support
 						beg = - 1;
 					} else {
-						beg = Long.parseLong(pair[0]);
+						beg = SizeInBytes.toFixedSize(pair[0]);
 					}
-					if(pair[1].isEmpty()) {
-						end = - 1;
-					} else {
-						end = Long.parseLong(pair[1]);
-					}
-					if(beg == -1 && end == -1) {
-						throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
-					}
+					end = SizeInBytes.toFixedSize(pair[1]);
 				} catch(final NumberFormatException e) {
 					throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
 				}
 				if(beg > end && end != -1) {
 					throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
 				}
+			} else if(pair.length == 1) {
+				beg = SizeInBytes.toFixedSize(pair[0]);
+				end = -1;
 			} else {
 				throw new InvalidByteRangeException("Invalid range string: \""+ rawRange + "\"");
 			}

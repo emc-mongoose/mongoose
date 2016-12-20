@@ -333,22 +333,33 @@ extends ChannelInboundHandlerAdapter {
 	private boolean handlePartialWrite(
 		final String containerName, final String id, final List<String> rangeHeadersValues,
 		final long size
-	) throws ContainerMockException, ObjectMockNotFoundException {
+	) throws ContainerMockException, ObjectMockNotFoundException, NumberFormatException {
+		String ranges[];
+		String rangeBorders[];
+		int rangeBordersNum;
+		long start;
+		long end;
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
 				final String rangeValueWithoutPrefix = rangeValues.substring(
 					VALUE_RANGE_PREFIX.length(), rangeValues.length()
 				);
-				final String[] ranges = rangeValueWithoutPrefix.split(",");
-				for(final String range: ranges) {
-					final String[] rangeBorders = range.split(VALUE_RANGE_CONCAT);
-					final int rangeBordersNum = rangeBorders.length;
-					final long offset = Long.parseLong(rangeBorders[0]);
-					if(rangeBordersNum == 1) {
-						localStorage.appendObject(containerName, id, offset, size);
-					} else if(rangeBordersNum == 2) {
-						final long dynSize = Long.parseLong(rangeBorders[1]) - offset + 1;
-						localStorage.updateObject(containerName, id, offset, dynSize);
+				ranges = rangeValueWithoutPrefix.split(",");
+				for(final String range : ranges) {
+					rangeBorders = range.split(VALUE_RANGE_CONCAT);
+					rangeBordersNum = rangeBorders.length;
+					if(rangeBordersNum == 2) {
+						if(rangeBorders[0].isEmpty()) {
+							end = Long.parseLong(rangeBorders[1]);
+							localStorage.appendObject(containerName, id, end);
+						} else if(rangeBorders[1].isEmpty()) {
+							start = Long.parseLong(rangeBorders[0]);
+							localStorage.updateObject(containerName, id, start, size - start);
+						} else {
+							start = Long.parseLong(rangeBorders[1]);
+							end = Long.parseLong(rangeBorders[1]);
+							localStorage.updateObject(containerName, id, start, end - start + 1);
+						}
 					} else {
 						LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
 						return false;

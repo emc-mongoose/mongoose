@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
+
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
@@ -33,6 +35,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.rmi.RemoteException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -215,7 +218,12 @@ implements FileStorageDriver<I, O, R> {
 					if(dstChannel == null) {
 						ioTask.setStatus(Status.CANCELLED);
 					} else {
-						invokeUpdate(item, ioTask, dstChannel);
+						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
+						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+							invokeRandomRangesUpdate(item, ioTask, dstChannel);
+						} else {
+							invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedByteRanges);
+						}
 					}
 					break;
 				
@@ -370,8 +378,9 @@ implements FileStorageDriver<I, O, R> {
 		}
 	}
 
-	private void invokeUpdate(final I fileItem, final O ioTask, final FileChannel dstChannel)
-	throws IOException {
+	private void invokeRandomRangesUpdate(
+		final I fileItem, final O ioTask, final FileChannel dstChannel
+	) throws IOException {
 		
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
@@ -397,9 +406,7 @@ implements FileStorageDriver<I, O, R> {
 			
 			final long updatingRangeSize = updatingRange.size();
 			dstChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += updatingRange.write(
-				dstChannel, updatingRange.size() - countBytesDone
-			);
+			countBytesDone += updatingRange.write(dstChannel, updatingRangeSize - countBytesDone);
 			if(countBytesDone == updatingRangeSize) {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
@@ -407,6 +414,55 @@ implements FileStorageDriver<I, O, R> {
 		} else {
 			finishIoTask(ioTask);
 			fileItem.commitUpdatedRanges(ioTask.getUpdRangesMaskPair());
+		}
+	}
+
+	private void invokeFixedRangesUpdate(
+		final I fileItem, final O ioTask, final FileChannel dstChannel,
+		final List<ByteRange> byteRanges
+	) throws IOException {
+
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long baseItemSize = fileItem.size();
+		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
+
+		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
+
+			ByteRange byteRange;
+			DataItem updatingRange;
+			int currRangeIdx = ioTask.getCurrRangeIdx();
+			long rangeBeg;
+			long rangeEnd;
+
+			if(currRangeIdx < byteRanges.size()) {
+				byteRange = byteRanges.get(currRangeIdx);
+				rangeBeg = byteRange.getBeg();
+				rangeEnd = byteRange.getEnd();
+				if(rangeBeg == -1) {
+					rangeBeg = baseItemSize;
+					updatingRange = fileItem.slice(rangeBeg, rangeEnd);
+				} else if(rangeEnd == -1) {
+					updatingRange = fileItem.slice(rangeBeg, baseItemSize - rangeBeg);
+				} else {
+					updatingRange = fileItem.slice(rangeBeg, rangeEnd - rangeBeg + 1);
+				}
+				final long updatingRangeSize = updatingRange.size();
+
+				dstChannel.position(rangeBeg + countBytesDone);
+				countBytesDone += updatingRange.write(
+					dstChannel, updatingRangeSize - countBytesDone
+				);
+
+				if(countBytesDone == updatingRangeSize) {
+					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+					ioTask.setCountBytesDone(0);
+				}
+			} else {
+				ioTask.setCountBytesDone(updatingRangesSize);
+			}
+		} else {
+			finishIoTask(ioTask);
+			fileItem.size(baseItemSize + updatingRangesSize);
 		}
 	}
 

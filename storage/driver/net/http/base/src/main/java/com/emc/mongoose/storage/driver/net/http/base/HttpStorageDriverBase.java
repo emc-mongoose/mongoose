@@ -412,20 +412,19 @@ implements HttpStorageDriver<I, O, R> {
 							end = fixedByteRange.getEnd();
 							if(beg == -1) {
 								channel.write(
-									new DataItemFileRegion<>(
-										mdi.slice(baseItemSize, baseItemSize + end)
-									)
+									new DataItemFileRegion<>(mdi.slice(baseItemSize, end))
 								);
 							} else if(end == -1) {
 								channel.write(
-									new DataItemFileRegion<>(mdi.slice(baseItemSize, end))
+									new DataItemFileRegion<>(mdi.slice(beg, baseItemSize - beg))
 								);
 							} else {
-								channel.write(new DataItemFileRegion<>(mdi.slice(beg, end)));
+								channel.write(
+									new DataItemFileRegion<>(mdi.slice(beg, end - beg + 1))
+								);
 							}
-
 						}
-						mdi.size(mdIoTask.getUpdatingRangesSize());
+						mdi.size(mdi.size() + mdIoTask.getUpdatingRangesSize());
 					}
 					mdIoTask.setCountBytesDone(mdIoTask.getUpdatingRangesSize());
 				}
