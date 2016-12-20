@@ -323,7 +323,6 @@ implements LoadClient<T, W> {
 			Thread.currentThread().setName("interruptSvc<" + loadSvcName + "@" + addr + ">");
 			try {
 				loadSvc.shutdown();
-				System.out.println("wait until all processed items are received from the load server");
 				int n;
 				do {
 					n = loadSvc.getProcessedItemsCount();
@@ -639,11 +638,7 @@ implements LoadClient<T, W> {
 			if(!isCircular) {
 				remotePutExecutor.shutdown();
 				try {
-					if(
-						!remotePutExecutor.awaitTermination(
-							REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS
-						)
-					) {
+					if(!remotePutExecutor.awaitTermination(1000, TimeUnit.SECONDS)) {
 						LOG.debug(
 							Markers.ERR,
 							"Timeout while submitting all the remaining data items to the load servers"
@@ -652,9 +647,7 @@ implements LoadClient<T, W> {
 				} catch(final InterruptedException e) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 				} finally {
-					LOG.info(
-						Markers.MSG, "Submitted {} items to the load servers", counterSubm.get()
-					);
+					LOG.debug(Markers.MSG, "Submitted {} items to the load servers", counterSubm.get());
 					for(final String addr : remoteLoadMap.keySet()) {
 						try {
 							remoteLoadMap.get(addr).shutdown();
