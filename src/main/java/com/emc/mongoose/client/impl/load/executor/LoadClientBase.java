@@ -638,10 +638,9 @@ implements LoadClient<T, W> {
 			if(!isCircular) {
 				remotePutExecutor.shutdown();
 				try {
-					if(!remotePutExecutor.awaitTermination(1000, TimeUnit.SECONDS)) {
+					if(!remotePutExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS)) {
 						LOG.debug(
-							Markers.ERR,
-							"Timeout while submitting all the remaining data items to the load servers"
+							Markers.ERR, "Timeout while submitting all the remaining data items to the load servers"
 						);
 					}
 				} catch(final InterruptedException e) {
