@@ -1093,8 +1093,8 @@ implements LoadExecutor<T> {
 		if(isDoneAllSubm()) {
 			if(!isCircular) {
 				LOG.debug(
-					Markers.MSG, "{}: done due to \"done all submitted\" state",
-					getName()
+					Markers.MSG, "{}: done because was shutdown ({}) and results count {} is not less than submitted {}",
+					getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
 				);
 				return true;
 			}
@@ -1125,9 +1125,7 @@ implements LoadExecutor<T> {
 				shutdownActually();
 			}
 		} else {
-			throw new IllegalStateException(
-				getName() + ": not started yet but shutdown is invoked"
-			);
+			throw new IllegalStateException(getName() + ": not started yet but shutdown is invoked");
 		}
 	}
 	//
@@ -1159,10 +1157,6 @@ implements LoadExecutor<T> {
 			timeOutMilliSec -= t;
 		}
 		//
-		LOG.debug(
-			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
-		);
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
 			synchronized(state) {
