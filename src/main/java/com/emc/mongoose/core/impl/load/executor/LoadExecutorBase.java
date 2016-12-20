@@ -1130,7 +1130,6 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void shutdownActually() {
-		new Throwable().printStackTrace(System.out);
 		super.interrupt(); // stop the source producing right now
 		if(isCircular) {
 			allItemsProducedFlag = true; //  unblock ResultsDispatcher thread

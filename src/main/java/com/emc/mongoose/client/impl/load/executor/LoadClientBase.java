@@ -323,7 +323,7 @@ implements LoadClient<T, W> {
 			Thread.currentThread().setName("interruptSvc<" + loadSvcName + "@" + addr + ">");
 			try {
 				loadSvc.shutdown();
-				// wait until all processed items are received from the load server
+				System.out.println("wait until all processed items are received from the load server");
 				int n;
 				do {
 					n = loadSvc.getProcessedItemsCount();
@@ -652,7 +652,7 @@ implements LoadClient<T, W> {
 				} catch(final InterruptedException e) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 				} finally {
-					LOG.debug(
+					LOG.info(
 						Markers.MSG, "Submitted {} items to the load servers", counterSubm.get()
 					);
 					for(final String addr : remoteLoadMap.keySet()) {
