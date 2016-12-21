@@ -10,10 +10,12 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,7 +24,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -41,13 +42,13 @@ implements StorageDriver<I, O, R> {
 	private final int ioTaskBuffCapacity;
 	private final Runnable ioWorkerTasks[];
 	private final BlockingQueue<O> ioTaskQueues[];
-	private final LongAdder activeTasksCount = new LongAdder();
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
 		super(jobName, null, loadConfig, verifyFlag);
+		DISPATCH_INBOUND_TASKS.remove(this); // disable the inherited incoming I/O task dispatcher
 		ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
 		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
@@ -183,46 +184,60 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
-		if(!isStarted()) {
-			throw new InterruptedException();
-		}
-		final BlockingQueue<O> nextQueue = ioTaskQueues[
-			Math.abs(ioTask.hashCode()) % ioWorkerCount
-		];
+	public final void put(final O ioTask)
+	throws EOFException {
 		ioTask.reset();
-		if(nextQueue != null) {
-			return nextQueue.offer(ioTask);
+		int i = (int) (System.nanoTime() % Integer.MAX_VALUE);
+		while(true) {
+			if(!isStarted()) {
+				throw new EOFException();
+			}
+			if(ioTaskQueues[i % ioWorkerCount].offer(ioTask)) {
+				break;
+			} else {
+				LockSupport.parkNanos(1);
+				i ++;
+			}
 		}
-		return false;
 	}
 
 	@Override
-	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
-		if(!isStarted()) {
-			throw new InterruptedException();
-		}
-		O nextIoTask;
-		BlockingQueue<O> nextQueue;
-		for(int i = from; i < to; i ++) {
-			nextIoTask = ioTasks.get(i);
-			nextIoTask.reset();
-			nextQueue = ioTaskQueues[Math.abs(nextIoTask.hashCode()) % ioWorkerCount];
-			if(nextQueue != null) {
-				if(!nextQueue.offer(nextIoTask)) {
-					return i - from;
-				}
+	public final int put(final List<O> ioTasks, final int from, final int to)
+	throws EOFException {
+		int i = from;
+		int j = (int) (System.nanoTime() % Integer.MAX_VALUE);
+		O nextIoTask = ioTasks.get(i);
+		nextIoTask.reset();
+		while(i < to) {
+			if(!isStarted()) {
+				throw new EOFException();
+			}
+			if(ioTaskQueues[j % ioWorkerCount].offer(nextIoTask)) {
+				i ++;
+				nextIoTask = ioTasks.get(i);
+				nextIoTask.reset();
+			} else {
+				LockSupport.parkNanos(1);
+				j ++;
 			}
 		}
 		return to - from;
 	}
-	
+
+	@Override
+	protected final boolean submit(final O ioTask) {
+		throw new IllegalStateException();
+	}
+
+	@Override
+	protected final int submit(final List<O> ioTasks, final int from, final int to) {
+		throw new IllegalStateException();
+	}
+
 	@Override
 	protected final int submit(final List<O> ioTasks)
 	throws InterruptedException {
-		return submit(ioTasks, 0, ioTasks.size());
+		throw new IllegalStateException();
 	}
 
 	@Override

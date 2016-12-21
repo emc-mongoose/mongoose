@@ -39,7 +39,8 @@ extends DaemonBase
 implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<StorageDriver, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
+	protected static final Map<StorageDriver, Runnable>
+		DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
 	static {
 		new Thread(new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher") {
 			{
@@ -134,7 +135,7 @@ implements StorageDriver<I, O, R> {
 	}
 	
 	@Override
-	public final void put(final O task)
+	public void put(final O task)
 	throws IOException {
 		if(!isStarted()) {
 			throw new EOFException();
@@ -143,7 +144,7 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public final int put(final List<O> tasks, final int from, final int to)
+	public int put(final List<O> tasks, final int from, final int to)
 	throws IOException {
 		if(!isStarted()) {
 			throw new EOFException();
