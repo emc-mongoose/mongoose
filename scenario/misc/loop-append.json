@@ -86,7 +86,7 @@
 				},
 				{
 					"type" : "command",
-					"value" : "tail -n 1 item2append32times_.csv > item2append32times.csv; rm -f item2append32times_.csv"
+					"value" : "mv -f item2append32times_.csv item2append32times.csv"
 				}
 			]
 		}
