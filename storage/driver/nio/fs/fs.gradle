@@ -2,6 +2,7 @@ description = "mongoose-storage-driver-nio-fs"
 
 dependencies {
 	compile(
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
@@ -14,8 +15,6 @@ dependencies {
 	)
 
 	runtime(
-		"com.lmax:disruptor:${depVersion.disruptor}",
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
 	)
 

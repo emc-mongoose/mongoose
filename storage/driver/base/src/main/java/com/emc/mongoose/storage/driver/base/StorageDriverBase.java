@@ -11,11 +11,10 @@ import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.common.io.collection.IoBuffer;
-import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +39,7 @@ extends DaemonBase
 implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	protected static final Map<StorageDriver, Runnable>
-		DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
+	private static final Map<StorageDriver, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
 	static {
 		new Thread(new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher") {
 			{
@@ -51,9 +50,9 @@ implements StorageDriver<I, O, R> {
 	}
 
 	private final int queueCapacity;
-	private final IoBuffer<O> ownTasksQueue;
-	private final IoBuffer<O> inTasksQueue;
-	private final IoBuffer<R> ioResultsQueue;
+	private final BlockingQueue<O> ownTasksQueue;
+	private final BlockingQueue<O> inTasksQueue;
+	private final BlockingQueue<R> ioResultsQueue;
 	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
@@ -79,15 +78,15 @@ implements StorageDriver<I, O, R> {
 		final boolean verifyFlag
 	) {
 		queueCapacity = loadConfig.getQueueConfig().getSize();
-		this.ownTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
-		this.inTasksQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(BATCH_SIZE));
-		this.ioResultsQueue = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(queueCapacity));
+		this.ownTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
+		this.inTasksQueue = new ArrayBlockingQueue<>(BATCH_SIZE);
+		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
 		this.userName = authConfig == null ? null : authConfig.getId();
 		secret = authConfig == null ? null : authConfig.getSecret();
 		authToken = authConfig == null ? null : authConfig.getToken();
 		concurrencyLevel = loadConfig.getConcurrency();
-		concurrencyThrottle = new Semaphore(concurrencyLevel);
+		concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
 
@@ -112,53 +111,59 @@ implements StorageDriver<I, O, R> {
 		public final void run() {
 			int n;
 			final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
+			ioTasks.clear();
+			n = ownTasksQueue.drainTo(ioTasks, BATCH_SIZE);
+			if(n < BATCH_SIZE) {
+				n += inTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
+			}
 			try {
-				ioTasks.clear();
-				n = ownTasksQueue.get(ioTasks, BATCH_SIZE);
-				if(n < BATCH_SIZE) {
-					n += inTasksQueue.get(ioTasks, BATCH_SIZE - n);
-				}
 				if(n > 0) {
 					for(int i = 0; i < n; i += submit(ioTasks, i, n)) {
 						LockSupport.parkNanos(1);
 					}
-				} else {
-					Thread.sleep(1);
 				}
-			} catch(final IOException e) {
-				if(!isInterrupted() && !isClosed()) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to dispatch the input I/O tasks");
-				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "{}: Interrupted while dispatching I/O tasks",
+					toString()
+				);
 			}
 		}
 	}
 	
 	@Override
-	public void put(final O task)
+	public final boolean put(final O task)
 	throws IOException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		inTasksQueue.put(task);
+		return inTasksQueue.offer(task);
 	}
 
 	@Override
-	public int put(final List<O> tasks, final int from, final int to)
-	throws IOException {
-		if(!isStarted()) {
-			throw new EOFException();
+	public final int put(final List<O> tasks, final int from, final int to) {
+		int i = from;
+		while(i < to && isStarted()) {
+			if(inTasksQueue.offer(tasks.get(i))) {
+				i ++;
+			} else {
+				break;
+			}
 		}
-		return inTasksQueue.put(tasks, from, to);
+		return i - from;
 	}
 
 	@Override
-	public final int put(final List<O> tasks)
-	throws IOException {
-		if(!isStarted()) {
-			throw new EOFException();
+	public final int put(final List<O> tasks) {
+		int n = 0;
+		for(final O nextIoTask : tasks) {
+			if(isStarted() && inTasksQueue.offer(nextIoTask)) {
+				n ++;
+			} else {
+				break;
+			}
 		}
-		return inTasksQueue.put(tasks);
+		return n;
 	}
 	
 	@Override
@@ -188,7 +193,7 @@ implements StorageDriver<I, O, R> {
 	public List<R> getResults()
 	throws IOException {
 		final List<R> ioTaskResults = new ArrayList<>(BATCH_SIZE);
-		ioResultsQueue.get(ioTaskResults, queueCapacity);
+		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
 		return ioTaskResults;
 	}
 
@@ -198,15 +203,26 @@ implements StorageDriver<I, O, R> {
 		try {
 			if(isCircular) {
 				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
-					ownTasksQueue.put(ioTask);
+					if(!ownTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
+						LOG.warn(
+							Markers.ERR, "{}: own I/O tasks queue overflow, dropping the I/O task",
+							toString()
+						);
+					}
 				}
 			} else if(ioTask instanceof CompositeIoTask) {
 				final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
 				if(!parentTask.allSubTasksDone()) {
 					final List<O> subTasks = parentTask.getSubTasks();
-					final int n = subTasks.size();
-					for(int i = 0; i < n; i += ownTasksQueue.put(subTasks, i, n)) {
-						LockSupport.parkNanos(1);
+					for(final O nextSubTask : subTasks) {
+						if(!ownTasksQueue.offer(nextSubTask, 1, TimeUnit.MILLISECONDS)) {
+							LOG.warn(
+								Markers.ERR,
+								"{}: own I/O tasks queue overflow, dropping the I/O sub-task",
+								toString()
+							);
+							break;
+						}
 					}
 				}
 			} else if(ioTask instanceof PartialIoTask) {
@@ -215,34 +231,41 @@ implements StorageDriver<I, O, R> {
 				if(parentTask.allSubTasksDone()) {
 					// execute once again to finalize the things if necessary:
 					// complete the multipart upload, for example
-					ownTasksQueue.put((O) parentTask);
+					if(!ownTasksQueue.offer((O) parentTask, 1, TimeUnit.MILLISECONDS)) {
+						LOG.warn(
+							Markers.ERR, "{}: own I/O tasks queue overflow, dropping the I/O task",
+							toString()
+						);
+					}
 				}
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to enqueue the I/O task for the next execution"
-			);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted the completed I/O task processing");
 		}
 
 		try {
-			ioResultsQueue.put(
-				ioTask.getResult(
-					HOST_ADDR,
-					useStorageDriverResult,
-					useStorageNodeResult,
-					useItemInfoResult,
-					useIoTypeCodeResult,
-					useStatusCodeResult,
-					useReqTimeStartResult,
-					useDurationResult,
-					useRespLatencyResult,
-					useDataLatencyResult,
-					useTransferSizeResult
-				)
+			final R ioResult = ioTask.getResult(
+				HOST_ADDR,
+				useStorageDriverResult,
+				useStorageNodeResult,
+				useItemInfoResult,
+				useIoTypeCodeResult,
+				useStatusCodeResult,
+				useReqTimeStartResult,
+				useDurationResult,
+				useRespLatencyResult,
+				useDataLatencyResult,
+				useTransferSizeResult
 			);
-		} catch(final IOException e) {
+			if(!ioResultsQueue.offer(ioResult, 1, TimeUnit.MILLISECONDS)) {
+				LOG.warn(
+					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
+					toString()
+				);
+			}
+		} catch(final InterruptedException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to put the I/O task to the output buffer"
+				LOG, Level.DEBUG, e, "Interrupting the I/O task put to the output buffer"
 			);
 		}
 	}
@@ -310,9 +333,9 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		ownTasksQueue.close();
-		inTasksQueue.close();
-		ioResultsQueue.close();
+		ownTasksQueue.clear();
+		inTasksQueue.clear();
+		ioResultsQueue.clear();
 	}
 	
 	@Override

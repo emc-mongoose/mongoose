@@ -14,8 +14,9 @@ implements Output<T> {
 	private volatile T item = null;
 	
 	@Override
-	public void put(final T item) {
+	public boolean put(final T item) {
 		this.item = item;
+		return true;
 	}
 	
 	@Override

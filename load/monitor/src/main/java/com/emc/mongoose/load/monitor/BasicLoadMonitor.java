@@ -658,8 +658,21 @@ implements LoadMonitor<R> {
 		}
 
 		if(uniqueItems != null && itemInfoOutput != null) {
-			for(final String itemInfo : uniqueItems.values()) {
-				itemInfoOutput.put(itemInfo);
+			try {
+				for(final String itemInfo : uniqueItems.values()) {
+					if(!itemInfoOutput.put(itemInfo)) {
+						LOG.debug(
+							Markers.ERR,
+							"{}: item info output fails to ingest, blocking the closing method",
+							getName()
+						);
+						while(!itemInfoOutput.put(itemInfo)) {
+							Thread.sleep(1);
+						}
+						LOG.debug(Markers.MSG, "{}: closing method unblocked", getName());
+					}
+				}
+			} catch(final InterruptedException ignored) {
 			}
 			uniqueItems.clear();
 		}

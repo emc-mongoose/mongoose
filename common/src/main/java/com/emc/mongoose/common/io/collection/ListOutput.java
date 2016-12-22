@@ -24,11 +24,9 @@ implements Output<T> {
 	 (due to capacity reasons for example)
 	 */
 	@Override
-	public void put(final T item)
+	public boolean put(final T item)
 	throws IOException {
-		if(!items.add(item)) {
-			throw new IOException("Failed to add the data item to the destination collection");
-		}
+		return items.add(item);
 	}
 
 	/**

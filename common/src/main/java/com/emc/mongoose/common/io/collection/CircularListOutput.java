@@ -31,10 +31,12 @@ extends ListOutput<T> {
 	 @throws IOException if the destination collection fails to add the data item
 	 */
 	@Override
-	public void put(final T item)
+	public boolean put(final T item)
 	throws IOException {
 		if(items.size() < capacity) {
-			super.put(item);
+			if(!super.put(item)) {
+				return false;
+			}
 		} else {
 			if(i >= capacity) {
 				i = 0;
@@ -42,6 +44,7 @@ extends ListOutput<T> {
 			items.set(i, item);
 		}
 		i ++;
+		return true;
 	}
 
 	/**

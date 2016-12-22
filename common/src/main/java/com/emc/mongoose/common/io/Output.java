@@ -15,7 +15,7 @@ extends Closeable {
 	 @param item the item to put
 	 @throws IOException if fails some-why
 	 */
-	void put(final I item)
+	boolean put(final I item)
 	throws IOException;
 
 	/**

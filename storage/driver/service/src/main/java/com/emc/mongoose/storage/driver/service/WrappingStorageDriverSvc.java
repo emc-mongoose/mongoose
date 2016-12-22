@@ -71,12 +71,12 @@ implements StorageDriverSvc<I, O, R> {
 	}
 
 	@Override
-	public final void put(final O ioTask)
+	public final boolean put(final O ioTask)
 	throws IOException {
 		if(ioTask instanceof DataIoTask) {
 			((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
 		}
-		driver.put(ioTask);
+		return driver.put(ioTask);
 	}
 
 	@Override

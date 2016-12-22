@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.storage;
 
 import com.emc.mongoose.common.concurrent.Daemon;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.task.IoTask;

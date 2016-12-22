@@ -170,7 +170,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	}
 
 	@Override
-	public final void put(final I item)
+	public final boolean put(final I item)
 	throws IOException {
 
 		final O nextIoTask = ioTaskBuilder.getInstance(
@@ -193,7 +193,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 			}
 		}
 
-		ioTaskOutput.put(nextIoTask);
+		return ioTaskOutput.put(nextIoTask);
 	}
 	
 	@Override

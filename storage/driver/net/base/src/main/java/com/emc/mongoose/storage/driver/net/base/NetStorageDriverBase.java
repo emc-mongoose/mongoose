@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
+
 /**
  Created by kurila on 30.09.16.
  */
@@ -228,7 +228,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected int submit(final List<O> tasks)
+	protected final int submit(final List<O> tasks)
 	throws InterruptedException {
 		return submit(tasks, 0, tasks.size());
 	}

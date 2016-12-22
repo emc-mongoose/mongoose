@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -48,7 +47,6 @@ implements StorageDriver<I, O, R> {
 		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
 	) {
 		super(jobName, null, loadConfig, verifyFlag);
-		DISPATCH_INBOUND_TASKS.remove(this); // disable the inherited incoming I/O task dispatcher
 		ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
 		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
@@ -184,60 +182,47 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public final void put(final O ioTask)
-	throws EOFException {
+	protected final boolean submit(final O ioTask)
+	throws InterruptedException {
 		ioTask.reset();
-		int i = (int) (System.nanoTime() % Integer.MAX_VALUE);
-		while(true) {
+		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
-				throw new EOFException();
+				throw new InterruptedException();
 			}
-			if(ioTaskQueues[i % ioWorkerCount].offer(ioTask)) {
-				break;
+			if(ioTaskQueues[(int) (System.nanoTime() % ioWorkerCount)].offer(ioTask)) {
+				return true;
 			} else {
-				LockSupport.parkNanos(1);
 				i ++;
 			}
 		}
+		return false;
 	}
 
 	@Override
-	public final int put(final List<O> ioTasks, final int from, final int to)
-	throws EOFException {
-		int i = from;
-		int j = (int) (System.nanoTime() % Integer.MAX_VALUE);
-		O nextIoTask = ioTasks.get(i);
-		nextIoTask.reset();
+	protected final int submit(final List<O> ioTasks, final int from, final int to)
+	throws InterruptedException {
+		O nextIoTask;
+		int i = from, j;
 		while(i < to) {
-			if(!isStarted()) {
-				throw new EOFException();
-			}
-			if(ioTaskQueues[j % ioWorkerCount].offer(nextIoTask)) {
-				i ++;
-				nextIoTask = ioTasks.get(i);
-				nextIoTask.reset();
-			} else {
-				LockSupport.parkNanos(1);
-				j ++;
+			nextIoTask = ioTasks.get(i);
+			nextIoTask.reset();
+			for(j = 0; j < ioWorkerCount; j ++) {
+				if(!isStarted()) {
+					throw new InterruptedException();
+				}
+				if(ioTaskQueues[(int) (System.nanoTime() % ioWorkerCount)].offer(nextIoTask)) {
+					i ++;
+					break;
+				}
 			}
 		}
-		return to - from;
+		return i - from;
 	}
-
-	@Override
-	protected final boolean submit(final O ioTask) {
-		throw new IllegalStateException();
-	}
-
-	@Override
-	protected final int submit(final List<O> ioTasks, final int from, final int to) {
-		throw new IllegalStateException();
-	}
-
+	
 	@Override
 	protected final int submit(final List<O> ioTasks)
 	throws InterruptedException {
-		throw new IllegalStateException();
+		return submit(ioTasks, 0, ioTasks.size());
 	}
 
 	@Override

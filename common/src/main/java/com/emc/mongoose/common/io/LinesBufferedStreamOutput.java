@@ -31,10 +31,11 @@ implements Output<String> {
 	}
 	
 	@Override
-	public void put(final String line)
+	public boolean put(final String line)
 	throws IOException {
 		writer.write(line);
 		writer.newLine();
+		return true;
 	}
 	
 	@Override

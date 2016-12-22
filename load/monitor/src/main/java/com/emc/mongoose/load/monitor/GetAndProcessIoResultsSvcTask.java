@@ -1,20 +1,11 @@
 package com.emc.mongoose.load.monitor;
 
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.load.monitor.metrics.IoStats;
-import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,11 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 15.12.16.
  */

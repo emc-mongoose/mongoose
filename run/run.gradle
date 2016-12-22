@@ -3,8 +3,7 @@ description = "mongoose-run"
 dependencies {
 
 	compile(
-		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
-		"it.unimi.dsi:fastutil:${depVersion.fastutil}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		project(":ui"),
 	)
 
@@ -18,7 +17,7 @@ dependencies {
 
 	runtime(
 		"com.lmax:disruptor:${depVersion.disruptor}",
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
 

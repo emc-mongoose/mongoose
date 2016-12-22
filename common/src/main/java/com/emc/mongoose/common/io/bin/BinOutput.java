@@ -19,9 +19,10 @@ implements Output<T> {
 	}
 	
 	@Override
-	public void put(final T item)
+	public boolean put(final T item)
 	throws IOException {
 		output.writeUnshared(item);
+		return true;
 	}
 	
 	@Override

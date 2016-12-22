@@ -31,10 +31,10 @@ implements Output<T> {
 	}
 
 	@Override
-	public final void put(final T ioTask)
+	public final boolean put(final T ioTask)
 	throws IOException {
 		final Output<T> nextOutput = getNextOutput();
-		nextOutput.put(ioTask);
+		return nextOutput.put(ioTask);
 	}
 
 	@Override

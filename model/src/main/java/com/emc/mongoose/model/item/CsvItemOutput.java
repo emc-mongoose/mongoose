@@ -28,19 +28,21 @@ implements Output<I> {
 	}
 	//
 	@Override
-	public void put(final I item)
+	public boolean put(final I item)
 	throws IOException {
 		itemsDst.write(item.toString());
 		itemsDst.newLine();
+		return true;
 	}
 	//
 	@Override
 	public int put(final List<I> buffer, final int from, final int to)
 	throws IOException {
-		for(int i = from; i < to; i ++) {
-			put(buffer.get(i));
+		int i = from;
+		while(i < to && put(buffer.get(i))) {
+			i ++;
 		}
-		return to - from;
+		return i - from;
 	}
 	//
 	@Override

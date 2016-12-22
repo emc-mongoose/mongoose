@@ -21,14 +21,10 @@ implements IoBuffer<T> {
 	/**
 	 Non-blocking put implementation
 	 @param item the data item to put
-	 @throws IOException if no free capacity in the buffer
 	 */
 	@Override
-	public void put(final T item)
-	throws IOException {
-		if(!queue.offer(item)) {
-			throw new IOException("Buffer has no free space to put an item");
-		}
+	public boolean put(final T item) {
+		return queue.offer(item);
 	}
 
 	/**
