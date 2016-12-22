@@ -149,7 +149,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "Keep-Alive",
-				"User-Agent" : "mongoose/next"
+				"User-Agent" : "mongoose/3.0.0-alpha1"
 			},
 			"namespace" : null,
 			"versioning" : false
@@ -182,5 +182,5 @@
 			"node": false
 		}
 	},
-	"version" : "next"
+	"version" : "3.0.0-alpha1"
 }

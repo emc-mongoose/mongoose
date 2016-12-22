@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"data" : {
-				"size" : "4KB"
+				"size" : "16KB"
 			}
 		},
 		"load" : {
@@ -46,7 +46,7 @@
 					"type" : "update",
 					"circular" : true,
 					"limit" : {
-						"count" : 1023
+						"count" : 31000
 					}
 				}
 			}
