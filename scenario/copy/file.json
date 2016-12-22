@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"output" : {
-				"path" : "src-dir"
+				"path" : "/tmp/src-dir"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -27,10 +27,10 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"path" : "dst-dir"
+						"path" : "/tmp/dst-dir"
 					},
 					"input" : {
-						"path" : "src-dir"
+						"path" : "/tmp/src-dir"
 					}
 				}
 			}

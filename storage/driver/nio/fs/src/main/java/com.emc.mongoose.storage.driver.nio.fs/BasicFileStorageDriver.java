@@ -54,7 +54,8 @@ implements FileStorageDriver<I, O, R> {
 	private static final Logger LOG = LogManager.getLogger();
 	private static final Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
 		{
-			add(StandardOpenOption.CREATE_NEW);
+			add(StandardOpenOption.CREATE);
+			add(StandardOpenOption.TRUNCATE_EXISTING);
 			add(StandardOpenOption.WRITE);
 		}
 	};

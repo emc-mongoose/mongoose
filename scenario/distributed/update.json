@@ -56,6 +56,9 @@
 					"input" : {
 						"file" : "distributed-update.csv"
 					}
+				},
+				"load" : {
+					"type" : "update"
 				}
 			}
 		}

@@ -46,6 +46,9 @@
 			"type": "load",
 			"config" : {
 				"item" : {
+					"data" : {
+						"verify" : true
+					},
 					"input" : {
 						"file" : "linear-read-verify-updated-1.csv"
 					}

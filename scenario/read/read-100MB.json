@@ -6,7 +6,7 @@
 				"path" : "linear-read-100MB"
 			},
 			"data" : {
-				"size" : "10MB"
+				"size" : "100MB"
 			}
 		},
 		"load" : {

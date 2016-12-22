@@ -19,7 +19,8 @@
 	"jobs": [
 		{
 			"type": "precondition"
-		}, {
+		},
+		{
 			"type": "load",
 			"config" : {
 				"item" : {

@@ -43,9 +43,6 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"data" : {
-						"verify" : false
-					},
 					"input" : {
 						"file" : "read-no-verify.csv"
 					}

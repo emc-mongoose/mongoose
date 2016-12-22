@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"content" : {
-					"file" : "conf/content/zerobytes"
+					"file" : "config/content/zerobytes"
 				}
 			}
 		}

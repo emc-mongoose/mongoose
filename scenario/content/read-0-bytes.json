@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"content" : {
-					"file" : "conf/content/zerobytes"
+					"file" : "config/content/zerobytes"
 				}
 			}
 		},
@@ -28,6 +28,9 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
+					"data" : {
+						"verify" : true
+					},
 					"input" : {
 						"file" : "content-read-zerobytes.csv"
 					}

@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"content" : {
-					"file" : "conf/content/textexample"
+					"file" : "config/content/textexample"
 				},
 				"size" : "4KB"
 			}
@@ -40,6 +40,9 @@
 					"input" : {
 						"file" : "content-read-text-0.csv"
 					}
+				},
+				"load" : {
+					"type" : "update"
 				}
 			}
 		}, {
