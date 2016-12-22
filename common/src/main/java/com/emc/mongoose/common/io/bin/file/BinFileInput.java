@@ -50,12 +50,6 @@ implements FileItemInput<T> {
 	}
 	
 	@Override
-	public final void delete()
-		throws IOException {
-		Files.delete(srcPath);
-	}
-	
-	@Override
 	public void reset()
 	throws IOException {
 		if(itemsSrc != null) {

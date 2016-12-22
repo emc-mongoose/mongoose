@@ -5,6 +5,7 @@ import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
@@ -152,18 +153,11 @@ implements FileStorageDriver<I, O, R> {
 			return true;
 		}
 	}
-
+	
 	@Override
-	public final String getAuthToken()
-	throws RemoteException {
-		return null;
+	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType) {
 	}
-
-	@Override
-	public final void setAuthToken(final String authToken)
-	throws RemoteException {
-	}
-
+	
 	@Override
 	protected final void invokeNio(final O ioTask) {
 

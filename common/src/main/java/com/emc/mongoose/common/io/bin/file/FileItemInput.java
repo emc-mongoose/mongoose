@@ -2,7 +2,6 @@ package com.emc.mongoose.common.io.bin.file;
 
 import com.emc.mongoose.common.io.Input;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 /**
@@ -10,9 +9,5 @@ import java.nio.file.Path;
  */
 public interface FileItemInput<T>
 extends Input<T> {
-	//
 	Path getFilePath();
-	//
-	void delete()
-	throws IOException;
 }

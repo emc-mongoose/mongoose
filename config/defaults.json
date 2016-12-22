@@ -132,9 +132,9 @@
 		"keepAlive" : true,
 		"linger" : 0,
 		"reuseAddr" : true,
-		"rcvBuf" : "4KB",
+		"rcvBuf" : 0,
 		"selectInterval" : 100,
-		"sndBuf" : "4KB",
+		"sndBuf" : 0,
 		"tcpNoDelay" : true,
 		"timeoutMilliSec" : 0
 	},

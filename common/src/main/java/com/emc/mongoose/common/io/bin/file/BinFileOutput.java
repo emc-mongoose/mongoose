@@ -57,10 +57,4 @@ implements FileItemOutput<T> {
 	public final Path getFilePath() {
 		return dstPath;
 	}
-	
-	@Override
-	public final void delete()
-	throws IOException {
-		Files.delete(dstPath);
-	}
 }

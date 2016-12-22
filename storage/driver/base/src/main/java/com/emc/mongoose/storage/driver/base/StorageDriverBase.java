@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ implements StorageDriver<I, O, R> {
 	protected final Semaphore concurrencyThrottle;
 	protected final String userName;
 	protected final String secret;
-	private final String authToken;
+	protected volatile String authToken;
 	protected final boolean verifyFlag;
 
 	private final boolean useStorageDriverResult;
@@ -72,7 +73,7 @@ implements StorageDriver<I, O, R> {
 	private final boolean useRespLatencyResult;
 	private final boolean useDataLatencyResult;
 	private final boolean useTransferSizeResult;
-
+	
 	protected StorageDriverBase(
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
@@ -312,6 +313,17 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public Input<O> getInput() {
 		return null;
+	}
+	
+	@Override
+	public String getAuthToken()
+	throws RemoteException {
+		return authToken;
+	}
+	
+	@Override
+	public void setAuthToken(final String authToken) {
+		this.authToken = authToken;
 	}
 
 	@Override

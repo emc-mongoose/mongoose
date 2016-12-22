@@ -177,7 +177,7 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	public final void setAuthToken(final String authToken) {
-		this.authToken = authToken;
+		super.setAuthToken(authToken);
 		refreshUidHeader();
 	}
 

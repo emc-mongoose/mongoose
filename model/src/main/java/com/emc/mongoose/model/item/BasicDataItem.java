@@ -284,7 +284,7 @@ implements DataItem {
 		position += n;
 		return n;
 	}
-	//
+	
 	@Override
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {

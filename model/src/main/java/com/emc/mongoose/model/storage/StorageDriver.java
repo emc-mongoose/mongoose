@@ -1,8 +1,10 @@
 package com.emc.mongoose.model.storage;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -20,6 +22,8 @@ public interface StorageDriver<I extends Item, O extends IoTask<I, R>, R extends
 extends Daemon, Output<O>, Remote {
 
 	String HOST_ADDR = ServiceUtil.getHostAddr();
+	int BUFF_SIZE_MIN = 0x1000;
+	int BUFF_SIZE_MAX = 0x100000;
 	
 	boolean createPath(final String path)
 	throws RemoteException;
@@ -48,5 +52,8 @@ extends Daemon, Output<O>, Remote {
 	throws RemoteException;
 
 	boolean isFullThrottleExited()
+	throws RemoteException;
+	
+	void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
 	throws RemoteException;
 }

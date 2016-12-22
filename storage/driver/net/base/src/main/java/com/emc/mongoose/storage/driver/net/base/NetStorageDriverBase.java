@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
@@ -15,7 +16,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -63,6 +64,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	protected final String storageNodeAddrs[];
 	private final int storageNodePort;
 	private final Input<String> nodeSelector;
+	private final Bootstrap bootstrap;
 	private final EventLoopGroup workerGroup;
 	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	private final int socketTimeout;
@@ -103,7 +105,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 				new NamingThreadFactory("ioWorker", true)
 			);
 		}
-		final Bootstrap bootstrap = new Bootstrap()
+		bootstrap = new Bootstrap()
 			.group(workerGroup)
 			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class );
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
@@ -112,8 +114,14 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
 		//bootstrap.option(ChannelOption.AUTO_READ)
 		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, socketConfig.getTimeoutMilliSec());
-		bootstrap.option(ChannelOption.SO_RCVBUF, (int) socketConfig.getRcvBuf().get());
-		bootstrap.option(ChannelOption.SO_SNDBUF, (int) socketConfig.getSndBuf().get());
+		int size = (int) socketConfig.getRcvBuf().get();
+		if(size > 0) {
+			bootstrap.option(ChannelOption.SO_RCVBUF, size);
+		}
+		size = (int) socketConfig.getSndBuf().get();
+		if(size > 0) {
+			bootstrap.option(ChannelOption.SO_SNDBUF, size);
+		}
 		//bootstrap.option(ChannelOption.SO_BACKLOG, socketConfig.getBindBackLogSize());
 		bootstrap.option(ChannelOption.SO_KEEPALIVE, socketConfig.getKeepAlive());
 		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
@@ -130,6 +138,34 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			connPoolMap.put(
 				na, new FixedChannelPool(bootstrap.remoteAddress(nodeAddr), this, concurrencyLevel)
 			);
+		}
+	}
+	
+	@Override
+	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType) {
+		int size;
+		if(avgDataItemSize.get() < BUFF_SIZE_MIN) {
+			size = BUFF_SIZE_MIN;
+		} else if(BUFF_SIZE_MAX < avgDataItemSize.get()) {
+			size = BUFF_SIZE_MAX;
+		} else {
+			size = (int) avgDataItemSize.get();
+		}
+		if(IoType.CREATE.equals(ioType)) {
+			LOG.info(
+				Markers.MSG, "Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
+			);
+			bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
+			bootstrap.option(ChannelOption.SO_SNDBUF, size);
+		} else if(IoType.READ.equals(ioType)) {
+			LOG.info(
+				Markers.MSG, "Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size)
+			);
+			bootstrap.option(ChannelOption.SO_RCVBUF, size);
+			bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
+		} else {
+			bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
+			bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
 		}
 	}
 

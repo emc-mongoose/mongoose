@@ -40,12 +40,6 @@ implements FileItemInput<I> {
 	}
 	//
 	@Override
-	public final void delete()
-	throws IOException {
-		Files.delete(itemsFilePath);
-	}
-	//
-	@Override
 	public void reset()
 	throws IOException {
 		if(itemsSrc != null) {

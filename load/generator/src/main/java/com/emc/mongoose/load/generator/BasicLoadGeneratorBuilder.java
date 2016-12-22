@@ -14,6 +14,7 @@ import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.BasicItemNameInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemNamingType;
@@ -29,14 +30,16 @@ import com.emc.mongoose.model.item.NewItemInput;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -139,11 +142,71 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 
 		final String itemInputFile = inputConfig.getFile();
 		itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+		
+		if(itemInput != null && ItemType.DATA.equals(itemType)) {
+			try {
+				final SizeInBytes avgDataItemSize = estimateAvgDataItemSize(
+					(Input<DataItem>) itemInput
+				);
+				if(avgDataItemSize != null) {
+					for(final StorageDriver<I, O, R> storageDriver : storageDrivers) {
+						try {
+							storageDriver.adjustIoBuffers(avgDataItemSize, ioType);
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"Failed to adjust the storage driver buffer sizes"
+							);
+						}
+					}
+				}
+			} catch(final Exception e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to estimate the average data item size"
+				);
+			} finally {
+				try {
+					itemInput.reset();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to reset the item input");
+				}
+			}
+		}
+			
 		dstPathInput = getDstPathInput(ioType);
 
 		return (T) new BasicLoadGenerator<>(
 			itemInput, dstPathInput, ioTaskBuilder, countLimit, maxQueueSize, isCircular
 		);
+	}
+	
+	private SizeInBytes estimateAvgDataItemSize(final Input<DataItem> itemInput) {
+		final int maxCount = 0x100;
+		final List<DataItem> items = new ArrayList<>(maxCount);
+		int n = 0;
+		try {
+			while(n < maxCount) {
+				n += itemInput.get(items, maxCount - n);
+			}
+		} catch(final EOFException ignored) {
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failure occurs while estimating the average data item size"
+			);
+		}
+		
+		long sumSize = 0;
+		if(n > 0) {
+			try {
+				for(int i = 0; i < n; i++) {
+					sumSize += items.get(i).size();
+				}
+			} catch(final IOException ignored) {
+				assert false;
+			}
+			return new SizeInBytes(sumSize / n);
+		}
+		return null;
 	}
 
 	private Input<String> getDstPathInput(final IoType ioType)

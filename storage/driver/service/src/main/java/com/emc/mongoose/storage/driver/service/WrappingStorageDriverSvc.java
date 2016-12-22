@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.driver.service;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.DataItemFactory;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -205,5 +205,11 @@ implements StorageDriverSvc<I, O, R> {
 	public final boolean isFullThrottleExited()
 	throws RemoteException {
 		return driver.isFullThrottleExited();
+	}
+	
+	@Override
+	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
+	throws RemoteException {
+		driver.adjustIoBuffers(avgDataItemSize, ioType);
 	}
 }

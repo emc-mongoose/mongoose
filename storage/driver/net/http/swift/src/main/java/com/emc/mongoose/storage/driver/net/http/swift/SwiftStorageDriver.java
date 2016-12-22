@@ -437,7 +437,7 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	public final void setAuthToken(final String authToken) {
-		this.authToken = authToken;
+		super.setAuthToken(authToken);
 		sharedHeaders.set(KEY_X_AUTH_TOKEN, authToken);
 	}
 

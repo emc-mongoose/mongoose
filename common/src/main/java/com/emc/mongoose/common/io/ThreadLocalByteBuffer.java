@@ -22,7 +22,7 @@ public final class ThreadLocalByteBuffer {
 		}
 	};
 	
-	public static final ByteBuffer get(final long size) {
+	public static ByteBuffer get(final long size) {
 		
 		final ByteBuffer[] ioBuffers = BUFFERS.get();
 		int i, currBuffSize = SIZE_MIN;
