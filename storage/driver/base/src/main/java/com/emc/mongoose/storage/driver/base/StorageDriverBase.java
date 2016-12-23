@@ -80,7 +80,7 @@ implements StorageDriver<I, O, R> {
 	) {
 		queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.ownTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.inTasksQueue = new ArrayBlockingQueue<>(BATCH_SIZE);
+		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
 		this.userName = authConfig == null ? null : authConfig.getId();
