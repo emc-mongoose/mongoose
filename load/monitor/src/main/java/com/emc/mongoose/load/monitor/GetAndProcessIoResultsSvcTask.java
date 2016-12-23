@@ -64,7 +64,7 @@ implements Runnable {
 						break;
 					}
 				} catch(final RemoteException | InterruptedException ee) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failure");
+					LogUtil.exception(LOG, Level.DEBUG, e, "Failure");
 					break;
 				}
 			} catch(final InterruptedException e) {

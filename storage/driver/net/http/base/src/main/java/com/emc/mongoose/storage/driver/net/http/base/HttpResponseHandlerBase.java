@@ -32,7 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-
+import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 05.09.16.
  */
@@ -120,7 +120,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 	protected void handleResponseContentFinish(final Channel channel, final O ioTask) {
 		driver.complete(channel, ioTask);
 	}
-	
+
 	@Override
 	protected final void handle(final Channel channel, final O ioTask, final HttpObject msg)
 	throws IOException {

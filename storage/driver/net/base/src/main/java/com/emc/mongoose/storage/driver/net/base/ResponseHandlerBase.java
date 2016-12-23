@@ -12,6 +12,7 @@ import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.data.DataVerificationException;
 import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
 import com.emc.mongoose.ui.log.Markers;
@@ -23,6 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.PrematureChannelClosureException;
 import io.netty.handler.timeout.IdleStateEvent;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,13 +65,13 @@ extends SimpleChannelInboundHandler<M> {
 	@Override @SuppressWarnings("unchecked")
 	public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
 	throws IOException {
-		if(cause instanceof PrematureChannelClosureException) {
-			return;
-		}
 		if(!driver.isInterrupted() && !driver.isClosed()) {
 			final Channel channel = ctx.channel();
 			final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-			if(cause instanceof DataVerificationException) {
+			if(cause instanceof PrematureChannelClosureException) {
+				LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
+				ioTask.setStatus(FAIL_IO);
+			} else if(cause instanceof DataVerificationException) {
 				final DataVerificationException ee = (DataVerificationException) cause;
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				final DataItem dataItem = dataIoTask.getItem();

@@ -268,7 +268,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	throws InterruptedException {
 		return submit(tasks, 0, tasks.size());
 	}
-	
+
 	private boolean submitToNode(final O task, final String nodeAddr) {
 		if(concurrencyThrottle.tryAcquire()) {
 			if(IoType.NOOP.equals(task.getIoType())) {
@@ -327,7 +327,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 
 	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
-	
+
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
@@ -337,7 +337,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		}
 		ioTaskCompleted(ioTask);
 	}
-	
+
 	@Override
 	public final void channelReleased(final Channel channel)
 	throws Exception {

@@ -33,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -199,6 +200,11 @@ extends JobBase {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {
 				final Path itemOutputPath = Paths.get(itemOutputFile);
+				if(Files.exists(itemOutputPath)) {
+					LOG.warn(
+						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
+					);
+				}
 				final Output<String> itemOutput = new TextFileOutput(itemOutputPath);
 				monitor.setItemInfoOutput(itemOutput);
 			}

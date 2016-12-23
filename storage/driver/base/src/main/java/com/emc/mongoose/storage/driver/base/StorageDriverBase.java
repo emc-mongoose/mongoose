@@ -204,7 +204,7 @@ implements StorageDriver<I, O, R> {
 		try {
 			if(isCircular) {
 				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
-					if(!ownTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
+					if(!inTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
 						LOG.warn(
 							Markers.ERR, "{}: own I/O tasks queue overflow, dropping the I/O task",
 							toString()

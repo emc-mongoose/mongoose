@@ -6,7 +6,7 @@
 				"path" : "linear-read-zero-size"
 			},
 			"data" : {
-				"size" : "0"
+				"size" : 0
 			}
 		},
 		"load" : {
