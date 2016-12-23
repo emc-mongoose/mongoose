@@ -404,10 +404,12 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 						connPool.close();
 					}
 				} catch(final Throwable cause) {
-					LogUtil.exception(
-						LOG, Level.WARN, cause, "Failed to close the connection pool for {}",
-						storageNodeAddrs[i]
-					);
+					if(!workerGroup.isTerminated()) {
+						LogUtil.exception(
+							LOG, Level.WARN, cause, "Failed to close the connection pool for {}",
+							storageNodeAddrs[i]
+						);
+					}
 				}
 			}
 			storageNodeAddrs[i] = null;

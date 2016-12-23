@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  */
@@ -154,6 +154,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
 							"batch size = {}, batch offset = {}", generatedIoTaskCount, n, m
 						);
+						//e.printStackTrace(System.err);
 					}
 				}
 			} finally {
@@ -172,27 +173,19 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	@Override
 	public final boolean put(final I item)
 	throws IOException {
-
 		final O nextIoTask = ioTaskBuilder.getInstance(
 			item, dstPathInput == null ? null : dstPathInput.get()
 		);
-
 		if(weightThrottle != null) {
-			try {
-				weightThrottle.getPassFor(this);
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException();
+			while(!weightThrottle.getPassFor(this)) {
+				LockSupport.parkNanos(1);
 			}
 		}
-
 		if(rateThrottle != null) {
-			try {
-				rateThrottle.getPassFor(nextIoTask);
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException();
+			while(!rateThrottle.getPassFor(this)) {
+				LockSupport.parkNanos(1);
 			}
 		}
-
 		return ioTaskOutput.put(nextIoTask);
 	}
 	
@@ -215,19 +208,11 @@ implements LoadGenerator<I, O, R>, Output<I> {
 			}
 			
 			if(weightThrottle != null) {
-				try {
-					n = weightThrottle.getPassFor(this, n);
-				} catch(final InterruptedException e) {
-					throw new InterruptedIOException();
-				}
+				n = weightThrottle.getPassFor(this, n);
 			}
 
 			if(rateThrottle != null) {
-				try {
-					rateThrottle.getPassFor(this, n);
-				} catch(final InterruptedException e) {
-					throw new InterruptedIOException();
-				}
+				n = rateThrottle.getPassFor(this, n);
 			}
 			
 			return ioTaskOutput.put(ioTasks, 0, n);

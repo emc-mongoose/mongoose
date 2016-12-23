@@ -1,67 +1,75 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.concurrent.Throttle;
+import com.emc.mongoose.ui.log.Markers;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 04.04.16.
  */
-public class RateThrottle<X>
+public final class RateThrottle<X>
 implements Throttle<X> {
 
-	private static final int MILLIS_IN_SEC = 1_000;
+	private final static Logger LOG = LogManager.getLogger();
 
-	private final long periodMillis;
-	private final int countPerTime;
-	private volatile int lastCount;
+	private final long periodNanos;
+	private volatile long startTime = -1;
+	private volatile long acquiredCount = 0;
 
 	public RateThrottle(final double rateLimit) {
-
 		if(rateLimit <= 0) {
 			throw new IllegalArgumentException(
 				"Rate limit should be more than 0, but got " + rateLimit
 			);
 		}
-
-		if(rateLimit > MILLIS_IN_SEC) {
-			periodMillis = 1;
-			countPerTime = (int) (rateLimit / MILLIS_IN_SEC);
-		} else {
-			periodMillis = (long) (MILLIS_IN_SEC / rateLimit);
-			countPerTime = 1;
-		}
-
-		lastCount = countPerTime;
+		periodNanos = (long) (TimeUnit.SECONDS.toNanos(1) / rateLimit);
+		LOG.info(
+			Markers.MSG, "Rate limit throttle is configured to pass the request each {}[ns]",
+			periodNanos
+		);
 	}
 
 	@Override
-	public final boolean getPassFor(final X item)
-	throws InterruptedException {
+	public final boolean getPassFor(final X item) {
 		synchronized(this) {
-			if(lastCount == 0) {
-				Thread.sleep(periodMillis);
-				lastCount = countPerTime - 1;
+			if(startTime > 0) {
+				final long periodCount = (System.nanoTime() - startTime) / periodNanos;
+				if(periodCount > acquiredCount) {
+					acquiredCount ++;
+					return true;
+				} else {
+					return false;
+				}
 			} else {
-				lastCount --;
+				startTime = System.nanoTime();
+				acquiredCount ++;
+				return true;
 			}
 		}
-		return true;
 	}
 	
 	@Override
-	public final int getPassFor(final X item, final int times)
-	throws InterruptedException {
+	public final int getPassFor(final X item, final int requiredCount) {
 		synchronized(this) {
-			if(lastCount == 0) {
-				Thread.sleep(periodMillis);
-				lastCount = countPerTime;
-			}
-			if(times > lastCount) {
-				final int n = lastCount;
-				lastCount = 0;
-				return n;
+			if(startTime > 0) {
+				final int availableCount = (int) (
+					(System.nanoTime() - startTime) / periodNanos - acquiredCount
+				);
+				if(availableCount > requiredCount) {
+					acquiredCount += requiredCount;
+					return requiredCount;
+				} else {
+					acquiredCount += availableCount;
+					return availableCount;
+				}
 			} else {
-				lastCount -= times;
-				return times;
+				startTime = System.nanoTime();
+				acquiredCount += requiredCount;
+				return requiredCount;
 			}
 		}
 	}

@@ -149,7 +149,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "Keep-Alive",
-				"User-Agent" : "mongoose/3.0.0-alpha2"
+				"User-Agent" : "mongoose/3.0.0-alpha3"
 			},
 			"namespace" : null,
 			"versioning" : false
@@ -182,5 +182,5 @@
 			"node": false
 		}
 	},
-	"version" : "3.0.0-alpha2"
+	"version" : "3.0.0-alpha3"
 }

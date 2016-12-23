@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"output" : {
-				"path" : "copy-s3-object"
+				"path" : "copy-s3-object-src"
 			},
 			"data" : {
 				"size" : "10KB"
@@ -31,10 +31,10 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"path" : "copy-s3-object_"
+						"path" : "copy-s3-object-dst"
 					},
 					"input" : {
-						"path" : "copy-s3-object",
+						"path" : "copy-s3-object-src",
 						"file" : "copy-s3-object.csv"
 					}
 				}

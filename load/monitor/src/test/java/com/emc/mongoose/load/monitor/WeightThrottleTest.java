@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.Assert.assertEquals;
 /**
@@ -45,12 +46,10 @@ public class WeightThrottleTest {
 		@Override
 		public final void run() {
 			while(true) {
-				try {
-					if(fc.getPassFor(ioType)) {
-						resultsMap.get(ioType).increment();
-					}
-				} catch(final InterruptedException e) {
-					break;
+				if(fc.getPassFor(ioType)) {
+					resultsMap.get(ioType).increment();
+				} else {
+					LockSupport.parkNanos(1);
 				}
 			}
 		}
@@ -80,13 +79,11 @@ public class WeightThrottleTest {
 		public final void run() {
 			int n;
 			while(true) {
-				try {
-					n = fc.getPassFor(ioType, 128);
-					if(n > 0) {
-						resultsMap.get(ioType).add(n);
-					}
-				} catch(final InterruptedException e) {
-					break;
+				n = fc.getPassFor(ioType, 128);
+				if(n > 0) {
+					resultsMap.get(ioType).add(n);
+				} else {
+					LockSupport.parkNanos(1);
 				}
 			}
 		}

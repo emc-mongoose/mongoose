@@ -53,15 +53,15 @@ implements Runnable {
 				}
 				Thread.sleep(1);
 			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to get the results from the driver \"{}\"",
-					driver.toString()
-				);
 				try {
-					if(driver.isInterrupted() || driver.isClosed()) {
-						break;
-					} else {
+					if(!driver.isClosed()) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to get the results from the driver \"{}\"",
+							driver.toString()
+						);
 						Thread.sleep(1);
+					} else {
+						break;
 					}
 				} catch(final RemoteException | InterruptedException ee) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failure");
