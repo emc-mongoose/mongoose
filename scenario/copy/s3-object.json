@@ -11,7 +11,7 @@
 		},
 		"load" : {
 			"limit" : {
-				"count" : 1000
+				"count" : 100
 			},
 			"concurrency" : 10
 		}
@@ -34,7 +34,6 @@
 						"path" : "copy-s3-object-dst"
 					},
 					"input" : {
-						"path" : "copy-s3-object-src",
 						"file" : "copy-s3-object.csv"
 					}
 				}

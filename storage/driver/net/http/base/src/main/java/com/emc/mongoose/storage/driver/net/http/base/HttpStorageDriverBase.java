@@ -272,10 +272,8 @@ implements HttpStorageDriver<I, O, R> {
 			} else {
 				return srcPath + SLASH + item.getName();
 			}
-		} else if(dstPath.endsWith(SLASH)) {
-			return dstPath + item.getName();
 		} else {
-			return dstPath + SLASH + item.getName();
+			return (dstPath.endsWith(SLASH) ? dstPath : (dstPath + SLASH)) + item.getName();
 		}
 	}
 

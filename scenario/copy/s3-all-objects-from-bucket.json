@@ -3,11 +3,10 @@
 	"config" : {
 		"item" : {
 			"output" : {
-				"file" : "files2copy.csv",
-				"path" : "/tmp/src-dir"
+				"path" : "copy-s3-object-src"
 			},
 			"data" : {
-				"size" : "4KB"
+				"size" : "10KB"
 			}
 		},
 		"load" : {
@@ -15,9 +14,6 @@
 				"count" : 1000
 			},
 			"concurrency" : 10
-		},
-		"storage" : {
-			"type" : "fs"
 		}
 	},
 	"jobs" : [
@@ -28,10 +24,10 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"path" : "/tmp/dst-dir"
+						"path" : "copy-s3-object-dst"
 					},
 					"input" : {
-						"file" : "files2copy.csv"
+						"path" : "copy-s3-object-src"
 					}
 				}
 			}

@@ -34,18 +34,16 @@ implements IoTask<I, R> {
 	) {
 		this.ioType = ioType;
 		this.item = item;
-		if(srcPath == null) {
-			final String itemName = item.getName();
-			final int lastSlashIndex = itemName.lastIndexOf(SLASH);
-			if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
-				this.srcPath = itemName.substring(0, lastSlashIndex);
-				item.setName(itemName.substring(lastSlashIndex + 1));
-			} else {
-				this.srcPath = null;
-			}
+
+		final String itemName = item.getName();
+		final int lastSlashIndex = itemName.lastIndexOf(SLASH);
+		if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
+			this.srcPath = itemName.substring(0, lastSlashIndex);
+			item.setName(itemName.substring(lastSlashIndex + 1));
 		} else {
 			this.srcPath = srcPath;
 		}
+
 		if(dstPath == null) {
 			if(
 				IoType.READ.equals(ioType) || IoType.UPDATE.equals(ioType) ||
