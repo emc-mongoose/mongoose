@@ -43,40 +43,53 @@
 					"output" : {
 						"file" : "weighted2-delete-input.csv"
 					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 0,
+						"time" : "5m"
+					},
+					"metrics": {
+						"period" : 10
+					}
 				}
 			}
 		}, {
 			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "64KB"
-					},
-					"input" : {
-						// new item generator will be used for write,
-						// one CSV file will be used for read,
-						// and the other CSV file will be used for delete
-						"file" : [
-							null,
-							"weighted2-read-input.csv",
-							"weighted2-delete-input.csv"
-						]
+			"weights" : [
+				50, 30, 20
+			],
+			"config" : [
+				{
+					"item" : {
+						"data" : {
+							"size" : "64KB"
+						}
 					}
 				},
-				"load" : {
-					"circular" : true,
-					"limit" : {
-						"time" : "5m",
-						"count" : 0
+				{
+					"item" : {
+						"input" : {
+							"file" : "weighted2-read-input.csv"
+						}
 					},
-					"metrics" : {
-						"period" : 10
+					"load" : {
+						"circular" : true,
+						"type" : "read"
+					}
+				},
+				{
+					"item" : {
+						"input" : {
+							"file" : "weighted2-delete-input.csv"
+						}
 					},
-					"type" : [
-						"create=50%", "read=30%", "delete=20%"
-					]
+					"load" : {
+						"circular" : true,
+						"type" : "delete"
+					}
 				}
-			}
+			]
 		}
 	]
 }
