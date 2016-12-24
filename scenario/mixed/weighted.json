@@ -44,7 +44,8 @@
 							"size" : "4KB-16KB"
 						}
 					}
-				}, {
+				},
+				{
 					"item" : {
 						"input" : {
 							"file" : "weighted-load.csv"

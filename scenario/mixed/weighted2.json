@@ -55,7 +55,7 @@
 				}
 			}
 		}, {
-			"type" : "load",
+			"type" : "mixed",
 			"weights" : [
 				50, 30, 20
 			],
