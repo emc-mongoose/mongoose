@@ -316,10 +316,15 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		throws Exception {
 			if(isStarted()) {
 				final Channel channel = future.getNow();
-				assert channel != null;
-				channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-				ioTask.startRequest();
-				sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
+				if(channel == null) {
+					LOG.warn(Markers.ERR, "Failed to establish the storage node connection");
+					ioTask.setStatus(IoTask.Status.FAIL_IO);
+					ioTaskCompleted(ioTask);
+				} else {
+					channel.attr(ATTR_KEY_IOTASK).set(ioTask);
+					ioTask.startRequest();
+					sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
+				}
 			} else {
 				concurrencyThrottle.release();
 			}
