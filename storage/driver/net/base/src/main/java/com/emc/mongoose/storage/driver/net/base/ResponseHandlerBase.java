@@ -176,8 +176,8 @@ extends SimpleChannelInboundHandler<M> {
 				chunkCountDone += remainingSize;
 			} catch(final DataCorruptionException e) {
 				throw new DataCorruptionException(
-					getRangeOffset(ioTask.getCurrRangeIdx()) + e.getOffset(), e.actual,
-					e.expected
+Q					getRangeOffset(ioTask.getCurrRangeIdx()) + e.getOffset(), e.expected,
+					e.actual
 				);
 			}
 		}

@@ -356,7 +356,7 @@ extends ChannelInboundHandlerAdapter {
 							start = Long.parseLong(rangeBorders[0]);
 							localStorage.updateObject(containerName, id, start, size - start);
 						} else {
-							start = Long.parseLong(rangeBorders[1]);
+							start = Long.parseLong(rangeBorders[0]);
 							end = Long.parseLong(rangeBorders[1]);
 							localStorage.updateObject(containerName, id, start, end - start + 1);
 						}
