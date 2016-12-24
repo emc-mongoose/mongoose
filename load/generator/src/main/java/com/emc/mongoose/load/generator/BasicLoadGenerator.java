@@ -71,7 +71,8 @@ implements LoadGenerator<I, O, R>, Output<I> {
 		worker = new Thread(
 			new GeneratorTask(),
 			Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
-				(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "")
+				(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
+				itemInput.toString()
 		);
 		worker.setDaemon(true);
 	}

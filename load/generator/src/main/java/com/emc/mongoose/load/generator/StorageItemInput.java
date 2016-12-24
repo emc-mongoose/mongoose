@@ -4,6 +4,8 @@ import com.emc.mongoose.common.io.collection.BufferingInputBase;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+
+import com.emc.mongoose.model.item.DataItemFactory;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -39,5 +41,11 @@ extends BufferingInputBase<I> {
 	throws IOException {
 		items.addAll(storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, BATCH_SIZE));
 		return items.size();
+	}
+
+	@Override
+	public final String toString() {
+		return (itemFactory instanceof DataItemFactory ? "Data" : "") +
+			"ItemsFromPath(" + path + ")";
 	}
 }

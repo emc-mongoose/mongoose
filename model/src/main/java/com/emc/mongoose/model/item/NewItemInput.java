@@ -57,6 +57,6 @@ implements Input<I> {
 
 	@Override
 	public String toString() {
-		return "newItemInput<" + itemFactory.getClass().getSimpleName() + ">";
+		return "New" + (itemFactory instanceof DataItemFactory ? "Data" : "") + "Items";
 	}
 }

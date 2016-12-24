@@ -34,8 +34,7 @@
 		}, {
 			"type" : "mixed",
 			"weights" : [
-				20,
-				80
+				20, 80
 			],
 			"config" : [
 				{

@@ -31,7 +31,8 @@ implements FileItemInput<I> {
 	//
 	@Override
 	public String toString() {
-		return "csvFileItemInput<" + itemsFilePath.getFileName() + ">";
+		return (itemFactory instanceof DataItemFactory ? "Data" : "") +
+			"ItemsFromFile(" + itemsFilePath + ")";
 	}
 	//
 	@Override

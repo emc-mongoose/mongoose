@@ -41,6 +41,6 @@ implements Input<D> {
 	
 	@Override
 	public final String toString() {
-		return "newDataItemInput<" + itemFactory.getClass().getSimpleName() + ">";
+		return super.toString() + "(" + dataSize.toString() + ")";
 	}
 }
