@@ -65,9 +65,9 @@ extends SimpleChannelInboundHandler<M> {
 	@Override @SuppressWarnings("unchecked")
 	public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
 	throws IOException {
+		final Channel channel = ctx.channel();
+		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		if(!driver.isInterrupted() && !driver.isClosed()) {
-			final Channel channel = ctx.channel();
-			final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 			if(cause instanceof PrematureChannelClosureException) {
 				LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
 				ioTask.setStatus(FAIL_IO);
@@ -97,8 +97,8 @@ extends SimpleChannelInboundHandler<M> {
 				LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
 				ioTask.setStatus(FAIL_UNKNOWN);
 			}
-			driver.complete(channel, ioTask);
 		}
+		driver.complete(channel, ioTask);
 	}
 
 	@Override
@@ -159,7 +159,7 @@ extends SimpleChannelInboundHandler<M> {
 			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
 			if(countBytesDone + chunkCountDone == nextRangeOffset) {
 				if(nextRangeOffset < item.size()) {
-					currRangeIdx++;
+					currRangeIdx ++;
 					nextRangeOffset = getRangeOffset(currRangeIdx + 1);
 					ioTask.setCurrRangeIdx(currRangeIdx);
 				} else {
@@ -228,8 +228,8 @@ extends SimpleChannelInboundHandler<M> {
 						fastEquals = false;
 						break;
 					}
-					buffPos++;
-					chunkPos++;
+					buffPos ++;
+					chunkPos ++;
 				}
 			}
 		}

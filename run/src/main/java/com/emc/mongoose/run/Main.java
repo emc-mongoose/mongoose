@@ -1,17 +1,19 @@
 package com.emc.mongoose.run;
 
+import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.run.scenario.Scenario;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 
+import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
 /**
  Created by kurila on 11.07.16.
  */
@@ -34,7 +36,7 @@ public class Main {
 		if(scenarioValue != null && !scenarioValue.isEmpty()) {
 			scenarioPath = Paths.get(scenarioValue);
 		} else {
-			scenarioPath = Paths.get(Scenario.DIR_SCENARIO, Scenario.FNAME_DEFAULT_SCENARIO);
+			scenarioPath = Paths.get(getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO);
 		}
 		
 		try(final Scenario scenario = new JsonScenario(config, scenarioPath.toFile())) {
