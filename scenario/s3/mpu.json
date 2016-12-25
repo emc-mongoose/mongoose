@@ -4,15 +4,15 @@
 		"item" : {
 			"data" : {
 				"ranges" : {
-					"threshold" : "1MB"
+					"threshold" : "16MB"
 				},
-				"size" : "10MB"
+				"size" : "100MB"
 			}
 		},
 		"load" : {
-			"concurrency" : 100,
+			"concurrency" : 10,
 			"limit" : {
-				"count" : 100000
+				"count" : 10000
 			}
 		}
 	}

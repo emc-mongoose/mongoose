@@ -88,15 +88,21 @@ extends HttpResponseHandlerBase<I, O, R> {
 		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
 		final ByteBuf content = contentAttr.get();
 		if(content != null && content.readableBytes() > 0) {
-			final String contentStr = content.toString(UTF_8);
-			final Matcher m = PATTERN_UPLOAD_ID.matcher(contentStr);
-			if(m.find()) {
-				channel.attr(KEY_ATTR_UPLOAD_ID).set(m.group(1));
-			} else {
-				LOG.warn(
-					Markers.ERR, "Upload id not found in the following response content:\n{}",
-					contentStr
-				);
+			if(ioTask instanceof CompositeDataIoTask) {
+				final CompositeDataIoTask mpuIoTask = (CompositeDataIoTask) ioTask;
+				if(!mpuIoTask.allSubTasksDone()) {
+					// this is an MPU init response
+					final String contentStr = content.toString(UTF_8);
+					final Matcher m = PATTERN_UPLOAD_ID.matcher(contentStr);
+					if(m.find()) {
+						channel.attr(KEY_ATTR_UPLOAD_ID).set(m.group(1));
+					} else {
+						LOG.warn(
+							Markers.ERR,
+							"Upload id not found in the following response content:\n{}", contentStr
+						);
+					}
+				}
 			}
 			content.clear();
 		}
