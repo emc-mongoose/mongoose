@@ -58,7 +58,7 @@ extends LogMessageBase {
 		final IoStats.Snapshot snapshot, final int concurrency, final int driversCount
 	) {
 		buffer
-			.append(runId).append("\n\t")
+			.append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
 			.append(concurrency).append('x').append(driversCount)
 			.append(": n=(").append(snapshot.getSuccCount()).append('/')
@@ -79,7 +79,7 @@ extends LogMessageBase {
 	}
 
 	private void formatMultiSnapshot(final StringBuilder buffer) {
-		final StrBuilder strb = new StrBuilder(jobName).append(" metrics:");
+		final StrBuilder strb = new StrBuilder("metrics:");
 		if(snapshots.size() > 0) {
 			strb.appendNewLine();
 			for(final String tableHeaderLine : TABLE_HEADER_LINES) {

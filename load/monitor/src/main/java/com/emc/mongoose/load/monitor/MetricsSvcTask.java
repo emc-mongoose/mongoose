@@ -50,8 +50,10 @@ implements Runnable {
 	@Override
 
 	public final void run() {
+		final Thread currThread = Thread.currentThread();
+		currThread.setName(jobName);
 		long nextNanoTimeStamp;
-		while(true) {
+		while(!currThread.isInterrupted()) {
 			refreshStats();
 			nextNanoTimeStamp = System.nanoTime();
 			if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {

@@ -368,7 +368,7 @@
 						]
 					}
 				},
-				{
+				/*{
 					"name" : "extResultsFile",
 					"type": "file",
 					"fileName": "result.xml",
@@ -395,7 +395,7 @@
 							}
 						]
 					}
-				},
+				},*/
 				{
 					"name": "async",
 					"type": "Async",

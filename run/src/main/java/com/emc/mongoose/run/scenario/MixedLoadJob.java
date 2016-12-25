@@ -84,6 +84,7 @@ extends JobBase {
 
 		final LoadConfig localLoadConfig = localConfig.getLoadConfig();
 		final String jobName = localLoadConfig.getJobConfig().getName();
+		LOG.info(Markers.MSG, "Run the mixed load job \"{}\"", jobName);
 		final LimitConfig limitConfig = localLoadConfig.getLimitConfig();
 		
 		final long t = limitConfig.getTime();

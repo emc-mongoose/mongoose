@@ -75,6 +75,7 @@ extends JobBase {
 		
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final String jobName = loadConfig.getJobConfig().getName();
+		LOG.info(Markers.MSG, "Run the load job \"{}\"", jobName);
 		loadConfig.getMetricsConfig().setPrecondition(preconditionFlag);
 		
 		final ItemConfig itemConfig = localConfig.getItemConfig();
@@ -209,16 +210,16 @@ extends JobBase {
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load monitor done");
+				LOG.info(Markers.MSG, "Load job \"{}\" done", jobName);
 			} else {
-				LOG.info(Markers.MSG, "Load monitor timeout");
+				LOG.info(Markers.MSG, "Load job \"{}\" timeout", jobName);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load monitor interrupted");
+			LOG.debug(Markers.MSG, "Load job \"{}\" interrupted", jobName);
 		}
 	}
 	
