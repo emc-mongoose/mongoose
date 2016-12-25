@@ -6,7 +6,8 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "items2read.csv"
+						"file" : "items2read.csv",
+						"path" : "items2read"
 					}
 				}
 			}
@@ -15,6 +16,11 @@
 			"type" : "mixed",
 			"config" : [
 				{
+					"item" : {
+						"output" : {
+							"path" : "default"
+						}
+					},
 					"load" : {
 						"concurrency" : 20,
 						"limit" : {
@@ -24,6 +30,9 @@
 				},
 				{
 					"item" : {
+						"data" : {
+							"verify" : true
+						},
 						"input" : {
 							"file" : "items2read.csv"
 						}
