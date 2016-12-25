@@ -16,7 +16,7 @@
 			"config" : [
 				{
 					"load" : {
-						"concurrency" : 10,
+						"concurrency" : 20,
 						"limit" : {
 							"count" : 0
 						}
@@ -29,7 +29,7 @@
 						}
 					},
 					"load" : {
-						"concurrency" : 20,
+						"concurrency" : 50,
 						"circular" : true,
 						"limit" : {
 							"count" : 0
