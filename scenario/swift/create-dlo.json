@@ -1,0 +1,24 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"ranges" : {
+					"threshold" : "1MB"
+				},
+				"size" : "10MB"
+			}
+		},
+		"load" : {
+			"concurrency" : 100,
+			"limit" : {
+				"count" : 100000
+			}
+		},
+		"storage" : {
+			"http" : {
+				"api" : "swift"
+			}
+		}
+	}
+}
