@@ -35,6 +35,9 @@
 						},
 						"input" : {
 							"file" : "items2read.csv"
+						},
+						"output" : {
+							"path" : "items2read"
 						}
 					},
 					"load" : {
