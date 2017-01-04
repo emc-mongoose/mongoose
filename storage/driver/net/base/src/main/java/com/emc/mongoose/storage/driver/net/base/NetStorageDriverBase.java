@@ -69,7 +69,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	private final int socketTimeout;
 	private final boolean sslFlag;
-	
+
 	protected NetStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final SocketConfig socketConfig, final boolean verifyFlag
