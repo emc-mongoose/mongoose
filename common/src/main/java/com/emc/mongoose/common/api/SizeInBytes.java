@@ -72,7 +72,7 @@ implements Serializable {
 	
 	private long min, range = 0;
 	private double bias = 1;
-	
+
 	public SizeInBytes(final String sizeInfo) {
 		final int
 			sep1pos = sizeInfo.indexOf(SEP1, 0),

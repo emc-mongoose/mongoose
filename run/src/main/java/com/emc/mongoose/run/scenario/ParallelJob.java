@@ -19,7 +19,8 @@ extends ParentJobBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	protected ParallelJob(final Config appConfig, final Map<String, Object> subTree) {
+	protected ParallelJob(final Config appConfig, final Map<String, Object> subTree)
+	throws ScenarioParseException {
 		super(appConfig, subTree);
 	}
 	//

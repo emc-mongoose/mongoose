@@ -7,10 +7,16 @@ import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_SEP;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import static org.apache.commons.lang.WordUtils.capitalize;
 
 import java.io.IOException;
@@ -46,6 +52,16 @@ implements Serializable {
 			final JsonParser p, final DeserializationContext ctx
 		) throws IOException {
 			return new SizeInBytes(p.getValueAsString());
+		}
+	}
+
+	private static final class SizeInBytesSerializer
+	extends JsonSerializer<SizeInBytes> {
+		@Override
+		public final void serialize(
+			final SizeInBytes value, final JsonGenerator gen, final SerializerProvider serializers
+		) throws IOException, JsonProcessingException {
+			gen.writeString(value.toString());
 		}
 	}
 
@@ -189,15 +205,30 @@ implements Serializable {
 		}
 		
 		@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
+
 		@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
+
 		@JsonProperty(KEY_KEEP_ALIVE) private boolean keepAlive;
+
 		@JsonProperty(KEY_TCP_NO_DELAY) private boolean tcpNoDelay;
+
 		@JsonProperty(KEY_LINGER) private int linger;
+
 		@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
+
 		@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
+
 		@JsonProperty(KEY_SELECT_INTERVAL) private int selectInterval;
-		@JsonProperty(KEY_RCVBUF) private SizeInBytes rcvBuf;
-		@JsonProperty(KEY_SNDBUF) private SizeInBytes sndBuf;
+
+		@JsonProperty(KEY_RCVBUF)
+		@JsonDeserialize(using = SizeInBytesDeserializer.class)
+		@JsonSerialize(using = SizeInBytesSerializer.class)
+		private SizeInBytes rcvBuf;
+
+		@JsonProperty(KEY_SNDBUF)
+		@JsonDeserialize(using = SizeInBytesDeserializer.class)
+		@JsonSerialize(using = SizeInBytesSerializer.class)
+		private SizeInBytes sndBuf;
 
 		public SocketConfig() {}
 
@@ -346,9 +377,14 @@ implements Serializable {
 			}
 			
 			@JsonProperty(KEY_CONTENT) private ContentConfig contentConfig;
+
 			@JsonProperty(KEY_RANGES) private RangesConfig rangesConfig;
-			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+
+			@JsonProperty(KEY_SIZE)
+			@JsonDeserialize(using = SizeInBytesDeserializer.class)
+			@JsonSerialize(using = SizeInBytesSerializer.class)
 			private SizeInBytes size;
+
 			@JsonProperty(KEY_VERIFY) private boolean verify;
 
 			public DataConfig() {
@@ -398,8 +434,12 @@ implements Serializable {
 				}
 				
 				@JsonProperty(KEY_FILE) private String file;
+
 				@JsonProperty(KEY_SEED) private String seed;
-				@JsonProperty(KEY_RING_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+
+				@JsonProperty(KEY_RING_SIZE)
+				@JsonDeserialize(using = SizeInBytesDeserializer.class)
+				@JsonSerialize(using = SizeInBytesSerializer.class)
 				private SizeInBytes ringSize;
 
 				public ContentConfig() {
@@ -432,8 +472,12 @@ implements Serializable {
 				public static final String KEY_THRESHOLD = "threshold";
 
 				@JsonProperty(KEY_FIXED) private String fixed;
+
 				@JsonProperty(KEY_RANDOM) private int random;
-				@JsonProperty(KEY_THRESHOLD) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+
+				@JsonProperty(KEY_THRESHOLD)
+				@JsonDeserialize(using = SizeInBytesDeserializer.class)
+				@JsonSerialize(using = SizeInBytesSerializer.class)
 				private SizeInBytes threshold;
 
 				public RangesConfig() {
@@ -791,9 +835,12 @@ implements Serializable {
 			}
 			
 			@JsonProperty(KEY_COUNT) private long count;
+
 			@JsonProperty(KEY_RATE) private double rate;
 			
-			@JsonDeserialize(using = SizeInBytesDeserializer.class) @JsonProperty(KEY_SIZE)
+			@JsonDeserialize(using = SizeInBytesDeserializer.class)
+			@JsonSerialize(using = SizeInBytesSerializer.class)
+			@JsonProperty(KEY_SIZE)
 			private SizeInBytes size;
 
 			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_TIME)

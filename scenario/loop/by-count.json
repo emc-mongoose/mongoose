@@ -1,0 +1,10 @@
+{
+	"type" : "for",
+	"value" : 5,
+	"jobs" : [
+		{
+			"type" : "command",
+			"value" : "echo \"Hi there\""
+		}
+	]
+}

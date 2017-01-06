@@ -21,18 +21,22 @@ extends JobBase {
 
 	protected final List<Job> childJobs = new LinkedList<>();
 
-	protected ParentJobBase(final Config appConfig, final Map<String, Object> subTree) {
+	protected ParentJobBase(final Config appConfig, final Map<String, Object> subTree)
+	throws ScenarioParseException {
 		super(appConfig);
 		loadSubTree(subTree);
 	}
 
-	protected void loadSubTree(final Map<String, Object> subTree) {
+	protected void loadSubTree(final Map<String, Object> subTree)
+	throws ScenarioParseException {
 		final Object nodeConfig = subTree.get(KEY_NODE_CONFIG);
 		if(nodeConfig != null) {
 			if(nodeConfig instanceof Map) {
 				localConfig.apply((Map<String, Object>) nodeConfig);
 			} else {
-				LOG.error(Markers.ERR, "Invalid config node type: {}", nodeConfig.getClass());
+				throw new ScenarioParseException(
+					"Invalid config node type: \"" + nodeConfig.getClass() + "\""
+				);
 			}
 		}
 		final Object jobList = subTree.get(KEY_NODE_JOBS);
@@ -43,23 +47,28 @@ extends JobBase {
 						if(job instanceof Map) {
 							appendNewJob((Map<String, Object>) job, localConfig);
 						} else {
-							LOG.error(Markers.ERR, "Invalid job node type: {}", job.getClass());
+							throw new ScenarioParseException(
+								"Invalid job node type: \"" + job.getClass() + "\""
+							);
 						}
 					} else {
-						LOG.warn(Markers.ERR, "{}: job node is null");
+						throw new ScenarioParseException("job node is null");
 					}
 				}
 			} else {
-				LOG.error(Markers.ERR, "Invalid jobs node type: {}", jobList.getClass());
+				throw new ScenarioParseException(
+					"Invalid jobs node type: \"" + jobList.getClass() + "\""
+				);
 			}
 		}
 	}
 
-	protected void appendNewJob(final Map<String, Object> subTree, final Config config) {
+	protected void appendNewJob(final Map<String, Object> subTree, final Config config)
+	throws ScenarioParseException {
 		LOG.debug(Markers.MSG, "Load the subtree to the job \"{}\"", this.toString());
 		final String jobType = (String) subTree.get(KEY_NODE_TYPE);
 		if(jobType == null) {
-			LOG.fatal(Markers.ERR, "No \"{}\" element for the job", KEY_NODE_TYPE);
+			throw new ScenarioParseException("No \"" + KEY_NODE_TYPE + "\" element for the job");
 		} else {
 			switch(jobType) {
 				case NODE_TYPE_COMMAND:
@@ -84,8 +93,8 @@ extends JobBase {
 					append(new MixedLoadJob(config, subTree));
 					break;
 				default:
-					LOG.warn(
-						Markers.ERR, "{}: unexpected job type value: {}", this, jobType
+					throw new ScenarioParseException(
+						"\"" + this.toString() + "\": unexpected job type value: " + jobType
 					);
 			}
 		}

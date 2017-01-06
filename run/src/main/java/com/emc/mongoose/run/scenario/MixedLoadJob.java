@@ -59,21 +59,22 @@ extends JobBase {
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<Integer> weights;
 
-	public MixedLoadJob(final Config appConfig, final Map<String, Object> subTree) {
+	public MixedLoadJob(final Config appConfig, final Map<String, Object> subTree)
+	throws ScenarioParseException {
 		super(appConfig);
 		this.appConfig = appConfig;
 
 		nodeConfigList = (List<Map<String, Object>>) subTree.get(KEY_NODE_CONFIG);
 		if(nodeConfigList != null && nodeConfigList.size() > 0) {
 		} else {
-			throw new IllegalArgumentException("Configuration list is empty");
+			throw new ScenarioParseException("Configuration list is empty");
 		}
 		localConfig.apply(nodeConfigList.get(0));
 
 		weights = (List<Integer>) subTree.get(KEY_NODE_WEIGHTS);
 		if(weights != null) {
 			if(weights.size() != nodeConfigList.size()) {
-				throw new IllegalArgumentException("Weights count is not equal to sub-jobs count");
+				throw new ScenarioParseException("Weights count is not equal to sub-jobs count");
 			}
 		}
 	}

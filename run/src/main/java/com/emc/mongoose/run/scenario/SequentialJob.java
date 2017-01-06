@@ -16,7 +16,8 @@ extends ParentJobBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	public SequentialJob(final Config appConfig, final Map<String, Object> subTree) {
+	public SequentialJob(final Config appConfig, final Map<String, Object> subTree)
+	throws ScenarioParseException {
 		super(appConfig, subTree);
 	}
 	//

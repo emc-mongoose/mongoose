@@ -3,13 +3,14 @@
 	"config" : {
 		"load" : {
 			"limit" : {
-				"time" : "5s"
+				"time" : 5
 			}
 		}
 	},
 	"jobs" : [
 		{
-			"type" : "load"
+			"type" : "command",
+			"value" : "echo \"Hi there!\""
 		}
 	]
 }

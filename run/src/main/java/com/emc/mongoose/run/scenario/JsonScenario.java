@@ -27,7 +27,7 @@ implements Scenario {
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	public JsonScenario(final Config config, final File scenarioSrcFile)
-	throws IOException {
+	throws IOException, ScenarioParseException {
 		this(
 			config,
 			new ObjectMapper()
@@ -40,7 +40,7 @@ implements Scenario {
 	}
 	//
 	public JsonScenario(final Config config, final InputStream scenarioInputStream)
-	throws IOException {
+	throws IOException, ScenarioParseException {
 		this(
 			config,
 			new ObjectMapper()
@@ -53,7 +53,7 @@ implements Scenario {
 	}
 	//
 	public JsonScenario(final Config config, final String scenarioString)
-	throws IOException {
+	throws IOException, ScenarioParseException {
 		this(
 			config,
 			new ObjectMapper()
@@ -66,7 +66,7 @@ implements Scenario {
 	}
 	//
 	public JsonScenario(final Config config, final Map<String, Object> tree)
-	throws IOException {
+	throws IOException, ScenarioParseException {
 		super(config, overrideFromEnv(validateAgainstSchema(tree)));
 	}
 	//
@@ -172,7 +172,8 @@ implements Scenario {
 	}
 	//
 	@Override
-	protected final void loadSubTree(final Map<String, Object> subTree) {
+	protected final void loadSubTree(final Map<String, Object> subTree)
+	throws ScenarioParseException {
 		appendNewJob(subTree, localConfig);
 	}
 	//

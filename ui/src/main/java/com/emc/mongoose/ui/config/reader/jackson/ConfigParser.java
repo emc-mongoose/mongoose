@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.Constants.DIR_CONFIG;
 import static com.emc.mongoose.common.Constants.FNAME_CONFIG;
@@ -38,20 +39,21 @@ public abstract class ConfigParser {
 		try {
 			final String configText = mapper.writeValueAsString(config);
 			final String newConfigText;
+			final String rp = Pattern.quote(replacePattern);
 			if(newValue == null) {
-				newConfigText = configText.replaceAll("\"" + replacePattern + "\"", "null");
+				newConfigText = configText.replaceAll("\"" + rp + "\"", "null");
 			} else if(newValue instanceof Boolean) {
 				newConfigText = configText
-					.replaceAll("\"" + replacePattern + "\"", newValue.toString())
-					.replaceAll(replacePattern, newValue.toString());
+					.replaceAll("\"" + rp + "\"", newValue.toString())
+					.replaceAll(rp, newValue.toString());
 			} else if(newValue instanceof Long) {
 				newConfigText = configText
-					.replaceAll("\"" + replacePattern + "\"", newValue.toString())
-					.replaceAll(replacePattern, newValue.toString());
+					.replaceAll("\"" + rp + "\"", newValue.toString())
+					.replaceAll(rp, newValue.toString());
 			} else if(newValue instanceof Double) {
 				newConfigText = configText
-					.replaceAll("\"" + replacePattern + "\"", newValue.toString())
-					.replaceAll(replacePattern, newValue.toString());
+					.replaceAll("\"" + rp+ "\"", newValue.toString())
+					.replaceAll(rp, newValue.toString());
 			} else if(newValue instanceof List) {
 				final List<Object> newValues = (List<Object>) newValue;
 				final List<String> newStrValues = new ArrayList<>();
@@ -76,9 +78,9 @@ public abstract class ConfigParser {
 					}
 				}
 				final String newValueStr = "[" + String.join(",", newStrValues) + "]";
-				newConfigText = configText.replace(replacePattern, newValueStr);
+				newConfigText = configText.replace(rp, newValueStr);
 			} else if(newValue instanceof String) {
-				newConfigText = configText.replaceAll(replacePattern, (String) newValue);
+				newConfigText = configText.replaceAll(rp, (String) newValue);
 			} else {
 				throw new OmgLookAtMyConsoleException(
 					"Unexpected replacement value type: " + newValue.getClass().getName()

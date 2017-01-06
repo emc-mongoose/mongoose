@@ -1,0 +1,13 @@
+{
+	"type" : "for",
+	"value" : "e",
+	"in" : [
+		"a", "b", "c", "d", "e"
+	],
+	"jobs" : [
+		{
+			"type" : "command",
+			"value" : "echo ${e}"
+		}
+	]
+}
