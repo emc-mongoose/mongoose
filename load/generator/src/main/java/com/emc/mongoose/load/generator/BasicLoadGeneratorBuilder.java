@@ -174,7 +174,8 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		dstPathInput = getDstPathInput(ioType);
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, dstPathInput, ioTaskBuilder, countLimit, maxQueueSize, isCircular
+			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit, maxQueueSize,
+			isCircular
 		);
 	}
 	

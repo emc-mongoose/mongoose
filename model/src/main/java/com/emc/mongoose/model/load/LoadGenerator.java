@@ -1,8 +1,10 @@
 package com.emc.mongoose.model.load;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -20,4 +22,8 @@ extends Daemon {
 	void setOutput(final Output<O> ioTaskOutput);
 
 	long getGeneratedIoTasksCount();
+
+	SizeInBytes getAvgItemSize();
+
+	IoType getIoType();
 }

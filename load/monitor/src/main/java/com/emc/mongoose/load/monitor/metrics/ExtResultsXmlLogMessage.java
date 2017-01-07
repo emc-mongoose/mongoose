@@ -29,15 +29,18 @@ extends LogMessageBase {
 
 	private final String jobName;
 	private final Int2ObjectMap<Snapshot> snapshots;
+	private final Int2ObjectMap<SizeInBytes> itemSizeMap;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 
 	public ExtResultsXmlLogMessage(
 		final String jobName, final Int2ObjectMap<Snapshot> snapshots,
-		final Int2IntMap concurrencyMap, final Int2IntMap driversCountMap
+		final Int2ObjectMap<SizeInBytes> itemSizeMap, final Int2IntMap concurrencyMap,
+		final Int2IntMap driversCountMap
 	) {
 		this.jobName = jobName;
 		this.snapshots = snapshots;
+		this.itemSizeMap = itemSizeMap;
 		this.concurrencyMap = concurrencyMap;
 		this.driversCountMap = driversCountMap;
 	}
@@ -46,12 +49,14 @@ extends LogMessageBase {
 	public final void formatTo(final StringBuilder buffer) {
 
 		Snapshot snapshot;
+		SizeInBytes itemSize;
 		int concurrency;
 		int driversCount;
 
 		for(final int ioTypeCode : snapshots.keySet()) {
 
 			snapshot = snapshots.get(ioTypeCode);
+			itemSize = itemSizeMap.get(ioTypeCode);
 			concurrency = concurrencyMap.get(ioTypeCode);
 			driversCount = driversCountMap.get(ioTypeCode);
 
@@ -71,10 +76,7 @@ extends LogMessageBase {
 			buffer.append("clients=\"").append(driversCount).append("\" ");
 			buffer.append("error=\"").append(snapshot.getFailCount()).append("\" ");
 			buffer.append("runtime=\"").append(((float) elapsedTimeMillis) / 1000).append("\" ");
-			final long itemCount = snapshot.getSuccCount();
-			final long byteCount = snapshot.getByteCount();
-			final String avgSize = SizeInBytes.formatFixedSize(itemCount > 0 ? byteCount / itemCount : 0);
-			buffer.append("filesize=\"").append(avgSize).append("\" ");
+			buffer.append("filesize=\"").append(itemSize == null ? 0 : itemSize.toString()).append("\" ");
 			buffer.append("tps=\"").append(snapshot.getSuccRateMean()).append("\" tps_unit=\"Fileps\" ");
 			buffer.append("bw=\"").append(snapshot.getByteRateMean() / MIB).append("\" bw_unit=\"MBps\" ");
 			buffer.append("latency=\"").append(snapshot.getLatencyAvg()).append("\" latency_unit=\"us\" ");

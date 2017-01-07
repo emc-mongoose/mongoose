@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
@@ -7,6 +8,8 @@ import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.common.io.Input;
@@ -44,6 +47,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	private volatile Output<O> ioTaskOutput;
 
 	private final Input<I> itemInput;
+	private final SizeInBytes avgItemSize;
 	private final Input<String> dstPathInput;
 	private final Thread worker;
 	private final long countLimit;
@@ -56,12 +60,13 @@ implements LoadGenerator<I, O, R>, Output<I> {
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final Input<I> itemInput, final Input<String> dstPathInput,
-		final IoTaskBuilder<I, O, R> ioTaskBuilder, final long countLimit,
-		final int maxItemQueueSize, final boolean isCircular
+		final Input<I> itemInput, final SizeInBytes avgItemSize,
+		final Input<String> dstPathInput, final IoTaskBuilder<I, O, R> ioTaskBuilder,
+		final long countLimit, final int maxItemQueueSize, final boolean isCircular
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
+		this.avgItemSize = avgItemSize;
 		this.dstPathInput = dstPathInput;
 		this.ioTaskBuilder = ioTaskBuilder;
 		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
@@ -96,6 +101,16 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	@Override
 	public final long getGeneratedIoTasksCount() {
 		return generatedIoTaskCount;
+	}
+
+	@Override
+	public final SizeInBytes getAvgItemSize() {
+		return avgItemSize;
+	}
+
+	@Override
+	public final IoType getIoType() {
+		return ioTaskBuilder.getIoType();
 	}
 
 	private final class GeneratorTask

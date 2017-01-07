@@ -109,23 +109,11 @@ implements StorageDriver<I, O, R> {
 		useDataLatencyResult = traceConfig.getDataLatency();
 		useTransferSizeResult = traceConfig.getTransferSize();
 
-		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch(metricsConfig.getPeriod()));
+		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch());
 	}
 
 	private final class IoTasksDispatch
 	implements Runnable {
-
-		private final long metricsPeriodNanoSec;
-
-		private IoTasksDispatch(final long metricsPeriodSec) {
-			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
-				metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
-			);
-		}
-
-		private long prevNanoTimeStamp = -1;
-		private long nextNanoTimeStamp;
-
 		@Override
 		public final void run() {
 			int n;
@@ -146,12 +134,6 @@ implements StorageDriver<I, O, R> {
 					LOG, Level.DEBUG, e, "{}: Interrupted while dispatching I/O tasks",
 					toString()
 				);
-			}
-
-			nextNanoTimeStamp = System.nanoTime();
-			if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-				outputCurrentMetrics();
-				prevNanoTimeStamp = nextNanoTimeStamp;
 			}
 		}
 	}

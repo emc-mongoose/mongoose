@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.monitor;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.DaemonBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -77,6 +78,7 @@ implements LoadMonitor<R> {
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
 	private final Int2ObjectMap<IoStats> medIoStats = new Int2ObjectOpenHashMap<>();
 	private volatile Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<String> itemInfoOutput;
 	private final Int2IntMap concurrencyMap;
@@ -184,6 +186,7 @@ implements LoadMonitor<R> {
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
+			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getAvgItemSize());
 		}
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
@@ -641,7 +644,9 @@ implements LoadMonitor<R> {
 			);
 			LOG.info(
 				Markers.METRICS_EXT_RESULTS,
-				new ExtResultsXmlLogMessage(name, lastStats, concurrencyMap, driversCountMap)
+				new ExtResultsXmlLogMessage(
+					name, lastStats, itemSizeMap, concurrencyMap, driversCountMap
+				)
 			);
 		}
 		
