@@ -368,34 +368,34 @@
 						]
 					}
 				},
-				{
-					"name" : "extResultsFile",
-					"type": "file",
-					"fileName": "result.xml",
-					"bufferedIO": false,
-					"PatternLayout": {
-						"header": "<result>\n",
-						"footer": "</result>\n",
-						"pattern": "%m",
-						"noConsoleNoAnsi": true
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "extResultsFile",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							},
-							{
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				},
+//				{
+//					"name" : "extResultsFile",
+//					"type": "file",
+//					"fileName": "result.xml",
+//					"bufferedIO": false,
+//					"PatternLayout": {
+//						"header": "<result>\n",
+//						"footer": "</result>\n",
+//						"pattern": "%m",
+//						"noConsoleNoAnsi": true
+//					},
+//					"Filters": {
+//						"Filter": [
+//							{
+//								"type": "MarkerFilter",
+//								"marker": "extResultsFile",
+//								"onMatch": "ACCEPT",
+//								"onMismatch": "DENY"
+//							},
+//							{
+//								"type": "ThresholdFilter",
+//								"level": "INFO",
+//								"onMatch": "ACCEPT",
+//								"onMismatch": "DENY"
+//							}
+//						]
+//					}
+//				},
 				{
 					"name": "async",
 					"type": "Async",
@@ -427,8 +427,8 @@
 							"ref": "cfgFile"
 						}, {
 							"ref": "partsUploadFile"
-						}, {
-							"ref": "extResultsFile"
+//						}, {
+//							"ref": "extResultsFile"
 						}
 					]
 				}

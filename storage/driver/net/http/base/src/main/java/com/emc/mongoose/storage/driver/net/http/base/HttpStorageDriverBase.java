@@ -442,16 +442,6 @@ implements HttpStorageDriver<I, O, R> {
 	}
 
 	@Override
-	protected void doStart()
-	throws IllegalStateException {
-	}
-	
-	@Override
-	protected void doShutdown()
-	throws IllegalStateException {
-	}
-	
-	@Override
 	protected void doClose()
 	throws IOException {
 		super.doClose();
