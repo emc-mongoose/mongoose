@@ -394,6 +394,6 @@ implements StorageDriver<I, O, R> {
 	
 	@Override
 	public String toString() {
-		return "storage/driver/%s/" + concurrencyLevel + '/' + hashCode();
+		return "storage/driver/%s/" + concurrencyLevel + "/" + hashCode();
 	}
 }
