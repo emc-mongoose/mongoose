@@ -271,7 +271,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final void markSucc(
+	public final synchronized void markSucc(
 		final long size, final long duration, final long latency
 	) {
 		throughputSuccess.mark();
@@ -287,7 +287,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final void markPartSucc(
+	public final synchronized void markPartSucc(
 		final long size, final long duration, final long latency
 	) {
 		reqBytes.mark(size);
@@ -302,7 +302,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final void markSucc(
+	public final synchronized void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	) {
 		throughputSuccess.mark(count);
@@ -318,7 +318,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final void markPartSucc(
+	public final synchronized void markPartSucc(
 		final long bytes, final long durationValues[], final long latencyValues[]
 	) {
 		reqBytes.mark(bytes);
@@ -333,17 +333,17 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final void markFail() {
+	public final synchronized void markFail() {
 		throughputFail.mark();
 	}
 	//
 	@Override
-	public final void markFail(final long count) {
+	public final synchronized void markFail(final long count) {
 		throughputFail.mark(count);
 	}
 	//
 	@Override
-	public final Snapshot getSnapshot() {
+	public final synchronized Snapshot getSnapshot() {
 		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
