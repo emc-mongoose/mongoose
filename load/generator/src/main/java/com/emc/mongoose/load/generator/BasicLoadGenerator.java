@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 11.07.16.
  */
@@ -90,6 +91,11 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	@Override
 	public final void setOutput(final Output<O> ioTaskOutput) {
 		this.ioTaskOutput = ioTaskOutput;
+	}
+
+	@Override
+	public final long getGeneratedIoTasksCount() {
+		return generatedIoTaskCount;
 	}
 
 	private final class GeneratorTask
@@ -235,35 +241,30 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	}
 
 	@Override
-	public long getGeneratedIoTasksCount() {
-		return generatedIoTaskCount;
-	}
-
-	@Override
-	protected void doStart()
+	protected final void doStart()
 	throws IllegalStateException {
 		worker.start();
 	}
 
 	@Override
-	protected void doShutdown() {
+	protected final void doShutdown() {
 		interrupt();
 	}
 
 	@Override
-	protected void doInterrupt() {
+	protected final void doInterrupt() {
 		worker.interrupt();
 	}
 
 	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		timeUnit.timedJoin(worker, timeout);
 		return true;
 	}
 
 	@Override
-	protected void doClose()
+	protected final void doClose()
 	throws IOException {
 		if(itemInput != null) {
 			itemInput.close();

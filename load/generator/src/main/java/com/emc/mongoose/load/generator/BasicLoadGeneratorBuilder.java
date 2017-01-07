@@ -142,22 +142,20 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 
 		final String itemInputFile = inputConfig.getFile();
 		itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
-		
-		if(itemInput != null && ItemType.DATA.equals(itemType)) {
+
+		final SizeInBytes avgItemSize = estimateAvgDataItemSize(
+			(Input<DataItem>) itemInput
+		);
+		if(avgItemSize != null && ItemType.DATA.equals(itemType)) {
 			try {
-				final SizeInBytes avgDataItemSize = estimateAvgDataItemSize(
-					(Input<DataItem>) itemInput
-				);
-				if(avgDataItemSize != null) {
-					for(final StorageDriver<I, O, R> storageDriver : storageDrivers) {
-						try {
-							storageDriver.adjustIoBuffers(avgDataItemSize, ioType);
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to adjust the storage driver buffer sizes"
-							);
-						}
+				for(final StorageDriver<I, O, R> storageDriver : storageDrivers) {
+					try {
+						storageDriver.adjustIoBuffers(avgItemSize, ioType);
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e,
+							"Failed to adjust the storage driver buffer sizes"
+						);
 					}
 				}
 			} catch(final Exception e) {
@@ -172,7 +170,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 				}
 			}
 		}
-			
+
 		dstPathInput = getDstPathInput(ioType);
 
 		return (T) new BasicLoadGenerator<>(
@@ -190,9 +188,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 			}
 		} catch(final EOFException ignored) {
 		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failure occurs while estimating the average data item size"
-			);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to estimate the average data item size");
 		}
 		
 		long sumSize = 0;

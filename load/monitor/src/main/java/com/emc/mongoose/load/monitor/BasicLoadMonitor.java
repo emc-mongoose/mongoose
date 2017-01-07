@@ -16,7 +16,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -54,6 +54,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 12.07.16.
  */
@@ -346,7 +347,7 @@ implements LoadMonitor<R> {
 		}
 
 		R ioTaskResult;
-		DataIoTask.DataIoResult dataIoTaskResult;
+		DataIoResult dataIoTaskResult;
 		int ioTypeCode;
 		int statusCode;
 		String itemInfo;
@@ -354,7 +355,7 @@ implements LoadMonitor<R> {
 		long respLatency;
 		long countBytesDone = 0;
 		ioTaskResult = ioTaskResults.get(0);
-		final boolean isDataTransferred = ioTaskResult instanceof DataIoTask.DataIoResult;
+		final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
 		IoStats ioTypeStats, ioTypeMedStats;
 
 		final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
@@ -378,7 +379,7 @@ implements LoadMonitor<R> {
 			reqDuration = ioTaskResult.getDuration();
 			respLatency = ioTaskResult.getLatency();
 			if(isDataTransferred) {
-				dataIoTaskResult = (DataIoTask.DataIoResult) ioTaskResult;
+				dataIoTaskResult = (DataIoResult) ioTaskResult;
 				countBytesDone = dataIoTaskResult.getCountBytesDone();
 			}
 

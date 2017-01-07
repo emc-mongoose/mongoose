@@ -368,7 +368,7 @@
 						]
 					}
 				},
-				/*{
+				{
 					"name" : "extResultsFile",
 					"type": "file",
 					"fileName": "result.xml",
@@ -395,7 +395,7 @@
 							}
 						]
 					}
-				},*/
+				},
 				{
 					"name": "async",
 					"type": "Async",
@@ -427,8 +427,8 @@
 							"ref": "cfgFile"
 						}, {
 							"ref": "partsUploadFile"
-						//}, {
-						//	"ref": "extResultsFile"
+						}, {
+							"ref": "extResultsFile"
 						}
 					]
 				}
