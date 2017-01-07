@@ -12,6 +12,7 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -73,7 +75,10 @@ implements StorageDriver<I, O, R> {
 	private final boolean useRespLatencyResult;
 	private final boolean useDataLatencyResult;
 	private final boolean useTransferSizeResult;
-	
+
+	private final LongAdder inCount = new LongAdder();
+	private final LongAdder outCount = new LongAdder();
+
 	protected StorageDriverBase(
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
@@ -91,7 +96,8 @@ implements StorageDriver<I, O, R> {
 		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
 
-		final TraceConfig traceConfig = loadConfig.getMetricsConfig().getTraceConfig();
+		final MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
+		final TraceConfig traceConfig = metricsConfig.getTraceConfig();
 		useStorageDriverResult = traceConfig.getStorageDriver();
 		useStorageNodeResult = traceConfig.getStorageNode();
 		useItemInfoResult = traceConfig.getItemInfo();
@@ -103,11 +109,23 @@ implements StorageDriver<I, O, R> {
 		useDataLatencyResult = traceConfig.getDataLatency();
 		useTransferSizeResult = traceConfig.getTransferSize();
 
-		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch());
+		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch(metricsConfig.getPeriod()));
 	}
 
 	private final class IoTasksDispatch
 	implements Runnable {
+
+		private final long metricsPeriodNanoSec;
+
+		private IoTasksDispatch(final long metricsPeriodSec) {
+			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
+				metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
+			);
+		}
+
+		private long prevNanoTimeStamp = -1;
+		private long nextNanoTimeStamp;
+
 		@Override
 		public final void run() {
 			int n;
@@ -129,7 +147,20 @@ implements StorageDriver<I, O, R> {
 					toString()
 				);
 			}
+
+			nextNanoTimeStamp = System.nanoTime();
+			if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+				outputCurrentMetrics();
+				prevNanoTimeStamp = nextNanoTimeStamp;
+			}
 		}
+	}
+
+	private void outputCurrentMetrics() {
+		LOG.info(
+			Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}", inCount.sum(),
+			getActiveTaskCount(), outCount.sum()
+		);
 	}
 	
 	@Override
@@ -138,7 +169,12 @@ implements StorageDriver<I, O, R> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		return inTasksQueue.offer(task);
+		if(inTasksQueue.offer(task)) {
+			inCount.increment();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override
@@ -151,7 +187,9 @@ implements StorageDriver<I, O, R> {
 				break;
 			}
 		}
-		return i - from;
+		final int n = i - from;
+		inCount.add(n);
+		return n;
 	}
 
 	@Override
@@ -164,6 +202,7 @@ implements StorageDriver<I, O, R> {
 				break;
 			}
 		}
+		inCount.add(n);
 		return n;
 	}
 	
@@ -339,6 +378,8 @@ implements StorageDriver<I, O, R> {
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to await the idle state");
+		} finally {
+			LOG.info(Markers.MSG, "{}: interrupted", toString());
 		}
 	}
 
@@ -348,10 +389,11 @@ implements StorageDriver<I, O, R> {
 		ownTasksQueue.clear();
 		inTasksQueue.clear();
 		ioResultsQueue.clear();
+		LOG.info(Markers.MSG, "{}: closed", toString());
 	}
 	
 	@Override
 	public String toString() {
-		return "storage/driver/%s/" + hashCode();
+		return "storage/driver/%s/" + concurrencyLevel + '/' + hashCode();
 	}
 }

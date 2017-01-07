@@ -40,7 +40,7 @@ implements Runnable {
 		this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
 			metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
 		);
-		this.prevNanoTimeStamp = - 1;
+		this.prevNanoTimeStamp = -1;
 		this.fileOutputFlag = fileOutputFlag;
 		this.ioStats = ioStats;
 		this.lastStats = lastStats;
