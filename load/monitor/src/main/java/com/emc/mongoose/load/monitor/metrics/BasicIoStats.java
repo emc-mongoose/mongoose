@@ -271,9 +271,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final synchronized void markSucc(
-		final long size, final long duration, final long latency
-	) {
+	public final void markSucc(final long size, final long duration, final long latency) {
 		throughputSuccess.mark();
 		reqBytes.mark(size);
 		if(duration > 0) {
@@ -287,9 +285,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final synchronized void markPartSucc(
-		final long size, final long duration, final long latency
-	) {
+	public final void markPartSucc(final long size, final long duration, final long latency) {
 		reqBytes.mark(size);
 		if(duration > 0) {
 			reqDuration.update(duration);
@@ -302,7 +298,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final synchronized void markSucc(
+	public final void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	) {
 		throughputSuccess.mark(count);
@@ -318,7 +314,7 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final synchronized void markPartSucc(
+	public final void markPartSucc(
 		final long bytes, final long durationValues[], final long latencyValues[]
 	) {
 		reqBytes.mark(bytes);
@@ -333,17 +329,17 @@ implements IoStats {
 	}
 	//
 	@Override
-	public final synchronized void markFail() {
+	public final void markFail() {
 		throughputFail.mark();
 	}
 	//
 	@Override
-	public final synchronized void markFail(final long count) {
+	public final void markFail(final long count) {
 		throughputFail.mark(count);
 	}
 	//
 	@Override
-	public final synchronized Snapshot getSnapshot() {
+	public final Snapshot getSnapshot() {
 		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
