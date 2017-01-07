@@ -158,8 +158,8 @@ implements StorageDriver<I, O, R> {
 
 	private void outputCurrentMetrics() {
 		LOG.info(
-			Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}", inCount.sum(),
-			getActiveTaskCount(), outCount.sum()
+			Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}", toString(),
+			inCount.sum(), getActiveTaskCount(), outCount.sum()
 		);
 	}
 	
