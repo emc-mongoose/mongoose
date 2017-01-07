@@ -240,6 +240,8 @@ implements StorageDriver<I, O, R> {
 	@SuppressWarnings("unchecked")
 	protected final void ioTaskCompleted(final O ioTask) {
 
+		outCount.increment();
+
 		try {
 			if(isCircular) {
 				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
@@ -368,6 +370,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doShutdown() {
 		DISPATCH_INBOUND_TASKS.remove(this);
+		LOG.info(Markers.MSG, "{}: shut down", toString());
 	}
 
 	@Override
@@ -394,6 +397,6 @@ implements StorageDriver<I, O, R> {
 	
 	@Override
 	public String toString() {
-		return "storage/driver/%s/" + concurrencyLevel + "/" + hashCode();
+		return "storage/driver/" + concurrencyLevel + "/%s/" + hashCode();
 	}
 }
