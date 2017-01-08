@@ -6,6 +6,4 @@ ADD build/dist/mongoose*.tgz /opt/
 
 RUN ln -s /opt/mongoose* /opt/mongoose
 
-EXPOSE 1099,9020-9040
-
-ENTRYPOINT ["java", "-jar", "/opt/mongoose/mongoose.jar"]
+CMD ["java", "-jar", "/opt/mongoose/mongoose.jar"]
