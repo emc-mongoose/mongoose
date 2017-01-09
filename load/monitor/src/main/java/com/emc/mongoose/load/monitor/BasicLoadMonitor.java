@@ -71,7 +71,7 @@ implements LoadMonitor<R> {
 	private final int metricsPeriodSec;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final ConcurrentMap<String, String> uniqueItems;
+	private final ConcurrentMap<String, R> latestIoResultsPerItem;
 	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
 
@@ -80,7 +80,7 @@ implements LoadMonitor<R> {
 	private volatile Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
-	private volatile Output<String> itemInfoOutput;
+	private volatile Output<R> ioResultsOutput;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 	private final Object2BooleanMap<LoadGenerator<I, O, R>> circularityMap;
@@ -190,9 +190,9 @@ implements LoadMonitor<R> {
 		}
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
-			uniqueItems = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
+			latestIoResultsPerItem = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
 		} else {
-			uniqueItems = null;
+			latestIoResultsPerItem = null;
 		}
 
 		long countLimitSum = 0;
@@ -332,8 +332,8 @@ implements LoadMonitor<R> {
 	}
 
 	@Override
-	public final void setItemInfoOutput(final Output<String> itemInfoOutput) {
-		this.itemInfoOutput = itemInfoOutput;
+	public final void setIoResultsOutput(final Output<R> ioResultsOutput) {
+		this.ioResultsOutput = ioResultsOutput;
 	}
 
 	@Override
@@ -361,7 +361,7 @@ implements LoadMonitor<R> {
 		final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
 		IoStats ioTypeStats, ioTypeMedStats;
 
-		final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
+		final List<R> ioResultsToPass = ioResultsOutput == null ? null : new ArrayList<>(n);
 
 		for(int i = 0; i < n; i ++) {
 
@@ -404,12 +404,14 @@ implements LoadMonitor<R> {
 					if(isCircular) {
 						itemInfoCommaPos = itemInfo.indexOf(',', 0);
 						if(itemInfoCommaPos > 0) {
-							uniqueItems.put(itemInfo.substring(0, itemInfoCommaPos), itemInfo);
+							latestIoResultsPerItem.put(
+								itemInfo.substring(0, itemInfoCommaPos), ioTaskResult
+							);
 						} else {
-							uniqueItems.put(itemInfo, itemInfo);
+							latestIoResultsPerItem.put(itemInfo, ioTaskResult);
 						}
-					} else if(itemInfoOutput != null) {
-						itemsToPass.add(itemInfo);
+					} else if(ioResultsOutput != null) {
+						ioResultsToPass.add(ioTaskResult);
 					}
 					// update the metrics with success
 					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
@@ -426,19 +428,19 @@ implements LoadMonitor<R> {
 			}
 		}
 
-		if(!isCircular && itemInfoOutput != null) {
-			final int itemsToPassCount = itemsToPass.size();
+		if(!isCircular && ioResultsOutput != null) {
+			final int itemsToPassCount = ioResultsToPass.size();
 			try {
 				for(
 					int i = 0; i < itemsToPassCount;
-					i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
+					i += ioResultsOutput.put(ioResultsToPass, i, itemsToPassCount)
 				) {
 					LockSupport.parkNanos(1);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to output {} items to {}", itemsToPassCount,
-					itemInfoOutput
+					ioResultsOutput
 				);
 			}
 		}
@@ -662,16 +664,16 @@ implements LoadMonitor<R> {
 			medIoStats.clear();
 		}
 
-		if(uniqueItems != null && itemInfoOutput != null) {
+		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
 			try {
-				for(final String itemInfo : uniqueItems.values()) {
-					if(!itemInfoOutput.put(itemInfo)) {
+				for(final R latestItemIoResult : latestIoResultsPerItem.values()) {
+					if(!ioResultsOutput.put(latestItemIoResult)) {
 						LOG.debug(
 							Markers.ERR,
 							"{}: item info output fails to ingest, blocking the closing method",
 							getName()
 						);
-						while(!itemInfoOutput.put(itemInfo)) {
+						while(!ioResultsOutput.put(latestItemIoResult)) {
 							Thread.sleep(1);
 						}
 						LOG.debug(Markers.MSG, "{}: closing method unblocked", getName());
@@ -679,11 +681,11 @@ implements LoadMonitor<R> {
 				}
 			} catch(final InterruptedException ignored) {
 			}
-			uniqueItems.clear();
+			latestIoResultsPerItem.clear();
 		}
 
-		if(itemInfoOutput != null) {
-			itemInfoOutput.close();
+		if(ioResultsOutput != null) {
+			ioResultsOutput.close();
 		}
 
 		UNCLOSED.remove(this);

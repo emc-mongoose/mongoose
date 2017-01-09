@@ -58,7 +58,8 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private volatile ItemType itemType;
 	private volatile ItemFactory<I> itemFactory;
 	private volatile List<StorageDriver<I, O, R>> storageDrivers;
-
+	private volatile Input<I> itemInput = null;
+	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
@@ -90,7 +91,13 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		this.storageDrivers = storageDrivers;
 		return this;
 	}
-
+	
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, R, T> setItemInput(final Input<I> itemInput) {
+		this.itemInput = itemInput;
+		return this;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
@@ -261,9 +268,11 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private Input<I> getItemInput(
 		final IoType ioType, final String itemInputFile, final String itemInputPath
 	) throws UserShootHisFootException {
-
-		Input<I> itemInput = null;
-
+		
+		if(itemInput != null) {
+			return itemInput;
+		}
+		
 		if(itemInputFile == null || itemInputFile.isEmpty()) {
 
 			final NamingConfig namingConfig = itemConfig.getNamingConfig();

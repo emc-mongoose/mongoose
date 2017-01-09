@@ -4,7 +4,6 @@ import com.emc.mongoose.common.api.ByteRange;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 
 import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
-import com.emc.mongoose.model.item.BasicMutableDataItem;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.io.IoType;

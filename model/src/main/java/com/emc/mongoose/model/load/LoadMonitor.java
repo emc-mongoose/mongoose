@@ -14,7 +14,7 @@ extends Daemon {
 	
 	String getName();
 	
-	void setItemInfoOutput(final Output<String> itemInfoOutput);
+	void setIoResultsOutput(final Output<R> ioTaskResults);
 
 	void processIoResults(final List<R> ioTaskResults, final int n, final boolean isCircular);
 }
