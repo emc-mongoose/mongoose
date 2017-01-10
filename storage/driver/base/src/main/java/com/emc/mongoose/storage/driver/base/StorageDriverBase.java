@@ -117,6 +117,9 @@ implements StorageDriver<I, O, R> {
 			if(n < BATCH_SIZE) {
 				n += ownTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
 			}
+			if(n < BATCH_SIZE) {
+				n += inTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
+			}
 			try {
 				if(n > 0) {
 					m = submit(ioTasks, 0, n);
