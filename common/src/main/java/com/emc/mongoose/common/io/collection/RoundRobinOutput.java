@@ -40,15 +40,32 @@ implements Output<T> {
 	@Override
 	public final int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		final Output<T> nextOutput = getNextOutput();
-		return nextOutput.put(buffer, from, to);
+		Output<T> nextOutput;
+		int nextFrom = from;
+		for(int i = 0; i < outputs.size(); i ++) {
+			nextOutput = getNextOutput();
+			nextFrom += nextOutput.put(buffer, nextFrom, to);
+			if(nextFrom == to) {
+				break;
+			}
+		}
+		return to - nextFrom;
 	}
 
 	@Override
 	public final int put(final List<T> buffer)
 	throws IOException {
-		final Output<T> nextOutput = getNextOutput();
-		return nextOutput.put(buffer, 0, buffer.size());
+		Output<T> nextOutput;
+		int from = 0;
+		final int to = buffer.size();
+		for(int i = 0; i < outputs.size(); i ++) {
+			nextOutput = getNextOutput();
+			from += nextOutput.put(buffer, from, to);
+			if(from == to) {
+				break;
+			}
+		}
+		return to - from;
 	}
 
 	@Override

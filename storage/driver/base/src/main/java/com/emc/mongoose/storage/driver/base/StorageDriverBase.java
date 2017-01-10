@@ -103,26 +103,30 @@ implements StorageDriver<I, O, R> {
 
 	private final class IoTasksDispatch
 	implements Runnable {
+
+		final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
+		final List<O> prevIoTasks = new ArrayList<>(BATCH_SIZE);
+		int n;
+		int m;
+
 		@Override
 		public final void run() {
-			int n;
-			final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
-			ioTasks.clear();
-			n = ownTasksQueue.drainTo(ioTasks, BATCH_SIZE);
+			ioTasks.addAll(prevIoTasks);
+			prevIoTasks.clear();
+			n = ioTasks.size();
 			if(n < BATCH_SIZE) {
-				n += inTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
+				n += ownTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
 			}
 			try {
 				if(n > 0) {
-					for(int i = 0; i < n; i += submit(ioTasks, i, n)) {
-						LockSupport.parkNanos(1);
+					m = submit(ioTasks, 0, n);
+					if(m < n) {
+						prevIoTasks.addAll(ioTasks.subList(m, n));
 					}
+					ioTasks.clear();
 				}
 			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e, "{}: Interrupted while dispatching I/O tasks",
-					toString()
-				);
+				SVC_TASKS.clear();
 			}
 		}
 	}
