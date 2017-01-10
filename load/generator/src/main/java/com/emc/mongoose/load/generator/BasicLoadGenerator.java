@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
@@ -122,12 +122,10 @@ implements LoadGenerator<I, O, R>, Output<I> {
 		public final void run() {
 
 			if(ioTaskOutput == null) {
-				LOG.warn(Markers.ERR, "No load I/O task output set, exiting");
-			}
-
-			if(itemInput == null) {
-				LOG.warn(Markers.MSG, "No item source for the producing, exiting");
-				return;
+				LOG.warn(
+					Markers.ERR, "{}: no load I/O task output set, exiting",
+					BasicLoadGenerator.this.toString()
+				);
 			}
 
 			int n = 0, m = 0;
@@ -173,8 +171,10 @@ implements LoadGenerator<I, O, R>, Output<I> {
 						break;
 					} catch(final Exception e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
-							"batch size = {}, batch offset = {}", generatedIoTaskCount, n, m
+							LOG, Level.WARN, e,
+							"{}: failed to read the data items, count = {}, batch size = {}, " +
+								"batch offset = {}",
+							BasicLoadGenerator.this.toString(), generatedIoTaskCount, n, m
 						);
 						//e.printStackTrace(System.err);
 					}
@@ -182,7 +182,8 @@ implements LoadGenerator<I, O, R>, Output<I> {
 			} finally {
 				LOG.debug(
 					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					Thread.currentThread().getName(), generatedIoTaskCount, itemInput.toString(), this
+					Thread.currentThread().getName(), generatedIoTaskCount, itemInput.toString(),
+					BasicLoadGenerator.this.toString()
 				);
 				try {
 					shutdown();

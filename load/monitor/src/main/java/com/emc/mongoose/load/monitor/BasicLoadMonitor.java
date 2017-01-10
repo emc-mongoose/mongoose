@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
@@ -498,20 +498,28 @@ implements LoadMonitor<R> {
 
 			try {
 				nextGenerator.interrupt();
+				LOG.debug(
+					Markers.MSG, "{}: load generator \"{}\" shut down", getName(),
+					nextGenerator.toString()
+				);
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to interrupt the generator {}",
-					nextGenerator.toString()
+					LOG, Level.WARN, e, "{}: failed to interrupt the generator {}",
+					getName(), nextGenerator.toString()
 				);
 			}
 
 			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
 				try {
 					nextDriver.shutdown();
+					LOG.debug(
+						Markers.MSG, "{}: storage driver \"{}\" shut down", getName(),
+						nextDriver.toString()
+					);
 				} catch(final RemoteException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to shutdown the driver {}",
-						nextDriver.toString()
+						LOG, Level.WARN, e, "failed to shutdown the driver {}",
+						getName(), nextDriver.toString()
 					);
 				}
 			}
@@ -574,8 +582,8 @@ implements LoadMonitor<R> {
 					nextDriver.interrupt();
 				} catch(final RemoteException e) {
 					LogUtil.exception(
-						LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
-						nextDriver.toString()
+						LOG, Level.DEBUG, e, "{}: failed to interrupt the driver {}",
+						getName(), nextDriver.toString()
 					);
 				}
 			}
@@ -584,10 +592,14 @@ implements LoadMonitor<R> {
 		svcTaskExecutor.shutdownNow();
 		try {
 			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.error(Markers.ERR, "Failed to terminate the service tasks in 1 second");
+				LOG.error(
+					Markers.ERR, "{}: failed to terminate the service tasks in 1 second", getName()
+				);
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final InterruptedException e) {
+			assert false;
 		}
+		LOG.debug(Markers.MSG, "{}: interrupted the load monitor", getName());
 	}
 
 	@Override
@@ -603,6 +615,11 @@ implements LoadMonitor<R> {
 					if(finalResults != null) {
 						final int finalResultsCount = finalResults.size();
 						if(finalResultsCount > 0) {
+							LOG.debug(
+								Markers.MSG,
+								"{}: the driver \"{}\" returned {} final I/O results to process",
+								getName(), driver, finalResults
+							);
 							processIoResults(
 								finalResults, finalResultsCount, circularityMap.get(generator)
 							);
@@ -611,22 +628,33 @@ implements LoadMonitor<R> {
 				} catch(final Throwable cause) {
 					LogUtil.exception(
 						LOG, Level.WARN, cause,
-						"Failed to process the final results for the driver {}", driver
+						"{}: failed to process the final results for the driver {}", getName(),
+						driver
 					);
 				}
 
 				try {
 					driver.close();
+					LOG.debug(
+						Markers.MSG, "{}: the storage driver \"{}\" has been closed", getName(),
+						driver
+					);
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the driver {}", driver);
+					LogUtil.exception(
+						LOG, Level.WARN, e, "{}: failed to close the driver {}", getName(), driver
+					);
 				}
 			}
 
 			try {
 				generator.close();
+				LOG.debug(
+					Markers.MSG, "{}: the load generator \"{}\" has been closed", getName(),
+					generator
+				);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to close the generator {}", generator
+					LOG, Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
 				);
 			}
 		}
@@ -684,8 +712,10 @@ implements LoadMonitor<R> {
 
 		if(itemInfoOutput != null) {
 			itemInfoOutput.close();
+			LOG.debug(Markers.MSG, "{}: closed the items output", getName());
 		}
 
 		UNCLOSED.remove(this);
+		LOG.debug(Markers.MSG, "{}: closed the load monitor", getName());
 	}
 }

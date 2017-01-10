@@ -135,7 +135,9 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 	public final String buildRemotely()
 	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O, R> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getContentSource());
+		final T wrapper = (T) new WrappingStorageDriverSvc<>(
+			driver, getContentSource(), getLoadConfig().getMetricsConfig().getPeriod()
+		);
 		return wrapper.getName();
 	}
 }

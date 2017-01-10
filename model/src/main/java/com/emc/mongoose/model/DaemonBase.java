@@ -1,10 +1,9 @@
-package com.emc.mongoose.common.concurrent;
+package com.emc.mongoose.model;
+
+import com.emc.mongoose.common.concurrent.Daemon;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ConcurrentModificationException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
@@ -18,8 +17,6 @@ import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
  */
 public abstract class DaemonBase
 implements Daemon {
-	
-	protected static final Queue<Daemon> UNCLOSED = new ConcurrentLinkedQueue<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -121,26 +118,5 @@ implements Daemon {
 	@Override
 	public final boolean isClosed() {
 		return stateRef.get().equals(CLOSED);
-	}
-	
-	public synchronized static void closeAll() {
-		// close all unclosed daemons
-		for(final Daemon d : UNCLOSED) {
-			try {
-				d.close();
-			} catch(final IllegalStateException | ConcurrentModificationException ignored) {
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		}
-		
-		// wait until the list of the unclosed daemons is empty
-		while(!UNCLOSED.isEmpty()) {
-			try {
-				TimeUnit.SECONDS.sleep(1);
-			} catch(final InterruptedException e) {
-				break;
-			}
-		}
 	}
 }

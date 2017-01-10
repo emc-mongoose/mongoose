@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.data.ContentSource;
@@ -40,7 +40,6 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;

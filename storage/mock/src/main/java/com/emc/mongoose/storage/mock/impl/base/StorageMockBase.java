@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.collection.ListingLRUMap;
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;

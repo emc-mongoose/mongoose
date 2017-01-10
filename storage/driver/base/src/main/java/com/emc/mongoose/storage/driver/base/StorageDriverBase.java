@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
@@ -25,10 +25,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
@@ -42,16 +40,7 @@ extends DaemonBase
 implements StorageDriver<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<StorageDriver, Runnable> DISPATCH_INBOUND_TASKS = new ConcurrentHashMap<>();
-	static {
-		new Thread(new CommonDispatchTask(DISPATCH_INBOUND_TASKS), "ioTasksDispatcher") {
-			{
-				setDaemon(true);
-				start();
-			}
-		};
-	}
-
+	
 	private final int queueCapacity;
 	private final BlockingQueue<O> ownTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
@@ -75,9 +64,9 @@ implements StorageDriver<I, O, R> {
 	private final boolean useRespLatencyResult;
 	private final boolean useDataLatencyResult;
 	private final boolean useTransferSizeResult;
-
-	private final LongAdder inCount = new LongAdder();
-	private final LongAdder outCount = new LongAdder();
+	
+	private final LongAdder scheduledTaskCount = new LongAdder();
+	private final LongAdder completedTaskCount = new LongAdder();
 
 	protected StorageDriverBase(
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
@@ -109,7 +98,7 @@ implements StorageDriver<I, O, R> {
 		useDataLatencyResult = traceConfig.getDataLatency();
 		useTransferSizeResult = traceConfig.getTransferSize();
 
-		DISPATCH_INBOUND_TASKS.put(this, new IoTasksDispatch());
+		SVC_TASKS.put(this, new IoTasksDispatch());
 	}
 
 	private final class IoTasksDispatch
@@ -138,13 +127,6 @@ implements StorageDriver<I, O, R> {
 		}
 	}
 
-	private void outputCurrentMetrics() {
-		LOG.info(
-			Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}", toString(),
-			inCount.sum(), getActiveTaskCount(), outCount.sum()
-		);
-	}
-	
 	@Override
 	public final boolean put(final O task)
 	throws IOException {
@@ -152,7 +134,7 @@ implements StorageDriver<I, O, R> {
 			throw new EOFException();
 		}
 		if(inTasksQueue.offer(task)) {
-			inCount.increment();
+			scheduledTaskCount.increment();
 			return true;
 		} else {
 			return false;
@@ -170,7 +152,7 @@ implements StorageDriver<I, O, R> {
 			}
 		}
 		final int n = i - from;
-		inCount.add(n);
+		scheduledTaskCount.add(n);
 		return n;
 	}
 
@@ -184,13 +166,23 @@ implements StorageDriver<I, O, R> {
 				break;
 			}
 		}
-		inCount.add(n);
+		scheduledTaskCount.add(n);
 		return n;
 	}
 	
 	@Override
 	public int getActiveTaskCount() {
 		return concurrencyLevel - concurrencyThrottle.availablePermits();
+	}
+	
+	@Override
+	public final long getScheduledTaskCount() {
+		return scheduledTaskCount.sum();
+	}
+	
+	@Override
+	public final long getCompletedTaskCount() {
+		return completedTaskCount.sum();
 	}
 
 	@Override
@@ -222,7 +214,7 @@ implements StorageDriver<I, O, R> {
 	@SuppressWarnings("unchecked")
 	protected final void ioTaskCompleted(final O ioTask) {
 
-		outCount.increment();
+		completedTaskCount.increment();
 
 		try {
 			if(isCircular) {
@@ -351,15 +343,15 @@ implements StorageDriver<I, O, R> {
 
 	@Override
 	protected void doShutdown() {
-		DISPATCH_INBOUND_TASKS.remove(this);
+		SVC_TASKS.remove(this);
 		LOG.info(Markers.MSG, "{}: shut down", toString());
 	}
 
 	@Override
 	protected void doInterrupt() {
 		try {
-			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 1, TimeUnit.SECONDS)) {
-				LOG.warn(Markers.ERR, "Failed to await the idle state");
+			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
+				LOG.debug(Markers.MSG, "{}: interrupting while not in the idle state", toString());
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to await the idle state");

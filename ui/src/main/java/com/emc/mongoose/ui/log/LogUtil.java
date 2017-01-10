@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.log;
 
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.env.PathUtil;
 
 import org.apache.logging.log4j.Level;
@@ -165,7 +165,7 @@ implements ShutdownCallbackRegistry {
 	}
 	//
 	public static void shutdown() {
-		DaemonBase.closeAll();
+		Daemon.closeAll();
 		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {

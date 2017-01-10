@@ -78,7 +78,7 @@ implements IoStats {
 		//
 		public BasicSnapshot(
 			final long countSucc, final double succRateLast, final long countFail,
-			final double failRate, final long countByte, final double byteRate,
+			final double failRateLast, final long countByte, final double byteRateLast,
 			final long startTime, final long elapsedTime, final long sumDur,
 			final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
@@ -86,9 +86,9 @@ implements IoStats {
 			this.countSucc = countSucc;
 			this.succRateLast = succRateLast;
 			this.countFail = countFail;
-			this.failRateLast = failRate;
+			this.failRateLast = failRateLast;
 			this.countByte = countByte;
-			this.byteRateLast = byteRate;
+			this.byteRateLast = byteRateLast;
 			this.sumDur = sumDur;
 			this.sumLat = sumLat;
 			this.startTime = startTime;
@@ -106,7 +106,7 @@ implements IoStats {
 		//
 		@Override
 		public final double getSuccRateMean() {
-			return elapsedTime == 0 ? 0 : 1000 * countSucc / elapsedTime;
+			return elapsedTime == 0 ? 0 : 1000.0 * countSucc / elapsedTime;
 		}
 		//
 		@Override
@@ -121,7 +121,7 @@ implements IoStats {
 		//
 		@Override
 		public final double getFailRateMean() {
-			return elapsedTime == 0 ? 0 : 1000 * countFail / elapsedTime;
+			return elapsedTime == 0 ? 0 : 1000.0 * countFail / elapsedTime;
 		}
 		//
 		@Override
@@ -136,7 +136,7 @@ implements IoStats {
 		//
 		@Override
 		public final double getByteRateMean() {
-			return elapsedTime == 0 ? 0 : 1000 * countByte / elapsedTime;
+			return elapsedTime == 0 ? 0 : 1000.0 * countByte / elapsedTime;
 		}
 		//
 		@Override
