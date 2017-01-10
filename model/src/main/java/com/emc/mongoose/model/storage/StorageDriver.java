@@ -64,6 +64,9 @@ extends Daemon, Output<O>, Remote {
 	long getCompletedTaskCount()
 	throws RemoteException;
 
+	long getRecycledTaskCount()
+	throws RemoteException;
+
 	boolean isIdle()
 	throws RemoteException;
 

@@ -30,8 +30,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
-
 /**
  Created by kurila on 11.07.16.
  */
@@ -42,7 +40,7 @@ implements StorageDriver<I, O, R> {
 	private static final Logger LOG = LogManager.getLogger();
 	
 	private final int queueCapacity;
-	private final BlockingQueue<O> ownTasksQueue;
+	private final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
 	private final BlockingQueue<R> ioResultsQueue;
 	private final boolean isCircular;
@@ -67,13 +65,14 @@ implements StorageDriver<I, O, R> {
 	
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
+	private final LongAdder recycledTaskCount = new LongAdder();
 
 	protected StorageDriverBase(
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
 		final boolean verifyFlag
 	) {
 		queueCapacity = loadConfig.getQueueConfig().getSize();
-		this.ownTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
+		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
@@ -115,7 +114,7 @@ implements StorageDriver<I, O, R> {
 			prevIoTasks.clear();
 			n = ioTasks.size();
 			if(n < BATCH_SIZE) {
-				n += ownTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
+				n += childTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
 			}
 			if(n < BATCH_SIZE) {
 				n += inTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
@@ -193,6 +192,11 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
+	public final long getRecycledTaskCount() {
+		return recycledTaskCount.sum();
+	}
+
+	@Override
 	public final boolean isIdle() {
 		return !concurrencyThrottle.hasQueuedThreads() &&
 			concurrencyThrottle.availablePermits() >= concurrencyLevel;
@@ -226,9 +230,12 @@ implements StorageDriver<I, O, R> {
 		try {
 			if(isCircular) {
 				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
-					if(!inTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
+					if(inTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
+						recycledTaskCount.increment();
+					} else {
 						LOG.warn(
-							Markers.ERR, "{}: own I/O tasks queue overflow, dropping the I/O task",
+							Markers.ERR,
+							"{}: incoming I/O tasks queue overflow, dropping the I/O task",
 							toString()
 						);
 					}
@@ -238,10 +245,10 @@ implements StorageDriver<I, O, R> {
 				if(!parentTask.allSubTasksDone()) {
 					final List<O> subTasks = parentTask.getSubTasks();
 					for(final O nextSubTask : subTasks) {
-						if(!ownTasksQueue.offer(nextSubTask, 1, TimeUnit.MILLISECONDS)) {
+						if(!childTasksQueue.offer(nextSubTask, 1, TimeUnit.MILLISECONDS)) {
 							LOG.warn(
 								Markers.ERR,
-								"{}: own I/O tasks queue overflow, dropping the I/O sub-task",
+								"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
 								toString()
 							);
 							break;
@@ -254,9 +261,9 @@ implements StorageDriver<I, O, R> {
 				if(parentTask.allSubTasksDone()) {
 					// execute once again to finalize the things if necessary:
 					// complete the multipart upload, for example
-					if(!ownTasksQueue.offer((O) parentTask, 1, TimeUnit.MILLISECONDS)) {
+					if(!childTasksQueue.offer((O) parentTask, 1, TimeUnit.MILLISECONDS)) {
 						LOG.warn(
-							Markers.ERR, "{}: own I/O tasks queue overflow, dropping the I/O task",
+							Markers.ERR, "{}: I/O child tasks queue overflow, dropping the I/O task",
 							toString()
 						);
 					}
@@ -370,7 +377,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		ownTasksQueue.clear();
+		childTasksQueue.clear();
 		inTasksQueue.clear();
 		ioResultsQueue.clear();
 		LOG.info(Markers.MSG, "{}: closed", toString());

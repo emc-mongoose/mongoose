@@ -72,9 +72,11 @@ implements StorageDriverSvc<I, O, R> {
 				prevNanoTimeStamp = nextNanoTimeStamp;
 				try {
 					LOG.info(
-						Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}",
+						Markers.MSG,
+						"{} I/O tasks: scheduled={}, active={}, completed={}, recycled={}",
 						storageDriver.getName(), storageDriver.getScheduledTaskCount(),
-						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount()
+						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount(),
+						storageDriver.getRecycledTaskCount()
 					);
 				} catch(final RemoteException ignored) {
 				}
@@ -239,7 +241,11 @@ implements StorageDriverSvc<I, O, R> {
 	throws RemoteException {
 		return driver.getCompletedTaskCount();
 	}
-
+	@Override
+	public final long getRecycledTaskCount()
+	throws RemoteException {
+		return driver.getRecycledTaskCount();
+	}
 	@Override
 	public final boolean isIdle()
 	throws RemoteException {

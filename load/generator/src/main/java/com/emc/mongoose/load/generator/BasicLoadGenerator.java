@@ -163,6 +163,11 @@ implements LoadGenerator<I, O, R>, Output<I> {
 						// produce only <maxItemQueueSize> items in order to make it possible to
 						// enqueue them infinitely
 						if(isCircular && generatedIoTaskCount >= maxItemQueueSize) {
+							LOG.warn(
+								Markers.ERR,
+								"{}: stopped producing at {} I/O tasks due circular load mode",
+								BasicLoadGenerator.this.toString(), generatedIoTaskCount
+							);
 							break;
 						}
 					} catch(
