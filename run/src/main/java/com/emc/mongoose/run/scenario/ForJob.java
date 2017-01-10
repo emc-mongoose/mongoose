@@ -214,10 +214,12 @@ extends SequentialJob {
 						childJobConfig = ConfigParser.replace(
 							localConfig, replacePattern, nextValue
 						);
-						nextNodeConfig = ConfigParser.replace(
-							(Map<String, Object>) nodeConfig, replacePattern, nextValue
-						);
-						childJobConfig.apply(nextNodeConfig);
+						if(nodeConfig != null) {
+							nextNodeConfig = ConfigParser.replace(
+								(Map<String, Object>) nodeConfig, replacePattern, nextValue
+							);
+							childJobConfig.apply(nextNodeConfig);
+						}
 						append(
 							new BasicTaskJob(
 								() -> LOG.info(
