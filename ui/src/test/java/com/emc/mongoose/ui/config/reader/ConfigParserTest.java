@@ -144,7 +144,7 @@ public class ConfigParserTest {
 			driverConfig.getAddrs().get(0),
 			equalTo("127.0.0.1", "storage.driver.addrs")
 		);
-		assertThat(storageConfig.getPort(), equalTo(9020, "storage.port"));
+		assertThat(storageConfig.getNodeConfig().getPort(), equalTo(9020, "storage.port"));
 		assertThat(storageConfig.getSsl(), equalTo(false, "storage.ssl"));
 		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
 		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();

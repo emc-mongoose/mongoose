@@ -7,7 +7,9 @@
 			}
 		},
 		"storage" : {
-			"port" : 9021,
+			"node" : {
+				"port" : 9021
+			},
 			"ssl" : true
 		}
 	}

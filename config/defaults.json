@@ -157,15 +157,16 @@
 		"node": {
 			"addrs" : [
 				"127.0.0.1"
-			]
+			],
+			"port" : 9020
 		},
 		"driver": {
 			"remote": false,
 			"addrs" : [
 				"127.0.0.1"
-			]
+			],
+			"port" : 1099
 		},
-		"port" : 9020,
 		"ssl" : false,
 		"type" : "http",
 		"mock" : {

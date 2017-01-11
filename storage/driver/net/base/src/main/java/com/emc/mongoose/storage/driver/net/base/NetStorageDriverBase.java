@@ -15,6 +15,7 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
@@ -85,8 +86,9 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		} else {
 			this.socketTimeout = (int) sto;
 		}
-		storageNodePort = storageConfig.getPort();
-		final String t[] = storageConfig.getNodeConfig().getAddrs().toArray(new String[]{});
+		final NodeConfig nodeConfig = storageConfig.getNodeConfig();
+		storageNodePort = nodeConfig.getPort();
+		final String t[] = nodeConfig.getAddrs().toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
 		String n;
 		for(int i = 0; i < t.length; i ++) {
@@ -317,9 +319,9 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			if(isStarted()) {
 				final Channel channel = future.getNow();
 				if(channel == null) {
-					LOG.warn(Markers.ERR, "Failed to establish the storage node connection");
 					ioTask.setStatus(IoTask.Status.FAIL_IO);
 					ioTaskCompleted(ioTask);
+					concurrencyThrottle.release();
 				} else {
 					channel.attr(ATTR_KEY_IOTASK).set(ioTask);
 					ioTask.startRequest();

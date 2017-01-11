@@ -59,7 +59,7 @@ extends StorageMockBase<MutableDataItemMock>{
 		super(
 			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource
 		);
-		port = storageConfig.getPort();
+		port = storageConfig.getNodeConfig().getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
 		dispatchGroups = new EventLoopGroup[headCount];
 		workGroups = new EventLoopGroup[headCount];

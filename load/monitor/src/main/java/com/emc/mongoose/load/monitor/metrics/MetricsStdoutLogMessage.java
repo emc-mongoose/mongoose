@@ -6,6 +6,7 @@ import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
 
+import com.emc.mongoose.ui.log.LogUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
@@ -53,16 +54,35 @@ extends LogMessageBase {
 		}
 	}
 
+	private static String getColoredFailCountText(final long succCount, final long failCount) {
+		final String failCountText;
+		if(LogUtil.isConsoleColoringEnabled()) {
+			if(failCount > 0) {
+				if(succCount / failCount > 100) {
+					failCountText = LogUtil.YELLOW + Long.toString(failCount) + LogUtil.GREEN;
+				} else {
+					failCountText = LogUtil.RED + Long.toString(failCount) + LogUtil.GREEN;
+				}
+			} else {
+				failCountText = Long.toString(failCount);
+			}
+		} else {
+			failCountText = Long.toString(failCount);
+		}
+		return failCountText;
+	}
+
 	private static void formatSingleSnapshot(
 		final StringBuilder buffer, final String runId, final int ioTypeCode,
 		final IoStats.Snapshot snapshot, final int concurrency, final int driversCount
 	) {
+		final long succCount = snapshot.getSuccCount();
 		buffer
 			.append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
 			.append(concurrency).append('x').append(driversCount)
-			.append(": n=(").append(snapshot.getSuccCount()).append('/')
-			.append(snapshot.getFailCount()).append("); t[s]=(")
+			.append(": n=(").append(succCount).append('/')
+			.append(getColoredFailCountText(succCount, snapshot.getFailCount())).append("); t[s]=(")
 			.append(formatFixedWidth(snapshot.getElapsedTime() / 1000.0, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
 			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
@@ -86,15 +106,21 @@ extends LogMessageBase {
 				strb.append(tableHeaderLine).appendNewLine();
 			}
 			IoStats.Snapshot snapshot;
+			long nextSuccCount;
 			for(final int ioTypeCode : snapshots.keySet()) {
 				snapshot = snapshots.get(ioTypeCode);
+				nextSuccCount = snapshot.getSuccCount();
 				strb
 					.appendFixedWidthPadLeft(IoType.values()[ioTypeCode].name(), 6, ' ')
 					.append('|');
 				strb.appendFixedWidthPadLeft(concurrencyMap.get(ioTypeCode), 7, ' ').append('|');
 				strb.appendFixedWidthPadLeft(driversCountMap.get(ioTypeCode), 7, ' ').append('|');
-				strb.appendFixedWidthPadLeft(snapshot.getSuccCount(), 12, ' ').append(('|'));
-				strb.appendFixedWidthPadLeft(snapshot.getFailCount(), 6, ' ').append('|');
+				strb.appendFixedWidthPadLeft(nextSuccCount, 12, ' ').append(('|'));
+				strb
+					.appendFixedWidthPadLeft(
+						getColoredFailCountText(nextSuccCount, snapshot.getFailCount()), 6, ' '
+					)
+					.append('|');
 				strb
 					.appendFixedWidthPadLeft(
 						formatFixedWidth(snapshot.getElapsedTime() / 1000.0, 7), 7, ' '

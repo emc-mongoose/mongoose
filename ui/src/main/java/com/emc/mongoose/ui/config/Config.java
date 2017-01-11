@@ -1099,7 +1099,6 @@ implements Serializable {
 		public static final String KEY_HTTP = "http";
 		public static final String KEY_NODE = "node";
 		public static final String KEY_DRIVER = "driver";
-		public static final String KEY_PORT = "port";
 		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
@@ -1120,10 +1119,6 @@ implements Serializable {
 			this.driverConfig = driverConfig;
 		}
 		
-		public final void setPort(final int port) {
-			this.port = port;
-		}
-		
 		public final void setSsl(final boolean ssl) {
 			this.ssl = ssl;
 		}
@@ -1140,7 +1135,6 @@ implements Serializable {
 		@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
 		@JsonProperty(KEY_NODE) private NodeConfig nodeConfig;
 		@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
-		@JsonProperty(KEY_PORT) private int port;
 		@JsonProperty(KEY_SSL) private boolean ssl;
 		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
@@ -1154,7 +1148,6 @@ implements Serializable {
 			this.httpConfig = new HttpConfig(other.getHttpConfig());
 			this.nodeConfig = new NodeConfig(other.getNodeConfig());
 			this.driverConfig = new DriverConfig(other.getDriverConfig());
-			this.port = other.getPort();
 			this.ssl = other.getSsl();
 			this.type = other.getType();
 			this.mockConfig = new MockConfig(other.getMockConfig());
@@ -1174,10 +1167,6 @@ implements Serializable {
 
 		public DriverConfig getDriverConfig() {
 			return driverConfig;
-		}
-
-		public int getPort() {
-			return port;
 		}
 
 		public boolean getSsl() {
@@ -1310,22 +1299,33 @@ implements Serializable {
 		implements Serializable {
 
 			public static final String KEY_ADDRS = "addrs";
+			public static final String KEY_PORT = "port";
 
 			public final void setAddrs(final List<String> addrs) {
 				this.addrs = addrs;
 			}
 
+			public final void setPort(final int port) {
+				this.port = port;
+			}
+
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
+			@JsonProperty(KEY_PORT) private int port;
 			
 			public NodeConfig() {
 			}
 
 			public NodeConfig(final NodeConfig other) {
 				this.addrs = new ArrayList<>(other.getAddrs());
+				this.port = other.getPort();
 			}
 			
 			public List<String> getAddrs() {
 				return addrs;
+			}
+
+			public int getPort() {
+				return port;
 			}
 		}
 		
@@ -1334,6 +1334,7 @@ implements Serializable {
 			
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
+			public static final String KEY_PORT = "port";
 
 			public final void setAddrs(final List<String> addrs) {
 				this.addrs = addrs;
@@ -1343,8 +1344,13 @@ implements Serializable {
 				this.remote = remote;
 			}
 
+			public final void setPort(final int port) {
+				this.port = port;
+			}
+
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
 			@JsonProperty(KEY_REMOTE) private boolean remote;
+			@JsonProperty(KEY_PORT) private int port;
 
 			public DriverConfig() {
 			}
@@ -1352,6 +1358,7 @@ implements Serializable {
 			public DriverConfig(final DriverConfig other) {
 				this.remote = other.getRemote();
 				this.addrs = new ArrayList<>(other.getAddrs());
+				this.port = other.getPort();
 			}
 
 			public List<String> getAddrs() {
@@ -1360,6 +1367,10 @@ implements Serializable {
 
 			public boolean getRemote() {
 				return remote;
+			}
+
+			public int getPort() {
+				return port;
 			}
 		}
 

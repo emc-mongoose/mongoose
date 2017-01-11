@@ -93,14 +93,22 @@ extends JobBase {
 		final List<StorageDriver> drivers = new ArrayList<>();
 		final StorageConfig storageConfig = localConfig.getStorageConfig();
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
+		final int driverPort = driverConfig.getPort();
 		final boolean remoteDriversFlag = driverConfig.getRemote();
 
 		if(remoteDriversFlag) {
 			final List<String> driverSvcAddrs = driverConfig.getAddrs();
 			for(final String driverSvcAddr : driverSvcAddrs) {
-				final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
-					driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
-				);
+				final StorageDriverBuilderSvc driverBuilderSvc;
+				if(driverSvcAddr.contains(":")) {
+					driverBuilderSvc = ServiceUtil.resolve(
+						driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
+					);
+				} else {
+					driverBuilderSvc = ServiceUtil.resolve(
+						driverSvcAddr, driverPort, StorageDriverBuilderSvc.SVC_NAME
+					);
+				}
 				LOG.info(
 					Markers.MSG, "Connected the service \"{}\" @ {}",
 					StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
@@ -126,9 +134,12 @@ extends JobBase {
 					throw new RuntimeException(e);
 				}
 
-				final StorageDriverSvc driverSvc = ServiceUtil.resolve(
-					driverSvcAddr, driverSvcName
-				);
+				final StorageDriverSvc driverSvc;
+				if(driverSvcAddr.contains(":")) {
+					driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
+				} else {
+					driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
+				}
 				LOG.info(
 					Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
 					driverSvcAddr

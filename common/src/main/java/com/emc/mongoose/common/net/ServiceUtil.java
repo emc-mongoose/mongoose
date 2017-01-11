@@ -1,5 +1,8 @@
 package com.emc.mongoose.common.net;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -9,7 +12,6 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.Naming;
-import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -18,54 +20,49 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  Created on 28.09.16.
  */
 public abstract class ServiceUtil {
 
-
-	private static Registry REGISTRY = null;
+	private static Int2ObjectMap<Registry> REGISTRY_MAP = new Int2ObjectOpenHashMap<>();
 	private static final String RMI_SCHEME = "rmi";
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
-	private static final Lock REGISTRY_LOCK = new ReentrantLock();
 	private static final Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 
-	static {
-		rmiRegistryInit();
-	}
-
-	private static void rmiRegistryInit() {
-		REGISTRY_LOCK.lock();
-		try {
-			if(REGISTRY == null) {
-				try {
-					REGISTRY = LocateRegistry.createRegistry(REGISTRY_PORT);
-				} catch(final RemoteException e) {
-					try {
-						REGISTRY = LocateRegistry.getRegistry(REGISTRY_PORT);
-					} catch(final RemoteException ee) {
-						ee.printStackTrace(System.err);
-					}
-				}
+	private static synchronized void ensureRmiRegistryIsAvailableAt(final int port)
+	throws RemoteException {
+		if(!REGISTRY_MAP.containsKey(port)) {
+			try {
+				REGISTRY_MAP.put(port, LocateRegistry.createRegistry(port));
+			} catch(final RemoteException e) {
+				REGISTRY_MAP.put(port, LocateRegistry.getRegistry(port));
 			}
-		} finally {
-			REGISTRY_LOCK.unlock();
 		}
 	}
 
-	public static URI getLocalSvcUri(final String svcName)
+	public static URI getLocalSvcUri(final String svcName, final int port)
 	throws URISyntaxException {
 		final String hostName = getHostAddr();
-		return new URI(RMI_SCHEME, null, hostName, REGISTRY_PORT, "/" + svcName, null, null);
+		return new URI(RMI_SCHEME, null, hostName, port, "/" + svcName, null, null);
 	}
 
-	public static URI getRemoteSvcUri(final String addr, final String svcName)
+	private static URI getRemoteSvcUri(final String addr, final String svcName)
 	throws URISyntaxException {
-		return new URI(RMI_SCHEME, null, addr, REGISTRY_PORT, "/" + svcName, null, null);
+		final int port;
+		final int portPos = addr.lastIndexOf(":");
+		if(portPos < 0) {
+			throw new URISyntaxException(addr, "No port information in the address");
+		} else {
+			port = Integer.parseInt(addr.substring(portPos + 1));
+		}
+		return getRemoteSvcUri(addr.substring(0, portPos), port, svcName);
+	}
+
+	private static URI getRemoteSvcUri(final String addr, final int port, final String svcName)
+	throws URISyntaxException {
+		return new URI(RMI_SCHEME, null, addr, port, "/" + svcName, null, null);
 	}
 
 	public static String getHostAddr() {
@@ -102,11 +99,12 @@ public abstract class ServiceUtil {
 		return addr.getHostAddress();
 	}
 
-	public static String create(final Service svc) {
+	public static String create(final Service svc, final int port) {
 		try {
+			ensureRmiRegistryIsAvailableAt(port);
 			UnicastRemoteObject.exportObject(svc, 0);
 			final String svcName = svc.getName();
-			final String svcUri = getLocalSvcUri(svcName).toString();
+			final String svcUri = getLocalSvcUri(svcName, port).toString();
 			if(!SVC_MAP.containsKey(svcUri)) {
 				Naming.rebind(svcUri, svc);
 				SVC_MAP.put(svcName, svc);
@@ -131,6 +129,19 @@ public abstract class ServiceUtil {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <S extends Service> S resolve(
+		final String addr, final int port, final String name
+	) {
+		try {
+			final String svcUri = getRemoteSvcUri(addr, port, name).toString();
+			return (S) Naming.lookup(svcUri);
+		} catch(final NotBoundException | IOException | URISyntaxException e) {
+			e.printStackTrace(System.err);
+		}
+		return null;
+	}
+
 	public static String close(final Service svc)
 	throws RemoteException, MalformedURLException {
 		String svcUri = null;
@@ -138,7 +149,7 @@ public abstract class ServiceUtil {
 			UnicastRemoteObject.unexportObject(svc, true);
 		} finally {
 			try {
-				svcUri = getLocalSvcUri(svc.getName()).toString();
+				svcUri = getLocalSvcUri(svc.getName(), svc.getRegistryPort()).toString();
 				Naming.unbind(svcUri);
 				SVC_MAP.remove(svcUri);
 			} catch(final NotBoundException | URISyntaxException e) {
@@ -149,6 +160,7 @@ public abstract class ServiceUtil {
 	}
 
 	public static void shutdown() {
+
 		for(final Service svc : SVC_MAP.values()) {
 			try {
 				System.out.println("Service closed: " + close(svc));
@@ -156,6 +168,9 @@ public abstract class ServiceUtil {
 				e.printStackTrace(System.err);
 			}
 		}
+		SVC_MAP.clear();
+
+		REGISTRY_MAP.clear();
 	}
 
 }
