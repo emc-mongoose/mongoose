@@ -119,27 +119,18 @@ public abstract class ServiceUtil {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <S extends Service> S resolve(final String addr, final String name) {
-		try {
-			final String svcUri = getRemoteSvcUri(addr, name).toString();
-			return (S) Naming.lookup(svcUri);
-		} catch(final NotBoundException | IOException | URISyntaxException e) {
-			e.printStackTrace(System.err);
-		}
-		return null;
+	public static <S extends Service> S resolve(final String addr, final String name)
+	throws NotBoundException, IOException, URISyntaxException {
+		final String svcUri = getRemoteSvcUri(addr, name).toString();
+		return (S) Naming.lookup(svcUri);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <S extends Service> S resolve(
 		final String addr, final int port, final String name
-	) {
-		try {
-			final String svcUri = getRemoteSvcUri(addr, port, name).toString();
-			return (S) Naming.lookup(svcUri);
-		} catch(final NotBoundException | IOException | URISyntaxException e) {
-			e.printStackTrace(System.err);
-		}
-		return null;
+	) throws NotBoundException, IOException, URISyntaxException {
+		final String svcUri = getRemoteSvcUri(addr, port, name).toString();
+		return (S) Naming.lookup(svcUri);
 	}
 
 	public static String close(final Service svc)

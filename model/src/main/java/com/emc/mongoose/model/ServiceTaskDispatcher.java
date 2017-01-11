@@ -4,7 +4,7 @@ import com.emc.mongoose.common.concurrent.Daemon;
 
 import java.rmi.RemoteException;
 import java.util.Map;
-
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 30.11.16.
  */
@@ -22,21 +22,25 @@ implements Runnable {
 		try {
 			while(true) {
 				Runnable nextDispatchTask;
-				for(final Daemon taskOwner : dispatchTasks.keySet()) {
-					nextDispatchTask = dispatchTasks.get(taskOwner);
-					if(nextDispatchTask != null) {
-						try {
-							nextDispatchTask.run();
-						} catch(final Exception e) {
-							if(
-								taskOwner != null && !taskOwner.isInterrupted() &&
-								!taskOwner.isClosed()
-							) {
-								e.printStackTrace(System.err);
+				if(dispatchTasks.size() == 0) {
+					Thread.sleep(1);
+				} else {
+					for(final Daemon taskOwner : dispatchTasks.keySet()) {
+						nextDispatchTask = dispatchTasks.get(taskOwner);
+						if(nextDispatchTask != null) {
+							try {
+								nextDispatchTask.run();
+							} catch(final Exception e) {
+								if(
+									taskOwner != null && !taskOwner.isInterrupted() &&
+									!taskOwner.isClosed()
+								) {
+									e.printStackTrace(System.err);
+								}
 							}
 						}
+						LockSupport.parkNanos(1);
 					}
-					Thread.sleep(1);
 				}
 			}
 		} catch(final InterruptedException | RemoteException ignored) {

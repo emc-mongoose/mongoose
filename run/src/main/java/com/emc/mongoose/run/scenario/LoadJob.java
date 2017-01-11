@@ -33,9 +33,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,13 +103,31 @@ extends JobBase {
 			for(final String driverSvcAddr : driverSvcAddrs) {
 				final StorageDriverBuilderSvc driverBuilderSvc;
 				if(driverSvcAddr.contains(":")) {
-					driverBuilderSvc = ServiceUtil.resolve(
-						driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
-					);
+					try {
+						driverBuilderSvc = ServiceUtil.resolve(
+							driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
+						);
+					} catch(final NotBoundException | IOException | URISyntaxException e) {
+						LogUtil.exception(
+							LOG, Level.FATAL, e,
+							"Failed to resolve the storage driver builder service @{}",
+							driverSvcAddr
+						);
+						return;
+					}
 				} else {
-					driverBuilderSvc = ServiceUtil.resolve(
-						driverSvcAddr, driverPort, StorageDriverBuilderSvc.SVC_NAME
-					);
+					try {
+						driverBuilderSvc = ServiceUtil.resolve(
+							driverSvcAddr, driverPort, StorageDriverBuilderSvc.SVC_NAME
+						);
+					} catch(final NotBoundException | IOException | URISyntaxException e) {
+						LogUtil.exception(
+							LOG, Level.FATAL, e,
+							"Failed to resolve the storage driver builder service @{}:{}",
+							driverSvcAddr, driverPort
+						);
+						return;
+					}
 				}
 				LOG.info(
 					Markers.MSG, "Connected the service \"{}\" @ {}",
@@ -136,9 +156,26 @@ extends JobBase {
 
 				final StorageDriverSvc driverSvc;
 				if(driverSvcAddr.contains(":")) {
-					driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
+					try {
+						driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
+					} catch(final NotBoundException | IOException | URISyntaxException e) {
+						LogUtil.exception(
+							LOG, Level.FATAL, e, "Failed to resolve the storage driver service @{}",
+							driverSvcAddr
+						);
+						return;
+					}
 				} else {
-					driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
+					try {
+						driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
+					} catch(final NotBoundException | IOException | URISyntaxException e) {
+						LogUtil.exception(
+							LOG, Level.FATAL, e,
+							"Failed to resolve the storage driver service @{}:{}", driverSvcAddr,
+							driverPort
+						);
+						return;
+					}
 				}
 				LOG.info(
 					Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
