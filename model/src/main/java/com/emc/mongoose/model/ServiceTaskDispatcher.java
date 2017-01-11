@@ -35,8 +35,8 @@ implements Runnable {
 								e.printStackTrace(System.err);
 							}
 						}
-						Thread.sleep(1);
 					}
+					Thread.sleep(1);
 				}
 			}
 		} catch(final InterruptedException | RemoteException ignored) {

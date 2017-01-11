@@ -444,14 +444,12 @@
 			},
 			"logger": [
 				{
-					// netty
-					"name" : "rejectedExecution",
-					"level" : "OFF",
+					"name" : "io.netty.util.concurrent.DefaultPromise.rejectedExecution",
+					"level" : "FATAL",
 					"additivity" : "false"
 				},
 				{
-					// netty
-					"name" : "AbstractChannel",
+					"name" : "io.netty.channel.AbstractChannel",
 					"level" : "ERROR",
 					"additivity" : "false",
 					"AppenderRef": {
