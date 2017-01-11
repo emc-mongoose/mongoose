@@ -239,6 +239,7 @@ extends SimpleChannelInboundHandler<M> {
 		}
 		
 		if(fastEquals) {
+			buff.release();
 			return;
 		}
 		
@@ -248,8 +249,11 @@ extends SimpleChannelInboundHandler<M> {
 			expected = buff.getByte(i);
 			actual = chunkData.getByte(chunkOffset + i);
 			if(expected != actual) {
+				buff.release();
 				throw new DataCorruptionException(i, expected, actual);
 			}
 		}
+
+		buff.release();
 	}
 }

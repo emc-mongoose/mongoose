@@ -26,6 +26,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,9 +52,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	private final Input<String> dstPathInput;
 	private final Thread worker;
 	private final long countLimit;
-	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
-	private final boolean isCircular;
 	private final IoTaskBuilder<I, O, R> ioTaskBuilder;
 
 	private long generatedIoTaskCount = 0;
@@ -62,7 +61,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final SizeInBytes avgItemSize,
 		final Input<String> dstPathInput, final IoTaskBuilder<I, O, R> ioTaskBuilder,
-		final long countLimit, final int maxItemQueueSize, final boolean isCircular
+		final long countLimit
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
@@ -70,8 +69,6 @@ implements LoadGenerator<I, O, R>, Output<I> {
 		this.dstPathInput = dstPathInput;
 		this.ioTaskBuilder = ioTaskBuilder;
 		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
-		this.maxItemQueueSize = maxItemQueueSize;
-		this.isCircular = isCircular;
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
 		worker = new Thread(
@@ -159,26 +156,28 @@ implements LoadGenerator<I, O, R>, Output<I> {
 								break;
 							}
 						}
-						// CIRCULARITY FEATURE:
-						// produce only <maxItemQueueSize> items in order to make it possible to
-						// enqueue them infinitely
-						if(isCircular && generatedIoTaskCount >= maxItemQueueSize) {
-							LOG.warn(
-								Markers.ERR,
-								"{}: stopped producing at {} I/O tasks due circular load mode",
-								BasicLoadGenerator.this.toString(), generatedIoTaskCount
-							);
-							break;
-						}
-					} catch(
-						final EOFException | ClosedByInterruptException | InterruptedIOException e
-					) {
+					} catch(final EOFException | InterruptedIOException e) {
 						break;
+					} catch(final RemoteException e) {
+						final Throwable cause = e.getCause();
+						if(
+							cause instanceof EOFException ||
+							cause instanceof ClosedByInterruptException
+						) {
+							break;
+						} else {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"{}: failed to read the data items, count = {}, batch size = {}, " +
+								"batch offset = {}",
+								BasicLoadGenerator.this.toString(), generatedIoTaskCount, n, m
+							);
+						}
 					} catch(final Exception e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e,
 							"{}: failed to read the data items, count = {}, batch size = {}, " +
-								"batch offset = {}",
+							"batch offset = {}",
 							BasicLoadGenerator.this.toString(), generatedIoTaskCount, n, m
 						);
 						//e.printStackTrace(System.err);

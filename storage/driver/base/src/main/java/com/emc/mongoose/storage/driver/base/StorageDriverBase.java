@@ -135,8 +135,11 @@ implements StorageDriver<I, O, R> {
 
 	@Override
 	public final boolean put(final O task)
-	throws IOException {
+	throws EOFException {
 		if(!isStarted()) {
+			throw new EOFException();
+		}
+		if(isCircular && scheduledTaskCount.sum() >= queueCapacity) {
 			throw new EOFException();
 		}
 		if(inTasksQueue.offer(task)) {
@@ -148,22 +151,43 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public final int put(final List<O> tasks, final int from, final int to) {
+	public final int put(final List<O> tasks, final int from, final int to)
+	throws EOFException {
+		int j;
+		if(isCircular) {
+			final long remaining = queueCapacity - scheduledTaskCount.sum();
+			if(remaining < 1) {
+				throw new EOFException();
+			}
+			j = (int) (from + Math.min(to - from, remaining));
+		} else {
+			j = to;
+		}
 		int i = from;
-		while(i < to && isStarted()) {
+		while(i < j && isStarted()) {
 			if(inTasksQueue.offer(tasks.get(i))) {
 				i ++;
 			} else {
 				break;
 			}
 		}
-		final int n = i - from;
+		final int n = i - j;
 		scheduledTaskCount.add(n);
 		return n;
 	}
 
 	@Override
-	public final int put(final List<O> tasks) {
+	public final int put(final List<O> tasks)
+	throws EOFException {
+		if(isCircular) {
+			final long remaining = queueCapacity - scheduledTaskCount.sum();
+			if(remaining < 1) {
+				throw new EOFException();
+			}
+			if(remaining < tasks.size()) {
+				return put(tasks, 0, (int) remaining);
+			}
+		}
 		int n = 0;
 		for(final O nextIoTask : tasks) {
 			if(isStarted() && inTasksQueue.offer(nextIoTask)) {

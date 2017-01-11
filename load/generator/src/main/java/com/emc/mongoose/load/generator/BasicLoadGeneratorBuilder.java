@@ -102,8 +102,6 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final Input<String> dstPathInput;
 		final IoTaskBuilder<I, O, R> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
-		final int maxQueueSize = loadConfig.getQueueConfig().getSize();
-		final boolean isCircular = loadConfig.getCircular();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 
@@ -174,8 +172,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		dstPathInput = getDstPathInput(ioType);
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit, maxQueueSize,
-			isCircular
+			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit
 		);
 	}
 	
