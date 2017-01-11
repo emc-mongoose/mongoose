@@ -417,8 +417,7 @@ implements LoadMonitor<R> {
 						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 					}
 				}
-
-			} else {
+			} else if(statusCode != IoTask.Status.CANCELLED.ordinal()) {
 				ioTypeStats.markFail();
 				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 					ioTypeMedStats.markFail();

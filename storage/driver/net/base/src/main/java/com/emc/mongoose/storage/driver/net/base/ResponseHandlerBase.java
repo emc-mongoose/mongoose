@@ -12,6 +12,8 @@ import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.data.DataVerificationException;
 import com.emc.mongoose.ui.log.LogUtil;
+
+import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
@@ -67,7 +69,9 @@ extends SimpleChannelInboundHandler<M> {
 	throws IOException {
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		if(!driver.isInterrupted() && !driver.isClosed()) {
+		if(driver.isInterrupted() || driver.isClosed()) {
+			ioTask.setStatus(CANCELLED);
+		} else if(!driver.isInterrupted() && !driver.isClosed()) {
 			if(cause instanceof PrematureChannelClosureException) {
 				LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
 				ioTask.setStatus(FAIL_IO);

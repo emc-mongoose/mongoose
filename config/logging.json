@@ -436,7 +436,7 @@
 		},
 		"loggers": {
 			"root": {
-				"level": "debug",
+				"level": "DEBUG",
 				"additivity": "false",
 				"AppenderRef": {
 					"ref": "async"
@@ -444,8 +444,27 @@
 			},
 			"logger": [
 				{
-					"name": "com.emc.mongoose",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+					// netty
+					"name" : "rejectedExecution",
+					"level" : "OFF",
+					"additivity" : "false"
+				},
+				{
+					// netty
+					"name" : "AbstractChannel",
+					"level" : "ERROR",
+					"additivity" : "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose",
+					"level" : "DEBUG",
+					"additivity" : "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
 				}
 			]
 		}
