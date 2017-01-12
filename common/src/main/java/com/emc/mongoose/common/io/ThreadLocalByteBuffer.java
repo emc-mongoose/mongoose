@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 public final class ThreadLocalByteBuffer {
 	
 	public static final int SIZE_MIN = 1;
-	public static final int SIZE_MAX = 0x100000; // 1MB
+	public static final int SIZE_MAX = 0x1000000; // 16MB
 	
 	private static final ThreadLocal<ByteBuffer[]> BUFFERS = new ThreadLocal<ByteBuffer[]>() {
 		@Override
@@ -22,22 +22,30 @@ public final class ThreadLocalByteBuffer {
 		}
 	};
 	
-	public static ByteBuffer get(final long size) {
+	public static ByteBuffer get(final long size)
+	throws IllegalArgumentException {
+		
+		if(size < 0) {
+			throw new IllegalArgumentException("Requested negative buffer size: " + size);
+		}
 		
 		final ByteBuffer[] ioBuffers = BUFFERS.get();
-		int i, currBuffSize = SIZE_MIN;
-		for(i = 0; i < ioBuffers.length && currBuffSize < size; i ++) {
-			currBuffSize *= 2;
+		long currBuffSize = Long.highestOneBit(size);
+		if(currBuffSize > SIZE_MAX) {
+			currBuffSize = SIZE_MAX;
+		} else if(currBuffSize < SIZE_MAX) {
+			if(currBuffSize < SIZE_MIN) {
+				currBuffSize = SIZE_MIN;
+			} else if(currBuffSize < size) {
+				currBuffSize <<= 1;
+			}
 		}
-		
-		if(i == ioBuffers.length) {
-			i --;
-		}
+		final int i = Long.numberOfTrailingZeros(currBuffSize);
 		ByteBuffer buff = ioBuffers[i];
 		
 		if(buff == null) {
-			buff = ByteBuffer.allocateDirect(currBuffSize);
-			long buffSizeSum = 0;
+			buff = ByteBuffer.allocateDirect((int) currBuffSize);
+			/*long buffSizeSum = 0;
 			for(final ByteBuffer ioBuff : ioBuffers) {
 				if(ioBuff != null) {
 					buffSizeSum += ioBuff.capacity();
@@ -46,7 +54,7 @@ public final class ThreadLocalByteBuffer {
 			System.out.println(
 				Thread.currentThread().getName() + ": allocated " + formatFixedSize(currBuffSize) +
 				" of direct memory, total used by the thread: " + formatFixedSize(buffSizeSum)
-			);
+			);*/
 			ioBuffers[i] = buff;
 		}
 		
