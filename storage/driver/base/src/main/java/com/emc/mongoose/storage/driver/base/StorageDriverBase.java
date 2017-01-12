@@ -171,7 +171,7 @@ implements StorageDriver<I, O, R> {
 				break;
 			}
 		}
-		final int n = i - j;
+		final int n = i - from;
 		scheduledTaskCount.add(n);
 		return n;
 	}

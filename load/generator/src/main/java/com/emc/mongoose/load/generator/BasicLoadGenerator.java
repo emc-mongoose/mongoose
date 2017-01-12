@@ -135,11 +135,9 @@ implements LoadGenerator<I, O, R>, Output<I> {
 						break;
 					}
 					try {
-						buff = new ArrayList<>(BATCH_SIZE);
-						n = itemInput.get(buff, BATCH_SIZE);
-						if(n > remaining) {
-							n = (int) remaining;
-						}
+						n = BATCH_SIZE > remaining ? (int) remaining : BATCH_SIZE;
+						buff = new ArrayList<>(n);
+						n = itemInput.get(buff, n);
 						if(isShuffling) {
 							Collections.shuffle(buff, rnd);
 						}

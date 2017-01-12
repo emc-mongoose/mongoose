@@ -44,7 +44,7 @@ public final class ThreadLocalByteBuffer {
 				}
 			}
 			System.out.println(
-				"Allocated " + formatFixedSize(currBuffSize) +
+				Thread.currentThread().getName() + ": allocated " + formatFixedSize(currBuffSize) +
 				" of direct memory, total used by the thread: " + formatFixedSize(buffSizeSum)
 			);
 			ioBuffers[i] = buff;
