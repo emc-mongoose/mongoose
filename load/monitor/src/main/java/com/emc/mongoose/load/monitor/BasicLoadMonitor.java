@@ -523,6 +523,8 @@ implements LoadMonitor<R> {
 				}
 			}
 		}
+		
+		LOG.info(Markers.MSG, "{}: load monitor was shut down", getName());
 	}
 
 	@Override
@@ -541,7 +543,7 @@ implements LoadMonitor<R> {
 		//
 		LOG.debug(
 			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutMilliSec)
+			getName(), TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
