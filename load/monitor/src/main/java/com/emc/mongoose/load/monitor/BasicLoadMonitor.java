@@ -519,20 +519,22 @@ implements LoadMonitor<R> {
 				}
 			);
 			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
-				shutdownExecutor.submit(() -> {
-					try {
-						nextDriver.shutdown();
-						LOG.debug(
-							Markers.MSG, "{}: storage driver \"{}\" shut down", getName(),
-							nextDriver.toString()
-						);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "failed to shutdown the driver {}", getName(),
-							nextDriver.toString()
-						);
+				shutdownExecutor.submit(
+					() -> {
+						try {
+							nextDriver.shutdown();
+							LOG.debug(
+								Markers.MSG, "{}: storage driver \"{}\" shut down", getName(),
+								nextDriver.toString()
+							);
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "failed to shutdown the driver {}", getName(),
+								nextDriver.toString()
+							);
+						}
 					}
-				});
+				);
 			}
 		}
 		
