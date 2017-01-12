@@ -36,7 +36,7 @@ extends Daemon, Output<O>, Remote {
 
 	String HOST_ADDR = ServiceUtil.getHostAddr();
 	int BUFF_SIZE_MIN = 0x1000;
-	int BUFF_SIZE_MAX = 0x100000;
+	int BUFF_SIZE_MAX = 0x1000000;
 	
 	boolean createPath(final String path)
 	throws RemoteException;
