@@ -170,7 +170,7 @@ implements StorageDriver<I, O, R> {
 	protected final void doInterrupt()
 	throws IllegalStateException {
 		try {
-			if(!ioTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+			if(!ioTaskExecutor.awaitTermination(1, TimeUnit.MILLISECONDS)) {
 				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 1 second");
 			}
 		} catch(final InterruptedException e) {

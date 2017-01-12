@@ -153,6 +153,9 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public final int put(final List<O> tasks, final int from, final int to)
 	throws EOFException {
+		if(!isStarted()) {
+			throw new EOFException();
+		}
 		int j;
 		if(isCircular) {
 			final long remaining = queueCapacity - scheduledTaskCount.sum();
@@ -179,6 +182,9 @@ implements StorageDriver<I, O, R> {
 	@Override
 	public final int put(final List<O> tasks)
 	throws EOFException {
+		if(!isStarted()) {
+			throw new EOFException();
+		}
 		if(isCircular) {
 			final long remaining = queueCapacity - scheduledTaskCount.sum();
 			if(remaining < 1) {
@@ -388,7 +394,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doInterrupt() {
 		try {
-			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
+			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 1, TimeUnit.MILLISECONDS)) {
 				LOG.debug(Markers.MSG, "{}: interrupting while not in the idle state", toString());
 			}
 		} catch(final InterruptedException e) {
