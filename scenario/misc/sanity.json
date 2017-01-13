@@ -1,18 +1,9 @@
 {
-	"type" : "for",
+	"type" : "parallel",
 	"config" : {
 		"item" : {
-			"data" : {
-				"size" : "10KB"
-			},
 			"output" : {
 				"path" : "/default"
-			}
-		},
-		"load" : {
-			"concurrency" : 10,
-			"limit" : {
-				"time" : 20
 			}
 		},
 		"storage" : {
@@ -26,51 +17,82 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"output" : {
-						"file" : "items.csv"
-					}
-				}
-			}
-		},
-		{
-			"type" : "load",
-			"config" : {
-				"item" : {
 					"data" : {
-						"verify" : true
-					},
-					"input" : {
-						"file" : "items.csv"
+						"size" : "10KB"
 					}
 				},
 				"load" : {
-					"circular" : true,
-					"type" : "read"
+					"concurrency" : 100
 				}
 			}
 		},
 		{
-			"type" : "load",
+			"type" : "for",
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : {
-							"random" : 1
+						"size" : "1KB"
+					}
+				},
+				"load" : {
+					"concurrency" : 10,
+					"limit" : {
+						"time" : 10
+					}
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"output" : {
+								"file" : "items.csv"
+							}
 						}
-					},
-					"input" : {
-						"file" : "items.csv"
 					}
 				},
-				"load" : {
-					"circular" : true,
-					"type" : "update"
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"verify" : true
+							},
+							"input" : {
+								"file" : "items.csv"
+							}
+						},
+						"load" : {
+							"circular" : true,
+							"type" : "read"
+						}
+					}
+				},
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"ranges" : {
+									"random" : 1
+								}
+							},
+							"input" : {
+								"file" : "items.csv"
+							}
+						},
+						"load" : {
+							"circular" : true,
+							"type" : "update"
+						}
+					}
+				},
+				{
+					"type" : "command",
+					"value" : "rm -f items.csv"
 				}
-			}
-		},
-		{
-			"type" : "command",
-			"value" : "rm -f items.csv"
+			]
 		}
 	]
 }

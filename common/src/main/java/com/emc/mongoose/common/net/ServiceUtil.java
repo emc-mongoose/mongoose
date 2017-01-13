@@ -109,9 +109,6 @@ public abstract class ServiceUtil {
 				if(!SVC_MAP.containsKey(svcUri)) {
 					Naming.rebind(svcUri, svc);
 					SVC_MAP.put(svcName, svc);
-					System.out.println(
-						"Registered new service \"" + svcName + "\", total count: " + SVC_MAP.size()
-					);
 				} else {
 					throw new IllegalStateException("Service already registered");
 				}
@@ -152,11 +149,6 @@ public abstract class ServiceUtil {
 					if(null == SVC_MAP.remove(svcName)) {
 						System.err.println(
 							"Failed to remove the service \"" + svcName + "\""
-						);
-					} else {
-						System.out.println(
-							"Removed the service \"" + svcName + "\", total count: " +
-							SVC_MAP.size()
 						);
 					}
 				}
