@@ -192,9 +192,11 @@ implements LoadGenerator<I, O, R> {
 							break;
 						} else {
 							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+							e.printStackTrace(System.err);
 						}
 					} catch(final Exception e) {
 						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+						e.printStackTrace(System.err);
 					}
 				} else {
 					if(worker.isInterrupted()) {
