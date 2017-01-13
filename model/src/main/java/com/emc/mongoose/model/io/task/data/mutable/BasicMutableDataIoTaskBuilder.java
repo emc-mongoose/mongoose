@@ -33,48 +33,21 @@ implements MutableDataIoTaskBuilder<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final int from, final int to)
+	public List<O> getInstances(final List<I> items)
 	throws IOException {
-		final List<O> tasks = new ArrayList<>(to - from);
-		I item;
-		for(int i = from; i < to; i ++) {
-			item = items.get(i);
-			if(item.size() > sizeThreshold) {
+		final List<O> tasks = new ArrayList<>(items.size());
+		for(final I nextItem : items) {
+			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeMutableDataIoTask<>(
-						ioType, item, srcPath, null, fixedRanges, randomRangesCount, sizeThreshold
-					)
-				);
-			} else {
-				tasks.add(
-					(O) new BasicMutableDataIoTask<>(
-						ioType, item, srcPath, null, fixedRanges, randomRangesCount
-					)
-				);
-			}
-		}
-		return tasks;
-	}
-
-	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(
-		final List<I> items, final String dstPath, final int from, final int to
-	) throws IOException {
-		final List<O> tasks = new ArrayList<>(to - from);
-		I item;
-		for(int i = from; i < to; i ++) {
-			item = items.get(i);
-			if(item.size() > sizeThreshold) {
-				tasks.add(
-					(O) new BasicCompositeMutableDataIoTask<>(
-						ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount,
+						ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount,
 						sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicMutableDataIoTask<>(
-						ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount
+						ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount
 					)
 				);
 			}
@@ -83,25 +56,50 @@ implements MutableDataIoTaskBuilder<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(
-		final List<I> items, final List<String> dstPaths, final int from, final int to
-	) throws IOException {
-		final List<O> tasks = new ArrayList<>(to - from);
-		I item;
-		for(int i = from; i < to; i ++) {
-			item = items.get(i);
-			if(item.size() > sizeThreshold) {
+	public List<O> getInstances(final List<I> items, final String dstPath)
+	throws IOException {
+		final List<O> tasks = new ArrayList<>(items.size());
+		for(final I nextItem : items) {
+			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeMutableDataIoTask<>(
-						ioType, item, srcPath, dstPaths.get(i - from), fixedRanges,
-						randomRangesCount, sizeThreshold
+						ioType, nextItem, srcPath, dstPath, fixedRanges, randomRangesCount,
+						sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicMutableDataIoTask<>(
-						ioType, item, srcPath, dstPaths.get(i - from), fixedRanges,
-						randomRangesCount
+						ioType, nextItem, srcPath, dstPath, fixedRanges, randomRangesCount
+					)
+				);
+			}
+		}
+		return tasks;
+	}
+
+	@Override @SuppressWarnings("unchecked")
+	public List<O> getInstances(final List<I> items, final List<String> dstPaths)
+	throws IOException {
+		final int n = items.size();
+		if(dstPaths.size() != n) {
+			throw new IllegalArgumentException("Items count and paths count should be equal");
+		}
+		final List<O> tasks = new ArrayList<>(n);
+		I nextItem;
+		for(int i = 0; i < n; i ++) {
+			nextItem = items.get(i);
+			if(nextItem.size() > sizeThreshold) {
+				tasks.add(
+					(O) new BasicCompositeMutableDataIoTask<>(
+						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
+						sizeThreshold
+					)
+				);
+			} else {
+				tasks.add(
+					(O) new BasicMutableDataIoTask<>(
+						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount
 					)
 				);
 			}

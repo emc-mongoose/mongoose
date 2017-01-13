@@ -393,7 +393,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	throws IllegalStateException {
 		super.doInterrupt();
 		try {
-			workerGroup.shutdownGracefully(1, 1, TimeUnit.MILLISECONDS).sync();
+			workerGroup.shutdownGracefully(10, 10, TimeUnit.MILLISECONDS).sync();
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
 		}

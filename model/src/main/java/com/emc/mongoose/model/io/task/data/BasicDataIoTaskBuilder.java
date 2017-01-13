@@ -53,12 +53,10 @@ implements DataIoTaskBuilder<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final int from, final int to)
+	public List<O> getInstances(final List<I> items)
 	throws IOException {
-		final List<O> tasks = new ArrayList<>(to - from);
-		I nextItem;
-		for(int i = from; i < to; i ++) {
-			nextItem = items.get(i);
+		final List<O> tasks = new ArrayList<>(items.size());
+		for(final I nextItem : items) {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
@@ -78,13 +76,10 @@ implements DataIoTaskBuilder<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(
-		final List<I> items, final String dstPath, final int from, final int to
-	) throws IOException {
-		final List<O> tasks = new ArrayList<>(to - from);
-		I nextItem;
-		for(int i = from; i < to; i ++) {
-			nextItem = items.get(i);
+	public List<O> getInstances(final List<I> items, final String dstPath)
+	throws IOException {
+		final List<O> tasks = new ArrayList<>(items.size());
+		for(final I nextItem : items) {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
@@ -104,25 +99,27 @@ implements DataIoTaskBuilder<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(
-		final List<I> items, final List<String> dstPaths, final int from, final int to
-	) throws IOException {
-		final List<O> tasks = new ArrayList<>(to - from);
+	public List<O> getInstances(final List<I> items, final List<String> dstPaths)
+	throws IOException {
+		final int n = items.size();
+		if(dstPaths.size() != n) {
+			throw new IllegalArgumentException("Items count and paths count should be equal");
+		}
+		final List<O> tasks = new ArrayList<>(n);
 		I nextItem;
-		for(int i = from; i < to; i ++) {
+		for(int i = 0; i < n; i ++) {
 			nextItem = items.get(i);
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, dstPaths.get(i - from), fixedRanges,
-						randomRangesCount, sizeThreshold
+						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
+						sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicDataIoTask<>(
-						ioType, nextItem, srcPath, dstPaths.get(i - from), fixedRanges,
-						randomRangesCount
+						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount
 					)
 				);
 			}
