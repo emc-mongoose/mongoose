@@ -106,9 +106,12 @@ public abstract class ServiceUtil {
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
 			synchronized(SVC_MAP) {
-				if(! SVC_MAP.containsKey(svcUri)) {
+				if(!SVC_MAP.containsKey(svcUri)) {
 					Naming.rebind(svcUri, svc);
 					SVC_MAP.put(svcName, svc);
+					System.out.println(
+						"Registered new service \"" + svcName + "\", total count: " + SVC_MAP.size()
+					);
 				} else {
 					throw new IllegalStateException("Service already registered");
 				}
@@ -137,17 +140,23 @@ public abstract class ServiceUtil {
 
 	public static String close(final Service svc)
 	throws RemoteException, MalformedURLException {
+		final String svcName = svc.getName();
 		String svcUri = null;
 		try {
 			UnicastRemoteObject.unexportObject(svc, true);
 		} finally {
 			try {
-				svcUri = getLocalSvcUri(svc.getName(), svc.getRegistryPort()).toString();
+				svcUri = getLocalSvcUri(svcName, svc.getRegistryPort()).toString();
 				Naming.unbind(svcUri);
 				synchronized(SVC_MAP) {
-					if(null == SVC_MAP.remove(svc.getName())) {
+					if(null == SVC_MAP.remove(svcName)) {
 						System.err.println(
-							"Failed to remove the service \"" + svc.getName() + "\""
+							"Failed to remove the service \"" + svcName + "\""
+						);
+					} else {
+						System.out.println(
+							"Removed the service \"" + svcName + "\", total count: " +
+							SVC_MAP.size()
 						);
 					}
 				}
