@@ -1,0 +1,76 @@
+{
+	"type" : "for",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "10KB"
+			},
+			"output" : {
+				"path" : "/default"
+			}
+		},
+		"load" : {
+			"concurrency" : 10,
+			"limit" : {
+				"time" : 20
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"remote" : true
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "items.csv"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"verify" : true
+					},
+					"input" : {
+						"file" : "items.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"type" : "read"
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 1
+						}
+					},
+					"input" : {
+						"file" : "items.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"type" : "command",
+			"value" : "rm -f items.csv"
+		}
+	]
+}

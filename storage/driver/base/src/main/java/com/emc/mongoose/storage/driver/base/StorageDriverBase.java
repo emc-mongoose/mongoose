@@ -394,7 +394,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doInterrupt() {
 		try {
-			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 1, TimeUnit.MILLISECONDS)) {
+			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
 				LOG.debug(Markers.MSG, "{}: interrupting while not in the idle state", toString());
 			}
 		} catch(final InterruptedException e) {
