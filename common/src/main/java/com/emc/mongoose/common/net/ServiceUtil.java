@@ -18,8 +18,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  Created on 28.09.16.
@@ -29,7 +29,7 @@ public abstract class ServiceUtil {
 	private static Int2ObjectMap<Registry> REGISTRY_MAP = new Int2ObjectOpenHashMap<>();
 	private static final String RMI_SCHEME = "rmi";
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
-	private static final Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
+	private static final Map<String, Service> SVC_MAP = new HashMap<>();
 
 	private static synchronized void ensureRmiRegistryIsAvailableAt(final int port)
 	throws RemoteException {
@@ -105,11 +105,13 @@ public abstract class ServiceUtil {
 			UnicastRemoteObject.exportObject(svc, 0);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
-			if(!SVC_MAP.containsKey(svcUri)) {
-				Naming.rebind(svcUri, svc);
-				SVC_MAP.put(svcName, svc);
-			} else {
-				throw new IllegalStateException("Service already registered");
+			synchronized(SVC_MAP) {
+				if(! SVC_MAP.containsKey(svcUri)) {
+					Naming.rebind(svcUri, svc);
+					SVC_MAP.put(svcName, svc);
+				} else {
+					throw new IllegalStateException("Service already registered");
+				}
 			}
 			return svcUri;
 		} catch(final IOException | URISyntaxException e) {
@@ -142,7 +144,13 @@ public abstract class ServiceUtil {
 			try {
 				svcUri = getLocalSvcUri(svc.getName(), svc.getRegistryPort()).toString();
 				Naming.unbind(svcUri);
-				SVC_MAP.remove(svcUri);
+				synchronized(SVC_MAP) {
+					if(null == SVC_MAP.remove(svc.getName())) {
+						System.err.println(
+							"Failed to remove the service \"" + svc.getName() + "\""
+						);
+					}
+				}
 			} catch(final NotBoundException | URISyntaxException e) {
 				e.printStackTrace(System.err);
 			}
@@ -152,14 +160,16 @@ public abstract class ServiceUtil {
 
 	public static void shutdown() {
 
-		for(final Service svc : SVC_MAP.values()) {
-			try {
-				System.out.println("Service closed: " + close(svc));
-			} catch(final RemoteException | MalformedURLException e) {
-				e.printStackTrace(System.err);
+		synchronized(SVC_MAP) {
+			for(final Service svc : SVC_MAP.values()) {
+				try {
+					System.out.println("Service closed: " + close(svc));
+				} catch(final RemoteException | MalformedURLException e) {
+					e.printStackTrace(System.err);
+				}
 			}
+			SVC_MAP.clear();
 		}
-		SVC_MAP.clear();
 
 		REGISTRY_MAP.clear();
 	}
