@@ -190,13 +190,15 @@ implements LoadGenerator<I, O, R> {
 						if(cause instanceof EOFException) {
 							LOG.debug(Markers.MSG, "{}: finish due to output's EOF", toString());
 							break;
-						} else {
+						} else if(!isStarted()){
 							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
 							e.printStackTrace(System.err);
 						}
 					} catch(final Exception e) {
-						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
-						e.printStackTrace(System.err);
+						if(!isStarted()) {
+							LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+							e.printStackTrace(System.err);
+						}
 					}
 				} else {
 					if(worker.isInterrupted()) {
