@@ -13,6 +13,8 @@ import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
+import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +44,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-
-import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;
 import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
@@ -177,22 +177,19 @@ implements StorageMockClient<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void serviceResolved(final ServiceEvent event) {
-		final Consumer<String> c = new Consumer<String>() {
-			@Override
-			public final void accept(final String hostAddress) {
-				try {
-					final URI rmiUrl = new URI(
-						"rmi", null, hostAddress, REGISTRY_PORT, "/" + SVC_NAME, null, null
-					);
-					final StorageMockServer<T> mock = (StorageMockServer<T>) Naming.lookup(
-						rmiUrl.toString()
-					);
-					remoteNodeMap.putIfAbsent(hostAddress, mock);
-				} catch(final NotBoundException | MalformedURLException | RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
-				} catch(final URISyntaxException e) {
-					LOG.debug(Markers.ERR, "RMI URL syntax error {}", e);
-				}
+		final Consumer<String> c = hostAddress -> {
+			try {
+				final URI rmiUrl = new URI(
+					"rmi", null, hostAddress, REGISTRY_PORT, "/" + SVC_NAME, null, null
+				);
+				final StorageMockServer<T> mock = (StorageMockServer<T>) Naming.lookup(
+					rmiUrl.toString()
+				);
+				remoteNodeMap.putIfAbsent(hostAddress, mock);
+			} catch(final NotBoundException | MalformedURLException | RemoteException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
+			} catch(final URISyntaxException e) {
+				LOG.debug(Markers.ERR, "RMI URL syntax error {}", e);
 			}
 		};
 		handleServiceEvent(event, c, "Node added");
