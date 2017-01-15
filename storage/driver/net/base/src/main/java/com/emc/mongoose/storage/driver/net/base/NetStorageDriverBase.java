@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.common.io.Input;

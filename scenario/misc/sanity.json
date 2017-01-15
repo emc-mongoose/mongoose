@@ -5,11 +5,6 @@
 			"output" : {
 				"path" : "/default"
 			}
-		},
-		"storage" : {
-			"driver" : {
-				"remote" : true
-			}
 		}
 	},
 	"jobs" : [

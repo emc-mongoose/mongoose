@@ -188,6 +188,7 @@ implements Scenario {
 	//
 	@Override
 	public final void run() {
+		LOG.info(Markers.MSG, "Scenario start");
 		super.run();
 		LOG.info(Markers.MSG, "Scenario end");
 	}

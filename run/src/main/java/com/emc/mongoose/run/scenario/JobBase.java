@@ -4,6 +4,11 @@ import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.JobConfig;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Markers;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 /**
@@ -11,6 +16,8 @@ import org.apache.logging.log4j.ThreadContext;
  */
 public abstract class JobBase
 implements Job {
+
+	private static final Logger LOG = LogManager.getLogger();
 
 	protected final Config localConfig;
 
@@ -26,15 +33,20 @@ implements Job {
 	@Override
 	public void run() {
 		final JobConfig jobConfig = localConfig.getLoadConfig().getJobConfig();
-		String jobName = jobConfig.getName();
-		if(jobName == null) {
-			jobName = ThreadContext.get(KEY_JOB_NAME);
-			jobConfig.setName(jobName);
-		} else {
-			ThreadContext.put(KEY_JOB_NAME, jobName);
-		}
-		if(jobName == null) {
-			throw new IllegalStateException("Job name is not set");
+		try {
+			String jobName = jobConfig.getName();
+			if(jobName == null) {
+				jobName = ThreadContext.get(KEY_JOB_NAME);
+				if(jobName == null) {
+					LOG.fatal(Markers.ERR, "Job name is not set");
+				} else {
+					jobConfig.setName(jobName);
+				}
+			} else {
+				ThreadContext.put(KEY_JOB_NAME, jobName);
+			}
+		} catch(final Throwable t) {
+			LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
 		}
 	}
 }

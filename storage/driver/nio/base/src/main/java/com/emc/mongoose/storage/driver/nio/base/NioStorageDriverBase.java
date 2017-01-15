@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;

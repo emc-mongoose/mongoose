@@ -12,6 +12,7 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,6 +65,7 @@ implements StorageMockClient<T> {
 		this.executor = new ThreadPoolExecutor(
 			ThreadUtil.getHardwareConcurrencyLevel(), ThreadUtil.getHardwareConcurrencyLevel(),
 			0, TimeUnit.DAYS, new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
+			new NamingThreadFactory("storageMockClientWorker", true),
 			(r, e) -> LOG.error("Task {} rejected", r.toString())
 		) {
 			@Override

@@ -29,12 +29,14 @@ extends ParentJobBase {
 	@Override
 	public synchronized void run() {
 		super.run();
-		LOG.debug(Markers.MSG, "{}: start {} child jobs", toString(), childJobs.size());
+		LOG.info(
+			Markers.MSG, "{}: execute {} child jobs sequentially", toString(), childJobs.size()
+		);
 		for(final Job subJob : childJobs) {
 			LOG.debug(Markers.MSG, "{}: child job \"{}\" start", toString(), subJob.toString());
 			subJob.run();
 			LOG.debug(Markers.MSG, "{}: child job \"{}\" is done", toString(), subJob.toString());
 		}
-		LOG.debug(Markers.MSG, "{}: end", toString());
+		LOG.info(Markers.MSG, "{}: finished the sequential execution of {} child jobs", toString());
 	}
 }

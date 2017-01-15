@@ -3,7 +3,7 @@ package com.emc.mongoose.load.monitor;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.DaemonBase;
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
@@ -40,7 +40,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Order;
 
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
@@ -498,7 +497,8 @@ implements LoadMonitor<R> {
 	throws IllegalStateException {
 		
 		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel()
+			ThreadUtil.getHardwareConcurrencyLevel(),
+			new NamingThreadFactory("shutdownWorker", true)
 		);
 
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
@@ -603,7 +603,8 @@ implements LoadMonitor<R> {
 	throws IllegalStateException {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel()
+			ThreadUtil.getHardwareConcurrencyLevel(),
+			new NamingThreadFactory("interruptWorker", true)
 		);
 
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
@@ -656,7 +657,8 @@ implements LoadMonitor<R> {
 	throws IOException {
 		
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel()
+			ThreadUtil.getHardwareConcurrencyLevel(),
+			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)
 		);
 
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
@@ -673,30 +675,32 @@ implements LoadMonitor<R> {
 									LOG.debug(
 										Markers.MSG,
 										"{}: the driver \"{}\" returned {} final I/O results to process",
-										getName(), driver, finalResults
+										getName(), driver.toString(), finalResults.size()
 									);
 									processIoResults(
-										finalResults, finalResultsCount, circularityMap.get(generator)
+										finalResults, finalResultsCount,
+										circularityMap.get(generator)
 									);
 								}
 							}
 						} catch(final Throwable cause) {
 							LogUtil.exception(
 								LOG, Level.WARN, cause,
-								"{}: failed to process the final results for the driver {}", getName(),
-								driver
+								"{}: failed to process the final results for the driver {}",
+								getName(), driver.toString()
 							);
 						}
 		
 						try {
 							driver.close();
 							LOG.debug(
-								Markers.MSG, "{}: the storage driver \"{}\" has been closed", getName(),
-								driver
+								Markers.MSG, "{}: the storage driver \"{}\" has been closed",
+								getName(), driver.toString()
 							);
 						} catch(final IOException e) {
 							LogUtil.exception(
-								LOG, Level.WARN, e, "{}: failed to close the driver {}", getName(), driver
+								LOG, Level.WARN, e, "{}: failed to close the driver {}", getName(),
+								driver.toString()
 							);
 						}
 					}
