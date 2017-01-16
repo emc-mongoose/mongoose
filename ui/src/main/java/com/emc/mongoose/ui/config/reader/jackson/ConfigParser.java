@@ -11,7 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.Constants.DIR_CONFIG;
@@ -42,17 +45,9 @@ public abstract class ConfigParser {
 			final String rp = Pattern.quote(replacePattern);
 			if(newValue == null) {
 				newConfigText = configText.replaceAll("\"" + rp + "\"", "null");
-			} else if(newValue instanceof Boolean) {
+			} else if(newValue instanceof Boolean || newValue instanceof Number) {
 				newConfigText = configText
 					.replaceAll("\"" + rp + "\"", newValue.toString())
-					.replaceAll(rp, newValue.toString());
-			} else if(newValue instanceof Long) {
-				newConfigText = configText
-					.replaceAll("\"" + rp + "\"", newValue.toString())
-					.replaceAll(rp, newValue.toString());
-			} else if(newValue instanceof Double) {
-				newConfigText = configText
-					.replaceAll("\"" + rp+ "\"", newValue.toString())
 					.replaceAll(rp, newValue.toString());
 			} else if(newValue instanceof List) {
 				final List<Object> newValues = (List<Object>) newValue;
@@ -63,11 +58,7 @@ public abstract class ConfigParser {
 					nextValue = newValues.get(i);
 					if(nextValue == null) {
 						newStrValues.add("null");
-					} else if(nextValue instanceof Boolean) {
-						newStrValues.add(nextValue.toString());
-					} else if(nextValue instanceof Long) {
-						newStrValues.add(nextValue.toString());
-					} else if(nextValue instanceof Double) {
+					} else if(nextValue instanceof Boolean || nextValue instanceof Number) {
 						newStrValues.add(nextValue.toString());
 					} else if(nextValue instanceof String) {
 						newStrValues.add("\"" + nextValue + "\"");
@@ -90,5 +81,46 @@ public abstract class ConfigParser {
 		} catch(final JsonProcessingException e) {
 			throw new OmgDoesNotPerformException(e);
 		}
+	}
+	
+	public static Map<String, Object> replace(
+		final Map<String, Object> config, final String replacePattern, final Object newValue
+	) throws OmgLookAtMyConsoleException {
+		final Map<String, Object> newConfig = new HashMap<>();
+		final String rp = Pattern.quote(replacePattern);
+		Object v;
+		String valueStr;
+		for(final String k : config.keySet()) {
+			v = config.get(k);
+			if(v instanceof String) {
+				valueStr = (String) v;
+				if(valueStr.equals("\"" + replacePattern + "\"")) {
+					v = newValue;
+				} else {
+					if(newValue == null) {
+						v = valueStr.replaceAll(rp, "");
+					} else if(
+						newValue instanceof Boolean || newValue instanceof Number ||
+						newValue instanceof String
+					) {
+						v = valueStr.replaceAll(rp, newValue.toString());
+					} else if(newValue instanceof List) {
+						final StringJoiner sj = new StringJoiner(",");
+						for(final Object newValueElement : (List) newValue) {
+							sj.add(newValueElement == null ? "" : newValueElement.toString());
+						}
+						v = valueStr.replaceAll(rp, sj.toString());
+					} else {
+						throw new OmgLookAtMyConsoleException(
+							"Unexpected replacement value type: " + newValue.getClass().getName()
+						);
+					}
+				}
+			} else if(v instanceof Map) {
+				v = replace((Map<String, Object>) v, replacePattern, newValue);
+			}
+			newConfig.put(k, v);
+		}
+		return newConfig;
 	}
 }

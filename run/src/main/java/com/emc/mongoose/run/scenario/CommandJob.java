@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario;
 
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.ui.log.LogUtil.BLUE;

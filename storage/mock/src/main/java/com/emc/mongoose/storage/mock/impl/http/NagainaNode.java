@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.common.net.NetUtil;

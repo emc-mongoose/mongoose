@@ -1,8 +1,9 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.DaemonBase;
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.model.DaemonBase;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
@@ -51,6 +52,8 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
@@ -419,8 +422,7 @@ implements LoadMonitor<R> {
 						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
 					}
 				}
-
-			} else {
+			} else if(statusCode != IoTask.Status.CANCELLED.ordinal()) {
 				ioTypeStats.markFail();
 				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 					ioTypeMedStats.markFail();
@@ -495,28 +497,60 @@ implements LoadMonitor<R> {
 	@Override
 	protected void doShutdown()
 	throws IllegalStateException {
+		
+		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
+			ThreadUtil.getHardwareConcurrencyLevel(),
+			new NamingThreadFactory("shutdownWorker", true)
+		);
 
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
-
-			try {
-				nextGenerator.interrupt();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to interrupt the generator {}",
-					nextGenerator.toString()
+			shutdownExecutor.submit(
+				() -> {
+					try {
+						nextGenerator.interrupt();
+						LOG.debug(
+							Markers.MSG, "{}: load generator \"{}\" shut down", getName(),
+							nextGenerator.toString()
+						);
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "{}: failed to interrupt the generator {}",
+							getName(), nextGenerator.toString()
+						);
+					}
+				}
+			);
+			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
+				shutdownExecutor.submit(
+					() -> {
+						try {
+							nextDriver.shutdown();
+							LOG.debug(
+								Markers.MSG, "{}: storage driver \"{}\" shut down", getName(),
+								nextDriver.toString()
+							);
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "failed to shutdown the driver {}", getName(),
+								nextDriver.toString()
+							);
+						}
+					}
 				);
 			}
-
-			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
-				try {
-					nextDriver.shutdown();
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to shutdown the driver {}",
-						nextDriver.toString()
-					);
-				}
+		}
+		
+		shutdownExecutor.shutdown();
+		try {
+			if(shutdownExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				LOG.debug(Markers.MSG, "{}: load monitor was shut down properly", getName());
+			} else {
+				LOG.warn(Markers.ERR, "{}: load monitor shutdown timeout", getName());
 			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "{}: load monitor shutdown interrupted", getName()
+			);
 		}
 	}
 
@@ -536,7 +570,7 @@ implements LoadMonitor<R> {
 		//
 		LOG.debug(
 			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutMilliSec)
+			getName(), TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
@@ -569,68 +603,143 @@ implements LoadMonitor<R> {
 	@Override
 	protected void doInterrupt()
 	throws IllegalStateException {
+		
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
+			ThreadUtil.getHardwareConcurrencyLevel(),
+			new NamingThreadFactory("interruptWorker", true)
+		);
 
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			for(final StorageDriver<I, O, R> nextDriver : driversMap.get(nextGenerator)) {
-				try {
-					nextDriver.interrupt();
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e, "Failed to interrupt the driver {}",
-						nextDriver.toString()
-					);
-				}
+				interruptExecutor.submit(
+					() -> {
+						try {
+							nextDriver.interrupt();
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.DEBUG, e, "{}: failed to interrupt the driver {}",
+								getName(), nextDriver.toString()
+							);
+						}
+					}
+				);
 			}
+		}
+		
+		interruptExecutor.shutdown();
+		try {
+			if(interruptExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				LOG.debug(
+					Markers.MSG, "{}: storage drivers have been interrupted properly", getName()
+				);
+			} else {
+				LOG.warn(Markers.ERR, "{}: storage drivers interrupting timeout", getName());
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
+			);
 		}
 
 		svcTaskExecutor.shutdownNow();
 		try {
 			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.error(Markers.ERR, "Failed to terminate the service tasks in 1 second");
+				LOG.error(
+					Markers.ERR, "{}: failed to terminate the service tasks in 1 second", getName()
+				);
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final InterruptedException e) {
+			assert false;
 		}
+		LOG.debug(Markers.MSG, "{}: interrupted the load monitor", getName());
 	}
 
 	@Override
 	protected final void doClose()
 	throws IOException {
+		
+		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
+			ThreadUtil.getHardwareConcurrencyLevel(),
+			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)
+		);
 
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
-
-				try {
-					final List<R> finalResults = driver.getResults();
-					if(finalResults != null) {
-						final int finalResultsCount = finalResults.size();
-						if(finalResultsCount > 0) {
-							processIoResults(
-								finalResults, finalResultsCount, circularityMap.get(generator)
+				
+				ioResultsGetAndApplyExecutor.submit(
+					() -> {
+						try {
+							final List<R> finalResults = driver.getResults();
+							if(finalResults != null) {
+								final int finalResultsCount = finalResults.size();
+								if(finalResultsCount > 0) {
+									LOG.debug(
+										Markers.MSG,
+										"{}: the driver \"{}\" returned {} final I/O results to process",
+										getName(), driver.toString(), finalResults.size()
+									);
+									processIoResults(
+										finalResults, finalResultsCount,
+										circularityMap.get(generator)
+									);
+								}
+							}
+						} catch(final Throwable cause) {
+							LogUtil.exception(
+								LOG, Level.WARN, cause,
+								"{}: failed to process the final results for the driver {}",
+								getName(), driver.toString()
+							);
+						}
+		
+						try {
+							driver.close();
+							LOG.debug(
+								Markers.MSG, "{}: the storage driver \"{}\" has been closed",
+								getName(), driver.toString()
+							);
+						} catch(final IOException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "{}: failed to close the driver {}", getName(),
+								driver.toString()
 							);
 						}
 					}
-				} catch(final Throwable cause) {
-					LogUtil.exception(
-						LOG, Level.WARN, cause,
-						"Failed to process the final results for the driver {}", driver
-					);
-				}
-
-				try {
-					driver.close();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the driver {}", driver);
-				}
+				);
 			}
 
 			try {
 				generator.close();
+				LOG.debug(
+					Markers.MSG, "{}: the load generator \"{}\" has been closed", getName(),
+					generator
+				);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to close the generator {}", generator
+					LOG, Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
 				);
 			}
+		}
+		
+		ioResultsGetAndApplyExecutor.shutdown();
+		try {
+			if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				LOG.debug(
+					Markers.MSG, "{}: final I/O result have been got and processed properly",
+					getName()
+				);
+			} else {
+				LOG.warn(
+					Markers.ERR, "{}: timeout while getting and processing the final I/O results",
+					getName()
+				);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"{}: interrupted  while getting and processing the final I/O results", getName()
+			);
 		}
 		
 		driversMap.clear();
@@ -686,8 +795,10 @@ implements LoadMonitor<R> {
 
 		if(ioResultsOutput != null) {
 			ioResultsOutput.close();
+			LOG.debug(Markers.MSG, "{}: closed the items output", getName());
 		}
 
 		UNCLOSED.remove(this);
+		LOG.debug(Markers.MSG, "{}: closed the load monitor", getName());
 	}
 }

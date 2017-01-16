@@ -32,6 +32,12 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
+	private final int port;
+
+	public BasicStorageDriverBuilderSvc(final int port) {
+		this.port = port;
+	}
+
 	@Override
 	public BasicStorageDriverBuilderSvc<I, O, R, T> setJobName(final String jobName) {
 		super.setJobName(jobName);
@@ -65,7 +71,7 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 	@Override
 	public void start()
 	throws IllegalStateException, RemoteException {
-		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
+		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
 	}
 
 	@Override
@@ -120,6 +126,12 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 	}
 
 	@Override
+	public final int getRegistryPort()
+	throws RemoteException {
+		return port;
+	}
+
+	@Override
 	public final String getName()
 	throws RemoteException {
 		return SVC_NAME;
@@ -135,7 +147,9 @@ implements StorageDriverBuilderSvc<I, O, R, T> {
 	public final String buildRemotely()
 	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O, R> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(driver, getContentSource());
+		final T wrapper = (T) new WrappingStorageDriverSvc<>(
+			port, driver, getContentSource(), getLoadConfig().getMetricsConfig().getPeriod()
+		);
 		return wrapper.getName();
 	}
 }

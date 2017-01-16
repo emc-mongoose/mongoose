@@ -10,8 +10,7 @@
 			"http" : {
 				"api" : "Swift",
 				"namespace" : "test"
-			},
-			"port" : 9024
+			}
 		}
 	}
 }

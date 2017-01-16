@@ -191,7 +191,7 @@ extends SequentialJob {
 		}
 
 		final Object nodeConfig = subTree.get(KEY_NODE_CONFIG);
-		if(nodeConfig != null) {
+		/*if(nodeConfig != null) {
 			if(nodeConfig instanceof Map) {
 				localConfig.apply((Map<String, Object>) nodeConfig);
 			} else {
@@ -199,11 +199,12 @@ extends SequentialJob {
 					"Invalid config node type: \"" + nodeConfig.getClass() + "\""
 				);
 			}
-		}
+		}*/
 
 		final Object jobTreeList = subTree.get(KEY_NODE_JOBS);
 		final String replacePattern = Character.toString(REPLACE_MARKER_CHAR) + FORMAT_CHARS[0] +
 			replaceMarkerName + FORMAT_CHARS[1];
+		Map<String, Object> nextNodeConfig;
 		try {
 			if(jobTreeList != null) {
 				if(jobTreeList instanceof List) {
@@ -213,6 +214,12 @@ extends SequentialJob {
 						childJobConfig = ConfigParser.replace(
 							localConfig, replacePattern, nextValue
 						);
+						if(nodeConfig != null) {
+							nextNodeConfig = ConfigParser.replace(
+								(Map<String, Object>) nodeConfig, replacePattern, nextValue
+							);
+							childJobConfig.apply(nextNodeConfig);
+						}
 						append(
 							new BasicTaskJob(
 								() -> LOG.info(

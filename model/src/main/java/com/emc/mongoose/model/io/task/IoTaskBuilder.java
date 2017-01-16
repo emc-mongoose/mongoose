@@ -22,13 +22,12 @@ public interface IoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends
 	O getInstance(final I item, final String dstPath)
 	throws IOException;
 
-	List<O> getInstances(final List<I> items, final int from, final int to)
+	List<O> getInstances(final List<I> items)
 	throws IOException;
 
-	List<O> getInstances(final List<I> items, String dstPath, final int from, final int to)
+	List<O> getInstances(final List<I> items, String dstPath)
 	throws IOException;
 
-	List<O> getInstances(
-		final List<I> items, final List<String> dstPaths, final int from, final int to
-	) throws IOException;
+	List<O> getInstances(final List<I> items, final List<String> dstPaths)
+	throws IOException;
 }

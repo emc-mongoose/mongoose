@@ -33,15 +33,63 @@ implements StorageDriverSvc<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
+	private final int port;
 	private final StorageDriver<I, O, R> driver;
 	private final ContentSource contentSrc;
 
 	public WrappingStorageDriverSvc(
-		final StorageDriver<I, O, R> driver, final ContentSource contentSrc
+		final int port, final StorageDriver<I, O, R> driver, final ContentSource contentSrc,
+		final long metricsPeriodSec
 	) {
+		this.port = port;
 		this.driver = driver;
 		this.contentSrc = contentSrc;
-		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this));
+		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
+		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			SVC_TASKS.put(this, new StateReportingTask(this, metricsPeriodSec));
+		}
+	}
+	
+	private final static class StateReportingTask
+	implements Runnable {
+		
+		private final StorageDriverSvc storageDriver;
+		private final long metricsPeriodNanoSec;
+		
+		private long prevNanoTimeStamp;
+		private long nextNanoTimeStamp;
+		
+		public StateReportingTask(
+			final StorageDriverSvc storageDriver, final long metricsPeriodSec
+		) {
+			this.storageDriver = storageDriver;
+			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
+			this.prevNanoTimeStamp = 0;
+		}
+		
+		@Override
+		public final void run() {
+			nextNanoTimeStamp = System.nanoTime();
+			if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+				prevNanoTimeStamp = nextNanoTimeStamp;
+				try {
+					LOG.info(
+						Markers.MSG,
+						"{} I/O tasks: scheduled={}, active={}, completed={}, recycled={}",
+						storageDriver.getName(), storageDriver.getScheduledTaskCount(),
+						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount(),
+						storageDriver.getRecycledTaskCount()
+					);
+				} catch(final RemoteException ignored) {
+				}
+			}
+		}
+	}
+
+	@Override
+	public final int getRegistryPort()
+	throws RemoteException {
+		return port;
 	}
 
 	@Override
@@ -65,6 +113,7 @@ implements StorageDriverSvc<I, O, R> {
 	@Override
 	public final void close()
 	throws IOException {
+		SVC_TASKS.remove(this);
 		driver.close();
 		contentSrc.close();
 		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
@@ -188,7 +237,23 @@ implements StorageDriverSvc<I, O, R> {
 	throws RemoteException {
 		return driver.getActiveTaskCount();
 	}
-
+	
+	@Override
+	public final long getScheduledTaskCount()
+	throws RemoteException {
+		return driver.getScheduledTaskCount();
+	}
+	
+	@Override
+	public final long getCompletedTaskCount()
+	throws RemoteException {
+		return driver.getCompletedTaskCount();
+	}
+	@Override
+	public final long getRecycledTaskCount()
+	throws RemoteException {
+		return driver.getRecycledTaskCount();
+	}
 	@Override
 	public final boolean isIdle()
 	throws RemoteException {

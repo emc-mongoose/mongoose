@@ -149,7 +149,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "Keep-Alive",
-				"User-Agent" : "mongoose/3.0.3"
+				"User-Agent" : "mongoose/3.0.5"
 			},
 			"namespace" : null,
 			"versioning" : false
@@ -157,15 +157,16 @@
 		"node": {
 			"addrs" : [
 				"127.0.0.1"
-			]
+			],
+			"port" : 9020
 		},
 		"driver": {
 			"remote": false,
 			"addrs" : [
 				"127.0.0.1"
-			]
+			],
+			"port" : 1099
 		},
-		"port" : 9020,
 		"ssl" : false,
 		"type" : "http",
 		"mock" : {
@@ -182,5 +183,5 @@
 			"node": false
 		}
 	},
-	"version" : "3.0.3"
+	"version" : "3.0.5"
 }

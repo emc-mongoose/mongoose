@@ -1,4 +1,4 @@
-package com.emc.mongoose.model.impl.load;
+package com.emc.mongoose.model.impl;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.UniformOptionSelector;

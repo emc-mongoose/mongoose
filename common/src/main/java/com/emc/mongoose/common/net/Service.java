@@ -12,6 +12,9 @@ import java.rmi.RemoteException;
 public interface Service
 extends Remote, Daemon {
 
+	int getRegistryPort()
+	throws RemoteException;
+
 	String getName()
 	throws RemoteException;
 }

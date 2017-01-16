@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario;
 
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
@@ -28,14 +28,16 @@ extends ParentJobBase {
 	public final synchronized void run() {
 		
 		super.run();
-		
+
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
 			childJobs.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
 		);
 		for(final Job subJob : childJobs) {
 			parallelJobsExecutor.submit(subJob);
 		}
-		LOG.debug(Markers.MSG, "{}: started {} child jobs", toString(), childJobs.size());
+		LOG.info(
+			Markers.MSG, "{}: execute {} child jobs in parallel", toString(), childJobs.size()
+		);
 		parallelJobsExecutor.shutdown();
 		
 		final long limitTime = localConfig.getLoadConfig().getLimitConfig().getTime();
@@ -45,12 +47,15 @@ extends ParentJobBase {
 			} else {
 				parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 			}
-			LOG.debug(Markers.MSG, "{}: {} child jobs done", toString(), childJobs.size());
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "{}: interrupted the child jobs execution", toString());
 		} finally {
 			parallelJobsExecutor.shutdownNow();
 		}
+		LOG.info(
+			Markers.MSG, "{}: finished parallel execution of {} child jobs", toString(),
+			childJobs.size()
+		);
 	}
 	//
 	@Override

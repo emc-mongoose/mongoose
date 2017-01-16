@@ -14,17 +14,17 @@ public final class RoundRobinOutput<T>
 implements Output<T> {
 
 	private final List<? extends Output<T>> outputs;
-	private final int count;
+	private final int outputsCount;
 	private final AtomicLong rrc = new AtomicLong(0);
 
 	public RoundRobinOutput(final List<? extends Output<T>> outputs) {
 		this.outputs = outputs;
-		this.count = outputs.size();
+		this.outputsCount = outputs.size();
 	}
 
 	private Output<T> getNextOutput() {
-		if(count > 1) {
-			return outputs.get((int) (rrc.incrementAndGet() % count));
+		if(outputsCount > 1) {
+			return outputs.get((int) (rrc.incrementAndGet() % outputsCount));
 		} else {
 			return outputs.get(0);
 		}
@@ -40,15 +40,35 @@ implements Output<T> {
 	@Override
 	public final int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		final Output<T> nextOutput = getNextOutput();
-		return nextOutput.put(buffer, from, to);
+		Output<T> nextOutput;
+		final int n = to - from;
+		if(n > outputsCount) {
+			final int nPerOutput = n / outputsCount;
+			int nextFrom = from;
+			for(int i = 0; i < outputsCount; i ++) {
+				nextOutput = getNextOutput();
+				nextFrom = nextOutput.put(buffer, nextFrom, nextFrom + nPerOutput);
+			}
+			if(nextFrom < to) {
+				nextOutput = getNextOutput();
+				nextFrom = nextOutput.put(buffer, nextFrom, to);
+			}
+			return nextFrom - from;
+		} else {
+			for(int i = from; i < to; i ++) {
+				nextOutput = getNextOutput();
+				if(!nextOutput.put(buffer.get(i))) {
+					return i - from;
+				}
+			}
+			return to - from;
+		}
 	}
 
 	@Override
 	public final int put(final List<T> buffer)
 	throws IOException {
-		final Output<T> nextOutput = getNextOutput();
-		return nextOutput.put(buffer, 0, buffer.size());
+		return put(buffer, 0, buffer.size());
 	}
 
 	@Override
@@ -60,5 +80,6 @@ implements Output<T> {
 	@Override
 	public final void close()
 	throws IOException {
+		outputs.clear();
 	}
 }

@@ -12,10 +12,9 @@
 		},
 		"storage" : {
 			"http" : {
-				"api" : "Swift",
+				"api" : "swift",
 				"namespace" : "test"
-			},
-			"port" : 9024
+			}
 		}
 	},
 	"jobs" : [

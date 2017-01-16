@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.data.ContentSource;
@@ -30,6 +30,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.util.List;
@@ -59,7 +60,7 @@ extends StorageMockBase<MutableDataItemMock>{
 		super(
 			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource
 		);
-		port = storageConfig.getPort();
+		port = storageConfig.getNodeConfig().getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
 		dispatchGroups = new EventLoopGroup[headCount];
 		workGroups = new EventLoopGroup[headCount];

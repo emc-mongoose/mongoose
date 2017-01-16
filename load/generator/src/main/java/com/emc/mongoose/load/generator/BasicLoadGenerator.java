@@ -1,14 +1,13 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.DaemonBase;
+import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -24,8 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.nio.channels.ClosedByInterruptException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +36,7 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 extends DaemonBase
-implements LoadGenerator<I, O, R>, Output<I> {
+implements LoadGenerator<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -51,9 +49,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	private final Input<String> dstPathInput;
 	private final Thread worker;
 	private final long countLimit;
-	private final int maxItemQueueSize;
 	private final boolean isShuffling = false;
-	private final boolean isCircular;
 	private final IoTaskBuilder<I, O, R> ioTaskBuilder;
 
 	private long generatedIoTaskCount = 0;
@@ -62,7 +58,7 @@ implements LoadGenerator<I, O, R>, Output<I> {
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final SizeInBytes avgItemSize,
 		final Input<String> dstPathInput, final IoTaskBuilder<I, O, R> ioTaskBuilder,
-		final long countLimit, final int maxItemQueueSize, final boolean isCircular
+		final long countLimit
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
@@ -70,8 +66,6 @@ implements LoadGenerator<I, O, R>, Output<I> {
 		this.dstPathInput = dstPathInput;
 		this.ioTaskBuilder = ioTaskBuilder;
 		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
-		this.maxItemQueueSize = maxItemQueueSize;
-		this.isCircular = isCircular;
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
 		worker = new Thread(
@@ -122,137 +116,135 @@ implements LoadGenerator<I, O, R>, Output<I> {
 		public final void run() {
 
 			if(ioTaskOutput == null) {
-				LOG.warn(Markers.ERR, "No load I/O task output set, exiting");
+				LOG.warn(
+					Markers.ERR, "{}: no load I/O task output set, exiting",
+					BasicLoadGenerator.this.toString()
+				);
 			}
 
-			if(itemInput == null) {
-				LOG.warn(Markers.MSG, "No item source for the producing, exiting");
-				return;
-			}
-
-			int n = 0, m = 0;
+			int n;
+			int i, j, k;
 			long remaining;
-			try {
-				List<I> buff;
-				while(!worker.isInterrupted()) {
-					remaining = countLimit - generatedIoTaskCount;
-					if(remaining <= 0) {
-						break;
+			List<I> items;
+
+			while(!worker.isInterrupted()) {
+
+				// find the limits and prepare the items buffer
+				remaining = countLimit - generatedIoTaskCount;
+				if(remaining <= 0) {
+					break;
+				}
+				n = BATCH_SIZE > remaining ? (int) remaining : BATCH_SIZE;
+				items = new ArrayList<>(n);
+
+				// get the items from the input
+				try {
+					n = itemInput.get(items, n);
+				} catch(final EOFException e) {
+					LOG.debug(
+						Markers.MSG, "{}: end of items input @ the count {}", toString(),
+						generatedIoTaskCount
+					);
+					break;
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "{}: failed to get the items from the input",
+						toString()
+					);
+					break;
+				}
+
+				if(worker.isInterrupted()) {
+					break;
+				}
+
+				if(n > 0) {
+					if(isShuffling) {
+						Collections.shuffle(items, rnd);
 					}
 					try {
-						buff = new ArrayList<>(BATCH_SIZE);
-						n = itemInput.get(buff, BATCH_SIZE);
-						if(n > remaining) {
-							n = (int) remaining;
-						}
-						if(isShuffling) {
-							Collections.shuffle(buff, rnd);
-						}
-						if(worker.isInterrupted()) {
-							break;
-						}
-						if(n > 0) {
-							for(m = 0; m < n && !worker.isInterrupted(); ) {
-								m += put(buff, m, n);
+						// build the I/O tasks for the items got from the input
+						final List<O> ioTasks = buildIoTasksFor(items);
+						i = j = 0;
+						while(i < n) {
+							// pass the throttles
+							j += acquireThrottlesPermit(ioTasks, i, n);
+							if(i == j) {
+								LockSupport.parkNanos(1);
+								continue;
 							}
-							generatedIoTaskCount += n;
-						} else {
-							if(worker.isInterrupted()) {
-								break;
+							k = i;
+							while(k < j) {
+								// feed the items to the I/O tasks consumer
+								k += ioTaskOutput.put(ioTasks, k, j);
+								LockSupport.parkNanos(1);
 							}
+							i = j;
 						}
-						// CIRCULARITY FEATURE:
-						// produce only <maxItemQueueSize> items in order to make it possible to
-						// enqueue them infinitely
-						if(isCircular && generatedIoTaskCount >= maxItemQueueSize) {
-							break;
-						}
-					} catch(
-						final EOFException | ClosedByInterruptException | InterruptedIOException e
-					) {
+						generatedIoTaskCount += n;
+					} catch(final EOFException e) {
+						LOG.debug(Markers.MSG, "{}: finish due to output's EOF", toString());
 						break;
+					} catch(final RemoteException e) {
+						final Throwable cause = e.getCause();
+						if(cause instanceof EOFException) {
+							LOG.debug(Markers.MSG, "{}: finish due to output's EOF", toString());
+							break;
+						} else if(!isStarted()){
+							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+							e.printStackTrace(System.err);
+						}
 					} catch(final Exception e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to read the data items, count = {}, " +
-							"batch size = {}, batch offset = {}", generatedIoTaskCount, n, m
-						);
-						//e.printStackTrace(System.err);
+						if(!isStarted()) {
+							LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+							e.printStackTrace(System.err);
+						}
+					}
+				} else {
+					if(worker.isInterrupted()) {
+						break;
 					}
 				}
-			} finally {
-				LOG.debug(
-					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					Thread.currentThread().getName(), generatedIoTaskCount, itemInput.toString(), this
-				);
-				try {
-					shutdown();
-				} catch(final IllegalStateException ignored) {
-				}
+			}
+
+			LOG.debug(
+				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
+				Thread.currentThread().getName(), generatedIoTaskCount, itemInput.toString(),
+				BasicLoadGenerator.this.toString()
+			);
+			try {
+				shutdown();
+			} catch(final IllegalStateException ignored) {
 			}
 		}
 	}
 
-	@Override
-	public final boolean put(final I item)
+	private List<O> buildIoTasksFor(final List<I> items)
 	throws IOException {
-		final O nextIoTask = ioTaskBuilder.getInstance(
-			item, dstPathInput == null ? null : dstPathInput.get()
-		);
+		final List<O> ioTasks;
+		if(dstPathInput == null) {
+			ioTasks = ioTaskBuilder.getInstances(items);
+		} else if(dstPathInput instanceof ConstantStringInput) {
+			final String dstPath = dstPathInput.get();
+			ioTasks = ioTaskBuilder.getInstances(items, dstPath);
+		} else {
+			final int n = items.size();
+			final List<String> dstPaths = new ArrayList<>(n);
+			dstPathInput.get(dstPaths, n);
+			ioTasks = ioTaskBuilder.getInstances(items, dstPaths);
+		}
+		return ioTasks;
+	}
+
+	private int acquireThrottlesPermit(final List<O> ioTasks, final int from, final int to) {
+		int n = to - from;
 		if(weightThrottle != null) {
-			while(!weightThrottle.getPassFor(this)) {
-				LockSupport.parkNanos(1);
-			}
+			n = weightThrottle.getPassFor(this, n);
 		}
 		if(rateThrottle != null) {
-			while(!rateThrottle.getPassFor(this)) {
-				LockSupport.parkNanos(1);
-			}
+			n = rateThrottle.getPassFor(this, n);
 		}
-		return ioTaskOutput.put(nextIoTask);
-	}
-	
-	@Override
-	public final int put(final List<I> buffer, final int from, final int to)
-	throws IOException {
-		int n = to - from;
-		if(n > 0) {
-			
-			final List<O> ioTasks;
-			if(dstPathInput == null) {
-				ioTasks = ioTaskBuilder.getInstances(buffer, from, to);
-			} else if(dstPathInput instanceof ConstantStringInput) {
-				final String dstPath = dstPathInput.get();
-				ioTasks = ioTaskBuilder.getInstances(buffer, dstPath, from, to);
-			} else {
-				final List<String> dstPaths = new ArrayList<>(n);
-				dstPathInput.get(dstPaths, n);
-				ioTasks = ioTaskBuilder.getInstances(buffer, dstPaths, from, to);
-			}
-			
-			if(weightThrottle != null) {
-				n = weightThrottle.getPassFor(this, n);
-			}
-
-			if(rateThrottle != null) {
-				n = rateThrottle.getPassFor(this, n);
-			}
-			
-			return ioTaskOutput.put(ioTasks, 0, n);
-		} else {
-			return 0;
-		}
-	}
-	
-	@Override
-	public final int put(final List<I> buffer)
-	throws IOException {
-		return put(buffer, 0, buffer.size());
-	}
-	
-	@Override
-	public final Input<I> getInput()
-	throws IOException {
-		return itemInput;
+		return n;
 	}
 
 	@Override
