@@ -155,12 +155,13 @@ implements IoTask<I, R> {
 		return respTimeDone;
 	}
 	
-	public static class BasicIoResult
-	implements IoResult {
+	public static class BasicIoResult<I extends Item>
+	implements IoResult<I> {
 		
 		private String storageDriverAddr;
 		private String storageNodeAddr;
 		private String itemInfo;
+		private I item;
 		private int ioTypeCode;
 		private int statusCode;
 		private long reqTimeStart;
@@ -172,12 +173,13 @@ implements IoTask<I, R> {
 		
 		public BasicIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final I item, final int ioTypeCode, final int statusCode, final long reqTimeStart,
 			final long duration, final long latency
 		) {
 			this.storageDriverAddr = storageDriverAddr;
 			this.storageNodeAddr = storageNodeAddr;
 			this.itemInfo = itemInfo;
+			this.item = item;
 			this.ioTypeCode = ioTypeCode;
 			this.statusCode = statusCode;
 			this.reqTimeStart = reqTimeStart;
@@ -198,6 +200,11 @@ implements IoTask<I, R> {
 		@Override
 		public final String getItemInfo() {
 			return itemInfo;
+		}
+		
+		@Override
+		public final I getItem() {
+			return item;
 		}
 		
 		@Override
@@ -272,6 +279,7 @@ implements IoTask<I, R> {
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ?
 				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
+			item,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

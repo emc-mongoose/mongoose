@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
@@ -8,7 +9,11 @@ import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+
+import com.emc.mongoose.model.item.BasicIoResultsItemInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
+import com.emc.mongoose.model.item.IoResultsItemInput;
+import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
@@ -35,13 +40,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,7 +91,7 @@ extends JobBase {
 		
 		try {
 			
-			Output<IoResult> nextItemOutput = null;
+			IoResultsItemInput nextItemBuff = null;
 			
 			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
@@ -113,13 +121,39 @@ extends JobBase {
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final DriverConfig driverConfig = storageConfig.getDriverConfig();
+				final int driverPort = driverConfig.getPort();
 				final SocketConfig socketConfig = config.getSocketConfig();
 				if(remoteDriversFlag) {
 					final List<String> driverSvcAddrs = driverConfig.getAddrs();
 					for(final String driverSvcAddr : driverSvcAddrs) {
-						final StorageDriverBuilderSvc driverBuilderSvc = ServiceUtil.resolve(
-							driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
-						);
+						final StorageDriverBuilderSvc driverBuilderSvc;
+						if(driverSvcAddr.contains(":")) {
+							try {
+								driverBuilderSvc = ServiceUtil.resolve(
+									driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
+								);
+							} catch(final NotBoundException | IOException | URISyntaxException e) {
+								LogUtil.exception(
+									LOG, Level.FATAL, e,
+									"Failed to resolve the storage driver builder service @{}",
+									driverSvcAddr
+								);
+								return;
+							}
+						} else {
+							try {
+								driverBuilderSvc = ServiceUtil.resolve(
+									driverSvcAddr, driverPort, StorageDriverBuilderSvc.SVC_NAME
+								);
+							} catch(final NotBoundException | IOException | URISyntaxException e) {
+								LogUtil.exception(
+									LOG, Level.FATAL, e,
+									"Failed to resolve the storage driver builder service @{}:{}",
+									driverSvcAddr, driverPort
+								);
+								return;
+							}
+						}
 						LOG.info(
 							Markers.MSG, "Connected the service \"{}\" @ {}",
 							StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
@@ -132,16 +166,42 @@ extends JobBase {
 							);
 							continue;
 						}
-						final String driverSvcName = driverBuilderSvc
+						final String driverSvcName;
+						try {
+							driverSvcName = driverBuilderSvc
 							.setJobName(jobName)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
 							.setSocketConfig(socketConfig)
 							.setStorageConfig(storageConfig)
 							.buildRemotely();
-						final StorageDriverSvc driverSvc = ServiceUtil.resolve(
-							driverSvcAddr, driverSvcName
-						);
+						} catch(final IOException | UserShootHisFootException e) {
+							throw new RuntimeException(e);
+						}
+						
+						final StorageDriverSvc driverSvc;
+						if(driverSvcAddr.contains(":")) {
+							try {
+								driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
+							} catch(final NotBoundException | IOException | URISyntaxException e) {
+								LogUtil.exception(
+									LOG, Level.FATAL, e, "Failed to resolve the storage driver service @{}",
+									driverSvcAddr
+								);
+								return;
+							}
+						} else {
+							try {
+								driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
+							} catch(final NotBoundException | IOException | URISyntaxException e) {
+								LogUtil.exception(
+									LOG, Level.FATAL, e,
+									"Failed to resolve the storage driver service @{}:{}", driverSvcAddr,
+									driverPort
+								);
+								return;
+							}
+						}
 						LOG.info(
 							Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
 							driverSvcAddr
@@ -156,19 +216,23 @@ extends JobBase {
 						}
 					}
 				} else {
-					drivers.add(
-						new BasicStorageDriverBuilder<>()
-							.setJobName(jobName)
-							.setItemConfig(itemConfig)
-							.setLoadConfig(loadConfig)
-							.setSocketConfig(socketConfig)
-							.setStorageConfig(storageConfig)
-							.build()
-					);
+					try {
+						drivers.add(
+							new BasicStorageDriverBuilder<>()
+								.setJobName(jobName)
+								.setItemConfig(itemConfig)
+								.setLoadConfig(loadConfig)
+								.setSocketConfig(socketConfig)
+								.setStorageConfig(storageConfig)
+								.build()
+						);
+					} catch(final UserShootHisFootException e) {
+						throw new RuntimeException(e);
+					}
 				}
 				
 				final LoadGenerator loadGenerator;
-				if(nextItemOutput == null) {
+				if(nextItemBuff == null) {
 					loadGenerator = new BasicLoadGeneratorBuilder<>()
 						.setItemConfig(itemConfig)
 						.setItemFactory(itemFactory)
@@ -183,7 +247,7 @@ extends JobBase {
 						.setItemType(itemType)
 						.setLoadConfig(loadConfig)
 						.setStorageDrivers(drivers)
-						.setItemInput(/*TODO*/null)
+						.setItemInput(nextItemBuff)
 						.build();
 				}
 				
@@ -193,7 +257,10 @@ extends JobBase {
 				loadChain.add(loadMonitor);
 				
 				if(i < nodeConfigList.size() - 1) {
-					/*TODO*/
+					nextItemBuff = new BasicIoResultsItemInput<>(
+						new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
+					);
+					loadMonitor.setIoResultsOutput(nextItemBuff);
 				} else {
 					final String itemOutputFile = localConfig
 						.getItemConfig().getOutputConfig().getFile();

@@ -2,6 +2,7 @@ package com.emc.mongoose.model.io.task.composite.data;
 
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
+import static com.emc.mongoose.model.io.task.composite.CompositeIoTask.CompositeIoResult;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 
@@ -14,8 +15,8 @@ public interface CompositeDataIoTask<
 >
 extends CompositeIoTask<I, R> {
 	
-	interface CompositeDataIoResult
-	extends DataIoResult, CompositeIoResult {
+	interface CompositeDataIoResult<I extends DataItem>
+	extends DataIoResult<I>, CompositeIoResult<I> {
 	}
 
 	@Override

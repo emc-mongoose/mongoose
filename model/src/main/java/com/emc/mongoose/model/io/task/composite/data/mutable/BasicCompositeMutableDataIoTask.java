@@ -114,6 +114,7 @@ implements CompositeMutableDataIoTask<I, R> {
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ?
 				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
+			item,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

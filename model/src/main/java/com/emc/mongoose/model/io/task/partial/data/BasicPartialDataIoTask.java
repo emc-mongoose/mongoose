@@ -42,9 +42,9 @@ implements PartialDataIoTask<I, R> {
 		parent.subTaskCompleted();
 	}
 
-	public static class BasicPartialDataIoResult
-	extends BasicDataIoResult
-	implements PartialDataIoResult {
+	public static class BasicPartialDataIoResult<I extends DataItem>
+	extends BasicDataIoResult<I>
+	implements PartialDataIoResult<I> {
 
 		public BasicPartialDataIoResult() {
 			super();
@@ -52,12 +52,12 @@ implements PartialDataIoTask<I, R> {
 
 		public BasicPartialDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final I item, final int ioTypeCode, final int statusCode, final long reqTimeStart,
 			final long duration, final long latency, final long dataLatency,
 			final long transferredByteCount
 		) {
 			super(
-				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode,
+				storageDriverAddr, storageNodeAddr, itemInfo, item, ioTypeCode, statusCode,
 				reqTimeStart, duration, latency, dataLatency, transferredByteCount
 			);
 		}
@@ -83,6 +83,7 @@ implements PartialDataIoTask<I, R> {
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ?
 				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
+			item,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

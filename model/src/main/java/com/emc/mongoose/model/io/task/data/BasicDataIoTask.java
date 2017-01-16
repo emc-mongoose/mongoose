@@ -40,9 +40,9 @@ implements DataIoTask<T, R> {
 		contentSrc = item.getContentSrc();
 	}
 	
-	public static class BasicDataIoResult
-	extends BasicIoResult
-	implements DataIoResult {
+	public static class BasicDataIoResult<T extends DataItem>
+	extends BasicIoResult<T>
+	implements DataIoResult<T> {
 		
 		private long dataLatency;
 		private long transferredByteCount;
@@ -53,13 +53,13 @@ implements DataIoTask<T, R> {
 		
 		public BasicDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final T item, final int ioTypeCode, final int statusCode, final long reqTimeStart,
 			final long duration, final long latency, final long dataLatency,
 			final long transferredByteCount
 		) {
 			super(
-				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency
+				storageDriverAddr, storageNodeAddr, itemInfo, item, ioTypeCode, statusCode,
+				reqTimeStart, duration, latency
 			);
 			this.dataLatency = dataLatency;
 			this.transferredByteCount = transferredByteCount;
@@ -111,6 +111,7 @@ implements DataIoTask<T, R> {
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ?
 				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
+			item,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

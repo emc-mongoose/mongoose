@@ -71,6 +71,9 @@ extends JobBase {
 			throw new ScenarioParseException("No \"" + KEY_NODE_TYPE + "\" element for the job");
 		} else {
 			switch(jobType) {
+				case NODE_TYPE_CHAIN:
+					append(new ChainJob(config, subTree));
+					break;
 				case NODE_TYPE_COMMAND:
 					append(new CommandJob(config, subTree));
 					break;

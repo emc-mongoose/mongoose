@@ -1,0 +1,32 @@
+{
+	"type" : "chain",
+	"config" : [
+		{
+			"storage" : {
+				"node" : {
+					"port" : 9020
+				}
+			}
+		},
+		{
+			"load" : {
+				"type" : "read"
+			},
+			"storage" : {
+				"node" : {
+					"port" : 9022
+				}
+			}
+		},
+		{
+			"load" : {
+				"type" : "delete"
+			},
+			"storage" : {
+				"node" : {
+					"port" : 9024
+				}
+			}
+		}
+	]
+}

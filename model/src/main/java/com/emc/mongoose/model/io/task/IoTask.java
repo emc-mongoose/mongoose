@@ -65,14 +65,17 @@ extends Externalizable {
 
 	long getRespTimeDone();
 	
-	interface IoResult
+	interface IoResult<I extends Item>
 	extends Externalizable {
 		
 		String getStorageDriverAddr();
 		
 		String getStorageNodeAddr();
 
+		@Deprecated
 		String getItemInfo();
+		
+		I getItem();
 		
 		int getIoTypeCode();
 		

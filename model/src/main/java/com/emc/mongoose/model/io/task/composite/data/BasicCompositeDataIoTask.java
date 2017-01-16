@@ -93,9 +93,9 @@ implements CompositeDataIoTask<I, R> {
 		return pendingSubTasksCount.get() == 0;
 	}
 	
-	public final static class BasicCompositeDataIoResult
-	extends BasicDataIoResult
-	implements CompositeDataIoResult {
+	public final static class BasicCompositeDataIoResult<I extends DataItem>
+	extends BasicDataIoResult<I>
+	implements CompositeDataIoResult<I> {
 		
 		private boolean completeFlag;
 
@@ -105,13 +105,13 @@ implements CompositeDataIoTask<I, R> {
 		
 		public BasicCompositeDataIoResult(
 			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final I item, final int ioTypeCode, final int statusCode, final long reqTimeStart,
 			final long duration, final long latency, final long dataLatency,
 			final long transferredByteCount, final boolean completeFlag
 		) {
 			super(
-				storageDriverAddr, storageNodeAddr, itemInfo, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency, dataLatency, transferredByteCount
+				storageDriverAddr, storageNodeAddr, itemInfo, item, ioTypeCode, statusCode,
+				reqTimeStart, duration, latency, dataLatency, transferredByteCount
 			);
 			this.completeFlag = completeFlag;
 		}
@@ -155,6 +155,7 @@ implements CompositeDataIoTask<I, R> {
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ?
 				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
+			item,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,

@@ -335,8 +335,8 @@ implements LoadMonitor<R> {
 	}
 
 	@Override
-	public final void setIoResultsOutput(final Output<R> ioResultsOutput) {
-		this.ioResultsOutput = ioResultsOutput;
+	public final void setIoResultsOutput(final Output<R> ioTaskResultsOutput) {
+		this.ioResultsOutput = ioTaskResultsOutput;
 	}
 
 	@Override

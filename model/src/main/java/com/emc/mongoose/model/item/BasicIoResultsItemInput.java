@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.item;
 
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.IoBuffer;
 import com.emc.mongoose.common.io.collection.LimitedQueueBuffer;
 import com.emc.mongoose.model.io.task.IoTask.IoResult;
@@ -15,12 +14,12 @@ import java.util.concurrent.BlockingQueue;
 /**
  Created by kurila on 16.01.17.
  */
-public final class IoResultsItemInput<I extends Item, R extends IoResult<I>>
-implements Input<I>, Output<R> {
+public final class BasicIoResultsItemInput<I extends Item, R extends IoResult<I>>
+implements IoResultsItemInput<I, R> {
 	
 	private final IoBuffer<I> itemBuff;
 	
-	public IoResultsItemInput(final BlockingQueue<I> itemQueue) {
+	public BasicIoResultsItemInput(final BlockingQueue<I> itemQueue) {
 		itemBuff = new LimitedQueueBuffer<>(itemQueue);
 	}
 	
