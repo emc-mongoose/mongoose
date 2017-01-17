@@ -8,8 +8,12 @@
 				}
 			},
 			"load" : {
-				"limit" : {
-					"count" : 1
+				"metrics" : {
+					"trace" : {
+						"itemInfo" : true,
+						"reqTimeStart" : true,
+						"duration" : true
+					}
 				}
 			}
 		},
