@@ -24,14 +24,6 @@
 				},
 				"type" : "read"
 			}
-		},
-		{
-			"load" : {
-				"queue" : {
-					"delay" : "1m"
-				},
-				"type" : "delete"
-			}
 		}
 	]
 }

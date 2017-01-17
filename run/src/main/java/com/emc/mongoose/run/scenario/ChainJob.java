@@ -247,6 +247,7 @@ extends JobBase {
 						.setStorageDrivers(drivers)
 						.build();
 				} else {
+					nextItemBuff.setDelay(TimeUnit.SECONDS, queueConfig.getDelay());
 					loadGenerator = new BasicLoadGeneratorBuilder<>()
 						.setItemConfig(itemConfig)
 						.setItemFactory(itemFactory)
@@ -263,9 +264,7 @@ extends JobBase {
 				loadChain.add(loadMonitor);
 				
 				if(i < nodeConfigList.size() - 1) {
-					nextItemBuff = new BasicIoResultsItemInput<>(
-						queueConfig.getSize(), TimeUnit.SECONDS.toMicros(queueConfig.getDelay())
-					);
+					nextItemBuff = new BasicIoResultsItemInput<>(queueConfig.getSize());
 					loadMonitor.setIoResultsOutput(nextItemBuff);
 				} else {
 					final String itemOutputFile = localConfig
