@@ -105,6 +105,10 @@ extends JobBase {
 			for(int i = 0; i < loadGeneratorCount; i ++) {
 				
 				final Config config = new Config(appConfig);
+				if(i > 0) {
+					// add the config params from the 1st element as defaults
+					config.apply(nodeConfigList.get(0));
+				}
 				config.apply(nodeConfigList.get(i));
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();

@@ -7,6 +7,8 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static java.lang.System.nanoTime;
+
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -189,7 +191,7 @@ implements StorageDriver<I, O, R> {
 			if(!isStarted()) {
 				throw new InterruptedException();
 			}
-			if(ioTaskQueues[(int) (System.nanoTime() % ioWorkerCount)].offer(ioTask)) {
+			if(ioTaskQueues[(int) (nanoTime() % ioWorkerCount)].offer(ioTask)) {
 				return true;
 			} else {
 				i ++;
@@ -210,7 +212,7 @@ implements StorageDriver<I, O, R> {
 				if(!isStarted()) {
 					throw new InterruptedException();
 				}
-				if(ioTaskQueues[(int) (System.nanoTime() % ioWorkerCount)].offer(nextIoTask)) {
+				if(ioTaskQueues[(int) (nanoTime() % ioWorkerCount)].offer(nextIoTask)) {
 					i ++;
 					break;
 				}

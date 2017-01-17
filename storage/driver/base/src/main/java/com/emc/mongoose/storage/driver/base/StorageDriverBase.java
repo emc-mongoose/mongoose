@@ -388,7 +388,7 @@ implements StorageDriver<I, O, R> {
 	@Override
 	protected void doShutdown() {
 		SVC_TASKS.remove(this);
-		LOG.info(Markers.MSG, "{}: shut down", toString());
+		LOG.debug(Markers.MSG, "{}: shut down", toString());
 	}
 
 	@Override
@@ -400,7 +400,7 @@ implements StorageDriver<I, O, R> {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to await the idle state");
 		} finally {
-			LOG.info(Markers.MSG, "{}: interrupted", toString());
+			LOG.debug(Markers.MSG, "{}: interrupted", toString());
 		}
 	}
 
@@ -410,7 +410,7 @@ implements StorageDriver<I, O, R> {
 		childTasksQueue.clear();
 		inTasksQueue.clear();
 		ioResultsQueue.clear();
-		LOG.info(Markers.MSG, "{}: closed", toString());
+		LOG.debug(Markers.MSG, "{}: closed", toString());
 	}
 	
 	@Override

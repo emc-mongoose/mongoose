@@ -32,6 +32,8 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+
+import com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -96,6 +98,10 @@ extends JobBase {
 			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
 				final Config config = new Config(appConfig);
+				if(i > 0) {
+					// add the config params from the 1st element as defaults
+					config.apply(nodeConfigList.get(0));
+				}
 				config.apply(nodeConfigList.get(i));
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
@@ -117,7 +123,7 @@ extends JobBase {
 				}
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
-				
+				final QueueConfig queueConfig = loadConfig.getQueueConfig();
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final DriverConfig driverConfig = storageConfig.getDriverConfig();
@@ -258,7 +264,7 @@ extends JobBase {
 				
 				if(i < nodeConfigList.size() - 1) {
 					nextItemBuff = new BasicIoResultsItemInput<>(
-						new ArrayBlockingQueue<>(loadConfig.getQueueConfig().getSize())
+						queueConfig.getSize(), TimeUnit.SECONDS.toMicros(queueConfig.getDelay())
 					);
 					loadMonitor.setIoResultsOutput(nextItemBuff);
 				} else {

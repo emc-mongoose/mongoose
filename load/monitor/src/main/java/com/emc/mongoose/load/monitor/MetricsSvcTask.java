@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.TimeUnit;
+import static java.lang.System.nanoTime;
 
 /**
  Created by andrey on 15.12.16.
@@ -55,7 +56,7 @@ implements Runnable {
 		long nextNanoTimeStamp;
 		while(!currThread.isInterrupted()) {
 			refreshStats();
-			nextNanoTimeStamp = System.nanoTime();
+			nextNanoTimeStamp = nanoTime();
 			if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 				outputCurrentMetrics();
 				prevNanoTimeStamp = nextNanoTimeStamp;

@@ -6,15 +6,26 @@
 				"output" : {
 					"path" : "/default"
 				}
+			},
+			"load" : {
+				"limit" : {
+					"count" : 1
+				}
 			}
 		},
 		{
 			"load" : {
+				"queue" : {
+					"delay" : "1m"
+				},
 				"type" : "read"
 			}
 		},
 		{
 			"load" : {
+				"queue" : {
+					"delay" : "1m"
+				},
 				"type" : "delete"
 			}
 		}

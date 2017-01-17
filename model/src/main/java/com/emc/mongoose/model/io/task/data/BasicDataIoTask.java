@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
+import static java.lang.System.nanoTime;
 
 public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult>
 extends BasicIoTask<T, R>
@@ -52,14 +53,14 @@ implements DataIoTask<T, R> {
 		}
 		
 		public BasicDataIoResult(
-			final String storageDriverAddr, final String storageNodeAddr, final String itemInfo,
-			final T item, final int ioTypeCode, final int statusCode, final long reqTimeStart,
+			final String storageDriverAddr, final String storageNodeAddr, final T item,
+			final int ioTypeCode, final int statusCode, final long reqTimeStart,
 			final long duration, final long latency, final long dataLatency,
 			final long transferredByteCount
 		) {
 			super(
-				storageDriverAddr, storageNodeAddr, itemInfo, item, ioTypeCode, statusCode,
-				reqTimeStart, duration, latency
+				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
+				duration, latency
 			);
 			this.dataLatency = dataLatency;
 			this.transferredByteCount = transferredByteCount;
@@ -106,12 +107,11 @@ implements DataIoTask<T, R> {
 		final boolean useDataLatencyResult,
 		final boolean useTransferSizeResult
 	) {
+		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return (R) new BasicDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ?
-				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
-			item,
+			useItemInfoResult ? item : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,
@@ -165,7 +165,7 @@ implements DataIoTask<T, R> {
 
 	@Override
 	public final void startDataResponse() {
-		respDataTimeStart = System.nanoTime() / 1000;
+		respDataTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
 	}
 
 	@Override

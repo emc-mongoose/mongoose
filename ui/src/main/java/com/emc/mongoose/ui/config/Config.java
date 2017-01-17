@@ -1047,20 +1047,35 @@ implements Serializable {
 		
 		public static final class QueueConfig
 		implements Serializable {
-			
+
+			public static final String KEY_DELAY = "delay";
 			public static final String KEY_SIZE = "size";
-			
+
+			public final void setDelay(final long delay) {
+				this.delay = delay;
+			}
+
 			public final void setSize(final int size) {
 				this.size = size;
 			}
 			
-			@JsonProperty(KEY_SIZE) private int size;
+			@JsonProperty(KEY_DELAY)
+			@JsonDeserialize(using = TimeStrToLongDeserializer.class)
+			private long delay;
+
+			@JsonProperty(KEY_SIZE)
+			private int size;
 			
 			public QueueConfig() {
 			}
 
 			public QueueConfig(final QueueConfig other) {
+				this.delay = other.getDelay();
 				this.size = other.getSize();
+			}
+
+			public final long getDelay() {
+				return delay;
 			}
 			
 			public final int getSize() {

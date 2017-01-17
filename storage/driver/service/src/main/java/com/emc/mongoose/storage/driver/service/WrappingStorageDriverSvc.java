@@ -8,6 +8,8 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import static java.lang.System.nanoTime;
+
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
@@ -69,7 +71,7 @@ implements StorageDriverSvc<I, O, R> {
 		
 		@Override
 		public final void run() {
-			nextNanoTimeStamp = System.nanoTime();
+			nextNanoTimeStamp = nanoTime();
 			if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
 				prevNanoTimeStamp = nextNanoTimeStamp;
 				try {

@@ -5,6 +5,9 @@ import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.io.BasicValueInput;
 
+import static java.lang.System.currentTimeMillis;
+import static java.lang.System.nanoTime;
+
 /**
  Created by kurila on 18.12.15.
  */
@@ -55,8 +58,7 @@ implements IdStringInput {
 		// xorShift(0) = 0, so override this behaviour (which is by default)
 		if(ItemNamingType.RANDOM.equals(namingType) && offset == 0) {
 			this.lastValue = Math.abs(
-				Long.reverse(System.currentTimeMillis()) ^
-				Long.reverseBytes(System.nanoTime()) ^
+				Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime()) ^
 				NetUtil.getHostAddrCode()
 			);
 		} else {
@@ -75,7 +77,7 @@ implements IdStringInput {
 		// calc next number
 		switch(namingType) {
 			case RANDOM:
-				lastValue = Math.abs(MathUtil.xorShift(lastValue ^ System.nanoTime()));
+				lastValue = Math.abs(MathUtil.xorShift(lastValue ^ nanoTime()));
 				break;
 			case ASC:
 				if(lastValue < Long.MAX_VALUE) {

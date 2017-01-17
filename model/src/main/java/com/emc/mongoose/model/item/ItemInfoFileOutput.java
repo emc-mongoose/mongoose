@@ -24,28 +24,28 @@ implements Output<R> {
 	}
 	
 	@Override
-	public final boolean put(final R item)
+	public final boolean put(final R ioResult)
 	throws IOException {
-		return itemInfoOutput.put(item.getItemInfo());
+		return itemInfoOutput.put(ioResult.getItem().toString());
 	}
 	
 	@Override
-	public final int put(final List<R> buffer, final int from, final int to)
+	public final int put(final List<R> ioResults, final int from, final int to)
 	throws IOException {
 		final int n = to - from;
 		final List<String> itemsInfo = new ArrayList<>(n);
 		for(int i = from; i < to; i ++) {
-			itemsInfo.add(buffer.get(i).getItemInfo());
+			itemsInfo.add(ioResults.get(i).getItem().toString());
 		}
 		return itemInfoOutput.put(itemsInfo, 0, n);
 	}
 	
 	@Override
-	public final int put(final List<R> buffer)
+	public final int put(final List<R> ioResults)
 	throws IOException {
-		final List<String> itemsInfo = new ArrayList<>(buffer.size());
-		for(final R nextIoResult : buffer) {
-			itemsInfo.add(nextIoResult.getItemInfo());
+		final List<String> itemsInfo = new ArrayList<>(ioResults.size());
+		for(final R nextIoResult : ioResults) {
+			itemsInfo.add(nextIoResult.getItem().toString());
 		}
 		return itemInfoOutput.put(itemsInfo);
 	}

@@ -10,7 +10,8 @@ import static java.util.Arrays.binarySearch;
 /**
  * Created on 05.05.16.
  */
-public class CircularArray<T> implements Iterable<T> {
+public class CircularArray<T>
+implements Iterable<T> {
 
 	private final int length;
 	private final T[] array;
@@ -45,7 +46,7 @@ public class CircularArray<T> implements Iterable<T> {
 	}
 
 	public List<T> getLastItems(final T item) {
-		List<T> lastItems = new ArrayList<>(size);
+		final List<T> lastItems = new ArrayList<>(size);
 		final int searchedItemIndex = searchItem(item);
 		final Iterator<T> iterator = new LastItemsIterator(searchedItemIndex);
 		while (iterator.hasNext()) {

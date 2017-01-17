@@ -2,6 +2,7 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -62,7 +63,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends DaemonBase
 implements LoadMonitor<R> {
 
@@ -74,7 +75,7 @@ implements LoadMonitor<R> {
 	private final int metricsPeriodSec;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final ConcurrentMap<String, R> latestIoResultsPerItem;
+	private final ConcurrentMap<I, R> latestIoResultsPerItem;
 	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
 
@@ -345,18 +346,17 @@ implements LoadMonitor<R> {
 	) {
 
 		int m = n; // count of complete whole tasks
-		int itemInfoCommaPos;
 
 		// I/O trace logging
 		if(LOG.isDebugEnabled(Markers.IO_TRACE)) {
 			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n));
 		}
 
+		I item;
 		R ioTaskResult;
 		DataIoResult dataIoTaskResult;
 		int ioTypeCode;
 		int statusCode;
-		String itemInfo;
 		long reqDuration;
 		long respLatency;
 		long countBytesDone = 0;
@@ -403,16 +403,9 @@ implements LoadMonitor<R> {
 					}
 					m --;
 				} else {
-					itemInfo = ioTaskResult.getItemInfo();
+					item = ioTaskResult.getItem();
 					if(isCircular) {
-						itemInfoCommaPos = itemInfo.indexOf(',', 0);
-						if(itemInfoCommaPos > 0) {
-							latestIoResultsPerItem.put(
-								itemInfo.substring(0, itemInfoCommaPos), ioTaskResult
-							);
-						} else {
-							latestIoResultsPerItem.put(itemInfo, ioTaskResult);
-						}
+						latestIoResultsPerItem.put(item, ioTaskResult);
 					} else if(ioResultsOutput != null) {
 						ioResultsToPass.add(ioTaskResult);
 					}
