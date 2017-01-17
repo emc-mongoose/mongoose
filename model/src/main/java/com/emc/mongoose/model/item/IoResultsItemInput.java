@@ -10,6 +10,4 @@ import java.util.concurrent.TimeUnit;
  */
 public interface IoResultsItemInput<I extends Item, R extends IoResult<I>>
 extends Input<I>, Output<R> {
-
-	void setDelay(final TimeUnit timeUnit, final long delay);
 }

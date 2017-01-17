@@ -553,34 +553,51 @@ implements Serializable {
 		public static final class OutputConfig
 		implements Serializable {
 
-			public static final String KEY_PATH = "path";
+			public static final String KEY_DELAY = "delay";
 			public static final String KEY_FILE = "file";
-			
-			public final void setPath(final String path) {
-				this.path = path;
+			public static final String KEY_PATH = "path";
+
+			public final void setDelay(final long delay) {
+				this.delay = delay;
 			}
-			
+
 			public final void setFile(final String file) {
 				this.file = file;
 			}
-			
-			@JsonProperty(KEY_PATH) private String path;
-			@JsonProperty(KEY_FILE) private String file;
+
+			public final void setPath(final String path) {
+				this.path = path;
+			}
+
+			@JsonProperty(KEY_DELAY)
+			@JsonDeserialize(using=TimeStrToLongDeserializer.class)
+			private long delay;
+
+			@JsonProperty(KEY_FILE)
+			private String file;
+
+			@JsonProperty(KEY_PATH)
+			private String path;
 
 			public OutputConfig() {
 			}
 
 			public OutputConfig(final OutputConfig other) {
-				this.path = other.getPath();
+				this.delay = other.getDelay();
 				this.file = other.getFile();
+				this.path = other.getPath();
 			}
 
-			public String getPath() {
-				return path;
+			public long getDelay() {
+				return delay;
 			}
 
 			public String getFile() {
 				return file;
+			}
+
+			public String getPath() {
+				return path;
 			}
 		}
 		
@@ -756,8 +773,9 @@ implements Serializable {
 		public static final class GeneratorConfig
 			implements Serializable {
 
-			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
+			public static final String KEY_REMOTE = "remote";
+			public static final String KEY_SHUFFLE = "shuffle";
 
 			public final void setAddrs(final List<String> addrs) {
 				this.addrs = addrs;
@@ -767,8 +785,13 @@ implements Serializable {
 				this.remote = remote;
 			}
 
+			public final void setShuffle(final boolean shuffle) {
+				this.shuffle = shuffle;
+			}
+
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
 			@JsonProperty(KEY_REMOTE) private boolean remote;
+			@JsonProperty(KEY_SHUFFLE) private boolean shuffle;
 
 			public GeneratorConfig() {
 			}
@@ -776,6 +799,7 @@ implements Serializable {
 			public GeneratorConfig(final GeneratorConfig other) {
 				this.addrs = new ArrayList<>(other.getAddrs());
 				this.remote = other.getRemote();
+				this.shuffle = other.getShuffle();
 			}
 
 			public List<String> getAddrs() {
@@ -784,6 +808,10 @@ implements Serializable {
 
 			public boolean getRemote() {
 				return remote;
+			}
+
+			public boolean getShuffle() {
+				return shuffle;
 			}
 		}
 
@@ -1048,21 +1076,12 @@ implements Serializable {
 		public static final class QueueConfig
 		implements Serializable {
 
-			public static final String KEY_DELAY = "delay";
 			public static final String KEY_SIZE = "size";
-
-			public final void setDelay(final long delay) {
-				this.delay = delay;
-			}
 
 			public final void setSize(final int size) {
 				this.size = size;
 			}
 			
-			@JsonProperty(KEY_DELAY)
-			@JsonDeserialize(using = TimeStrToLongDeserializer.class)
-			private long delay;
-
 			@JsonProperty(KEY_SIZE)
 			private int size;
 			
@@ -1070,12 +1089,7 @@ implements Serializable {
 			}
 
 			public QueueConfig(final QueueConfig other) {
-				this.delay = other.getDelay();
 				this.size = other.getSize();
-			}
-
-			public final long getDelay() {
-				return delay;
 			}
 			
 			public final int getSize() {

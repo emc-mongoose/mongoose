@@ -11,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.TimeUnit;
-
 import static java.lang.System.nanoTime;
 
 /**
@@ -23,27 +22,16 @@ implements IoResultsItemInput<I, R> {
 	private final List<R> ioResultsBuff;
 	private volatile int ioResultsBuffSize = 0;
 	private final int ioResultsBuffCapacity;
-	private volatile long delayMicroseconds = 0;
-	
-	@SuppressWarnings("unchecked")
-	public BasicIoResultsItemInput(final int queueCapacity) {
-		this.ioResultsBuff = new LinkedList<>();
-		this.ioResultsBuffCapacity = queueCapacity;
-	}
+	private final long delayMicroseconds;
 
 	public BasicIoResultsItemInput(
 		final int queueCapacity, final TimeUnit timeUnit, final long delay
 	) {
 		this.ioResultsBuff = new LinkedList<>();
 		this.ioResultsBuffCapacity = queueCapacity;
-		setDelay(timeUnit, delay);
-	}
-
-	@Override
-	public final void setDelay(final TimeUnit timeUnit, final long delay) {
 		this.delayMicroseconds = timeUnit.toMicros(delay);
 	}
-	
+
 	@Override
 	public final synchronized boolean put(final R ioResult)
 	throws IOException {

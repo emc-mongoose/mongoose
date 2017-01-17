@@ -33,6 +33,7 @@ import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 
+import com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
 import com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -83,7 +84,7 @@ extends JobBase {
 		
 		final LoadConfig localLoadConfig = localConfig.getLoadConfig();
 		final String jobName = localLoadConfig.getJobConfig().getName();
-		LOG.info(Markers.MSG, "Run the mixed load job \"{}\"", jobName);
+		LOG.info(Markers.MSG, "Run the chain load job \"{}\"", jobName);
 		final LimitConfig limitConfig = localLoadConfig.getLimitConfig();
 		
 		final long t = limitConfig.getTime();
@@ -106,6 +107,7 @@ extends JobBase {
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final ContentConfig contentConfig = dataConfig.getContentConfig();
+				final OutputConfig outputConfig = itemConfig.getOutputConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 				final ContentSource contentSrc = ContentSourceUtil.getInstance(
@@ -124,6 +126,7 @@ extends JobBase {
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final QueueConfig queueConfig = loadConfig.getQueueConfig();
+
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final DriverConfig driverConfig = storageConfig.getDriverConfig();
@@ -247,7 +250,6 @@ extends JobBase {
 						.setStorageDrivers(drivers)
 						.build();
 				} else {
-					nextItemBuff.setDelay(TimeUnit.SECONDS, queueConfig.getDelay());
 					loadGenerator = new BasicLoadGeneratorBuilder<>()
 						.setItemConfig(itemConfig)
 						.setItemFactory(itemFactory)
@@ -264,7 +266,9 @@ extends JobBase {
 				loadChain.add(loadMonitor);
 				
 				if(i < nodeConfigList.size() - 1) {
-					nextItemBuff = new BasicIoResultsItemInput<>(queueConfig.getSize());
+					nextItemBuff = new BasicIoResultsItemInput<>(
+						queueConfig.getSize(), TimeUnit.SECONDS, outputConfig.getDelay()
+					);
 					loadMonitor.setIoResultsOutput(nextItemBuff);
 				} else {
 					final String itemOutputFile = localConfig

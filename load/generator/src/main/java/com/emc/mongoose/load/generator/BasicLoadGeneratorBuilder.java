@@ -113,6 +113,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final Input<String> dstPathInput;
 		final IoTaskBuilder<I, O, R> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
+		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 
@@ -183,7 +184,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		dstPathInput = getDstPathInput(ioType);
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit
+			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit, shuffleFlag
 		);
 	}
 	

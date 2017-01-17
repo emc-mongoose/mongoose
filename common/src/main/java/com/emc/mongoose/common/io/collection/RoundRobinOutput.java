@@ -47,11 +47,11 @@ implements Output<T> {
 			int nextFrom = from;
 			for(int i = 0; i < outputsCount; i ++) {
 				nextOutput = getNextOutput();
-				nextFrom = nextOutput.put(buffer, nextFrom, nextFrom + nPerOutput);
+				nextFrom += nextOutput.put(buffer, nextFrom, nextFrom + nPerOutput);
 			}
 			if(nextFrom < to) {
 				nextOutput = getNextOutput();
-				nextFrom = nextOutput.put(buffer, nextFrom, to);
+				nextFrom += nextOutput.put(buffer, nextFrom, to);
 			}
 			return nextFrom - from;
 		} else {
@@ -68,7 +68,29 @@ implements Output<T> {
 	@Override
 	public final int put(final List<T> buffer)
 	throws IOException {
-		return put(buffer, 0, buffer.size());
+		Output<T> nextOutput;
+		final int n = buffer.size();
+		if(n > outputsCount) {
+			final int nPerOutput = n / outputsCount;
+			int nextFrom = 0;
+			for(int i = 0; i < outputsCount; i ++) {
+				nextOutput = getNextOutput();
+				nextFrom += nextOutput.put(buffer, nextFrom, nextFrom + nPerOutput);
+			}
+			if(nextFrom < n) {
+				nextOutput = getNextOutput();
+				nextFrom += nextOutput.put(buffer, nextFrom, n);
+			}
+			return nextFrom;
+		} else {
+			for(int i = 0; i < n; i ++) {
+				nextOutput = getNextOutput();
+				if(!nextOutput.put(buffer.get(i))) {
+					return i;
+				}
+			}
+			return n;
+		}
 	}
 
 	@Override
