@@ -4,6 +4,7 @@
 		{
 			"item" : {
 				"output" : {
+					"delay" : "1m",
 					"path" : "/default"
 				}
 			},
@@ -19,9 +20,6 @@
 		},
 		{
 			"load" : {
-				"queue" : {
-					"delay" : "1m"
-				},
 				"type" : "read"
 			}
 		}
