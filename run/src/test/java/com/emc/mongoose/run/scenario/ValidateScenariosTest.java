@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.scenario;
 
+import com.emc.mongoose.common.env.PathUtil;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,7 +30,9 @@ public class ValidateScenariosTest {
 	throws Exception {
 
 		final ObjectMapper m = new ObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-		final JsonNode jsonSchema = m.readTree(new File("../scenario/schema.json"));
+		final JsonNode jsonSchema = m.readTree(
+			Paths.get(PathUtil.getBaseDir(), "scenario", "schema.json").toFile()
+		);
 		final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
 		final JsonValidator validator = factory.getValidator();
 

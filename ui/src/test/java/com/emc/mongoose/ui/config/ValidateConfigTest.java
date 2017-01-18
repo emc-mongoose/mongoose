@@ -1,5 +1,6 @@
 package com.emc.mongoose.ui.config;
 
+import com.emc.mongoose.common.env.PathUtil;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
@@ -9,7 +10,7 @@ import org.junit.Test;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertTrue;
 /**
@@ -21,8 +22,12 @@ public class ValidateConfigTest {
 	public final void testDefaultConfig()
 	throws Exception {
 		final ObjectMapper m = new ObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-		final JsonNode jsonInput = m.readTree(new File("../config/defaults.json"));
-		final JsonNode jsonSchema = m.readTree(new File("../config/config-schema.json"));
+		final JsonNode jsonInput = m.readTree(
+			Paths.get(PathUtil.getBaseDir(), "config", "defaults.json").toFile()
+		);
+		final JsonNode jsonSchema = m.readTree(
+			Paths.get(PathUtil.getBaseDir(), "config", "config-schema.json").toFile()
+		);
 		final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
 		final JsonValidator validator = factory.getValidator();
 		final ProcessingReport report = validator.validate(jsonSchema, jsonInput);

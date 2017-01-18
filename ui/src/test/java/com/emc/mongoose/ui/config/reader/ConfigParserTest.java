@@ -25,10 +25,10 @@ public class ConfigParserTest {
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("next", "version"));
+		assertThat(config.getVersion(), equalTo("3.1.0", "version"));
 		final Config.SocketConfig socketConfig = config.getSocketConfig();
 		assertThat(socketConfig, notNullValue());
-		assertThat(socketConfig.getTimeoutMilliSec(), equalTo(1_000_000, "socket.timeoutMilliSec"));
+		assertThat(socketConfig.getTimeoutMilliSec(), equalTo(0, "socket.timeoutMilliSec"));
 		assertThat(socketConfig.getReuseAddr(), equalTo(true, "socket.reuseAddr"));
 		assertThat(socketConfig.getKeepAlive(), equalTo(true, "socket.keepAlive"));
 		assertThat(socketConfig.getTcpNoDelay(), equalTo(true, "socket.tcpNoDelay"));
@@ -51,7 +51,7 @@ public class ConfigParserTest {
 		);
 		assertThat(dataConfig.getRangesConfig().getRandom(), equalTo(0, "item.data.ranges.random"));
 		assertThat(dataConfig.getSize(), equalTo(new SizeInBytes("1MB"), "item.data.size"));
-		assertThat(dataConfig.getVerify(), equalTo(true, "item.data.verify"));
+		assertThat(dataConfig.getVerify(), equalTo(false, "item.data.verify"));
 		final Config.ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
 		assertThat(inputConfig, notNullValue());
 		assertThat(inputConfig.getPath(), nullValue("item.input.path"));
@@ -94,7 +94,7 @@ public class ConfigParserTest {
 		);
 		final Config.LoadConfig.MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
-		assertThat(metricsConfig.getThreshold(), equalTo(false, "load.metrics.intermediate"));
+		assertThat(metricsConfig.getThreshold(), equalTo(0.0, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
 		assertThat(
 			metricsConfig.getPeriod(),
@@ -125,11 +125,11 @@ public class ConfigParserTest {
 		assertThat(headers.containsKey(Config.StorageConfig.HttpConfig.KEY_HEADER_CONNECTION),
 			equalTo(true, "storage.http.headers[Connection]"));
 		assertThat(headers.get(Config.StorageConfig.HttpConfig.KEY_HEADER_CONNECTION),
-			equalTo("keep-alive", "storage.http.headers[Connection]"));
+			equalTo("Keep-Alive", "storage.http.headers[Connection]"));
 		assertThat(headers.containsKey(Config.StorageConfig.HttpConfig.KEY_HEADER_USER_AGENT),
 			equalTo(true, "storage.http.headers[User-Agent]"));
 		assertThat(headers.get(Config.StorageConfig.HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo("mongoose/3.0.0-SNAPSHOT", "storage.http.headers[User-Agent]"));
+			equalTo("mongoose/3.1.0", "storage.http.headers[User-Agent]"));
 		assertThat(httpConfig.getNamespace(), nullValue("storage.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.http.versioning"));
 		assertThat(
