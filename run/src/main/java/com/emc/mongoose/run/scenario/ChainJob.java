@@ -1,13 +1,19 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.IoTask.IoResult;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+
+import com.emc.mongoose.model.item.BasicIoResultsItemInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
+import com.emc.mongoose.model.item.IoResultsItemInput;
+import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
@@ -15,7 +21,6 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
-import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.ui.config.Config;
@@ -27,11 +32,11 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+
+import com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
+import com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -45,49 +50,41 @@ import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- Created by andrey on 08.11.16.
+ Created by kurila on 09.01.17.
  */
-public class MixedLoadJob
+public class ChainJob
 extends JobBase {
-
+	
 	private static final Logger LOG = LogManager.getLogger();
-
+	
 	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
-	private final List<Integer> weights;
-
-	public MixedLoadJob(final Config appConfig, final Map<String, Object> subTree)
+	private final List<LoadMonitor> loadChain;
+	
+	public ChainJob(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
 		this.appConfig = appConfig;
-
 		nodeConfigList = (List<Map<String, Object>>) subTree.get(KEY_NODE_CONFIG);
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
-		localConfig.apply(nodeConfigList.get(0));
-
-		weights = (List<Integer>) subTree.get(KEY_NODE_WEIGHTS);
-		if(weights != null) {
-			if(weights.size() != nodeConfigList.size()) {
-				throw new ScenarioParseException("Weights count is not equal to sub-jobs count");
-			}
-		}
+		loadChain = new ArrayList<>(nodeConfigList.size());
 	}
-
+	
 	@Override
 	public final void run() {
 		super.run();
-
+		
 		final LoadConfig localLoadConfig = localConfig.getLoadConfig();
 		final String jobName = localLoadConfig.getJobConfig().getName();
-		LOG.info(Markers.MSG, "Run the mixed load job \"{}\"", jobName);
+		LOG.info(Markers.MSG, "Run the chain load job \"{}\"", jobName);
 		final LimitConfig limitConfig = localLoadConfig.getLimitConfig();
 		
 		final long t = limitConfig.getTime();
@@ -95,14 +92,11 @@ extends JobBase {
 		final boolean remoteDriversFlag = localConfig
 			.getStorageConfig().getDriverConfig().getRemote();
 		
-		final int loadGeneratorCount = nodeConfigList.size();
-		final Map<LoadGenerator, List<StorageDriver>> driverMap = new HashMap<>(loadGeneratorCount);
-		final Object2IntMap<LoadGenerator> weightMap = weights == null ?
-			null : new Object2IntOpenHashMap<>(loadGeneratorCount);
-		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>(loadGeneratorCount);
-		
 		try {
-			for(int i = 0; i < loadGeneratorCount; i ++) {
+			
+			IoResultsItemInput nextItemBuff = null;
+			
+			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
 				final Config config = new Config(appConfig);
 				if(i > 0) {
@@ -113,6 +107,7 @@ extends JobBase {
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final ContentConfig contentConfig = dataConfig.getContentConfig();
+				final OutputConfig outputConfig = itemConfig.getOutputConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 				final ContentSource contentSrc = ContentSourceUtil.getInstance(
@@ -128,8 +123,9 @@ extends JobBase {
 					itemFactory = null;
 					LOG.info(Markers.MSG, "Work on the path items");
 				}
-
+				
 				final LoadConfig loadConfig = config.getLoadConfig();
+				final QueueConfig queueConfig = loadConfig.getQueueConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();
@@ -179,35 +175,38 @@ extends JobBase {
 							);
 							continue;
 						}
-						final String driverSvcName = driverBuilderSvc
+						final String driverSvcName;
+						try {
+							driverSvcName = driverBuilderSvc
 							.setJobName(jobName)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
 							.setSocketConfig(socketConfig)
 							.setStorageConfig(storageConfig)
 							.buildRemotely();
+						} catch(final IOException | UserShootHisFootException e) {
+							throw new RuntimeException(e);
+						}
+						
 						final StorageDriverSvc driverSvc;
 						if(driverSvcAddr.contains(":")) {
 							try {
 								driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
 							} catch(final NotBoundException | IOException | URISyntaxException e) {
 								LogUtil.exception(
-									LOG, Level.FATAL, e,
-									"Failed to resolve the storage driver service @{}",
+									LOG, Level.FATAL, e, "Failed to resolve the storage driver service @{}",
 									driverSvcAddr
 								);
 								return;
 							}
 						} else {
 							try {
-								driverSvc = ServiceUtil.resolve(
-									driverSvcAddr, driverPort, driverSvcName
-								);
+								driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
 							} catch(final NotBoundException | IOException | URISyntaxException e) {
 								LogUtil.exception(
 									LOG, Level.FATAL, e,
-									"Failed to resolve the storage driver builder service @{}:{}",
-									driverSvcAddr, driverPort
+									"Failed to resolve the storage driver service @{}:{}", driverSvcAddr,
+									driverPort
 								);
 								return;
 							}
@@ -226,30 +225,69 @@ extends JobBase {
 						}
 					}
 				} else {
-					drivers.add(
-						new BasicStorageDriverBuilder<>()
-							.setJobName(jobName)
-							.setItemConfig(itemConfig)
-							.setLoadConfig(loadConfig)
-							.setSocketConfig(socketConfig)
-							.setStorageConfig(storageConfig)
-							.build()
-					);
+					try {
+						drivers.add(
+							new BasicStorageDriverBuilder<>()
+								.setJobName(jobName)
+								.setItemConfig(itemConfig)
+								.setLoadConfig(loadConfig)
+								.setSocketConfig(socketConfig)
+								.setStorageConfig(storageConfig)
+								.build()
+						);
+					} catch(final UserShootHisFootException e) {
+						throw new RuntimeException(e);
+					}
 				}
-
-				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
-					.setItemConfig(itemConfig)
-					.setItemFactory(itemFactory)
-					.setItemType(itemType)
-					.setLoadConfig(loadConfig)
-					.setStorageDrivers(drivers)
-					.build();
 				
-				driverMap.put(loadGenerator, drivers);
-				if(weightMap != null) {
-					weightMap.put(loadGenerator, weights.get(i));
+				final LoadGenerator loadGenerator;
+				if(nextItemBuff == null) {
+					loadGenerator = new BasicLoadGeneratorBuilder<>()
+						.setItemConfig(itemConfig)
+						.setItemFactory(itemFactory)
+						.setItemType(itemType)
+						.setLoadConfig(loadConfig)
+						.setStorageDrivers(drivers)
+						.build();
+				} else {
+					loadGenerator = new BasicLoadGeneratorBuilder<>()
+						.setItemConfig(itemConfig)
+						.setItemFactory(itemFactory)
+						.setItemType(itemType)
+						.setLoadConfig(loadConfig)
+						.setStorageDrivers(drivers)
+						.setItemInput(nextItemBuff)
+						.build();
 				}
-				loadConfigMap.put(loadGenerator, loadConfig);
+				
+				final LoadMonitor loadMonitor = new BasicLoadMonitor(
+					jobName, loadGenerator, drivers, loadConfig
+				);
+				loadChain.add(loadMonitor);
+				
+				if(i < nodeConfigList.size() - 1) {
+					nextItemBuff = new BasicIoResultsItemInput<>(
+						queueConfig.getSize(), TimeUnit.SECONDS, outputConfig.getDelay()
+					);
+					loadMonitor.setIoResultsOutput(nextItemBuff);
+				} else {
+					final String itemOutputFile = localConfig
+						.getItemConfig().getOutputConfig().getFile();
+					if(itemOutputFile != null && itemOutputFile.length() > 0) {
+						final Path itemOutputPath = Paths.get(itemOutputFile);
+						if(Files.exists(itemOutputPath)) {
+							LOG.warn(
+								Markers.ERR, "Items output file \"{}\" already exists",
+								itemOutputPath
+							);
+						}
+						// NOTE: using null as an ItemFactory
+						final Output<IoResult> itemOutput = new ItemInfoFileOutput<>(
+							itemOutputPath
+						);
+						loadMonitor.setIoResultsOutput(itemOutput);
+					}
+				}
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the content source");
@@ -257,42 +295,45 @@ extends JobBase {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the load generator");
 		}
 		
-		try(
-			final LoadMonitor monitor = new BasicLoadMonitor(
-				jobName, driverMap, loadConfigMap, weightMap
-			)
-		) {
-			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();
-			if(itemOutputFile != null && itemOutputFile.length() > 0) {
-				final Path itemOutputPath = Paths.get(itemOutputFile);
-				if(Files.exists(itemOutputPath)) {
-					LOG.warn(
-						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
-					);
-				}
-				// NOTE: using null as an ItemFactory
-				final Output<IoResult> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-				monitor.setIoResultsOutput(itemOutput);
-			}
-			monitor.start();
-			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load monitor done");
-			} else {
-				LOG.info(Markers.MSG, "Load monitor timeout");
+		try {
+			for(final LoadMonitor nextMonitor : loadChain) {
+				nextMonitor.start();
 			}
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load monitor interrupted");
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+		}
+		
+		long timeRemainSec = timeLimitSec;
+		long tsStart;
+		for(final LoadMonitor nextMonitor : loadChain) {
+			if(timeRemainSec > 0) {
+				tsStart = System.currentTimeMillis();
+				try {
+					if(nextMonitor.await(timeRemainSec, TimeUnit.SECONDS)) {
+						LOG.info(Markers.MSG, "Load monitor \"{}\" done", nextMonitor.getName());
+					} else {
+						LOG.info(Markers.MSG, "Load monitor \"{}\" timeout", nextMonitor.getName());
+					}
+				} catch(final InterruptedException e) {
+					LOG.debug(Markers.MSG, "Load job interrupted");
+					break;
+				} catch(final RemoteException e) {
+					assert false;
+					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+				}
+				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
+			} else {
+				break;
+			}
 		}
 	}
-
+	
 	@Override
 	public void close()
 	throws IOException {
 		nodeConfigList.clear();
-		weights.clear();
+		for(final LoadMonitor nextLoadMonitor : loadChain) {
+			nextLoadMonitor.close();
+		}
 	}
 }

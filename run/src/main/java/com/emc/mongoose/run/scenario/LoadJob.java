@@ -1,14 +1,15 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.TextFileOutput;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
@@ -72,7 +73,6 @@ extends JobBase {
 	
 	@Override
 	public final void run() {
-		
 		super.run();
 		
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
@@ -253,8 +253,8 @@ extends JobBase {
 						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
 					);
 				}
-				final Output<String> itemOutput = new TextFileOutput(itemOutputPath);
-				monitor.setItemInfoOutput(itemOutput);
+				final Output<IoResult> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+				monitor.setIoResultsOutput(itemOutput);
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {

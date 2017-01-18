@@ -8,11 +8,13 @@ import com.emc.mongoose.model.item.DataItem;
 /**
  Created by andrey on 25.11.16.
  */
-public interface PartialDataIoTask<I extends DataItem, R extends PartialDataIoTask.PartialDataIoResult>
+public interface PartialDataIoTask<
+	I extends DataItem, R extends PartialDataIoTask.PartialDataIoResult
+>
 extends DataIoTask<I, R>, PartialIoTask<I, R> {
 
-	interface PartialDataIoResult
-	extends DataIoResult, PartialIoResult {
+	interface PartialDataIoResult<I extends DataItem>
+	extends DataIoResult<I>, PartialIoResult<I> {
 	}
 
 	@Override

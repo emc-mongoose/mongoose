@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
@@ -32,6 +33,8 @@ public interface LoadGeneratorBuilder<
 	LoadGeneratorBuilder<I, O, R, T> setStorageDrivers(
 		final List<StorageDriver<I, O, R>> storageDrivers
 	);
+	
+	LoadGeneratorBuilder<I, O, R, T> setItemInput(final Input<I> itemInput);
 
 	T build()
 	throws UserShootHisFootException, IOException;

@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.TimeUnit;
+import static java.lang.System.nanoTime;
 
 /**
  Created by kurila on 04.04.16.
@@ -37,7 +38,7 @@ implements Throttle<X> {
 	public final boolean getPassFor(final X item) {
 		synchronized(this) {
 			if(startTime > 0) {
-				final long periodCount = (System.nanoTime() - startTime) / periodNanos;
+				final long periodCount = (nanoTime() - startTime) / periodNanos;
 				if(periodCount > acquiredCount) {
 					acquiredCount ++;
 					return true;
@@ -45,7 +46,7 @@ implements Throttle<X> {
 					return false;
 				}
 			} else {
-				startTime = System.nanoTime();
+				startTime = nanoTime();
 				acquiredCount ++;
 				return true;
 			}
@@ -57,7 +58,7 @@ implements Throttle<X> {
 		synchronized(this) {
 			if(startTime > 0) {
 				final int availableCount = (int) (
-					(System.nanoTime() - startTime) / periodNanos - acquiredCount
+					(nanoTime() - startTime) / periodNanos - acquiredCount
 				);
 				if(availableCount > requiredCount) {
 					acquiredCount += requiredCount;
@@ -67,7 +68,7 @@ implements Throttle<X> {
 					return availableCount;
 				}
 			} else {
-				startTime = System.nanoTime();
+				startTime = nanoTime();
 				acquiredCount += requiredCount;
 				return requiredCount;
 			}

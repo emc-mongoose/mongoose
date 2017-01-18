@@ -4,12 +4,16 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.Externalizable;
+import static java.lang.System.currentTimeMillis;
+import static java.lang.System.nanoTime;
 
 /**
  Created by kurila on 11.07.16.
  */
 public interface IoTask<I extends Item, R extends IoTask.IoResult>
 extends Externalizable {
+
+	long START_OFFSET_MICROS = currentTimeMillis() * 1000 - nanoTime() / 1000;
 
 	String SLASH = "/";
 
@@ -65,14 +69,14 @@ extends Externalizable {
 
 	long getRespTimeDone();
 	
-	interface IoResult
+	interface IoResult<I extends Item>
 	extends Externalizable {
 		
 		String getStorageDriverAddr();
 		
 		String getStorageNodeAddr();
 
-		String getItemInfo();
+		I getItem();
 		
 		int getIoTypeCode();
 		
@@ -85,18 +89,17 @@ extends Externalizable {
 		long getLatency();
 	}
 
-	default String buildItemInfo(final String itemPath, final String itemInfo) {
+	default void buildItemPath(final I item, final String itemPath) {
+		String itemName = item.getName();
 		if(itemPath == null || itemPath.isEmpty()) {
-			if(itemInfo.startsWith("/")) {
-				return itemInfo;
-			} else {
-				return "/" + itemInfo;
+			if(!itemName.startsWith("/")) {
+				item.setName("/" + itemName);
 			}
 		} else {
 			if(itemPath.endsWith("/")) {
-				return itemPath + itemInfo;
+				item.setName(itemPath + itemName);
 			} else {
-				return itemPath + "/" + itemInfo;
+				item.setName(itemPath + "/" + itemName);
 			}
 		}
 	}

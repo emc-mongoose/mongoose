@@ -10,7 +10,7 @@ import java.io.ObjectOutput;
 public class BasicItem
 implements Item {
 	
-	protected String name = null;
+	protected volatile String name = null;
 	
 	public BasicItem() {
 	}

@@ -34,7 +34,7 @@ extends LogMessageBase {
 				DataIoResult nextDataIoResult;
 				for(int i = from; i < to; i ++) {
 					nextDataIoResult = dataIoResults.get(i);
-					nextItemInfo = nextDataIoResult.getItemInfo();
+					nextItemInfo = nextDataIoResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
 						if(commaPos > 0) {
@@ -62,7 +62,7 @@ extends LogMessageBase {
 				R nextIoResult;
 				for(int i = from; i < to; i ++) {
 					nextIoResult = ioResults.get(i);
-					nextItemInfo = nextIoResult.getItemInfo();
+					nextItemInfo = nextIoResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
 						if(commaPos > 0) {

@@ -78,6 +78,7 @@
 			"length" : 13
 		},
 		"output" : {
+			"delay" : 0,
 			"file" : null,
 			"path" : null
 		},
@@ -86,11 +87,12 @@
 	"load" : {
 		"circular" : false,
 		"concurrency" : 1,
-		"generator": {
-			"remote": false,
+		"generator" : {
 			"addrs" : [
 				"127.0.0.1"
-			]
+			],
+			"remote" : false,
+			"shuffle" : false
 		},
 		"job" :{
 			"name" : null
@@ -155,7 +157,7 @@
 			"fsAccess" : false,
 			"headers" : {
 				"Connection" : "Keep-Alive",
-				"User-Agent" : "mongoose/3.0.6"
+				"User-Agent" : "mongoose/3.1.0"
 			},
 			"namespace" : null,
 			"versioning" : false
@@ -182,5 +184,5 @@
 		"ssl" : false,
 		"type" : "http"
 	},
-	"version" : "3.0.6"
+	"version" : "3.1.0"
 }

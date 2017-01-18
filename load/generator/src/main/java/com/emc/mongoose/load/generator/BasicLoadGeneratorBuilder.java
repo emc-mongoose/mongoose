@@ -15,6 +15,7 @@ import com.emc.mongoose.model.item.BasicItemNameInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.IoResultsItemInput;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemNamingType;
@@ -53,12 +54,14 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	private volatile ItemConfig itemConfig;
-	private volatile LoadConfig loadConfig;
-	private volatile ItemType itemType;
-	private volatile ItemFactory<I> itemFactory;
-	private volatile List<StorageDriver<I, O, R>> storageDrivers;
-
+	private ItemConfig itemConfig;
+	private LoadConfig loadConfig;
+	private ItemType itemType;
+	private ItemFactory<I> itemFactory;
+	private List<StorageDriver<I, O, R>> storageDrivers;
+	private Input<I> itemInput = null;
+	private SizeInBytes avgItemSize = null;
+	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
@@ -90,7 +93,16 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		this.storageDrivers = storageDrivers;
 		return this;
 	}
-
+	
+	@Override @SuppressWarnings("unchecked")
+	public BasicLoadGeneratorBuilder<I, O, R, T> setItemInput(final Input<I> itemInput) {
+		this.itemInput = itemInput;
+		if(!(itemInput instanceof IoResultsItemInput)) {
+			this.avgItemSize = estimateAvgDataItemSize((Input<DataItem>) itemInput);
+		}
+		return this;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
@@ -98,10 +110,10 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 
-		final Input<I> itemInput;
 		final Input<String> dstPathInput;
 		final IoTaskBuilder<I, O, R> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
+		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 
@@ -139,11 +151,11 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		}
 
 		final String itemInputFile = inputConfig.getFile();
-		itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+		if(itemInput == null) {
+			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+			avgItemSize = estimateAvgDataItemSize((Input<DataItem>) itemInput);
+		}
 
-		final SizeInBytes avgItemSize = estimateAvgDataItemSize(
-			(Input<DataItem>) itemInput
-		);
 		if(avgItemSize != null && ItemType.DATA.equals(itemType)) {
 			try {
 				for(final StorageDriver<I, O, R> storageDriver : storageDrivers) {
@@ -172,7 +184,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		dstPathInput = getDstPathInput(ioType);
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit
+			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit, shuffleFlag
 		);
 	}
 	
@@ -258,9 +270,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private Input<I> getItemInput(
 		final IoType ioType, final String itemInputFile, final String itemInputPath
 	) throws UserShootHisFootException {
-
-		Input<I> itemInput = null;
-
+		
 		if(itemInputFile == null || itemInputFile.isEmpty()) {
 
 			final NamingConfig namingConfig = itemConfig.getNamingConfig();

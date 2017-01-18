@@ -13,9 +13,8 @@ import java.util.List;
 public interface CompositeIoTask<I extends Item, R extends CompositeIoTask.CompositeIoResult>
 extends IoTask<I, R> {
 	
-	interface CompositeIoResult
-	extends IoResult {
-		
+	interface CompositeIoResult<I extends Item>
+	extends IoResult<I> {
 		boolean getCompleteFlag();
 	}
 

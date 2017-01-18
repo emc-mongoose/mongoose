@@ -23,6 +23,7 @@ extends Closeable, Runnable {
 	String NODE_TYPE_COMMAND = "command";
 	String NODE_TYPE_FOR = "for";
 	String NODE_TYPE_MIXED = "mixed";
+	String NODE_TYPE_CHAIN = "chain";
 
 	Config getConfig();
 }

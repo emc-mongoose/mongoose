@@ -4,8 +4,6 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.item.Item;
 
-import static com.emc.mongoose.model.io.task.partial.PartialIoTask.PartialIoResult;
-
 /**
  Created by andrey on 23.11.16.
  Attention: not more serializable/externalizable!
@@ -14,8 +12,8 @@ import static com.emc.mongoose.model.io.task.partial.PartialIoTask.PartialIoResu
 public interface PartialIoTask<I extends Item, R extends PartialIoTask.PartialIoResult>
 extends IoTask<I, R> {
 	
-	interface PartialIoResult
-	extends IoTask.IoResult {
+	interface PartialIoResult<I extends Item>
+	extends IoResult<I> {
 	}
 	
 	int getPartNumber();

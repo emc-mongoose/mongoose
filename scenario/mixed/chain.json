@@ -1,0 +1,22 @@
+{
+	"type" : "chain",
+	"config" : [
+		{
+			"item" : {
+				"output" : {
+					"path" : "/default"
+				}
+			}
+		},
+		{
+			"load" : {
+				"type" : "read"
+			}
+		},
+		{
+			"load" : {
+				"type" : "delete"
+			}
+		}
+	]
+}

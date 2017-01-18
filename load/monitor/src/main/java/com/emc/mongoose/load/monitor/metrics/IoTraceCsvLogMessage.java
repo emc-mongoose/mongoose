@@ -35,7 +35,7 @@ extends LogMessageBase {
 	public IoTraceCsvLogMessage(final R ioResult) {
 		storageDriver = ioResult.getStorageDriverAddr();
 		storageNode = ioResult.getStorageNodeAddr();
-		final String itemInfo = ioResult.getItemInfo();
+		final String itemInfo = ioResult.getItem().toString();
 		if(itemInfo != null) {
 			final int commaPos = itemInfo.indexOf(',', 0);
 			if(commaPos > 0) {

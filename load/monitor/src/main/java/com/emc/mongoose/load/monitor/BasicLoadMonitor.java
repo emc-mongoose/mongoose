@@ -2,6 +2,7 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -62,7 +63,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public class BasicLoadMonitor<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends DaemonBase
 implements LoadMonitor<R> {
 
@@ -74,7 +75,7 @@ implements LoadMonitor<R> {
 	private final int metricsPeriodSec;
 	private final long countLimit;
 	private final long sizeLimit;
-	private final ConcurrentMap<String, String> uniqueItems;
+	private final ConcurrentMap<I, R> latestIoResultsPerItem;
 	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
 
@@ -83,7 +84,7 @@ implements LoadMonitor<R> {
 	private volatile Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
-	private volatile Output<String> itemInfoOutput;
+	private volatile Output<R> ioResultsOutput;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 	private final Object2BooleanMap<LoadGenerator<I, O, R>> circularityMap;
@@ -193,9 +194,9 @@ implements LoadMonitor<R> {
 		}
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
-			uniqueItems = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
+			latestIoResultsPerItem = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
 		} else {
-			uniqueItems = null;
+			latestIoResultsPerItem = null;
 		}
 
 		long countLimitSum = 0;
@@ -335,8 +336,8 @@ implements LoadMonitor<R> {
 	}
 
 	@Override
-	public final void setItemInfoOutput(final Output<String> itemInfoOutput) {
-		this.itemInfoOutput = itemInfoOutput;
+	public final void setIoResultsOutput(final Output<R> ioTaskResultsOutput) {
+		this.ioResultsOutput = ioTaskResultsOutput;
 	}
 
 	@Override
@@ -345,18 +346,17 @@ implements LoadMonitor<R> {
 	) {
 
 		int m = n; // count of complete whole tasks
-		int itemInfoCommaPos;
 
 		// I/O trace logging
 		if(LOG.isDebugEnabled(Markers.IO_TRACE)) {
 			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n));
 		}
 
+		I item;
 		R ioTaskResult;
 		DataIoResult dataIoTaskResult;
 		int ioTypeCode;
 		int statusCode;
-		String itemInfo;
 		long reqDuration;
 		long respLatency;
 		long countBytesDone = 0;
@@ -364,7 +364,7 @@ implements LoadMonitor<R> {
 		final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
 		IoStats ioTypeStats, ioTypeMedStats;
 
-		final List<String> itemsToPass = itemInfoOutput == null ? null : new ArrayList<>(n);
+		final List<R> ioResultsToPass = ioResultsOutput == null ? null : new ArrayList<>(n);
 
 		for(int i = 0; i < n; i ++) {
 
@@ -403,16 +403,11 @@ implements LoadMonitor<R> {
 					}
 					m --;
 				} else {
-					itemInfo = ioTaskResult.getItemInfo();
+					item = ioTaskResult.getItem();
 					if(isCircular) {
-						itemInfoCommaPos = itemInfo.indexOf(',', 0);
-						if(itemInfoCommaPos > 0) {
-							uniqueItems.put(itemInfo.substring(0, itemInfoCommaPos), itemInfo);
-						} else {
-							uniqueItems.put(itemInfo, itemInfo);
-						}
-					} else if(itemInfoOutput != null) {
-						itemsToPass.add(itemInfo);
+						latestIoResultsPerItem.put(item, ioTaskResult);
+					} else if(ioResultsOutput != null) {
+						ioResultsToPass.add(ioTaskResult);
 					}
 					// update the metrics with success
 					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
@@ -428,19 +423,19 @@ implements LoadMonitor<R> {
 			}
 		}
 
-		if(!isCircular && itemInfoOutput != null) {
-			final int itemsToPassCount = itemsToPass.size();
+		if(!isCircular && ioResultsOutput != null) {
+			final int itemsToPassCount = ioResultsToPass.size();
 			try {
 				for(
 					int i = 0; i < itemsToPassCount;
-					i += itemInfoOutput.put(itemsToPass, i, itemsToPassCount)
+					i += ioResultsOutput.put(ioResultsToPass, i, itemsToPassCount)
 				) {
 					LockSupport.parkNanos(1);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to output {} items to {}", itemsToPassCount,
-					itemInfoOutput
+					ioResultsOutput
 				);
 			}
 		}
@@ -771,16 +766,16 @@ implements LoadMonitor<R> {
 			medIoStats.clear();
 		}
 
-		if(uniqueItems != null && itemInfoOutput != null) {
+		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
 			try {
-				for(final String itemInfo : uniqueItems.values()) {
-					if(!itemInfoOutput.put(itemInfo)) {
+				for(final R latestItemIoResult : latestIoResultsPerItem.values()) {
+					if(!ioResultsOutput.put(latestItemIoResult)) {
 						LOG.debug(
 							Markers.ERR,
 							"{}: item info output fails to ingest, blocking the closing method",
 							getName()
 						);
-						while(!itemInfoOutput.put(itemInfo)) {
+						while(!ioResultsOutput.put(latestItemIoResult)) {
 							Thread.sleep(1);
 						}
 						LOG.debug(Markers.MSG, "{}: closing method unblocked", getName());
@@ -788,11 +783,11 @@ implements LoadMonitor<R> {
 				}
 			} catch(final InterruptedException ignored) {
 			}
-			uniqueItems.clear();
+			latestIoResultsPerItem.clear();
 		}
 
-		if(itemInfoOutput != null) {
-			itemInfoOutput.close();
+		if(ioResultsOutput != null) {
+			ioResultsOutput.close();
 			LOG.debug(Markers.MSG, "{}: closed the items output", getName());
 		}
 

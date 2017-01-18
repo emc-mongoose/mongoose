@@ -49,7 +49,7 @@ implements LoadGenerator<I, O, R> {
 	private final Input<String> dstPathInput;
 	private final Thread worker;
 	private final long countLimit;
-	private final boolean isShuffling = false;
+	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O, R> ioTaskBuilder;
 
 	private long generatedIoTaskCount = 0;
@@ -58,7 +58,7 @@ implements LoadGenerator<I, O, R> {
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final SizeInBytes avgItemSize,
 		final Input<String> dstPathInput, final IoTaskBuilder<I, O, R> ioTaskBuilder,
-		final long countLimit
+		final long countLimit, final boolean shuffleFlag
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
@@ -66,6 +66,7 @@ implements LoadGenerator<I, O, R> {
 		this.dstPathInput = dstPathInput;
 		this.ioTaskBuilder = ioTaskBuilder;
 		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
+		this.shuffleFlag = shuffleFlag;
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
 		worker = new Thread(
@@ -159,7 +160,7 @@ implements LoadGenerator<I, O, R> {
 				}
 
 				if(n > 0) {
-					if(isShuffling) {
+					if(shuffleFlag) {
 						Collections.shuffle(items, rnd);
 					}
 					try {
@@ -207,11 +208,7 @@ implements LoadGenerator<I, O, R> {
 				}
 			}
 
-			LOG.debug(
-				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-				Thread.currentThread().getName(), generatedIoTaskCount, itemInput.toString(),
-				BasicLoadGenerator.this.toString()
-			);
+			LOG.debug(Markers.MSG, "Produced {} items", generatedIoTaskCount);
 			try {
 				shutdown();
 			} catch(final IllegalStateException ignored) {

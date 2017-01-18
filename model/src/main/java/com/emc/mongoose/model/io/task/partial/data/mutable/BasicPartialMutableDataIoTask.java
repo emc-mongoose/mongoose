@@ -56,11 +56,11 @@ implements PartialMutableDataIoTask<I, R> {
 		final boolean useDataLatencyResult,
 		final boolean useTransferSizeResult
 	) {
+		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return (R) new BasicPartialDataIoResult(
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ?
-				buildItemInfo(dstPath == null ? srcPath : dstPath, item.toString()) : null,
+			useItemInfoResult ? item : null,
 			useIoTypeCodeResult ? ioType.ordinal() : - 1,
 			useStatusCodeResult ? status.ordinal() : - 1,
 			useReqTimeStartResult ? reqTimeStart : - 1,
