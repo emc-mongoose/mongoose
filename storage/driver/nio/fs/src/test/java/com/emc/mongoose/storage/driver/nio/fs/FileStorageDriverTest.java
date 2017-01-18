@@ -53,7 +53,7 @@ public class FileStorageDriverTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public final void testList()
 	throws Exception {
 
