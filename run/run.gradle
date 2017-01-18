@@ -25,6 +25,7 @@ dependencies {
 		project(":common"),
 		project(":model"),
 		project(":load:generator"),
+		"com.github.fge:json-schema-validator:2.2.6"
 	)
 }
 

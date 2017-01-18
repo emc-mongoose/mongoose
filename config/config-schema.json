@@ -216,7 +216,7 @@
 						"addrs": {
 							"type": "array",
 							"items": {
-								"type": "string"
+								"type" : "string"
 							}
 						},
 						"remote" : {
@@ -232,7 +232,7 @@
 					"additionalProperties" : false,
 					"properties" : {
 						"name" : {
-							"types" : [
+							"type" : [
 								"null", "string"
 							]
 						}
@@ -477,9 +477,9 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"addrs" : {
-							"type" : "array",
-							"items" : {
+						"addrs": {
+							"type": "array",
+							"items": {
 								"type" : "string"
 							}
 						},
@@ -582,10 +582,10 @@
 					"type" : "object",
 					"additionalProperties" : false,
 					"properties" : {
-						"addrs" : {
-							"type" : "array",
+						"addrs": {
+							"type": "array",
 							"items": {
-								"type": "string"
+								"type" : "string"
 							}
 						},
 						"port" : {

@@ -20,8 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class ConfigParserTest {
 
-	@SuppressWarnings("ConstantConditions")
-	@Test @Ignore
+	@Test
 	public void shouldParseWithoutFireballsThrowing()
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
@@ -36,7 +35,6 @@ public class ConfigParserTest {
 		assertThat(socketConfig.getLinger(), equalTo(0, "socket.linger"));
 		assertThat(socketConfig.getBindBackLogSize(), equalTo(0, "socket.bindBacklogSize"));
 		assertThat(socketConfig.getInterestOpQueued(), equalTo(false, "socket.interestOpQueued"));
-		assertThat(socketConfig.getSelectInterval(), equalTo(100, "socket.selectInterval"));
 		final Config.ItemConfig itemConfig = config.getItemConfig();
 		assertThat(itemConfig, notNullValue());
 		assertThat(itemConfig.getType(), equalTo("data", "item.type"));

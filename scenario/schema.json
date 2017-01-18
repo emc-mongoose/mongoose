@@ -1,0 +1,592 @@
+{
+	"$schema" : "http://json-schema.org/draft-04/schema#",
+	"definitions" : {
+		"config" : {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"item": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"data": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"content": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"file": {
+											"type": [
+												"null", "string"
+											]
+										},
+										"seed": {
+											"type": "string",
+											"pattern" : "[A-Fa-f0-9]+"
+										},
+										"ringSize": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										}
+									}
+								},
+								"ranges": {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"fixed" : {
+											"oneOf" : [
+												{
+													"type" : "null"
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+												}
+											]
+										},
+										"random" : {
+											"type" : "number",
+											"minimum" : 0
+										},
+										"threshold" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										}
+									}
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										}
+									]
+								},
+								"verify": {
+									"type": "boolean"
+								}
+							}
+						},
+						"input": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"file": {
+									"type": [
+										"null", "string"
+									]
+								},
+								"path": {
+									"type": [
+										"null", "string"
+									]
+								}
+							}
+						},
+						"naming": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum" : [
+										"asc", "desc", "random"
+									]
+								},
+								"prefix": {
+									"type": [
+										"null", "string"
+									]
+								},
+								"radix": {
+									"type": "integer",
+									"minimum" : 2,
+									"maximum" : 36
+								},
+								"offset": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"length": {
+									"type": "integer",
+									"minimum" : 1
+								}
+							}
+						},
+						"output": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"file": {
+									"type": [
+										"null", "string"
+									]
+								},
+								"path": {
+									"type": [
+										"null", "string"
+									]
+								}
+							}
+						},
+						"type" : {
+							"enum" : [
+								"data", "path", "token"
+							]
+						}
+					}
+				},
+				"load": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"circular": {
+							"type": "boolean"
+						},
+						"concurrency": {
+							"type": "integer",
+							"minimum" : 1
+						},
+						"generator" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type" : "string"
+									}
+								},
+								"remote" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"job" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"name" : {
+									"type" : [
+										"null", "string"
+									]
+								}
+							}
+						},
+						"limit": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"count": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"rate": {
+									"type": "number",
+									"minimum" : 0
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										}
+									]
+								},
+								"time": {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								}
+							}
+						},
+						"metrics" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								},
+								"precondition" : {
+									"type" : "boolean"
+								},
+								"threshold" : {
+									"type" : "number",
+									"minimum" : 0,
+									"maximum" : 1
+								},
+								"trace" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"storageDriver" : {
+											"type" : "boolean"
+										},
+										"storageNode" : {
+											"type" : "boolean"
+										},
+										"itemInfo" : {
+											"type" : "boolean"
+										},
+										"ioTypeCode" : {
+											"type" : "boolean"
+										},
+										"statusCode" : {
+											"type" : "boolean"
+										},
+										"reqTimeStart" : {
+											"type" : "boolean"
+										},
+										"duration" : {
+											"type" : "boolean"
+										},
+										"respLatency" : {
+											"type" : "boolean"
+										},
+										"dataLatency" : {
+											"type" : "boolean"
+										},
+										"transferSize" : {
+											"type" : "boolean"
+										}
+									}
+								}
+							}
+						},
+						"queue" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"size" : {
+									"type" : "integer",
+									"minimum" : 1
+								}
+							}
+						},
+						"type": {
+							"type": "string",
+							"pattern" : "[NnOoPpCcRrEeAaTtDdUuLl]+=?[\\d]?%?",
+							"minLength" : 4,
+							"maxLength" : 6
+						}
+					}
+				},
+				"scenario" : {
+					"type" : "object",
+					"additionalProperties" : false,
+					"properties" : {
+						"file" : {
+							"type" : [
+								"null", "string"
+							]
+						}
+					}
+				},
+				"socket": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"bindBacklogSize": {
+							"type": "integer",
+							"minimum" : 0
+						},
+						"interestOpQueued": {
+							"type": "boolean"
+						},
+						"keepAlive": {
+							"type": "boolean"
+						},
+						"linger": {
+							"type": "integer",
+							"minimum" : 0
+						},
+						"rcvBuf" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+								}
+							]
+						},
+						"reuseAddr": {
+							"type": "boolean"
+						},
+						"sndBuf" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+								}
+							]
+						},
+						"tcpNoDelay": {
+							"type": "boolean"
+						},
+						"timeoutMilliSec": {
+							"type": "integer",
+							"minimum" : 0
+						}
+					}
+				},
+				"storage": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"auth": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"id": {
+									"type": [
+										"null", "string"
+									]
+								},
+								"secret": {
+									"type": [
+										"null", "string"
+									]
+								},
+								"token": {
+									"type": [
+										"null", "string"
+									]
+								}
+							}
+						},
+						"driver" : {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type" : "string"
+									}
+								},
+								"port" : {
+									"type" : "number",
+									"minimum" : 1
+								},
+								"remote" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"http": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"api": {
+									"type": "string",
+									"pattern" : "[\\w\\d]+"
+								},
+								"fsAccess": {
+									"type": "boolean"
+								},
+								"headers": {
+									"type": "object",
+									"properties": {
+									}
+								},
+								"namespace": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"versioning": {
+									"type": "boolean"
+								}
+							}
+						},
+						"mock": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"capacity": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"container": {
+									"type": "object",
+									"properties": {
+										"capacity": {
+											"type": "integer",
+											"minimum" : 0
+										},
+										"countLimit": {
+											"type": "integer",
+											"minimum" : 0
+										}
+									}
+								},
+								"fail" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"connections" : {
+											"type" : "integer",
+											"minimum" : 0
+										},
+										"responses" : {
+											"type" : "integer",
+											"minimum" : 0
+										}
+									}
+								},
+								"headCount": {
+									"type": "integer",
+									"minimum" : 1
+								},
+								"node" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"node" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type" : "string"
+									}
+								},
+								"port" : {
+									"type" : "number",
+									"minimum" : 1
+								}
+							}
+						},
+						"ssl" : {
+							"type" : "boolean"
+						},
+						"type": {
+							"type": "string",
+							"enum" : [
+								"fs", "http"
+							]
+						}
+					}
+				},
+				"version" : {
+					"type" : "string"
+				}
+			}
+		}
+	},
+	"type" : "object",
+	"additionalProperties" : false,
+	"properties" : {
+		"blocking" : {
+			"type" : "boolean"
+		},
+		"config" : {
+			"oneOf" : [
+				{
+					"$ref" : "#/definitions/config"
+				},
+				{
+					"type" : "array",
+					"items" : {
+						"$ref" : "#/definitions/config"
+					}
+				}
+			]
+		},
+		"in" : {
+			"oneOf" : [
+				{
+					"type" : "array"
+				},
+				{
+					"type" : "string"
+				},
+				{
+					"type" : "integer",
+					"minimum" : 0
+				}
+			]
+		},
+		"jobs" : {
+			"type" : "array",
+			"items" : {
+				"$ref" : "#"
+			}
+		},
+		"type" : {
+			"type" : "string",
+			"enum" : [
+				"command", "for", "load", "parallel", "precondition", "sequential", "mixed", "chain"
+			]
+		},
+		"value" : {
+			"oneOf" : [
+				{
+					"type" : "string"
+				},
+				{
+					"type" : "integer"
+				}
+			]
+		},
+		"weights" : {
+			"type" : "array",
+			"items" : {
+				"type" : "integer",
+				"minimum" : 1
+			}
+		}
+	},
+	"required" : [
+		"type"
+	]
+}
