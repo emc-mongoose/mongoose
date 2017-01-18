@@ -133,7 +133,6 @@
 		"linger" : 0,
 		"reuseAddr" : true,
 		"rcvBuf" : 0,
-		"selectInterval" : 100,
 		"sndBuf" : 0,
 		"tcpNoDelay" : true,
 		"timeoutMilliSec" : 0
@@ -143,6 +142,13 @@
 			"id" : null,
 			"secret" : null,
 			"token" : null
+		},
+		"driver": {
+			"remote": false,
+			"addrs" : [
+				"127.0.0.1"
+			],
+			"port" : 1099
 		},
 		"http" : {
 			"api" : "S3",
@@ -154,21 +160,6 @@
 			"namespace" : null,
 			"versioning" : false
 		},
-		"node": {
-			"addrs" : [
-				"127.0.0.1"
-			],
-			"port" : 9020
-		},
-		"driver": {
-			"remote": false,
-			"addrs" : [
-				"127.0.0.1"
-			],
-			"port" : 1099
-		},
-		"ssl" : false,
-		"type" : "http",
 		"mock" : {
 			"capacity" : 1000000,
 			"container" : {
@@ -181,7 +172,15 @@
 			},
 			"headCount" : 5,
 			"node": false
-		}
+		},
+		"node": {
+			"addrs" : [
+				"127.0.0.1"
+			],
+			"port" : 9020
+		},
+		"ssl" : false,
+		"type" : "http"
 	},
 	"version" : "3.0.6"
 }

@@ -160,7 +160,6 @@ implements Serializable {
 		public static final String KEY_LINGER = "linger";
 		public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
 		public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
-		public static final String KEY_SELECT_INTERVAL = "selectInterval";
 		public static final String KEY_RCVBUF = "rcvBuf";
 		public static final String KEY_SNDBUF = "sndBuf";
 		
@@ -191,11 +190,7 @@ implements Serializable {
 		public final void setInterestOpQueued(final boolean interestOpQueued) {
 			this.interestOpQueued = interestOpQueued;
 		}
-		
-		public final void setSelectInterval(final int selectInterval) {
-			this.selectInterval = selectInterval;
-		}
-		
+
 		public final void setRcvBuf(final SizeInBytes rcvBuf) {
 			this.rcvBuf = rcvBuf;
 		}
@@ -218,8 +213,6 @@ implements Serializable {
 
 		@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
 
-		@JsonProperty(KEY_SELECT_INTERVAL) private int selectInterval;
-
 		@JsonProperty(KEY_RCVBUF)
 		@JsonDeserialize(using = SizeInBytesDeserializer.class)
 		@JsonSerialize(using = SizeInBytesSerializer.class)
@@ -240,7 +233,6 @@ implements Serializable {
 			this.linger = other.getLinger();
 			this.bindBackLogSize = other.getBindBackLogSize();
 			this.interestOpQueued = other.getInterestOpQueued();
-			this.selectInterval = other.getSelectInterval();
 			this.rcvBuf = new SizeInBytes(other.getRcvBuf());
 			this.sndBuf = new SizeInBytes(other.getSndBuf());
 		}
@@ -271,10 +263,6 @@ implements Serializable {
 
 		public final boolean getInterestOpQueued() {
 			return interestOpQueued;
-		}
-
-		public final int getSelectInterval() {
-			return selectInterval;
 		}
 
 		public final SizeInBytes getRcvBuf() {
