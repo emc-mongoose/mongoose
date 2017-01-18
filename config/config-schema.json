@@ -173,6 +173,18 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
+						"delay" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d]+[SsMmHhDd]?"
+								}
+							]
+						},
 						"file": {
 							"type": [
 								"null", "string"
@@ -185,7 +197,7 @@
 						}
 					},
 					"required": [
-						"file", "path"
+						"delay", "file", "path"
 					]
 				},
 				"type" : {
@@ -221,10 +233,13 @@
 						},
 						"remote" : {
 							"type" : "boolean"
+						},
+						"shuffle" : {
+							"type" : "boolean"
 						}
 					},
 					"required" : [
-						"addrs", "remote"
+						"addrs", "remote", "shuffle"
 					]
 				},
 				"job" : {
@@ -258,7 +273,8 @@
 								{
 									"type": "integer",
 									"minimum" : 0
-								}, {
+								},
+								{
 									"type" : "string",
 									"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
 								}
@@ -269,7 +285,8 @@
 								{
 									"type" : "integer",
 									"minimum" : 0
-								}, {
+								},
+								{
 									"type" : "string",
 									"pattern" : "[\\d]+[SsMmHhDd]?"
 								}

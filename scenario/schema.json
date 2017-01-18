@@ -23,8 +23,16 @@
 											]
 										},
 										"seed": {
-											"type": "string",
-											"pattern" : "[A-Fa-f0-9]+"
+											"oneOf" : [
+												{
+													"type": "string",
+													"pattern" : "[A-Fa-f0-9]+"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										},
 										"ringSize": {
 											"oneOf" : [
@@ -35,6 +43,10 @@
 												{
 													"type" : "string",
 													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
 												}
 											]
 										}
@@ -52,12 +64,24 @@
 												{
 													"type" : "string",
 													"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
 												}
 											]
 										},
 										"random" : {
-											"type" : "number",
-											"minimum" : 0
+											"oneOf" : [
+												{
+													"type" : "number",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										},
 										"threshold" : {
 											"oneOf" : [
@@ -68,6 +92,10 @@
 												{
 													"type" : "string",
 													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
 												}
 											]
 										}
@@ -81,11 +109,23 @@
 										}, {
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
 								"verify": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
@@ -110,9 +150,16 @@
 							"additionalProperties": false,
 							"properties": {
 								"type": {
-									"type": "string",
-									"enum" : [
-										"asc", "desc", "random"
+									"oneOf" : [
+										{
+											"enum" : [
+												"asc", "desc", "random"
+											]
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
 									]
 								},
 								"prefix": {
@@ -121,17 +168,41 @@
 									]
 								},
 								"radix": {
-									"type": "integer",
-									"minimum" : 2,
-									"maximum" : 36
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 2,
+											"maximum" : 36
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"offset": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"length": {
-									"type": "integer",
-									"minimum" : 1
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
@@ -139,6 +210,22 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
+								"delay" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
 								"file": {
 									"type": [
 										"null", "string"
@@ -152,8 +239,16 @@
 							}
 						},
 						"type" : {
-							"enum" : [
-								"data", "path", "token"
+							"oneOf" : [
+								{
+									"enum" : [
+										"data", "path", "token"
+									]
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
 							]
 						}
 					}
@@ -163,24 +258,67 @@
 					"additionalProperties": false,
 					"properties": {
 						"circular": {
-							"type": "boolean"
+							"oneOf" : [
+								{
+									"type": "boolean"
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
+							]
 						},
 						"concurrency": {
-							"type": "integer",
-							"minimum" : 1
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 1
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
+							]
 						},
 						"generator" : {
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
 								"addrs": {
-									"type": "array",
-									"items": {
-										"type" : "string"
-									}
+									"oneOf" : [
+										{
+											"type" : "array",
+											"items" : {
+												"type" : "string"
+											}
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"remote" : {
-									"type" : "boolean"
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"shuffle" : {
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
@@ -200,12 +338,28 @@
 							"additionalProperties": false,
 							"properties": {
 								"count": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"rate": {
-									"type": "number",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type": "number",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"size": {
 									"oneOf" : [
@@ -215,6 +369,10 @@
 										}, {
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -226,6 +384,10 @@
 										}, {
 											"type" : "string",
 											"pattern" : "[\\d]+[SsMmHhDd]?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								}
@@ -243,16 +405,36 @@
 										}, {
 											"type" : "string",
 											"pattern" : "[\\d]+[SsMmHhDd]?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
 								"precondition" : {
-									"type" : "boolean"
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"threshold" : {
-									"type" : "number",
-									"minimum" : 0,
-									"maximum" : 1
+									"oneOf" : [
+										{
+											"type" : "number",
+											"minimum" : 0,
+											"maximum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"trace" : {
 									"type" : "object",
@@ -297,16 +479,32 @@
 							"additionalProperties" : false,
 							"properties" : {
 								"size" : {
-									"type" : "integer",
-									"minimum" : 1
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
 						"type": {
-							"type": "string",
-							"pattern" : "[NnOoPpCcRrEeAaTtDdUuLl]+=?[\\d]?%?",
-							"minLength" : 4,
-							"maxLength" : 6
+							"oneOf" : [
+								{
+									"type": "string",
+									"pattern" : "[NnOoPpCcRrEeAaTtDdUuLl]+=?[\\d]?%?",
+									"minLength" : 4,
+									"maxLength" : 6
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
+							]
 						}
 					}
 				},
@@ -405,17 +603,41 @@
 							"additionalProperties": false,
 							"properties": {
 								"addrs": {
-									"type": "array",
-									"items": {
-										"type" : "string"
-									}
+									"oneOf" : [
+										{
+											"type": "array",
+											"items": {
+												"type" : "string"
+											}
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"port" : {
-									"type" : "number",
-									"minimum" : 1
+									"oneOf" : [
+										{
+											"type" : "number",
+											"minimum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"remote" : {
-									"type" : "boolean"
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
@@ -424,11 +646,27 @@
 							"additionalProperties": false,
 							"properties": {
 								"api": {
-									"type": "string",
-									"pattern" : "[\\w\\d]+"
+									"oneOf" : [
+										{
+											"type" : "string",
+											"pattern" : "[\\w\\d]+"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"fsAccess": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"headers": {
 									"type": "object",
@@ -437,12 +675,19 @@
 								},
 								"namespace": {
 									"type": [
-										"null",
-										"string"
+										"null", "string"
 									]
 								},
 								"versioning": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
@@ -495,24 +740,55 @@
 							"additionalProperties" : false,
 							"properties" : {
 								"addrs": {
-									"type": "array",
-									"items": {
-										"type" : "string"
-									}
+									"oneOf" : [
+										{
+											"type" : "array",
+											"items" : {
+												"type" : "string"
+											}
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"port" : {
-									"type" : "number",
-									"minimum" : 1
+									"oneOf" : [
+										{
+											"type" : "number",
+											"minimum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						},
 						"ssl" : {
-							"type" : "boolean"
+							"oneOf" : [
+								{
+									"type" : "boolean"
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
+							]
 						},
 						"type": {
-							"type": "string",
-							"enum" : [
-								"fs", "http"
+							"oneOf" : [
+								{
+									"enum" : [
+										"fs", "http"
+									]
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
 							]
 						}
 					}
@@ -563,7 +839,6 @@
 			}
 		},
 		"type" : {
-			"type" : "string",
 			"enum" : [
 				"command", "for", "load", "parallel", "precondition", "sequential", "mixed", "chain"
 			]
@@ -581,9 +856,9 @@
 		"weights" : {
 			"type" : "array",
 			"items" : {
-				"type" : "integer",
-				"minimum" : 1
-			}
+				"type" : "integer"
+			},
+			"minItems" : 2
 		}
 	},
 	"required" : [

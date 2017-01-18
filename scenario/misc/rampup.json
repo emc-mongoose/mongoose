@@ -51,9 +51,6 @@
 								"name" : "C${threads}_${size}"
 							},
 							"type" : "create"
-						},
-						"run" : {
-							
 						}
 					}
 				}, {

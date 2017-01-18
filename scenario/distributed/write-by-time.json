@@ -6,9 +6,6 @@
 				"time" : "40s" // unit may be also "m", "h" and "d"
 			}
 		},
-		"run" : {
-			"mode" : "client"
-		},
 		"storage" : {
 			"driver" : {
 				"remote" : true,

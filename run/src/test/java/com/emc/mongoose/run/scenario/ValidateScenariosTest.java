@@ -35,7 +35,7 @@ public class ValidateScenariosTest {
 
 		final List<Path> scenarioPaths = Files.walk(Paths.get("..", "scenario"))
 			.filter(path -> path.toString().endsWith(".json"))
-			.filter(path -> !path.endsWith("scenario-schema.json"))
+			.filter(path -> !path.endsWith("schema.json") && !path.endsWith("invalid.json"))
 			.collect(Collectors.toList());
 
 		JsonNode nextScenario;

@@ -12,9 +12,6 @@
 			},
 			"concurrency" : 10
 		},
-		"run" : {
-			"mode" : "client"
-		},
 		"storage" : {
 			"driver" : {
 				"remote" : true,
