@@ -21,6 +21,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	private static final int LOAD_LIMIT_TIME = 25;
 
 	private static boolean FINISHED_IN_TIME = true;
+	private static String STD_OUTPUT = null;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -30,7 +31,9 @@ extends HttpStorageDistributedScenarioTestBase {
 		final Thread runner = new Thread(
 			() -> {
 				try {
+					STD_OUT_STREAM.startRecording();
 					SCENARIO.run();
+					STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 				} catch(final Throwable t) {
 					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
 				}
@@ -54,7 +57,38 @@ extends HttpStorageDistributedScenarioTestBase {
 	}
 
 	@Test
-	public void testFinishedInTime() {
+	public void testFinishedInTime()
+	throws Exception {
 		assertTrue(FINISHED_IN_TIME);
+	}
+
+	@Test
+	public void testSuccCountFromStdOut()
+	throws Exception {
+
+	}
+
+	@Test
+	public void testSuccCountFromLogFile()
+	throws Exception {
+
+	}
+
+	@Test
+	public void testSuccCountsEquals()
+	throws Exception {
+
+	}
+
+	@Test
+	public void testNoErrorsFromStdOut()
+	throws Exception {
+
+	}
+
+	@Test
+	public void testNoErrorsFromLogFile()
+	throws Exception {
+
 	}
 }

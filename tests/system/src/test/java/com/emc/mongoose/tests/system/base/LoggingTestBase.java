@@ -1,6 +1,7 @@
 package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.common.env.PathUtil;
+import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
@@ -31,6 +32,7 @@ public abstract class LoggingTestBase {
 
 	protected static Logger LOG;
 	protected static String JOB_NAME;
+	protected static BufferingOutputStream STD_OUT_STREAM;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -38,6 +40,7 @@ public abstract class LoggingTestBase {
 		LogUtil.init();
 		JOB_NAME = ThreadContext.get(KEY_JOB_NAME);
 		LOG = LogManager.getLogger();
+		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 
 	private static List<String> getLogFileLines(final String fileName)
@@ -109,6 +112,7 @@ public abstract class LoggingTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		STD_OUT_STREAM.close();
 		LogUtil.shutdown();
 	}
 }
