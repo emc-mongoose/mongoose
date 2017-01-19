@@ -20,13 +20,6 @@ dependencies {
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
-
-	testCompile(
-		project(":common"),
-		project(":model"),
-		project(":load:generator"),
-		"com.github.fge:json-schema-validator:2.2.6"
-	)
 }
 
 configurations.compileOnly.dependencies.each { it.transitive = false }

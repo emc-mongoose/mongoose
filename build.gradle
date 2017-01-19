@@ -58,10 +58,12 @@ subprojects {
 		targetCompatibility = JavaVersion.VERSION_1_8
 	}
 
-	task "create-dirs" << {
-		sourceSets*.java.srcDirs*.each { it.mkdirs() }
-		sourceSets*.resources.srcDirs*.each { it.mkdirs() }
-	}
+	task("create-dirs").doLast(
+		{
+			sourceSets*.java.srcDirs*.each { it.mkdirs() }
+			sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+		}
+	)
 
 	repositories {
 		mavenCentral()
@@ -83,19 +85,15 @@ subprojects {
 			)
 		}
 	}
-}
 
-test {
-	maxParallelForks = 1
-	maxHeapSize = "2560m"
-	testLogging {
-		showExceptions = true
-		showStandardStreams = true
+	test {
+		maxHeapSize "2560m"
+		testLogging {
+			events "passed", "skipped", "failed", "standardOut"
+			showExceptions = true
+			showStandardStreams = true
+		}
 	}
-}
-
-task systemTest(type: Test) {
-	include "DistributedTestSuite.class"
 }
 
 task dist(type: Tar) {
@@ -132,7 +130,7 @@ task printVersion {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "2.14.1"
+	gradleVersion = "3.3"
 }
 
 void collectName(Project p, LinkedList<String> names) {
