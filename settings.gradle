@@ -12,6 +12,7 @@ include "storage:driver:net:http:swift"
 include "storage:driver:builder"
 include "storage:driver:service"
 include "storage:mock"
+include "tests:system"
 
 rootProject.name = "mongoose"
 

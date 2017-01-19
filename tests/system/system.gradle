@@ -1,0 +1,41 @@
+description = "mongoose-tests-system"
+
+dependencies {
+
+	testCompile(
+		project(':common'),
+		project(':model'),
+		project(":ui"),
+		project(":load:generator"),
+		project(":load:monitor"),
+		project(":storage:driver:base"),
+		project(":storage:driver:builder"),
+		project(":storage:driver:net:base"),
+		project(":storage:driver:net:http:base"),
+		project(":storage:driver:net:http:atmos"),
+		project(":storage:driver:net:http:s3"),
+		project(":storage:driver:net:http:swift"),
+		project(":storage:driver:nio:base"),
+		project(":storage:driver:nio:fs"),
+		project(":storage:driver:service"),
+		project(":storage:mock"),
+		project(":run"),
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		"org.apache.commons:commons-csv:1.1"
+	)
+
+	testRuntime(
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+	)
+}
+
+configurations.compileOnly.dependencies.each { it.transitive = false }
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations),
+		)
+	}
+}

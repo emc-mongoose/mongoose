@@ -106,9 +106,9 @@ public abstract class ServiceUtil {
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
 			synchronized(SVC_MAP) {
-				if(!SVC_MAP.containsKey(svcUri)) {
+				if(!SVC_MAP.containsKey(svcName + ":" + port)) {
 					Naming.rebind(svcUri, svc);
-					SVC_MAP.put(svcName, svc);
+					SVC_MAP.put(svcName + ":" + port, svc);
 				} else {
 					throw new IllegalStateException("Service already registered");
 				}
@@ -146,7 +146,7 @@ public abstract class ServiceUtil {
 				svcUri = getLocalSvcUri(svcName, svc.getRegistryPort()).toString();
 				Naming.unbind(svcUri);
 				synchronized(SVC_MAP) {
-					if(null == SVC_MAP.remove(svcName)) {
+					if(null == SVC_MAP.remove(svcName + ":" + svc.getRegistryPort())) {
 						System.err.println(
 							"Failed to remove the service \"" + svcName + "\""
 						);

@@ -1,4 +1,4 @@
-description = 'mongoose-ui'
+description = "mongoose-ui"
 
 dependencies {
 
@@ -11,8 +11,8 @@ dependencies {
 	)
 
 	compileOnly(
-		project(':common'),
-		project(':model'),
+		project(":common"),
+		project(":model"),
 	)
 
 	runtime(
@@ -20,8 +20,8 @@ dependencies {
 	)
 
 	testCompile(
-		project(':common'),
-		project(':model'),
+		project(":common"),
+		project(":model"),
 		"com.github.fge:json-schema-validator:2.2.6"
 	)
 }

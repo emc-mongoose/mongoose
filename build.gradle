@@ -87,7 +87,15 @@ subprojects {
 
 test {
 	maxParallelForks = 1
-	testLogging.showStandardStreams = true
+	maxHeapSize = "2560m"
+	testLogging {
+		showExceptions = true
+		showStandardStreams = true
+	}
+}
+
+task systemTest(type: Test) {
+	include "DistributedTestSuite.class"
 }
 
 task dist(type: Tar) {

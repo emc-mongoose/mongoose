@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
-
+import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 04.10.16.
  */
@@ -102,7 +102,13 @@ extends SimpleChannelInboundHandler<M> {
 				ioTask.setStatus(FAIL_UNKNOWN);
 			}
 		}
-		driver.complete(channel, ioTask);
+		if(!driver.isClosed()) {
+			try {
+				driver.complete(channel, ioTask);
+			} catch(final RejectedExecutionException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to complete the I/O task");
+			}
+		}
 	}
 
 	@Override
