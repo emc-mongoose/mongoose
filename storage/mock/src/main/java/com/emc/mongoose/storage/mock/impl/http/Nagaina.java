@@ -30,7 +30,6 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,10 +45,9 @@ extends StorageMockBase<MutableDataItemMock>{
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private final int port;
-	private final EventLoopGroup[] dispatchGroups;
-	private final EventLoopGroup[] workGroups;
-	private final Channel[] channels;
+	private EventLoopGroup dispatchGroup;
+	private EventLoopGroup workGroup;
+	private Channel channel;
 	private final List<ChannelInboundHandler> handlers;
 
 	@SuppressWarnings("ConstantConditions")
@@ -60,89 +58,70 @@ extends StorageMockBase<MutableDataItemMock>{
 		super(
 			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource
 		);
-		port = storageConfig.getNodeConfig().getPort();
-		final int headCount = storageConfig.getMockConfig().getHeadCount();
-		dispatchGroups = new EventLoopGroup[headCount];
-		workGroups = new EventLoopGroup[headCount];
-		channels = new Channel[headCount];
-		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
+		final int port = storageConfig.getNodeConfig().getPort();
 		this.handlers = handlers;
-	}
 
-	@Override
-	protected void doStart()
-	throws IllegalStateException {
-		super.doStart();
-		final int portsNumber = dispatchGroups.length;
-		for(int i = 0; i < portsNumber; i++) {
-			try {
-				if(SystemUtils.IS_OS_LINUX) {
-					dispatchGroups[i] = new EpollEventLoopGroup(
-						ThreadUtil.getHardwareConcurrencyLevel(),
-						new NamingThreadFactory("dispatcher@port#" + (port + i) + "-", true)
-					);
-					workGroups[i] = new EpollEventLoopGroup(
-						ThreadUtil.getHardwareConcurrencyLevel(),
-						new NamingThreadFactory("ioworker@port#" + (port + i) + "-", true)
-					);
-				} else {
-					dispatchGroups[i] = new NioEventLoopGroup(
-						ThreadUtil.getHardwareConcurrencyLevel(),
-						new NamingThreadFactory("dispatcher@port#" + (port + i) + "-", true)
-					);
-					workGroups[i] = new NioEventLoopGroup(
-						ThreadUtil.getHardwareConcurrencyLevel(),
-						new NamingThreadFactory("ioworker@port#" + (port + i) + "-", true)
-					);
-				}
-				final ServerBootstrap serverBootstrap = new ServerBootstrap();
-				final int currentIndex = i;
-				serverBootstrap.group(dispatchGroups[i], workGroups[i])
-					.channel(
-						SystemUtils.IS_OS_LINUX ?
-							EpollServerSocketChannel.class : NioServerSocketChannel.class
-					)
-					.childHandler(
-						new ChannelInitializer<SocketChannel>() {
-							@Override
-							protected final void initChannel(final SocketChannel socketChannel)
-							throws Exception {
-								final ChannelPipeline pipeline = socketChannel.pipeline();
-								if(currentIndex % 2 == 1) {
-									pipeline.addLast(
-										new SslHandler(SslContext.INSTANCE.createSSLEngine())
-									);
-								}
-								pipeline.addLast(new HttpServerCodec());
-								for(final ChannelInboundHandler handler: handlers) {
-									pipeline.addLast(handler);
-								}
+		try {
+			if(SystemUtils.IS_OS_LINUX) {
+				dispatchGroup = new EpollEventLoopGroup(
+					ThreadUtil.getHardwareConcurrencyLevel(),
+					new NamingThreadFactory("dispatcher@port#" + port + "-", true)
+				);
+				workGroup = new EpollEventLoopGroup(
+					ThreadUtil.getHardwareConcurrencyLevel(),
+					new NamingThreadFactory("ioworker@port#" + port + "-", true)
+				);
+			} else {
+				dispatchGroup = new NioEventLoopGroup(
+					ThreadUtil.getHardwareConcurrencyLevel(),
+					new NamingThreadFactory("dispatcher@port#" + port + "-", true)
+				);
+				workGroup = new NioEventLoopGroup(
+					ThreadUtil.getHardwareConcurrencyLevel(),
+					new NamingThreadFactory("ioworker@port#" + port + "-", true)
+				);
+			}
+			final ServerBootstrap serverBootstrap = new ServerBootstrap();
+			serverBootstrap.group(dispatchGroup, workGroup)
+				.channel(
+					SystemUtils.IS_OS_LINUX ?
+					EpollServerSocketChannel.class : NioServerSocketChannel.class
+				)
+				.childHandler(
+					new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected final void initChannel(final SocketChannel socketChannel)
+						throws Exception {
+							final ChannelPipeline pipeline = socketChannel.pipeline();
+							if(storageConfig.getSsl()) {
+								pipeline.addLast(
+									new SslHandler(SslContext.INSTANCE.createSSLEngine())
+								);
+							}
+							pipeline.addLast(new HttpServerCodec());
+							for(final ChannelInboundHandler handler: handlers) {
+								pipeline.addLast(handler);
 							}
 						}
-					);
-				final ChannelFuture bind = serverBootstrap.bind(port + i);
-				bind.sync();
-				channels[i] = bind.sync().channel();
-			} catch(final Exception e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i
+					}
 				);
-				throw new IllegalStateException();
-			}
+			final ChannelFuture bind = serverBootstrap.bind(port);
+			bind.sync();
+			channel = bind.sync().channel();
+		} catch(final Exception e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to start the service at port #{}", port
+			);
+			throw new IllegalStateException();
 		}
-		if(portsNumber > 1) {
-			LOG.info(Markers.MSG, "Listening the ports {} .. {}",
-				port, port + portsNumber - 1);
-		} else {
-			LOG.info(Markers.MSG, "Listening the port {}", port);
-		}
+		LOG.info(Markers.MSG, "Listening the port #{}", port);
 	}
-	
+
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		try {
-			channels[0].closeFuture().await(timeout, timeUnit); // one channel is enough
+			channel.closeFuture().await(timeout, timeUnit); // one channel is enough
 		} catch(final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Nagaina");
 		}
@@ -154,18 +133,9 @@ extends StorageMockBase<MutableDataItemMock>{
 	protected final void doClose()
 	throws IOException {
 		super.doClose();
-		for(int i = 0; i < channels.length; i ++) {
-			channels[i].close();
-			channels[i] = null;
-		}
-		for(int i = 0; i < dispatchGroups.length; i ++) {
-			dispatchGroups[i].shutdownGracefully(1, 1, TimeUnit.SECONDS);
-			dispatchGroups[i] = null;
-		}
-		for(int i = 0; i < workGroups.length; i ++) {
-			workGroups[i].shutdownGracefully(1, 1, TimeUnit.SECONDS);
-			workGroups[i] = null;
-		}
+		channel.close();
+		dispatchGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
+		workGroup.shutdownGracefully(1, 1, TimeUnit.SECONDS);
 		handlers.clear();
 	}
 
