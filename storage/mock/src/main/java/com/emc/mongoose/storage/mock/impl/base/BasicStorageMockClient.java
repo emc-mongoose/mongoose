@@ -196,9 +196,9 @@ implements StorageMockClient<T> {
 	}
 
 	private void printNodeList() {
-		final StringJoiner joiner = new StringJoiner("\n");
+		final StringJoiner joiner = new StringJoiner(",");
 		remoteNodeMap.keySet().forEach(joiner::add);
-		LOG.info(Markers.MSG, "Detected nodes: \n" + joiner.toString());
+		LOG.info(Markers.MSG, "Detected nodes: " + joiner.toString());
 	}
 
 	private void handleServiceEvent(

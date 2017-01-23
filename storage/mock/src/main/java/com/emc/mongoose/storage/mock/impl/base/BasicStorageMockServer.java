@@ -48,7 +48,7 @@ implements StorageMockServer<T> {
 	protected final void doStart()
 	throws IllegalStateException {
 		try {
-			LOG.info(Markers.MSG, "Register RMI service");
+			LOG.info(Markers.MSG, "Register the service");
 			
 			// TODO move the registry obtaining section to some kind of init
 			try {
@@ -71,7 +71,7 @@ implements StorageMockServer<T> {
 				MDns.Type.HTTP.toString(), SVC_NAME, MDns.DEFAULT_PORT, "storage mock"
 			);
 			jmDns.registerService(serviceInfo);
-			LOG.info("Nagaina registered as service");
+			LOG.info("Storage mock was registered as service");
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to register as service"
