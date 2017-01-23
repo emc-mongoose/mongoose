@@ -360,13 +360,13 @@ implements StorageDriver<I, O, R> {
 		return to - from;
 	}*/
 
-	protected abstract boolean submit(final O task)
+	protected abstract boolean submit(final O ioTask)
 	throws InterruptedException;
 
-	protected abstract int submit(final List<O> tasks, final int from, final int to)
+	protected abstract int submit(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedException;
 
-	protected abstract int submit(final List<O> tasks)
+	protected abstract int submit(final List<O> ioTasks)
 	throws InterruptedException;
 
 	@Override

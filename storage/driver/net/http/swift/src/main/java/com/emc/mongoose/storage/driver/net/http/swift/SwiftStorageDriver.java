@@ -249,15 +249,15 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	protected final boolean submit(final O task)
+	protected final boolean submit(final O ioTask)
 	throws InterruptedException {
 		if(isClosed() || isInterrupted()) {
 			throw new InterruptedException();
 		}
-		if(task instanceof CompositeDataIoTask) {
-			final CompositeDataIoTask compositeTask = (CompositeDataIoTask) task;
+		if(ioTask instanceof CompositeDataIoTask) {
+			final CompositeDataIoTask compositeTask = (CompositeDataIoTask) ioTask;
 			if(compositeTask.allSubTasksDone()) {
-				return super.submit(task);
+				return super.submit(ioTask);
 			} else {
 				final List<O> subTasks = compositeTask.getSubTasks();
 				final int n = subTasks.size();
@@ -267,19 +267,19 @@ extends HttpStorageDriverBase<I, O, R> {
 				return true;
 			}
 		} else {
-			return super.submit(task);
+			return super.submit(ioTask);
 		}
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	protected final int submit(final List<O> tasks, final int from, final int to)
+	protected final int submit(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedException {
 		if(isClosed() || isInterrupted()) {
 			throw new InterruptedException();
 		}
 		O nextIoTask;
 		for(int i = from; i < to; i ++) {
-			nextIoTask = tasks.get(i);
+			nextIoTask = ioTasks.get(i);
 			if(nextIoTask instanceof CompositeDataIoTask) {
 				final CompositeDataIoTask compositeTask = (CompositeDataIoTask) nextIoTask;
 				if(compositeTask.allSubTasksDone()) {

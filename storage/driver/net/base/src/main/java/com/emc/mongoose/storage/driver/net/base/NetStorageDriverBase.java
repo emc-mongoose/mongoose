@@ -200,75 +200,85 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected boolean submit(final O task)
+	protected boolean submit(final O ioTask)
 	throws InterruptedException {
+
 		if(!isStarted()) {
 			throw new InterruptedException();
 		}
-		final String bestNode;
-		if(storageNodeAddrs.length == 1) {
-			bestNode = storageNodeAddrs[0];
-		} else {
-			try {
-				bestNode = nodeSelector.get();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the best node");
+
+		if(concurrencyThrottle.tryAcquire()) {
+
+			Future<Channel> connFuture;
+			Channel conn = null;
+			for(final String nextNode : storageNodeAddrs) {
+				connFuture = connPoolMap.get(nextNode).acquire();
+				if(null == (conn = connFuture.getNow())) {
+					connFuture.cancel(true);
+				} else {
+					ioTask.setNodeAddr(nextNode);
+					break;
+				}
+			}
+			if(conn == null) {
+				concurrencyThrottle.release();
 				return false;
 			}
-		}
-		if(bestNode == null) {
+
+			conn.attr(ATTR_KEY_IOTASK).set(ioTask);
+			ioTask.startRequest();
+			sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
+			return true;
+
+		} else {
 			return false;
 		}
-		task.reset();
-		task.setNodeAddr(bestNode);
-		return submitToNode(task, bestNode);
+
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	protected int submit(final List<O> tasks, final int from, final int to)
+	protected int submit(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedException {
+
 		if(!isStarted()) {
 			throw new InterruptedException();
 		}
-		final int n = to - from;
-		if(storageNodeAddrs.length == 1) {
-			O nextTask;
-			for(int i = 0; i < n; i ++) {
-				nextTask = tasks.get(from + i);
-				nextTask.reset();
-				nextTask.setNodeAddr(storageNodeAddrs[0]);
-				if(!submitToNode(nextTask, storageNodeAddrs[0])) {
-					return i;
+
+		Future<Channel> connFuture;
+		Channel conn = null;
+		O nextIoTask;
+		for(int i = from; i < to; i ++) {
+			if(concurrencyThrottle.tryAcquire()) {
+				nextIoTask = ioTasks.get(i);
+				for(final String nextNode : storageNodeAddrs) {
+					connFuture = connPoolMap.get(nextNode).acquire();
+					if(null == (conn = connFuture.getNow())) {
+						connFuture.cancel(true);
+					} else {
+						nextIoTask.setNodeAddr(nextNode);
+						break;
+					}
 				}
-			}
-		} else {
-			final List<String> nodeBuff = new ArrayList<>(n);
-			try {
-				if(n != nodeSelector.get(nodeBuff, n)) {
-					throw new IllegalStateException("Node selector unexpected behavior");
+				if(conn == null) {
+					concurrencyThrottle.release();
+					return to - i;
 				}
-			} catch(final IOException e) {
-				throw new IllegalStateException(e);
-			}
-			O nextTask;
-			String nextNode;
-			for(int i = 0; i < n; i++) {
-				nextTask = tasks.get(from + i);
-				nextNode = nodeBuff.get(i);
-				nextTask.reset();
-				nextTask.setNodeAddr(nextNode);
-				if(!submitToNode(nextTask, nextNode)) {
-					return i;
-				}
+
+				conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
+				nextIoTask.startRequest();
+				sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
+			} else {
+				return to - i;
 			}
 		}
-		return n;
+
+		return to - from;
 	}
 	
 	@Override
-	protected final int submit(final List<O> tasks)
+	protected final int submit(final List<O> ioTasks)
 	throws InterruptedException {
-		return submit(tasks, 0, tasks.size());
+		return submit(ioTasks, 0, ioTasks.size());
 	}
 
 	private boolean submitToNode(final O task, final String nodeAddr) {
