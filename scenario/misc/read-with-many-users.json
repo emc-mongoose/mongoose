@@ -1,11 +1,6 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "read-with-many-users"
-			}
-		},
 		"load" : {
 			"limit" : {
 				"count" : 1000
@@ -18,7 +13,8 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "read-with-many-users.csv"
+						"file" : "read-with-many-users.csv",
+						"path" : "read-with-many-users"
 					}
 				}
 			}

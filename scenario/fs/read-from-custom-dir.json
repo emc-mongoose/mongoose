@@ -2,9 +2,6 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"output" : {
-				"path" : "read-from-custom-dir"
-			},
 			"data" : {
 				"size" : "4KB"
 			}
@@ -25,7 +22,8 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "read-from-custom-dir.csv"
+						"file" : "read-from-custom-dir.csv",
+						"path" : "read-from-custom-dir"
 					}
 				}
 			}

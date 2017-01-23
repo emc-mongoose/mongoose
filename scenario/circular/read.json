@@ -1,12 +1,5 @@
 {
 	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "circular-read"
-			}
-		}
-	},
 	"jobs": [
 		{
 			"type": "precondition",

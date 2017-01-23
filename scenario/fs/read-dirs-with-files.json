@@ -2,10 +2,7 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"type" : "path",
-			"output" : {
-				"path" : "read-dirs-with-files"
-			}
+			"type" : "path"
 		},
 		"load" : {
 			"limit" : {
@@ -24,7 +21,8 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "read-dirs-with-files.json"
+						"file" : "read-dirs-with-files.json",
+						"path" : "read-dirs-with-files"
 					},
 					"naming" : {
 						"type" : "asc",

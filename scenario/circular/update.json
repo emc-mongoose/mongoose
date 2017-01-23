@@ -2,9 +2,6 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"output" : {
-				"path" : "circular-update"
-			},
 			"data" : {
 				"size" : "1KB"
 			}
@@ -19,7 +16,8 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "circular-update.csv"
+						"file" : "circular-update.csv",
+						"path" : "circular-update"
 					}
 				},
 				"load" : {

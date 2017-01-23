@@ -1,11 +1,6 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "distributed-read"
-			}
-		},
 		"load" : {
 			"limit" : {
 				"count" : 1000
@@ -35,7 +30,8 @@
 						"size" : "8KB"
 					},
 					"output" : {
-						"file" : "distributed-read.csv"
+						"file" : "distributed-read.csv",
+						"path" : "distributed-read"
 					}
 				}
 			}

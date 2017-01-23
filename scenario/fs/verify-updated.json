@@ -1,11 +1,6 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "fs-verify-updated"
-			}
-		},
 		"load" : {
 			"limit" : {
 				"count" : 100
@@ -23,7 +18,8 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "fs-verify-updated-0.csv"
+						"file" : "fs-verify-updated-0.csv",
+						"path" : "fs-verify-updated"
 					}
 				}
 			}

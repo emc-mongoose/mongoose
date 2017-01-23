@@ -6,12 +6,10 @@ import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingThrottledConnPoo
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.common.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingThrottledConnPool.ATTR_KEY_NODE;
@@ -61,7 +59,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	
 	protected final String storageNodeAddrs[];
 	private final int storageNodePort;
-	private final Input<String> nodeSelector;
 	private final Bootstrap bootstrap;
 	private final EventLoopGroup workerGroup;
 	//private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
@@ -93,7 +90,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			n = t[i];
 			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
 		}
-		nodeSelector = new UniformOptionSelector<>(storageNodeAddrs);
 		if(SystemUtils.IS_OS_LINUX) {
 			workerGroup = new EpollEventLoopGroup(
 				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
@@ -268,10 +264,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
-		//final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
-		//if(connPool != null && channel != null) {
-			connPool.release(channel);
-		//}
+		connPool.release(channel);
 		ioTaskCompleted(ioTask);
 	}
 
