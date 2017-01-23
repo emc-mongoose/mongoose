@@ -37,8 +37,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.FutureListener;
 
 import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.Level;
@@ -208,14 +206,24 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		if(!isStarted()) {
 			throw new InterruptedException();
 		}
-		final Channel conn = connPool.lease();
-		if(conn == null) {
-			return false;
+		if(IoType.NOOP.equals(ioTask.getIoType())) {
+			concurrencyThrottle.acquire();
+			ioTask.startRequest();
+			sendRequest(null, ioTask);
+			ioTask.finishRequest();
+			concurrencyThrottle.release();
+			ioTask.setStatus(SUCC);
+			complete(null, ioTask);
+		} else {
+			final Channel conn = connPool.lease();
+			if(conn == null) {
+				return false;
+			}
+			conn.attr(ATTR_KEY_IOTASK).set(ioTask);
+			ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+			ioTask.startRequest();
+			sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
 		}
-		conn.attr(ATTR_KEY_IOTASK).set(ioTask);
-		ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
-		ioTask.startRequest();
-		sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
 		return true;
 
 	}
@@ -227,16 +235,25 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		O nextIoTask;
 		for(int i = from; i < to && isStarted(); i ++) {
 			nextIoTask = ioTasks.get(i);
-			conn = connPool.lease();
-			if(conn == null) {
-				return i - from;
+			if(IoType.NOOP.equals(nextIoTask.getIoType())) {
+				concurrencyThrottle.acquire();
+				nextIoTask.startRequest();
+				sendRequest(null, nextIoTask);
+				nextIoTask.finishRequest();
+				concurrencyThrottle.release();
+				nextIoTask.setStatus(SUCC);
+				complete(null, nextIoTask);
+			} else {
+				conn = connPool.lease();
+				if(conn == null) {
+					return i - from;
+				}
+				conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
+				nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+				nextIoTask.startRequest();
+				sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
 			}
-			conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
-			nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
-			nextIoTask.startRequest();
-			sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
 		}
-
 		return to - from;
 	}
 	
@@ -244,68 +261,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	protected final int submit(final List<O> ioTasks)
 	throws InterruptedException {
 		return submit(ioTasks, 0, ioTasks.size());
-	}
-
-	/*private boolean submitToNode(final O task, final String nodeAddr) {
-		if(concurrencyThrottle.tryAcquire()) {
-			if(IoType.NOOP.equals(task.getIoType())) {
-				new DummyConnectionLeaseCallback(task).operationComplete(null);
-			} else {
-				connPoolMap.get(nodeAddr).acquire().addListener(new ConnectionLeaseCallback(task));
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}*/
-
-	private final class DummyConnectionLeaseCallback
-	implements FutureListener<Channel> {
-
-		private final O ioTask;
-
-		public DummyConnectionLeaseCallback(final O ioTask) {
-			this.ioTask = ioTask;
-		}
-
-		@Override
-		public final void operationComplete(final Future<Channel> future) {
-			ioTask.startRequest();
-			sendRequest(null, ioTask);
-			ioTask.finishRequest();
-			concurrencyThrottle.release();
-			ioTask.setStatus(SUCC);
-			complete(null, ioTask);
-		}
-	}
-
-	private final class ConnectionLeaseCallback
-	implements FutureListener<Channel> {
-
-		private final O ioTask;
-
-		public ConnectionLeaseCallback(final O ioTask) {
-			this.ioTask = ioTask;
-		}
-
-		@Override
-		public final void operationComplete(final Future<Channel> future)
-		throws Exception {
-			if(isStarted()) {
-				final Channel channel = future.getNow();
-				if(channel == null) {
-					ioTask.setStatus(IoTask.Status.FAIL_IO);
-					ioTaskCompleted(ioTask);
-					concurrencyThrottle.release();
-				} else {
-					channel.attr(ATTR_KEY_IOTASK).set(ioTask);
-					ioTask.startRequest();
-					sendRequest(channel, ioTask).addListener(new RequestSentCallback(ioTask));
-				}
-			} else {
-				concurrencyThrottle.release();
-			}
-		}
 	}
 
 	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
