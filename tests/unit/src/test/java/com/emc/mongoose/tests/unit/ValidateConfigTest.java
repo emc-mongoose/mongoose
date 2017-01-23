@@ -31,6 +31,6 @@ public class ValidateConfigTest {
 		final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
 		final JsonValidator validator = factory.getValidator();
 		final ProcessingReport report = validator.validate(jsonSchema, jsonInput);
-		assertTrue(report.isSuccess());
+		assertTrue(report.toString(), report.isSuccess());
 	}
 }

@@ -588,7 +588,7 @@
 						}
 					},
 					"required": [
-						"capacity", "container", "fail", "headCount", "node"
+						"capacity", "container", "fail", "node"
 					]
 				},
 				"node" : {
