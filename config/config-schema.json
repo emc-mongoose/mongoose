@@ -583,10 +583,6 @@
 								"connections", "responses"
 							]
 						},
-						"headCount": {
-							"type": "integer",
-							"minimum" : 1
-						},
 						"node" : {
 							"type" : "boolean"
 						}

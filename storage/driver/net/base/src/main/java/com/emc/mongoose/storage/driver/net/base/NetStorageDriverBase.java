@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.storage.driver.net.base.pool.BasicNettyConnPool;
+import com.emc.mongoose.storage.driver.net.base.pool.NettyConnPool;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
@@ -12,12 +14,14 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.storage.driver.net.base.pool.NettyConnPool.ATTR_KEY_NODE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -47,7 +51,6 @@ import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +70,8 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Input<String> nodeSelector;
 	private final Bootstrap bootstrap;
 	private final EventLoopGroup workerGroup;
-	private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
+	//private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
+	private final NettyConnPool connPool;
 	private final int socketTimeout;
 	private final boolean sslFlag;
 
@@ -129,7 +133,10 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
-		for(final String na : storageNodeAddrs) {
+		connPool = new BasicNettyConnPool(
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
+		);
+		/*for(final String na : storageNodeAddrs) {
 			final InetSocketAddress nodeAddr;
 			if(na.contains(":")) {
 				final String addrParts[] = na.split(":");
@@ -140,7 +147,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			connPoolMap.put(
 				na, new FixedChannelPool(bootstrap.remoteAddress(nodeAddr), this, concurrencyLevel)
 			);
-		}
+		}*/
 	}
 	
 	@Override
@@ -202,74 +209,36 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	protected boolean submit(final O ioTask)
 	throws InterruptedException {
-
 		if(!isStarted()) {
 			throw new InterruptedException();
 		}
-
-		if(concurrencyThrottle.tryAcquire()) {
-
-			Future<Channel> connFuture;
-			Channel conn = null;
-			for(final String nextNode : storageNodeAddrs) {
-				connFuture = connPoolMap.get(nextNode).acquire();
-				if(null == (conn = connFuture.getNow())) {
-					connFuture.cancel(true);
-				} else {
-					ioTask.setNodeAddr(nextNode);
-					break;
-				}
-			}
-			if(conn == null) {
-				concurrencyThrottle.release();
-				return false;
-			}
-
-			conn.attr(ATTR_KEY_IOTASK).set(ioTask);
-			ioTask.startRequest();
-			sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
-			return true;
-
-		} else {
+		final Channel conn = connPool.lease();
+		if(conn == null) {
 			return false;
 		}
+		conn.attr(ATTR_KEY_IOTASK).set(ioTask);
+		ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+		ioTask.startRequest();
+		sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
+		return true;
 
 	}
 	
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> ioTasks, final int from, final int to)
 	throws InterruptedException {
-
-		if(!isStarted()) {
-			throw new InterruptedException();
-		}
-
-		Future<Channel> connFuture;
-		Channel conn = null;
+		Channel conn;
 		O nextIoTask;
-		for(int i = from; i < to; i ++) {
-			if(concurrencyThrottle.tryAcquire()) {
-				nextIoTask = ioTasks.get(i);
-				for(final String nextNode : storageNodeAddrs) {
-					connFuture = connPoolMap.get(nextNode).acquire();
-					if(null == (conn = connFuture.getNow())) {
-						connFuture.cancel(true);
-					} else {
-						nextIoTask.setNodeAddr(nextNode);
-						break;
-					}
-				}
-				if(conn == null) {
-					concurrencyThrottle.release();
-					return to - i;
-				}
-
-				conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
-				nextIoTask.startRequest();
-				sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
-			} else {
-				return to - i;
+		for(int i = from; i < to && isStarted(); i ++) {
+			nextIoTask = ioTasks.get(i);
+			conn = connPool.lease();
+			if(conn == null) {
+				return i - from;
 			}
+			conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
+			nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+			nextIoTask.startRequest();
+			sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
 		}
 
 		return to - from;
@@ -281,7 +250,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 
-	private boolean submitToNode(final O task, final String nodeAddr) {
+	/*private boolean submitToNode(final O task, final String nodeAddr) {
 		if(concurrencyThrottle.tryAcquire()) {
 			if(IoType.NOOP.equals(task.getIoType())) {
 				new DummyConnectionLeaseCallback(task).operationComplete(null);
@@ -292,7 +261,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		} else {
 			return false;
 		}
-	}
+	}*/
 
 	private final class DummyConnectionLeaseCallback
 	implements FutureListener<Channel> {
@@ -348,10 +317,10 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
-		final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
-		if(connPool != null && channel != null) {
+		//final ChannelPool connPool = connPoolMap.get(ioTask.getNodeAddr());
+		//if(connPool != null && channel != null) {
 			connPool.release(channel);
-		}
+		//}
 		ioTaskCompleted(ioTask);
 	}
 
@@ -417,7 +386,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
-		for(int i = 0; i < storageNodeAddrs.length; i ++) {
+		/*for(int i = 0; i < storageNodeAddrs.length; i ++) {
 			if(!workerGroup.isShutdown()) {
 				try {
 					final ChannelPool connPool = connPoolMap.remove(storageNodeAddrs[i]);
@@ -436,6 +405,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 			storageNodeAddrs[i] = null;
 		}
 		connPoolMap.clear();
-		nodeSelector.close();
+		nodeSelector.close();*/
+		connPool.close();
 	}
 }
