@@ -2,10 +2,7 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.NodeConfig;
+import com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -19,38 +16,43 @@ import java.util.List;
 public abstract class HttpStorageTestBase
 extends ConfiguredTestBase {
 
-	protected static List<StorageMock> STORAGE_MOCKS = new ArrayList<>();
-	protected static int NODE_COUNT = 1;
+	private static StorageMockFactory STORAGE_MOCK_FACTORY;
+	protected static StorageMock STORAGE_MOCK;
+	protected static int HEAD_COUNT = 4;
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		ConfiguredTestBase.setUpClass();
 		final StorageConfig storageConfig = CONFIG.getStorageConfig();
-		final NodeConfig nodeConfig = storageConfig.getNodeConfig();
-		final LoadConfig loadConfig = CONFIG.getLoadConfig();
-		final ItemConfig itemConfig = CONFIG.getItemConfig();
-		final int port = nodeConfig.getPort();
+		CONFIG.getStorageConfig().getMockConfig().setHeadCount(HEAD_COUNT);
+		final boolean sslFlag = CONFIG.getStorageConfig().getSsl();
 		final List<String> nodeAddrs = new ArrayList<>();
-		StorageMock storageMock;
-		for(int i = 0; i < NODE_COUNT; i ++) {
-			nodeConfig.setPort(port + i);
-			storageMock = new StorageMockFactory(storageConfig, loadConfig, itemConfig)
-				.newStorageMock();
-			storageMock.start();
-			STORAGE_MOCKS.add(storageMock);
-			nodeAddrs.add("127.0.0.1:" + port + i);
+		if(sslFlag) {
+			for(int i = 0; i < HEAD_COUNT; i ++) {
+				if(i % 2 == 1) {
+					nodeAddrs.add("127.0.0.1:" + i);
+				}
+			}
+		} else {
+			for(int i = 0; i < HEAD_COUNT; i ++) {
+				if(i % 2 == 0) {
+					nodeAddrs.add("127.0.0.1:" + i);
+				}
+			}
 		}
-		nodeConfig.setAddrs(nodeAddrs);
-		nodeConfig.setPort(port);
+		storageConfig.getNodeConfig().setAddrs(nodeAddrs);
+		STORAGE_MOCK_FACTORY = new StorageMockFactory(
+			storageConfig, CONFIG.getLoadConfig(), CONFIG.getItemConfig()
+		);
+		STORAGE_MOCK = STORAGE_MOCK_FACTORY.newStorageMock();
+		STORAGE_MOCK.start();
 	}
 
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		for(final StorageMock storageMock : STORAGE_MOCKS) {
-			storageMock.close();
-		}
+		STORAGE_MOCK.close();
 		ConfiguredTestBase.tearDownClass();
 	}
 }

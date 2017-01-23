@@ -146,6 +146,10 @@ public class ConfigParserTest {
 		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
 		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());
+		assertThat(
+			mockConfig.getHeadCount() == 1 || mockConfig.getHeadCount() == 5,
+			equalTo(true, "storage.mock.headCount")
+		);
 		assertThat(mockConfig.getCapacity(), equalTo(1_000_000, "storage.mock.capacity"));
 		assertThat(mockConfig.getNode(), equalTo(false, "storage.mock.node"));
 		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig = mockConfig

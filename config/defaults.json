@@ -172,6 +172,7 @@
 				"connections" : 0,
 				"responses" : 0
 			},
+			"headCount" : 5,
 			"node": false
 		},
 		"node": {

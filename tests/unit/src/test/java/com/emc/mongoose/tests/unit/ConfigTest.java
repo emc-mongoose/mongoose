@@ -39,6 +39,7 @@ public class ConfigTest {
 		argsMap.put("--storage-node-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
 		argsMap.put("--storage-http-fsAccess", "true");
 		argsMap.put("--storage-http-headers", "customHeaderName:customHeaderValue");
+		argsMap.put("--storage-mock-headCount", "2");
 		
 		final List<String> args = new ArrayList<>();
 		String t;
@@ -82,6 +83,7 @@ public class ConfigTest {
 			"customHeaderValue",
 			storageConfig.getHttpConfig().getHeaders().get("customHeaderName")
 		);
+		assertEquals(2, storageConfig.getMockConfig().getHeadCount());
 	}
 	
 	@Test

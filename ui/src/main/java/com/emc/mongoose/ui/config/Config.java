@@ -1397,7 +1397,12 @@ implements Serializable {
 			public static final String KEY_CAPACITY = "capacity";
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FAIL = "fail";
+			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_NODE = "node";
+			
+			public final void setHeadCount(final int headCount) {
+				this.headCount = headCount;
+			}
 			
 			public final void setCapacity(final int capacity) {
 				this.capacity = capacity;
@@ -1414,7 +1419,8 @@ implements Serializable {
 			public final void setNode(final boolean node) {
 				this.node = node;
 			}
-
+			
+			@JsonProperty(KEY_HEAD_COUNT) private int headCount;
 			@JsonProperty(KEY_CAPACITY) private int capacity;
 			@JsonProperty(KEY_CONTAINER) private ContainerConfig containerConfig;
 			@JsonProperty(KEY_FAIL) private FailConfig failConfig;
@@ -1424,10 +1430,15 @@ implements Serializable {
 			}
 
 			public MockConfig(final MockConfig other) {
+				this.headCount = other.getHeadCount();
 				this.capacity = other.getCapacity();
 				this.containerConfig = new ContainerConfig(other.getContainerConfig());
 				this.failConfig = new FailConfig(other.getFailConfig());
 				this.node = other.getNode();
+			}
+
+			public int getHeadCount() {
+				return headCount;
 			}
 
 			public int getCapacity() {
