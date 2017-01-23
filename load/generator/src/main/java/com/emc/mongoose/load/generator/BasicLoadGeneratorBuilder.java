@@ -181,7 +181,11 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 			}
 		}
 
-		dstPathInput = getDstPathInput(ioType);
+		if(IoType.CREATE.equals(ioType)) {
+			dstPathInput = getDstPathInput();
+		} else {
+			dstPathInput = null;
+		}
 
 		return (T) new BasicLoadGenerator<>(
 			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit, shuffleFlag
@@ -215,53 +219,41 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		return null;
 	}
 
-	private Input<String> getDstPathInput(final IoType ioType)
+	private Input<String> getDstPathInput()
 	throws UserShootHisFootException {
-		Input<String> dstPathInput = null;
+		final Input<String> dstPathInput;
 		final String t = itemConfig.getOutputConfig().getPath();
-		switch(ioType) {
-			case CREATE:
-				if(t == null || t.isEmpty()) {
-					final String dstPath = "/" + LogUtil.getDateTimeStamp();
-					dstPathInput = new ConstantStringInput(dstPath);
-					try {
-						storageDrivers.get(0).createPath(dstPath);
-					} catch(final IOException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
-							dstPath
-						);
+		if(t == null || t.isEmpty()) {
+			final String dstPath = "/" + LogUtil.getDateTimeStamp();
+			dstPathInput = new ConstantStringInput(dstPath);
+			try {
+				storageDrivers.get(0).createPath(dstPath);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
+					dstPath
+				);
+			}
+		} else { // copy mode
+			dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
+			String dstPath = null;
+			try {
+				dstPath = dstPathInput.get();
+				dstPathInput.reset();
+				if(dstPath != null) {
+					final int sepPos = dstPath.indexOf('/', 1);
+					if(sepPos > 1) {
+						// create only 1st level path
+						dstPath = dstPath.substring(0, sepPos);
 					}
-				} else { // copy mode
-					dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
-					String dstPath = null;
-					try {
-						dstPath = dstPathInput.get();
-						dstPathInput.reset();
-						if(dstPath != null) {
-							final int sepPos = dstPath.indexOf('/', 1);
-							if(sepPos > 1) {
-								// create only 1st level path
-								dstPath = dstPath.substring(0, sepPos);
-							}
-							storageDrivers.get(0).createPath(dstPath);
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
-							dstPath
-						);
-					}
+					storageDrivers.get(0).createPath(dstPath);
 				}
-				break;
-			case NOOP:
-			case READ:
-			case UPDATE:
-			case DELETE:
-				if(t != null && !t.isEmpty()) {
-					dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
-				}
-				break;
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
+					dstPath
+				);
+			}
 		}
 		return dstPathInput;
 	}

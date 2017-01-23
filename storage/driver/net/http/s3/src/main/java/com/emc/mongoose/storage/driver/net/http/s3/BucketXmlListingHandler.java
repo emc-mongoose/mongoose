@@ -36,13 +36,16 @@ extends DefaultHandler {
 	private I nextItem;
 
 	private final List<I> itemsBuffer;
+	private final String path;
 	private final ItemFactory<I> itemFactory;
 	private final int idRadix;
 
 	public BucketXmlListingHandler(
-		final List<I> itemsBuffer, final ItemFactory<I> itemFactory, final int idRadix
+		final List<I> itemsBuffer, final String path, final ItemFactory<I> itemFactory,
+		final int idRadix
 	) {
 		this.itemsBuffer = itemsBuffer;
+		this.path = path == null ? "" : (path.endsWith("/") ? path : path + "/");
 		this.itemFactory = itemFactory;
 		this.idRadix = idRadix;
 	}
@@ -93,7 +96,7 @@ extends DefaultHandler {
 					);
 					offset = 0;
 				}
-				nextItem = itemFactory.getItem(oid, offset, size);
+				nextItem = itemFactory.getItem(path + oid, offset, size);
 				itemsBuffer.add(nextItem);
 				count ++;
 			} else {

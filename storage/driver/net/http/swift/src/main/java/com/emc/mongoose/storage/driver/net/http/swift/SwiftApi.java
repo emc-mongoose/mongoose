@@ -38,10 +38,12 @@ public interface SwiftApi {
 
 	Logger LOG = LogManager.getLogger();
 
-	static <I extends Item> int parseContainerListingContent(
-		final List<I> buff, final InputStream inStream, final ItemFactory<I> itemFactory,
-		final int idRadix
+	static <I extends Item> int parseContainerListing(
+		final List<I> buff, final InputStream inStream, final String path,
+		final ItemFactory<I> itemFactory, final int idRadix
 	) throws IOException {
+
+		final String path_ = path == null ? "" : (path.endsWith("/") ? path : path + "/");
 
 		int n = 0;
 		boolean isInsideObjectToken = false;
@@ -73,7 +75,7 @@ public interface SwiftApi {
 									}
 									try {
 										nextItem = itemFactory.getItem(
-											lastItemId, lastItemOffset, lastSize
+											path_ + lastItemId, lastItemOffset, lastSize
 										);
 										if(nextItem != null) {
 											buff.add(nextItem);

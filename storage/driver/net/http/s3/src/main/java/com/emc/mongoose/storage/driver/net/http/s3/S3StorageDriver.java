@@ -352,8 +352,8 @@ extends HttpStorageDriverBase<I, O, R> {
 			} else {
 				listRespParser.reset();
 			}
-			final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<I>(
-				buff, itemFactory, idRadix
+			final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<>(
+				buff, path, itemFactory, idRadix
 			);
 			try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
 				listRespParser.parse(contentStream, listingHandler);

@@ -74,7 +74,6 @@ extends StorageDriver<I, O, R> {
 			final int prefixLength = (prefix == null || prefix.isEmpty()) ?
 				0 : prefix.length();
 
-			String nextFullPath;
 			File nextFile;
 			String nextFileName;
 			I nextItem;
@@ -101,10 +100,14 @@ extends StorageDriver<I, O, R> {
 						} else {
 							offset = Long.parseLong(nextFileName, idRadix);
 						}
-						nextItem = itemFactory.getItem(nextFileName, offset, nextFile.length());
+						nextItem = itemFactory.getItem(
+							nextFile.getAbsolutePath(), offset, nextFile.length()
+						);
 					} catch(final NumberFormatException e) {
 						// try to not use the offset (read verification should be disabled)
-						nextItem = itemFactory.getItem(nextFileName, 0, nextFile.length());
+						nextItem = itemFactory.getItem(
+							nextFile.getAbsolutePath(), 0, nextFile.length()
+						);
 					}
 					buff.add(nextItem);
 					if(count == buff.size()) {

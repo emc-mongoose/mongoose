@@ -22,7 +22,7 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_COPY
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_OBJECT_MANIFEST;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_VERSIONS_LOCATION;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.URI_BASE;
-import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseContainerListingContent;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseContainerListing;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -54,7 +54,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
@@ -232,7 +231,7 @@ extends HttpStorageDriverBase<I, O, R> {
 				} else {
 					final ByteBuf listRespContent = listResp.content();
 					try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
-						parseContainerListingContent(buff, contentStream, itemFactory, idRadix);
+						parseContainerListing(buff, contentStream, path, itemFactory, idRadix);
 					}
 				}
 			} else {
