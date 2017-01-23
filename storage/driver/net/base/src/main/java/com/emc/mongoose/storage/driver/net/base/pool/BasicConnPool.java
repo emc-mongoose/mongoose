@@ -22,8 +22,8 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by andrey on 23.01.17.
  */
-public class BasicNettyConnPool
-implements NettyConnPool {
+public class BasicConnPool
+implements NonBlockingThrottledConnPool {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -32,7 +32,7 @@ implements NettyConnPool {
 	private final Map<String, Bootstrap> bootstrapMap;
 	private final Map<String, Queue<Channel>> connsMap;
 
-	public BasicNettyConnPool(
+	public BasicConnPool(
 		final Semaphore concurrencyThrottle, final String nodes[], final Bootstrap bootstrap,
 		final ChannelPoolHandler connPoolHandler, final int defaultPort
 	) {

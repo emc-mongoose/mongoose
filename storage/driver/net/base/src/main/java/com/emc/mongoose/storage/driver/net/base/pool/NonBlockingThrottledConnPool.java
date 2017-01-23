@@ -8,7 +8,7 @@ import java.io.Closeable;
 /**
  Created by andrey on 23.01.17.
  */
-public interface NettyConnPool
+public interface NonBlockingThrottledConnPool
 extends Closeable {
 
 	AttributeKey<String> ATTR_KEY_NODE = AttributeKey.valueOf("node");

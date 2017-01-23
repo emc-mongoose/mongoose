@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.storage.driver.net.base.pool.BasicNettyConnPool;
-import com.emc.mongoose.storage.driver.net.base.pool.NettyConnPool;
+import com.emc.mongoose.storage.driver.net.base.pool.BasicConnPool;
+import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingThrottledConnPool;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
@@ -14,7 +14,7 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.UniformOptionSelector;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
-import static com.emc.mongoose.storage.driver.net.base.pool.NettyConnPool.ATTR_KEY_NODE;
+import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingThrottledConnPool.ATTR_KEY_NODE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -32,9 +32,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
-import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
@@ -52,8 +50,6 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,7 +67,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Bootstrap bootstrap;
 	private final EventLoopGroup workerGroup;
 	//private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
-	private final NettyConnPool connPool;
+	private final NonBlockingThrottledConnPool connPool;
 	private final int socketTimeout;
 	private final boolean sslFlag;
 
@@ -133,7 +129,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
-		connPool = new BasicNettyConnPool(
+		connPool = new BasicConnPool(
 			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
 		);
 		/*for(final String na : storageNodeAddrs) {
@@ -327,7 +323,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	public final void channelReleased(final Channel channel)
 	throws Exception {
-		concurrencyThrottle.release();
 	}
 	
 	@Override
