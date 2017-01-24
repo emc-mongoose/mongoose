@@ -11,6 +11,7 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import static java.lang.System.nanoTime;
 
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.DataItemFactory;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -219,6 +220,9 @@ implements StorageDriverSvc<I, O, R> {
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws IOException {
+		if(itemFactory instanceof DataItemFactory) {
+			((DataItemFactory) itemFactory).setContentSource(contentSrc);
+		}
 		return driver.list(itemFactory, path, prefix, idRadix, lastPrevItem, count);
 	}
 
