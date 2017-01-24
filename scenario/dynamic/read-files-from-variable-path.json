@@ -22,7 +22,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"path" : "read-files-from-variable-path/$p{16;2}",
+						"path" : "/tmp/read-files-from-variable-path/%p{16;2}",
 						"file" : "read-files-from-variable-path.csv"
 					},
 					"data" : {

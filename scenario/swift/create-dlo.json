@@ -17,7 +17,8 @@
 		},
 		"storage" : {
 			"http" : {
-				"api" : "swift"
+				"api" : "swift",
+				"namespace" : "dlo"
 			}
 		}
 	}

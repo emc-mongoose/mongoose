@@ -410,7 +410,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	private HttpRequest getInitMpuRequest(final O ioTask, final String nodeAddr) {
 		final I item = ioTask.getItem();
 		final String srcPath = ioTask.getSrcPath();
-		if(srcPath != null) {
+		if(srcPath != null && !srcPath.isEmpty()) {
 			throw new IllegalStateException(
 				"Multipart copy operation is not implemented yet"
 			);

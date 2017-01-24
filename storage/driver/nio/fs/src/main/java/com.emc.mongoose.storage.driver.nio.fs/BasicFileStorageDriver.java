@@ -85,7 +85,7 @@ implements FileStorageDriver<I, O, R> {
 		
 		openSrcFileFunc = ioTask -> {
 			final String srcPath = ioTask.getSrcPath();
-			if(srcPath == null) {
+			if(srcPath == null || srcPath.isEmpty()) {
 				return null;
 			}
 			final String fileItemName = ioTask.getItem().getName();
@@ -180,7 +180,7 @@ implements FileStorageDriver<I, O, R> {
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.CANCELLED);
+						ioTask.setStatus(Status.FAIL_IO);
 					} else if(srcChannel == null) {
 						invokeCreate(item, ioTask, dstChannel);
 					} else { // copy the data from the src channel to the dst channel
@@ -191,7 +191,7 @@ implements FileStorageDriver<I, O, R> {
 				case READ:
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(srcChannel == null) {
-						ioTask.setStatus(Status.CANCELLED);
+						ioTask.setStatus(Status.FAIL_IO);
 					} else if(verifyFlag) {
 						try {
 							invokeReadAndVerify(item, ioTask, srcChannel);
@@ -211,7 +211,7 @@ implements FileStorageDriver<I, O, R> {
 				case UPDATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.CANCELLED);
+						ioTask.setStatus(Status.FAIL_IO);
 					} else {
 						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
 						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {

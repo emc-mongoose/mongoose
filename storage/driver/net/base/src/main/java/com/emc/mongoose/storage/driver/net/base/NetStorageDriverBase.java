@@ -61,7 +61,6 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final int storageNodePort;
 	private final Bootstrap bootstrap;
 	private final EventLoopGroup workerGroup;
-	//private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
 	private final boolean sslFlag;

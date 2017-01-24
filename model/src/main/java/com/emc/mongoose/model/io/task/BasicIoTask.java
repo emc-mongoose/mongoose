@@ -334,6 +334,7 @@ implements IoTask<I, R> {
 	throws IOException {
 		out.writeInt(ioType.ordinal());
 		out.writeObject(item);
+		out.writeUTF(srcPath == null ? "" : srcPath);
 		out.writeUTF(dstPath == null ? "" : dstPath);
 	}
 	
@@ -342,6 +343,7 @@ implements IoTask<I, R> {
 	throws IOException, ClassNotFoundException {
 		ioType = IoType.values()[in.readInt()];
 		item = (I) in.readObject();
+		srcPath = in.readUTF();
 		dstPath = in.readUTF();
 	}
 

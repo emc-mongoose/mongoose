@@ -171,7 +171,7 @@ implements HttpStorageDriver<I, O, R> {
 
 		switch(ioType) {
 			case CREATE:
-				if(srcPath == null) {
+				if(srcPath == null || srcPath.isEmpty()) {
 					if(item instanceof DataItem) {
 						try {
 							httpHeaders.set(

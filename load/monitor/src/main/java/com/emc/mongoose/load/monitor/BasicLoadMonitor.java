@@ -585,7 +585,7 @@ implements LoadMonitor<R> {
 			}
 			if(!isAnyCircular && allIoTasksCompleted()) {
 				LOG.debug(
-					Markers.MSG, "{}: await exit due to IO Tasks have been completed", getName()
+					Markers.MSG, "{}: await exit because all I/O tasks have been completed", getName()
 				);
 				return true;
 			}
