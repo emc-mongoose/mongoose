@@ -16,8 +16,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "circular-update.csv",
-						"path" : "circular-update"
+						"file" : "circular-update.csv"
 					}
 				},
 				"load" : {

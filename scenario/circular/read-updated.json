@@ -16,8 +16,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "circular-read-updated-0.csv",
-						"path" : "circular-read-updated"
+						"file" : "circular-read-updated-0.csv"
 					}
 				},
 				"load" : {
@@ -52,7 +51,7 @@
 			}
 		}, {
 			"type" : "command",
-			"value" : "sleep 10"
+			"value" : "sleep 1"
 		}, {
 			"type": "load",
 			"config" : {
