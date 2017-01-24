@@ -15,8 +15,8 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SPACE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SVC;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
+import com.emc.mongoose.ui.log.Markers;
 
-import com.emc.mongoose.ui.log.LogUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -27,12 +27,12 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.LastHttpContent;
-import org.apache.logging.log4j.Level;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.LongAdder;
+
 /**
  Created by kurila on 05.09.16.
  */
@@ -53,15 +53,18 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 	) {
 		switch(statusClass) {
 			case INFORMATIONAL:
+				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
 				ioTask.setStatus(RESP_FAIL_CLIENT);
 				break;
 			case SUCCESS:
 				ioTask.setStatus(SUCC);
 				return true;
 			case REDIRECTION:
+				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
 				ioTask.setStatus(RESP_FAIL_CLIENT);
 				break;
 			case CLIENT_ERROR:
+				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
 				if(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.equals(responseStatus)) {
 					ioTask.setStatus(RESP_FAIL_SVC);
 				} else if(HttpResponseStatus.REQUEST_URI_TOO_LONG.equals(responseStatus)) {
@@ -77,6 +80,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 				}
 				break;
 			case SERVER_ERROR:
+				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
 				if(HttpResponseStatus.GATEWAY_TIMEOUT.equals(responseStatus)) {
 					ioTask.setStatus(FAIL_TIMEOUT);
 				} else if(HttpResponseStatus.INSUFFICIENT_STORAGE.equals(responseStatus)) {
@@ -86,6 +90,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 				}
 				break;
 			case UNKNOWN:
+				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
 				ioTask.setStatus(FAIL_UNKNOWN);
 				break;
 		}

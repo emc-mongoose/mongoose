@@ -252,6 +252,35 @@ implements IoTask<I, R> {
 			duration = in.readLong();
 			latency = in.readLong();
 		}
+		
+		protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
+		
+		@Override
+		public final String toString() {
+			final StringBuilder strb = STRB.get();
+			strb.setLength(0);
+			if(storageNodeAddr != null && !storageNodeAddr.isEmpty()) {
+				strb.append("endpoint: ").append(storageNodeAddr).append(", ");
+			}
+			if(storageDriverAddr != null && !storageDriverAddr.isEmpty()) {
+				strb.append("client: ").append(storageDriverAddr).append(", ");
+			}
+			if(item != null) {
+				strb.append("item: ").append(item.getName()).append(", ");
+			}
+			if(ioTypeCode > -1) {
+				strb.append("operation: ").append(IoType.values()[ioTypeCode]).append(", ");
+			}
+			if(statusCode > -1) {
+				strb.append("status: ").append(Status.values()[statusCode]);
+			}
+			return strb.toString();
+		}
 	}
 	
 	
@@ -274,11 +303,11 @@ implements IoTask<I, R> {
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : - 1,
-			useStatusCodeResult ? status.ordinal() : - 1,
-			useReqTimeStartResult ? reqTimeStart : - 1,
-			useDurationResult ? respTimeDone - reqTimeStart : - 1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1
+			useIoTypeCodeResult ? ioType.ordinal() : -1,
+			useStatusCodeResult ? status.ordinal() : -1,
+			useReqTimeStartResult ? reqTimeStart : -1,
+			useDurationResult ? respTimeDone - reqTimeStart : -1,
+			useRespLatencyResult ? respTimeStart - reqTimeDone : -1
 		);
 	}
 

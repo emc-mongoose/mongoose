@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.storage.driver.net.base.pool.BasicConnPool;
-import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingThrottledConnPool;
+import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
@@ -12,7 +12,7 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
-import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingThrottledConnPool.ATTR_KEY_NODE;
+import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
@@ -62,7 +62,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final Bootstrap bootstrap;
 	private final EventLoopGroup workerGroup;
 	//private final Map<String, ChannelPool> connPoolMap = new ConcurrentHashMap<>();
-	private final NonBlockingThrottledConnPool connPool;
+	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
 	private final boolean sslFlag;
 
