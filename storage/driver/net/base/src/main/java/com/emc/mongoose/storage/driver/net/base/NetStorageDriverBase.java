@@ -202,6 +202,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		if(!isStarted()) {
 			throw new InterruptedException();
 		}
+		ioTask.reset();
 		if(IoType.NOOP.equals(ioTask.getIoType())) {
 			concurrencyThrottle.acquire();
 			ioTask.startRequest();
@@ -231,6 +232,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		O nextIoTask;
 		for(int i = from; i < to && isStarted(); i ++) {
 			nextIoTask = ioTasks.get(i);
+			nextIoTask.reset();
 			if(IoType.NOOP.equals(nextIoTask.getIoType())) {
 				concurrencyThrottle.acquire();
 				nextIoTask.startRequest();
