@@ -125,19 +125,6 @@ implements MutableDataItem {
 			).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public boolean equals(final Object o) {
-		if(o == this) {
-			return true;
-		}
-		if(!(o instanceof BasicMutableDataItem) || !super.equals(o)) {
-			return false;
-		} else {
-			final BasicMutableDataItem other = (BasicMutableDataItem) o;
-			return maskRangesRead.equals(other.maskRangesRead);
-		}
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
 		int result = 0;
 		if((value &  0xffffffff00000000L ) != 0	) { value >>>= 32;	result += 32; }
