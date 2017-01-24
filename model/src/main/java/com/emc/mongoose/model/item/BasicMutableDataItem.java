@@ -137,11 +137,6 @@ implements MutableDataItem {
 			return maskRangesRead.equals(other.maskRangesRead);
 		}
 	}
-	//
-	@Override
-	public int hashCode() {
-		return super.hashCode() ^ maskRangesRead.hashCode();
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
 		int result = 0;
