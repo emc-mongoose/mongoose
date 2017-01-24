@@ -49,6 +49,9 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
+					"data" : {
+						"verify" : true
+					},
 					"input" : {
 						"file" : "content-read-text-1.csv"
 					}
