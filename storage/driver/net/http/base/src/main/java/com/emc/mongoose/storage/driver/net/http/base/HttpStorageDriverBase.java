@@ -117,24 +117,28 @@ implements HttpStorageDriver<I, O, R> {
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
 		final Channel channel = getUnpooledConnection();
-		final ChannelPipeline pipeline = channel.pipeline();
-		pipeline.removeLast(); // remove the API specific handler
-		final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
-		pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
-		pipeline.addLast(
-			new SimpleChannelInboundHandler<HttpObject>() {
-				@Override
-				protected final void channelRead0(
-					final ChannelHandlerContext ctx, final HttpObject msg
-				) throws Exception {
-					if(msg instanceof FullHttpResponse) {
-						fullRespSync.put(((FullHttpResponse) msg).retain());
+		try {
+			final ChannelPipeline pipeline = channel.pipeline();
+			pipeline.removeLast(); // remove the API specific handler
+			final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
+			pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
+			pipeline.addLast(
+				new SimpleChannelInboundHandler<HttpObject>() {
+					@Override
+					protected final void channelRead0(
+						final ChannelHandlerContext ctx, final HttpObject msg
+					) throws Exception {
+						if(msg instanceof FullHttpResponse) {
+							fullRespSync.put(((FullHttpResponse) msg).retain());
+						}
 					}
 				}
-			}
-		);
-		channel.writeAndFlush(request).sync();
-		return fullRespSync.take();
+			);
+			channel.writeAndFlush(request).sync();
+			return fullRespSync.take();
+		} finally {
+			channel.close();
+		}
 	}
 
 	@Override
