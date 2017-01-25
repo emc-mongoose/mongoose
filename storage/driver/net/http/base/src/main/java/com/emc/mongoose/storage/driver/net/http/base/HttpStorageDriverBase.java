@@ -171,7 +171,7 @@ implements HttpStorageDriver<I, O, R> {
 
 		switch(ioType) {
 			case CREATE:
-				if(srcPath == null) {
+				if(srcPath == null || srcPath.isEmpty()) {
 					if(item instanceof DataItem) {
 						try {
 							httpHeaders.set(
@@ -264,16 +264,19 @@ implements HttpStorageDriver<I, O, R> {
 	protected String getUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
+		final String itemName = item.getName();
 		if(dstPath == null) {
 			if(srcPath == null) {
-				return SLASH + item.getName();
+				return SLASH + itemName;
 			} else if(srcPath.endsWith(SLASH)) {
-				return srcPath + item.getName();
+				return srcPath + itemName;
 			} else {
-				return srcPath + SLASH + item.getName();
+				return srcPath + SLASH + itemName;
 			}
+		} else if(itemName.startsWith(dstPath)) {
+			return itemName;
 		} else {
-			return (dstPath.endsWith(SLASH) ? dstPath : (dstPath + SLASH)) + item.getName();
+			return (dstPath.endsWith(SLASH) ? dstPath : (dstPath + SLASH)) + itemName;
 		}
 	}
 

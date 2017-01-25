@@ -36,12 +36,12 @@ public class ContentSourceUtil {
 					}
 				} else {
 					throw new IllegalStateException(
-						"Content source file @" + contentFilePath + " is empty"
+						"Content source file @" + p.toAbsolutePath() + " is empty"
 					);
 				}
 			} else {
 				throw new IllegalStateException(
-					"Content source file @" + contentFilePath + " doesn't exist/" +
+					"Content source file @" + p.toAbsolutePath() + " doesn't exist/" +
 						"not readable/is a directory"
 				);
 			}

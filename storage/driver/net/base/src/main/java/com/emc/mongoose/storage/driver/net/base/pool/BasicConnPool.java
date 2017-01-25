@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base.pool;
 
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -22,14 +23,18 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  Created by andrey on 23.01.17.
+ The simple connection pool being throttled externally by providing the semaphore.
+ The provided semaphore limits the count of the simultaneously used connections.
+ Based on netty.
  */
 public class BasicConnPool
-implements NonBlockingThrottledConnPool {
+implements NonBlockingConnPool {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final Semaphore concurrencyThrottle;
 	private final String nodes[];
+	private final int n;
 	private final Map<String, Bootstrap> bootstrapMap;
 	private final Map<String, Queue<Channel>> connsMap;
 
@@ -39,6 +44,7 @@ implements NonBlockingThrottledConnPool {
 	) {
 		this.concurrencyThrottle = concurrencyThrottle;
 		this.nodes = nodes;
+		this.n = nodes.length;
 		bootstrapMap = new HashMap<>();
 		connsMap = new HashMap<>();
 		for(final String node : nodes) {
@@ -69,28 +75,34 @@ implements NonBlockingThrottledConnPool {
 		}
 	}
 
-	protected Channel newConnection(final String addr)
+	protected Channel connect(final String addr)
 	throws InterruptedException {
+		LOG.debug(Markers.MSG, "New connection to \"{}\"", addr);
 		return bootstrapMap.get(addr).connect().sync().channel();
+	}
+	
+	protected Channel poll() {
+		final int i = ThreadLocalRandom.current().nextInt(n);
+		Queue<Channel> connQueue;
+		Channel conn;
+		for(int j = i; j < i + n; j ++) {
+			connQueue = connsMap.get(nodes[j % n]);
+			conn = connQueue.poll();
+			if(conn != null) {
+				return conn;
+			}
+		}
+		return null;
 	}
 
 	@Override
 	public final Channel lease() {
 		Channel conn = null;
 		if(concurrencyThrottle.tryAcquire()) {
-			Queue<Channel> connQueue;
-			for(final String nodeAddr : nodes) {
-				connQueue = connsMap.get(nodeAddr);
-				conn = connQueue.poll();
-				if(conn != null) {
-					conn.attr(ATTR_KEY_NODE).set(nodeAddr);
-					break;
-				}
-			}
-			if(conn == null) {
-				final String nodeAddr = nodes[ThreadLocalRandom.current().nextInt(nodes.length)];
+			if((conn = poll()) == null) {
+				final String nodeAddr = nodes[ThreadLocalRandom.current().nextInt(n)];
 				try {
-					conn = newConnection(nodeAddr);
+					conn = connect(nodeAddr);
 					conn.attr(ATTR_KEY_NODE).set(nodeAddr);
 				} catch(final InterruptedException e) {
 					concurrencyThrottle.release();
@@ -99,8 +111,40 @@ implements NonBlockingThrottledConnPool {
 					);
 				}
 			}
+			assert conn != null;
 		}
 		return conn;
+	}
+	
+	@Override
+	public final int lease(final List<Channel> conns, final int maxCount) {
+		int availableCount = concurrencyThrottle.drainPermits();
+		if(availableCount == 0) {
+			return availableCount;
+		}
+		if(availableCount > maxCount) {
+			concurrencyThrottle.release(availableCount - maxCount);
+			availableCount = maxCount;
+		}
+		
+		Channel conn;
+		for(int i = 0; i < availableCount; i ++) {
+			if((conn = poll()) == null) {
+				final String nodeAddr = nodes[ThreadLocalRandom.current().nextInt(n)];
+				try {
+					conn = connect(nodeAddr);
+					conn.attr(ATTR_KEY_NODE).set(nodeAddr);
+				} catch(final InterruptedException e) {
+					concurrencyThrottle.release();
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to create a new connection to \"{}\"", nodeAddr
+					);
+				}
+			}
+			assert conn != null;
+			conns.add(conn);
+		}
+		return availableCount;
 	}
 
 	@Override
@@ -108,6 +152,16 @@ implements NonBlockingThrottledConnPool {
 		final Queue<Channel> connQueue = connsMap.get(conn.attr(ATTR_KEY_NODE).get());
 		connQueue.add(conn);
 		concurrencyThrottle.release();
+	}
+	
+	@Override
+	public final void release(final List<Channel> conns) {
+		Queue<Channel> connQueue;
+		for(final Channel conn : conns) {
+			connQueue = connsMap.get(conn.attr(ATTR_KEY_NODE).get());
+			connQueue.add(conn);
+			concurrencyThrottle.release();
+		}
 	}
 
 	@Override

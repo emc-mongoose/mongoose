@@ -85,12 +85,12 @@ implements FileStorageDriver<I, O, R> {
 		
 		openSrcFileFunc = ioTask -> {
 			final String srcPath = ioTask.getSrcPath();
-			if(srcPath == null) {
+			if(srcPath == null || srcPath.isEmpty()) {
 				return null;
 			}
-			final I fileItem = ioTask.getItem();
-			final Path srcFilePath = srcPath.isEmpty() ?
-				FS.getPath(fileItem.getName()) : FS.getPath(srcPath, fileItem.getName());
+			final String fileItemName = ioTask.getItem().getName();
+			final Path srcFilePath = srcPath.isEmpty() || fileItemName.startsWith(srcPath) ?
+				FS.getPath(fileItemName) : FS.getPath(srcPath, fileItemName);
 			try {
 				return FS_PROVIDER.newFileChannel(srcFilePath, READ_OPEN_OPT);
 			} catch(final IOException e) {
@@ -115,16 +115,16 @@ implements FileStorageDriver<I, O, R> {
 		};
 		
 		openDstFileFunc = ioTask -> {
-			final I fileItem = ioTask.getItem();
+			final String fileItemName = ioTask.getItem().getName();
 			final IoType ioType = ioTask.getIoType();
 			final String dstPath = ioTask.getDstPath();
 			final Path itemPath;
 			try {
-				if(dstPath == null || dstPath.isEmpty()) {
-					itemPath = FS.getPath(fileItem.getName());
+				if(dstPath == null || dstPath.isEmpty() || fileItemName.startsWith(dstPath)) {
+					itemPath = FS.getPath(fileItemName);
 				} else {
 					dstParentDirs.computeIfAbsent(dstPath, createParentDirFunc);
-					itemPath = FS.getPath(dstPath, fileItem.getName());
+					itemPath = FS.getPath(dstPath, fileItemName);
 
 				}
 				if(IoType.CREATE.equals(ioType)) {
@@ -180,7 +180,7 @@ implements FileStorageDriver<I, O, R> {
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.CANCELLED);
+						ioTask.setStatus(Status.FAIL_IO);
 					} else if(srcChannel == null) {
 						invokeCreate(item, ioTask, dstChannel);
 					} else { // copy the data from the src channel to the dst channel
@@ -191,7 +191,7 @@ implements FileStorageDriver<I, O, R> {
 				case READ:
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(srcChannel == null) {
-						ioTask.setStatus(Status.CANCELLED);
+						ioTask.setStatus(Status.FAIL_IO);
 					} else if(verifyFlag) {
 						try {
 							invokeReadAndVerify(item, ioTask, srcChannel);
@@ -211,7 +211,7 @@ implements FileStorageDriver<I, O, R> {
 				case UPDATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.CANCELLED);
+						ioTask.setStatus(Status.FAIL_IO);
 					} else {
 						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
 						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
@@ -232,12 +232,15 @@ implements FileStorageDriver<I, O, R> {
 					break;
 			}
 		} catch(final FileNotFoundException e) {
+			LogUtil.exception(LOG, Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.RESP_FAIL_NOT_FOUND);
 		} catch(final AccessDeniedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.RESP_FAIL_AUTH);
 		} catch(final ClosedChannelException e) {
 			ioTask.setStatus(Status.CANCELLED);
 		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.FAIL_IO);
 		} catch(final NullPointerException e) {
 			if(!isClosed()) { // shared content source may be already closed from the load generator
@@ -247,7 +250,7 @@ implements FileStorageDriver<I, O, R> {
 		} catch(final Throwable e) {
 			// should be Throwable here in order to make the closing block further always reachable
 			// the same effect may be reached using "finally" block after this "catch"
-			e.printStackTrace(System.out);
+			e.printStackTrace(System.err);
 			ioTask.setStatus(Status.FAIL_UNKNOWN);
 		}
 

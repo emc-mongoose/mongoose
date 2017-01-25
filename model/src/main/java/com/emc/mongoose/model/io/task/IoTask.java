@@ -95,7 +95,7 @@ extends Externalizable {
 			if(!itemName.startsWith("/")) {
 				item.setName("/" + itemName);
 			}
-		} else {
+		} else if(!itemName.startsWith(itemPath)){
 			if(itemPath.endsWith("/")) {
 				item.setName(itemPath + itemName);
 			} else {

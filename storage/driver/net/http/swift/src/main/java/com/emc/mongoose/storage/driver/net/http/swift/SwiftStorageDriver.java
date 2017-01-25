@@ -26,6 +26,8 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseConta
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+
+import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -86,6 +88,9 @@ extends HttpStorageDriverBase<I, O, R> {
 		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
 		if(authToken != null && !authToken.isEmpty()) {
 			setAuthToken(authToken);
+		}
+		if(namespace == null) {
+			throw new IllegalArgumentNameException("Namespace is not set");
 		}
 		namespacePath = URI_BASE + SLASH + namespace;
 	}
@@ -253,6 +258,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		if(isClosed() || isInterrupted()) {
 			throw new InterruptedException();
 		}
+		ioTask.reset();
 		if(ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeTask = (CompositeDataIoTask) ioTask;
 			if(compositeTask.allSubTasksDone()) {
@@ -279,6 +285,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		O nextIoTask;
 		for(int i = from; i < to; i ++) {
 			nextIoTask = ioTasks.get(i);
+			nextIoTask.reset();
 			if(nextIoTask instanceof CompositeDataIoTask) {
 				final CompositeDataIoTask compositeTask = (CompositeDataIoTask) nextIoTask;
 				if(compositeTask.allSubTasksDone()) {

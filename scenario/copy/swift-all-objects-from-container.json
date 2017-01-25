@@ -4,6 +4,9 @@
 		"item" : {
 			"data" : {
 				"size" : "1KB"
+			},
+			"output" : {
+				"path" : "copy-swift-object"
 			}
 		},
 		"load" : {
@@ -26,11 +29,11 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"output" : {
-						"path" : "copy-swift-object_"
-					},
 					"input" : {
 						"path" : "copy-swift-object"
+					},
+					"output" : {
+						"path" : "copy-swift-object_"
 					}
 				}
 			}
