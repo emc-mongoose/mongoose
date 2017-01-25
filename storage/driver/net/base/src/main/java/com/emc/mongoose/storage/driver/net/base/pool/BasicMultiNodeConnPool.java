@@ -25,11 +25,11 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by andrey on 23.01.17.
- The simple connection pool being throttled externally by providing the semaphore.
+ The simple multi-endpoint connection pool which is throttled externally by providing the semaphore.
  The provided semaphore limits the count of the simultaneously used connections.
  Based on netty.
  */
-public class BasicConnPool
+public class BasicMultiNodeConnPool
 implements NonBlockingConnPool {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -41,7 +41,7 @@ implements NonBlockingConnPool {
 	private final Map<String, Queue<Channel>> connsMap;
 	private final AtomicLong connCount = new AtomicLong(0);
 
-	public BasicConnPool(
+	public BasicMultiNodeConnPool(
 		final Semaphore concurrencyThrottle, final String nodes[], final Bootstrap bootstrap,
 		final ChannelPoolHandler connPoolHandler, final int defaultPort
 	) {

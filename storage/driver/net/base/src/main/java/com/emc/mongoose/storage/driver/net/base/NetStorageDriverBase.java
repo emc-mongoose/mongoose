@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.storage.driver.net.base.pool.BasicConnPool;
+import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
@@ -122,7 +122,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
-		connPool = new BasicConnPool(
+		connPool = new BasicMultiNodeConnPool(
 			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
 		);
 		/*for(final String na : storageNodeAddrs) {
