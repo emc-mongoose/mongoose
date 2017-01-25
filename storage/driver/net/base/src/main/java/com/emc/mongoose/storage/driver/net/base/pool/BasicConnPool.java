@@ -82,7 +82,9 @@ implements NonBlockingConnPool {
 	throws InterruptedException {
 		final String addr = nodes[(int) (connCount.getAndIncrement() % nodes.length)];
 		LOG.debug(Markers.MSG, "New connection to \"{}\"", addr);
-		return bootstrapMap.get(addr).connect().sync().channel();
+		final Channel conn = bootstrapMap.get(addr).connect().sync().channel();
+		conn.attr(ATTR_KEY_NODE).set(addr);
+		return conn;
 	}
 	
 	protected Channel poll() {
