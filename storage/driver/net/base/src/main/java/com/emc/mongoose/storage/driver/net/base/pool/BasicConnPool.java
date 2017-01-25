@@ -20,6 +20,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by andrey on 23.01.17.
@@ -37,6 +39,7 @@ implements NonBlockingConnPool {
 	private final int n;
 	private final Map<String, Bootstrap> bootstrapMap;
 	private final Map<String, Queue<Channel>> connsMap;
+	private final AtomicLong connCount = new AtomicLong(0);
 
 	public BasicConnPool(
 		final Semaphore concurrencyThrottle, final String nodes[], final Bootstrap bootstrap,
@@ -75,8 +78,9 @@ implements NonBlockingConnPool {
 		}
 	}
 
-	protected Channel connect(final String addr)
+	protected Channel connect()
 	throws InterruptedException {
+		final String addr = nodes[(int) (connCount.getAndIncrement() % nodes.length)];
 		LOG.debug(Markers.MSG, "New connection to \"{}\"", addr);
 		return bootstrapMap.get(addr).connect().sync().channel();
 	}
@@ -100,15 +104,11 @@ implements NonBlockingConnPool {
 		Channel conn = null;
 		if(concurrencyThrottle.tryAcquire()) {
 			if((conn = poll()) == null) {
-				final String nodeAddr = nodes[ThreadLocalRandom.current().nextInt(n)];
 				try {
-					conn = connect(nodeAddr);
-					conn.attr(ATTR_KEY_NODE).set(nodeAddr);
+					conn = connect();
 				} catch(final InterruptedException e) {
 					concurrencyThrottle.release();
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to create a new connection to \"{}\"", nodeAddr
-					);
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a new connection");
 				}
 			}
 			assert conn != null;
@@ -130,15 +130,11 @@ implements NonBlockingConnPool {
 		Channel conn;
 		for(int i = 0; i < availableCount; i ++) {
 			if((conn = poll()) == null) {
-				final String nodeAddr = nodes[ThreadLocalRandom.current().nextInt(n)];
 				try {
-					conn = connect(nodeAddr);
-					conn.attr(ATTR_KEY_NODE).set(nodeAddr);
+					conn = connect();
 				} catch(final InterruptedException e) {
 					concurrencyThrottle.release();
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to create a new connection to \"{}\"", nodeAddr
-					);
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a new connection");
 				}
 			}
 			assert conn != null;
