@@ -147,8 +147,10 @@ implements NonBlockingConnPool {
 
 	@Override
 	public final void release(final Channel conn) {
-		final Queue<Channel> connQueue = connsMap.get(conn.attr(ATTR_KEY_NODE).get());
-		connQueue.add(conn);
+		if(conn.isActive()) {
+			final Queue<Channel> connQueue = connsMap.get(conn.attr(ATTR_KEY_NODE).get());
+			connQueue.add(conn);
+		}
 		concurrencyThrottle.release();
 	}
 	
@@ -156,8 +158,10 @@ implements NonBlockingConnPool {
 	public final void release(final List<Channel> conns) {
 		Queue<Channel> connQueue;
 		for(final Channel conn : conns) {
-			connQueue = connsMap.get(conn.attr(ATTR_KEY_NODE).get());
-			connQueue.add(conn);
+			if(conn.isActive()) {
+				connQueue = connsMap.get(conn.attr(ATTR_KEY_NODE).get());
+				connQueue.add(conn);
+			}
 			concurrencyThrottle.release();
 		}
 	}
