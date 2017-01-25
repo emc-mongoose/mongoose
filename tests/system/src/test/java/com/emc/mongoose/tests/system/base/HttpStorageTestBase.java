@@ -39,7 +39,7 @@ extends ConfiguredTestBase {
 				.newStorageMock();
 			storageMock.start();
 			STORAGE_MOCKS.add(storageMock);
-			nodeAddrs.add("127.0.0.1:" + port + i);
+			nodeAddrs.add("127.0.0.1:" + (port + i));
 		}
 		nodeConfig.setAddrs(nodeAddrs);
 		nodeConfig.setPort(port);
