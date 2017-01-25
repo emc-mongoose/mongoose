@@ -3,6 +3,7 @@ package com.emc.mongoose.tests.system.base;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
@@ -12,7 +13,9 @@ import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
 import org.apache.commons.io.FileUtils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -27,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -46,11 +50,13 @@ public abstract class LoggingTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		final URL u = LoggingTestBase.class.getClassLoader().getResource("logging.json");
+		System.setProperty("log4j.configurationFile", u.toString());
 		LogUtil.init();
 		JOB_NAME = ThreadContext.get(KEY_JOB_NAME);
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
-		LOG = LogManager.getLogger();
+		LOG = LogManager.getLogger();;
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 
@@ -151,7 +157,7 @@ public abstract class LoggingTestBase {
 			if(lastTimeStamp != null) {
 				assertEquals(
 					metricsPeriodSec, (nextDateTimeStamp.getTime() - lastTimeStamp.getTime()) / K,
-					((double) metricsPeriodSec) / 100
+					((double) metricsPeriodSec) / 10
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
@@ -298,6 +304,20 @@ public abstract class LoggingTestBase {
 		assertTrue(latHiQ >= latMed);
 		final int latMax = Integer.parseInt(metrics.get("LatencyMax[us]"));
 		assertTrue(latMax >= latHiQ);
+	}
+
+	protected static void testIoTraceRecord(
+		final CSVRecord ioTraceRecord, final int ioTypeCodeExpected, final SizeInBytes sizeExpected
+	) throws Exception {
+		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
+		assertEquals(IoTask.Status.SUCC.ordinal(), Integer.parseInt(ioTraceRecord.get("StatusCode")));
+		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
+		final String latencyStr = ioTraceRecord.get("RespLatency[us]");
+		if(latencyStr != null && !latencyStr.isEmpty()) {
+			assertTrue(duration >= Long.parseLong(latencyStr));
+		}
+		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
+		assertTrue(sizeExpected.getMin() <= size && size <= sizeExpected.getMax());
 	}
 
 	@AfterClass

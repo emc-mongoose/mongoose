@@ -62,7 +62,7 @@ implements DataIoTask<T, R> {
 				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
 				duration, latency
 			);
-			this.dataLatency = dataLatency;
+			this.dataLatency = dataLatency > latency && duration > latency ? dataLatency : -1;
 			this.transferredByteCount = transferredByteCount;
 		}
 		

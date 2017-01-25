@@ -317,7 +317,7 @@ implements StorageDriver<I, O, R> {
 				useDataLatencyResult,
 				useTransferSizeResult
 			);
-			if(!ioResultsQueue.offer(ioResult, 1, TimeUnit.MILLISECONDS)) {
+			if(ioResult != null && !ioResultsQueue.offer(ioResult, 1, TimeUnit.MILLISECONDS)) {
 				LOG.warn(
 					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
 					toString()

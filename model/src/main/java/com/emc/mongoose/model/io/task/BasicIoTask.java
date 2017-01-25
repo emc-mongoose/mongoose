@@ -63,7 +63,7 @@ implements IoTask<I, R> {
 		item.reset();
 		nodeAddr = null;
 		status = Status.PENDING;
-		reqTimeStart = reqTimeDone = respTimeStart = reqTimeDone = 0;
+		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = 0;
 	}
 	
 	@Override
@@ -184,7 +184,7 @@ implements IoTask<I, R> {
 			this.statusCode = statusCode;
 			this.reqTimeStart = reqTimeStart;
 			this.duration = duration;
-			this.latency = latency;
+			this.latency = duration > latency ? latency : -1;
 		}
 		
 		@Override

@@ -147,7 +147,7 @@ implements LoadGenerator<I, O, R> {
 						generatedIoTaskCount
 					);
 					break;
-				} catch(final IOException e) {
+				} catch(final Exception e) {
 					LogUtil.exception(
 						LOG, Level.ERROR, e, "{}: failed to get the items from the input",
 						toString()

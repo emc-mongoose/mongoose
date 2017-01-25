@@ -10,7 +10,9 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AsyncAppender;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
+import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.util.Cancellable;
@@ -126,12 +128,12 @@ implements ShutdownCallbackRegistry {
 					ThreadContext.put(KEY_JOB_NAME, getDateTimeStamp());
 				}
 				try {
-					String log4jConfigurationFile = System.getProperty("log4j.configurationFile");
-					if(log4jConfigurationFile == null) {
-						log4jConfigurationFile = PathUtil.getBaseDir() + File.separator +
-							DIR_CONFIG + File.separator + FNAME_LOG_CONFIG;
+					String log4jConfigFile = System.getProperty("log4j.configurationFile");
+					if(log4jConfigFile == null) {
+						log4jConfigFile = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
+							File.separator + FNAME_LOG_CONFIG;
 					}
-					LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigurationFile);
+					LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigFile);
 					//
 					if(LOG_CTX == null) {
 						System.err.println("Logging configuration failed");

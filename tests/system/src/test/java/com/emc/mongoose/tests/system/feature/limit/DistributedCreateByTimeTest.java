@@ -5,9 +5,10 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
@@ -89,8 +90,16 @@ extends HttpStorageDistributedScenarioTestBase {
 
 	}
 
-	@Test public void testCreatedDataExists()
+	@Test public void testIoTraceLogFile()
 	throws Exception {
-
+		final String nodeAddr = STORAGE_MOCKS.keySet().iterator().next();
+		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
+		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
+			testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
+			testHttpStorageMockContains(
+				nodeAddr, ioTraceRecord.get("ItemPath"),
+				Long.parseLong(ioTraceRecord.get("TransferSize"))
+			);
+		}
 	}
 }
