@@ -2,6 +2,8 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogMessageBase;
+
+import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
@@ -83,7 +85,7 @@ extends LogMessageBase {
 			.append(concurrency).append('x').append(driversCount)
 			.append(": n=(").append(succCount).append('/')
 			.append(getColoredFailCountText(succCount, snapshot.getFailCount())).append("); t[s]=(")
-			.append(formatFixedWidth(snapshot.getElapsedTime() / 1000.0, 7)).append('/')
+			.append(formatFixedWidth(snapshot.getElapsedTime() / K, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
 			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
 			.append(formatFixedWidth(snapshot.getSuccRateMean(), 7)).append('/')

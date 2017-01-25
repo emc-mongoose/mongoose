@@ -57,7 +57,8 @@ extends Closeable {
 		
 		/** @return value in milliseconds */
 		long getElapsedTime();
-		
+
+		/** @return value in microseconds */
 		long getDurationSum();
 		long getLatencySum();
 		//

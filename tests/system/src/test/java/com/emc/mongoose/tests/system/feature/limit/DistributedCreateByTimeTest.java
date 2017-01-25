@@ -1,7 +1,10 @@
 package com.emc.mongoose.tests.system.feature.limit;
 
+import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 
 import org.apache.logging.log4j.Level;
 
@@ -10,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -18,15 +22,18 @@ import static org.junit.Assert.assertTrue;
 public class DistributedCreateByTimeTest
 extends HttpStorageDistributedScenarioTestBase {
 
-	private static final int LOAD_LIMIT_TIME = 25;
+	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("123KB");
+	private static final int LOAD_LIMIT_TIME = 45;
+	private static final int LOAD_CONCURRENCY = 3;
 
 	private static boolean FINISHED_IN_TIME = true;
 	private static String STD_OUTPUT = null;
 
-	@BeforeClass
-	public static void setUpClass()
+	@BeforeClass public static void setUpClass()
 	throws Exception {
+		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--load-limit-time=" + LOAD_LIMIT_TIME);
+		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
@@ -48,46 +55,41 @@ extends HttpStorageDistributedScenarioTestBase {
 			runner.interrupt();
 			FINISHED_IN_TIME = false;
 		}
+		LoadJobLogFileManager.flush(JOB_NAME);
+		TimeUnit.SECONDS.sleep(1);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@AfterClass public static void tearDownClass()
 	throws Exception {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test
-	public void testFinishedInTime()
+	@Test public void testFinishedInTime()
 	throws Exception {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test
-	public void testSuccCountFromStdOut()
+	@Test public void testMetricsLogFile()
+	throws Exception {
+		testMetricsLogFile(
+			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, LOAD_LIMIT_TIME,
+			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+		);
+	}
+
+	@Test public void testTotalMetricsLogFile()
+	throws Exception {
+		testTotalMetricsLogFile(
+			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, LOAD_LIMIT_TIME
+		);
+	}
+
+	@Test public void testStdOutput()
 	throws Exception {
 
 	}
 
-	@Test
-	public void testSuccCountFromLogFile()
-	throws Exception {
-
-	}
-
-	@Test
-	public void testSuccCountsEquals()
-	throws Exception {
-
-	}
-
-	@Test
-	public void testNoErrorsFromStdOut()
-	throws Exception {
-
-	}
-
-	@Test
-	public void testNoErrorsFromLogFile()
+	@Test public void testCreatedDataExists()
 	throws Exception {
 
 	}

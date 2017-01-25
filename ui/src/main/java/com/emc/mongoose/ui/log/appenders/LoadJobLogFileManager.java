@@ -24,10 +24,10 @@ import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static java.io.File.separatorChar;
 
 /** Created by andrey on 13.03.15. */
-public final class LoadJobFileManager
+public final class LoadJobLogFileManager
 extends AbstractManager {
 	//
-	public static final List<LoadJobFileManager> INSTANCES = new ArrayList<>();
+	public static final List<LoadJobLogFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -35,7 +35,7 @@ extends AbstractManager {
 	private final Map<String, OutputStream> outStreamsMap = new HashMap<>();
 	private final Layout<? extends Serializable> layout;
 	//
-	protected LoadJobFileManager(
+	protected LoadJobLogFileManager(
 		final LoggerContext loggerContext, final String fileName, final boolean flagAppend,
 		final boolean flagLock, final boolean flagBuffered, final String uriAdvertise,
 		final Layout<? extends Serializable> layout, final int buffSize
@@ -87,7 +87,7 @@ extends AbstractManager {
 	 * Factory to create a FileManager.
 	 */
 	private static final class LoadJobFileManagerFactory
-	implements ManagerFactory<LoadJobFileManager, FactoryData> {
+	implements ManagerFactory<LoadJobLogFileManager, FactoryData> {
 		/**
 		 * Create a FileManager.
 		 * @param fileName The prefix for the name of the File.
@@ -95,8 +95,8 @@ extends AbstractManager {
 		 * @return The FileManager for the File.
 		 */
 		@Override
-		public LoadJobFileManager createManager(final String fileName, final FactoryData data) {
-			return new LoadJobFileManager(
+		public LoadJobLogFileManager createManager(final String fileName, final FactoryData data) {
+			return new LoadJobLogFileManager(
 				data.getLoggerContext(), fileName, data.flagAppend, data.flagLock,
 				data.flagBuffered, data.uriAdvertise, data.layout, data.buffSize
 			);
@@ -105,13 +105,13 @@ extends AbstractManager {
 	//
 	private static final LoadJobFileManagerFactory FACTORY = new LoadJobFileManagerFactory();
 	//
-	public static LoadJobFileManager getRunIdFileManager(
+	public static LoadJobLogFileManager getRunIdFileManager(
 		final String fileName,
 		final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
 		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize,
 		final Configuration config
 	) {
-		return LoadJobFileManager.class.cast(
+		return LoadJobLogFileManager.class.cast(
 			getManager(
 				fileName, FACTORY,
 				new FactoryData(
@@ -216,9 +216,9 @@ extends AbstractManager {
 	}
 	//
 	public static void closeAll(final String runId) {
-		final LoadJobFileManager[] managers = new LoadJobFileManager[INSTANCES.size()];
+		final LoadJobLogFileManager[] managers = new LoadJobLogFileManager[INSTANCES.size()];
 		INSTANCES.toArray(managers);
-		for(final LoadJobFileManager manager : managers) {
+		for(final LoadJobLogFileManager manager : managers) {
 			if(manager.outStreamsMap.containsKey(runId)) {
 				manager.close();
 			}
@@ -240,7 +240,7 @@ extends AbstractManager {
 	}
 	//
 	public static void flush(final String runId) {
-		for(final LoadJobFileManager instance : INSTANCES) {
+		for(final LoadJobLogFileManager instance : INSTANCES) {
 			final OutputStream outStream = instance.outStreamsMap.get(runId);
 			if(outStream != null) {
 				try {
@@ -254,7 +254,7 @@ extends AbstractManager {
 	//
 	public static void flushAll()
 	throws IOException {
-		for(final LoadJobFileManager manager : INSTANCES) {
+		for(final LoadJobLogFileManager manager : INSTANCES) {
 			manager.flush();
 		}
 	}

@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class HttpStorageDistributedTestBase
 extends HttpStorageTestBase {
 
-	private static final int STORAGE_DRIVERS_COUNT = 2;
+	protected static final int STORAGE_DRIVERS_COUNT = 2;
 	private static final List<StorageDriverBuilderSvc>
 		STORAGE_DRIVER_BUILDER_SVCS = new ArrayList<>(STORAGE_DRIVERS_COUNT);
 

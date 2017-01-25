@@ -33,7 +33,7 @@ extends AbstractAppender {
 	private final Advertiser advertiser;
 	private Object advertisement;
 	private final boolean ignoreExceptions, flagFlush;
-	private final LoadJobFileManager manager;
+	private final LoadJobLogFileManager manager;
 	/**
 	 Instantiate a WriterAppender and set the output destination to a
 	 new {@link java.io.OutputStreamWriter} initialized with <code>os</code>
@@ -49,7 +49,7 @@ extends AbstractAppender {
 		final Filter filter,
 		final boolean ignoreExceptions,
 		final boolean flagFlush,
-		final LoadJobFileManager manager,
+		final LoadJobLogFileManager manager,
 		final String fName,
 		final Advertiser advertiser
 	) {
@@ -130,7 +130,7 @@ extends AbstractAppender {
 			}
 		}
 		//
-		final LoadJobFileManager manager = LoadJobFileManager.getRunIdFileManager(
+		final LoadJobLogFileManager manager = LoadJobLogFileManager.getRunIdFileManager(
 			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize, config
 		);
 		//
