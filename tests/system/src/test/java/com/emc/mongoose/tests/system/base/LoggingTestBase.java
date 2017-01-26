@@ -5,6 +5,7 @@ import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
+import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
@@ -36,6 +37,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +60,13 @@ public abstract class LoggingTestBase {
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		LOG = LogManager.getLogger();;
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
+	}
+	
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		STD_OUT_STREAM.close();
+		LogUtil.shutdown();
 	}
 
 	private static List<String> getLogFileLines(final String fileName)
@@ -133,7 +142,10 @@ public abstract class LoggingTestBase {
 	) throws Exception {
 		final List<CSVRecord> metrics = getMetricsLogRecords();
 		final int countRecords = metrics.size();
-		assertEquals(Integer.toString(countRecords), expectedLoadJobTime, metricsPeriodSec * countRecords, metricsPeriodSec);
+		assertEquals(
+			Integer.toString(countRecords), expectedLoadJobTime, metricsPeriodSec * countRecords,
+			metricsPeriodSec
+		);
 
 		Date lastTimeStamp = null, nextDateTimeStamp;
 		String ioTypeStr;
@@ -319,11 +331,105 @@ public abstract class LoggingTestBase {
 		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
 		assertTrue(sizeExpected.getMin() <= size && size <= sizeExpected.getMax());
 	}
-
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		STD_OUT_STREAM.close();
-		LogUtil.shutdown();
+	
+	protected static void testMetricsStdout(
+		final String stdOutContent,
+		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
+		final SizeInBytes expectedItemDataSize, final long metricsPeriodSec
+	) throws Exception {
+		Date lastTimeStamp = null, nextDateTimeStamp;
+		String ioTypeStr;
+		int concurrencyLevel;
+		int driverCount;
+		long prevTotalBytes = Long.MIN_VALUE, totalBytes;
+		long prevCountSucc = Long.MIN_VALUE, countSucc;
+		long countFail;
+		long avgItemSize;
+		double prevJobDuration = Double.NaN, jobDuration;
+		double prevDurationSum = Double.NaN, durationSum;
+		double tpAvg, tpLast;
+		double bwAvg, bwLast;
+		double durAvg;
+		int durMin, durMax;
+		double latAvg;
+		int latMin, latMax;
+		
+		final Matcher m = LogPatterns.STD_OUT_METRICS_SINGLE.matcher(stdOutContent);
+		while(m.find()) {
+			nextDateTimeStamp = FMT_DATE_ISO8601.parse(m.group("dateTime"));
+			if(lastTimeStamp != null) {
+				assertEquals(
+					metricsPeriodSec, (nextDateTimeStamp.getTime() - lastTimeStamp.getTime()) / K,
+					((double) metricsPeriodSec) / 10
+				);
+			}
+			lastTimeStamp = nextDateTimeStamp;
+			ioTypeStr = m.group("typeLoad").toUpperCase();
+			assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
+			concurrencyLevel = Integer.parseInt(m.group("concurrency"));
+			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
+			driverCount = Integer.parseInt(m.group("driverCount"));
+			assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
+			totalBytes = SizeInBytes.toFixedSize(m.group("size"));
+			if(prevTotalBytes == Long.MIN_VALUE) {
+				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
+			} else {
+				assertTrue(Long.toString(totalBytes), totalBytes >= prevTotalBytes);
+			}
+			prevTotalBytes = totalBytes;
+			countSucc = Long.parseLong(m.group("countSucc"));
+			if(prevCountSucc == Long.MIN_VALUE) {
+				assertTrue(Long.toString(countSucc), countSucc >= 0);
+			} else {
+				assertTrue(Long.toString(countSucc), countSucc >= prevCountSucc);
+			}
+			prevCountSucc = countSucc;
+			countFail = Long.parseLong(m.group("countFail"));
+			assertTrue(Long.toString(countFail), countFail < 1);
+			if(countSucc > 0) {
+				avgItemSize = totalBytes / countSucc;
+				assertEquals(
+					Long.toString(avgItemSize), expectedItemDataSize.getAvg(), avgItemSize,
+					expectedItemDataSize.getAvg() / 100
+				);
+			}
+			jobDuration = Double.parseDouble(m.group("jobDur"));
+			if(Double.isNaN(prevJobDuration)) {
+				assertEquals(Double.toString(jobDuration), 0, jobDuration, 1);
+			} else {
+				assertEquals(
+					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 1
+				);
+			}
+			prevJobDuration = jobDuration;
+			durationSum = Double.parseDouble(m.group("sumDur"));
+			if(Double.isNaN(prevDurationSum)) {
+				assertTrue(durationSum >= 0);
+			} else {
+				assertTrue(durationSum >= prevDurationSum);
+			}
+			final double
+				effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
+			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
+			prevDurationSum = durationSum;
+			tpAvg = Double.parseDouble(m.group("tpMean"));
+			tpLast = Double.parseDouble(m.group("tpLast"));
+			bwAvg = Double.parseDouble(m.group("bwMean"));
+			bwLast = Double.parseDouble(m.group("bwLast"));
+			assertEquals(bwAvg / tpAvg, bwAvg / tpAvg, expectedItemDataSize.getAvg() / 100);
+			assertEquals(bwLast / tpLast, bwLast / tpLast, expectedItemDataSize.getAvg() / 100);
+			durAvg = Double.parseDouble(m.group("durAvg"));
+			assertTrue(durAvg >= 0);
+			durMin = Integer.parseInt(m.group("durMin"));
+			assertTrue(durAvg >= durMin);
+			durMax = Integer.parseInt(m.group("durMax"));
+			assertTrue(durMax >= durAvg);
+			latAvg = Double.parseDouble(m.group("latAvg"));
+			assertTrue(latAvg >= 0);
+			latMin = Integer.parseInt(m.group("latMin"));
+			assertTrue(latAvg >= latMin);
+			latMax = Integer.parseInt(m.group("latMax"));
+			assertTrue(latMax >= latAvg);
+		}
 	}
 }

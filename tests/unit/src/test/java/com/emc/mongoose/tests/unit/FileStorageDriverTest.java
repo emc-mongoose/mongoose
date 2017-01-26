@@ -2,7 +2,6 @@ package com.emc.mongoose.tests.unit;
 
 import com.emc.mongoose.common.math.Random;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.item.BasicItemFactory;
 import com.emc.mongoose.model.item.BasicMutableDataItem;
 import com.emc.mongoose.model.item.MutableDataItem;

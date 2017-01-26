@@ -85,9 +85,13 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testStdOutput()
+	@Test public void testMetricsStdout()
 	throws Exception {
-
+		testMetricsStdout(
+			STD_OUTPUT.replaceAll("[\r\n]+", " "),
+			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
+			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+		);
 	}
 
 	@Test public void testIoTraceLogFile()
