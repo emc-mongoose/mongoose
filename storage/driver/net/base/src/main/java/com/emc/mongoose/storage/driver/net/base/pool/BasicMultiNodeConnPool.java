@@ -2,10 +2,14 @@ package com.emc.mongoose.storage.driver.net.base.pool;
 
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.pool.ChannelPoolHandler;
+
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -20,8 +24,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by andrey on 23.01.17.
@@ -40,7 +42,7 @@ implements NonBlockingConnPool {
 	private final int n;
 	private final Map<String, Bootstrap> bootstrapMap;
 	private final Map<String, Queue<Channel>> connsMap;
-	private final AtomicLong connCount = new AtomicLong(0);
+	private final Object2IntMap<String> connsCountMap;
 
 	public BasicMultiNodeConnPool(
 		final Semaphore concurrencyThrottle, final int concurrencyLevel, final String nodes[],
@@ -48,10 +50,14 @@ implements NonBlockingConnPool {
 	) {
 		this.concurrencyThrottle = concurrencyThrottle;
 		this.concurrencyLevel = concurrencyLevel;
+		if(nodes.length == 0) {
+			throw new IllegalArgumentException("Empty nodes array argument");
+		}
 		this.nodes = nodes;
 		this.n = nodes.length;
-		bootstrapMap = new HashMap<>();
-		connsMap = new HashMap<>();
+		bootstrapMap = new HashMap<>(n);
+		connsMap = new HashMap<>(n);
+		connsCountMap = new Object2IntOpenHashMap<>(n);
 		for(final String node : nodes) {
 			final InetSocketAddress nodeAddr;
 			if(node.contains(":")) {
@@ -77,15 +83,32 @@ implements NonBlockingConnPool {
 					)
 			);
 			connsMap.put(node, new ConcurrentLinkedQueue<>());
+			connsCountMap.put(node, 0);
 		}
 	}
 
 	protected Channel connect()
 	throws InterruptedException {
-		final String addr = nodes[(int) (connCount.getAndIncrement() % n)];
-		LOG.debug(Markers.MSG, "New connection to \"{}\"", addr);
-		final Channel conn = bootstrapMap.get(addr).connect().sync().channel();
-		conn.attr(ATTR_KEY_NODE).set(addr);
+		final Channel conn;
+		String selectedNodeAddr = null, nextNodeAddr;
+		int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
+		synchronized(connsCountMap) {
+			for(int i = 0; i < n; i ++) {
+				nextNodeAddr = nodes[i];
+				nextConnsCount = connsCountMap.get(nextNodeAddr);
+				if(nextConnsCount == 0) {
+					selectedNodeAddr = nextNodeAddr;
+					break;
+				} else if(nextConnsCount < minConnsCount) {
+					minConnsCount = nextConnsCount;
+					selectedNodeAddr = nextNodeAddr;
+				}
+			}
+			LOG.debug(Markers.MSG, "New connection to \"{}\"", selectedNodeAddr);
+			conn = bootstrapMap.get(selectedNodeAddr).connect().sync().channel();
+			conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
+			connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
+		}
 		return conn;
 	}
 	
@@ -107,16 +130,12 @@ implements NonBlockingConnPool {
 	public final Channel lease() {
 		Channel conn = null;
 		if(concurrencyThrottle.tryAcquire()) {
-			if(connCount.get() < concurrencyLevel) {
-				// prefer to create a new connection if the current connection count is less than
-				// configured concurrency level
+			if(null == (conn = poll())) {
 				try {
 					conn = connect();
-				} catch(final InterruptedException e) {
+				} catch(final Exception e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a new connection");
 				}
-			} else {
-				conn = poll();
 			}
 			if(conn == null) {
 				concurrencyThrottle.release();
@@ -138,17 +157,12 @@ implements NonBlockingConnPool {
 		
 		Channel conn;
 		for(int i = 0; i < availableCount; i ++) {
-			conn = null;
-			if(connCount.get() < concurrencyLevel) {
-				// prefer to create a new connection if the current connection count is less than
-				// configured concurrency level
+			if(null == (conn = poll())) {
 				try {
 					conn = connect();
-				} catch(final InterruptedException e) {
+				} catch(final Exception e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a new connection");
 				}
-			} else {
-				conn = poll();
 			}
 			if(conn == null) {
 				concurrencyThrottle.release(availableCount - i);
@@ -167,7 +181,9 @@ implements NonBlockingConnPool {
 			final Queue<Channel> connQueue = connsMap.get(nodeAddr);
 			connQueue.add(conn);
 		} else {
-			connCount.decrementAndGet();
+			synchronized(connsCountMap) {
+				connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+			}
 			conn.close();
 		}
 		concurrencyThrottle.release();
@@ -183,7 +199,9 @@ implements NonBlockingConnPool {
 				connQueue = connsMap.get(nodeAddr);
 				connQueue.add(conn);
 			} else {
-				connCount.decrementAndGet();
+				synchronized(connsCountMap) {
+					connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+				}
 				conn.close();
 			}
 			concurrencyThrottle.release();
