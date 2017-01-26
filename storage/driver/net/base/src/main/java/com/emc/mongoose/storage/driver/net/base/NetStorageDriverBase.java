@@ -123,7 +123,8 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
 		connPool = new BasicMultiNodeConnPool(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
+			concurrencyThrottle, concurrencyLevel, storageNodeAddrs, bootstrap, this,
+			storageNodePort
 		);
 		/*for(final String na : storageNodeAddrs) {
 			final InetSocketAddress nodeAddr;
