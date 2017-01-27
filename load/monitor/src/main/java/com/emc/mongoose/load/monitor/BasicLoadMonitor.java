@@ -141,7 +141,7 @@ implements LoadMonitor<R> {
 		this.name = name;
 
 		final LoadConfig firstLoadConfig = loadConfigs.get(loadConfigs.keySet().iterator().next());
-		final double rateLimit = firstLoadConfig.getJobConfig().getLimitConfig().getRate();
+		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
 		final Throttle<Object> rateThrottle;
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
