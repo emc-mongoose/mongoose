@@ -11,11 +11,9 @@ import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.NS_URI_BAS
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.OBJ_URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_DATE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SIGNATURE;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SUBTENANT_ID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.model.io.IoType;
@@ -188,7 +186,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	protected final HttpMethod getHttpMethod(final IoType ioType) {
+	protected final HttpMethod getDataHttpMethod(final IoType ioType) {
 		switch(ioType) {
 			case CREATE:
 			case NOOP:
@@ -200,21 +198,45 @@ extends HttpStorageDriverBase<I, O, R> {
 			case DELETE:
 				return HttpMethod.DELETE;
 			default:
-				throw new IllegalStateException();
+				throw new AssertionError("Unsupported I/O type: " + ioType);
 		}
 	}
 
 	@Override
-	protected final String getUriPath(
+	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
+		throw new AssertionError("Not implemented yet");
+	}
+
+	@Override
+	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
+		throw new AssertionError("Not implemented yet");
+	}
+
+	@Override
+	protected final String getDataUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		if(fsAccess) {
-			return NS_URI_BASE + super.getUriPath(item, srcPath, dstPath, ioType);
+			return NS_URI_BASE + super.getDataUriPath(item, srcPath, dstPath, ioType);
 		} else if(IoType.CREATE.equals(ioType)) {
 			return OBJ_URI_BASE;
 		} else {
-			return OBJ_URI_BASE + super.getUriPath(item, srcPath, dstPath, ioType);
+			return OBJ_URI_BASE + super.getDataUriPath(item, srcPath, dstPath, ioType);
 		}
+	}
+
+	@Override
+	protected final String getTokenUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	) {
+		throw new AssertionError("Not implemented yet");
+	}
+
+	@Override
+	protected final String getPathUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	) {
+		throw new AssertionError("Not implemented yet");
 	}
 	
 	@Override
@@ -298,7 +320,7 @@ extends HttpStorageDriverBase<I, O, R> {
 				mac = Mac.getInstance(SIGN_METHOD);
 				mac.init(secretKey);
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				throw new IllegalStateException("Failed to init MAC cypher instance");
+				throw new AssertionError("Failed to init MAC cypher instance", e);
 			}
 			THREAD_LOCAL_MAC.set(mac);
 		}

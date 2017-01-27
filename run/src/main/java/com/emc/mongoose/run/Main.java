@@ -34,7 +34,7 @@ public class Main {
 
 		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
-			throw new IllegalStateException();
+			throw new AssertionError();
 		}
 		config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
 

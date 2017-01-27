@@ -332,7 +332,7 @@ implements FileStorageDriver<I, O, R> {
 							}
 						}
 					} else {
-						throw new IllegalStateException("Null data range");
+						throw new AssertionError("Null data range");
 					}
 				} else {
 					final int n = fileItem.readAndVerify(

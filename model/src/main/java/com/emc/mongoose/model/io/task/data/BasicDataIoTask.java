@@ -132,7 +132,7 @@ implements DataIoTask<T, R> {
 				try {
 					contentSize = item.size();
 				} catch(IOException e) {
-					throw new IllegalStateException();
+					throw new AssertionError();
 				}
 				break;
 			default:

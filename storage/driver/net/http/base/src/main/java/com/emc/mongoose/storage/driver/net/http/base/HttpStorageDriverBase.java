@@ -22,6 +22,9 @@ import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
+
+import com.emc.mongoose.model.item.PathItem;
+import com.emc.mongoose.model.item.TokenItem;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -161,10 +164,22 @@ implements HttpStorageDriver<I, O, R> {
 
 		final I item = ioTask.getItem();
 		final IoType ioType = ioTask.getIoType();
-		final HttpMethod httpMethod = getHttpMethod(ioType);
-
 		final String srcPath = ioTask.getSrcPath();
-		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+
+		final HttpMethod httpMethod;
+		final String uriPath;
+		if(item instanceof DataItem) {
+			httpMethod = getDataHttpMethod(ioType);
+			uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+		} else if(item instanceof TokenItem) {
+			httpMethod = getTokenHttpMethod(ioType);
+			uriPath = getTokenUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+		} else if(item instanceof PathItem) {
+			httpMethod = getPathHttpMethod(ioType);
+			uriPath = getPathUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+		} else {
+			throw new AssertionError("Unsupported item class: " + item.getClass().getName());
+		}
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
@@ -189,7 +204,7 @@ implements HttpStorageDriver<I, O, R> {
 						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 					}
 				} else {
-					applyCopyHeaders(httpHeaders, getUriPath(item, srcPath, null, ioType));
+					applyCopyHeaders(httpHeaders, getDataUriPath(item, srcPath, null, ioType));
 					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				}
 				break;
@@ -205,7 +220,7 @@ implements HttpStorageDriver<I, O, R> {
 				try {
 					baseItemSize = mdi.size();
 				} catch(final IOException e) {
-					throw new IllegalStateException(e);
+					throw new AssertionError(e);
 				}
 				final List<ByteRange> fixedByteRanges = mdIoTask.getFixedRanges();
 				final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
@@ -256,7 +271,7 @@ implements HttpStorageDriver<I, O, R> {
 		return httpRequest;
 	}
 	
-	protected HttpMethod getHttpMethod(final IoType ioType) {
+	protected HttpMethod getDataHttpMethod(final IoType ioType) {
 		switch(ioType) {
 			case READ:
 				return HttpMethod.GET;
@@ -267,7 +282,11 @@ implements HttpStorageDriver<I, O, R> {
 		}
 	}
 
-	protected String getUriPath(
+	protected abstract HttpMethod getTokenHttpMethod(final IoType ioType);
+
+	protected abstract HttpMethod getPathHttpMethod(final IoType ioType);
+
+	protected String getDataUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
 		final String itemName = item.getName();
@@ -285,6 +304,14 @@ implements HttpStorageDriver<I, O, R> {
 			return (dstPath.endsWith(SLASH) ? dstPath : (dstPath + SLASH)) + itemName;
 		}
 	}
+
+	protected abstract String getTokenUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	);
+
+	protected abstract String getPathUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	);
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
 		String sharedHeaderName;

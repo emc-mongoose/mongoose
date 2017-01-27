@@ -52,7 +52,7 @@ implements MutableDataIoTask<I, R> {
 			if(randomRangesCount > 0) {
 				scheduleRandomRangesUpdate(randomRangesCount);
 			} else if(fixedRanges == null || fixedRanges.isEmpty()){
-				throw new IllegalStateException("Range update is not configured");
+				throw new AssertionError("Range update is not configured");
 			}
 			contentSize = getUpdatingRangesSize();
 		}
@@ -65,7 +65,7 @@ implements MutableDataIoTask<I, R> {
 		try {
 			final int countRangesTotal = getRangeCount(item.size());
 			if(count < 1 || count > countRangesTotal) {
-				throw new IllegalArgumentException(
+				throw new AssertionError(
 					"Range count should be more than 0 and less than max " + countRangesTotal +
 					" for the item size"
 				);
@@ -74,7 +74,7 @@ implements MutableDataIoTask<I, R> {
 				scheduleRandomUpdate(countRangesTotal);
 			}
 		} catch(final IOException e) {
-			throw new IllegalStateException(e);
+			throw new AssertionError(e);
 		}
 	}
 	
@@ -126,7 +126,7 @@ implements MutableDataIoTask<I, R> {
 					}
 				}
 			} catch(final IOException e) {
-				throw new IllegalStateException(e);
+				throw new AssertionError(e);
 			}
 		} else {
 			long nextBeg, nextEnd;
@@ -139,7 +139,7 @@ implements MutableDataIoTask<I, R> {
 					try {
 						sumSize += item.size() - nextBeg;
 					} catch(final IOException e) {
-						throw new IllegalStateException(e);
+						throw new AssertionError(e);
 					}
 				} else {
 					sumSize += nextEnd - nextBeg + 1;
@@ -173,7 +173,7 @@ implements MutableDataIoTask<I, R> {
 				}
 			}
 		} catch(final IOException e) {
-			throw new IllegalStateException(e);
+			throw new AssertionError(e);
 		}
 		return currRange;
 	}

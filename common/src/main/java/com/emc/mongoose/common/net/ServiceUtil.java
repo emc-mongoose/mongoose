@@ -110,7 +110,7 @@ public abstract class ServiceUtil {
 					Naming.rebind(svcUri, svc);
 					SVC_MAP.put(svcName + ":" + port, svc);
 				} else {
-					throw new IllegalStateException("Service already registered");
+					throw new AssertionError("Service already registered");
 				}
 			}
 			return svcUri;

@@ -320,12 +320,12 @@ extends HttpStorageDriverBase<I, O, R> {
 				if(mpuTask.allSubTasksDone()) {
 					httpRequest = getManifestCreateRequest(mpuTask, nodeAddr);
 				} else { // this is the initial state of the task
-					throw new IllegalStateException(
+					throw new AssertionError(
 						"Initial request for the composite I/O task is not allowed"
 					);
 				}
 			} else {
-				throw new IllegalStateException(
+				throw new AssertionError(
 					"Non-create multipart operations are not implemented yet"
 				);
 			}
@@ -333,7 +333,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			if(IoType.CREATE.equals(ioType)) {
 				httpRequest = getUploadPartRequest((PartialDataIoTask) ioTask, nodeAddr);
 			} else {
-				throw new IllegalStateException(
+				throw new AssertionError(
 					"Non-create multipart operations are not implemented yet"
 				);
 			}
@@ -342,20 +342,30 @@ extends HttpStorageDriverBase<I, O, R> {
 		}
 		return httpRequest;
 	}
-	
+
+	@Override
+	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
+		throw new AssertionError("Not implemented yet");
+	}
+
+	@Override
+	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
+		throw new AssertionError("Not implemented yet");
+	}
+
 	private HttpRequest getManifestCreateRequest(
 		final CompositeDataIoTask mpuTask, final String nodeAddr
 	) {
 		final I item = (I) mpuTask.getItem();
 		final String srcPath = mpuTask.getSrcPath();
-		final String uriPath = getUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE);
+		final String uriPath = getDataUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		final String objManifestPath = super.getUriPath(
+		final String objManifestPath = super.getDataUriPath(
 			item, srcPath, mpuTask.getDstPath(), IoType.CREATE
 		);
 		httpHeaders.set(
@@ -379,7 +389,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		final I item = (I) ioTask.getItem();
 		final String srcPath = ioTask.getSrcPath();
 		final String partNumStr = Integer.toString(ioTask.getPartNumber() + 1);
-		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
+		final String uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
 			"/" + PART_NUM_MASK.substring(partNumStr.length()) + partNumStr;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
@@ -458,10 +468,24 @@ extends HttpStorageDriverBase<I, O, R> {
 	}
 
 	@Override
-	protected final String getUriPath(
+	protected final String getDataUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		return namespacePath + super.getUriPath(item, srcPath, dstPath, ioType);
+		return namespacePath + super.getDataUriPath(item, srcPath, dstPath, ioType);
+	}
+
+	@Override
+	protected final String getTokenUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	) {
+		throw new AssertionError("Not implemented yet");
+	}
+
+	@Override
+	protected final String getPathUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	) {
+		throw new AssertionError("Not implemented yet");
 	}
 	
 	@Override

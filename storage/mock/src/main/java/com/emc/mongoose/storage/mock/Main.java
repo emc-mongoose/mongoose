@@ -33,7 +33,7 @@ public class Main {
 		
 		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
-			throw new IllegalStateException();
+			throw new AssertionError();
 		}
 		config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
 
@@ -47,7 +47,7 @@ public class Main {
 			ThreadContext.put(KEY_JOB_NAME, jobName);
 		}
 		if(jobName == null) {
-			throw new IllegalStateException("Load job name is not set");
+			throw new AssertionError("Load job name is not set");
 		}
 		
 		final Logger log = LogManager.getLogger();

@@ -388,7 +388,7 @@ extends HttpStorageDriverBase<I, O, R> {
 					httpRequest = getInitMpuRequest(ioTask, nodeAddr);
 				}
 			} else {
-				throw new IllegalStateException(
+				throw new AssertionError(
 					"Non-create multipart operations are not implemented yet"
 				);
 			}
@@ -396,7 +396,7 @@ extends HttpStorageDriverBase<I, O, R> {
 			if(IoType.CREATE.equals(ioType)) {
 				httpRequest = getUploadPartRequest((PartialDataIoTask) ioTask, nodeAddr);
 			} else {
-				throw new IllegalStateException(
+				throw new AssertionError(
 					"Non-create multipart operations are not implemented yet"
 				);
 			}
@@ -407,15 +407,39 @@ extends HttpStorageDriverBase<I, O, R> {
 		return httpRequest;
 	}
 
+	@Override
+	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
+		throw new AssertionError("Not implemented");
+	}
+
+	@Override
+	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
+		throw new AssertionError("Not implemented yet");
+	}
+
+	@Override
+	protected final String getTokenUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	) {
+		throw new AssertionError("Not implemented");
+	}
+
+	@Override
+	protected final String getPathUriPath(
+		final I item, final String srcPath, final String dstPath, final IoType ioType
+	) {
+		throw new AssertionError("Not implemented yet");
+	}
+
 	private HttpRequest getInitMpuRequest(final O ioTask, final String nodeAddr) {
 		final I item = ioTask.getItem();
 		final String srcPath = ioTask.getSrcPath();
 		if(srcPath != null && !srcPath.isEmpty()) {
-			throw new IllegalStateException(
+			throw new AssertionError(
 				"Multipart copy operation is not implemented yet"
 			);
 		}
-		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
+		final String uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
 			"?uploads";
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
@@ -440,7 +464,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		final I item = (I) ioTask.getItem();
 
 		final String srcPath = ioTask.getSrcPath();
-		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
+		final String uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
 			"?partNumber=" + (ioTask.getPartNumber() + 1) +
 			"&uploadId=" + ioTask.getParent().get(KEY_UPLOAD_ID);
 
@@ -497,7 +521,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		final String srcPath = mpuTask.getSrcPath();
 		final I item = (I) mpuTask.getItem();
 		final String uploadId = mpuTask.get(KEY_UPLOAD_ID);
-		final String uriPath = getUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE) +
+		final String uriPath = getDataUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE) +
 			"?uploadId=" + uploadId;
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
@@ -642,7 +666,7 @@ extends HttpStorageDriverBase<I, O, R> {
 				mac = Mac.getInstance(SIGN_METHOD);
 				mac.init(secretKey);
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				throw new IllegalStateException("Failed to init MAC cypher instance");
+				throw new AssertionError("Failed to init MAC cypher instance", e);
 			}
 			THREAD_LOCAL_MAC.set(mac);
 		}
