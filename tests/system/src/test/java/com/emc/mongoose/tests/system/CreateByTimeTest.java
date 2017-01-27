@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system.feature.limit;
+package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
@@ -20,12 +20,12 @@ import static org.junit.Assert.assertTrue;
 /**
  Created by andrey on 19.01.17.
  */
-public class DistributedCreateByTimeTest
+public class CreateByTimeTest
 extends HttpStorageDistributedScenarioTestBase {
 
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("123KB");
 	private static final int LOAD_LIMIT_TIME = 45;
-	private static final int LOAD_CONCURRENCY = 3;
+	private static final int LOAD_CONCURRENCY = 100;
 
 	private static boolean FINISHED_IN_TIME = true;
 	private static String STD_OUTPUT = null;
@@ -48,10 +48,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		try {
-			TimeUnit.SECONDS.timedJoin(runner, LOAD_LIMIT_TIME + 2);
-		} catch(final InterruptedException e) {
-		}
+		TimeUnit.SECONDS.timedJoin(runner, LOAD_LIMIT_TIME + 2);
 		if(runner.isAlive()) {
 			runner.interrupt();
 			FINISHED_IN_TIME = false;
@@ -73,15 +70,16 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogFile(
-			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, LOAD_LIMIT_TIME,
-			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0,
+			LOAD_LIMIT_TIME, CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
 	@Test public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogFile(
-			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, LOAD_LIMIT_TIME
+			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0,
+			LOAD_LIMIT_TIME
 		);
 	}
 

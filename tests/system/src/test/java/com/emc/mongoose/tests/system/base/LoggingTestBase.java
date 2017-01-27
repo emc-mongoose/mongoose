@@ -137,15 +137,17 @@ public abstract class LoggingTestBase {
 
 	protected static void testMetricsLogFile(
 		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
-		final SizeInBytes expectedItemDataSize, final int expectedLoadJobTime,
-		final long metricsPeriodSec
+		final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
+		final int expectedLoadJobTime, final long metricsPeriodSec
 	) throws Exception {
 		final List<CSVRecord> metrics = getMetricsLogRecords();
 		final int countRecords = metrics.size();
-		assertEquals(
-			Integer.toString(countRecords), expectedLoadJobTime, metricsPeriodSec * countRecords,
-			metricsPeriodSec
-		);
+		if(expectedLoadJobTime > 0) {
+			assertEquals(
+				Integer.toString(countRecords), expectedLoadJobTime,
+				metricsPeriodSec * countRecords, metricsPeriodSec
+			);
+		}
 
 		Date lastTimeStamp = null, nextDateTimeStamp;
 		String ioTypeStr;
@@ -191,6 +193,9 @@ public abstract class LoggingTestBase {
 				assertTrue(Long.toString(countSucc), countSucc >= 0);
 			} else {
 				assertTrue(Long.toString(countSucc), countSucc >= prevCountSucc);
+			}
+			if(expectedMaxCount > 0) {
+				assertTrue(Long.toString(countSucc), countSucc <= expectedMaxCount);
 			}
 			prevCountSucc = countSucc;
 			countFail = Long.parseLong(nextRecord.get("CountFail"));
@@ -256,7 +261,8 @@ public abstract class LoggingTestBase {
 
 	protected static void testTotalMetricsLogFile(
 		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
-		final SizeInBytes expectedItemDataSize, final int expectedLoadJobTime
+		final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
+		final int expectedLoadJobTime
 	) throws Exception {
 		final CSVRecord metrics = getMetricsTotalLogRecords().get(0);
 		try {
@@ -273,6 +279,9 @@ public abstract class LoggingTestBase {
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
 		assertTrue(Long.toString(totalBytes), totalBytes > 0);
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
+		if(expectedMaxCount > 0) {
+			assertEquals(countSucc, expectedMaxCount);
+		}
 		assertTrue(Long.toString(countSucc), countSucc > 0);
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		assertTrue(Long.toString(countFail), countFail < 1);
@@ -282,7 +291,9 @@ public abstract class LoggingTestBase {
 			expectedItemDataSize.getAvg() / 100
 		);
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
-		assertEquals(Double.toString(jobDuration), expectedLoadJobTime, jobDuration, 2);
+		if(expectedLoadJobTime > 0) {
+			assertEquals(Double.toString(jobDuration), expectedLoadJobTime, jobDuration, 2);
+		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
 		final double effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
 		assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate > 0);
