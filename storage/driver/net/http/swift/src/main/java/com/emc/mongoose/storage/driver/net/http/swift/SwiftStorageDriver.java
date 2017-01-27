@@ -26,7 +26,6 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseConta
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -49,6 +48,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -350,7 +350,9 @@ extends HttpStorageDriverBase<I, O, R> {
 		final String srcPath = mpuTask.getSrcPath();
 		final String uriPath = getUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		if(nodeAddr != null) {
+			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		}
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final String objManifestPath = super.getUriPath(
@@ -380,7 +382,9 @@ extends HttpStorageDriverBase<I, O, R> {
 		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
 			"/" + PART_NUM_MASK.substring(partNumStr.length()) + partNumStr;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		if(nodeAddr != null) {
+			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		}
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(

@@ -167,7 +167,9 @@ implements HttpStorageDriver<I, O, R> {
 		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), ioType);
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		if(nodeAddr != null) {
+			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		}
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders

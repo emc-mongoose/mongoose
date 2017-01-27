@@ -266,7 +266,9 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
 		ioTask.finishResponse();
-		connPool.release(channel);
+		if(!IoType.NOOP.equals(ioTask.getIoType())) {
+			connPool.release(channel);
+		}
 		ioTaskCompleted(ioTask);
 	}
 

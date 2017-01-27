@@ -418,7 +418,9 @@ extends HttpStorageDriverBase<I, O, R> {
 		final String uriPath = getUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
 			"?uploads";
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		if(nodeAddr != null) {
+			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		}
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final HttpMethod httpMethod = HttpMethod.POST;
@@ -443,7 +445,9 @@ extends HttpStorageDriverBase<I, O, R> {
 			"&uploadId=" + ioTask.getParent().get(KEY_UPLOAD_ID);
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		if(nodeAddr != null) {
+			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		}
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(

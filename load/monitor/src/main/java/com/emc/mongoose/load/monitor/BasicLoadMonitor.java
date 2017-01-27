@@ -2,7 +2,6 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -142,7 +141,7 @@ implements LoadMonitor<R> {
 		this.name = name;
 
 		final LoadConfig firstLoadConfig = loadConfigs.get(loadConfigs.keySet().iterator().next());
-		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
+		final double rateLimit = firstLoadConfig.getJobConfig().getLimitConfig().getRate();
 		final Throttle<Object> rateThrottle;
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
