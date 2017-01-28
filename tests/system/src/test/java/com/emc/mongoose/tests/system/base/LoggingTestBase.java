@@ -66,7 +66,6 @@ public abstract class LoggingTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		STD_OUT_STREAM.close();
-		LogUtil.shutdown();
 	}
 
 	private static List<String> getLogFileLines(final String fileName)
@@ -212,7 +211,7 @@ public abstract class LoggingTestBase {
 				assertEquals(Double.toString(jobDuration), 0, jobDuration, 1);
 			} else {
 				assertEquals(
-					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 1
+					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 2
 				);
 			}
 			prevJobDuration = jobDuration;

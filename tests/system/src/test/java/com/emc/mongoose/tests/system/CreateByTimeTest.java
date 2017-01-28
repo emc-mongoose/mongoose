@@ -11,10 +11,12 @@ import org.apache.logging.log4j.Level;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -32,6 +34,7 @@ extends HttpStorageDistributedScenarioTestBase {
 
 	@BeforeClass public static void setUpClass()
 	throws Exception {
+		ThreadContext.put(KEY_JOB_NAME, CreateByTimeTest.class.getSimpleName());
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--load-limit-time=" + LOAD_LIMIT_TIME);
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
