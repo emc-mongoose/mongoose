@@ -23,6 +23,9 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+
+import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
+import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -66,6 +69,7 @@ public abstract class LoggingTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		STD_OUT_STREAM.close();
+		LogUtil.shutdown();
 	}
 
 	private static List<String> getLogFileLines(final String fileName)
@@ -91,12 +95,12 @@ public abstract class LoggingTestBase {
 		return getLogFileLines("config.log");
 	}
 
-	protected static List<String> getPartsUploadLongLines()
+	protected static List<String> getPartsUploadLogLines()
 	throws IOException {
 		return getLogFileLines("parts.upload.log");
 	}
 
-	private static List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
 		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME, fileName).toFile();
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
@@ -332,7 +336,8 @@ public abstract class LoggingTestBase {
 		final CSVRecord ioTraceRecord, final int ioTypeCodeExpected, final SizeInBytes sizeExpected
 	) throws Exception {
 		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
-		assertEquals(IoTask.Status.SUCC.ordinal(), Integer.parseInt(ioTraceRecord.get("StatusCode")));
+		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
+		assertTrue(actualStatusCode == CANCELLED.ordinal() || actualStatusCode == SUCC.ordinal());
 		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
 		final String latencyStr = ioTraceRecord.get("RespLatency[us]");
 		if(latencyStr != null && !latencyStr.isEmpty()) {

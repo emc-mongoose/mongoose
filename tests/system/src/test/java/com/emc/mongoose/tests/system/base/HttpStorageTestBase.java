@@ -7,23 +7,18 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NodeConfig;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  Created by andrey on 19.01.17.
@@ -32,7 +27,7 @@ public abstract class HttpStorageTestBase
 extends ConfiguredTestBase {
 
 	protected static Map<String, StorageMock> STORAGE_MOCKS = new HashMap();
-	protected static int NODE_COUNT = 1;
+	protected static int STORAGE_NODE_COUNT = 1;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -46,7 +41,7 @@ extends ConfiguredTestBase {
 		final List<String> nodeAddrs = new ArrayList<>();
 		String nextNodeAddr;
 		StorageMock storageMock;
-		for(int i = 0; i < NODE_COUNT; i ++) {
+		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			nodeConfig.setPort(port + i);
 			storageMock = new StorageMockFactory(storageConfig, loadConfig, itemConfig)
 				.newStorageMock();

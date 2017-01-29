@@ -6,6 +6,7 @@ import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.math3.stat.Frequency;
 import org.apache.logging.log4j.Level;
 
 import java.util.List;
@@ -17,16 +18,32 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  Created by andrey on 19.01.17.
+ Covered use cases:
+ * 2.1.1.1.2. Small Data Items (10KB)
+ * 2.2.3.1. Random Item Ids
+ * 2.3.2. CSV File
+ * 4.3. Medium Concurrency Level (100)
+ * 6.1. Load Job Naming
+ * 6.2.5. By Time
+ * 8.1. Periodic Reporting
+ * 8.4. I/O Traces Reporting
+ * 9.2.1. Create New Items
+ * 10.2. Default Scenario
+ * 11.2. I/O Buffer Size Adjustment for Optimal Performance
+ * 12.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
 public class CreateByTimeTest
 extends HttpStorageDistributedScenarioTestBase {
 
-	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("123KB");
-	private static final int LOAD_LIMIT_TIME = 45;
+	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
+	private static final String ITEM_OUTPUT_FILE = CreateByTimeTest.class.getSimpleName() + ".csv";
+	private static final int LOAD_LIMIT_TIME = 25;
 	private static final int LOAD_CONCURRENCY = 100;
 
 	private static boolean FINISHED_IN_TIME = true;
@@ -106,5 +123,42 @@ extends HttpStorageDistributedScenarioTestBase {
 				Long.parseLong(ioTraceRecord.get("TransferSize"))
 			);
 		}
+	}
+
+	@Test public void testIoBufferSizeAdjustment()
+	throws Exception {
+		String msg = "Adjust output buffer size: " + ITEM_DATA_SIZE;
+		int k;
+		for(int i = 0; i < STORAGE_DRIVERS_COUNT; i ++) {
+			k = STD_OUTPUT.indexOf(msg);
+			if(k > -1) {
+				msg = msg.substring(k + msg.length());
+			} else {
+				fail("Expected the message to occur " + STORAGE_DRIVERS_COUNT + " times, but got " + i);
+			}
+		}
+	}
+
+	@Test public void testItemsOutputFile()
+	throws Exception {
+		final int itemIdRadix = CONFIG.getItemConfig().getNamingConfig().getRadix();
+		final List<CSVRecord> items = getLogFileCsvRecords(ITEM_OUTPUT_FILE);
+		final Frequency freq = new Frequency();
+		String itemPath, itemId;
+		long itemOffset;
+		long itemSize;
+		String modLayerAndMask;
+		for(final CSVRecord itemRec : items) {
+			itemPath = itemRec.get(0);
+			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
+			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+			freq.addValue(itemOffset);
+			itemSize = Long.parseLong(itemRec.get(1));
+			assertEquals(ITEM_DATA_SIZE.get(), itemSize);
+			modLayerAndMask = itemRec.get(2);
+			assertEquals("0/0", modLayerAndMask);
+		}
+		assertEquals(items.size(), freq.getUniqueCount());
 	}
 }

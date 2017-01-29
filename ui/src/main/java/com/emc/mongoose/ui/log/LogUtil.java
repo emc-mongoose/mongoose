@@ -171,8 +171,11 @@ implements ShutdownCallbackRegistry {
 		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {
-			if(LOG_CTX != null && LOG_CTX.isStarted()) {
-				LOG_CTX.stop();
+			if(LOG_CTX != null) {
+				if(LOG_CTX.isStarted()) {
+					LOG_CTX.stop();
+				}
+				LOG_CTX = null;
 			}
 		} finally {
 			LOG_CTX_LOCK.unlock();
