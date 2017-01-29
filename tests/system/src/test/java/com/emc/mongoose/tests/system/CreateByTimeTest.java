@@ -5,10 +5,15 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.logging.log4j.Level;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -132,7 +137,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		for(int i = 0; i < STORAGE_DRIVERS_COUNT; i ++) {
 			k = STD_OUTPUT.indexOf(msg);
 			if(k > -1) {
-				msg = msg.substring(k + msg.length());
+				msg = STD_OUTPUT.substring(k + msg.length());
 			} else {
 				fail("Expected the message to occur " + STORAGE_DRIVERS_COUNT + " times, but got " + i);
 			}
@@ -141,8 +146,14 @@ extends HttpStorageDistributedScenarioTestBase {
 
 	@Test public void testItemsOutputFile()
 	throws Exception {
+		final List<CSVRecord> items = new ArrayList<>();
+		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
+			final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br);
+			for(final CSVRecord csvRecord : csvParser) {
+				items.add(csvRecord);
+			}
+		}
 		final int itemIdRadix = CONFIG.getItemConfig().getNamingConfig().getRadix();
-		final List<CSVRecord> items = getLogFileCsvRecords(ITEM_OUTPUT_FILE);
 		final Frequency freq = new Frequency();
 		String itemPath, itemId;
 		long itemOffset;

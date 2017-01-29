@@ -69,7 +69,7 @@ public abstract class LoggingTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		STD_OUT_STREAM.close();
-		LogUtil.shutdown();
+		//LogUtil.shutdown();
 	}
 
 	private static List<String> getLogFileLines(final String fileName)
