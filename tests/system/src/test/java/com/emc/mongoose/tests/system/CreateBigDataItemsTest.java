@@ -50,7 +50,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("100MB");
 	private static final String ITEM_OUTPUT_FILE = CreateBigDataItemsTest.class.getSimpleName() + ".csv";
-	private static final int LOAD_LIMIT_COUNT = 500;
+	private static final int LOAD_LIMIT_COUNT = 1000;
 	private static final int LOAD_CONCURRENCY = 10;
 	private static String STD_OUTPUT = null;
 

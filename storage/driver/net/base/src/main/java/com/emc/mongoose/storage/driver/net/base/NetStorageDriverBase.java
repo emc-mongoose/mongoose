@@ -319,6 +319,13 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	throws IllegalStateException {
 		super.doInterrupt();
 		try {
+			connPool.close();
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "{}: failed to close the connection pool", toString()
+			);
+		}
+		try {
 			if(workerGroup.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
 				LOG.debug(Markers.MSG, "{}: I/O workers stopped in time", toString());
 			} else {
@@ -327,32 +334,5 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
 		}
-	}
-	
-	@Override
-	protected void doClose()
-	throws IOException {
-		super.doClose();
-		/*for(int i = 0; i < storageNodeAddrs.length; i ++) {
-			if(!workerGroup.isShutdown()) {
-				try {
-					final ChannelPool connPool = connPoolMap.remove(storageNodeAddrs[i]);
-					if(connPool != null) {
-						connPool.close();
-					}
-				} catch(final Throwable cause) {
-					if(!workerGroup.isTerminated()) {
-						LogUtil.exception(
-							LOG, Level.WARN, cause, "Failed to close the connection pool for {}",
-							storageNodeAddrs[i]
-						);
-					}
-				}
-			}
-			storageNodeAddrs[i] = null;
-		}
-		connPoolMap.clear();
-		nodeSelector.close();*/
-		connPool.close();
 	}
 }
