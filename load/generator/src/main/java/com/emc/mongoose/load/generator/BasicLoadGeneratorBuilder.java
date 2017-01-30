@@ -60,7 +60,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private ItemFactory<I> itemFactory;
 	private List<StorageDriver<I, O, R>> storageDrivers;
 	private Input<I> itemInput = null;
-	private SizeInBytes avgItemSize = null;
+	private SizeInBytes itemSizeEstimate = null;
 	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
@@ -98,7 +98,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	public BasicLoadGeneratorBuilder<I, O, R, T> setItemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
 		if(!(itemInput instanceof IoResultsItemInput)) {
-			this.avgItemSize = estimateAvgDataItemSize((Input<DataItem>) itemInput);
+			this.itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
 		}
 		return this;
 	}
@@ -113,6 +113,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final Input<String> dstPathInput;
 		final IoTaskBuilder<I, O, R> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
+		final SizeInBytes sizeLimit = limitConfig.getSize();
 		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
@@ -153,14 +154,14 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
-			avgItemSize = estimateAvgDataItemSize((Input<DataItem>) itemInput);
+			itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
 		}
 
-		if(avgItemSize != null && ItemType.DATA.equals(itemType)) {
+		if(itemSizeEstimate != null && ItemType.DATA.equals(itemType)) {
 			try {
 				for(final StorageDriver<I, O, R> storageDriver : storageDrivers) {
 					try {
-						storageDriver.adjustIoBuffers(avgItemSize, ioType);
+						storageDriver.adjustIoBuffers(itemSizeEstimate, ioType);
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e,
@@ -188,11 +189,12 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		}
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, avgItemSize, dstPathInput, ioTaskBuilder, countLimit, shuffleFlag
+			itemInput, itemSizeEstimate, dstPathInput, ioTaskBuilder, countLimit, sizeLimit,
+			shuffleFlag
 		);
 	}
 	
-	private SizeInBytes estimateAvgDataItemSize(final Input<DataItem> itemInput) {
+	private SizeInBytes estimateDataItemSize(final Input<DataItem> itemInput) {
 		final int maxCount = 0x100;
 		final List<DataItem> items = new ArrayList<>(maxCount);
 		int n = 0;
@@ -206,15 +208,26 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		}
 		
 		long sumSize = 0;
+		long minSize = Long.MAX_VALUE;
+		long maxSize = Long.MIN_VALUE;
+		long nextSize;
 		if(n > 0) {
 			try {
 				for(int i = 0; i < n; i++) {
-					sumSize += items.get(i).size();
+					nextSize = items.get(i).size();
+					sumSize += nextSize;
+					if(nextSize < minSize) {
+						minSize = nextSize;
+					}
+					if(nextSize > maxSize) {
+						maxSize = nextSize;
+					}
 				}
-			} catch(final IOException ignored) {
-				assert false;
+			} catch(final IOException e) {
+				throw new AssertionError(e);
 			}
-			return new SizeInBytes(sumSize / n);
+			return minSize == maxSize ?
+				new SizeInBytes(sumSize / n) : new SizeInBytes(minSize, maxCount, 1);
 		}
 		return null;
 	}

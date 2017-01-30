@@ -45,7 +45,7 @@ implements LoadGenerator<I, O, R> {
 	private volatile Output<O> ioTaskOutput;
 
 	private final Input<I> itemInput;
-	private final SizeInBytes avgItemSize;
+	private final SizeInBytes itemSizeEstimate;
 	private final Input<String> dstPathInput;
 	private final Thread worker;
 	private final long countLimit;
@@ -56,16 +56,25 @@ implements LoadGenerator<I, O, R> {
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final Input<I> itemInput, final SizeInBytes avgItemSize,
+		final Input<I> itemInput, final SizeInBytes itemSizeEstimate,
 		final Input<String> dstPathInput, final IoTaskBuilder<I, O, R> ioTaskBuilder,
-		final long countLimit, final boolean shuffleFlag
+		final long countLimit, final SizeInBytes sizeLimit, final boolean shuffleFlag
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
-		this.avgItemSize = avgItemSize;
+		this.itemSizeEstimate = itemSizeEstimate;
 		this.dstPathInput = dstPathInput;
 		this.ioTaskBuilder = ioTaskBuilder;
-		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
+		if(countLimit > 0) {
+			this.countLimit = countLimit;
+		} else if(
+			sizeLimit.get() > 0 && itemSizeEstimate.get() > 0 &&
+				itemSizeEstimate.getMin() == itemSizeEstimate.getMax()
+		) {
+			this.countLimit = sizeLimit.get() / itemSizeEstimate.get();
+		} else {
+			this.countLimit = Long.MAX_VALUE;
+		}
 		this.shuffleFlag = shuffleFlag;
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
@@ -99,8 +108,8 @@ implements LoadGenerator<I, O, R> {
 	}
 
 	@Override
-	public final SizeInBytes getAvgItemSize() {
-		return avgItemSize;
+	public final SizeInBytes getItemSizeEstimate() {
+		return itemSizeEstimate;
 	}
 
 	@Override

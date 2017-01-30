@@ -18,8 +18,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,26 +30,23 @@ import static org.junit.Assert.fail;
 /**
  Created by kurila on 30.01.17.
  Covered use cases:
- * 2.1.1.1.4. Big Data Items (100MB)
- * 4.2. Small Concurrency Level (10)
- * 6.1. Load Job Naming
- * 6.2.4. Limit By Size
- * 6.2.6. Limit By End of Items Input
- * 8.1. Periodic Reporting
- * 8.4. I/O Traces Reporting
+ * 2.1.1.1.2. Small Data Items (10KB)
+ * 2.2.2. Path Listing
+ * 2.3.3.1. Constant Destination Path
+ * 4.4. Big Concurrency Level (1K)
  * 9.3.2. Read - Enabled Validation
  * 10.2. Default Scenario
+ * 10.5.2. Load Job
  * 11.2. I/O Buffer Size Adjustment for Optimal Performance
  * 12.1.2. Two Local Separate Storage Driver Services (at different ports)
+ * 12.2.2. Prepare the Destination Path on the Storage
  */
-public class ReadBigDataItemsTest
+public class ReadFromBucketListingTest
 extends HttpStorageDistributedScenarioTestBase {
-	
-	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("100MB");
-	private static final String ITEM_OUTPUT_FILE = ReadBigDataItemsTest.class.getSimpleName() + ".csv";
-	private static final int LOAD_CONCURRENCY = 10;
-	private static final SizeInBytes LOAD_LIMIT_SIZE = new SizeInBytes("100GB");
-	private static final long EXPECTED_COUNT = LOAD_LIMIT_SIZE.get() / ITEM_DATA_SIZE.get();
+	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
+	private static final String ITEM_OUTPUT_PATH = ReadFromBucketListingTest.class.getSimpleName();
+	private static final int LOAD_CONCURRENCY = 1000;
+	private static final int LOAD_LIMIT_TIME = 40;
 	
 	private static String STD_OUTPUT = null;
 	private static int ACTUAL_CONCURRENCY = 0;
@@ -59,36 +54,32 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_JOB_NAME, ReadBigDataItemsTest.class.getSimpleName());
+		ThreadContext.put(KEY_JOB_NAME, ReadFromBucketListingTest.class.getSimpleName());
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
-		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
-		} catch(final NoSuchFileException ignored) {
-		}
-		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.add("--load-limit-size=" + LOAD_LIMIT_SIZE.toString());
+		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
+		CONFIG_ARGS.add("--load-limit-time=" + LOAD_LIMIT_TIME);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		SCENARIO.run();
 		
 		// reinit
 		SCENARIO.close();
 		LoadJobLogFileManager.closeAll(JOB_NAME);
-		JOB_NAME = ReadBigDataItemsTest.class.getSimpleName() + "_";
+		JOB_NAME = ReadFromBucketListingTest.class.getSimpleName() + "_";
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		LogUtil.init();
 		LOG = LogManager.getLogger();
 		CONFIG_ARGS.add("--item-data-verify");
-		CONFIG_ARGS.add("--item-input-file=" + ITEM_OUTPUT_FILE);
+		CONFIG_ARGS.add("--item-input-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-type=read");
 		CONFIG.apply(
 			CliArgParser.parseArgs(
 				CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 			)
 		);
-		CONFIG.getItemConfig().getOutputConfig().setFile(null);
-		CONFIG.getLoadConfig().getLimitConfig().setCount(0);
+		CONFIG.getItemConfig().getOutputConfig().setPath(null);
+		CONFIG.getLoadConfig().getLimitConfig().setTime(0);
 		CONFIG.getLoadConfig().getJobConfig().setName(JOB_NAME);
 		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
 		
@@ -130,7 +121,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogFile(
-			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0,
+			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0,
 			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
 		);
 	}
@@ -138,7 +129,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogFile(
-			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
+			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0
 		);
 	}
 	
@@ -154,7 +145,6 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(ioTraceRecords.size(), EXPECTED_COUNT, 1);
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), ITEM_DATA_SIZE);
 		}
@@ -162,7 +152,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	@Test public void testIoBufferSizeAdjustment()
 	throws Exception {
-		String msg = "Adjust input buffer size: " + SizeInBytes.formatFixedSize(BUFF_SIZE_MAX);
+		String msg = "Adjust input buffer size: " + ITEM_DATA_SIZE.toString();
 		int k;
 		for(int i = 0; i < STORAGE_DRIVERS_COUNT; i ++) {
 			k = STD_OUTPUT.indexOf(msg);

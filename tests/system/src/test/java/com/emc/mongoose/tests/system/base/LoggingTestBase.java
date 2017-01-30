@@ -283,7 +283,7 @@ public abstract class LoggingTestBase {
 		assertTrue(Long.toString(totalBytes), totalBytes > 0);
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
-			assertEquals(countSucc, expectedMaxCount);
+			assertEquals(expectedMaxCount, countSucc);
 		}
 		assertTrue(Long.toString(countSucc), countSucc > 0);
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
@@ -344,7 +344,10 @@ public abstract class LoggingTestBase {
 			assertTrue(duration >= Long.parseLong(latencyStr));
 		}
 		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
-		assertTrue(sizeExpected.getMin() <= size && size <= sizeExpected.getMax());
+		assertTrue(
+			"Expected the size " + sizeExpected.toString() + ", but got " + size,
+			sizeExpected.getMin() <= size && size <= sizeExpected.getMax()
+		);
 	}
 	
 	protected static void testMetricsStdout(

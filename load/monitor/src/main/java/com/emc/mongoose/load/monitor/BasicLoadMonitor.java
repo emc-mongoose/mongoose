@@ -189,7 +189,7 @@ implements LoadMonitor<R> {
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
-			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getAvgItemSize());
+			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getItemSizeEstimate());
 		}
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
