@@ -355,7 +355,17 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
-		throw new AssertionError("Not implemented yet");
+		switch(ioType) {
+			case NOOP:
+			case CREATE:
+				return HttpMethod.PUT;
+			case READ:
+				return HttpMethod.GET;
+			case DELETE:
+				return HttpMethod.DELETE;
+			default:
+				throw new AssertionError("Not implemented yet");
+		}
 	}
 
 	private HttpRequest getManifestCreateRequest(
@@ -490,7 +500,12 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final String getPathUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		throw new AssertionError("Not implemented yet");
+		final String itemName = item.getName();
+		if(itemName.startsWith(SLASH)) {
+			return namespacePath + itemName;
+		} else {
+			return namespacePath + SLASH + itemName;
+		}
 	}
 	
 	@Override

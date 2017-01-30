@@ -36,7 +36,7 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 100000
+						"count" : 10000
 					},
 					"concurrency" : 10
 				}
