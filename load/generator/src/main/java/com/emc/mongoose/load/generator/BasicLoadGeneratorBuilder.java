@@ -12,6 +12,7 @@ import com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
+import com.emc.mongoose.model.io.task.token.BasicTokenIoTaskBuilder;
 import com.emc.mongoose.model.item.BasicItemNameInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;
@@ -130,7 +131,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		} else if(ItemType.PATH.equals(itemType)){
 			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicPathIoTaskBuilder();
 		} else {
-			throw new AssertionError("Not implemented yet");
+			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicTokenIoTaskBuilder();
 		}
 		
 		String itemInputPath = inputConfig.getPath();
@@ -139,8 +140,10 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		}
 		ioTaskBuilder.setSrcPath(itemInputPath);
 		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
-		
-		if(!IoType.NOOP.equals(ioType)) { // prevent the storage connections if noop
+
+		// prevent the storage connections if noop
+		// also don't create tocken if token load is configured
+		if(!IoType.NOOP.equals(ioType) && !ItemType.TOKEN.equals(itemType)) {
 			String authToken = null;
 			try {
 				for(final StorageDriver<I, O, R> nextDriver : storageDrivers) {

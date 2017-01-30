@@ -409,12 +409,14 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
-		throw new AssertionError("Not implemented");
+		throw new AssertionError("Not implemented yet");
 	}
 
 	@Override
 	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
 		switch(ioType) {
+			case UPDATE:
+				throw new AssertionError("Not implemnted yet");
 			case READ:
 				return HttpMethod.GET;
 			case DELETE:

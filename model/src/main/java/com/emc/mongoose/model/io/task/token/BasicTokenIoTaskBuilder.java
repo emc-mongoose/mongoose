@@ -1,48 +1,48 @@
-package com.emc.mongoose.model.io.task.path;
+package com.emc.mongoose.model.io.task.token;
 
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
-import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
-import com.emc.mongoose.model.item.PathItem;
+import static com.emc.mongoose.model.io.task.token.TokenIoTask.TokenIoResult;
+import com.emc.mongoose.model.item.TokenItem;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- Created by kurila on 30.01.17.
+ Created by kurila on 14.07.16.
  */
-public class BasicPathIoTaskBuilder<
-	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult
+public class BasicTokenIoTaskBuilder<
+	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult
 >
 extends BasicIoTaskBuilder<I, O, R>
-implements PathIoTaskBuilder<I, O, R> {
-	
+implements TokenIoTaskBuilder<I, O, R> {
+
 	@Override @SuppressWarnings("unchecked")
-	public O getInstance(final I dataItem, final String dstPath)
+	public O getInstance(final I item, final String dstPath)
 	throws IOException {
-		return (O) new BasicPathIoTask<>(ioType, dataItem);
+		return (O) new BasicTokenIoTask<>(ioType, item);
 	}
-	
+
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items)
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
-		for(final I nextItem : items) {
-			tasks.add((O) new BasicPathIoTask<>(ioType, nextItem));
+		for(final I item : items) {
+			tasks.add((O) new BasicTokenIoTask<>(ioType, item));
 		}
 		return tasks;
 	}
-	
+
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items, final String dstPath)
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
-		for(final I nextItem : items) {
-			tasks.add((O) new BasicPathIoTask<>(ioType, nextItem));
+		for(final I item : items) {
+			tasks.add((O) new BasicTokenIoTask<>(ioType, item));
 		}
 		return tasks;
 	}
-	
+
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items, final List<String> dstPaths)
 	throws IOException {
@@ -51,10 +51,8 @@ implements PathIoTaskBuilder<I, O, R> {
 			throw new IllegalArgumentException("Items count and paths count should be equal");
 		}
 		final List<O> tasks = new ArrayList<>(n);
-		I nextItem;
 		for(int i = 0; i < n; i ++) {
-			nextItem = items.get(i);
-			tasks.add((O) new BasicPathIoTask<>(ioType, nextItem));
+			tasks.add((O) new BasicTokenIoTask<>(ioType, items.get(i)));
 		}
 		return tasks;
 	}

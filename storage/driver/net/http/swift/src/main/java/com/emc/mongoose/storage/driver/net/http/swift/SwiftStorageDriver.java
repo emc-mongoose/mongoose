@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
+import static com.emc.mongoose.model.io.IoType.CREATE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
@@ -315,7 +316,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		final HttpRequest httpRequest;
 		final IoType ioType = ioTask.getIoType();
 		if(ioTask instanceof CompositeDataIoTask) {
-			if(IoType.CREATE.equals(ioType)) {
+			if(CREATE.equals(ioType)) {
 				final CompositeDataIoTask mpuTask = (CompositeDataIoTask) ioTask;
 				if(mpuTask.allSubTasksDone()) {
 					httpRequest = getManifestCreateRequest(mpuTask, nodeAddr);
@@ -330,7 +331,7 @@ extends HttpStorageDriverBase<I, O, R> {
 				);
 			}
 		} else if(ioTask instanceof PartialDataIoTask) {
-			if(IoType.CREATE.equals(ioType)) {
+			if(CREATE.equals(ioType)) {
 				httpRequest = getUploadPartRequest((PartialDataIoTask) ioTask, nodeAddr);
 			} else {
 				throw new AssertionError(
@@ -345,7 +346,11 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
-		throw new AssertionError("Not implemented yet");
+		if(CREATE.equals(ioType)) {
+			return HttpMethod.GET;
+		} else {
+			throw new AssertionError("Not implemented yet");
+		}
 	}
 
 	@Override
@@ -358,7 +363,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	) {
 		final I item = (I) mpuTask.getItem();
 		final String srcPath = mpuTask.getSrcPath();
-		final String uriPath = getDataUriPath(item, srcPath, mpuTask.getDstPath(), IoType.CREATE);
+		final String uriPath = getDataUriPath(item, srcPath, mpuTask.getDstPath(), CREATE);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -366,7 +371,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final String objManifestPath = super.getDataUriPath(
-			item, srcPath, mpuTask.getDstPath(), IoType.CREATE
+			item, srcPath, mpuTask.getDstPath(), CREATE
 		);
 		httpHeaders.set(
 			KEY_X_OBJECT_MANIFEST,
@@ -389,7 +394,7 @@ extends HttpStorageDriverBase<I, O, R> {
 		final I item = (I) ioTask.getItem();
 		final String srcPath = ioTask.getSrcPath();
 		final String partNumStr = Integer.toString(ioTask.getPartNumber() + 1);
-		final String uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), IoType.CREATE) +
+		final String uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), CREATE) +
 			"/" + PART_NUM_MASK.substring(partNumStr.length()) + partNumStr;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
@@ -478,7 +483,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final String getTokenUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		throw new AssertionError("Not implemented yet");
+		return AUTH_URI;
 	}
 
 	@Override
@@ -496,7 +501,14 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final void applyAuthHeaders(
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
-		if(authToken != null && !authToken.isEmpty()) {
+		if(dstUriPath.equals(AUTH_URI)) {
+			if(userName != null && !userName.isEmpty()) {
+				httpHeaders.set(KEY_X_AUTH_USER, userName);
+			}
+			if(secret != null && !secret.isEmpty()) {
+				httpHeaders.set(KEY_X_AUTH_KEY, secret);
+			}
+		} else if(authToken != null && !authToken.isEmpty()) {
 			httpHeaders.set(KEY_X_AUTH_TOKEN, authToken);
 		}
 	}

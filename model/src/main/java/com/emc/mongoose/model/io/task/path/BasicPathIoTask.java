@@ -16,8 +16,6 @@ public class BasicPathIoTask<I extends PathItem, R extends BasicPathIoTask.Basic
 extends BasicIoTask<I, R>
 implements PathIoTask<I, R> {
 	
-	protected long contentSize;
-	
 	protected transient volatile long countBytesDone;
 	protected transient volatile long respDataTimeStart;
 	
