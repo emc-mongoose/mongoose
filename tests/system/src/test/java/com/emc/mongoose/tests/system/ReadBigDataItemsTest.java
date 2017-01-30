@@ -1,6 +1,7 @@
 package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
@@ -9,7 +10,9 @@ import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -54,18 +57,28 @@ extends HttpStorageDistributedScenarioTestBase {
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		SCENARIO.run();
-		// reinit the scenario for read
+		
+		// reinit
 		SCENARIO.close();
+		LoadJobLogFileManager.closeAll(JOB_NAME);
+		JOB_NAME = ReadBigDataItemsTest.class.getSimpleName() + "_";
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
+		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
+		LogUtil.init();
+		LOG = LogManager.getLogger();
+		CONFIG_ARGS.add("--item-data-verify");
 		CONFIG_ARGS.add("--item-input-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.remove("--item-output-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.remove("--load-limit-count=" + LOAD_LIMIT_COUNT);
 		CONFIG_ARGS.add("--load-type=read");
 		CONFIG.apply(
 			CliArgParser.parseArgs(
 				CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 			)
 		);
+		CONFIG.getItemConfig().getOutputConfig().setFile(null);
+		CONFIG.getLoadConfig().getLimitConfig().setCount(0);
+		CONFIG.getLoadConfig().getJobConfig().setName(JOB_NAME);
 		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
+		
 		final Thread runner = new Thread(
 			() -> {
 				try {
@@ -128,14 +141,9 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	@Test public void testIoTraceLogFile()
 	throws Exception {
-		final String nodeAddr = STORAGE_MOCKS.keySet().iterator().next();
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), ITEM_DATA_SIZE);
-			testHttpStorageMockContains(
-				nodeAddr, ioTraceRecord.get("ItemPath"),
-				Long.parseLong(ioTraceRecord.get("TransferSize"))
-			);
 		}
 	}
 	

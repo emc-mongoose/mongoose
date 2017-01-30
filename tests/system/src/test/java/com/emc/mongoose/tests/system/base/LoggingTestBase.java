@@ -61,7 +61,7 @@ public abstract class LoggingTestBase {
 		JOB_NAME = ThreadContext.get(KEY_JOB_NAME);
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
-		LOG = LogManager.getLogger();;
+		LOG = LogManager.getLogger();
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	
