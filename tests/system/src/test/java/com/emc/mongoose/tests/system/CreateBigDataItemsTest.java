@@ -81,7 +81,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.sleep(20); // warmup
+		TimeUnit.SECONDS.sleep(15); // warmup
 		final int startPort = CONFIG.getStorageConfig().getNodeConfig().getPort();
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			ACTUAL_CONCURRENCY += PortListener
@@ -159,7 +159,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
-			final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br);
+			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);
 			}

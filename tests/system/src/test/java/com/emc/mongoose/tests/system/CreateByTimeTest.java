@@ -58,6 +58,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_JOB_NAME, CreateByTimeTest.class.getSimpleName());
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
+		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.add("--load-limit-time=" + LOAD_LIMIT_TIME);
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
