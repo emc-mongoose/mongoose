@@ -40,11 +40,11 @@ import static org.junit.Assert.fail;
  * 12.1.2. Two Local Separate Storage Driver Services (at different ports)
  * 12.2.2. Prepare the Destination Path on the Storage
  */
-public class ReadBucketListingHighConcurrencyTest
+public class ReadBucketListingTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
-	private static final String ITEM_OUTPUT_PATH = ReadBucketListingHighConcurrencyTest.class.getSimpleName();
-	private static final int LOAD_CONCURRENCY = 1000;
+	private static final String ITEM_OUTPUT_PATH = ReadBucketListingTest.class.getSimpleName();
+	private static final int LOAD_CONCURRENCY = 1;
 	private static final int LOAD_LIMIT_TIME = 40;
 	
 	private static String STD_OUTPUT = null;
@@ -53,7 +53,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_JOB_NAME, ReadBucketListingHighConcurrencyTest.class.getSimpleName());
+		ThreadContext.put(KEY_JOB_NAME, ReadBucketListingTest.class.getSimpleName());
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
@@ -64,7 +64,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		// reinit
 		SCENARIO.close();
 		LoadJobLogFileManager.closeAll(JOB_NAME);
-		JOB_NAME = ReadBucketListingHighConcurrencyTest.class.getSimpleName() + "_";
+		JOB_NAME = ReadBucketListingTest.class.getSimpleName() + "_";
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		LogUtil.init();
