@@ -80,7 +80,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			FINISHED_IN_TIME = false;
 		}
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(5);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass public static void tearDownClass()
