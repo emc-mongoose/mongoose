@@ -166,9 +166,9 @@ extends HttpStorageDistributedScenarioTestBase {
 			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
 			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
 			freq.addValue(itemOffset);
-			itemSize = Long.parseLong(itemRec.get(1));
+			itemSize = Long.parseLong(itemRec.get(2));
 			assertEquals(ITEM_DATA_SIZE.get(), itemSize);
-			modLayerAndMask = itemRec.get(2);
+			modLayerAndMask = itemRec.get(3);
 			assertEquals("0/0", modLayerAndMask);
 		}
 		assertEquals(items.size(), freq.getUniqueCount());

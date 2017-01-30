@@ -17,7 +17,11 @@ import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
  */
 public abstract class HttpStorageDistributedScenarioTestBase
 extends HttpStorageDistributedTestBase {
-
+	
+	protected static final Path DEFAULT_SCENARIO_PATH = Paths.get(
+		getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO
+	);
+	protected static Path SCENARIO_PATH;
 	protected static Scenario SCENARIO;
 
 	@BeforeClass
@@ -25,13 +29,12 @@ extends HttpStorageDistributedTestBase {
 	throws Exception {
 		HttpStorageDistributedTestBase.setUpClass();
 		final String scenarioValue = CONFIG.getScenarioConfig().getFile();
-		final Path scenarioPath;
 		if(scenarioValue != null && !scenarioValue.isEmpty()) {
-			scenarioPath = Paths.get(scenarioValue);
+			SCENARIO_PATH = Paths.get(scenarioValue);
 		} else {
-			scenarioPath = Paths.get(getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO);
+			SCENARIO_PATH = DEFAULT_SCENARIO_PATH;
 		}
-		SCENARIO = new JsonScenario(CONFIG, scenarioPath.toFile());
+		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 	}
 
 	@AfterClass
