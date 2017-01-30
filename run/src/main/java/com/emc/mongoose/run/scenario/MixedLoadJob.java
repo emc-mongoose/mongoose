@@ -119,15 +119,8 @@ extends JobBase {
 					contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
 				);
 				
-				final ItemFactory itemFactory;
-				if(ItemType.DATA.equals(itemType)) {
-					itemFactory = new BasicMutableDataItemFactory(contentSrc);
-					LOG.info(Markers.MSG, "Work on the mutable data items");
-				} else {
-					// TODO path item factory
-					itemFactory = null;
-					LOG.info(Markers.MSG, "Work on the path items");
-				}
+				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
+				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();
 

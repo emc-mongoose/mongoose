@@ -11,6 +11,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
 import com.emc.mongoose.model.item.BasicItemNameInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;
@@ -22,6 +23,8 @@ import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
+
+import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -118,15 +121,18 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 
-		if(ItemType.PATH.equals(itemType)) {
-			ioTaskBuilder = new BasicIoTaskBuilder<>();
-		} else {
+		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicMutableDataIoTaskBuilder()
 				.setFixedRanges(ByteRange.parseList(rangesConfig.getFixed()))
 				.setRandomRangesCount(rangesConfig.getRandom())
 				.setSizeThreshold(rangesConfig.getThreshold().get());
+		} else if(ItemType.PATH.equals(itemType)){
+			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicPathIoTaskBuilder();
+		} else {
+			throw new AssertionError("Not implemented yet");
 		}
+		
 		String itemInputPath = inputConfig.getPath();
 		if(itemInputPath != null && !itemInputPath.startsWith("/")) {
 			itemInputPath = "/" + itemInputPath;
@@ -154,7 +160,11 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
-			itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+			if(ItemType.DATA.equals(itemType)) {
+				itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+			} else {
+				itemSizeEstimate = new SizeInBytes(BUFF_SIZE_MIN);
+			}
 		}
 
 		if(itemSizeEstimate != null && ItemType.DATA.equals(itemType)) {
@@ -182,7 +192,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 			}
 		}
 
-		if(IoType.CREATE.equals(ioType)) {
+		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
 			dstPathInput = getDstPathInput();
 		} else {
 			dstPathInput = null;

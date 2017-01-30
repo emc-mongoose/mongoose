@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "read-containers-with-items.json"
+						"file" : "read-containers-with-items.csv"
 					},
 					"naming" : {
 						"type" : "asc",
@@ -140,7 +140,7 @@
 			"config" : {
 				"item" : {
 					"input" : {
-						"file" : "read-containers-with-items.json"
+						"file" : "read-containers-with-items.csv"
 					}
 				},
 				"load" : {

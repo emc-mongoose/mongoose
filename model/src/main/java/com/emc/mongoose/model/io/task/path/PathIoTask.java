@@ -1,19 +1,15 @@
-package com.emc.mongoose.model.io.task.data;
+package com.emc.mongoose.model.io.task.path;
 
-import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.model.item.DataItem;
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
+import com.emc.mongoose.model.item.PathItem;
 
-import java.util.List;
 /**
- Created by kurila on 11.07.16.
+ Created by kurila on 30.01.17.
  */
-public interface DataIoTask<I extends DataItem, R extends DataIoResult>
+public interface PathIoTask<I extends PathItem, R extends PathIoTask.PathIoResult>
 extends IoTask<I, R> {
 	
-	interface DataIoResult<I extends DataItem>
+	interface PathIoResult<I extends PathItem>
 	extends IoResult<I> {
 		
 		@Override
@@ -41,15 +37,12 @@ extends IoTask<I, R> {
 		final boolean useDataLatencyResult,
 		final boolean useTransferSizeResult
 	);
-
-	List<ByteRange> getFixedRanges();
-
+	
 	long getCountBytesDone();
-
+	
 	void setCountBytesDone(long n);
-
+	
 	long getRespDataTimeStart();
-
+	
 	void startDataResponse();
 }
-

@@ -11,7 +11,10 @@ import com.emc.mongoose.model.item.MutableDataItem;
  */
 public interface PartialMutableDataIoTask<I extends MutableDataItem, R extends PartialDataIoResult>
 extends PartialDataIoTask<I, R>, MutableDataIoTask<I, R> {
-
+	
+	@Override
+	I getItem();
+	
 	@Override
 	CompositeMutableDataIoTask<I, ? extends DataIoResult> getParent();
 }

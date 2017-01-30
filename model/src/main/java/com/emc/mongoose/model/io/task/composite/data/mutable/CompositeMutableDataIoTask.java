@@ -15,5 +15,8 @@ public interface CompositeMutableDataIoTask<
 extends CompositeDataIoTask<I, R> {
 	
 	@Override
+	I getItem();
+	
+	@Override
 	List<? extends PartialMutableDataIoTask> getSubTasks();
 }

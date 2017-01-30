@@ -414,7 +414,14 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
-		throw new AssertionError("Not implemented yet");
+		switch(ioType) {
+			case READ:
+				return HttpMethod.GET;
+			case DELETE:
+				return HttpMethod.DELETE;
+			default:
+				return HttpMethod.PUT;
+		}
 	}
 
 	@Override
@@ -428,7 +435,12 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final String getPathUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		throw new AssertionError("Not implemented yet");
+		final String itemName = item.getName();
+		if(itemName.startsWith("/")) {
+			return itemName;
+		} else {
+			return "/" + itemName;
+		}
 	}
 
 	private HttpRequest getInitMpuRequest(final O ioTask, final String nodeAddr) {

@@ -17,6 +17,24 @@ extends IoTask<I, R> {
 	extends IoResult<I> {
 		boolean getCompleteFlag();
 	}
+	
+	@Override
+	I getItem();
+	
+	@Override
+	R getResult(
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemInfoResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
+		final boolean useTransferSizeResult
+	);
 
 	String get(final String key);
 

@@ -114,7 +114,7 @@ public class BasicStorageDriverBuilder<
 			LOG.info(Markers.MSG, "Work on the filesystem");
 			if(ItemType.PATH.equals(itemType)) {
 				LOG.info(Markers.MSG, "Work on the directories");
-				// TODO directory load driver
+				throw new AssertionError("Not implemented yet");
 			} else {
 				LOG.info(Markers.MSG, "Work on the files");
 				driver = (T) new BasicFileStorageDriver<>(jobName, loadConfig, verifyFlag);
@@ -123,28 +123,24 @@ public class BasicStorageDriverBuilder<
 			if(StorageType.HTTP.equals(storageType)){
 				final String apiType = storageConfig.getHttpConfig().getApi();
 				LOG.info(Markers.MSG, "Work via HTTP using \"{}\" cloud storage API", apiType);
-				if(ItemType.PATH.equals(itemType)) {
-					// TODO container/bucket load driver
-				} else {
-					switch(apiType.toLowerCase()) {
-						case API_ATMOS:
-							driver = (T) new AtmosStorageDriver<>(
-								jobName, loadConfig, storageConfig, verifyFlag, socketConfig
-							);
-							break;
-						case API_S3:
-							driver = (T) new S3StorageDriver<>(
-								jobName, loadConfig, storageConfig, verifyFlag, socketConfig
-							);
-							break;
-						case API_SWIFT:
-							driver = (T) new SwiftStorageDriver<>(
-								jobName, loadConfig, storageConfig, verifyFlag, socketConfig
-							);
-							break;
-						default:
-							throw new IllegalArgumentException("Unknown HTTP storage API: " + apiType);
-					}
+				switch(apiType.toLowerCase()) {
+					case API_ATMOS:
+						driver = (T) new AtmosStorageDriver<>(
+							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+						);
+						break;
+					case API_S3:
+						driver = (T) new S3StorageDriver<>(
+							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+						);
+						break;
+					case API_SWIFT:
+						driver = (T) new SwiftStorageDriver<>(
+							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+						);
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown HTTP storage API: " + apiType);
 				}
 			} else {
 				throw new UserShootHisFootException("Unsupported storage type");

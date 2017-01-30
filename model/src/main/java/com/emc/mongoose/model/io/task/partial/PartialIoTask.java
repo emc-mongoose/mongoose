@@ -16,6 +16,21 @@ extends IoTask<I, R> {
 	extends IoResult<I> {
 	}
 	
+	@Override
+	R getResult(
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemInfoResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
+		final boolean useTransferSizeResult
+	);
+	
 	int getPartNumber();
 
 	CompositeIoTask<I, ? extends IoResult> getParent();

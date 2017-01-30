@@ -3,6 +3,9 @@ package com.emc.mongoose.load.monitor;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.DaemonBase;
+import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
+import static com.emc.mongoose.model.io.task.composite.CompositeIoTask.CompositeIoResult;
+import static com.emc.mongoose.model.io.task.partial.PartialIoTask.PartialIoResult;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
@@ -17,9 +20,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
-import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -353,14 +354,12 @@ implements LoadMonitor<R> {
 
 		I item;
 		R ioTaskResult;
-		DataIoResult dataIoTaskResult;
 		int ioTypeCode;
 		int statusCode;
 		long reqDuration;
 		long respLatency;
 		long countBytesDone = 0;
 		ioTaskResult = ioTaskResults.get(0);
-		final boolean isDataTransferred = ioTaskResult instanceof DataIoResult;
 		IoStats ioTypeStats, ioTypeMedStats;
 
 		final List<R> ioResultsToPass = ioResultsOutput == null ? null : new ArrayList<>(n);
@@ -372,8 +371,8 @@ implements LoadMonitor<R> {
 			}
 
 			if( // account only completed composite I/O tasks
-				ioTaskResult instanceof CompositeIoTask.CompositeIoResult &&
-					!((CompositeIoTask.CompositeIoResult) ioTaskResult).getCompleteFlag()
+				ioTaskResult instanceof CompositeIoResult &&
+					!((CompositeIoResult) ioTaskResult).getCompleteFlag()
 				) {
 				m --;
 				continue;
@@ -383,9 +382,10 @@ implements LoadMonitor<R> {
 			statusCode = ioTaskResult.getStatusCode();
 			reqDuration = ioTaskResult.getDuration();
 			respLatency = ioTaskResult.getLatency();
-			if(isDataTransferred) {
-				dataIoTaskResult = (DataIoResult) ioTaskResult;
-				countBytesDone = dataIoTaskResult.getCountBytesDone();
+			if(ioTaskResult instanceof DataIoResult) {
+				countBytesDone = ((DataIoResult) ioTaskResult).getCountBytesDone();
+			} else if(ioTaskResult instanceof PathIoResult) {
+				countBytesDone = ((PathIoResult) ioTaskResult).getCountBytesDone();
 			}
 
 			ioTypeStats = ioStats.get(ioTypeCode);
@@ -395,7 +395,7 @@ implements LoadMonitor<R> {
 				if(respLatency > 0 && respLatency > reqDuration) {
 					LOG.debug(Markers.ERR, "Dropping invalid latency value {}", respLatency);
 				}
-				if(ioTaskResult instanceof PartialIoTask.PartialIoResult) {
+				if(ioTaskResult instanceof PartialIoResult) {
 					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 						ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);

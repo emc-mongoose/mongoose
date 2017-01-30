@@ -133,11 +133,13 @@ extends RequestHandlerBase<T> {
 		}
 		int maxCount = DEFAULT_PAGE_SIZE;
 		String marker = null;
-		if(queryParams.containsKey(LIMIT_KEY)) {
-			maxCount = Integer.parseInt(queryParams.get(LIMIT_KEY));
-		}
-		if(queryParams.containsKey(MARKER_KEY)) {
-			marker = queryParams.get(MARKER_KEY);
+		if(queryParams != null) {
+			if(queryParams.containsKey(LIMIT_KEY)) {
+				maxCount = Integer.parseInt(queryParams.get(LIMIT_KEY));
+			}
+			if(queryParams.containsKey(MARKER_KEY)) {
+				marker = queryParams.get(MARKER_KEY);
+			}
 		}
 		final List<T> buffer = new ArrayList<>(maxCount);
 		final T lastObject;

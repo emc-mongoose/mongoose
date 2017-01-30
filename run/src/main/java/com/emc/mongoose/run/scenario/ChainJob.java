@@ -12,6 +12,8 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 
 import com.emc.mongoose.model.item.BasicIoResultsItemInput;
 import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
+import com.emc.mongoose.model.item.BasicPathItemFactory;
+import com.emc.mongoose.model.item.BasicTokenItemFactory;
 import com.emc.mongoose.model.item.IoResultsItemInput;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
@@ -114,15 +116,8 @@ extends JobBase {
 					contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
 				);
 				
-				final ItemFactory itemFactory;
-				if(ItemType.DATA.equals(itemType)) {
-					itemFactory = new BasicMutableDataItemFactory(contentSrc);
-					LOG.info(Markers.MSG, "Work on the mutable data items");
-				} else {
-					// TODO path item factory
-					itemFactory = null;
-					LOG.info(Markers.MSG, "Work on the path items");
-				}
+				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
+				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final QueueConfig queueConfig = loadConfig.getQueueConfig();

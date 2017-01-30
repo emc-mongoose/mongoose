@@ -18,6 +18,21 @@ extends CompositeIoTask<I, R> {
 	interface CompositeDataIoResult<I extends DataItem>
 	extends DataIoResult<I>, CompositeIoResult<I> {
 	}
+	
+	@Override
+	R getResult(
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemInfoResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
+		final boolean useTransferSizeResult
+	);
 
 	@Override
 	List<? extends PartialDataIoTask> getSubTasks();
