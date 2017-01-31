@@ -2,6 +2,7 @@ package com.emc.mongoose.tests.unit;
 
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import org.junit.Assert;
@@ -26,19 +27,19 @@ public class ConfigTest {
 		final Map<String, String> argsMap = new HashMap<>();
 		argsMap.put("--load-job-name", "goose");
 		argsMap.put("--version", "1.2.5.10");
-		argsMap.put("--socket-timeoutMilliSec", "123456");
-		argsMap.put("--socket-reuseAddr", "true");
-		argsMap.put("--socket-tcpNoDelay", "false");
-		argsMap.put("--socket-interestOpQueued", null);
 		argsMap.put("--item-data-content-ringSize", "16MB");
 		argsMap.put("--item-data-ranges-random", "1");
 		argsMap.put("--load-limit-count", "1000");
 		argsMap.put("--load-limit-rate", "12.345");
 		argsMap.put("--load-limit-size", "321KB");
 		argsMap.put("--load-limit-time", "5m");
-		argsMap.put("--storage-node-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
-		argsMap.put("--storage-http-fsAccess", "true");
-		argsMap.put("--storage-http-headers", "customHeaderName:customHeaderValue");
+		argsMap.put("--storage-net-timeoutMilliSec", "123456");
+		argsMap.put("--storage-net-reuseAddr", "true");
+		argsMap.put("--storage-net-tcpNoDelay", "false");
+		argsMap.put("--storage-net-interestOpQueued", null);
+		argsMap.put("--storage-net-node-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
+		argsMap.put("--storage-net-http-fsAccess", "true");
+		argsMap.put("--storage-net-http-headers", "customHeaderName:customHeaderValue");
 		
 		final List<String> args = new ArrayList<>();
 		String t;
@@ -56,14 +57,14 @@ public class ConfigTest {
 		config.apply(argTree);
 		
 		assertEquals(argsMap.get("--version"), config.getVersion());
-		final Config.SocketConfig socketConfig = config.getSocketConfig();
+		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertEquals(
-			Integer.parseInt(argsMap.get("--socket-timeoutMilliSec")),
-			socketConfig.getTimeoutMilliSec()
+			Integer.parseInt(argsMap.get("--storage-net-timeoutMilliSec")),
+			netConfig.getTimeoutMilliSec()
 		);
-		assertEquals(true, socketConfig.getReuseAddr());
-		assertEquals(false, socketConfig.getTcpNoDelay());
-		assertEquals(true, socketConfig.getInterestOpQueued());
+		assertEquals(true, netConfig.getReuseAddr());
+		assertEquals(false, netConfig.getTcpNoDelay());
+		assertEquals(true, netConfig.getInterestOpQueued());
 		final Config.ItemConfig.DataConfig dataConfig = config.getItemConfig().getDataConfig();
 		assertEquals(
 			"16MB",
@@ -76,11 +77,11 @@ public class ConfigTest {
 		assertEquals("321KB", loadConfig.getLimitConfig().getSize().toString());
 		assertEquals(300, loadConfig.getLimitConfig().getTime());
 		final Config.StorageConfig storageConfig = config.getStorageConfig();
-		assertEquals(4, storageConfig.getNodeConfig().getAddrs().size());
-		assertEquals(true, storageConfig.getHttpConfig().getFsAccess());
+		assertEquals(4, netConfig.getNodeConfig().getAddrs().size());
+		assertEquals(true, netConfig.getHttpConfig().getFsAccess());
 		assertEquals(
 			"customHeaderValue",
-			storageConfig.getHttpConfig().getHeaders().get("customHeaderName")
+			netConfig.getHttpConfig().getHeaders().get("customHeaderName")
 		);
 	}
 	

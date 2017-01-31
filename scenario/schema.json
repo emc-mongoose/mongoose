@@ -519,60 +519,6 @@
 						}
 					}
 				},
-				"socket": {
-					"type": "object",
-					"additionalProperties": false,
-					"properties": {
-						"bindBacklogSize": {
-							"type": "integer",
-							"minimum" : 0
-						},
-						"interestOpQueued": {
-							"type": "boolean"
-						},
-						"keepAlive": {
-							"type": "boolean"
-						},
-						"linger": {
-							"type": "integer",
-							"minimum" : 0
-						},
-						"rcvBuf" : {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								},
-								{
-									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-								}
-							]
-						},
-						"reuseAddr": {
-							"type": "boolean"
-						},
-						"sndBuf" : {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								},
-								{
-									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-								}
-							]
-						},
-						"tcpNoDelay": {
-							"type": "boolean"
-						},
-						"timeoutMilliSec": {
-							"type": "integer",
-							"minimum" : 0
-						}
-					}
-				},
 				"storage": {
 					"type": "object",
 					"additionalProperties": false,
@@ -641,56 +587,6 @@
 								}
 							}
 						},
-						"http": {
-							"type": "object",
-							"additionalProperties": false,
-							"properties": {
-								"api": {
-									"oneOf" : [
-										{
-											"type" : "string",
-											"pattern" : "[\\w\\d]+"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"fsAccess": {
-									"oneOf" : [
-										{
-											"type": "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"headers": {
-									"type": "object",
-									"properties": {
-									}
-								},
-								"namespace": {
-									"type": [
-										"null", "string"
-									]
-								},
-								"versioning": {
-									"oneOf" : [
-										{
-											"type": "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								}
-							}
-						},
 						"mock": {
 							"type": "object",
 							"additionalProperties": false,
@@ -731,48 +627,152 @@
 								}
 							}
 						},
-						"node" : {
+						"net" : {
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"addrs": {
+								"bindBacklogSize": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"interestOpQueued": {
+									"type": "boolean"
+								},
+								"keepAlive": {
+									"type": "boolean"
+								},
+								"linger": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"rcvBuf" : {
 									"oneOf" : [
 										{
-											"type" : "array",
-											"items" : {
-												"type" : "string"
+											"type" : "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										}
+									]
+								},
+								"reuseAddr": {
+									"type": "boolean"
+								},
+								"sndBuf" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										}
+									]
+								},
+								"tcpNoDelay": {
+									"type": "boolean"
+								},
+								"timeoutMilliSec": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"ssl" : {
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"http": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"api": {
+											"oneOf" : [
+												{
+													"type" : "string",
+													"pattern" : "[\\w\\d]+"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"fsAccess": {
+											"oneOf" : [
+												{
+													"type": "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"headers": {
+											"type": "object",
+											"properties": {
 											}
 										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"port" : {
-									"oneOf" : [
-										{
-											"type" : "number",
-											"minimum" : 1
+										"namespace": {
+											"type": [
+												"null", "string"
+											]
 										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+										"versioning": {
+											"oneOf" : [
+												{
+													"type": "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										}
-									]
+									}
+								},
+								"node" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"addrs": {
+											"oneOf" : [
+												{
+													"type" : "array",
+													"items" : {
+														"type" : "string"
+													}
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"port" : {
+											"oneOf" : [
+												{
+													"type" : "number",
+													"minimum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										}
+									}
 								}
 							}
-						},
-						"ssl" : {
-							"oneOf" : [
-								{
-									"type" : "boolean"
-								},
-								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
-								}
-							]
 						},
 						"type": {
 							"oneOf" : [

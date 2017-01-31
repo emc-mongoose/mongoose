@@ -15,8 +15,10 @@
 			"auth" : {
 				"token" : "5cc597535ed747f09b5d273154216339"
 			},
-			"http" : {
-				"api" : "atmos"
+			"net" : {
+				"http" : {
+					"api" : "atmos"
+				}
 			}
 		}
 	}

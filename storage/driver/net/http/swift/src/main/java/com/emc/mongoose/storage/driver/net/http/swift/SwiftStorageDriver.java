@@ -25,7 +25,6 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_VERS
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseContainerListing;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -84,9 +83,9 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	public SwiftStorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag, final SocketConfig socketConfig
+		final boolean verifyFlag
 	) throws IllegalStateException {
-		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
+		super(jobName, loadConfig, storageConfig, verifyFlag);
 		if(authToken != null && !authToken.isEmpty()) {
 			setAuthToken(authToken);
 		}
@@ -346,10 +345,12 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
-		if(CREATE.equals(ioType)) {
-			return HttpMethod.GET;
-		} else {
-			throw new AssertionError("Not implemented yet");
+		switch(ioType) {
+			case NOOP:
+			case CREATE:
+				return HttpMethod.GET;
+			default:
+				throw new AssertionError("Not implemented yet");
 		}
 	}
 

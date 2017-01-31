@@ -18,11 +18,9 @@ import static com.emc.mongoose.common.io.pattern.PatternDefinedInput.PATTERN_CHA
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.HttpConfig;
-
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.HttpConfig;
 import com.emc.mongoose.model.item.PathItem;
 import com.emc.mongoose.model.item.TokenItem;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
@@ -94,11 +92,11 @@ implements HttpStorageDriver<I, O, R> {
 	
 	protected HttpStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag, final SocketConfig socketConfig
+		final boolean verifyFlag
 	) throws IllegalStateException {
-		super(jobName, loadConfig, storageConfig, socketConfig, verifyFlag);
+		super(jobName, loadConfig, storageConfig, verifyFlag);
 		
-		final HttpConfig httpConfig = storageConfig.getHttpConfig();
+		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
 		authToken = storageConfig.getAuthConfig().getToken();
 		namespace = httpConfig.getNamespace();

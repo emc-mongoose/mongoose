@@ -14,6 +14,10 @@ extends IoTask<I, R> {
 
 		@Override
 		I getItem();
+		
+		long getDataLatency();
+		
+		long getCountBytesDone();
 	}
 
 	@Override
@@ -21,11 +25,24 @@ extends IoTask<I, R> {
 
 	@Override
 	R getResult(
-		final String hostAddr, final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult, final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult, final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult, final boolean useDurationResult,
-		final boolean useRespLatencyResult, final boolean useDataLatencyResult,
+		final String hostAddr,
+		final boolean useStorageDriverResult,
+		final boolean useStorageNodeResult,
+		final boolean useItemInfoResult,
+		final boolean useIoTypeCodeResult,
+		final boolean useStatusCodeResult,
+		final boolean useReqTimeStartResult,
+		final boolean useDurationResult,
+		final boolean useRespLatencyResult,
+		final boolean useDataLatencyResult,
 		final boolean useTransferSizeResult
 	);
+	
+	long getCountBytesDone();
+	
+	void setCountBytesDone(long n);
+	
+	long getRespDataTimeStart();
+	
+	void startDataResponse();
 }

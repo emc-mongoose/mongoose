@@ -5,9 +5,11 @@
 			"auth" : {
 				"token" : "existingAuthToken"
 			},
-			"http" : {
-				"api" : "Swift",
-				"namespace" : "test"
+			"net" : {
+				"http" : {
+					"api" : "Swift",
+					"namespace" : "test"
+				}
 			}
 		}
 	}

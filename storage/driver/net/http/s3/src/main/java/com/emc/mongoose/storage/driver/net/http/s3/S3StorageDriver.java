@@ -31,7 +31,6 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.URL_ARG_VERSIONI
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_ENABLE_CONTENT;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_DISABLE_CONTENT;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import com.emc.mongoose.ui.log.LogUtil;
@@ -110,10 +109,10 @@ extends HttpStorageDriverBase<I, O, R> {
 	private final SecretKeySpec secretKey;
 	
 	public S3StorageDriver(
-		final String jobName, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag, final SocketConfig socketConfig
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
+		super(jobName, loadConfig, storageConfig, verifyFlag);
 		if(secret != null) {
 			secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
 		} else {

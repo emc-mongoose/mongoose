@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.driver.net.http.atmos;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
+
+import static com.emc.mongoose.model.io.IoType.CREATE;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.HEADERS_CANONICAL;
@@ -20,7 +22,6 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -80,9 +81,9 @@ extends HttpStorageDriverBase<I, O, R> {
 	
 	public AtmosStorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag, final SocketConfig socketConfig
+		final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag, socketConfig);
+		super(jobName, loadConfig, storageConfig, verifyFlag);
 		if(secret != null) {
 			secretKey = new SecretKeySpec(
 				Base64.getDecoder().decode(secret.getBytes(UTF_8)), SIGN_METHOD
@@ -204,7 +205,16 @@ extends HttpStorageDriverBase<I, O, R> {
 
 	@Override
 	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
-		throw new AssertionError("Not implemented yet");
+		switch(ioType) {
+			case CREATE:
+				return HttpMethod.PUT;
+			case READ:
+				return HttpMethod.GET;
+			case DELETE:
+				return HttpMethod.DELETE;
+			default:
+				throw new AssertionError("Not implemented yet");
+		}
 	}
 
 	@Override
@@ -218,7 +228,7 @@ extends HttpStorageDriverBase<I, O, R> {
 	) {
 		if(fsAccess) {
 			return NS_URI_BASE + super.getDataUriPath(item, srcPath, dstPath, ioType);
-		} else if(IoType.CREATE.equals(ioType)) {
+		} else if(CREATE.equals(ioType)) {
 			return OBJ_URI_BASE;
 		} else {
 			return OBJ_URI_BASE + super.getDataUriPath(item, srcPath, dstPath, ioType);
@@ -229,7 +239,11 @@ extends HttpStorageDriverBase<I, O, R> {
 	protected final String getTokenUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		throw new AssertionError("Not implemented yet");
+		if(CREATE.equals(ioType)) {
+			return SUBTENANT_URI_BASE;
+		} else {
+			return SUBTENANT_URI_BASE + "/" + item.getName();
+		}
 	}
 
 	@Override

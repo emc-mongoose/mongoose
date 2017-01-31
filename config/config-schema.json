@@ -404,64 +404,6 @@
 				"file"
 			]
 		},
-		"socket": {
-			"type": "object",
-			"additionalProperties": false,
-			"properties": {
-				"bindBacklogSize": {
-					"type": "integer",
-					"minimum" : 0
-				},
-				"interestOpQueued": {
-					"type": "boolean"
-				},
-				"keepAlive": {
-					"type": "boolean"
-				},
-				"linger": {
-					"type": "integer",
-					"minimum" : 0
-				},
-				"rcvBuf" : {
-					"oneOf" : [
-						{
-							"type" : "integer",
-							"minimum" : 0
-						},
-						{
-							"type" : "string",
-							"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-						}
-					]
-				},
-				"reuseAddr": {
-					"type": "boolean"
-				},
-				"sndBuf" : {
-					"oneOf" : [
-						{
-							"type" : "integer",
-							"minimum" : 0
-						},
-						{
-							"type" : "string",
-							"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-						}
-					]
-				},
-				"tcpNoDelay": {
-					"type": "boolean"
-				},
-				"timeoutMilliSec": {
-					"type": "integer",
-					"minimum" : 0
-				}
-			},
-			"required": [
-				"bindBacklogSize", "interestOpQueued", "keepAlive", "linger",
-				"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec"
-			]
-		},
 		"storage": {
 			"type": "object",
 			"additionalProperties": false,
@@ -510,36 +452,6 @@
 					},
 					"required" : [
 						"addrs", "port", "remote"
-					]
-				},
-				"http": {
-					"type": "object",
-					"additionalProperties": false,
-					"properties": {
-						"api": {
-							"type": "string",
-							"pattern" : "[\\w\\d]+"
-						},
-						"fsAccess": {
-							"type": "boolean"
-						},
-						"headers": {
-							"type": "object",
-							"properties": {
-							}
-						},
-						"namespace": {
-							"type": [
-								"null",
-								"string"
-							]
-						},
-						"versioning": {
-							"type": "boolean"
-						}
-					},
-					"required": [
-						"api", "fsAccess", "headers", "namespace", "versioning"
 					]
 				},
 				"mock": {
@@ -591,27 +503,116 @@
 						"capacity", "container", "fail", "node"
 					]
 				},
-				"node" : {
+				"net" : {
 					"type" : "object",
 					"additionalProperties" : false,
 					"properties" : {
-						"addrs": {
-							"type": "array",
-							"items": {
-								"type" : "string"
-							}
+						"bindBacklogSize": {
+							"type": "integer",
+							"minimum" : 0
 						},
-						"port" : {
-							"type" : "number",
-							"minimum" : 1
+						"interestOpQueued": {
+							"type": "boolean"
+						},
+						"keepAlive": {
+							"type": "boolean"
+						},
+						"linger": {
+							"type": "integer",
+							"minimum" : 0
+						},
+						"rcvBuf" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+								}
+							]
+						},
+						"reuseAddr": {
+							"type": "boolean"
+						},
+						"sndBuf" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+								}
+							]
+						},
+						"tcpNoDelay": {
+							"type": "boolean"
+						},
+						"timeoutMilliSec": {
+							"type": "integer",
+							"minimum" : 0
+						},
+						"ssl" : {
+							"type" : "boolean"
+						},
+						"http": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"api": {
+									"type": "string",
+									"pattern" : "[\\w\\d]+"
+								},
+								"fsAccess": {
+									"type": "boolean"
+								},
+								"headers": {
+									"type": "object",
+									"properties": {
+									}
+								},
+								"namespace": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"versioning": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"api", "fsAccess", "headers", "namespace", "versioning"
+							]
+						},
+						"node" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type" : "string"
+									}
+								},
+								"port" : {
+									"type" : "number",
+									"minimum" : 1
+								}
+							},
+							"required" : [
+								"addrs", "port"
+							]
 						}
 					},
 					"required" : [
-						"addrs", "port"
+						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger",
+						"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl",
+						"http", "node"
 					]
-				},
-				"ssl" : {
-					"type" : "boolean"
 				},
 				"type": {
 					"type": "string",
@@ -621,7 +622,7 @@
 				}
 			},
 			"required": [
-				"auth", "driver", "http", "mock", "node", "ssl", "type"
+				"auth", "driver", "mock", "type"
 			]
 		},
 		"version" : {
@@ -632,7 +633,6 @@
 		"item",
 		"load",
 		"scenario",
-		"socket",
 		"storage",
 		"version"
 	]

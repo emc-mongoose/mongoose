@@ -7,10 +7,12 @@
 			}
 		},
 		"storage" : {
-			"node" : {
-				"port" : 9021
-			},
-			"ssl" : true
+			"net" : {
+				"node" : {
+					"port" : 9021
+				},
+				"ssl" : true
+			}
 		}
 	}
 }

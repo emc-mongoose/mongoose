@@ -1,7 +1,6 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
@@ -9,13 +8,8 @@ import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-
 import com.emc.mongoose.model.item.BasicIoResultsItemInput;
-import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
-import com.emc.mongoose.model.item.BasicPathItemFactory;
-import com.emc.mongoose.model.item.BasicTokenItemFactory;
 import com.emc.mongoose.model.item.IoResultsItemInput;
-import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
@@ -31,12 +25,10 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-
-import com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -54,7 +46,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -126,7 +117,6 @@ extends JobBase {
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final DriverConfig driverConfig = storageConfig.getDriverConfig();
 				final int driverPort = driverConfig.getPort();
-				final SocketConfig socketConfig = config.getSocketConfig();
 				if(remoteDriversFlag) {
 					final List<String> driverSvcAddrs = driverConfig.getAddrs();
 					for(final String driverSvcAddr : driverSvcAddrs) {
@@ -176,7 +166,6 @@ extends JobBase {
 							.setJobName(jobName)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
-							.setSocketConfig(socketConfig)
 							.setStorageConfig(storageConfig)
 							.buildRemotely();
 						} catch(final IOException | UserShootHisFootException e) {
@@ -226,7 +215,6 @@ extends JobBase {
 								.setJobName(jobName)
 								.setItemConfig(itemConfig)
 								.setLoadConfig(loadConfig)
-								.setSocketConfig(socketConfig)
 								.setStorageConfig(storageConfig)
 								.build()
 						);

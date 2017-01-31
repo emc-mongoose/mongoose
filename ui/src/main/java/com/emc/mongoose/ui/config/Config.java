@@ -69,14 +69,12 @@ implements Serializable {
 	public static final String KEY_ITEM = "item";
 	public static final String KEY_LOAD = "load";
 	public static final String SCENARIO = "scenario";
-	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_STORAGE = "storage";
 	public static final String KEY_ALIASING = "aliasing";
 	
 	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
 	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
 	@JsonProperty(SCENARIO) private ScenarioConfig scenarioConfig;
-	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
 	@JsonProperty(KEY_VERSION) private String version;
 	@JsonProperty(KEY_ALIASING) private List<Map<String, Object>> aliasingConfig;
@@ -85,7 +83,6 @@ implements Serializable {
 
 	public Config(final Config config) {
 		this.version = config.getVersion();
-		this.socketConfig = new SocketConfig(config.getSocketConfig());
 		this.itemConfig = new ItemConfig(config.getItemConfig());
 		this.loadConfig = new LoadConfig(config.getLoadConfig());
 		this.scenarioConfig = new ScenarioConfig(config.getScenarioConfig());
@@ -96,10 +93,6 @@ implements Serializable {
 
 	public final String getVersion() {
 		return version;
-	}
-
-	public final SocketConfig getSocketConfig() {
-		return socketConfig;
 	}
 
 	public final StorageConfig getStorageConfig() {
@@ -126,10 +119,6 @@ implements Serializable {
 		this.version = version;
 	}
 	
-	public final void setSocketConfig(final SocketConfig socketConfig) {
-		this.socketConfig = socketConfig;
-	}
-	
 	public final void setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 	}
@@ -150,130 +139,6 @@ implements Serializable {
 		this.aliasingConfig = aliasingConfig;
 	}
 	
-	public static final class SocketConfig
-	implements Serializable {
-
-		public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
-		public static final String KEY_REUSE_ADDR = "reuseAddr";
-		public static final String KEY_KEEP_ALIVE = "keepAlive";
-		public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
-		public static final String KEY_LINGER = "linger";
-		public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
-		public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
-		public static final String KEY_RCVBUF = "rcvBuf";
-		public static final String KEY_SNDBUF = "sndBuf";
-		
-		public final void setTimeoutMilliSec(final int timeoutMilliSec) {
-			this.timeoutMilliSec = timeoutMilliSec;
-		}
-		
-		public final void setReuseAddr(final boolean reuseAddr) {
-			this.reuseAddr = reuseAddr;
-		}
-		
-		public final void setKeepAlive(final boolean keepAlive) {
-			this.keepAlive = keepAlive;
-		}
-		
-		public final void setTcpNoDelay(final boolean tcpNoDelay) {
-			this.tcpNoDelay = tcpNoDelay;
-		}
-		
-		public final void setLinger(final int linger) {
-			this.linger = linger;
-		}
-		
-		public final void setBindBackLogSize(final int bindBackLogSize) {
-			this.bindBackLogSize = bindBackLogSize;
-		}
-		
-		public final void setInterestOpQueued(final boolean interestOpQueued) {
-			this.interestOpQueued = interestOpQueued;
-		}
-
-		public final void setRcvBuf(final SizeInBytes rcvBuf) {
-			this.rcvBuf = rcvBuf;
-		}
-		
-		public final void setSndBuf(final SizeInBytes sndBuf) {
-			this.sndBuf = sndBuf;
-		}
-		
-		@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
-
-		@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
-
-		@JsonProperty(KEY_KEEP_ALIVE) private boolean keepAlive;
-
-		@JsonProperty(KEY_TCP_NO_DELAY) private boolean tcpNoDelay;
-
-		@JsonProperty(KEY_LINGER) private int linger;
-
-		@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
-
-		@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
-
-		@JsonProperty(KEY_RCVBUF)
-		@JsonDeserialize(using = SizeInBytesDeserializer.class)
-		@JsonSerialize(using = SizeInBytesSerializer.class)
-		private SizeInBytes rcvBuf;
-
-		@JsonProperty(KEY_SNDBUF)
-		@JsonDeserialize(using = SizeInBytesDeserializer.class)
-		@JsonSerialize(using = SizeInBytesSerializer.class)
-		private SizeInBytes sndBuf;
-
-		public SocketConfig() {}
-
-		public SocketConfig(final SocketConfig other) {
-			this.timeoutMilliSec = other.getTimeoutMilliSec();
-			this.reuseAddr = other.getReuseAddr();
-			this.keepAlive = other.getKeepAlive();
-			this.tcpNoDelay = other.getTcpNoDelay();
-			this.linger = other.getLinger();
-			this.bindBackLogSize = other.getBindBackLogSize();
-			this.interestOpQueued = other.getInterestOpQueued();
-			this.rcvBuf = new SizeInBytes(other.getRcvBuf());
-			this.sndBuf = new SizeInBytes(other.getSndBuf());
-		}
-
-		public final int getTimeoutMilliSec() {
-			return timeoutMilliSec;
-		}
-
-		public final boolean getReuseAddr() {
-			return reuseAddr;
-		}
-
-		public final boolean getKeepAlive() {
-			return keepAlive;
-		}
-
-		public final boolean getTcpNoDelay() {
-			return tcpNoDelay;
-		}
-
-		public final int getLinger() {
-			return linger;
-		}
-
-		public final int getBindBackLogSize() {
-			return bindBackLogSize;
-		}
-
-		public final boolean getInterestOpQueued() {
-			return interestOpQueued;
-		}
-
-		public final SizeInBytes getRcvBuf() {
-			return rcvBuf;
-		}
-
-		public final SizeInBytes getSndBuf() {
-			return sndBuf;
-		}
-	}
-
 	public static final class ItemConfig
 	implements Serializable {
 
@@ -1113,10 +978,8 @@ implements Serializable {
 	implements Serializable {
 
 		public static final String KEY_AUTH = "auth";
-		public static final String KEY_HTTP = "http";
-		public static final String KEY_NODE = "node";
+		public static final String KEY_NET = "net";
 		public static final String KEY_DRIVER = "driver";
-		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
 		
@@ -1124,20 +987,12 @@ implements Serializable {
 			this.authConfig = authConfig;
 		}
 		
-		public final void setHttpConfig(final HttpConfig httpConfig) {
-			this.httpConfig = httpConfig;
-		}
-		
-		public final void setNodeConfig(final NodeConfig nodeConfig) {
-			this.nodeConfig = nodeConfig;
+		public final void setNetConfig(final NetConfig netConfig) {
+			this.netConfig = netConfig;
 		}
 		
 		public final void setDriverConfig(final DriverConfig driverConfig) {
 			this.driverConfig = driverConfig;
-		}
-		
-		public final void setSsl(final boolean ssl) {
-			this.ssl = ssl;
 		}
 		
 		public final void setType(final String type) {
@@ -1149,10 +1004,8 @@ implements Serializable {
 		}
 
 		@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
-		@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
-		@JsonProperty(KEY_NODE) private NodeConfig nodeConfig;
+		@JsonProperty(KEY_NET) private NetConfig netConfig;
 		@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
-		@JsonProperty(KEY_SSL) private boolean ssl;
 		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
 
@@ -1162,10 +1015,8 @@ implements Serializable {
 
 		public StorageConfig(final StorageConfig other) {
 			this.authConfig = new AuthConfig(other.getAuthConfig());
-			this.httpConfig = new HttpConfig(other.getHttpConfig());
-			this.nodeConfig = new NodeConfig(other.getNodeConfig());
+			this.netConfig = new NetConfig(other.getNetConfig());
 			this.driverConfig = new DriverConfig(other.getDriverConfig());
-			this.ssl = other.getSsl();
 			this.type = other.getType();
 			this.mockConfig = new MockConfig(other.getMockConfig());
 		}
@@ -1174,22 +1025,14 @@ implements Serializable {
 			return authConfig;
 		}
 
-		public HttpConfig getHttpConfig() {
-			return httpConfig;
-		}
-
-		public NodeConfig getNodeConfig() {
-			return nodeConfig;
+		public NetConfig getNetConfig() {
+			return netConfig;
 		}
 
 		public DriverConfig getDriverConfig() {
 			return driverConfig;
 		}
-
-		public boolean getSsl() {
-			return ssl;
-		}
-
+		
 		public String getType() {
 			return type;
 		}
@@ -1242,107 +1085,266 @@ implements Serializable {
 				return token;
 			}
 		}
-
-		public static final class HttpConfig
-		implements Serializable {
-
-			public static final String KEY_API = "api";
-			public static final String KEY_FS_ACCESS = "fsAccess";
-			public static final String KEY_HEADERS = "headers";
-			public static final String KEY_HEADER_CONNECTION = "Connection";
-			public static final String KEY_HEADER_USER_AGENT = "User-Agent";
-			public static final String KEY_NAMESPACE = "namespace";
-			public static final String KEY_VERSIONING = "versioning";
-			
-			public final void setApi(final String api) {
-				this.api = api;
-			}
-			
-			public final void setFsAccess(final boolean fsAccess) {
-				this.fsAccess = fsAccess;
-			}
-			
-			public final void setNamespace(final String namespace) {
-				this.namespace = namespace;
-			}
-			
-			public final void setVersioning(final boolean versioning) {
-				this.versioning = versioning;
-			}
-			
-			public final void setHeaders(final Map<String, String> headers) {
-				this.headers = headers;
-			}
-			
-			@JsonProperty(KEY_API) private String api;
-			@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
-			@JsonProperty(KEY_NAMESPACE) private String namespace;
-			@JsonProperty(KEY_VERSIONING) private boolean versioning;
-			@JsonProperty(KEY_HEADERS) private Map<String, String> headers;
-
-			public HttpConfig() {
-			}
-
-			public HttpConfig(final HttpConfig other) {
-				this.api = other.getApi();
-				this.fsAccess = other.getFsAccess();
-				this.namespace = other.getNamespace();
-				this.versioning = other.getVersioning();
-				this.headers = new HashMap<>(other.getHeaders());
-			}
-
-			public String getApi() {
-				return api;
-			}
-
-			public boolean getFsAccess() {
-				return fsAccess;
-			}
-
-			public String getNamespace() {
-				return namespace;
-			}
-
-			public boolean getVersioning() {
-				return versioning;
-			}
-
-			public Map<String, String> getHeaders() {
-				return headers;
-			}
-		}
 		
-		public static final class NodeConfig
+		public static final class NetConfig
 		implements Serializable {
-
-			public static final String KEY_ADDRS = "addrs";
-			public static final String KEY_PORT = "port";
-
-			public final void setAddrs(final List<String> addrs) {
-				this.addrs = addrs;
-			}
-
-			public final void setPort(final int port) {
-				this.port = port;
-			}
-
-			@JsonProperty(KEY_ADDRS) private List<String> addrs;
-			@JsonProperty(KEY_PORT) private int port;
 			
-			public NodeConfig() {
-			}
-
-			public NodeConfig(final NodeConfig other) {
-				this.addrs = new ArrayList<>(other.getAddrs());
-				this.port = other.getPort();
+			public static final class HttpConfig
+			implements Serializable {
+				
+				public static final String KEY_API = "api";
+				public static final String KEY_FS_ACCESS = "fsAccess";
+				public static final String KEY_HEADERS = "headers";
+				public static final String KEY_HEADER_CONNECTION = "Connection";
+				public static final String KEY_HEADER_USER_AGENT = "User-Agent";
+				public static final String KEY_NAMESPACE = "namespace";
+				public static final String KEY_VERSIONING = "versioning";
+				
+				public final void setApi(final String api) {
+					this.api = api;
+				}
+				
+				public final void setFsAccess(final boolean fsAccess) {
+					this.fsAccess = fsAccess;
+				}
+				
+				public final void setNamespace(final String namespace) {
+					this.namespace = namespace;
+				}
+				
+				public final void setVersioning(final boolean versioning) {
+					this.versioning = versioning;
+				}
+				
+				public final void setHeaders(final Map<String, String> headers) {
+					this.headers = headers;
+				}
+				
+				@JsonProperty(KEY_API) private String api;
+				@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
+				@JsonProperty(KEY_NAMESPACE) private String namespace;
+				@JsonProperty(KEY_VERSIONING) private boolean versioning;
+				@JsonProperty(KEY_HEADERS) private Map<String, String> headers;
+				
+				public HttpConfig() {
+				}
+				
+				public HttpConfig(final HttpConfig other) {
+					this.api = other.getApi();
+					this.fsAccess = other.getFsAccess();
+					this.namespace = other.getNamespace();
+					this.versioning = other.getVersioning();
+					this.headers = new HashMap<>(other.getHeaders());
+				}
+				
+				public String getApi() {
+					return api;
+				}
+				
+				public boolean getFsAccess() {
+					return fsAccess;
+				}
+				
+				public String getNamespace() {
+					return namespace;
+				}
+				
+				public boolean getVersioning() {
+					return versioning;
+				}
+				
+				public Map<String, String> getHeaders() {
+					return headers;
+				}
 			}
 			
-			public List<String> getAddrs() {
-				return addrs;
+			public static final class NodeConfig
+			implements Serializable {
+				
+				public static final String KEY_ADDRS = "addrs";
+				public static final String KEY_PORT = "port";
+				
+				public final void setAddrs(final List<String> addrs) {
+					this.addrs = addrs;
+				}
+				
+				public final void setPort(final int port) {
+					this.port = port;
+				}
+				
+				@JsonProperty(KEY_ADDRS) private List<String> addrs;
+				@JsonProperty(KEY_PORT) private int port;
+				
+				public NodeConfig() {
+				}
+				
+				public NodeConfig(final NodeConfig other) {
+					this.addrs = new ArrayList<>(other.getAddrs());
+					this.port = other.getPort();
+				}
+				
+				public List<String> getAddrs() {
+					return addrs;
+				}
+				
+				public int getPort() {
+					return port;
+				}
 			}
-
-			public int getPort() {
-				return port;
+			
+			public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
+			public static final String KEY_REUSE_ADDR = "reuseAddr";
+			public static final String KEY_KEEP_ALIVE = "keepAlive";
+			public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
+			public static final String KEY_LINGER = "linger";
+			public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
+			public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
+			public static final String KEY_RCVBUF = "rcvBuf";
+			public static final String KEY_SNDBUF = "sndBuf";
+			public static final String KEY_SSL = "ssl";
+			public static final String KEY_HTTP = "http";
+			public static final String KEY_NODE = "node";
+			
+			public final int getTimeoutMilliSec() {
+				return timeoutMilliSec;
+			}
+			
+			public final boolean getReuseAddr() {
+				return reuseAddr;
+			}
+			
+			public final boolean getKeepAlive() {
+				return keepAlive;
+			}
+			
+			public final boolean getTcpNoDelay() {
+				return tcpNoDelay;
+			}
+			
+			public final int getLinger() {
+				return linger;
+			}
+			
+			public final int getBindBackLogSize() {
+				return bindBackLogSize;
+			}
+			
+			public final boolean getInterestOpQueued() {
+				return interestOpQueued;
+			}
+			
+			public final SizeInBytes getRcvBuf() {
+				return rcvBuf;
+			}
+			
+			public final SizeInBytes getSndBuf() {
+				return sndBuf;
+			}
+			
+			public boolean getSsl() {
+				return ssl;
+			}
+			
+			public HttpConfig getHttpConfig() {
+				return httpConfig;
+			}
+			
+			public NodeConfig getNodeConfig() {
+				return nodeConfig;
+			}
+			
+			public final void setTimeoutMilliSec(final int timeoutMilliSec) {
+				this.timeoutMilliSec = timeoutMilliSec;
+			}
+			
+			public final void setReuseAddr(final boolean reuseAddr) {
+				this.reuseAddr = reuseAddr;
+			}
+			
+			public final void setKeepAlive(final boolean keepAlive) {
+				this.keepAlive = keepAlive;
+			}
+			
+			public final void setTcpNoDelay(final boolean tcpNoDelay) {
+				this.tcpNoDelay = tcpNoDelay;
+			}
+			
+			public final void setLinger(final int linger) {
+				this.linger = linger;
+			}
+			
+			public final void setBindBackLogSize(final int bindBackLogSize) {
+				this.bindBackLogSize = bindBackLogSize;
+			}
+			
+			public final void setInterestOpQueued(final boolean interestOpQueued) {
+				this.interestOpQueued = interestOpQueued;
+			}
+			
+			public final void setRcvBuf(final SizeInBytes rcvBuf) {
+				this.rcvBuf = rcvBuf;
+			}
+			
+			public final void setSndBuf(final SizeInBytes sndBuf) {
+				this.sndBuf = sndBuf;
+			}
+			
+			public final void setSsl(final boolean ssl) {
+				this.ssl = ssl;
+			}
+			
+			public final void setHttpConfig(final HttpConfig httpConfig) {
+				this.httpConfig = httpConfig;
+			}
+			
+			public final void setNodeConfig(final NodeConfig nodeConfig) {
+				this.nodeConfig = nodeConfig;
+			}
+			
+			@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
+			
+			@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
+			
+			@JsonProperty(KEY_KEEP_ALIVE) private boolean keepAlive;
+			
+			@JsonProperty(KEY_TCP_NO_DELAY) private boolean tcpNoDelay;
+			
+			@JsonProperty(KEY_LINGER) private int linger;
+			
+			@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
+			
+			@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
+			
+			@JsonProperty(KEY_RCVBUF)
+			@JsonDeserialize(using = SizeInBytesDeserializer.class)
+			@JsonSerialize(using = SizeInBytesSerializer.class)
+			private SizeInBytes rcvBuf;
+			
+			@JsonProperty(KEY_SNDBUF)
+			@JsonDeserialize(using = SizeInBytesDeserializer.class)
+			@JsonSerialize(using = SizeInBytesSerializer.class)
+			private SizeInBytes sndBuf;
+			
+			@JsonProperty(KEY_SSL) private boolean ssl;
+			@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
+			@JsonProperty(KEY_NODE) private NodeConfig nodeConfig;
+			
+			public NetConfig() {
+			}
+			
+			public NetConfig(final NetConfig other) {
+				this.timeoutMilliSec = other.getTimeoutMilliSec();
+				this.reuseAddr = other.getReuseAddr();
+				this.keepAlive = other.getKeepAlive();
+				this.tcpNoDelay = other.getTcpNoDelay();
+				this.linger = other.getLinger();
+				this.bindBackLogSize = other.getBindBackLogSize();
+				this.interestOpQueued = other.getInterestOpQueued();
+				this.rcvBuf = new SizeInBytes(other.getRcvBuf());
+				this.sndBuf = new SizeInBytes(other.getSndBuf());
+				this.ssl = other.getSsl();
+				this.httpConfig = new HttpConfig(other.getHttpConfig());
+				this.nodeConfig = new NodeConfig(other.getNodeConfig());
 			}
 		}
 		

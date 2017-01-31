@@ -15,8 +15,8 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.NodeConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -66,12 +66,13 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	private final boolean sslFlag;
 
 	protected NetStorageDriverBase(
-		final String jobName, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final SocketConfig socketConfig, final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final boolean verifyFlag
 	) {
 		super(jobName, storageConfig.getAuthConfig(), loadConfig, verifyFlag);
-		sslFlag = storageConfig.getSsl();
-		final long sto = socketConfig.getTimeoutMilliSec();
+		final NetConfig netConfig = storageConfig.getNetConfig();
+		sslFlag = netConfig.getSsl();
+		final long sto = netConfig.getTimeoutMilliSec();
 		if(sto < 0 || sto > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException(
 				"Socket timeout shouldn't be more than " + Integer.MAX_VALUE +
@@ -80,7 +81,7 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		} else {
 			this.socketTimeout = (int) sto;
 		}
-		final NodeConfig nodeConfig = storageConfig.getNodeConfig();
+		final NodeConfig nodeConfig = netConfig.getNodeConfig();
 		storageNodePort = nodeConfig.getPort();
 		final String t[] = nodeConfig.getAddrs().toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
@@ -108,20 +109,20 @@ implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
 		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
 		//bootstrap.option(ChannelOption.AUTO_READ)
-		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, socketConfig.getTimeoutMilliSec());
-		int size = (int) socketConfig.getRcvBuf().get();
+		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.getTimeoutMilliSec());
+		int size = (int) netConfig.getRcvBuf().get();
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
 		}
-		size = (int) socketConfig.getSndBuf().get();
+		size = (int) netConfig.getSndBuf().get();
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_SNDBUF, size);
 		}
-		//bootstrap.option(ChannelOption.SO_BACKLOG, socketConfig.getBindBackLogSize());
-		bootstrap.option(ChannelOption.SO_KEEPALIVE, socketConfig.getKeepAlive());
-		bootstrap.option(ChannelOption.SO_LINGER, socketConfig.getLinger());
-		bootstrap.option(ChannelOption.SO_REUSEADDR, socketConfig.getReuseAddr());
-		bootstrap.option(ChannelOption.TCP_NODELAY, socketConfig.getTcpNoDelay());
+		//bootstrap.option(ChannelOption.SO_BACKLOG, netConfig.getBindBackLogSize());
+		bootstrap.option(ChannelOption.SO_KEEPALIVE, netConfig.getKeepAlive());
+		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
+		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
+		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
 		connPool = new BasicMultiNodeConnPool(
 			concurrencyThrottle, concurrencyLevel, storageNodeAddrs, bootstrap, this,
 			storageNodePort

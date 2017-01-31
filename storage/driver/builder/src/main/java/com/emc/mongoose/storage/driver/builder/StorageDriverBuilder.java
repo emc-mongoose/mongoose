@@ -7,7 +7,6 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import java.rmi.RemoteException;
@@ -32,9 +31,6 @@ public interface StorageDriverBuilder<
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
-	SocketConfig getSocketConfig()
-	throws RemoteException;
-
 	StorageDriverBuilder<I, O, R, T> setJobName(final String runId)
 	throws RemoteException;
 
@@ -45,9 +41,6 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, R, T> setStorageConfig(final StorageConfig storageConfig)
-	throws RemoteException;
-
-	StorageDriverBuilder<I, O, R, T> setSocketConfig(final SocketConfig socketConfig)
 	throws RemoteException;
 
 	T build()

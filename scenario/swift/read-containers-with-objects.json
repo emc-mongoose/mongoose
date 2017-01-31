@@ -11,9 +11,11 @@
 			"concurrency" : 10
 		},
 		"storage" : {
-			"http" : {
-				"api" : "swift",
-				"namespace" : "test"
+			"net" : {
+				"http" : {
+					"api" : "swift",
+					"namespace" : "test"
+				}
 			}
 		}
 	},

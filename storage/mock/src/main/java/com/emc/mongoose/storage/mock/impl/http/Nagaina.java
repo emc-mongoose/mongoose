@@ -10,6 +10,7 @@ import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -61,7 +62,8 @@ extends StorageMockBase<MutableDataItemMock>{
 		super(
 			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource
 		);
-		final int port = storageConfig.getNodeConfig().getPort();
+		final NetConfig netConfig = storageConfig.getNetConfig();
+		final int port = netConfig.getNodeConfig().getPort();
 		this.handlers = handlers;
 
 		try {
@@ -96,7 +98,7 @@ extends StorageMockBase<MutableDataItemMock>{
 						protected final void initChannel(final SocketChannel socketChannel)
 						throws Exception {
 							final ChannelPipeline pipeline = socketChannel.pipeline();
-							if(storageConfig.getSsl()) {
+							if(netConfig.getSsl()) {
 								pipeline.addLast(
 									new SslHandler(SslContext.INSTANCE.createSSLEngine())
 								);

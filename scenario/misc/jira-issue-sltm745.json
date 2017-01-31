@@ -19,9 +19,11 @@
 		},
 		
 		"storage" : {
-			"http" : {
-				"api" : "s3",
-				"namespace" : "ns1"
+			"net" : {
+				"http" : {
+					"api" : "s3",
+					"namespace" : "ns1"
+				}
 			}
 		}
 	},

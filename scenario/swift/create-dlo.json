@@ -16,9 +16,11 @@
 			}
 		},
 		"storage" : {
-			"http" : {
-				"api" : "swift",
-				"namespace" : "dlo"
+			"net" : {
+				"http" : {
+					"api" : "swift",
+					"namespace" : "dlo"
+				}
 			}
 		}
 	}

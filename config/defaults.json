@@ -49,6 +49,91 @@
 		{
 			"name" : "swift-output-container",
 			"target" : "item-output-path"
+		},
+		{
+			"name" : "socket-bindBacklogSize",
+			"deprecated" : true,
+			"target" : "storage-net-bindBacklogSize"
+		},
+		{
+			"name" : "socket-interestOpQueued",
+			"deprecated" : true,
+			"target" : "storage-net-interestOpQueued"
+		},
+		{
+			"name" : "socket-keepAlive",
+			"deprecated" : true,
+			"target" : "storage-net-keepAlive"
+		},
+		{
+			"name" : "socket-linger",
+			"deprecated" : true,
+			"target" : "storage-net-linger"
+		},
+		{
+			"name" : "socket-reuseAddr",
+			"deprecated" : true,
+			"target" : "storage-net-reuseAddr"
+		},
+		{
+			"name" : "socket-rcvBuf",
+			"deprecated" : true,
+			"target" : "storage-net-rcvBuf"
+		},
+		{
+			"name" : "socket-sndBuf",
+			"deprecated" : true,
+			"target" : "storage-net-sndBuf"
+		},
+		{
+			"name" : "socket-tcpNoDelay",
+			"deprecated" : true,
+			"target" : "storage-net-tcpNoDelay"
+		},
+		{
+			"name" : "socket-timeoutMilliSec",
+			"deprecated" : true,
+			"target" : "storage-net-timeOutMilliSec"
+		},
+		{
+			"name" : "storage-ssl",
+			"deprecated" : true,
+			"target" : "storage-net-ssl"
+		},
+		{
+			"name" : "storage-http-api",
+			"deprecated" : true,
+			"target" : "storage-net-http-api"
+		},
+		{
+			"name" : "socket-http-fsAccess",
+			"deprecated" : true,
+			"target" : "storage-net-http-fsAccess"
+		},
+		{
+			"name" : "storage-http-headers",
+			"deprecated" : true,
+			"target" : "storage-net-http-headers"
+		},
+		{
+			"name" : "storage-http-namespace",
+			"deprecated" : true,
+			"target" : "storage-net-http-namespace"
+		},
+		{
+			"name" : "storage-http-versioning",
+			"deprecated" : true,
+			"target" : "storage-net-http-versioning"
+		},
+		{
+			"name" : "storage-node-addrs",
+			"deprecated" : true,
+			"target" : "storage-net-node-addrs"
+		},
+		{
+			"name" : "storage-node-port",
+			"deprecated" : true,
+			"target" : "storage-net-node-port"
 		}
 	],
 	"item" : {
@@ -128,17 +213,6 @@
 	"scenario" : {
 		"file" : null
 	},
-	"socket" : {
-		"bindBacklogSize" : 0,
-		"interestOpQueued" : false,
-		"keepAlive" : true,
-		"linger" : 0,
-		"reuseAddr" : true,
-		"rcvBuf" : 0,
-		"sndBuf" : 0,
-		"tcpNoDelay" : true,
-		"timeoutMilliSec" : 0
-	},
 	"storage" : {
 		"auth" : {
 			"id" : null,
@@ -152,16 +226,6 @@
 			],
 			"port" : 1099
 		},
-		"http" : {
-			"api" : "S3",
-			"fsAccess" : false,
-			"headers" : {
-				"Connection" : "Keep-Alive",
-				"User-Agent" : "mongoose/3.1.0"
-			},
-			"namespace" : null,
-			"versioning" : false
-		},
 		"mock" : {
 			"capacity" : 1000000,
 			"container" : {
@@ -174,13 +238,34 @@
 			},
 			"node": false
 		},
-		"node": {
-			"addrs" : [
-				"127.0.0.1"
-			],
-			"port" : 9020
+		"net" : {
+			"bindBacklogSize" : 0,
+			"interestOpQueued" : false,
+			"keepAlive" : true,
+			"linger" : 0,
+			"reuseAddr" : true,
+			"rcvBuf" : 0,
+			"sndBuf" : 0,
+			"tcpNoDelay" : true,
+			"timeoutMilliSec" : 0,
+			"ssl" : false,
+			"http" : {
+				"api" : "S3",
+				"fsAccess" : false,
+				"headers" : {
+					"Connection" : "Keep-Alive",
+					"User-Agent" : "mongoose/3.1.0"
+				},
+				"namespace" : null,
+				"versioning" : false
+			},
+			"node": {
+				"addrs" : [
+					"127.0.0.1"
+				],
+				"port" : 9020
+			}
 		},
-		"ssl" : false,
 		"type" : "http"
 	},
 	"version" : "3.1.0"

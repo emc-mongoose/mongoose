@@ -12,8 +12,10 @@
 			}
 		},
 		"storage" : {
-			"http" : {
-				"api" : "atmos"
+			"net" : {
+				"http" : {
+					"api" : "atmos"
+				}
 			}
 		}
 	}

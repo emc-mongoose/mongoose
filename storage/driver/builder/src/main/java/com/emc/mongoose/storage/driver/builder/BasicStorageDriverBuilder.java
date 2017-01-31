@@ -9,12 +9,9 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageType;
-
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.SocketConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
 import com.emc.mongoose.storage.driver.net.http.atmos.AtmosStorageDriver;
 import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
@@ -40,7 +37,6 @@ public class BasicStorageDriverBuilder<
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private StorageConfig storageConfig;
-	private SocketConfig socketConfig;
 
 	protected final ContentSource getContentSource()
 	throws IOException {
@@ -63,11 +59,6 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public StorageConfig getStorageConfig() {
 		return storageConfig;
-	}
-
-	@Override
-	public SocketConfig getSocketConfig() {
-		return socketConfig;
 	}
 
 	@Override
@@ -94,12 +85,6 @@ public class BasicStorageDriverBuilder<
 		return this;
 	}
 	
-	@Override
-	public BasicStorageDriverBuilder<I, O, R, T> setSocketConfig(final SocketConfig socketConfig) {
-		this.socketConfig = socketConfig;
-		return this;
-	}
-
 	@Override @SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
@@ -121,22 +106,22 @@ public class BasicStorageDriverBuilder<
 			}
 		} else {
 			if(StorageType.HTTP.equals(storageType)){
-				final String apiType = storageConfig.getHttpConfig().getApi();
+				final String apiType = storageConfig.getNetConfig().getHttpConfig().getApi();
 				LOG.info(Markers.MSG, "Work via HTTP using \"{}\" cloud storage API", apiType);
 				switch(apiType.toLowerCase()) {
 					case API_ATMOS:
 						driver = (T) new AtmosStorageDriver<>(
-							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+							jobName, loadConfig, storageConfig, verifyFlag
 						);
 						break;
 					case API_S3:
 						driver = (T) new S3StorageDriver<>(
-							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+							jobName, loadConfig, storageConfig, verifyFlag
 						);
 						break;
 					case API_SWIFT:
 						driver = (T) new SwiftStorageDriver<>(
-							jobName, loadConfig, storageConfig, verifyFlag, socketConfig
+							jobName, loadConfig, storageConfig, verifyFlag
 						);
 						break;
 					default:

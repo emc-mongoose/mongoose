@@ -3,15 +3,32 @@ package com.emc.mongoose.tests.unit;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.GeneratorConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.ScenarioConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.HttpConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Map;
 
-import static com.emc.mongoose.tests.unit.ConfigMatcher.equalTo;
-import static com.emc.mongoose.tests.unit.ConfigNullMatcher.notNullValue;
-import static com.emc.mongoose.tests.unit.ConfigNullMatcher.nullValue;
+import static com.emc.mongoose.tests.unit.util.ConfigMatcher.equalTo;
+import static com.emc.mongoose.tests.unit.util.ConfigNullMatcher.notNullValue;
+import static com.emc.mongoose.tests.unit.util.ConfigNullMatcher.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -25,22 +42,21 @@ public class ConfigParserTest {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
 		assertThat(config.getVersion(), equalTo("3.1.0", "version"));
-		final Config.SocketConfig socketConfig = config.getSocketConfig();
-		assertThat(socketConfig, notNullValue());
-		assertThat(socketConfig.getTimeoutMilliSec(), equalTo(0, "socket.timeoutMilliSec"));
-		assertThat(socketConfig.getReuseAddr(), equalTo(true, "socket.reuseAddr"));
-		assertThat(socketConfig.getKeepAlive(), equalTo(true, "socket.keepAlive"));
-		assertThat(socketConfig.getTcpNoDelay(), equalTo(true, "socket.tcpNoDelay"));
-		assertThat(socketConfig.getLinger(), equalTo(0, "socket.linger"));
-		assertThat(socketConfig.getBindBackLogSize(), equalTo(0, "socket.bindBacklogSize"));
-		assertThat(socketConfig.getInterestOpQueued(), equalTo(false, "socket.interestOpQueued"));
-		final Config.ItemConfig itemConfig = config.getItemConfig();
+		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
+		assertThat(netConfig, notNullValue());
+		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
+		assertThat(netConfig.getReuseAddr(), equalTo(true, "storage.net.reuseAddr"));
+		assertThat(netConfig.getKeepAlive(), equalTo(true, "storage.net.keepAlive"));
+		assertThat(netConfig.getTcpNoDelay(), equalTo(true, "storage.net.tcpNoDelay"));
+		assertThat(netConfig.getLinger(), equalTo(0, "storage.net.linger"));
+		assertThat(netConfig.getBindBackLogSize(), equalTo(0, "storage.net.bindBacklogSize"));
+		assertThat(netConfig.getInterestOpQueued(), equalTo(false, "storage.net.interestOpQueued"));
+		final ItemConfig itemConfig = config.getItemConfig();
 		assertThat(itemConfig, notNullValue());
 		assertThat(itemConfig.getType(), equalTo("data", "item.type"));
-		final Config.ItemConfig.DataConfig dataConfig = itemConfig.getDataConfig();
+		final DataConfig dataConfig = itemConfig.getDataConfig();
 		assertThat(dataConfig, notNullValue());
-		final Config.ItemConfig.DataConfig.ContentConfig contentConfig =
-			dataConfig.getContentConfig();
+		final ContentConfig contentConfig = dataConfig.getContentConfig();
 		assertThat(contentConfig, notNullValue());
 		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
 		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
@@ -51,27 +67,27 @@ public class ConfigParserTest {
 		assertThat(dataConfig.getRangesConfig().getRandom(), equalTo(0, "item.data.ranges.random"));
 		assertThat(dataConfig.getSize(), equalTo(new SizeInBytes("1MB"), "item.data.size"));
 		assertThat(dataConfig.getVerify(), equalTo(false, "item.data.verify"));
-		final Config.ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
+		final InputConfig inputConfig = itemConfig.getInputConfig();
 		assertThat(inputConfig, notNullValue());
 		assertThat(inputConfig.getPath(), nullValue("item.input.path"));
 		assertThat(inputConfig.getFile(), nullValue("item.input.file"));
-		final Config.ItemConfig.OutputConfig outputConfig= itemConfig.getOutputConfig();
+		final OutputConfig outputConfig= itemConfig.getOutputConfig();
 		assertThat(outputConfig, notNullValue());
 		assertThat(outputConfig.getPath(), nullValue("item.output.path"));
 		assertThat(outputConfig.getFile(), nullValue("item.output.file"));
-		final Config.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
+		final NamingConfig namingConfig = itemConfig.getNamingConfig();
 		assertThat(namingConfig, notNullValue());
 		assertThat(namingConfig.getType(), equalTo("random", "item.naming.type"));
 		assertThat(namingConfig.getPrefix(), nullValue("item.naming.prefix"));
 		assertThat(namingConfig.getRadix(), equalTo(36, "item.naming.radix"));
 		assertThat(namingConfig.getOffset(), equalTo(0L, "item.naming.offset"));
 		assertThat(namingConfig.getLength(), equalTo(13, "item.naming.length"));
-		final Config.LoadConfig loadConfig = config.getLoadConfig();
+		final LoadConfig loadConfig = config.getLoadConfig();
 		assertThat(loadConfig, notNullValue());
 		assertThat(loadConfig.getCircular(), equalTo(false, "load.circular"));
 		assertThat(loadConfig.getType(), equalTo("create", "load.type"));
 		assertThat(loadConfig.getConcurrency(), equalTo(1, "load.concurrency"));
-		final Config.LoadConfig.LimitConfig limitConfig = loadConfig.getLimitConfig();
+		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 		assertThat(limitConfig, notNullValue());
 		assertThat(limitConfig.getCount(), equalTo(0L, "load.limit.count"));
 		assertThat(limitConfig.getRate(), equalTo(0.0, "load.limit.rate"));
@@ -86,12 +102,12 @@ public class ConfigParserTest {
 				"load.limit.time"
 			)
 		);
-		final Config.LoadConfig.GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
+		final GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
 		assertThat(generatorConfig.getRemote(), equalTo(false, "load.generator.remote"));
 		assertThat(
 			generatorConfig.getAddrs().get(0), equalTo("127.0.0.1", "load.generator.addrs")
 		);
-		final Config.LoadConfig.MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
+		final MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
 		assertThat(metricsConfig.getThreshold(), equalTo(0.0, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
@@ -105,50 +121,50 @@ public class ConfigParserTest {
 			)
 		);
 		assertThat(metricsConfig.getPrecondition(), equalTo(false, "load.metrics.precondition"));
-		final Config.ScenarioConfig scenarioConfig = config.getScenarioConfig();
+		final ScenarioConfig scenarioConfig = config.getScenarioConfig();
 		assertThat(scenarioConfig, notNullValue());
 		assertThat(scenarioConfig.getFile(), nullValue("run.file"));
-		final Config.StorageConfig storageConfig = config.getStorageConfig();
+		final StorageConfig storageConfig = config.getStorageConfig();
 		assertThat(storageConfig, notNullValue());
-		final Config.StorageConfig.AuthConfig authConfig = storageConfig.getAuthConfig();
+		final AuthConfig authConfig = storageConfig.getAuthConfig();
 		assertThat(authConfig, notNullValue());
 		assertThat(authConfig.getId(), nullValue("storage.auth.id"));
 		assertThat(authConfig.getSecret(), nullValue("storage.auth.secret"));
 		assertThat(authConfig.getToken(), nullValue("storage.auth.token"));
-		final Config.StorageConfig.HttpConfig httpConfig = storageConfig.getHttpConfig();
+		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		assertThat(httpConfig, notNullValue());
-		assertThat(httpConfig.getApi(), equalTo("S3", "storage.http.api"));
-		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.http.fsAccess"));
+		assertThat(httpConfig.getApi(), equalTo("S3", "storage.net.http.api"));
+		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.net.http.fsAccess"));
 		final Map<String, String> headers = httpConfig.getHeaders();
 		assertThat(headers, notNullValue());
-		assertThat(headers.containsKey(Config.StorageConfig.HttpConfig.KEY_HEADER_CONNECTION),
-			equalTo(true, "storage.http.headers[Connection]"));
-		assertThat(headers.get(Config.StorageConfig.HttpConfig.KEY_HEADER_CONNECTION),
-			equalTo("Keep-Alive", "storage.http.headers[Connection]"));
-		assertThat(headers.containsKey(Config.StorageConfig.HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo(true, "storage.http.headers[User-Agent]"));
-		assertThat(headers.get(Config.StorageConfig.HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo("mongoose/3.1.0", "storage.http.headers[User-Agent]"));
-		assertThat(httpConfig.getNamespace(), nullValue("storage.http.namespace"));
-		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.http.versioning"));
+		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_CONNECTION),
+			equalTo(true, "storage.net.http.headers[Connection]"));
+		assertThat(headers.get(HttpConfig.KEY_HEADER_CONNECTION),
+			equalTo("Keep-Alive", "storage.net.http.headers[Connection]"));
+		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_USER_AGENT),
+			equalTo(true, "storage.net.http.headers[User-Agent]"));
+		assertThat(headers.get(HttpConfig.KEY_HEADER_USER_AGENT),
+			equalTo("mongoose/3.1.0", "storage.net.http.headers[User-Agent]"));
+		assertThat(httpConfig.getNamespace(), nullValue("storage.net.http.namespace"));
+		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.net.http.versioning"));
 		assertThat(
-			storageConfig.getNodeConfig().getAddrs().get(0),
-			equalTo("127.0.0.1", "storage.node.addrs")
+			storageConfig.getNetConfig().getNodeConfig().getAddrs().get(0),
+			equalTo("127.0.0.1", "storage.net.node.addrs")
 		);
-		final Config.StorageConfig.DriverConfig driverConfig = storageConfig.getDriverConfig();
-		assertThat(storageConfig.getSsl(), equalTo(false, "storage.driver.remote"));
+		final DriverConfig driverConfig = storageConfig.getDriverConfig();
+		assertThat(storageConfig.getNetConfig().getSsl(), equalTo(false, "storage.driver.remote"));
 		assertThat(
 			driverConfig.getAddrs().get(0),
 			equalTo("127.0.0.1", "storage.driver.addrs")
 		);
-		assertThat(storageConfig.getNodeConfig().getPort(), equalTo(9020, "storage.port"));
-		assertThat(storageConfig.getSsl(), equalTo(false, "storage.ssl"));
+		assertThat(storageConfig.getNetConfig().getNodeConfig().getPort(), equalTo(9020, "storage.port"));
+		assertThat(storageConfig.getNetConfig().getSsl(), equalTo(false, "storage.net.ssl."));
 		assertThat(storageConfig.getType(), equalTo("http", "storage.type"));
-		final Config.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
+		final MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());
 		assertThat(mockConfig.getCapacity(), equalTo(1_000_000, "storage.mock.capacity"));
 		assertThat(mockConfig.getNode(), equalTo(false, "storage.mock.node"));
-		final Config.StorageConfig.MockConfig.ContainerConfig containerConfig = mockConfig
+		final MockConfig.ContainerConfig containerConfig = mockConfig
 			.getContainerConfig();
 		assertThat(containerConfig, notNullValue());
 		assertThat(

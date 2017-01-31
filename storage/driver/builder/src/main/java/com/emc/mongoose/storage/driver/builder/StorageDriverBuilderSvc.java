@@ -8,7 +8,6 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.config.Config.ItemConfig;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.SocketConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import java.io.IOException;
@@ -40,10 +39,6 @@ public interface StorageDriverBuilderSvc<
 
 	@Override
 	StorageDriverBuilderSvc<I, O, R, T> setStorageConfig(final StorageConfig storageConfig)
-	throws RemoteException;
-
-	@Override
-	StorageDriverBuilderSvc<I, O, R, T> setSocketConfig(final SocketConfig socketConfig)
 	throws RemoteException;
 
 	String buildRemotely()

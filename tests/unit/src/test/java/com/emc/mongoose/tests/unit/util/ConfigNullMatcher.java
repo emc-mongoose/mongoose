@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.unit;
+package com.emc.mongoose.tests.unit.util;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;

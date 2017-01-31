@@ -5,7 +5,7 @@ import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.NodeConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.AfterClass;
@@ -34,7 +34,7 @@ extends ConfiguredTestBase {
 	throws Exception {
 		ConfiguredTestBase.setUpClass();
 		final StorageConfig storageConfig = CONFIG.getStorageConfig();
-		final NodeConfig nodeConfig = storageConfig.getNodeConfig();
+		final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
 		final LoadConfig loadConfig = CONFIG.getLoadConfig();
 		final ItemConfig itemConfig = CONFIG.getItemConfig();
 		final int port = nodeConfig.getPort();

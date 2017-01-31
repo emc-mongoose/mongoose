@@ -12,9 +12,11 @@
 			}
 		},
 		"storage" : {
-			"http" : {
-				"api" : "atmos",
-				"fsAccess" : true
+			"net" : {
+				"http" : {
+					"api" : "atmos",
+					"fsAccess" : true
+				}
 			}
 		}
 	}

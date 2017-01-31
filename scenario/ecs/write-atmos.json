@@ -2,21 +2,23 @@
 	"type": "load",
 	"config" : {
 		"storage" : {
-			"node" : {
-				"addrs" : [
-					"10.77.33.102",
-					"10.77.33.103",
-					"10.77.33.104"
-				],
-				"port" : 9022
+			"net" : {
+				"node" : {
+					"addrs" : [
+						"10.77.33.102",
+						"10.77.33.103",
+						"10.77.33.104"
+					],
+					"port" : 9022
+				},
+				"http" : {
+					"api" : "atmos"
+				}
 			},
 			"auth" : {
 				"id" : "wuser1@sanity.local",
 				"secret" : "qMzVDJj1ispZib3BB8+mR7Gvrd/5IXif2vvu4d77"
 				// "token" : subtenant
-			},
-			"http" : {
-				"api" : "atmos"
 			}
 		}
 	}

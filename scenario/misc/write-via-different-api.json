@@ -5,8 +5,10 @@
 			"auth" : {
 				"id" : "wuser1@sanity.local"
 			},
-			"http" : {
-				"namespace" : "s3"
+			"net" : {
+				"http" : {
+					"namespace" : "s3"
+				}
 			}
 		}
 	},
@@ -33,8 +35,10 @@
 					"type" : "load",
 					"config" : {
 						"storage" : {
-							"http" : {
-								"api" : "atmos"
+							"net" : {
+								"http" : {
+									"api" : "atmos"
+								}
 							}
 						}
 					}
@@ -42,8 +46,10 @@
 					"type" : "load",
 					"config" : {
 						"storage" : {
-							"http" : {
-								"api" : "swift"
+							"net" : {
+								"http" : {
+									"api" : "swift"
+								}
 							}
 						}
 					}

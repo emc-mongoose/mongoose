@@ -21,7 +21,7 @@ public class CliArgParserTest {
 		final Map<String, String> argsMap = new HashMap<>();
 		argsMap.put("--name", "goose");
 		argsMap.put("--io-buffer-size", "1KB-4MB");
-		argsMap.put("--storage-http-headers", "customHeaderName:customHeaderValue");
+		argsMap.put("--storage-node-http-headers", "customHeaderName:customHeaderValue");
 		
 		final List<String> args = new ArrayList<>();
 		for(final String argName : argsMap.keySet()) {
@@ -35,8 +35,8 @@ public class CliArgParserTest {
 			((Map) ((Map) argTree.get("io")).get("buffer")).get("size")
 		);
 		assertEquals(
-			argsMap.get("--storage-http-headers"),
-			((Map) ((Map) argTree.get("storage")).get("http")).get("headers")
+			argsMap.get("--storage-node-http-headers"),
+			((Map) ((Map) ((Map) argTree.get("storage")).get("node")).get("http")).get("headers")
 		);
 	}
 }

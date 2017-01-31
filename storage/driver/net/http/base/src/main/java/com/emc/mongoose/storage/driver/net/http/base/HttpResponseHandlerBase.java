@@ -5,6 +5,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 
 import com.emc.mongoose.model.io.task.path.PathIoTask;
+import com.emc.mongoose.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.base.ResponseHandlerBase;
@@ -129,6 +130,16 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					pathIoTask.setCountBytesDone(countBytesDone + chunkSize);
+				}
+			} else if(ioTask instanceof TokenIoTask) {
+				final TokenIoTask tokenIoTask = (TokenIoTask) ioTask;
+				final long countBytesDone = tokenIoTask.getCountBytesDone();
+				if(tokenIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
+					tokenIoTask.startDataResponse();
+				}
+				final int chunkSize = contentChunk.readableBytes();
+				if(chunkSize > 0) {
+					tokenIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
 			} else {
 				throw new AssertionError("Not implemented yet");
