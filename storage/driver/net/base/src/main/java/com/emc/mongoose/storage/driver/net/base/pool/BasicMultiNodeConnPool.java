@@ -37,7 +37,6 @@ implements NonBlockingConnPool {
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final Semaphore concurrencyThrottle;
-	private final int concurrencyLevel;
 	private final String nodes[];
 	private final int n;
 	private final Map<String, Bootstrap> bootstrapMap;
@@ -45,11 +44,10 @@ implements NonBlockingConnPool {
 	private final Object2IntMap<String> connsCountMap;
 
 	public BasicMultiNodeConnPool(
-		final Semaphore concurrencyThrottle, final int concurrencyLevel, final String nodes[],
-		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort
+		final Semaphore concurrencyThrottle,  final String nodes[], final Bootstrap bootstrap,
+		final ChannelPoolHandler connPoolHandler, final int defaultPort
 	) {
 		this.concurrencyThrottle = concurrencyThrottle;
-		this.concurrencyLevel = concurrencyLevel;
 		if(nodes.length == 0) {
 			throw new IllegalArgumentException("Empty nodes array argument");
 		}
@@ -110,7 +108,7 @@ implements NonBlockingConnPool {
 				connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
 			} catch(final Exception e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to create a new connection to {}", selectedNodeAddr
+					LOG, Level.WARN, e, "Failed to create a new connection to {}", selectedNodeAddr
 				);
 			}
 		}

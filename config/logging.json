@@ -86,6 +86,10 @@
 								"level": "INFO",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
+							}, {
+								"type": "BurstFilter",
+								"rate": 100,
+								"maxBurst": 1000
 							}
 						]
 					}
