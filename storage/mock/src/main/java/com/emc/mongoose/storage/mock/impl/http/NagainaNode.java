@@ -12,6 +12,7 @@ import com.emc.mongoose.storage.mock.api.StorageMockNode;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.impl.base.BasicStorageMockClient;
 import com.emc.mongoose.storage.mock.impl.base.BasicStorageMockServer;
+import com.emc.mongoose.storage.mock.impl.proto.StorageMockProto;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

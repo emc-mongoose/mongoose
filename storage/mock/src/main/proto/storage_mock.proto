@@ -1,0 +1,29 @@
+package com.emc.mongoose.storage.mock.proto;
+
+option java_package = "com.emc.mongoose.storage.mock.impl.proto";
+option java_outer_classname = "StorageMockProto";
+
+service BasicStorageMockServer {
+    rpc  ManageRequest(ClientMessage) returns (ServerMessage) {}
+}
+
+//service Client {
+//    rpc ManageRequest(ServerMessage) returns (ClientMessage) {}
+//}
+
+message ClientMessage {
+    required string containerName = 1 [default = ""];
+    required string id = 2 [default = ""];
+    required fixed64 offset = 3 [default = 0];
+    required fixed64 size = 4 [default = 0];
+}
+
+message ServerMessage {
+    required fixed64 maskRangesRead = 1;
+    required int32 layerNum = 2 [default = 0];
+    required int64 position = 3 [default = 0];
+    required string containerName = 4 [default = ""];
+    required string id = 5 [default = ""];
+    required int64 offset = 6 [default = 0];
+    required fixed64 size = 7 [default = 0];
+}
