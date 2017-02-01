@@ -3,7 +3,6 @@ package com.emc.mongoose.tests.system.base;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -138,12 +137,11 @@ public abstract class LoggingTestBase {
 		return getLogFileCsvRecords("io.trace.csv");
 	}
 
-	protected static void testMetricsLogFile(
-		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
-		final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
-		final int expectedLoadJobTime, final long metricsPeriodSec
+	protected static void testMetricsLogRecords(
+		final List<CSVRecord> metrics, final IoType expectedIoType, final int expectedConcurrency,
+		final int expectedDriverCount, final SizeInBytes expectedItemDataSize,
+		final long expectedMaxCount, final int expectedLoadJobTime, final long metricsPeriodSec
 	) throws Exception {
-		final List<CSVRecord> metrics = getMetricsLogRecords();
 		final int countRecords = metrics.size();
 		if(expectedLoadJobTime > 0) {
 			assertEquals(
@@ -262,12 +260,12 @@ public abstract class LoggingTestBase {
 		}
 	}
 
-	protected static void testTotalMetricsLogFile(
+	protected static void testTotalMetricsLogRecords(
+		final CSVRecord metrics,
 		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
 		final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
 		final int expectedLoadJobTime
 	) throws Exception {
-		final CSVRecord metrics = getMetricsTotalLogRecords().get(0);
 		try {
 			FMT_DATE_ISO8601.parse(metrics.get("DateTimeISO8601"));
 		} catch(final ParseException e) {

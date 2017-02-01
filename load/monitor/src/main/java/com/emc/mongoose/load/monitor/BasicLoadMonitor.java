@@ -77,7 +77,6 @@ implements LoadMonitor<R> {
 	private final boolean preconditionJobFlag;
 	private final int metricsPeriodSec;
 	private final int totalConcurrency;
-	private final int driversCount;
 	private final double fullLoadThreshold;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -216,7 +215,6 @@ implements LoadMonitor<R> {
 			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getItemSizeEstimate());
 		}
 		this.totalConcurrency = concurrencySum;
-		this.driversCount = driversCountSum;
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
 			latestIoResultsPerItem = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
@@ -500,7 +498,6 @@ implements LoadMonitor<R> {
 			
 			try {
 				while(getActiveTaskCount() < activeTaskCountThreshold) {
-					System.out.print(">= " + getActiveTaskCount() + " ");
 					Thread.sleep(1);
 				}
 				LOG.info(
@@ -517,12 +514,11 @@ implements LoadMonitor<R> {
 				);
 				long prevNanoTimeStamp = -1, nextNanoTimeStamp;
 				while(getActiveTaskCount() >= activeTaskCountThreshold) {
-					System.out.print("< " + getActiveTaskCount() + " ");
-					IoStats.refreshLastStats(ioStats, lastStats);
+					IoStats.refreshLastStats(medIoStats, lastMedStats);
 					nextNanoTimeStamp = nanoTime();
 					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
 						IoStats.outputLastMedStats(
-							lastStats, driversCountMap, concurrencyMap, name, preconditionJobFlag
+							lastMedStats, driversCountMap, concurrencyMap, name, preconditionJobFlag
 						);
 						prevNanoTimeStamp = nextNanoTimeStamp;
 					}
@@ -536,14 +532,14 @@ implements LoadMonitor<R> {
 			} catch(final InterruptedException ignored) {
 			} finally {
 			
-				/*LOG.info(
+				LOG.info(
 					Markers.METRICS_MED_STDOUT,
-					new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
-				);*/
+					new MetricsStdoutLogMessage(name, lastMedStats, concurrencyMap, driversCountMap)
+				);
 				if(!preconditionJobFlag) {
 					LOG.info(
 						Markers.METRICS_MED_FILE_TOTAL,
-						new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
+						new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
 					);
 					/*LOG.info(
 						Markers.METRICS_EXT_RESULTS,

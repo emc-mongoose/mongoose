@@ -124,7 +124,7 @@ implements StorageDriver<I, O, R> {
 					m = submit(ioTasks, 0, n);
 					if(m == 0) {
 						prevIoTasks.addAll(ioTasks);
-					} if(m < n) {
+					} else if(m < n) {
 						prevIoTasks.addAll(ioTasks.subList(m, n));
 					}
 					ioTasks.clear();

@@ -129,7 +129,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	@Test public void testMetricsLogFile()
 	throws Exception {
-		testMetricsLogFile(
+		testMetricsLogRecords(
+			getMetricsLogRecords(),
 			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0,
 			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
 		);
@@ -137,7 +138,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	@Test public void testTotalMetricsLogFile()
 	throws Exception {
-		testTotalMetricsLogFile(
+		testTotalMetricsLogRecords(
+			getMetricsTotalLogRecords().get(0),
 			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
 		);
 	}
