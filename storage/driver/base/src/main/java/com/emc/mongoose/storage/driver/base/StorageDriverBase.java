@@ -122,7 +122,9 @@ implements StorageDriver<I, O, R> {
 			try {
 				if(n > 0) {
 					m = submit(ioTasks, 0, n);
-					if(m < n) {
+					if(m == 0) {
+						prevIoTasks.addAll(ioTasks);
+					} if(m < n) {
 						prevIoTasks.addAll(ioTasks.subList(m, n));
 					}
 					ioTasks.clear();
@@ -230,18 +232,6 @@ implements StorageDriver<I, O, R> {
 	public final boolean isIdle() {
 		return !concurrencyThrottle.hasQueuedThreads() &&
 			concurrencyThrottle.availablePermits() >= concurrencyLevel;
-	}
-
-	@Override
-	public final boolean isFullThrottleEntered() {
-		// TODO use full load threshold
-		return concurrencyThrottle.availablePermits() == 0;
-	}
-
-	@Override
-	public final boolean isFullThrottleExited() {
-		// TODO use full load threshold
-		return isShutdown() && concurrencyThrottle.availablePermits() > 0;
 	}
 
 	@Override

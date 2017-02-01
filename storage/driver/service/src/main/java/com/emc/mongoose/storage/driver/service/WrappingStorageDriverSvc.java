@@ -267,18 +267,6 @@ implements StorageDriverSvc<I, O, R> {
 	}
 
 	@Override
-	public final boolean isFullThrottleEntered()
-	throws RemoteException {
-		return driver.isFullThrottleEntered();
-	}
-
-	@Override
-	public final boolean isFullThrottleExited()
-	throws RemoteException {
-		return driver.isFullThrottleExited();
-	}
-	
-	@Override
 	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
 	throws RemoteException {
 		driver.adjustIoBuffers(avgDataItemSize, ioType);

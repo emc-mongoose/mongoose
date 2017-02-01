@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.monitor;
+package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
@@ -48,17 +48,19 @@ implements Runnable {
 		this.concurrencyMap = concurrencyMap;
 		this.driversCountMap = driversCountMap;
 	}
+	
 	@Override
-
 	public final void run() {
 		final Thread currThread = Thread.currentThread();
 		currThread.setName(jobName);
 		long nextNanoTimeStamp;
 		while(!currThread.isInterrupted()) {
-			refreshStats();
+			IoStats.refreshLastStats(ioStats, lastStats);
 			nextNanoTimeStamp = nanoTime();
 			if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-				outputCurrentMetrics();
+				IoStats.outputLastStats(
+					lastStats, driversCountMap, concurrencyMap, jobName, fileOutputFlag
+				);
 				prevNanoTimeStamp = nextNanoTimeStamp;
 			}
 			try {
@@ -66,25 +68,6 @@ implements Runnable {
 			} catch(final InterruptedException e) {
 				break;
 			}
-		}
-	}
-
-	private void refreshStats() {
-		for(final int nextIoTypeCode : ioStats.keySet()) {
-			lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
-		}
-	}
-
-	private void outputCurrentMetrics() {
-		LOG.info(
-			Markers.METRICS_STDOUT,
-			new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
-		);
-		if(!fileOutputFlag) {
-			LOG.info(
-				Markers.METRICS_FILE,
-				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
-			);
 		}
 	}
 }

@@ -2,6 +2,7 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
 import static com.emc.mongoose.model.io.task.composite.CompositeIoTask.CompositeIoResult;
@@ -20,6 +21,8 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import static java.lang.System.nanoTime;
+
 import com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -73,6 +76,9 @@ implements LoadMonitor<R> {
 	private final Map<LoadGenerator<I, O, R>, List<StorageDriver<I, O, R>>> driversMap;
 	private final boolean preconditionJobFlag;
 	private final int metricsPeriodSec;
+	private final int totalConcurrency;
+	private final int driversCount;
+	private final double fullLoadThreshold;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final ConcurrentMap<I, R> latestIoResultsPerItem;
@@ -80,8 +86,9 @@ implements LoadMonitor<R> {
 	private final ThreadPoolExecutor svcTaskExecutor;
 
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
-	private final Int2ObjectMap<IoStats> medIoStats = new Int2ObjectOpenHashMap<>();
-	private volatile Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<IoStats> medIoStats;
+	private final Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<IoStats.Snapshot> lastMedStats;
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
 	private volatile Output<R> ioResultsOutput;
@@ -168,16 +175,25 @@ implements LoadMonitor<R> {
 		final MetricsConfig metricsConfig = firstLoadConfig.getMetricsConfig();
 		preconditionJobFlag = metricsConfig.getPrecondition();
 		metricsPeriodSec = (int) metricsConfig.getPeriod();
+		fullLoadThreshold = metricsConfig.getThreshold();
+		if(fullLoadThreshold > 0) {
+			medIoStats = new Int2ObjectOpenHashMap<>();
+			lastMedStats = new Int2ObjectOpenHashMap<>();
+		} else {
+			medIoStats = null;
+			lastMedStats = null;
+		}
 
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		circularityMap = new Object2BooleanArrayMap<>(driversMap.size());
-		int driversCount = 0;
+		int concurrencySum = 0;
+		int driversCountSum = 0;
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O, R>> nextDrivers = driversMap.get(nextGenerator);
-			driversCount += nextDrivers.size();
+			driversCountSum += nextDrivers.size();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
 			circularityMap.put(nextGenerator, nextLoadConfig.getCircular());
 			if(circularityMap.getBoolean(nextGenerator)) {
@@ -186,12 +202,21 @@ implements LoadMonitor<R> {
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			driversCountMap.put(ioTypeCode, nextDrivers.size());
+			concurrencySum += loadConfigs.get(nextGenerator).getConcurrency();
 			concurrencyMap.put(ioTypeCode, loadConfigs.get(nextGenerator).getConcurrency());
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
+			if(medIoStats != null) {
+				medIoStats.put(
+					ioTypeCode,
+					new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
+				);
+			}
 			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getItemSizeEstimate());
 		}
+		this.totalConcurrency = concurrencySum;
+		this.driversCount = driversCountSum;
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
 			latestIoResultsPerItem = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
@@ -217,8 +242,9 @@ implements LoadMonitor<R> {
 		this.countLimit = countLimitSum;
 		this.sizeLimit = sizeLimitSum;
 
+		final int svcWorkerCount = driversCountSum + (medIoStats == null ? 1 : 2);
 		this.svcTaskExecutor = new ThreadPoolExecutor(
-			driversCount + 1, driversCount + 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
+			svcWorkerCount, svcWorkerCount, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
 			new NamingThreadFactory("svcTasksExecutor", true)
 		);
 
@@ -389,7 +415,7 @@ implements LoadMonitor<R> {
 			}
 
 			ioTypeStats = ioStats.get(ioTypeCode);
-			ioTypeMedStats = medIoStats.get(ioTypeCode);
+			ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
 
 			if(statusCode == IoTask.Status.SUCC.ordinal()) {
 				if(respLatency > 0 && respLatency > reqDuration) {
@@ -442,7 +468,103 @@ implements LoadMonitor<R> {
 
 		counterResults.add(m);
 	}
-
+	
+	@Override
+	public final int getActiveTaskCount() {
+		int totalActiveTaskCount = 0;
+		for(final LoadGenerator<I, O, R> nextGenerator : driversMap.keySet()) {
+			final List<StorageDriver<I, O, R>> nextGeneratorDrivers = driversMap.get(nextGenerator);
+			for(final StorageDriver<I, O, R> nextDriver : nextGeneratorDrivers) {
+				try {
+					totalActiveTaskCount += nextDriver.getActiveTaskCount();
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote method");
+				}
+			}
+		}
+		return totalActiveTaskCount;
+	}
+	
+	private final class IntermediateMetricsSvcTask
+	implements Runnable {
+		
+		@Override
+		public final void run() {
+			
+			if(medIoStats == null) {
+				return;
+			}
+			final Thread currThread = Thread.currentThread();
+			currThread.setName(name + "-intermediate-metrics");
+			final int activeTaskCountThreshold = (int) (fullLoadThreshold * totalConcurrency);
+			
+			try {
+				while(getActiveTaskCount() < activeTaskCountThreshold) {
+					System.out.print(">= " + getActiveTaskCount() + " ");
+					Thread.sleep(1);
+				}
+				LOG.info(
+					Markers.MSG,
+					"The threshold of {} active tasks count is reached, starting the additional metrics accounting",
+					activeTaskCountThreshold
+				);
+				for(final IoStats nextMedIoStats : medIoStats.values()) {
+					nextMedIoStats.start();
+				}
+				
+				final long metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
+					metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
+				);
+				long prevNanoTimeStamp = -1, nextNanoTimeStamp;
+				while(getActiveTaskCount() >= activeTaskCountThreshold) {
+					System.out.print("< " + getActiveTaskCount() + " ");
+					IoStats.refreshLastStats(ioStats, lastStats);
+					nextNanoTimeStamp = nanoTime();
+					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+						IoStats.outputLastMedStats(
+							lastStats, driversCountMap, concurrencyMap, name, preconditionJobFlag
+						);
+						prevNanoTimeStamp = nextNanoTimeStamp;
+					}
+					Thread.sleep(1);
+				}
+				LOG.info(
+					Markers.MSG,
+					"The active tasks count is below the threshold of {}, stopping the additional metrics accounting",
+					activeTaskCountThreshold
+				);
+			} catch(final InterruptedException ignored) {
+			} finally {
+			
+				/*LOG.info(
+					Markers.METRICS_MED_STDOUT,
+					new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
+				);*/
+				if(!preconditionJobFlag) {
+					LOG.info(
+						Markers.METRICS_MED_FILE_TOTAL,
+						new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
+					);
+					/*LOG.info(
+						Markers.METRICS_EXT_RESULTS,
+						new ExtResultsXmlLogMessage(
+							name, lastStats, itemSizeMap, concurrencyMap, driversCountMap
+						)
+					);*/
+				}
+				
+				for(final IoStats nextMedIoStats : medIoStats.values()) {
+					try {
+						nextMedIoStats.close();
+					} catch(final IOException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+					}
+				}
+				medIoStats.clear();
+			}
+		}
+	}
+	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
@@ -477,6 +599,9 @@ implements LoadMonitor<R> {
 				driversCountMap, concurrencyMap
 			)
 		);
+		if(medIoStats != null) {
+			svcTaskExecutor.submit(new IntermediateMetricsSvcTask());
+		}
 		for(final LoadGenerator<I, O, R> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O, R> driver : driversMap.get(generator)) {
 				svcTaskExecutor.submit(

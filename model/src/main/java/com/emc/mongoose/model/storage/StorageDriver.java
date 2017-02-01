@@ -70,12 +70,6 @@ extends Daemon, Output<O>, Remote {
 	boolean isIdle()
 	throws RemoteException;
 
-	boolean isFullThrottleEntered()
-	throws RemoteException;
-
-	boolean isFullThrottleExited()
-	throws RemoteException;
-	
 	void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
 	throws RemoteException;
 }

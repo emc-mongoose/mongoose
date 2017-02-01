@@ -1,5 +1,11 @@
 package com.emc.mongoose.load.monitor.metrics;
 
+import com.emc.mongoose.ui.log.Markers;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.Closeable;
 import java.io.Serializable;
 /**
@@ -77,5 +83,47 @@ extends Closeable {
 		long getLatencyMax();
 		long[] getLatencyValues();
 		double getLatencyAvg();
+	}
+	
+	static void refreshLastStats(
+		final Int2ObjectMap<IoStats> ioStats, Int2ObjectMap<IoStats.Snapshot> lastStats
+	) {
+		IoStats ioTypeStats;
+		for(final int nextIoTypeCode : ioStats.keySet()) {
+			ioTypeStats = ioStats.get(nextIoTypeCode);
+			if(ioTypeStats != null && ioTypeStats.isStarted()) {
+				lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
+			}
+		}
+	}
+	
+	Logger LOG = LogManager.getLogger();
+	
+	static void outputLastStats(
+		Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
+		final Int2IntMap concurrencyMap, final String jobName, final boolean fileOutputFlag
+	) {
+		LOG.info(
+			Markers.METRICS_STDOUT,
+			new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
+		);
+		if(!fileOutputFlag) {
+			LOG.info(
+				Markers.METRICS_FILE,
+				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
+			);
+		}
+	}
+	
+	static void outputLastMedStats(
+		Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
+		final Int2IntMap concurrencyMap, final String jobName, final boolean fileOutputFlag
+	) {
+		if(!fileOutputFlag) {
+			LOG.info(
+				Markers.METRICS_MED_FILE,
+				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
+			);
+		}
 	}
 }

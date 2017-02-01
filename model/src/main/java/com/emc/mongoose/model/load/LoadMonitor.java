@@ -17,4 +17,6 @@ extends Daemon {
 	void setIoResultsOutput(final Output<R> ioTaskResultsOutput);
 
 	void processIoResults(final List<R> ioTaskResults, final int n, final boolean isCircular);
+	
+	int getActiveTaskCount();
 }
