@@ -33,12 +33,12 @@ import static org.junit.Assert.fail;
  * 2.2.2. Path Listing
  * 2.3.3.1. Constant Destination Path
  * 4.4. Big Concurrency Level (1K)
- * 9.3.2. Read - Enabled Validation
- * 10.2. Default Scenario
- * 10.5.2. Load Job
- * 11.2. I/O Buffer Size Adjustment for Optimal Performance
- * 12.1.2. Two Local Separate Storage Driver Services (at different ports)
- * 12.2.2. Prepare the Destination Path on the Storage
+ * 8.3.2. Read - Enabled Validation
+ * 9.2. Default Scenario
+ * 9.5.2. Load Job
+ * 10.1.4. Two Local Separate Storage Driver Services (at different ports)
+ * 10.2.2. Destination Path Precondition Hook
+ * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
 public class ReadBucketListingTest
 extends HttpStorageDistributedScenarioTestBase {

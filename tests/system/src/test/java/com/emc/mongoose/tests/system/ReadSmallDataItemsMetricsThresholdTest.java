@@ -30,6 +30,16 @@ import static org.junit.Assert.assertTrue;
 
 /**
  Created by kurila on 01.02.17.
+ * 1.2. CLI Arguments Aliasing
+ * 2.2.1. Items Input File
+ * 2.3.2. Items Output File
+ * 7.1. Metrics Periodic Reporting
+ * 7.3. Metrics Reporting Triggered by Load Threshold
+ * 8.2.1. Create New Items
+ * 8.3.1. Read With Disabled Validation
+ * 9.2. Default Scenario
+ * 9.5.2. Load Job
+ * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
 public class ReadSmallDataItemsMetricsThresholdTest
 extends HttpStorageDistributedScenarioTestBase {

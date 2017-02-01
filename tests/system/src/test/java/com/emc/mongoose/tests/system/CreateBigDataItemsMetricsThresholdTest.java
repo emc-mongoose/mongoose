@@ -23,6 +23,14 @@ import static org.junit.Assert.assertTrue;
 
 /**
  Created by kurila on 01.02.17.
+ Covered use cases:
+ * 2.1.1.1.5. Very Big Data Items (100MB-10GB)
+ * 7.1. Metrics Periodic Reporting
+ * 7.3. Metrics Reporting Triggered by Load Threshold
+ * 8.2.1. Create New Items
+ * 9.2. Default Scenario
+ * 9.5.2. Load Job
+ * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
 public class CreateBigDataItemsMetricsThresholdTest
 extends HttpStorageDistributedScenarioTestBase {

@@ -33,16 +33,18 @@ import static org.junit.Assert.fail;
  Created by kurila on 30.01.17.
  Covered use cases:
  * 2.1.1.1.4. Big Data Items (100MB)
+ * 2.2.1. Items Input File
+ * 2.3.2. Items Output File
  * 4.2. Small Concurrency Level (10)
  * 6.1. Load Job Naming
  * 6.2.4. Limit By Size
  * 6.2.6. Limit By End of Items Input
- * 8.1. Periodic Reporting
- * 8.4. I/O Traces Reporting
- * 9.3.2. Read - Enabled Validation
- * 10.2. Default Scenario
- * 11.2. I/O Buffer Size Adjustment for Optimal Performance
- * 12.1.2. Two Local Separate Storage Driver Services (at different ports)
+ * 7.1. Periodic Reporting
+ * 7.4. I/O Traces Reporting
+ * 8.3.2. Read - Enabled Validation
+ * 9.2. Default Scenario
+ * 10.1.4. Two Local Separate Storage Driver Services (at different ports)
+ * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
 public class ReadBigDataItemsTest
 extends HttpStorageDistributedScenarioTestBase {

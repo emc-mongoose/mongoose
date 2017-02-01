@@ -36,12 +36,12 @@ import static org.junit.Assert.fail;
  * 4.3. Medium Concurrency Level (100)
  * 6.1. Load Job Naming
  * 6.2.5. By Time
- * 8.1. Periodic Reporting
- * 8.4. I/O Traces Reporting
- * 9.2.1. Create New Items
- * 10.2. Default Scenario
- * 11.2. I/O Buffer Size Adjustment for Optimal Performance
- * 12.1.2. Two Local Separate Storage Driver Services (at different ports)
+ * 7.1. Periodic Reporting
+ * 7.4. I/O Traces Reporting
+ * 8.2.1. Create New Items
+ * 9.2. Default Scenario
+ * 10.1.4. Two Local Separate Storage Driver Services (at different ports)
+ * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
 public class CreateByTimeTest
 extends HttpStorageDistributedScenarioTestBase {

@@ -18,12 +18,11 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 31.01.17.
  Covered use cases:
  * 2.1.1.1.3. Default Data Items (1MB)
- * 2.2.3. New Items Input
  * 4.4. High Concurrency Level (1K)
  * 6.2.1. Load Jobs Are Infinite by Default
- * 10.2. Default Scenario
- * 10.5.2. Load Job
- * 11.1.2. Two Local Separate Storage Driver Services (at different ports)
+ * 9.2. Default Scenario
+ * 9.5.2. Load Job
+ * 10.4.4. Two Local Separate Storage Driver Services (at different ports)
  */
 public class CreateNoLimitHighConcurrencyTest
 extends HttpStorageDistributedScenarioTestBase {
