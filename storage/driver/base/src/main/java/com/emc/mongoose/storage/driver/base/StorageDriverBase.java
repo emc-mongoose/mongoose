@@ -30,6 +30,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+
 /**
  Created by kurila on 11.07.16.
  */
@@ -101,33 +102,31 @@ implements StorageDriver<I, O, R> {
 	}
 
 	private final class IoTasksDispatch
+	extends ArrayList<O> // extends ArrayList in order to get the access to the "removeRange" method
 	implements Runnable {
 
-		final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
-		final List<O> prevIoTasks = new ArrayList<>(BATCH_SIZE);
-		int n;
-		int m;
+		private int n = 0;
+		private int m;
+
+		public IoTasksDispatch() {
+			super(BATCH_SIZE);
+		}
 
 		@Override
 		public final void run() {
-			ioTasks.addAll(prevIoTasks);
-			prevIoTasks.clear();
-			n = ioTasks.size();
 			if(n < BATCH_SIZE) {
-				n += childTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
+				n += childTasksQueue.drainTo(this, BATCH_SIZE - n);
 			}
 			if(n < BATCH_SIZE) {
-				n += inTasksQueue.drainTo(ioTasks, BATCH_SIZE - n);
+				n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
 			}
 			try {
 				if(n > 0) {
-					m = submit(ioTasks, 0, n);
-					if(m == 0) {
-						prevIoTasks.addAll(ioTasks);
-					} else if(m < n) {
-						prevIoTasks.addAll(ioTasks.subList(m, n));
+					m = submit(this, 0, n);
+					if(m > 0) {
+						removeRange(0, m);
+						n -= m;
 					}
-					ioTasks.clear();
 				}
 			} catch(final InterruptedException e) {
 				SVC_TASKS.clear();
