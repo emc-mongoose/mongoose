@@ -36,7 +36,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("1KB");
 	private static final String ITEM_OUTPUT_FILE = ReadSmallDataItemsMetricsThresholdTest.class.getSimpleName() + ".csv";
-	private static final int LOAD_LIMIT_COUNT = 1_000_000;
+	private static final int LOAD_LIMIT_COUNT = 100_000;
 	private static final int LOAD_CONCURRENCY = 500;
 	private static final double LOAD_THRESHOLD = 0.9;
 	
@@ -77,8 +77,9 @@ extends HttpStorageDistributedScenarioTestBase {
 				CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 			)
 		);
-		CONFIG.getItemConfig().getOutputConfig().setPath(null);
+		CONFIG.getItemConfig().getOutputConfig().setFile(null);
 		CONFIG.getLoadConfig().getLimitConfig().setCount(0);
+		CONFIG.getLoadConfig().getJobConfig().setName(JOB_NAME);
 		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
 		
 		final Thread runner = new Thread(
@@ -117,7 +118,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
-			getMetricsTotalLogRecords().get(0),
+			getMetricsMedTotalLogRecords().get(0),
 			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			LOAD_LIMIT_COUNT, 0
 		);
