@@ -152,14 +152,15 @@ implements LoadGenerator<I, O, R> {
 					n = itemInput.get(items, n);
 				} catch(final EOFException e) {
 					LOG.debug(
-						Markers.MSG, "{}: end of items input @ the count {}", toString(),
+						Markers.MSG, "{}: end of items input @ the count {}",
+						BasicLoadGenerator.this.toString(),
 						generatedIoTaskCount
 					);
 					break;
 				} catch(final Exception e) {
 					LogUtil.exception(
 						LOG, Level.ERROR, e, "{}: failed to get the items from the input",
-						toString()
+						BasicLoadGenerator.this.toString()
 					);
 					break;
 				}
@@ -193,12 +194,18 @@ implements LoadGenerator<I, O, R> {
 						}
 						generatedIoTaskCount += n;
 					} catch(final EOFException e) {
-						LOG.debug(Markers.MSG, "{}: finish due to output's EOF", toString());
+						LOG.debug(
+							Markers.MSG, "{}: finish due to output's EOF",
+							BasicLoadGenerator.this.toString()
+						);
 						break;
 					} catch(final RemoteException e) {
 						final Throwable cause = e.getCause();
 						if(cause instanceof EOFException) {
-							LOG.debug(Markers.MSG, "{}: finish due to output's EOF", toString());
+							LOG.debug(
+								Markers.MSG, "{}: finish due to output's EOF",
+								BasicLoadGenerator.this.toString()
+							);
 							break;
 						} else if(!isStarted()){
 							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
@@ -217,7 +224,10 @@ implements LoadGenerator<I, O, R> {
 				}
 			}
 
-			LOG.debug(Markers.MSG, "Produced {} items", generatedIoTaskCount);
+			LOG.debug(
+				Markers.MSG, "{}: produced {} items", generatedIoTaskCount,
+				BasicLoadGenerator.this.toString()
+			);
 			try {
 				shutdown();
 			} catch(final IllegalStateException ignored) {

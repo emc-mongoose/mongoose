@@ -19,7 +19,6 @@ implements Input<I> {
 	//
 	protected BufferedReader itemsSrc;
 	protected final ItemFactory<I> itemFactory;
-	private I lastItem = null;
 	//
 	/**
 	 @param in the input stream to get the data item records from
@@ -58,24 +57,34 @@ implements Input<I> {
 	public I get()
 	throws IOException {
 		final String nextLine = itemsSrc.readLine();
-		return nextLine == null ? null : itemFactory.getItem(nextLine);
+		try {
+			return nextLine == null ? null : itemFactory.getItem(nextLine);
+		} catch(final IllegalArgumentException e) {
+			e.printStackTrace(System.err);
+			return null;
+		}
 	}
 	//
 	@Override
 	public int get(final List<I> buffer, final int limit)
 	throws IOException {
-		int i;
+		int i = 0;
 		String nextLine;
-		for(i = 0; i < limit; i ++) {
-			nextLine = itemsSrc.readLine();
-			if(nextLine == null) {
-				if(i == 0) {
-					throw new EOFException();
-				} else {
-					break;
+		try {
+			while(i < limit) {
+				nextLine = itemsSrc.readLine();
+				if(nextLine == null) {
+					if(i == 0) {
+						throw new EOFException();
+					} else {
+						break;
+					}
 				}
+				buffer.add(itemFactory.getItem(nextLine));
+				i ++;
 			}
-			buffer.add(itemFactory.getItem(nextLine));
+		} catch(final IllegalArgumentException e) {
+			e.printStackTrace(System.err);
 		}
 		return i;
 	}
