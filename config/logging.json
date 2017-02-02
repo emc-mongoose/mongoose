@@ -400,6 +400,34 @@
 //						]
 //					}
 //				},
+//				{
+//					"name" : "extMedResultsFile",
+//					"type": "file",
+//					"fileName": "intermediate-result.xml",
+//					"bufferedIO": false,
+//					"PatternLayout": {
+//						"header": "<intermediate-result>\n",
+//						"footer": "</intermediate-result>\n",
+//						"pattern": "%m",
+//						"noConsoleNoAnsi": true
+//					},
+//					"Filters": {
+//						"Filter": [
+//							{
+//								"type": "MarkerFilter",
+//								"marker": "extMedResultsFile",
+//								"onMatch": "ACCEPT",
+//								"onMismatch": "DENY"
+//							},
+//							{
+//								"type": "ThresholdFilter",
+//								"level": "INFO",
+//								"onMatch": "ACCEPT",
+//								"onMismatch": "DENY"
+//							}
+//						]
+//					}
+//				},
 				{
 					"name": "async",
 					"type": "Async",

@@ -16,6 +16,7 @@ public interface Markers {
 	Marker METRICS_FILE_TOTAL = MarkerManager.getMarker("metricsFileTotal");
 	Marker METRICS_MED_FILE_TOTAL = MarkerManager.getMarker("metricsMedFileTotal");
 	Marker METRICS_EXT_RESULTS = MarkerManager.getMarker("extResultsFile");
+	Marker METRICS_EXT_MED_RESULTS = MarkerManager.getMarker("extMedResultsFile");
 	Marker IO_TRACE = MarkerManager.getMarker("ioTrace");
 	Marker CFG = MarkerManager.getMarker("cfg");
 	Marker MPU = MarkerManager.getMarker("mpu");

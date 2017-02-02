@@ -541,12 +541,12 @@ implements LoadMonitor<R> {
 						Markers.METRICS_MED_FILE_TOTAL,
 						new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
 					);
-					/*LOG.info(
-						Markers.METRICS_EXT_RESULTS,
+					LOG.info(
+						Markers.METRICS_EXT_MED_RESULTS,
 						new ExtResultsXmlLogMessage(
 							name, lastStats, itemSizeMap, concurrencyMap, driversCountMap
 						)
-					);*/
+					);
 				}
 				
 				for(final IoStats nextMedIoStats : medIoStats.values()) {
