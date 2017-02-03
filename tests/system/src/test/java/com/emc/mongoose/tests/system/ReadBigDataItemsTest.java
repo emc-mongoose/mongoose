@@ -158,7 +158,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(ioTraceRecords.size(), EXPECTED_COUNT, 1);
+		assertEquals(EXPECTED_COUNT, ioTraceRecords.size(), EXPECTED_COUNT / 5);
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), ITEM_DATA_SIZE);
 		}
