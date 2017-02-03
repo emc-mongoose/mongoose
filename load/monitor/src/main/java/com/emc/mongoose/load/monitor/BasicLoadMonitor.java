@@ -771,7 +771,7 @@ implements LoadMonitor<R> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		
+
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareConcurrencyLevel(),
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)

@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -101,8 +102,8 @@ extends HttpStorageDistributedScenarioTestBase {
 				.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
 		}
 		TimeUnit.MINUTES.timedJoin(runner, 5);
-		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(10);
+		LoadJobLogFileManager.closeAll(JOB_NAME);
+		TimeUnit.SECONDS.sleep(20);
 	}
 	
 	@AfterClass
@@ -126,7 +127,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testTotalMetricsLogFile()
+	@Test
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
 			getMetricsTotalLogRecords().get(0),
