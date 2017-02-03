@@ -1,0 +1,202 @@
+2017-01-27T13:22:31,780 | INFO | Main | main | Configuration loaded
+2017-01-27T13:22:32,120 | INFO | Nagaina | main | Listening the port #9020
+2017-01-27T13:22:32,178 | DEBUG | BasicStorageIoStats | main | Start
+2017-01-27T13:22:32,178 | DEBUG | BasicStorageIoStats | BasicStorageIoStats | Running
+2017-01-27T13:22:32,182 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:22:42,183 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:22:52,185 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:23:02,186 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:23:12,187 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:23:22,188 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:23:32,191 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 7215 (0.7%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |        7215|           0|     119.511|     511.642|     119.511|     511.642
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:23:42,191 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 26162 (2.6%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |       26162|           0|     371.767|    1404.802|     371.767|    1404.802
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:23:52,193 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 48382 (4.8%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |       48382|           0|     601.969|    1970.349|     601.969|    1970.349
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:24:02,193 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 70421 (7.0%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |       70421|           0|     779.219|    2157.565|     779.219|    2157.556
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:24:12,194 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 95482 (9.5%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |       95482|           0|     951.256|    2380.091|     951.256|    2380.088
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:24:22,194 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 120312 (12.0%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      120312|           0|    1090.025|    2449.220|    1090.024|    2449.219
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:24:32,196 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 145288 (14.5%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      145288|           0|    1206.947|    2478.911|    1206.947|    2478.905
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:24:42,198 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 170149 (17.0%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      170149|           0|    1305.048|    2485.324|    1305.049|    2485.322
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:24:52,198 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 195084 (19.5%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      195084|           0|    1389.698|    2490.094|    1389.698|    2490.093
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:25:02,199 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 220024 (22.0%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      220024|           0|    1463.125|    2494.445|    1463.125|    2494.444
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:25:12,198 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 244908 (24.5%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      244908|           0|    1527.046|    2489.686|    1527.046|    2489.781
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:25:22,200 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 269309 (26.9%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      269309|           0|    1580.628|    2445.393|    1580.628|    2445.382
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:25:32,200 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 292812 (29.3%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      292812|           0|    1623.291|    2399.015|    1623.291|    2399.097
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:25:42,202 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 317573 (31.8%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      317573|           0|    1668.079|    2454.480|    1668.079|    2454.471
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:25:52,201 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 342383 (34.2%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      342383|           0|    1708.642|    2479.867|    1708.642|    2479.856
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:26:02,493 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 366668 (36.7%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      366668|           0|    1740.452|    2467.130|    1740.452|    2467.126
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:26:12,494 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 388870 (38.9%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      388870|           0|    1762.179|    2267.288|    1762.179|    2267.283
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:26:22,495 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 412616 (41.3%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      412616|           0|    1788.722|    2329.867|    1788.722|    2329.859
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:26:32,497 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 435950 (43.6%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      435950|           0|    1811.348|    2323.086|    1811.348|    2323.082
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:26:42,497 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 460063 (46.0%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      460063|           0|    1835.276|    2385.875|    1835.276|    2385.874
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:26:52,497 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 484633 (48.5%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      484633|           0|    1859.120|    2423.658|    1859.120|    2423.657
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:27:02,499 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 507795 (50.8%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      507796|           0|    1876.005|    2365.716|    1876.005|    2365.715
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:27:12,499 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 530928 (53.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      530928|           0|    1891.577|    2416.305|    1891.577|    2416.299
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:27:22,501 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 530928 (53.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      530928|           0|    1826.496|     898.659|    1826.496|     898.657
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:27:32,501 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 530928 (53.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      530928|           0|    1765.744|     330.598|    1765.744|     330.597
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:27:42,503 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 530928 (53.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      530928|           0|    1708.904|     121.620|    1708.904|     121.620
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-01-27T13:27:52,504 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 530928 (53.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      530928|           0|    1655.608|      44.742|    1655.608|      44.741
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |

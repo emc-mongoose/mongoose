@@ -1,0 +1,13 @@
+2017-01-27T13:28:58,611 | DEBUG | InternalLoggerFactory | main | Using java.util.logging as the default logging framework
+2017-01-27T13:28:58,615 | DEBUG | MultithreadEventLoopGroup | main | -Dio.netty.eventLoopThreads: 8
+2017-01-27T13:28:58,637 | DEBUG | PlatformDependent0 | main | java.nio.Buffer.address: available
+2017-01-27T13:28:58,637 | DEBUG | PlatformDependent0 | main | sun.misc.Unsafe.theUnsafe: available
+2017-01-27T13:28:58,638 | DEBUG | PlatformDependent0 | main | sun.misc.Unsafe.copyMemory: available
+2017-01-27T13:28:58,638 | DEBUG | PlatformDependent0 | main | direct buffer constructor: available
+2017-01-27T13:28:58,639 | DEBUG | PlatformDependent0 | main | java.nio.Bits.unaligned: available, true
+2017-01-27T13:28:58,639 | DEBUG | PlatformDependent0 | main | java.nio.DirectByteBuffer.<init>(long, int): available
+2017-01-27T13:28:58,640 | DEBUG | Cleaner0 | main | java.nio.ByteBuffer.cleaner(): available
+2017-01-27T13:28:58,641 | DEBUG | PlatformDependent | main | Java version: 8
+2017-01-27T13:28:58,641 | DEBUG | PlatformDependent | main | -Dio.netty.noUnsafe: false
+2017-01-27T13:28:58,641 | DEBUG | PlatformDependent | main | sun.misc.Unsafe: available
+2017-01-27T13:28:58,642 | DEBUG | PlatformDependent | main | -Dio.netty.noJavassist: false

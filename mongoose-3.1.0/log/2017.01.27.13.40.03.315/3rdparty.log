@@ -1,0 +1,53 @@
+2017-01-27T13:40:04,163 | DEBUG | InternalLoggerFactory | main | Using java.util.logging as the default logging framework
+2017-01-27T13:40:04,168 | DEBUG | MultithreadEventLoopGroup | main | -Dio.netty.eventLoopThreads: 8
+2017-01-27T13:40:04,190 | DEBUG | PlatformDependent0 | main | java.nio.Buffer.address: available
+2017-01-27T13:40:04,190 | DEBUG | PlatformDependent0 | main | sun.misc.Unsafe.theUnsafe: available
+2017-01-27T13:40:04,191 | DEBUG | PlatformDependent0 | main | sun.misc.Unsafe.copyMemory: available
+2017-01-27T13:40:04,191 | DEBUG | PlatformDependent0 | main | direct buffer constructor: available
+2017-01-27T13:40:04,192 | DEBUG | PlatformDependent0 | main | java.nio.Bits.unaligned: available, true
+2017-01-27T13:40:04,192 | DEBUG | PlatformDependent0 | main | java.nio.DirectByteBuffer.<init>(long, int): available
+2017-01-27T13:40:04,193 | DEBUG | Cleaner0 | main | java.nio.ByteBuffer.cleaner(): available
+2017-01-27T13:40:04,194 | DEBUG | PlatformDependent | main | Java version: 8
+2017-01-27T13:40:04,194 | DEBUG | PlatformDependent | main | -Dio.netty.noUnsafe: false
+2017-01-27T13:40:04,194 | DEBUG | PlatformDependent | main | sun.misc.Unsafe: available
+2017-01-27T13:40:04,194 | DEBUG | PlatformDependent | main | -Dio.netty.noJavassist: false
+2017-01-27T13:40:04,258 | DEBUG | PlatformDependent | main | Javassist: available
+2017-01-27T13:40:04,258 | DEBUG | PlatformDependent | main | -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+2017-01-27T13:40:04,258 | DEBUG | PlatformDependent | main | -Dio.netty.bitMode: 64 (sun.arch.data.model)
+2017-01-27T13:40:04,259 | DEBUG | PlatformDependent | main | -Dio.netty.noPreferDirect: false
+2017-01-27T13:40:04,259 | DEBUG | PlatformDependent | main | io.netty.maxDirectMemory: 3728736256 bytes
+2017-01-27T13:40:04,275 | DEBUG | PlatformDependent | main | org.jctools-core.MpscChunkedArrayQueue: available
+2017-01-27T13:40:04,281 | DEBUG | NativeLibraryLoader | main | -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+2017-01-27T13:40:04,281 | DEBUG | NativeLibraryLoader | main | -Dio.netty.native.workdir: /tmp (io.netty.tmpdir)
+2017-01-27T13:40:04,298 | DEBUG | NetUtil | main | -Djava.net.preferIPv4Stack: false
+2017-01-27T13:40:04,298 | DEBUG | NetUtil | main | -Djava.net.preferIPv6Addresses: false
+2017-01-27T13:40:04,299 | DEBUG | NetUtil | main | Loopback interface: lo (lo, 0:0:0:0:0:0:0:1%lo)
+2017-01-27T13:40:04,300 | DEBUG | NetUtil | main | /proc/sys/net/core/somaxconn: 128
+2017-01-27T13:40:04,460 | DEBUG | DefaultChannelId | ioTasksDispatcher | -Dio.netty.processId: 28157 (auto-detected)
+2017-01-27T13:40:04,461 | DEBUG | DefaultChannelId | ioTasksDispatcher | -Dio.netty.machineId: 40:2c:f4:ff:fe:e9:16:17 (auto-detected)
+2017-01-27T13:40:04,479 | DEBUG | ThreadLocalRandom | ioTasksDispatcher | -Dio.netty.initialSeedUniquifier: 0xb8455b7b8cde80d4
+2017-01-27T13:40:04,504 | DEBUG | ResourceLeakDetector | ioTasksDispatcher | -Dio.netty.leakDetection.level: simple
+2017-01-27T13:40:04,504 | DEBUG | ResourceLeakDetector | ioTasksDispatcher | -Dio.netty.leakDetection.maxRecords: 4
+2017-01-27T13:40:04,524 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.numHeapArenas: 8
+2017-01-27T13:40:04,524 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.numDirectArenas: 8
+2017-01-27T13:40:04,524 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.pageSize: 8192
+2017-01-27T13:40:04,524 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.maxOrder: 11
+2017-01-27T13:40:04,524 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.chunkSize: 16777216
+2017-01-27T13:40:04,525 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.tinyCacheSize: 512
+2017-01-27T13:40:04,525 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.smallCacheSize: 256
+2017-01-27T13:40:04,525 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.normalCacheSize: 64
+2017-01-27T13:40:04,525 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+2017-01-27T13:40:04,525 | DEBUG | PooledByteBufAllocator | ioTasksDispatcher | -Dio.netty.allocator.cacheTrimInterval: 8192
+2017-01-27T13:40:04,534 | DEBUG | ByteBufUtil | ioTasksDispatcher | -Dio.netty.allocator.type: pooled
+2017-01-27T13:40:04,534 | DEBUG | ByteBufUtil | ioTasksDispatcher | -Dio.netty.threadLocalDirectBufferSize: 65536
+2017-01-27T13:40:04,534 | DEBUG | ByteBufUtil | ioTasksDispatcher | -Dio.netty.maxThreadLocalCharBufferSize: 16384
+2017-01-27T13:40:04,593 | DEBUG | AbstractByteBuf | ioWorker#1 | -Dio.netty.buffer.bytebuf.checkAccessible: true
+2017-01-27T13:40:04,595 | DEBUG | ResourceLeakDetectorFactory | ioWorker#1 | Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@22f1224e
+2017-01-27T13:40:04,604 | DEBUG | JavassistTypeParameterMatcherGenerator | ioWorker#1 | Generated: io.netty.util.internal.__matchers__.io.netty.handler.codec.http.HttpObjectMatcher
+2017-01-27T13:40:04,607 | DEBUG | JavassistTypeParameterMatcherGenerator | ioWorker#1 | Generated: io.netty.util.internal.__matchers__.java.net.InetSocketAddressMatcher
+2017-01-27T13:40:04,626 | DEBUG | Recycler | ioTasksDispatcher | -Dio.netty.recycler.maxCapacityPerThread: 32768
+2017-01-27T13:40:04,627 | DEBUG | Recycler | ioTasksDispatcher | -Dio.netty.recycler.maxSharedCapacityFactor: 2
+2017-01-27T13:40:04,627 | DEBUG | Recycler | ioTasksDispatcher | -Dio.netty.recycler.linkCapacity: 16
+2017-01-27T13:40:04,627 | DEBUG | Recycler | ioTasksDispatcher | -Dio.netty.recycler.ratio: 8
+2017-01-27T13:40:34,751 | INFO | BasicLoadMonitor | main | <result id="2017.01.27.13.40.03.315" StartDate="2017-01-27 13:40:04" StartTimestamp="1485524404389" EndDate="2017-01-27 13:40:34" EndTimestamp="1485524434744" operation="READ" threads="1" RequestThreads="1" clients="1" error="0" runtime="30.355" filesize="1MB" tps="547.7186624938231" tps_unit="Fileps" bw="547.7186624938231" bw_unit="MBps" latency="88.63618677042801" latency_unit="us" latency_min="38" latency_loq="61" latency_med="77" latency_hiq="100" latency_max="577" duration="1728.7908560311284" duration_unit="us" duration_min="1520" duration_loq="1607" duration_med="1651" duration_hiq="1719" duration_max="7889" />
+

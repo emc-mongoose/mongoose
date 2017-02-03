@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-storage-driver-net-http-swift
+Implementation-Version: 3.1.0
+Class-Path: lib/log4j-api-2.7.jar lib/log4j-core-2.7.jar lib/netty-com
+ mon-4.1.6.Final.jar lib/netty-buffer-4.1.6.Final.jar lib/netty-transp
+ ort-4.1.6.Final.jar lib/netty-handler-4.1.6.Final.jar lib/netty-codec
+ -http-4.1.6.Final.jar lib/jackson-databind-2.8.4.jar lib/log4j-jul-2.
+ 7.jar lib/javassist-3.21.0-GA.jar lib/netty-resolver-4.1.6.Final.jar 
+ lib/netty-codec-4.1.6.Final.jar lib/jackson-annotations-2.8.0.jar lib
+ /jackson-core-2.8.4.jar mongoose-common.jar mongoose-model.jar mongoo
+ se-ui.jar mongoose-storage-driver-base.jar mongoose-storage-driver-ne
+ t-base.jar mongoose-storage-driver-net-http-base.jar
+

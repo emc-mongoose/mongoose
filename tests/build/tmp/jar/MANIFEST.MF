@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-tests
+Implementation-Version: 3.1.0
+

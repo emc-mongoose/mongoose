@@ -1,0 +1,123 @@
+2017-02-01T18:43:28,898 | INFO | Nagaina | Test worker | Listening the port #9020
+2017-02-01T18:43:28,986 | DEBUG | BasicStorageIoStats | Test worker | Start
+2017-02-01T18:43:28,986 | DEBUG | BasicStorageIoStats | BasicStorageIoStats | Running
+2017-02-01T18:43:28,990 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:43:29,058 | INFO | BasicStorageDriverBuilderSvc | Test worker | Service started: rmi://10.77.9.39:1099/storage/driver/builder
+2017-02-01T18:43:29,062 | INFO | BasicStorageDriverBuilderSvc | Test worker | Service started: rmi://10.77.9.39:1100/storage/driver/builder
+2017-02-01T18:43:29,067 | DEBUG | ParentJobBase | Test worker | Load the subtree to the job "jsonScenario#1902808964"
+2017-02-01T18:43:29,071 | INFO | JsonScenario | Thread-4 | Scenario start
+2017-02-01T18:43:29,072 | INFO | SequentialJob | Thread-4 | jsonScenario#1902808964: execute 1 child jobs sequentially
+2017-02-01T18:43:29,072 | DEBUG | SequentialJob | Thread-4 | jsonScenario#1902808964: child job "singleLoadJobContainer#639913678" start
+2017-02-01T18:43:29,072 | INFO | LoadJob | Thread-4 | Run the load job "2017.02.01.18.43.27.996"
+2017-02-01T18:43:29,078 | INFO | LoadJob | Thread-4 | Connected the service "storage/driver/builder" @ 127.0.0.1:1099
+2017-02-01T18:43:29,109 | INFO | BasicStorageDriverBuilder | RMI TCP Connection(2)-127.0.0.1 | Work via HTTP using "S3" cloud storage API
+2017-02-01T18:43:29,157 | INFO | WrappingStorageDriverSvc | RMI TCP Connection(2)-127.0.0.1 | Service started: rmi://10.77.9.39:1099/storage/driver/3/s3/1600814790
+2017-02-01T18:43:29,160 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/1600814790 I/O tasks: scheduled=0, active=0, completed=0, recycled=0
+2017-02-01T18:43:29,160 | INFO | LoadJob | Thread-4 | Connected the service "storage/driver/3/s3/1600814790" @ 127.0.0.1:1099
+2017-02-01T18:43:29,162 | INFO | LoadJob | Thread-4 | Connected the service "storage/driver/builder" @ 127.0.0.1:1100
+2017-02-01T18:43:29,171 | INFO | BasicStorageDriverBuilder | RMI TCP Connection(2)-127.0.0.1 | Work via HTTP using "S3" cloud storage API
+2017-02-01T18:43:29,179 | INFO | WrappingStorageDriverSvc | RMI TCP Connection(2)-127.0.0.1 | Service started: rmi://10.77.9.39:1100/storage/driver/3/s3/666758847
+2017-02-01T18:43:29,180 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/666758847 I/O tasks: scheduled=0, active=0, completed=0, recycled=0
+2017-02-01T18:43:29,180 | INFO | LoadJob | Thread-4 | Connected the service "storage/driver/3/s3/666758847" @ 127.0.0.1:1100
+2017-02-01T18:43:29,181 | INFO | LoadJob | Thread-4 | Load drivers initialized
+2017-02-01T18:43:29,182 | INFO | LoadJob | Thread-4 | Work on the mutable data items
+2017-02-01T18:43:29,197 | INFO | NetStorageDriverBase | RMI TCP Connection(2)-127.0.0.1 | Adjust output buffer size: 123KB
+2017-02-01T18:43:29,198 | INFO | NetStorageDriverBase | RMI TCP Connection(2)-127.0.0.1 | Adjust output buffer size: 123KB
+2017-02-01T18:43:29,303 | INFO | S3StorageDriver | RMI TCP Connection(2)-127.0.0.1 | Bucket "/2017.02.01.18.43.29.198" created
+2017-02-01T18:43:29,498 | INFO | LoadJob | Thread-4 | Load generators initialized
+2017-02-01T18:43:29,535 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: await for the done condition at most for 45[s]
+2017-02-01T18:43:29,665 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-02-01T18:43:29,675 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-02-01T18:43:29,683 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-02-01T18:43:29,745 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-02-01T18:43:29,745 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-02-01T18:43:29,751 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-02-01T18:43:39,095 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 35164 (3.5%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |       35164|           0|    3374.618|    2291.167|     405.350|     275.207
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:43:39,160 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/1600814790 I/O tasks: scheduled=262144, active=0, completed=16475, recycled=0
+2017-02-01T18:43:39,180 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/666758847 I/O tasks: scheduled=264192, active=0, completed=19174, recycled=0
+2017-02-01T18:43:49,097 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 83740 (8.4%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |       83740|           0|    4098.727|    3978.118|     492.328|     477.846
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:43:49,160 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/1600814790 I/O tasks: scheduled=815104, active=1, completed=40551, recycled=0
+2017-02-01T18:43:49,185 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/666758847 I/O tasks: scheduled=819200, active=1, completed=43670, recycled=0
+2017-02-01T18:43:59,097 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 141065 (14.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      141065|           0|    4635.203|    5266.524|     556.768|     632.602
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:43:59,160 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/1600814790 I/O tasks: scheduled=1073182, active=0, completed=69196, recycled=0
+2017-02-01T18:43:59,186 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/666758847 I/O tasks: scheduled=1076494, active=1, completed=72479, recycled=0
+2017-02-01T18:44:09,098 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 221210 (22.1%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      221211|           0|    5470.883|    6978.829|     657.147|     838.278
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:44:09,161 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/1600814790 I/O tasks: scheduled=1112533, active=2, completed=108529, recycled=0
+2017-02-01T18:44:09,186 | INFO | WrappingStorageDriverSvc | ioTasksDispatcher | storage/driver/3/s3/666758847 I/O tasks: scheduled=1116966, active=3, completed=112912, recycled=0
+2017-02-01T18:44:14,631 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: await exit due to timeout
+2017-02-01T18:44:14,632 | INFO | LoadJob | Thread-4 | Load job "2017.02.01.18.43.27.996" timeout
+2017-02-01T18:44:14,640 | DEBUG | StorageDriverBase | RMI TCP Connection(5)-127.0.0.1 | storage/driver/3/s3/1600814790: shut down
+2017-02-01T18:44:14,643 | DEBUG | StorageDriverBase | RMI TCP Connection(5)-127.0.0.1 | storage/driver/3/s3/666758847: shut down
+2017-02-01T18:44:14,643 | DEBUG | BasicLoadMonitor | shutdownWorker#2 | 2017.02.01.18.43.27.996: storage driver "Proxy[StorageDriverSvc,RemoteObjectInvocationHandler[UnicastRef [liveRef: [endpoint:[127.0.1.1:36122](remote),objID:[40b49ad:159fafd1c6e:-7ff2, -6053038451378811724]]]]]" shut down
+2017-02-01T18:44:14,643 | DEBUG | BasicLoadMonitor | shutdownWorker#3 | 2017.02.01.18.43.27.996: storage driver "Proxy[StorageDriverSvc,RemoteObjectInvocationHandler[UnicastRef [liveRef: [endpoint:[127.0.1.1:36122](remote),objID:[40b49ad:159fafd1c6e:-7fe7, -8946375320993274704]]]]]" shut down
+2017-02-01T18:44:14,644 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: load monitor was shut down properly
+2017-02-01T18:44:14,646 | DEBUG | StorageDriverBase | RMI TCP Connection(2)-127.0.0.1 | storage/driver/3/s3/1600814790: interrupted
+2017-02-01T18:44:14,646 | DEBUG | StorageDriverBase | RMI TCP Connection(5)-127.0.0.1 | storage/driver/3/s3/666758847: interrupted
+2017-02-01T18:44:14,652 | DEBUG | NetStorageDriverBase | RMI TCP Connection(5)-127.0.0.1 | storage/driver/3/s3/666758847: I/O workers stopped in time
+2017-02-01T18:44:14,653 | DEBUG | NetStorageDriverBase | RMI TCP Connection(2)-127.0.0.1 | storage/driver/3/s3/1600814790: I/O workers stopped in time
+2017-02-01T18:44:14,654 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: storage drivers have been interrupted properly
+2017-02-01T18:44:14,655 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: interrupted the load monitor
+2017-02-01T18:44:14,656 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: the load generator "CreateNewDataItems(123KB)" has been closed
+2017-02-01T18:44:14,662 | DEBUG | BasicLoadGenerator | CreateNewDataItems(123KB) | com.emc.mongoose.load.generator.BasicLoadGenerator$GeneratorTask@501df027: finish due to output's EOF
+2017-02-01T18:44:14,662 | DEBUG | BasicLoadGenerator | CreateNewDataItems(123KB) | Produced 2273280 items
+2017-02-01T18:44:14,695 | DEBUG | StorageDriverBase | RMI TCP Connection(2)-127.0.0.1 | storage/driver/3/s3/666758847: closed
+2017-02-01T18:44:14,695 | DEBUG | StorageDriverBase | RMI TCP Connection(5)-127.0.0.1 | storage/driver/3/s3/1600814790: closed
+2017-02-01T18:44:14,730 | INFO | WrappingStorageDriverSvc | RMI TCP Connection(2)-127.0.0.1 | Service closed: rmi://10.77.9.39:1100/storage/driver/3/s3/666758847
+2017-02-01T18:44:14,730 | DEBUG | BasicLoadMonitor | ioResultsGetAndApplyWorker#2 | 2017.02.01.18.43.27.996: the storage driver "Proxy[StorageDriverSvc,RemoteObjectInvocationHandler[UnicastRef [liveRef: [endpoint:[127.0.1.1:36122](remote),objID:[40b49ad:159fafd1c6e:-7fe7, -8946375320993274704]]]]]" has been closed
+2017-02-01T18:44:14,731 | INFO | WrappingStorageDriverSvc | RMI TCP Connection(5)-127.0.0.1 | Service closed: rmi://10.77.9.39:1099/storage/driver/3/s3/1600814790
+2017-02-01T18:44:14,731 | DEBUG | BasicLoadMonitor | ioResultsGetAndApplyWorker#1 | 2017.02.01.18.43.27.996: the storage driver "Proxy[StorageDriverSvc,RemoteObjectInvocationHandler[UnicastRef [liveRef: [endpoint:[127.0.1.1:36122](remote),objID:[40b49ad:159fafd1c6e:-7ff2, -6053038451378811724]]]]]" has been closed
+2017-02-01T18:44:14,731 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: final I/O result have been got and processed properly
+2017-02-01T18:44:14,735 | DEBUG | BasicLoadMonitor | Thread-4 | 2017.02.01.18.43.27.996: closed the load monitor
+2017-02-01T18:44:14,735 | DEBUG | SequentialJob | Thread-4 | jsonScenario#1902808964: child job "singleLoadJobContainer#639913678" is done
+2017-02-01T18:44:14,735 | INFO | SequentialJob | Thread-4 | jsonScenario#1902808964: finished the sequential execution of jsonScenario#1902808964 child jobs
+2017-02-01T18:44:14,735 | INFO | JsonScenario | Thread-4 | Scenario end
+2017-02-01T18:44:19,099 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 266749 (26.7%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      266749|           0|    5288.957|    5049.121|     635.295|     606.487
+	Read      |       14313|           0|     283.791|    1111.212|      34.088|     133.476
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:44:29,100 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 266749 (26.7%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      266749|           0|    4413.753|    1857.468|     530.168|     223.114
+	Read      |       77970|           0|    1290.128|    4379.965|     154.967|     526.109
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:44:39,101 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 266749 (26.7%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      266749|           0|    3787.083|     683.324|     454.894|      82.079
+	Read      |      141394|           0|    2007.396|    5610.658|     241.123|     673.936
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:44:49,102 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 266749 (26.7%), containers count: 1
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |      266749|           0|    3316.235|     251.381|     398.337|      30.195
+	Read      |      205010|           0|    2548.693|    6131.699|     306.142|     736.522
+	Delete    |           0|           0|       0.000|       0.000|            |
+2017-02-01T18:44:58,771 | DEBUG | BasicStorageIoStats | BasicStorageIoStats | Interrupted

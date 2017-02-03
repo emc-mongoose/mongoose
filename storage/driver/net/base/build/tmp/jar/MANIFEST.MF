@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-storage-driver-net-base
+Implementation-Version: 3.1.0
+Class-Path: lib/commons-lang-2.6.jar lib/log4j-api-2.7.jar lib/log4j-c
+ ore-2.7.jar lib/netty-common-4.1.6.Final.jar lib/netty-buffer-4.1.6.F
+ inal.jar lib/netty-transport-4.1.6.Final.jar lib/netty-handler-4.1.6.
+ Final.jar lib/netty-transport-native-epoll-4.1.6.Final-linux-x86_64.j
+ ar lib/log4j-jul-2.7.jar lib/javassist-3.21.0-GA.jar lib/netty-resolv
+ er-4.1.6.Final.jar lib/netty-codec-4.1.6.Final.jar mongoose-common.ja
+ r mongoose-model.jar mongoose-ui.jar mongoose-storage-driver-base.jar
+

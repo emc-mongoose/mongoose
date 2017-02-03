@@ -1,5 +1,16 @@
 description = 'mongoose-storage-mock'
 
+apply plugin: "com.google.protobuf"
+
+buildscript {
+	dependencies {
+		classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.0"
+	}
+	repositories {
+		mavenCentral()
+	}
+}
+
 dependencies {
 
 	compileOnly(
@@ -27,7 +38,10 @@ dependencies {
 		"io.netty:netty-codec-http:${depVersion.netty}",
 		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}",
 
-		'org.jmdns:jmdns:3.5.1'
+		'org.jmdns:jmdns:3.5.1',
+
+		'com.google.protobuf:protobuf-java:3.0.0',
+		'io.grpc:grpc-all:1.0.3',
 	)
 
 	runtime(
@@ -45,6 +59,27 @@ dependencies {
 		'org.slf4j:slf4j-simple:1.7.16'
 	)
 }
+
+protobuf {
+	generatedFilesBaseDir = "$projectDir/src/"
+
+	protoc {
+		artifact = 'com.google.protobuf:protoc:3.1.0'
+	}
+	plugins {
+		grpc {
+			artifact = 'io.grpc:protoc-gen-grpc-java:1.0.3'
+		}
+	}
+	generateProtoTasks {
+		all()*.plugins {
+			grpc {
+				outputSubDir = "/java/"
+			}
+		}
+	}
+}
+
 
 jar {
 	manifest {

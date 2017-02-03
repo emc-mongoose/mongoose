@@ -1,0 +1,10 @@
+2017-02-01T18:09:01,572 | INFO | Main | main | Configuration loaded
+2017-02-01T18:09:23,301 | INFO | Nagaina | main | Listening the port #9020
+2017-02-01T18:09:23,911 | DEBUG | BasicStorageIoStats | main | Start
+2017-02-01T18:09:23,911 | DEBUG | BasicStorageIoStats | BasicStorageIoStats | Running
+2017-02-01T18:09:26,932 | INFO | BasicStorageIoStats | BasicStorageIoStats | Capacity used: 0 (0.0%), containers count: 0
+	Operation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last
+	----------|------------|------------|------------|------------|------------|------------
+	Write     |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Read      |           0|           0|       0.000|       0.000|       0.000|       0.000
+	Delete    |           0|           0|       0.000|       0.000|            |

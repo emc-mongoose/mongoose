@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-load-monitor
+Implementation-Version: 3.1.0
+Class-Path: lib/commons-lang-2.6.jar lib/log4j-api-2.7.jar lib/log4j-c
+ ore-2.7.jar lib/metrics-core-3.1.2.jar lib/log4j-jul-2.7.jar lib/slf4
+ j-api-1.7.7.jar mongoose-common.jar mongoose-ui.jar mongoose-model.ja
+ r
+

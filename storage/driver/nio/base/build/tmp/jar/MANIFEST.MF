@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-storage-driver-nio-base
+Implementation-Version: 3.1.0
+Class-Path: lib/log4j-api-2.7.jar lib/log4j-core-2.7.jar lib/log4j-jul
+ -2.7.jar mongoose-common.jar mongoose-model.jar mongoose-ui.jar mongo
+ ose-storage-driver-base.jar
+

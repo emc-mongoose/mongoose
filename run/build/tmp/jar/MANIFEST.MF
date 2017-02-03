@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-run
+Implementation-Version: 3.1.0
+Class-Path: lib/log4j-api-2.7.jar lib/mongoose-ui.jar lib/disruptor-3.
+ 3.4.jar lib/log4j-core-2.7.jar lib/log4j-jul-2.7.jar lib/commons-lang
+ -2.6.jar lib/log4j-iostreams-2.7.jar lib/jackson-databind-2.8.4.jar l
+ ib/jackson-annotations-2.8.0.jar lib/jackson-core-2.8.4.jar mongoose-
+ common.jar mongoose-model.jar mongoose-load-monitor.jar mongoose-load
+ -generator.jar mongoose-storage-driver-builder.jar
+Main-Class: com.emc.mongoose.run.Main
+

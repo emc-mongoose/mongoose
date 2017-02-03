@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-storage-driver-service
+Implementation-Version: 3.1.0
+Class-Path: lib/log4j-api-2.7.jar lib/log4j-core-2.7.jar lib/disruptor
+ -3.3.4.jar lib/log4j-jul-2.7.jar mongoose-common.jar mongoose-model.j
+ ar mongoose-ui.jar mongoose-storage-driver-base.jar mongoose-storage-
+ driver-nio-base.jar mongoose-storage-driver-nio-fs.jar mongoose-stora
+ ge-driver-net-base.jar mongoose-storage-driver-net-http-base.jar mong
+ oose-storage-driver-net-http-atmos.jar mongoose-storage-driver-net-ht
+ tp-s3.jar mongoose-storage-driver-net-http-swift.jar mongoose-storage
+ -driver-builder.jar
+Main-Class: com.emc.mongoose.storage.driver.service.Main
+

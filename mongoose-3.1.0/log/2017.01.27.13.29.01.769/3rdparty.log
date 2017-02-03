@@ -1,0 +1,53 @@
+2017-01-27T13:29:02,614 | DEBUG | InternalLoggerFactory | main | Using java.util.logging as the default logging framework
+2017-01-27T13:29:02,622 | DEBUG | MultithreadEventLoopGroup | main | -Dio.netty.eventLoopThreads: 8
+2017-01-27T13:29:02,644 | DEBUG | PlatformDependent0 | main | java.nio.Buffer.address: available
+2017-01-27T13:29:02,644 | DEBUG | PlatformDependent0 | main | sun.misc.Unsafe.theUnsafe: available
+2017-01-27T13:29:02,645 | DEBUG | PlatformDependent0 | main | sun.misc.Unsafe.copyMemory: available
+2017-01-27T13:29:02,645 | DEBUG | PlatformDependent0 | main | direct buffer constructor: available
+2017-01-27T13:29:02,646 | DEBUG | PlatformDependent0 | main | java.nio.Bits.unaligned: available, true
+2017-01-27T13:29:02,646 | DEBUG | PlatformDependent0 | main | java.nio.DirectByteBuffer.<init>(long, int): available
+2017-01-27T13:29:02,648 | DEBUG | Cleaner0 | main | java.nio.ByteBuffer.cleaner(): available
+2017-01-27T13:29:02,649 | DEBUG | PlatformDependent | main | Java version: 8
+2017-01-27T13:29:02,649 | DEBUG | PlatformDependent | main | -Dio.netty.noUnsafe: false
+2017-01-27T13:29:02,649 | DEBUG | PlatformDependent | main | sun.misc.Unsafe: available
+2017-01-27T13:29:02,651 | DEBUG | PlatformDependent | main | -Dio.netty.noJavassist: false
+2017-01-27T13:29:02,716 | DEBUG | PlatformDependent | main | Javassist: available
+2017-01-27T13:29:02,716 | DEBUG | PlatformDependent | main | -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+2017-01-27T13:29:02,716 | DEBUG | PlatformDependent | main | -Dio.netty.bitMode: 64 (sun.arch.data.model)
+2017-01-27T13:29:02,716 | DEBUG | PlatformDependent | main | -Dio.netty.noPreferDirect: false
+2017-01-27T13:29:02,718 | DEBUG | PlatformDependent | main | io.netty.maxDirectMemory: 3728736256 bytes
+2017-01-27T13:29:02,733 | DEBUG | PlatformDependent | main | org.jctools-core.MpscChunkedArrayQueue: available
+2017-01-27T13:29:02,741 | DEBUG | NativeLibraryLoader | main | -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+2017-01-27T13:29:02,741 | DEBUG | NativeLibraryLoader | main | -Dio.netty.native.workdir: /tmp (io.netty.tmpdir)
+2017-01-27T13:29:02,758 | DEBUG | NetUtil | main | -Djava.net.preferIPv4Stack: false
+2017-01-27T13:29:02,758 | DEBUG | NetUtil | main | -Djava.net.preferIPv6Addresses: false
+2017-01-27T13:29:02,758 | DEBUG | NetUtil | main | Loopback interface: lo (lo, 0:0:0:0:0:0:0:1%lo)
+2017-01-27T13:29:02,759 | DEBUG | NetUtil | main | /proc/sys/net/core/somaxconn: 128
+2017-01-27T13:29:02,841 | DEBUG | DefaultChannelId | main | -Dio.netty.processId: 27757 (auto-detected)
+2017-01-27T13:29:02,842 | DEBUG | DefaultChannelId | main | -Dio.netty.machineId: 40:2c:f4:ff:fe:e9:16:17 (auto-detected)
+2017-01-27T13:29:02,843 | DEBUG | ThreadLocalRandom | main | -Dio.netty.initialSeedUniquifier: 0xf413d7acbba580f5
+2017-01-27T13:29:02,855 | DEBUG | ResourceLeakDetector | main | -Dio.netty.leakDetection.level: simple
+2017-01-27T13:29:02,855 | DEBUG | ResourceLeakDetector | main | -Dio.netty.leakDetection.maxRecords: 4
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.numHeapArenas: 8
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.numDirectArenas: 8
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.pageSize: 8192
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.maxOrder: 11
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.chunkSize: 16777216
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.tinyCacheSize: 512
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.smallCacheSize: 256
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.normalCacheSize: 64
+2017-01-27T13:29:02,865 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+2017-01-27T13:29:02,866 | DEBUG | PooledByteBufAllocator | main | -Dio.netty.allocator.cacheTrimInterval: 8192
+2017-01-27T13:29:02,874 | DEBUG | ByteBufUtil | main | -Dio.netty.allocator.type: pooled
+2017-01-27T13:29:02,874 | DEBUG | ByteBufUtil | main | -Dio.netty.threadLocalDirectBufferSize: 65536
+2017-01-27T13:29:02,874 | DEBUG | ByteBufUtil | main | -Dio.netty.maxThreadLocalCharBufferSize: 16384
+2017-01-27T13:29:02,897 | DEBUG | AbstractByteBuf | ioWorker#1 | -Dio.netty.buffer.bytebuf.checkAccessible: true
+2017-01-27T13:29:02,899 | DEBUG | ResourceLeakDetectorFactory | ioWorker#1 | Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@73f9c3c8
+2017-01-27T13:29:02,907 | DEBUG | JavassistTypeParameterMatcherGenerator | ioWorker#1 | Generated: io.netty.util.internal.__matchers__.io.netty.handler.codec.http.HttpObjectMatcher
+2017-01-27T13:29:02,910 | DEBUG | JavassistTypeParameterMatcherGenerator | ioWorker#1 | Generated: io.netty.util.internal.__matchers__.java.net.InetSocketAddressMatcher
+2017-01-27T13:29:02,922 | DEBUG | Recycler | main | -Dio.netty.recycler.maxCapacityPerThread: 32768
+2017-01-27T13:29:02,922 | DEBUG | Recycler | main | -Dio.netty.recycler.maxSharedCapacityFactor: 2
+2017-01-27T13:29:02,922 | DEBUG | Recycler | main | -Dio.netty.recycler.linkCapacity: 16
+2017-01-27T13:29:02,932 | DEBUG | Recycler | main | -Dio.netty.recycler.ratio: 8
+2017-01-27T13:29:09,976 | INFO | BasicLoadMonitor | main | <result id="2017.01.27.13.29.01.769" StartDate="2017-01-27 13:29:03" StartTimestamp="1485523743127" EndDate="2017-01-27 13:29:09" EndTimestamp="1485523749963" operation="CREATE" threads="1" RequestThreads="1" clients="1" error="0" runtime="6.836" filesize="1MB" tps="1462.8437682855472" tps_unit="Fileps" bw="1462.8437682855472" bw_unit="MBps" latency="231.30350194552528" latency_unit="us" latency_min="20" latency_loq="79" latency_med="102" latency_hiq="146" latency_max="19129" duration="567.818093385214" duration_unit="us" duration_min="320" duration_loq="370" duration_med="429" duration_hiq="531" duration_max="18688" />
+

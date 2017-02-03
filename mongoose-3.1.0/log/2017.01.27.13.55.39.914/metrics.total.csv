@@ -1,0 +1,2 @@
+DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]
+"2017-01-27T13:56:41,128",UPDATE,1,1,293461,864,14663613799,60.091,43.597611,4883.609858381455,5049.0277034614455,2.4402346106738114E8,2.51443014127266E8,160.6070038910506,75,101,117,151,15573,160.6070038910506,11,42,54,67,1898

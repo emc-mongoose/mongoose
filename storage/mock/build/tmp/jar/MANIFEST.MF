@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Implementation-Title: mongoose-storage-mock
+Implementation-Version: 3.1.0
+Class-Path: lib/commons-lang-2.6.jar lib/commons-collections4-4.1.jar 
+ lib/commons-codec-1.10.jar lib/metrics-core-3.1.2.jar lib/log4j-api-2
+ .7.jar lib/log4j-core-2.7.jar lib/jackson-databind-2.8.4.jar lib/nett
+ y-common-4.1.6.Final.jar lib/netty-buffer-4.1.6.Final.jar lib/netty-t
+ ransport-4.1.6.Final.jar lib/netty-handler-4.1.6.Final.jar lib/netty-
+ codec-http-4.1.6.Final.jar lib/netty-transport-native-epoll-4.1.6.Fin
+ al-linux-x86_64.jar lib/jmdns-3.5.1.jar lib/grpc-all-1.0.3.jar lib/di
+ sruptor-3.3.4.jar lib/log4j-jul-2.7.jar lib/javassist-3.21.0-GA.jar l
+ ib/jackson-annotations-2.8.0.jar lib/jackson-core-2.8.4.jar lib/netty
+ -resolver-4.1.6.Final.jar lib/netty-codec-4.1.6.Final.jar lib/grpc-ne
+ tty-1.0.3.jar lib/grpc-core-1.0.3.jar lib/grpc-stub-1.0.3.jar lib/grp
+ c-auth-1.0.3.jar lib/grpc-context-1.0.3.jar lib/grpc-protobuf-1.0.3.j
+ ar lib/grpc-protobuf-lite-1.0.3.jar lib/grpc-okhttp-1.0.3.jar lib/grp
+ c-protobuf-nano-1.0.3.jar lib/netty-handler-proxy-4.1.6.Final.jar lib
+ /netty-codec-http2-4.1.6.Final.jar lib/guava-19.0.jar lib/jsr305-3.0.
+ 0.jar lib/google-auth-library-credentials-0.4.0.jar lib/protobuf-java
+ -util-3.0.2.jar lib/protobuf-lite-3.0.1.jar lib/okio-1.6.0.jar lib/ok
+ http-2.5.0.jar lib/protobuf-javanano-3.0.0-alpha-5.jar lib/netty-code
+ c-socks-4.1.6.Final.jar lib/gson-2.3.jar lib/slf4j-api-1.7.16.jar lib
+ /protobuf-java-3.0.2.jar mongoose-common.jar mongoose-model.jar mongo
+ ose-storage-driver-net-base.jar mongoose-ui.jar log4j-iostreams-2.7.j
+ ar
+Main-Class: com.emc.mongoose.storage.mock.Main
+

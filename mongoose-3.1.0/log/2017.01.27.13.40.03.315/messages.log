@@ -1,0 +1,31 @@
+2017-01-27T13:40:04,013 | DEBUG | ParentJobBase | main | Load the subtree to the job "jsonScenario#2129144075"
+2017-01-27T13:40:04,015 | INFO | JsonScenario | main | Scenario start
+2017-01-27T13:40:04,016 | INFO | SequentialJob | main | jsonScenario#2129144075: execute 1 child jobs sequentially
+2017-01-27T13:40:04,016 | DEBUG | SequentialJob | main | jsonScenario#2129144075: child job "singleLoadJobContainer#111900554" start
+2017-01-27T13:40:04,016 | INFO | LoadJob | main | Run the load job "2017.01.27.13.40.03.315"
+2017-01-27T13:40:04,044 | INFO | BasicStorageDriverBuilder | main | Work via HTTP using "S3" cloud storage API
+2017-01-27T13:40:04,326 | INFO | LoadJob | main | Load drivers initialized
+2017-01-27T13:40:04,327 | INFO | LoadJob | main | Work on the mutable data items
+2017-01-27T13:40:04,369 | INFO | NetStorageDriverBase | main | Adjust input buffer size: 1MB
+2017-01-27T13:40:04,371 | INFO | LoadJob | main | Load generators initialized
+2017-01-27T13:40:04,397 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: await for the done condition at most for 9223372036854775[s]
+2017-01-27T13:40:04,449 | DEBUG | BasicMultiNodeConnPool | ioTasksDispatcher | New connection to "127.0.0.1:9020"
+2017-01-27T13:40:04,499 | DEBUG | BasicLoadGenerator | ReadDataItemsFromFile(items.csv) | com.emc.mongoose.load.generator.BasicLoadGenerator$GeneratorTask@479f0bde: end of items input @ the count 16626
+2017-01-27T13:40:04,499 | DEBUG | BasicLoadGenerator | ReadDataItemsFromFile(items.csv) | Produced 16626 items
+2017-01-27T13:40:34,734 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: await exit because all I/O tasks have been completed
+2017-01-27T13:40:34,734 | INFO | LoadJob | main | Load job "2017.01.27.13.40.03.315" done
+2017-01-27T13:40:34,738 | DEBUG | StorageDriverBase | shutdownWorker#2 | storage/driver/1/s3/1117519786: shut down
+2017-01-27T13:40:34,738 | DEBUG | BasicLoadMonitor | shutdownWorker#2 | 2017.01.27.13.40.03.315: storage driver "storage/driver/1/s3/1117519786" shut down
+2017-01-27T13:40:34,738 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: load monitor was shut down properly
+2017-01-27T13:40:34,739 | DEBUG | StorageDriverBase | interruptWorker#1 | storage/driver/1/s3/1117519786: interrupted
+2017-01-27T13:40:34,744 | DEBUG | NetStorageDriverBase | interruptWorker#1 | storage/driver/1/s3/1117519786: I/O workers stopped in time
+2017-01-27T13:40:34,744 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: storage drivers have been interrupted properly
+2017-01-27T13:40:34,744 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: interrupted the load monitor
+2017-01-27T13:40:34,749 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: the load generator "ReadDataItemsFromFile(items.csv)" has been closed
+2017-01-27T13:40:34,749 | DEBUG | StorageDriverBase | ioResultsGetAndApplyWorker#1 | storage/driver/1/s3/1117519786: closed
+2017-01-27T13:40:34,750 | DEBUG | BasicLoadMonitor | ioResultsGetAndApplyWorker#1 | 2017.01.27.13.40.03.315: the storage driver "storage/driver/1/s3/1117519786" has been closed
+2017-01-27T13:40:34,750 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: final I/O result have been got and processed properly
+2017-01-27T13:40:34,751 | DEBUG | BasicLoadMonitor | main | 2017.01.27.13.40.03.315: closed the load monitor
+2017-01-27T13:40:34,751 | DEBUG | SequentialJob | main | jsonScenario#2129144075: child job "singleLoadJobContainer#111900554" is done
+2017-01-27T13:40:34,751 | INFO | SequentialJob | main | jsonScenario#2129144075: finished the sequential execution of jsonScenario#2129144075 child jobs
+2017-01-27T13:40:34,751 | INFO | JsonScenario | main | Scenario end

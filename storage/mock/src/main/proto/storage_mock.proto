@@ -1,15 +1,14 @@
+syntax = "proto3";
+
 package com.emc.mongoose.storage.mock.proto;
 
 option java_package = "com.emc.mongoose.storage.mock.impl.proto";
 option java_outer_classname = "StorageMockProto";
+option java_multiple_files = true;
 
 service BasicStorageMockServer {
-    rpc  ManageRequest(ClientMessage) returns (ServerMessage) {}
+    rpc ManageRequest(ClientMessage) returns (ServerMessage) {}
 }
-
-//service Client {
-//    rpc ManageRequest(ServerMessage) returns (ClientMessage) {}
-//}
 
 message ClientMessage {
     required string containerName = 1 [default = ""];
