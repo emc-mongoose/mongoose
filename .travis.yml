@@ -1,5 +1,8 @@
 language: java
 sudo: required
+addons:
+  ulimit:
+    nofile: 1048576
 services:
 - docker
 jdk:
