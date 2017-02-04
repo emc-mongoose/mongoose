@@ -107,7 +107,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		runner.start();
 		TimeUnit.MINUTES.timedJoin(runner, 10);
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(15);
+		TimeUnit.SECONDS.sleep(30);
 	}
 	
 	@AfterClass
@@ -173,6 +173,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		m = LogPatterns.STD_OUT_LOAD_THRESHOLD_EXIT.matcher(STD_OUTPUT);
 		assertTrue(m.find());
 		final Date dtExit = FMT_DATE_ISO8601.parse(m.group("dateTime"));
-		assertTrue(dtEnter.before(dtExit));
+		assertTrue(dtEnter + "should be before " + dtExit, dtEnter.before(dtExit));
 	}
 }
