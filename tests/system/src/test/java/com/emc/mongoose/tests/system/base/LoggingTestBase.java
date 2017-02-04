@@ -145,8 +145,8 @@ public abstract class LoggingTestBase {
 		final int countRecords = metrics.size();
 		if(expectedLoadJobTime > 0) {
 			assertEquals(
-				Integer.toString(countRecords), expectedLoadJobTime,
-				metricsPeriodSec * countRecords, metricsPeriodSec
+				"Count of the metrics records: " + countRecords,
+				expectedLoadJobTime, metricsPeriodSec * countRecords, metricsPeriodSec
 			);
 		}
 
@@ -171,6 +171,7 @@ public abstract class LoggingTestBase {
 			nextDateTimeStamp = FMT_DATE_ISO8601.parse(nextRecord.get("DateTimeISO8601"));
 			if(lastTimeStamp != null) {
 				assertEquals(
+					"Next metrics record is expected to be in " + metricsPeriodSec,
 					metricsPeriodSec, (nextDateTimeStamp.getTime() - lastTimeStamp.getTime()) / K,
 					((double) metricsPeriodSec) / 10
 				);
@@ -179,9 +180,12 @@ public abstract class LoggingTestBase {
 			ioTypeStr = nextRecord.get("TypeLoad").toUpperCase();
 			assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
-			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
+			assertEquals(
+				"Expected concurrency level: " + concurrencyLevel, expectedConcurrency,
+				concurrencyLevel
+			);
 			driverCount = Integer.parseInt(nextRecord.get("DriverCount"));
-			assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
+			assertEquals("Expected driver count: " + driverCount, expectedDriverCount, driverCount);
 			totalBytes = SizeInBytes.toFixedSize(nextRecord.get("Size"));
 			if(prevTotalBytes == Long.MIN_VALUE) {
 				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
@@ -204,8 +208,8 @@ public abstract class LoggingTestBase {
 			if(countSucc > 0) {
 				avgItemSize = totalBytes / countSucc;
 				assertEquals(
-					Long.toString(avgItemSize), expectedItemDataSize.getAvg(), avgItemSize,
-					expectedItemDataSize.getAvg() / 100
+					"Actual average item size: " + avgItemSize, expectedItemDataSize.getAvg(),
+					avgItemSize, expectedItemDataSize.getAvg() / 100
 				);
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
