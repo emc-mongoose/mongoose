@@ -229,7 +229,10 @@ public abstract class LoggingTestBase {
 			}
 			final double
 				effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
-			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
+			assertTrue(
+				"Efficiency estimate: " + effEstimate + " = " + durationSum + " / (" + concurrencyLevel + " * " + driverCount + " * " + jobDuration + ")",
+				effEstimate <= 1 && effEstimate >= 0
+			);
 			prevDurationSum = durationSum;
 			tpAvg = Double.parseDouble(nextRecord.get("TPAvg[op/s]"));
 			tpLast = Double.parseDouble(nextRecord.get("TPLast[op/s]"));
