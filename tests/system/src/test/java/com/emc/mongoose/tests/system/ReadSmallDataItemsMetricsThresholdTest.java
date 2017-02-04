@@ -107,7 +107,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		runner.start();
 		TimeUnit.MINUTES.timedJoin(runner, 10);
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(60);
 	}
 	
 	@AfterClass
