@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.Throttle;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -17,14 +18,16 @@ import java.util.Set;
 public final class WeightThrottle<K>
 implements Throttle<K> {
 
-	private final Set<K> weightKeys; // just to not to calculate every time
-	private final Object2IntMap<K> weightMap; // initial weight map (constant)
+	// just to not to calculate every time
+	private final Set<K> weightKeys = new HashSet<>();
+	// initial weight map (constant)
+	private final Object2IntMap<K> weightMap = new Object2IntOpenHashMap<>();
 	private final Object2IntMap<K> remainingWeightMap = new Object2IntOpenHashMap<>();
 
 	public WeightThrottle(final Object2IntMap<K> weightMap)
 	throws IllegalArgumentException {
-		this.weightKeys = weightMap.keySet();
-		this.weightMap = weightMap;
+		this.weightKeys.addAll(weightMap.keySet());
+		this.weightMap.putAll(weightMap);
 		resetRemainingWeights();
 	}
 
@@ -41,9 +44,7 @@ implements Throttle<K> {
 				return;
 			}
 		}
-		for(final K key : weightKeys) {
-			remainingWeightMap.put(key, weightMap.getInt(key));
-		}
+		resetRemainingWeights();
 	}
 
 	@Override
@@ -52,7 +53,7 @@ implements Throttle<K> {
 			ensureRemainingWeights();
 			final int remainingWeight = remainingWeightMap.getInt(key);
 			if(remainingWeight > 0) {
-				remainingWeightMap.put(key ,remainingWeight - 1);
+				remainingWeightMap.put(key, remainingWeight - 1);
 				return true;
 			} else {
 				return false;

@@ -372,7 +372,7 @@ implements LoadMonitor<R> {
 		int m = n; // count of complete whole tasks
 
 		// I/O trace logging
-		if(LOG.isDebugEnabled(Markers.IO_TRACE)) {
+		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
 			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n));
 		}
 

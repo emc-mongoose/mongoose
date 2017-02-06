@@ -80,7 +80,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			FINISHED_IN_TIME = false;
 		}
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(30);
+		TimeUnit.SECONDS.sleep(15);
 	}
 
 	@AfterClass public static void tearDownClass()
@@ -151,7 +151,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
-			final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br);
+			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);
 			}

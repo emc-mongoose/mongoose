@@ -247,6 +247,27 @@ implements StorageDriver<I, O, R> {
 		completedTaskCount.increment();
 
 		try {
+
+			final R ioResult = ioTask.getResult(
+				HOST_ADDR,
+				useStorageDriverResult,
+				useStorageNodeResult,
+				useItemInfoResult,
+				useIoTypeCodeResult,
+				useStatusCodeResult,
+				useReqTimeStartResult,
+				useDurationResult,
+				useRespLatencyResult,
+				useDataLatencyResult,
+				useTransferSizeResult
+			);
+			if(!ioResultsQueue.offer(ioResult, 1, TimeUnit.MILLISECONDS)) {
+				LOG.warn(
+					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
+					toString()
+				);
+			}
+
 			if(isCircular) {
 				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
 					if(inTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
@@ -290,32 +311,6 @@ implements StorageDriver<I, O, R> {
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted the completed I/O task processing");
-		}
-
-		try {
-			final R ioResult = ioTask.getResult(
-				HOST_ADDR,
-				useStorageDriverResult,
-				useStorageNodeResult,
-				useItemInfoResult,
-				useIoTypeCodeResult,
-				useStatusCodeResult,
-				useReqTimeStartResult,
-				useDurationResult,
-				useRespLatencyResult,
-				useDataLatencyResult,
-				useTransferSizeResult
-			);
-			if(!ioResultsQueue.offer(ioResult, 1, TimeUnit.MILLISECONDS)) {
-				LOG.warn(
-					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
-					toString()
-				);
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Interrupting the I/O task put to the output buffer"
-			);
 		}
 	}
 	

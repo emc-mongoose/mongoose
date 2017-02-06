@@ -3,6 +3,7 @@ package com.emc.mongoose.tests.system.base;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -341,7 +342,10 @@ public abstract class LoggingTestBase {
 	) throws Exception {
 		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
-		assertTrue(actualStatusCode == CANCELLED.ordinal() || actualStatusCode == SUCC.ordinal());
+		assertTrue(
+			"Actual status code is " + IoTask.Status.values()[actualStatusCode],
+			actualStatusCode == CANCELLED.ordinal() || actualStatusCode == SUCC.ordinal()
+		);
 		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
 		final String latencyStr = ioTraceRecord.get("RespLatency[us]");
 		if(latencyStr != null && !latencyStr.isEmpty()) {
