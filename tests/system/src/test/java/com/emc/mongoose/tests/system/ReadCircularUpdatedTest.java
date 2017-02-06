@@ -50,7 +50,7 @@ import static org.junit.Assert.assertTrue;
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
 public class ReadCircularUpdatedTest
-	extends HttpStorageDistributedScenarioTestBase {
+extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_SCENARIO, "circular", "read-updated.json"

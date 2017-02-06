@@ -164,11 +164,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		String itemPath, itemId;
 		long itemOffset;
 		long itemSize;
-		String modLayerAndMask[];
-		String rangesMask;
-		char rangesMaskChars[];
-		int layer;
-		BitSet mask;
 		for(final CSVRecord itemRec : items) {
 			itemPath = itemRec.get(0);
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
@@ -179,6 +174,6 @@ extends HttpStorageDistributedScenarioTestBase {
 			assertTrue(EXPECTED_FINAL_SIZE.getMin() <= itemSize && itemSize <= EXPECTED_FINAL_SIZE.getMax());
 			assertEquals("0/0", itemRec.get(3));
 		}
-		assertEquals(items.size(), freq.getUniqueCount());
+		assertEquals(EXPECTED_COUNT, freq.getUniqueCount());
 	}
 }
