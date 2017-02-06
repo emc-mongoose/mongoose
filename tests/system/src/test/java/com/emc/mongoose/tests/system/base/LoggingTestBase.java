@@ -210,7 +210,7 @@ public abstract class LoggingTestBase {
 				avgItemSize = totalBytes / countSucc;
 				assertEquals(
 					"Actual average item size: " + avgItemSize, expectedItemDataSize.getAvg(),
-					avgItemSize, expectedItemDataSize.getAvg() / 100
+					avgItemSize, expectedItemDataSize.getAvg() / 5
 				);
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
@@ -296,7 +296,7 @@ public abstract class LoggingTestBase {
 		final long avgItemSize = totalBytes / countSucc;
 		assertEquals(
 			Long.toString(avgItemSize), expectedItemDataSize.getAvg(), avgItemSize,
-			expectedItemDataSize.getAvg() / 100
+			expectedItemDataSize.getAvg() / 5
 		);
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
 		if(expectedLoadJobTime > 0) {
