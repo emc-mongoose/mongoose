@@ -53,8 +53,7 @@ implements Output<R> {
 	@Override
 	public final Input<R> getInput()
 	throws IOException {
-		assert false;
-		return null;
+		throw new AssertionError();
 	}
 	
 	@Override

@@ -41,7 +41,7 @@ public class ConfigParserTest {
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("3.1.0", "version"));
+		assertThat(config.getVersion(), equalTo("3.2.0", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertThat(netConfig, notNullValue());
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));

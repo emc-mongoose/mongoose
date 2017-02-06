@@ -122,8 +122,15 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 
 		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
+			final List<String> fixedRangesConfig = rangesConfig.getFixed();
+			final List<ByteRange> fixedRanges = new ArrayList<>();
+			if(fixedRangesConfig != null) {
+				for(final String fixedRangeConfig : fixedRangesConfig) {
+					fixedRanges.add(new ByteRange(fixedRangeConfig));
+				}
+			}
 			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicMutableDataIoTaskBuilder()
-				.setFixedRanges(ByteRange.parseList(rangesConfig.getFixed()))
+				.setFixedRanges(fixedRanges)
 				.setRandomRangesCount(rangesConfig.getRandom())
 				.setSizeThreshold(rangesConfig.getThreshold().get());
 		} else if(ItemType.PATH.equals(itemType)){

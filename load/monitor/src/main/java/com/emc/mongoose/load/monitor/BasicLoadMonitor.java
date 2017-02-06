@@ -763,7 +763,7 @@ implements LoadMonitor<R> {
 				);
 			}
 		} catch(final InterruptedException e) {
-			assert false;
+			throw new AssertionError(e);
 		}
 		LOG.debug(Markers.MSG, "{}: interrupted the load monitor", getName());
 	}

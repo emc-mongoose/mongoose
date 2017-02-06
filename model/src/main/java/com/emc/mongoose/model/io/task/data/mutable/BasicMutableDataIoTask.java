@@ -1,6 +1,8 @@
 package com.emc.mongoose.model.io.task.data.mutable;
 
 import com.emc.mongoose.common.api.ByteRange;
+
+import static com.emc.mongoose.model.io.IoType.UPDATE;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 
 import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
@@ -25,7 +27,7 @@ public class BasicMutableDataIoTask<I extends MutableDataItem, R extends DataIoR
 extends BasicDataIoTask<I, R>
 implements MutableDataIoTask<I, R> {
 	
-	private final BitSet[] updRangesMaskPair = new BitSet[] {
+	private final BitSet[] markedRangesMaskPair = new BitSet[] {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
 
@@ -46,22 +48,20 @@ implements MutableDataIoTask<I, R> {
 	@Override
 	public final void reset() {
 		super.reset();
-		updRangesMaskPair[0].clear();
-		updRangesMaskPair[1].clear();
-		if(IoType.UPDATE.equals(ioType)) {
-			if(randomRangesCount > 0) {
-				scheduleRandomRangesUpdate(randomRangesCount);
-			} else if(fixedRanges == null || fixedRanges.isEmpty()){
-				throw new AssertionError("Range update is not configured");
-			}
-			contentSize = getUpdatingRangesSize();
+		markedRangesMaskPair[0].clear();
+		markedRangesMaskPair[1].clear();
+		if(randomRangesCount > 0) {
+			markRandomRanges(randomRangesCount);
+		} else if(UPDATE.equals(ioType) && (fixedRanges == null || fixedRanges.isEmpty())) {
+			throw new AssertionError("Range update is not configured correctly");
 		}
+		contentSize = getMarkedRangesSize();
 		currRange = null;
 		currRangeIdx = 0;
 	}
 	
 	@Override
-	public final void scheduleRandomRangesUpdate(final int count) {
+	public final void markRandomRanges(final int count) {
 		try {
 			final int countRangesTotal = getRangeCount(item.size());
 			if(count < 1 || count > countRangesTotal) {
@@ -70,35 +70,35 @@ implements MutableDataIoTask<I, R> {
 					" for the item size"
 				);
 			}
-			for(int i = 0; i < count; i++) {
-				scheduleRandomUpdate(countRangesTotal);
+			for(int i = 0; i < count; i ++) {
+				markRandomRangesActually(countRangesTotal);
 			}
 		} catch(final IOException e) {
 			throw new AssertionError(e);
 		}
 	}
 	
-	private void scheduleRandomUpdate(final int countRangesTotal) {
+	private void markRandomRangesActually(final int countRangesTotal) {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
-		if(countRangesTotal > item.getUpdatedRangesCount() + updRangesMaskPair[0].cardinality()) {
+		if(countRangesTotal > item.getUpdatedRangesCount() + markedRangesMaskPair[0].cardinality()) {
 			// current layer has not updated yet ranges
-			for(int i = 0; i < countRangesTotal; i++) {
+			for(int i = 0; i < countRangesTotal; i ++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;
 				if(!item.isRangeUpdated(nextCellPos)) {
-					if(!updRangesMaskPair[0].get(nextCellPos)) {
-						updRangesMaskPair[0].set(nextCellPos);
+					if(!markedRangesMaskPair[0].get(nextCellPos)) {
+						markedRangesMaskPair[0].set(nextCellPos);
 						break;
 					}
 				}
 			}
 		} else {
 			// update the next layer ranges
-			for(int i = 0; i < countRangesTotal; i++) {
+			for(int i = 0; i < countRangesTotal; i ++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;
-				if(!updRangesMaskPair[0].get(nextCellPos)) {
-					if(!updRangesMaskPair[1].get(nextCellPos)) {
-						updRangesMaskPair[1].set(nextCellPos);
+				if(!markedRangesMaskPair[0].get(nextCellPos)) {
+					if(!markedRangesMaskPair[1].get(nextCellPos)) {
+						markedRangesMaskPair[1].set(nextCellPos);
 						break;
 					}
 				}
@@ -107,21 +107,12 @@ implements MutableDataIoTask<I, R> {
 	}
 	
 	@Override
-	public final void scheduleFixedRangesUpdate(final List<ByteRange> ranges) {
-		for(final ByteRange nextByteRange : ranges) {
-			if(-1 == nextByteRange.getBeg()) {
-
-			}
-		}
-	}
-	
-	@Override
-	public final long getUpdatingRangesSize() {
+	public final long getMarkedRangesSize() {
 		long sumSize = 0;
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
 			try {
 				for(int i = 0; i < getRangeCount(item.size()); i++) {
-					if(updRangesMaskPair[0].get(i) || updRangesMaskPair[1].get(i)) {
+					if(markedRangesMaskPair[0].get(i) || markedRangesMaskPair[1].get(i)) {
 						sumSize += item.getRangeSize(i);
 					}
 				}
@@ -129,20 +120,25 @@ implements MutableDataIoTask<I, R> {
 				throw new AssertionError(e);
 			}
 		} else {
-			long nextBeg, nextEnd;
+			long nextBeg, nextEnd, nextSize;
 			for(final ByteRange nextByteRange : fixedRanges) {
 				nextBeg = nextByteRange.getBeg();
 				nextEnd = nextByteRange.getEnd();
-				if(nextBeg == -1) {
-					sumSize += nextEnd;
-				} else if(nextEnd == -1){
-					try {
-						sumSize += item.size() - nextBeg;
-					} catch(final IOException e) {
-						throw new AssertionError(e);
+				nextSize = nextByteRange.getSize();
+				if(nextSize == -1) {
+					if(nextBeg == -1) {
+						sumSize += nextEnd;
+					} else if(nextEnd == -1) {
+						try {
+							sumSize += item.size() - nextBeg;
+						} catch(final IOException e) {
+							throw new AssertionError(e);
+						}
+					} else {
+						sumSize += nextEnd - nextBeg + 1;
 					}
 				} else {
-					sumSize += nextEnd - nextBeg + 1;
+					sumSize += nextSize;
 				}
 			}
 		}
@@ -182,12 +178,12 @@ implements MutableDataIoTask<I, R> {
 	public final DataItem getCurrRangeUpdate() {
 		if(currRange == null) {
 			final int layerIdx = item.layer();
-			if(updRangesMaskPair[0].get(currRangeIdx)) {
+			if(markedRangesMaskPair[0].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
 				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = item.slice(currRangeOffset, currRangeSize);
 				currRange.layer(layerIdx + 1);
-			} else if(updRangesMaskPair[1].get(currRangeIdx)) {
+			} else if(markedRangesMaskPair[1].get(currRangeIdx)) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
 				final long currRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = item.slice(currRangeOffset, currRangeSize);
@@ -199,9 +195,8 @@ implements MutableDataIoTask<I, R> {
 		return currRange;
 	}
 
-	@Override
-	public final BitSet[] getUpdRangesMaskPair() {
-		return updRangesMaskPair;
+	public final BitSet[] getMarkedRangesMaskPair() {
+		return markedRangesMaskPair;
 	}
 	
 	@Override
@@ -209,10 +204,10 @@ implements MutableDataIoTask<I, R> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(
-			updRangesMaskPair[0].isEmpty() ? 0 : updRangesMaskPair[0].toLongArray()[0]
+			markedRangesMaskPair[0].isEmpty() ? 0 : markedRangesMaskPair[0].toLongArray()[0]
 		);
 		out.writeLong(
-			updRangesMaskPair[1].isEmpty() ? 0 : updRangesMaskPair[1].toLongArray()[0]
+			markedRangesMaskPair[1].isEmpty() ? 0 : markedRangesMaskPair[1].toLongArray()[0]
 		);
 	}
 	
@@ -220,7 +215,7 @@ implements MutableDataIoTask<I, R> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		updRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
-		updRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
+		markedRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
+		markedRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
 	}
 }

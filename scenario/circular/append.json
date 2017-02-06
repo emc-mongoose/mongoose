@@ -32,7 +32,9 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"fixed" : "-16KB"
+							"fixed" : [
+								"-16KB-"
+							]
 						}
 					},
 					"input" : {

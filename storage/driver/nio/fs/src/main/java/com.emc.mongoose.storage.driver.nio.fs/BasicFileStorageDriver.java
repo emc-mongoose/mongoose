@@ -381,7 +381,7 @@ implements FileStorageDriver<I, O, R> {
 	) throws IOException {
 		
 		long countBytesDone = ioTask.getCountBytesDone();
-		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
+		final long updatingRangesSize = ioTask.getMarkedRangesSize();
 		
 		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
 			
@@ -411,7 +411,7 @@ implements FileStorageDriver<I, O, R> {
 			}
 		} else {
 			finishIoTask(ioTask);
-			fileItem.commitUpdatedRanges(ioTask.getUpdRangesMaskPair());
+			fileItem.commitUpdatedRanges(ioTask.getMarkedRangesMaskPair());
 		}
 	}
 
@@ -422,7 +422,7 @@ implements FileStorageDriver<I, O, R> {
 
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long baseItemSize = fileItem.size();
-		final long updatingRangesSize = ioTask.getUpdatingRangesSize();
+		final long updatingRangesSize = ioTask.getMarkedRangesSize();
 
 		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
 
@@ -431,27 +431,33 @@ implements FileStorageDriver<I, O, R> {
 			int currRangeIdx = ioTask.getCurrRangeIdx();
 			long rangeBeg;
 			long rangeEnd;
+			long rangeSize;
 
 			if(currRangeIdx < byteRanges.size()) {
 				byteRange = byteRanges.get(currRangeIdx);
 				rangeBeg = byteRange.getBeg();
 				rangeEnd = byteRange.getEnd();
-				if(rangeBeg == -1) {
-					rangeBeg = baseItemSize;
-					updatingRange = fileItem.slice(rangeBeg, rangeEnd);
-				} else if(rangeEnd == -1) {
-					updatingRange = fileItem.slice(rangeBeg, baseItemSize - rangeBeg);
+				rangeSize = byteRange.getSize();
+				if(rangeSize == -1) {
+					if(rangeBeg == -1) {
+						// last "rangeEnd" bytes
+						rangeBeg = baseItemSize - rangeEnd;
+						rangeSize = rangeEnd;
+					} else if(rangeEnd == -1) {
+						// start @ offset equal to "rangeBeg"
+						rangeSize = baseItemSize - rangeBeg;
+					} else {
+						rangeSize = rangeEnd - rangeBeg + 1;
+					}
 				} else {
-					updatingRange = fileItem.slice(rangeBeg, rangeEnd - rangeBeg + 1);
+					// append
+					rangeBeg = baseItemSize;
 				}
-				final long updatingRangeSize = updatingRange.size();
-
+				updatingRange = fileItem.slice(rangeBeg, rangeSize);
 				dstChannel.position(rangeBeg + countBytesDone);
-				countBytesDone += updatingRange.write(
-					dstChannel, updatingRangeSize - countBytesDone
-				);
+				countBytesDone += updatingRange.write(dstChannel, rangeSize - countBytesDone);
 
-				if(countBytesDone == updatingRangeSize) {
+				if(countBytesDone == rangeSize) {
 					ioTask.setCurrRangeIdx(currRangeIdx + 1);
 					ioTask.setCountBytesDone(0);
 				}

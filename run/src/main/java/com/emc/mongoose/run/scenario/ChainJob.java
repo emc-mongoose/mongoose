@@ -301,8 +301,7 @@ extends JobBase {
 					LOG.debug(Markers.MSG, "Load job interrupted");
 					break;
 				} catch(final RemoteException e) {
-					assert false;
-					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+					throw new AssertionError(e);
 				}
 				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
 			} else {

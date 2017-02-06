@@ -1,0 +1,49 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "10MB"
+			},
+			"output" : {
+				"path" : "linear-read-partial"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "linear-read-partial.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"fixed" : "2MB-"
+						}
+					},
+					"input" : {
+						"file" : "linear-read-partial.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+
+

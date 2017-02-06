@@ -324,7 +324,7 @@ implements Serializable {
 				public static final String KEY_RANDOM = "random";
 				public static final String KEY_THRESHOLD = "threshold";
 
-				@JsonProperty(KEY_FIXED) private String fixed;
+				@JsonProperty(KEY_FIXED) private List<String> fixed;
 
 				@JsonProperty(KEY_RANDOM) private int random;
 
@@ -337,16 +337,16 @@ implements Serializable {
 				}
 
 				public RangesConfig(final RangesConfig other) {
-					this.fixed = other.getFixed();
+					this.fixed = new ArrayList<>(other.getFixed());
 					this.random = other.getRandom();
 					this.threshold = new SizeInBytes(other.getThreshold());
 				}
 
-				public final String getFixed() {
+				public final List<String> getFixed() {
 					return fixed;
 				}
 
-				public final void setFixed(final String fixed) {
+				public final void setFixed(final List<String> fixed) {
 					this.fixed = fixed;
 				}
 

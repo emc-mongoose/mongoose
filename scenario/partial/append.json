@@ -31,7 +31,9 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"fixed" : "-8KB"
+							"fixed" : [
+								"-8KB-"
+							]
 						}
 					},
 					"input" : {

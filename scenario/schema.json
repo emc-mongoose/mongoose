@@ -62,8 +62,11 @@
 													"type" : "null"
 												},
 												{
-													"type" : "string",
-													"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+													"type" : "array",
+													"items" : {
+														"type" : "string",
+														"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+													}
 												},
 												{
 													"type" : "string",
