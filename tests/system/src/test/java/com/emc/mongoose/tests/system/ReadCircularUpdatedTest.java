@@ -43,7 +43,7 @@ import static org.junit.Assert.assertTrue;
  * 6.2.5. Limit Load Job by Time
  * 8.2.1. Create New Items
  * 8.3.2. Read With Enabled Validation
- * 8.4.2. Random Ranges Update
+ * 8.4.2.1. Single Random Range Update
  * 9.3. Custom Scenario File
  * 9.4.1. Override Default Configuration in the Scenario
  * 9.5.5. Sequential Job

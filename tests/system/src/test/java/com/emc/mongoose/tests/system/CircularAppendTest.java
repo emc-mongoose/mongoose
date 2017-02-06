@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  * 5. Circularity
  * 6.2.2. Limit Load Job by Processed Item Count
  * 8.2.1. Create New Items
- * 8.4.3.2. Append
+ * 8.4.3.4. Append
  * 9.3. Custom Scenario File
  * 9.4.1. Override Default Configuration in the Scenario
  * 9.5.5. Sequential Job
