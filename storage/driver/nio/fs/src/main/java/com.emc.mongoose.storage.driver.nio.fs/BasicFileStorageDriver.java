@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
-
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
@@ -35,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.rmi.RemoteException;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -192,19 +192,47 @@ implements FileStorageDriver<I, O, R> {
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(srcChannel == null) {
 						ioTask.setStatus(Status.FAIL_IO);
-					} else if(verifyFlag) {
-						try {
-							invokeReadAndVerify(item, ioTask, srcChannel);
-						} catch(final DataSizeException e) {
-							final long countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-							LOG.warn(
-								Markers.MSG, "{}: content size mismatch, expected: {}, actual: {}",
-								item.getName(), item.size(), countBytesDone
-							);
-							ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
-						}
 					} else {
-						invokeRead(item, ioTask, srcChannel);
+						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
+						if(verifyFlag) {
+							try {
+								if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+									if(ioTask.hasMarkedRanges()) {
+										invokeReadAndVerifyRandomRanges(
+											item, ioTask, srcChannel,
+											ioTask.getMarkedRangesMaskPair()
+										);
+									} else {
+										invokeReadAndVerify(item, ioTask, srcChannel);
+									}
+								} else {
+									invokeReadAndVerifyFixedRanges(
+										item, ioTask, srcChannel, fixedByteRanges
+									);
+								}
+							} catch(final DataSizeException e) {
+								final long
+									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
+								LOG.warn(
+									Markers.MSG,
+									"{}: content size mismatch, expected: {}, actual: {}",
+									item.getName(), item.size(), countBytesDone
+								);
+								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
+							}
+						} else {
+							if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+								if(ioTask.hasMarkedRanges()) {
+									invokeReadRandomRanges(
+										item, ioTask, srcChannel, ioTask.getMarkedRangesMaskPair()
+									);
+								} else {
+									invokeRead(item, ioTask, srcChannel);
+								}
+							} else {
+								invokeReadFixedRanges(item, ioTask, srcChannel, fixedByteRanges);
+							}
+						}
 					}
 					break;
 				
@@ -215,7 +243,11 @@ implements FileStorageDriver<I, O, R> {
 					} else {
 						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
 						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-							invokeRandomRangesUpdate(item, ioTask, dstChannel);
+							if(ioTask.hasMarkedRanges()) {
+								invokeRandomRangesUpdate(item, ioTask, dstChannel);
+							} else {
+								throw new AssertionError("Not implemented");
+							}
 						} else {
 							invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedByteRanges);
 						}
@@ -358,6 +390,100 @@ implements FileStorageDriver<I, O, R> {
 			finishIoTask(ioTask);
 		}
 	}
+
+	private void invokeReadAndVerifyRandomRanges(
+		final I fileItem, final O ioTask, final FileChannel srcChannel,
+		final BitSet maskRangesPair[]
+	) throws DataSizeException, IOException {
+
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long rangesSizeSum = ioTask.getMarkedRangesSize();
+
+		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
+
+			DataItem range2read;
+			int currRangeIdx;
+			while(true) {
+				currRangeIdx = ioTask.getCurrRangeIdx();
+				if(currRangeIdx < getRangeCount(fileItem.size())) {
+					if(maskRangesPair[0].get(currRangeIdx) || maskRangesPair[1].get(currRangeIdx)) {
+						range2read = ioTask.getCurrRange();
+						break;
+					} else {
+						ioTask.setCurrRangeIdx(++ currRangeIdx);
+					}
+				} else {
+					ioTask.setCountBytesDone(rangesSizeSum);
+					return;
+				}
+			}
+
+			final long currRangeSize = range2read.size();
+			srcChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
+			countBytesDone += range2read.readAndVerify(
+				srcChannel, ThreadLocalByteBuffer.get(currRangeSize - countBytesDone)
+			);
+			if(countBytesDone == currRangeSize) {
+				ioTask.setCurrRangeIdx(currRangeIdx + 1);
+				ioTask.setCountBytesDone(0);
+			}
+		} else {
+			finishIoTask(ioTask);
+		}
+	}
+
+	private void invokeReadAndVerifyFixedRanges(
+		final I fileItem, final O ioTask, final FileChannel srcChannel,
+		final List<ByteRange> byteRanges
+	) throws DataSizeException, IOException {
+
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long baseItemSize = fileItem.size();
+		final long rangesSizeSum = ioTask.getMarkedRangesSize();
+
+		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
+
+			ByteRange byteRange;
+			DataItem currRange;
+			int currRangeIdx = ioTask.getCurrRangeIdx();
+			long rangeBeg;
+			long rangeEnd;
+			long rangeSize;
+
+			if(currRangeIdx < byteRanges.size()) {
+				byteRange = byteRanges.get(currRangeIdx);
+				rangeBeg = byteRange.getBeg();
+				rangeEnd = byteRange.getEnd();
+				if(rangeBeg == -1) {
+					// last "rangeEnd" bytes
+					rangeBeg = baseItemSize - rangeEnd;
+					rangeSize = rangeEnd;
+				} else if(rangeEnd == -1) {
+					// start @ offset equal to "rangeBeg"
+					rangeSize = baseItemSize - rangeBeg;
+				} else {
+					rangeSize = rangeEnd - rangeBeg + 1;
+				}
+				currRange = fileItem.slice(rangeBeg, rangeSize);
+				currRange.position(countBytesDone);
+				srcChannel.position(rangeBeg + countBytesDone);
+				countBytesDone += currRange.readAndVerify(
+					srcChannel, ThreadLocalByteBuffer.get(rangeSize - countBytesDone)
+				);
+
+				if(countBytesDone == rangeSize) {
+					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+					ioTask.setCountBytesDone(0);
+				} else {
+					ioTask.setCountBytesDone(countBytesDone);
+				}
+			} else {
+				ioTask.setCountBytesDone(rangesSizeSum);
+			}
+		} else {
+			finishIoTask(ioTask);
+		}
+	}
 	
 	private void invokeRead(final I fileItem, final O ioTask, final FileChannel srcChannel)
 	throws IOException {
@@ -374,6 +500,20 @@ implements FileStorageDriver<I, O, R> {
 		} else {
 			finishIoTask(ioTask);
 		}
+	}
+
+	private void invokeReadRandomRanges(
+		final I fileItem, final O ioTask, final FileChannel srcChannel,
+		final BitSet maskRangesPair[]
+	) throws IOException {
+
+	}
+
+	private void invokeReadFixedRanges(
+		final I fileItem, final O ioTask, final FileChannel srcChannel,
+		final List<ByteRange> byteRanges
+	) throws IOException {
+
 	}
 
 	private void invokeRandomRangesUpdate(
@@ -454,13 +594,17 @@ implements FileStorageDriver<I, O, R> {
 					rangeBeg = baseItemSize;
 				}
 				updatingRange = fileItem.slice(rangeBeg, rangeSize);
+				updatingRange.position(countBytesDone);
 				dstChannel.position(rangeBeg + countBytesDone);
 				countBytesDone += updatingRange.write(dstChannel, rangeSize - countBytesDone);
 
 				if(countBytesDone == rangeSize) {
 					ioTask.setCurrRangeIdx(currRangeIdx + 1);
 					ioTask.setCountBytesDone(0);
+				} else {
+					ioTask.setCountBytesDone(countBytesDone);
 				}
+
 			} else {
 				ioTask.setCountBytesDone(updatingRangesSize);
 			}

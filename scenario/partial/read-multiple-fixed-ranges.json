@@ -4,9 +4,6 @@
 		"item" : {
 			"data" : {
 				"size" : "256KB"
-			},
-			"output" : {
-				"path" : "linear-read-partial"
 			}
 		},
 		"load" : {
@@ -21,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-multiple-fixed-ranges.csv"
 					}
 				}
 			}
@@ -41,7 +38,7 @@
 						}
 					},
 					"input" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-multiple-fixed-ranges.csv"
 					}
 				},
 				"load" : {

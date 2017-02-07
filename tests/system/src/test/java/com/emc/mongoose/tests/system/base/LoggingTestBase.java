@@ -294,10 +294,15 @@ public abstract class LoggingTestBase {
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		assertTrue(Long.toString(countFail), countFail < 1);
 		final long avgItemSize = totalBytes / countSucc;
-		assertEquals(
-			Long.toString(avgItemSize), expectedItemDataSize.getAvg(), avgItemSize,
-			expectedItemDataSize.getAvg() / 5
-		);
+		if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
+			assertTrue(avgItemSize >= expectedItemDataSize.getMin());
+			assertTrue(avgItemSize <= expectedItemDataSize.getMax());
+		} else {
+			assertEquals(
+				Long.toString(avgItemSize), expectedItemDataSize.get(), avgItemSize,
+				expectedItemDataSize.getAvg() / 100
+			);
+		}
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
 		if(expectedLoadJobTime > 0) {
 			assertEquals(Double.toString(jobDuration), expectedLoadJobTime, jobDuration, 2);
@@ -352,10 +357,17 @@ public abstract class LoggingTestBase {
 			assertTrue(duration >= Long.parseLong(latencyStr));
 		}
 		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
-		assertTrue(
-			"Expected the size " + sizeExpected.toString() + ", but got " + size,
-			sizeExpected.getMin() <= size && size <= sizeExpected.getMax()
-		);
+		if(sizeExpected.getMin() != sizeExpected.getMax()) {
+			assertTrue(
+				"Expected the size " + sizeExpected.toString() + ", but got " + size,
+				sizeExpected.getMin() <= size && size <= sizeExpected.getMax()
+			);
+		} else {
+			assertEquals(
+				"Expected the size " + sizeExpected.toString() + " but got " + size,
+				sizeExpected.get(), size, sizeExpected.get() / 100
+			);
+		}
 	}
 	
 	protected static void testMetricsStdout(

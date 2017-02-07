@@ -3,10 +3,7 @@
 	"config" : {
 		"item" : {
 			"data" : {
-				"size" : "100KB"
-			},
-			"output" : {
-				"path" : "linear-read-partial"
+				"size" : "1KB"
 			}
 		},
 		"load" : {
@@ -21,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-multiple-random-ranges.csv"
 					}
 				}
 			}
@@ -31,11 +28,11 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"random" : 10
+							"random" : 7
 						}
 					},
 					"input" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-multiple-random-ranges.csv"
 					}
 				},
 				"load" : {

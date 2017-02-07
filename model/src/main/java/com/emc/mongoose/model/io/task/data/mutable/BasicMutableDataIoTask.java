@@ -105,6 +105,11 @@ implements MutableDataIoTask<I, R> {
 			}
 		}
 	}
+
+	@Override
+	public final boolean hasMarkedRanges() {
+		return !markedRangesMaskPair[0].isEmpty() || !markedRangesMaskPair[1].isEmpty();
+	}
 	
 	@Override
 	public final long getMarkedRangesSize() {

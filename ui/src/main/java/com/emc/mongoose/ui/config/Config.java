@@ -337,7 +337,8 @@ implements Serializable {
 				}
 
 				public RangesConfig(final RangesConfig other) {
-					this.fixed = new ArrayList<>(other.getFixed());
+					final List<String> otherRanges = other.getFixed();
+					this.fixed = otherRanges == null ? null : new ArrayList<>(otherRanges);
 					this.random = other.getRandom();
 					this.threshold = new SizeInBytes(other.getThreshold());
 				}
@@ -1569,9 +1570,9 @@ implements Serializable {
 			} else {
 				final Class valueType = value.getClass();
 				if(TypeUtil.typeEquals(fieldType, valueType)) {
-					configCls
-						.getMethod("set" + capitalize(key), fieldType)
-						.invoke(config, value);
+					configCls.getMethod("set" + capitalize(key), fieldType).invoke(config, value);
+				} else if(value instanceof List && TypeUtil.typeEquals(fieldType, List.class)) {
+					configCls.getMethod("set" + capitalize(key), fieldType).invoke(config, value);
 				} else if(value instanceof String) { // CLI arguments case
 					if(fieldType.equals(List.class)) {
 						final List<String> listValue = Arrays.asList(((String) value).split(","));

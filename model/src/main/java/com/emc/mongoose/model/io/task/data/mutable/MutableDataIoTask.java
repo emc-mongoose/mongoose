@@ -24,6 +24,8 @@ extends DataIoTask<I, R> {
 	DataItem getCurrRange();
 	
 	void markRandomRanges(final int count);
+
+	boolean hasMarkedRanges();
 	
 	long getMarkedRangesSize();
 	

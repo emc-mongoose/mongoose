@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"output" : {
-				"path" : "linear-read-partial"
+			"data" : {
+				"size" : "1KB"
 			}
 		},
 		"load" : {
@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-random-ranges.csv"
 					}
 				}
 			}
@@ -32,7 +32,7 @@
 						}
 					},
 					"input" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-random-ranges.csv"
 					}
 				},
 				"load" : {
