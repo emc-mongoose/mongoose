@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
@@ -12,6 +13,9 @@ import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -28,26 +32,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaderNames.RANGE;
 import static io.netty.handler.codec.http.HttpMethod.DELETE;
@@ -60,7 +46,24 @@ import static io.netty.handler.codec.http.HttpResponseStatus.INSUFFICIENT_STORAG
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpResponseStatus.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  Created on 12.07.16.
@@ -378,22 +381,30 @@ extends ChannelInboundHandlerAdapter {
 		final String containerName, final String id, final long offset,
 		final ChannelHandlerContext ctx
 	) {
+		final List<String> rangeHeadersValues = ctx
+			.channel()
+			.attr(ATTR_KEY_REQUEST)
+			.get()
+			.headers()
+			.getAll(RANGE);
 		try {
 			T object = localStorage.getObject(containerName, id, offset, 0);
-			if(object != null) {
-				handleObjectReadSuccess(object, ctx);
-			} else {
+			if(object == null) {
 				if(remoteStorage != null) {
 					object = remoteStorage.getObject(containerName, id, offset, 0);
 				}
-				if(object == null) {
-					setHttpResponseStatusInContext(ctx, NOT_FOUND);
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						LOG.trace(Markers.ERR, "No such container: {}", id);
-					}
-					ioStats.markRead(false, 0);
-				} else {
+			}
+			if(object == null) {
+				setHttpResponseStatusInContext(ctx, NOT_FOUND);
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					LOG.trace(Markers.ERR, "No such container: {}", id);
+				}
+				ioStats.markRead(false, 0);
+			} else {
+				if(rangeHeadersValues == null || rangeHeadersValues.isEmpty()) {
 					handleObjectReadSuccess(object, ctx);
+				} else {
+					handlePartialObjectRead(object, ctx, rangeHeadersValues);
 				}
 			}
 		} catch(final ContainerMockNotFoundException e) {
@@ -410,16 +421,12 @@ extends ChannelInboundHandlerAdapter {
 
 	private void handleObjectReadSuccess(final T object, final ChannelHandlerContext ctx)
 	throws IOException {
-		final long size = object.size();
-		ioStats.markRead(true, size);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
-		}
 		if(localStorage.missResponse()) {
 			return;
 		}
 		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
+		final long size = object.size();
 		HttpUtil.setContentLength(response, size);
 		ctx.write(response);
 		if(object.isUpdated()) {
@@ -428,6 +435,61 @@ extends ChannelInboundHandlerAdapter {
 			ctx.write(new DataItemFileRegion<>(object));
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		ioStats.markRead(true, size);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
+		}
+	}
+
+	private void handlePartialObjectRead(
+		final T object, final ChannelHandlerContext ctx, final List<String> rangeHeadersValues
+	) throws IOException {
+
+		ByteRange byteRange;
+		long beg, end, size, sumSize = 0;
+		final long objSize = object.size();
+		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
+		final List<DataItemFileRegion<T>> rangesContent = new ArrayList<>(rangeHeadersValues.size());
+
+		for(final String rangeValue : rangeHeadersValues) {
+
+			byteRange = new ByteRange(rangeValue);
+			beg = byteRange.getBeg();
+			end = byteRange.getEnd();
+
+			if(beg == -1) {
+				if(end == -1) {
+					setHttpResponseStatusInContext(ctx, REQUESTED_RANGE_NOT_SATISFIABLE);
+					if(LOG.isTraceEnabled(Markers.ERR)) {
+						LOG.trace(Markers.ERR, "Request range not satisfiable: {}", rangeValue);
+					}
+					ioStats.markRead(false, 0);
+					return;
+				} else { // final "end" bytes
+					beg = 0;
+					size = end;
+				}
+			} else {
+				if(end == -1) { // start from "beg" to the end of the object
+					size = objSize - beg;
+				} else { // from "beg" to "end"
+					size = end - beg + 1;
+				}
+			}
+
+			rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
+			sumSize += size;
+		}
+
+		ctx.write(response);
+		for(final DataItemFileRegion<T> rangeContent : rangesContent) {
+			ctx.write(rangeContent);
+		}
+		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		ioStats.markRead(true, sumSize);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Partially sent the data object with ID {}", object.getName());
+		}
 	}
 
 	private void handleObjectDelete(

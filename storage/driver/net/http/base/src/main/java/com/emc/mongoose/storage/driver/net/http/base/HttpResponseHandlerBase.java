@@ -1,9 +1,11 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 
+import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
 import com.emc.mongoose.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.model.item.Item;
@@ -35,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  Created by kurila on 05.09.16.
@@ -110,13 +113,13 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 			if(ioTask instanceof DataIoTask) {
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				final long countBytesDone = dataIoTask.getCountBytesDone();
-				if(dataIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
+				if(dataIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					dataIoTask.startDataResponse();
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					if(verifyFlag && !RESP_FAIL_CORRUPT.equals(ioTask.getStatus())) {
-						verifyChunk(ioTask, contentChunk, chunkSize);
+						verifyChunk(dataIoTask, contentChunk, chunkSize);
 					} else {
 						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 					}
@@ -124,7 +127,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 			} else if(ioTask instanceof PathIoTask) {
 				final PathIoTask pathIoTask = (PathIoTask) ioTask;
 				final long countBytesDone = pathIoTask.getCountBytesDone();
-				if(pathIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
+				if(pathIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					pathIoTask.startDataResponse();
 				}
 				final int chunkSize = contentChunk.readableBytes();
@@ -134,7 +137,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 			} else if(ioTask instanceof TokenIoTask) {
 				final TokenIoTask tokenIoTask = (TokenIoTask) ioTask;
 				final long countBytesDone = tokenIoTask.getCountBytesDone();
-				if(tokenIoTask.getRespDataTimeStart() > 0) { // if not set yet - 1st time
+				if(tokenIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					tokenIoTask.startDataResponse();
 				}
 				final int chunkSize = contentChunk.readableBytes();

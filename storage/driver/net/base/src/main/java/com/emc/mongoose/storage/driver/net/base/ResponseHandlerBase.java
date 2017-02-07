@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -33,9 +34,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.BitSet;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
+
 /**
  Created by kurila on 04.10.16.
+ Contains the content validation functionality
  */
 public abstract class ResponseHandlerBase<
 	M, I extends Item, O extends IoTask<I, R>, R extends IoResult
@@ -118,30 +123,54 @@ extends SimpleChannelInboundHandler<M> {
 		}
 	}
 	
-	protected final void verifyChunk(
-		final O ioTask, final ByteBuf contentChunk, final int chunkSize
+	protected static void verifyChunk(
+		final DataIoTask dataIoTask, final ByteBuf contentChunk, final int chunkSize
 	) throws IOException {
-		final DataIoTask dataIoTask = (DataIoTask) ioTask;
-		final DataItem item = dataIoTask.getItem();
+
 		final long countBytesDone = dataIoTask.getCountBytesDone();
-		if(item instanceof MutableDataItem) {
-			final MutableDataItem mdi = (MutableDataItem)item;
-			if(mdi.isUpdated()) {
-				verifyChunkUpdatedData(
-					mdi, (MutableDataIoTask) ioTask, contentChunk, chunkSize
-				);
+		final List<ByteRange> byteRanges = dataIoTask.getFixedRanges();
+
+		if(dataIoTask instanceof MutableDataIoTask) {
+			final MutableDataIoTask mdIoTask = (MutableDataIoTask) dataIoTask;
+			final MutableDataItem item = mdIoTask.getItem();
+			if(item.isUpdated()) {
+				if(byteRanges != null && !byteRanges.isEmpty()) {
+					verifyChunkUpdatedData(item, mdIoTask, contentChunk, chunkSize, byteRanges);
+				} else if(mdIoTask.hasMarkedRanges()) {
+					verifyChunkUpdatedData(
+						item, mdIoTask, contentChunk, chunkSize, mdIoTask.getMarkedRangesMaskPair()
+					);
+				} else {
+					verifyChunkUpdatedData(item, mdIoTask, contentChunk, chunkSize);
+				}
 				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			} else {
-				verifyChunkDataAndSize(mdi, countBytesDone, contentChunk, chunkSize);
+				if(byteRanges != null && !byteRanges.isEmpty()) {
+					verifyChunkDataAndSize(
+						item, countBytesDone, contentChunk, chunkSize, byteRanges
+					);
+				} else if(mdIoTask.hasMarkedRanges()) {
+					verifyChunkDataAndSize(
+						item, countBytesDone, contentChunk, chunkSize,
+						mdIoTask.getMarkedRangesMaskPair()
+					);
+				} else {
+					verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+				}
 				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			}
 		} else {
-			verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+			final DataItem item = dataIoTask.getItem();
+			if(byteRanges != null && !byteRanges.isEmpty()) {
+				verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize, byteRanges);
+			} else {
+				verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+			}
 			dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 		}
 	}
 
-	private void verifyChunkDataAndSize(
+	private static void verifyChunkDataAndSize(
 		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
 		final int chunkSize
 	) throws DataCorruptionException, IOException {
@@ -150,8 +179,22 @@ extends SimpleChannelInboundHandler<M> {
 		}
 		verifyChunkData(item, chunkData, 0, chunkSize);
 	}
+
+	private static void verifyChunkDataAndSize(
+		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
+		final int chunkSize, final List<ByteRange> byteRanges
+	) throws DataCorruptionException, IOException {
+
+	}
+
+	private static void verifyChunkDataAndSize(
+		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
+		final int chunkSize, final BitSet markedRangesMaskPair[]
+	) throws DataCorruptionException, IOException {
+
+	}
 	
-	private void verifyChunkUpdatedData(
+	private static void verifyChunkUpdatedData(
 		final MutableDataItem item, final MutableDataIoTask ioTask, final ByteBuf chunkData,
 		final int chunkSize
 	) throws DataCorruptionException, IOException {
@@ -191,8 +234,22 @@ extends SimpleChannelInboundHandler<M> {
 			}
 		}
 	}
+
+	private static void verifyChunkUpdatedData(
+		final MutableDataItem item, final MutableDataIoTask ioTask, final ByteBuf chunkData,
+		final int chunkSize, final List<ByteRange> byteRanges
+	) throws DataCorruptionException, IOException {
+
+	}
+
+	private static void verifyChunkUpdatedData(
+		final MutableDataItem item, final MutableDataIoTask ioTask, final ByteBuf chunkData,
+		final int chunkSize, final BitSet markedRangesMaskPair[]
+	) throws DataCorruptionException, IOException {
+
+	}
 	
-	private void verifyChunkData(
+	private static void verifyChunkData(
 		final DataItem item, final ByteBuf chunkData, final int chunkOffset,
 		final int remainingSize
 	) throws DataCorruptionException, IOException {
