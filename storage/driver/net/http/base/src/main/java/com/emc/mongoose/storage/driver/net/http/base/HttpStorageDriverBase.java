@@ -211,9 +211,9 @@ implements HttpStorageDriver<I, O, R> {
 				}
 				break;
 			case UPDATE:
-				final DataIoTask mdIoTask = (DataIoTask) ioTask;
-				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, mdIoTask.getMarkedRangesSize());
-				applyByteRangesHeaders(httpHeaders, mdIoTask);
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.getMarkedRangesSize());
+				applyByteRangesHeaders(httpHeaders, dataIoTask);
 				break;
 			case DELETE:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -285,6 +285,9 @@ implements HttpStorageDriver<I, O, R> {
 
 		if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
 			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
+			if(rangesMaskPair[0].isEmpty() || rangesMaskPair[1].isEmpty()) {
+				return; // do not set the ranges header
+			}
 			// current layer first
 			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[0].get(i)) {
@@ -321,7 +324,6 @@ implements HttpStorageDriver<I, O, R> {
 				}
 			}
 		}
-
 		httpHeaders.set(HttpHeaderNames.RANGE, "bytes=" + strb.toString());
 	}
 

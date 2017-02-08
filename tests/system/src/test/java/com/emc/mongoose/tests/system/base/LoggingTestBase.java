@@ -208,10 +208,15 @@ public abstract class LoggingTestBase {
 			assertTrue(Long.toString(countFail), countFail < 1);
 			if(countSucc > 0) {
 				avgItemSize = totalBytes / countSucc;
-				assertEquals(
-					"Actual average item size: " + avgItemSize, expectedItemDataSize.getAvg(),
-					avgItemSize, expectedItemDataSize.getAvg() / 5
-				);
+				if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
+					assertTrue(expectedItemDataSize.getMin() <= avgItemSize);
+					assertTrue(expectedItemDataSize.getMax() >= avgItemSize);
+				} else {
+					assertEquals(
+						"Actual average item size: " + avgItemSize, expectedItemDataSize.getAvg(),
+						avgItemSize, expectedItemDataSize.get() / 100
+					);
+				}
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
 			if(Double.isNaN(prevJobDuration)) {
