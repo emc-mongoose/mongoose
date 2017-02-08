@@ -59,7 +59,8 @@ implements DataItemMock {
 			}
 			if(modifiedRangesMask.get(i)) {
 				throw new IllegalStateException(
-					"Range " + i + " is already updated, but mask is: " + modifiedRangesMask.toString()
+					"Range " + i + " is already updated, but mask is: " +
+					modifiedRangesMask.toString()
 				);
 			} else {
 				modifiedRangesMask.set(i);

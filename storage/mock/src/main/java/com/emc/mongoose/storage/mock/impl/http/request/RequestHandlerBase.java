@@ -338,10 +338,10 @@ extends ChannelInboundHandlerAdapter {
 		final long size
 	) throws ContainerMockException, ObjectMockNotFoundException, NumberFormatException {
 		String ranges[];
-		String rangeBorders[];
-		int rangeBordersNum;
-		long start;
+		ByteRange byteRange;
+		long beg;
 		long end;
+		long len;
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
 				final String rangeValueWithoutPrefix = rangeValues.substring(
@@ -349,20 +349,20 @@ extends ChannelInboundHandlerAdapter {
 				);
 				ranges = rangeValueWithoutPrefix.split(",");
 				for(final String range : ranges) {
-					rangeBorders = range.split(VALUE_RANGE_CONCAT);
-					rangeBordersNum = rangeBorders.length;
-					if(rangeBordersNum == 2) {
-						if(rangeBorders[0].isEmpty()) {
-							end = Long.parseLong(rangeBorders[1]);
-							localStorage.appendObject(containerName, id, end);
-						} else if(rangeBorders[1].isEmpty()) {
-							start = Long.parseLong(rangeBorders[0]);
-							localStorage.updateObject(containerName, id, start, size - start);
+					byteRange = new ByteRange(range);
+					beg = byteRange.getBeg();
+					end = byteRange.getEnd();
+					len = byteRange.getSize();
+					if(len > 0) {
+						localStorage.appendObject(containerName, id, len);
+					} else if(beg > -1) {
+						if(end > -1) {
+							localStorage.updateObject(containerName, id, beg, end - beg + 1);
 						} else {
-							start = Long.parseLong(rangeBorders[0]);
-							end = Long.parseLong(rangeBorders[1]);
-							localStorage.updateObject(containerName, id, start, end - start + 1);
+							localStorage.updateObject(containerName, id, beg, size - beg);
 						}
+					} else if(end > -1) {
+						localStorage.updateObject(containerName, id, size - end, end);
 					} else {
 						LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
 						return false;

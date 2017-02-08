@@ -14,6 +14,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -143,11 +144,11 @@ extends SimpleChannelInboundHandler<M> {
 		} else {
 			if(byteRanges != null && !byteRanges.isEmpty()) {
 				verifyChunkDataAndSize(
-					item, countBytesDone, contentChunk, chunkSize, byteRanges
+					dataIoTask, countBytesDone, contentChunk, chunkSize, byteRanges
 				);
 			} else if(dataIoTask.hasMarkedRanges()) {
 				verifyChunkDataAndSize(
-					item, countBytesDone, contentChunk, chunkSize,
+					dataIoTask, countBytesDone, contentChunk, chunkSize,
 					dataIoTask.getMarkedRangesMaskPair()
 				);
 			} else {
@@ -168,17 +169,17 @@ extends SimpleChannelInboundHandler<M> {
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
+		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf chunkData,
 		final int chunkSize, final List<ByteRange> byteRanges
 	) throws DataCorruptionException, IOException {
-
+		
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
+		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf chunkData,
 		final int chunkSize, final BitSet markedRangesMaskPair[]
 	) throws DataCorruptionException, IOException {
-
+		
 	}
 	
 	private static void verifyChunkUpdatedData(
