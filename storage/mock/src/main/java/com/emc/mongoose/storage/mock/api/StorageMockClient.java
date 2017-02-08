@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 /**
  Created on 01.09.16.
  */
-public interface StorageMockClient<T extends MutableDataItemMock>
+public interface StorageMockClient<T extends DataItemMock>
 extends ServiceListener, Daemon {
 	T getObject(
 		final String containerName, final String id, final long offset, final long size

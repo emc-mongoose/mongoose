@@ -4,8 +4,8 @@ import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
-import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
+import com.emc.mongoose.storage.mock.impl.base.BasicDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  Created on 11.07.16.
  */
 public final class Nagaina
-extends StorageMockBase<MutableDataItemMock>{
+extends StorageMockBase<DataItemMock>{
 
 	public static final String SVC_NAME = Nagaina.class.getSimpleName().toLowerCase();
 
@@ -145,10 +145,10 @@ extends StorageMockBase<MutableDataItemMock>{
 	}
 
 	@Override
-	protected MutableDataItemMock newDataObject(
+	protected DataItemMock newDataObject(
 		final String id, final long offset, final long size
 	) {
-		return new BasicMutableDataItemMock(id, offset, size, 0, contentSrc);
+		return new BasicDataItemMock(id, offset, size, 0, contentSrc);
 	}
 
 }

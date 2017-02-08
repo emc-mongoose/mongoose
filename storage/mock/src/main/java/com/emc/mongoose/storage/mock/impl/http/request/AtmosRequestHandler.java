@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -17,10 +17,8 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.Attribute;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +57,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 /**
  Created on 12.07.16.
  */
-public class AtmosRequestHandler<T extends MutableDataItemMock>
+public class AtmosRequestHandler<T extends DataItemMock>
 extends RequestHandlerBase<T> {
 
 	private static final Logger LOG = LogManager.getLogger();

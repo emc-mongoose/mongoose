@@ -3,6 +3,9 @@ package com.emc.mongoose.model.item;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -11,6 +14,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.BitSet;
+import static java.lang.Math.min;
 
 /**
  Created by kurila on 09.05.14.
@@ -23,7 +28,11 @@ implements DataItem {
 	//
 	private static final String
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
-		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
+		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"",
+		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
+		STR_EMPTY_MASK = "0";
+	//
+	private static final char LAYER_MASK_SEP = '/';
 	//
 	private ContentSource contentSrc;
 	private int ringBuffSize;
@@ -33,6 +42,8 @@ implements DataItem {
 	protected long offset = 0;
 	protected long position = 0;
 	protected long size = 0;
+	//
+	protected final BitSet modifiedRangesMask = new BitSet(Long.SIZE);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicDataItem() {
 		super();
@@ -45,12 +56,12 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(final String value, final ContentSource contentSrc) {
-		this(value.split(",", 3), contentSrc);
+		this(value.split(",", 4), contentSrc);
 	}
 	//
 	private BasicDataItem(final String tokens[], final ContentSource contentSrc) {
 		super(tokens[0]);
-		if(tokens.length == 3) {
+		if(tokens.length == 4) {
 			try {
 				offset(Long.parseLong(tokens[1], 0x10));
 			} catch(final NumberFormatException e) {
@@ -61,13 +72,33 @@ implements DataItem {
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
 			}
+			final String rangesInfo = tokens[3];
+			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
+			try {
+				// extract hexadecimal layer number
+				layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
+				// extract hexadecimal mask, convert into bit set and add to the existing mask
+				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+				final char rangesMaskChars[];
+				if(rangesMask.length() == 0) {
+					rangesMaskChars = ("00" + rangesMask).toCharArray();
+				} else if(rangesMask.length() % 2 == 1) {
+					rangesMaskChars = ("0" + rangesMask).toCharArray();
+				} else {
+					rangesMaskChars = rangesMask.toCharArray();
+				}
+				// method "or" to merge w/ the existing mask
+				modifiedRangesMask.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
+			} catch(final DecoderException | NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
+			}
 		} else {
 			throw new IllegalArgumentException(
-				"Invalid data item meta info: " + Arrays.toString(tokens)
+				"Invalid data item description: " + Arrays.toString(tokens)
 			);
 		}
 		this.contentSrc = contentSrc;
-		ringBuffSize = contentSrc.getSize();
+		this.ringBuffSize = contentSrc.getSize();
 	}
 	//
 	public BasicDataItem(
@@ -131,7 +162,12 @@ implements DataItem {
 		return strb
 			.append(super.toString()).append(',')
 			.append(Long.toString(offset, 0x10)).append(',')
-			.append(size).toString();
+			.append(size).append(',')
+			.append(Integer.toHexString(layerNum)).append('/')
+			.append(
+				modifiedRangesMask.isEmpty() ?
+					STR_EMPTY_MASK : Hex.encodeHexString(modifiedRangesMask.toByteArray())
+			).toString();
 	}
 
 	@Override
@@ -139,9 +175,14 @@ implements DataItem {
 		final StringBuilder strBuilder = STRB.get();
 		strBuilder.setLength(0); // reset
 		return strBuilder
-			.append(super.toString(itemPath)).append(",")
-			.append(Long.toString(offset, 0x10)).append(",")
-			.append(size).toString();
+			.append(super.toString(itemPath)).append(',')
+			.append(Long.toString(offset, 0x10)).append(',')
+			.append(size).append(',')
+			.append(Integer.toHexString(layerNum)).append('/')
+			.append(
+				modifiedRangesMask.isEmpty() ?
+					STR_EMPTY_MASK : Hex.encodeHexString(modifiedRangesMask.toByteArray())
+			).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -220,6 +261,40 @@ implements DataItem {
 	public BasicDataItem truncate(final long size) {
 		this.size = size;
 		return this;
+	}
+	//
+	@Override
+	public final long getRangeSize(final int i) {
+		return min(getRangeOffset(i + 1), size) - getRangeOffset(i);
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	@Override
+	public final boolean isUpdated() {
+		return !modifiedRangesMask.isEmpty();
+	}
+	
+	@Override
+	public final void commitUpdatedRanges(final BitSet[] updatingRangesMaskPair) {
+		if(updatingRangesMaskPair[1].isEmpty()) {
+			modifiedRangesMask.or(updatingRangesMaskPair[0]);
+		} else {
+			modifiedRangesMask.clear();
+			modifiedRangesMask.or(updatingRangesMaskPair[1]);
+			layerNum ++;
+		}
+	}
+	
+	@Override
+	public final boolean isRangeUpdated(final int rangeIdx) {
+		return modifiedRangesMask.get(rangeIdx);
+	}
+	
+	@Override
+	public final int getUpdatedRangesCount() {
+		return modifiedRangesMask.cardinality();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// ByteChannels implementation
@@ -365,6 +440,9 @@ implements DataItem {
 		out.writeLong(offset);
 		out.writeLong(position);
 		out.writeLong(size);
+		final byte buff[] = modifiedRangesMask.toByteArray();
+		out.writeInt(buff.length);
+		out.write(buff);
 	}
 	
 	@Override
@@ -375,5 +453,9 @@ implements DataItem {
 		offset = in.readLong();
 		position = in.readLong();
 		size = in.readLong();
+		final int len = in.readInt();
+		final byte buff[] = new byte[len];
+		in.readFully(buff);
+		modifiedRangesMask.or(BitSet.valueOf(buff));
 	}
 }

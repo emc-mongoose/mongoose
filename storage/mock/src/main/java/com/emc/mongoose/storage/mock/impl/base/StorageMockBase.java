@@ -5,7 +5,7 @@ import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created on 19.07.16.
  */
-public abstract class StorageMockBase<I extends MutableDataItemMock>
+public abstract class StorageMockBase<I extends DataItemMock>
 extends DaemonBase
 implements StorageMock<I> {
 
@@ -337,7 +337,7 @@ implements StorageMock<I> {
 				}
 			);
 			
-			final ItemFactory<I> itemFactory = new BasicMutableDataItemMockFactory<>(contentSrc);
+			final ItemFactory<I> itemFactory = new BasicDataItemMockFactory<>(contentSrc);
 			try(
 				final CsvFileItemInput<I> csvFileItemInput = new CsvFileItemInput<>(
 					itemInputFile, itemFactory

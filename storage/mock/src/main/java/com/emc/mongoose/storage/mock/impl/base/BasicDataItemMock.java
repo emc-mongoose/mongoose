@@ -1,41 +1,41 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.item.BasicMutableDataItem;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.model.item.BasicDataItem;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.ui.log.Markers;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
-
-public class BasicMutableDataItemMock
-extends BasicMutableDataItem
-implements MutableDataItemMock {
+public class BasicDataItemMock
+extends BasicDataItem
+implements DataItemMock {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	public BasicMutableDataItemMock() {
+	public BasicDataItemMock() {
 		super();
 	}
 	//
-	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
+	public BasicDataItemMock(final String value, final ContentSource contentSrc) {
 		super(value, contentSrc);
 	}
 	//
-	public BasicMutableDataItemMock(
+	public BasicDataItemMock(
 		final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
 	//
-	public BasicMutableDataItemMock(
+	public BasicDataItemMock(
 		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, contentSrc);
 	}
 	//
-	public BasicMutableDataItemMock(
+	public BasicDataItemMock(
 		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
@@ -52,17 +52,17 @@ implements MutableDataItemMock {
 			maskIndexStart = getRangeCount(offset),
 			maskIndexEnd = getRangeCount(offset + size);
 		for(int i = maskIndexStart; i < maskIndexEnd; i ++) {
-			if(countRangesTotal > 0 && countRangesTotal == maskRangesRead.cardinality()) {
+			if(countRangesTotal > 0 && countRangesTotal == modifiedRangesMask.cardinality()) {
 				// mask is full, switch to the next layer
 				layerNum ++;
-				maskRangesRead.clear();
+				modifiedRangesMask.clear();
 			}
-			if(maskRangesRead.get(i)) {
+			if(modifiedRangesMask.get(i)) {
 				throw new IllegalStateException(
-					"Range " + i + " is already updated, but mask is: " + maskRangesRead.toString()
+					"Range " + i + " is already updated, but mask is: " + modifiedRangesMask.toString()
 				);
 			} else {
-				maskRangesRead.set(i);
+				modifiedRangesMask.set(i);
 			}
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -80,8 +80,8 @@ implements MutableDataItemMock {
 		final int
 			lastCellPos = this.size > 0 ? getRangeCount(this.size) - 1 : 0,
 			nextCellPos = getRangeCount(this.size + size);
-		if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
-			maskRangesRead.set(lastCellPos, nextCellPos);
+		if(lastCellPos < nextCellPos && modifiedRangesMask.get(lastCellPos)) {
+			modifiedRangesMask.set(lastCellPos, nextCellPos);
 		}
 		this.size += size;
 	}

@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.model.DaemonBase;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -28,7 +28,7 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
 /**
  Created on 06.09.16.
  */
-public class BasicStorageMockServer<T extends MutableDataItemMock>
+public class BasicStorageMockServer<T extends DataItemMock>
 extends DaemonBase
 implements StorageMockServer<T> {
 

@@ -6,18 +6,16 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.common.io.pattern.AsyncPatternDefinedInput;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.common.io.pattern.PatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
-import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
-import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.HttpConfig;
@@ -213,7 +211,7 @@ implements HttpStorageDriver<I, O, R> {
 				}
 				break;
 			case UPDATE:
-				final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+				final DataIoTask mdIoTask = (DataIoTask) ioTask;
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, mdIoTask.getMarkedRangesSize());
 				applyByteRangesHeaders(httpHeaders, mdIoTask);
 				break;
@@ -286,32 +284,29 @@ implements HttpStorageDriver<I, O, R> {
 		strb.setLength(0);
 
 		if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-			if(dataIoTask instanceof MutableDataIoTask) {
-				final MutableDataIoTask mdIoTask = (MutableDataIoTask) dataIoTask;
-				final BitSet rangesMaskPair[] = mdIoTask.getMarkedRangesMaskPair();
-				// current layer first
-				for(int i = 0; i < getRangeCount(baseItemSize); i++) {
-					if(rangesMaskPair[0].get(i)) {
-						if(strb.length() > 0) {
-							strb.append(',');
-						}
-						strb
-							.append(getRangeOffset(i))
-							.append('-')
-							.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
+			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
+			// current layer first
+			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+				if(rangesMaskPair[0].get(i)) {
+					if(strb.length() > 0) {
+						strb.append(',');
 					}
+					strb
+						.append(getRangeOffset(i))
+						.append('-')
+						.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
 				}
-				// then next layer ranges if any
-				for(int i = 0; i < getRangeCount(baseItemSize); i++) {
-					if(rangesMaskPair[1].get(i)) {
-						if(strb.length() > 0) {
-							strb.append(',');
-						}
-						strb
-							.append(getRangeOffset(i))
-							.append('-')
-							.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
+			}
+			// then next layer ranges if any
+			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+				if(rangesMaskPair[1].get(i)) {
+					if(strb.length() > 0) {
+						strb.append(',');
 					}
+					strb
+						.append(getRangeOffset(i))
+						.append('-')
+						.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
 				}
 			}
 
@@ -423,22 +418,22 @@ implements HttpStorageDriver<I, O, R> {
 					}
 				}
 			} else if(IoType.UPDATE.equals(ioType)) {
-				if(item instanceof MutableDataItem) {
+				if(item instanceof DataItem) {
 					
-					final MutableDataItem mdi = (MutableDataItem) item;
-					final MutableDataIoTask mdIoTask = (MutableDataIoTask) ioTask;
+					final DataItem dataItem = (DataItem) item;
+					final DataIoTask dataIoTask = (DataIoTask) ioTask;
 
-					final List<ByteRange> fixedByteRanges = mdIoTask.getFixedRanges();
+					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
 					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
 						// random range update case
-						final BitSet updRangesMaskPair[] = mdIoTask.getMarkedRangesMaskPair();
-						final int rangeCount = getRangeCount(mdi.size());
+						final BitSet updRangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
+						final int rangeCount = getRangeCount(dataItem.size());
 						DataItem updatedRange;
 						// current layer updates first
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
-								mdIoTask.setCurrRangeIdx(i);
-								updatedRange = mdIoTask.getCurrRangeUpdate();
+								dataIoTask.setCurrRangeIdx(i);
+								updatedRange = dataIoTask.getCurrRangeUpdate();
 								assert updatedRange != null;
 								channel.write(new DataItemFileRegion<>(updatedRange));
 							}
@@ -446,15 +441,15 @@ implements HttpStorageDriver<I, O, R> {
 						// then next layer updates if any
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
-								mdIoTask.setCurrRangeIdx(i);
-								updatedRange = mdIoTask.getCurrRangeUpdate();
+								dataIoTask.setCurrRangeIdx(i);
+								updatedRange = dataIoTask.getCurrRangeUpdate();
 								assert updatedRange != null;
 								channel.write(new DataItemFileRegion<>(updatedRange));
 							}
 						}
-						mdi.commitUpdatedRanges(mdIoTask.getMarkedRangesMaskPair());
+						dataItem.commitUpdatedRanges(dataIoTask.getMarkedRangesMaskPair());
 					} else { // append case
-						final long baseItemSize = mdi.size();
+						final long baseItemSize = dataItem.size();
 						long beg;
 						long end;
 						long size;
@@ -475,11 +470,11 @@ implements HttpStorageDriver<I, O, R> {
 								// append
 								beg = baseItemSize;
 							}
-							channel.write(new DataItemFileRegion<>(mdi.slice(beg, size)));
+							channel.write(new DataItemFileRegion<>(dataItem.slice(beg, size)));
 						}
-						mdi.size(mdi.size() + mdIoTask.getMarkedRangesSize());
+						dataItem.size(dataItem.size() + dataIoTask.getMarkedRangesSize());
 					}
-					mdIoTask.setCountBytesDone(mdIoTask.getMarkedRangesSize());
+					dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 				}
 			}
 		} catch(final IOException e) {

@@ -13,12 +13,15 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.BitSet;
 
 /**
  Created by kurila on 11.07.16.
  */
 public interface DataItem
 extends Item, SeekableByteChannel {
+	
+	double LOG2 = Math.log(2);
 	
 	ContentSource getContentSrc();
 	
@@ -60,4 +63,22 @@ extends Item, SeekableByteChannel {
 	
 	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataSizeException, DataCorruptionException, IOException;
+	
+	static int getRangeCount(final long size) {
+		return (int) Math.ceil(Math.log(size + 1) / LOG2);
+	}
+	
+	static long getRangeOffset(final int i) {
+		return (1 << i) - 1;
+	}
+	
+	long getRangeSize(int rangeIdx);
+	
+	boolean isUpdated();
+	
+	boolean isRangeUpdated(final int rangeIdx);
+	
+	int getUpdatedRangesCount();
+	
+	void commitUpdatedRanges(final BitSet[] updatingRangesMask);
 }

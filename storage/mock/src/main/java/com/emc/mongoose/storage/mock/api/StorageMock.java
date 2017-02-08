@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  Created on 11.07.16. */
-public interface StorageMock<T extends MutableDataItemMock>
+public interface StorageMock<T extends DataItemMock>
 extends Daemon {
 
 	String DEFAULT_CONTAINER_NAME = "default";

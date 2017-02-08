@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
 import com.emc.mongoose.common.collection.ListingLRUMap;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 
 import java.io.IOException;
@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  Created on 20.07.16.
  */
-public final class BasicObjectContainerMock<T extends MutableDataItemMock>
+public final class BasicObjectContainerMock<T extends DataItemMock>
 implements ObjectContainerMock<T> {
 
 	private final ListingLRUMap<String, T> containerMap;

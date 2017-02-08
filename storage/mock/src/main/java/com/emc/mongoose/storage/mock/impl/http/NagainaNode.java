@@ -5,7 +5,7 @@ import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockNode;
@@ -28,15 +28,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class NagainaNode
 extends DaemonBase
-implements StorageMockNode<MutableDataItemMock> {
+implements StorageMockNode<DataItemMock> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private JmDNS jmDns;
-	private StorageMockClient<MutableDataItemMock> client;
-	private StorageMockServer<MutableDataItemMock> server;
+	private StorageMockClient<DataItemMock> client;
+	private StorageMockServer<DataItemMock> server;
 
 	public NagainaNode(
-		final StorageMock<MutableDataItemMock> storage, final ContentSource contentSrc
+		final StorageMock<DataItemMock> storage, final ContentSource contentSrc
 	) {
 		// System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
 		try {
@@ -50,12 +50,12 @@ implements StorageMockNode<MutableDataItemMock> {
 	}
 
 	@Override
-	public StorageMockClient<MutableDataItemMock> client() {
+	public StorageMockClient<DataItemMock> client() {
 		return client;
 	}
 
 	@Override
-	public StorageMockServer<MutableDataItemMock> server() {
+	public StorageMockServer<DataItemMock> server() {
 		return server;
 	}
 

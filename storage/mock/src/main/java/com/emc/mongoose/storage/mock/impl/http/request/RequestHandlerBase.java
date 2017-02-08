@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.UpdatedFullDataFileRegion;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageIoStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @SuppressWarnings("WeakerAccess")
 @Sharable
-public abstract class RequestHandlerBase<T extends MutableDataItemMock>
+public abstract class RequestHandlerBase<T extends DataItemMock>
 extends ChannelInboundHandlerAdapter {
 
 	private static final Logger LOG = LogManager.getLogger();

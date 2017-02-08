@@ -5,7 +5,7 @@ import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
@@ -49,7 +49,7 @@ import static java.rmi.registry.Registry.REGISTRY_PORT;
 /**
  Created on 06.09.16.
  */
-public final class BasicStorageMockClient<T extends MutableDataItemMock>
+public final class BasicStorageMockClient<T extends DataItemMock>
 extends DaemonBase
 implements StorageMockClient<T> {
 
@@ -79,7 +79,7 @@ implements StorageMockClient<T> {
 		this.jmDns = jmDns;
 	}
 	
-	private static final class GetRemoteObjectTask<T extends MutableDataItemMock>
+	private static final class GetRemoteObjectTask<T extends DataItemMock>
 	extends AnyNotNullSharedFutureTaskBase<T> {
 		
 		private final StorageMockServer<T> node;

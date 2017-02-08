@@ -1,11 +1,8 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
-import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-
-import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
 import com.emc.mongoose.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.model.item.Item;
@@ -37,7 +34,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  Created by kurila on 05.09.16.

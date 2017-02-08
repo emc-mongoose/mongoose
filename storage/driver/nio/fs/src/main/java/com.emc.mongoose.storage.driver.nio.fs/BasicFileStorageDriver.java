@@ -1,15 +1,14 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
 import static com.emc.mongoose.model.io.task.IoTask.Status;
-import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
-import static com.emc.mongoose.model.item.MutableDataItem.getRangeOffset;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.io.task.data.mutable.MutableDataIoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.io.IoType;
@@ -46,7 +45,7 @@ import java.util.function.Function;
  Created by kurila on 19.07.16.
  */
 public final class BasicFileStorageDriver<
-	I extends MutableDataItem, O extends MutableDataIoTask<I, R>, R extends DataIoResult
+	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoResult
 >
 extends NioStorageDriverBase<I, O, R>
 implements FileStorageDriver<I, O, R> {
@@ -506,14 +505,105 @@ implements FileStorageDriver<I, O, R> {
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
 		final BitSet maskRangesPair[]
 	) throws IOException {
-
+		
+		int n;
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long rangesSizeSum = ioTask.getMarkedRangesSize();
+		
+		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
+			
+			DataItem range2read;
+			int currRangeIdx;
+			while(true) {
+				currRangeIdx = ioTask.getCurrRangeIdx();
+				if(currRangeIdx < getRangeCount(fileItem.size())) {
+					if(maskRangesPair[0].get(currRangeIdx) || maskRangesPair[1].get(currRangeIdx)) {
+						range2read = ioTask.getCurrRange();
+						break;
+					} else {
+						ioTask.setCurrRangeIdx(++ currRangeIdx);
+					}
+				} else {
+					ioTask.setCountBytesDone(rangesSizeSum);
+					return;
+				}
+			}
+			
+			final long currRangeSize = range2read.size();
+			n = srcChannel.read(
+				ThreadLocalByteBuffer.get(currRangeSize - countBytesDone),
+				getRangeOffset(currRangeIdx) + countBytesDone
+			);
+			if(n < 0) {
+				finishIoTask(ioTask);
+				ioTask.setCountBytesDone(countBytesDone);
+				return;
+			}
+			countBytesDone += n;
+			
+			if(countBytesDone == currRangeSize) {
+				ioTask.setCurrRangeIdx(currRangeIdx + 1);
+				ioTask.setCountBytesDone(0);
+			}
+		} else {
+			finishIoTask(ioTask);
+		}
 	}
 
 	private void invokeReadFixedRanges(
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
 		final List<ByteRange> byteRanges
 	) throws IOException {
-
+		
+		int n;
+		long countBytesDone = ioTask.getCountBytesDone();
+		final long baseItemSize = fileItem.size();
+		final long rangesSizeSum = ioTask.getMarkedRangesSize();
+		
+		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
+			
+			ByteRange byteRange;
+			int currRangeIdx = ioTask.getCurrRangeIdx();
+			long rangeBeg;
+			long rangeEnd;
+			long rangeSize;
+			
+			if(currRangeIdx < byteRanges.size()) {
+				byteRange = byteRanges.get(currRangeIdx);
+				rangeBeg = byteRange.getBeg();
+				rangeEnd = byteRange.getEnd();
+				if(rangeBeg == -1) {
+					// last "rangeEnd" bytes
+					rangeBeg = baseItemSize - rangeEnd;
+					rangeSize = rangeEnd;
+				} else if(rangeEnd == -1) {
+					// start @ offset equal to "rangeBeg"
+					rangeSize = baseItemSize - rangeBeg;
+				} else {
+					rangeSize = rangeEnd - rangeBeg + 1;
+				}
+				n = srcChannel.read(
+					ThreadLocalByteBuffer.get(rangeSize - countBytesDone), rangeBeg + countBytesDone
+				);
+				if(n < 0) {
+					finishIoTask(ioTask);
+					ioTask.setCountBytesDone(countBytesDone);
+					return;
+				}
+				countBytesDone += n;
+				
+				if(countBytesDone == rangeSize) {
+					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+					ioTask.setCountBytesDone(0);
+				} else {
+					ioTask.setCountBytesDone(countBytesDone);
+				}
+			} else {
+				ioTask.setCountBytesDone(rangesSizeSum);
+			}
+		} else {
+			finishIoTask(ioTask);
+		}
 	}
 
 	private void invokeRandomRangesUpdate(

@@ -9,7 +9,7 @@ import java.rmi.RemoteException;
 /**
  Created on 31.08.16.
  */
-public interface StorageMockServer<T extends MutableDataItemMock>
+public interface StorageMockServer<T extends DataItemMock>
 extends Remote, Daemon {
 	T getObjectRemotely(
 		final String containerName, final String id, final long offset, final long size

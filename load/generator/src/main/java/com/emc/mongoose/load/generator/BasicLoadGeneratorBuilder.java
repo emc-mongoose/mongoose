@@ -8,12 +8,12 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTask.IoResult;
-import com.emc.mongoose.model.io.task.data.mutable.BasicMutableDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
 import com.emc.mongoose.model.io.task.token.BasicTokenIoTaskBuilder;
+import com.emc.mongoose.model.item.BasicDataItemFactory;
 import com.emc.mongoose.model.item.BasicItemNameInput;
-import com.emc.mongoose.model.item.BasicMutableDataItemFactory;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.IoResultsItemInput;
@@ -129,7 +129,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 					fixedRanges.add(new ByteRange(fixedRangeConfig));
 				}
 			}
-			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicMutableDataIoTaskBuilder()
+			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicDataIoTaskBuilder()
 				.setFixedRanges(fixedRanges)
 				.setRandomRangesCount(rangesConfig.getRandom())
 				.setSizeThreshold(rangesConfig.getThreshold().get());
@@ -310,7 +310,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 					final BasicItemNameInput itemNameInput = new BasicItemNameInput(
 						namingType, namingPrefix, namingLength, namingRadix, namingOffset
 					);
-					if(itemFactory instanceof BasicMutableDataItemFactory) {
+					if(itemFactory instanceof BasicDataItemFactory) {
 						final SizeInBytes size = itemConfig.getDataConfig().getSize();
 						itemInput = (Input<I>) new NewDataItemInput(
 							itemFactory, itemNameInput, size

@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.http;
 
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
+import com.emc.mongoose.storage.mock.api.DataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockNode;
@@ -49,13 +49,13 @@ public class StorageMockFactory {
 			contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
 		);
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
-		final StorageMock<MutableDataItemMock> storage = new Nagaina(
+		final StorageMock<DataItemMock> storage = new Nagaina(
 			storageConfig, loadConfig, itemConfig, contentSrc, handlers
 		);
-		final StorageMockNode<MutableDataItemMock> storageMockNode = new NagainaNode(
+		final StorageMockNode<DataItemMock> storageMockNode = new NagainaNode(
 			storage, contentSrc
 		);
-		final StorageMockClient<MutableDataItemMock> client = storageMockNode.client();
+		final StorageMockClient<DataItemMock> client = storageMockNode.client();
 		handlers.add(
 			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client)
 		);
@@ -76,7 +76,7 @@ public class StorageMockFactory {
 			contentSourcePath, contentConfig.getSeed(), contentConfig.getRingSize()
 		);
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
-		final StorageMock<MutableDataItemMock> storage = new Nagaina(
+		final StorageMock<DataItemMock> storage = new Nagaina(
 			storageConfig, loadConfig, itemConfig, contentSrc, handlers
 		);
 		try {

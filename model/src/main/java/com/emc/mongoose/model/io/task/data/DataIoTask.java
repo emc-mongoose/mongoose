@@ -6,6 +6,7 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 
+import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -42,8 +43,24 @@ extends IoTask<I, R> {
 		final boolean useDataLatencyResult,
 		final boolean useTransferSizeResult
 	);
-
+	
+	void markRandomRanges(final int count);
+	
+	boolean hasMarkedRanges();
+	
+	long getMarkedRangesSize();
+	
+	BitSet[] getMarkedRangesMaskPair();
+	
 	List<ByteRange> getFixedRanges();
+	
+	int getCurrRangeIdx();
+	
+	void setCurrRangeIdx(final int i);
+	
+	DataItem getCurrRange();
+	
+	DataItem getCurrRangeUpdate();
 
 	long getCountBytesDone();
 
