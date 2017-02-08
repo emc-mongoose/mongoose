@@ -48,8 +48,8 @@ public final class CliArgParser {
 				for(final Map<String, Object> aliasingNode : aliasingConfig) {
 					nextAliasName = ARG_PREFIX + aliasingNode.get(KEY_NAME);
 					nextAliasTarget = ARG_PREFIX + aliasingNode.get(KEY_TARGET);
-					nextDeprecatedFlag = aliasingNode.containsKey(KEY_DEPRECATED) ?
-						(boolean) aliasingNode.get(KEY_DEPRECATED) : false;
+					nextDeprecatedFlag =
+							aliasingNode.containsKey(KEY_DEPRECATED) && (boolean) aliasingNode.get(KEY_DEPRECATED);
 					if(arg.startsWith(nextAliasName)) {
 						if(nextDeprecatedFlag) {
 							LOG.warn(

@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.item;
 
+import com.emc.mongoose.model.data.BasicContentSource;
 import com.emc.mongoose.model.data.ContentSource;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -22,7 +23,7 @@ implements MutableDataItem {
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final BitSet maskRangesRead = new BitSet(Long.SIZE);
+	public BitSet maskRangesRead = new BitSet(Long.SIZE);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicMutableDataItem() {
 		super();
@@ -75,7 +76,19 @@ implements MutableDataItem {
 	) {
 		super(name, offset, size, layerNum, contentSrc);
 	}
-	
+
+	public BasicMutableDataItem(
+			final String name, final long offset, final long size, final int layerNum,
+			final BitSet maskRangesRead, final long position, final String id
+	) {
+		this.name = name;
+		this.offset = offset;
+		this.size = size;
+		this.layerNum = layerNum;
+		this.maskRangesRead = maskRangesRead;
+		this.position = position;
+	}
+
 	@Override
 	public BasicMutableDataItem slice(final long from, final long partSize) {
 		if(from < 0) {

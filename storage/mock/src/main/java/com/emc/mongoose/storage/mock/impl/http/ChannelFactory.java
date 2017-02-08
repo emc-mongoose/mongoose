@@ -9,13 +9,12 @@ import org.apache.logging.log4j.Logger;
 import javax.jmdns.JmDNS;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Optional;
 
 /**
  * Created by reddy on 03.02.17.
  */
 public class ChannelFactory {
-    private static final int defaultPort = 8080;
+    private static final int defaultPort = 135;
 
     public Channel newChannel(final String host, final int port, final boolean usePlainText) {
         return ManagedChannelBuilder.forAddress(host, port).usePlaintext(usePlainText).build();

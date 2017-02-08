@@ -13,5 +13,5 @@ public interface StorageMockServer<T extends MutableDataItemMock>
 extends Remote, Daemon {
 	T getObjectRemotely(
 		final String containerName, final String id, final long offset, final long size
-	) throws RemoteException, ContainerMockException;
+	) throws ContainerMockException;
 }
