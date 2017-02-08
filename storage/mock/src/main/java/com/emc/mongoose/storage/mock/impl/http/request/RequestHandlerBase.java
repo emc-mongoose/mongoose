@@ -293,19 +293,16 @@ extends ChannelInboundHandlerAdapter {
 		final String containerName, final String id, final long offset, final long size,
 		final ChannelHandlerContext ctx
 	) {
-		final List<String> rangeHeadersValues = ctx
-			.channel()
-			.attr(ATTR_KEY_REQUEST)
-			.get()
-			.headers()
-			.getAll(RANGE);
+		final HttpHeaders reqHeaders = ctx.channel().attr(ATTR_KEY_REQUEST).get().headers();
+		final List<String> rangeHeadersValues = reqHeaders.getAll(RANGE);
 		try {
 			if(rangeHeadersValues.size() == 0) {
 				localStorage.createObject(containerName, id, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
+				final long contentLen = Long.parseLong(reqHeaders.get(CONTENT_LENGTH));
 				final boolean success = handlePartialWrite(
-					containerName, id, rangeHeadersValues, size
+					containerName, id, rangeHeadersValues, size, contentLen
 				);
 				ioStats.markWrite(success, size);
 			}
@@ -331,11 +328,10 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	private static final String VALUE_RANGE_PREFIX = "bytes=";
-	private static final String VALUE_RANGE_CONCAT = "-";
 
 	private boolean handlePartialWrite(
 		final String containerName, final String id, final List<String> rangeHeadersValues,
-		final long size
+		final long size, final long contentLength
 	) throws ContainerMockException, ObjectMockNotFoundException, NumberFormatException {
 		String ranges[];
 		ByteRange byteRange;
@@ -358,6 +354,8 @@ extends ChannelInboundHandlerAdapter {
 					} else if(beg > -1) {
 						if(end > -1) {
 							localStorage.updateObject(containerName, id, beg, end - beg + 1);
+						} else if(beg == size) {
+							localStorage.appendObject(containerName, id, contentLength);
 						} else {
 							localStorage.updateObject(containerName, id, beg, size - beg);
 						}
