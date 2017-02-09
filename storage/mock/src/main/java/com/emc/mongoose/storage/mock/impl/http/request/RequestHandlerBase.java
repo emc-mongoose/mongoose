@@ -300,9 +300,8 @@ extends ChannelInboundHandlerAdapter {
 				localStorage.createObject(containerName, id, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
-				final long contentLen = Long.parseLong(reqHeaders.get(CONTENT_LENGTH));
 				final boolean success = handlePartialWrite(
-					containerName, id, rangeHeadersValues, size, contentLen
+					containerName, id, size, rangeHeadersValues
 				);
 				ioStats.markWrite(success, size);
 			}
@@ -330,14 +329,11 @@ extends ChannelInboundHandlerAdapter {
 	private static final String VALUE_RANGE_PREFIX = "bytes=";
 
 	private boolean handlePartialWrite(
-		final String containerName, final String id, final List<String> rangeHeadersValues,
-		final long size, final long contentLength
+		final String containerName, final String id, final long size,
+		final List<String> rangeHeadersValues
 	) throws ContainerMockException, ObjectMockNotFoundException, NumberFormatException {
 		String ranges[];
 		ByteRange byteRange;
-		long beg;
-		long end;
-		long len;
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
 				final String rangeValueWithoutPrefix = rangeValues.substring(
@@ -346,25 +342,7 @@ extends ChannelInboundHandlerAdapter {
 				ranges = rangeValueWithoutPrefix.split(",");
 				for(final String range : ranges) {
 					byteRange = new ByteRange(range);
-					beg = byteRange.getBeg();
-					end = byteRange.getEnd();
-					len = byteRange.getSize();
-					if(len > 0) {
-						localStorage.appendObject(containerName, id, len);
-					} else if(beg > -1) {
-						if(end > -1) {
-							localStorage.updateObject(containerName, id, beg, end - beg + 1);
-						} else if(beg == size) {
-							localStorage.appendObject(containerName, id, contentLength);
-						} else {
-							localStorage.updateObject(containerName, id, beg, size - beg);
-						}
-					} else if(end > -1) {
-						localStorage.updateObject(containerName, id, size - end, end);
-					} else {
-						LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
-						return false;
-					}
+					localStorage.updateObject(containerName, id, size, byteRange);
 				}
 			} else {
 				LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);

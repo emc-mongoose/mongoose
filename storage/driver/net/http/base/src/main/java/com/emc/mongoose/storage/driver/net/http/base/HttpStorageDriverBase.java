@@ -285,7 +285,7 @@ implements HttpStorageDriver<I, O, R> {
 
 		if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
 			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
-			if(rangesMaskPair[0].isEmpty() || rangesMaskPair[1].isEmpty()) {
+			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
 			}
 			// current layer first

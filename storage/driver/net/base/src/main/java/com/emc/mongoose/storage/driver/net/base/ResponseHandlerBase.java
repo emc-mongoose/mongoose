@@ -78,28 +78,6 @@ extends SimpleChannelInboundHandler<M> {
 			if(cause instanceof PrematureChannelClosureException) {
 				LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
 				ioTask.setStatus(FAIL_IO);
-			} else if(cause instanceof DataVerificationException) {
-				final DataVerificationException ee = (DataVerificationException) cause;
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				final DataItem dataItem = dataIoTask.getItem();
-				dataIoTask.setCountBytesDone(ee.getOffset());
-				dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
-				if(cause instanceof DataSizeException) {
-					try {
-						LOG.warn(
-							Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
-							dataItem.getName(), dataItem.size(), ee.getOffset()
-						);
-					} catch(final IOException ignored) {
-					}
-				} else if(cause instanceof DataCorruptionException) {
-					final DataCorruptionException eee = (DataCorruptionException) ee;
-					LOG.warn(
-						Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-						dataItem.getName(), ee.getOffset(), String.format("\"0x%X\"", eee.expected),
-						String.format("\"0x%X\"", eee.actual)
-					);
-				}
 			} else {
 				LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
 				ioTask.setStatus(FAIL_UNKNOWN);
@@ -130,31 +108,54 @@ extends SimpleChannelInboundHandler<M> {
 		final List<ByteRange> byteRanges = dataIoTask.getFixedRanges();
 
 		final DataItem item = dataIoTask.getItem();
-		if(item.isUpdated()) {
-			if(byteRanges != null && !byteRanges.isEmpty()) {
-				verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize, byteRanges);
-			} else if(dataIoTask.hasMarkedRanges()) {
-				verifyChunkUpdatedData(
-					item, dataIoTask, contentChunk, chunkSize, dataIoTask.getMarkedRangesMaskPair()
-				);
+		try {
+			if(item.isUpdated()) {
+				if(byteRanges != null && !byteRanges.isEmpty()) {
+					verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize, byteRanges);
+				} else if(dataIoTask.hasMarkedRanges()) {
+					verifyChunkUpdatedData(
+						item, dataIoTask, contentChunk, chunkSize,
+						dataIoTask.getMarkedRangesMaskPair()
+					);
+				} else {
+					verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize);
+				}
+				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			} else {
-				verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize);
+				if(byteRanges != null && !byteRanges.isEmpty()) {
+					verifyChunkDataAndSize(
+						dataIoTask, countBytesDone, contentChunk, chunkSize, byteRanges
+					);
+				} else if(dataIoTask.hasMarkedRanges()) {
+					verifyChunkDataAndSize(
+						dataIoTask, countBytesDone, contentChunk, chunkSize,
+						dataIoTask.getMarkedRangesMaskPair()
+					);
+				} else {
+					verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+				}
+				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			}
-			dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
-		} else {
-			if(byteRanges != null && !byteRanges.isEmpty()) {
-				verifyChunkDataAndSize(
-					dataIoTask, countBytesDone, contentChunk, chunkSize, byteRanges
+		} catch(final DataVerificationException e) {
+			final DataItem dataItem = dataIoTask.getItem();
+			dataIoTask.setCountBytesDone(e.getOffset());
+			dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
+			if(e instanceof DataSizeException) {
+				try {
+					LOG.warn(
+						Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
+						dataItem.getName(), dataItem.size(), e.getOffset()
+					);
+				} catch(final IOException ignored) {
+				}
+			} else if(e instanceof DataCorruptionException) {
+				final DataCorruptionException ee = (DataCorruptionException) e;
+				LOG.warn(
+					Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+					dataItem.getName(), ee.getOffset(), String.format("\"0x%X\"", ee.expected),
+					String.format("\"0x%X\"", ee.actual)
 				);
-			} else if(dataIoTask.hasMarkedRanges()) {
-				verifyChunkDataAndSize(
-					dataIoTask, countBytesDone, contentChunk, chunkSize,
-					dataIoTask.getMarkedRangesMaskPair()
-				);
-			} else {
-				verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
 			}
-			dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 		}
 	}
 
