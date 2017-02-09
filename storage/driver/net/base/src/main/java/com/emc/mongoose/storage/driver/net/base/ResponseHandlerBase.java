@@ -19,6 +19,7 @@ import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -111,11 +112,10 @@ extends SimpleChannelInboundHandler<M> {
 		try {
 			if(item.isUpdated()) {
 				if(byteRanges != null && !byteRanges.isEmpty()) {
-					verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize, byteRanges);
+					verifyChunkUpdatedData(dataIoTask, contentChunk, chunkSize, byteRanges);
 				} else if(dataIoTask.hasMarkedRanges()) {
 					verifyChunkUpdatedData(
-						item, dataIoTask, contentChunk, chunkSize,
-						dataIoTask.getMarkedRangesMaskPair()
+						dataIoTask, contentChunk, chunkSize, dataIoTask.getMarkedRangesMaskPair()
 					);
 				} else {
 					verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize);
@@ -174,13 +174,72 @@ extends SimpleChannelInboundHandler<M> {
 		final int chunkSize, final List<ByteRange> byteRanges
 	) throws DataCorruptionException, IOException {
 		
+		final long rangesSizeSum = dataIoTask.getMarkedRangesSize();
+		if(chunkSize > rangesSizeSum - countBytesDone) {
+			throw new DataSizeException(
+				dataIoTask.getMarkedRangesSize(), countBytesDone + chunkSize
+			);
+		}
+		// "countBytesDone" is the current range done bytes counter here
+		final DataItem dataItem = dataIoTask.getItem();
+		final long baseItemSize = dataItem.size();
+		
+		ByteRange byteRange;
+		DataItem currRange;
+		long rangeBytesDone = countBytesDone;
+		long rangeBeg;
+		long rangeEnd;
+		long rangeSize;
+		int currRangeIdx;
+		int chunkOffset = 0;
+		int n;
+		
+		while(chunkOffset < chunkSize) {
+			currRangeIdx = dataIoTask.getCurrRangeIdx();
+			if(currRangeIdx < byteRanges.size()) {
+				byteRange = byteRanges.get(currRangeIdx);
+				rangeBeg = byteRange.getBeg();
+				rangeEnd = byteRange.getEnd();
+				if(rangeBeg == -1) {
+					// last "rangeEnd" bytes
+					rangeBeg = baseItemSize - rangeEnd;
+					rangeSize = rangeEnd;
+				} else if(rangeEnd == -1) {
+					// start @ offset equal to "rangeBeg"
+					rangeSize = baseItemSize - rangeBeg;
+				} else {
+					rangeSize = rangeEnd - rangeBeg + 1;
+				}
+				currRange = dataItem.slice(rangeBeg, rangeSize);
+				currRange.position(rangeBytesDone);
+				n = (int) Math.min(chunkSize - chunkOffset, rangeSize - rangeBytesDone);
+				verifyChunkData(currRange, chunkData, chunkOffset, n);
+				chunkOffset += n;
+				rangeBytesDone += n;
+				
+				if(rangeBytesDone == rangeSize) {
+					dataIoTask.setCurrRangeIdx(currRangeIdx + 1);
+					rangeBytesDone = 0;
+				}
+				dataIoTask.setCountBytesDone(rangeBytesDone);
+			} else {
+				dataIoTask.setCountBytesDone(rangesSizeSum);
+				break;
+			}
+		}
 	}
 
 	private static void verifyChunkDataAndSize(
 		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf chunkData,
 		final int chunkSize, final BitSet markedRangesMaskPair[]
 	) throws DataCorruptionException, IOException {
-		
+		if(chunkSize > dataIoTask.getMarkedRangesSize() - countBytesDone) {
+			throw new DataSizeException(
+				dataIoTask.getMarkedRangesSize(), countBytesDone + chunkSize
+			);
+		}
+		// TODO
+		// "countBytesDone" is the current range done bytes counter here
 	}
 	
 	private static void verifyChunkUpdatedData(
@@ -225,15 +284,15 @@ extends SimpleChannelInboundHandler<M> {
 	}
 
 	private static void verifyChunkUpdatedData(
-		final DataItem item, final DataIoTask ioTask, final ByteBuf chunkData,
-		final int chunkSize, final List<ByteRange> byteRanges
+		final DataIoTask ioTask, final ByteBuf chunkData, final int chunkSize,
+		final List<ByteRange> byteRanges
 	) throws DataCorruptionException, IOException {
 
 	}
 
 	private static void verifyChunkUpdatedData(
-		final DataItem item, final DataIoTask ioTask, final ByteBuf chunkData,
-		final int chunkSize, final BitSet markedRangesMaskPair[]
+		final DataIoTask ioTask, final ByteBuf chunkData, final int chunkSize,
+		final BitSet markedRangesMaskPair[]
 	) throws DataCorruptionException, IOException {
 
 	}

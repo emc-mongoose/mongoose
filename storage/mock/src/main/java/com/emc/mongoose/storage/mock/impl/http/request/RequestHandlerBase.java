@@ -336,10 +336,9 @@ extends ChannelInboundHandlerAdapter {
 		ByteRange byteRange;
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
-				final String rangeValueWithoutPrefix = rangeValues.substring(
-					VALUE_RANGE_PREFIX.length(), rangeValues.length()
-				);
-				ranges = rangeValueWithoutPrefix.split(",");
+				ranges = rangeValues
+					.substring(VALUE_RANGE_PREFIX.length(), rangeValues.length())
+					.split(",");
 				for(final String range : ranges) {
 					byteRange = new ByteRange(range);
 					localStorage.updateObject(containerName, id, size, byteRange);
@@ -400,7 +399,6 @@ extends ChannelInboundHandlerAdapter {
 		if(localStorage.missResponse()) {
 			return;
 		}
-		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		final long size = object.size();
 		HttpUtil.setContentLength(response, size);
@@ -411,6 +409,7 @@ extends ChannelInboundHandlerAdapter {
 			ctx.write(new DataItemFileRegion<>(object));
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		ioStats.markRead(true, size);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
@@ -421,6 +420,7 @@ extends ChannelInboundHandlerAdapter {
 		final T object, final ChannelHandlerContext ctx, final List<String> rangeHeadersValues
 	) throws IOException {
 
+		String ranges[];
 		ByteRange byteRange;
 		long beg, end, size, sumSize = 0;
 		final long objSize = object.size();
@@ -428,40 +428,51 @@ extends ChannelInboundHandlerAdapter {
 		final List<DataItemFileRegion<T>> rangesContent = new ArrayList<>(rangeHeadersValues.size());
 
 		for(final String rangeValue : rangeHeadersValues) {
-
-			byteRange = new ByteRange(rangeValue);
-			beg = byteRange.getBeg();
-			end = byteRange.getEnd();
-
-			if(beg == -1) {
-				if(end == -1) {
-					setHttpResponseStatusInContext(ctx, REQUESTED_RANGE_NOT_SATISFIABLE);
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						LOG.trace(Markers.ERR, "Request range not satisfiable: {}", rangeValue);
+			if(rangeValue.startsWith(VALUE_RANGE_PREFIX)) {
+				ranges = rangeValue
+					.substring(VALUE_RANGE_PREFIX.length(), rangeValue.length())
+					.split(",");
+				for(final String range : ranges) {
+					
+					byteRange = new ByteRange(range);
+					beg = byteRange.getBeg();
+					end = byteRange.getEnd();
+		
+					if(beg == -1) {
+						if(end == -1) {
+							setHttpResponseStatusInContext(ctx, REQUESTED_RANGE_NOT_SATISFIABLE);
+							if(LOG.isTraceEnabled(Markers.ERR)) {
+								LOG.trace(
+									Markers.ERR, "Request range not satisfiable: {}", rangeValue
+								);
+							}
+							ioStats.markRead(false, 0);
+							return;
+						} else { // final "end" bytes
+							beg = 0;
+							size = end;
+						}
+					} else {
+						if(end == -1) { // start from "beg" to the end of the object
+							size = objSize - beg;
+						} else { // from "beg" to "end"
+							size = end - beg + 1;
+						}
 					}
-					ioStats.markRead(false, 0);
-					return;
-				} else { // final "end" bytes
-					beg = 0;
-					size = end;
-				}
-			} else {
-				if(end == -1) { // start from "beg" to the end of the object
-					size = objSize - beg;
-				} else { // from "beg" to "end"
-					size = end - beg + 1;
+		
+					rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
+					sumSize += size;
 				}
 			}
-
-			rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
-			sumSize += size;
 		}
-
+		
+		HttpUtil.setContentLength(response, sumSize);
 		ctx.write(response);
 		for(final DataItemFileRegion<T> rangeContent : rangesContent) {
 			ctx.write(rangeContent);
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		ioStats.markRead(true, sumSize);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Partially sent the data object with ID {}", object.getName());
