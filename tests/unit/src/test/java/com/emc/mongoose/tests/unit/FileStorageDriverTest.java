@@ -2,9 +2,9 @@ package com.emc.mongoose.tests.unit;
 
 import com.emc.mongoose.common.math.Random;
 import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.item.BasicDataItem;
 import com.emc.mongoose.model.item.BasicItemFactory;
-import com.emc.mongoose.model.item.BasicMutableDataItem;
-import com.emc.mongoose.model.item.MutableDataItem;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.storage.driver.nio.fs.FileStorageDriver;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
@@ -79,9 +79,9 @@ public class FileStorageDriverTest {
 				.createNewFile();
 		}
 
-		List<MutableDataItem> items = FileStorageDriver._list(
+		List<DataItem> items = FileStorageDriver._list(
 			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10,
-			new BasicMutableDataItem(
+			new BasicDataItem(
 				"yohoho0099", 0, 0,
 				new ContentSource() {
 					@Override
