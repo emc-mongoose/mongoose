@@ -4,15 +4,25 @@ import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.DaemonBase;
+import com.emc.mongoose.model.data.BasicContentSource;
 import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.data.ContentSourceUtil;
+import com.emc.mongoose.model.item.BasicMutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.impl.http.ChannelFactory;
+import com.emc.mongoose.storage.mock.impl.proto.ClientMessage;
+import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
+import com.emc.mongoose.storage.mock.impl.proto.ServerMessage;
+import com.emc.mongoose.storage.mock.impl.proto.ServerMessageOrBuilder;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,9 +35,11 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -96,9 +108,26 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
         @Override
         public final void run() {
             try {
-                final T remoteObject = node.getObjectRemotely(containerName, id, offset, size);
+                //final T remoteObject = node.getObjectRemotely(containerName, id, offset, size);
+                ClientMessage request = ClientMessage.newBuilder()
+                        .setContainerName(containerName)
+                        .setId(id)
+                        .setOffset(offset)
+                        .setSize(size)
+                        .build();
+                final ServerMessage response;
+                final ChannelFactory channelFactory = new ChannelFactory();
+                response = RemoteQuerierGrpc.newBlockingStub(channelFactory.newChannel()).getRemoteObject(request);
+                final T remoteObject = response.getIsPresent()
+                        ? (T) new BasicMutableDataItem(
+                                response.getContainerName(), response.getOffset(), response.getSize(),
+                                response.getLayerNum(), BitSet.valueOf(new long[]{response.getMaskRangesRead()}),
+                                response.getPosition(), response.getId()
+                            )
+                        : null;
                 set(remoteObject);
-            } catch(final ContainerMockException | RemoteException e) {
+            } catch (StatusRuntimeException e) {
+                LOG.info(Markers.ERR, "RPC failed: {0}", e.getStatus());
                 setException(e);
             }
         }

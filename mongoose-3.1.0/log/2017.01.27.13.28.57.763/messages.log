@@ -1,6 +1,0 @@
-2017-01-27T13:28:58,465 | DEBUG | ParentJobBase | main | Load the subtree to the job "jsonScenario#2129144075"
-2017-01-27T13:28:58,468 | INFO | JsonScenario | main | Scenario start
-2017-01-27T13:28:58,468 | INFO | SequentialJob | main | jsonScenario#2129144075: execute 1 child jobs sequentially
-2017-01-27T13:28:58,468 | DEBUG | SequentialJob | main | jsonScenario#2129144075: child job "singleLoadJobContainer#111900554" start
-2017-01-27T13:28:58,468 | INFO | LoadJob | main | Run the load job "2017.01.27.13.28.57.763"
-2017-01-27T13:28:58,496 | INFO | BasicStorageDriverBuilder | main | Work via HTTP using "S3" cloud storage API

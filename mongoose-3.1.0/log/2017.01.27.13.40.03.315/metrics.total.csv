@@ -1,2 +1,0 @@
-DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]
-"2017-01-27T13:40:34,752",READ,1,1,16626,0,17433624576,30.355,29.187727,547.7186624938231,546.0624677716688,5.74324644243123E8,5.725879982061454E8,1728.7908560311284,1520,1607,1651,1719,7889,1728.7908560311284,38,61,77,100,577
