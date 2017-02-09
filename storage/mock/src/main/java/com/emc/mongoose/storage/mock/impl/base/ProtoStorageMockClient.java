@@ -4,25 +4,21 @@ import com.emc.mongoose.common.concurrent.AnyNotNullSharedFutureTaskBase;
 import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.DaemonBase;
-import com.emc.mongoose.model.data.BasicContentSource;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.item.BasicMutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
-import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.impl.http.ChannelFactory;
 import com.emc.mongoose.storage.mock.impl.proto.ClientMessage;
 import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
 import com.emc.mongoose.storage.mock.impl.proto.ServerMessage;
-import com.emc.mongoose.storage.mock.impl.proto.ServerMessageOrBuilder;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
+import javafx.util.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,14 +31,10 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -61,8 +53,8 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
 
     private final ContentSource contentSrc;
     private final JmDNS jmDns;
-    private final Map<String, StorageMockServer<T>>
-            remoteNodeMap = new ConcurrentHashMap<>();
+    private final List<Pair<String, Integer>>
+            remoteNodeList = new CopyOnWriteArrayList<>();
     private final ExecutorService executor;
 
     public ProtoStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
@@ -86,16 +78,17 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
     private static final class GetRemoteObjectTask<T extends MutableDataItemMock>
             extends AnyNotNullSharedFutureTaskBase<T> {
 
-        private final StorageMockServer<T> node;
+        private final Pair<String, Integer> node;
         private final String containerName;
         private final String id;
         private final long offset;
         private final long size;
+        private final JmDNS jmDns;
 
         public GetRemoteObjectTask(
                 final AtomicReference<T> resultRef, final CountDownLatch sharedLatch,
-                final StorageMockServer<T> node, final String containerName, final String id,
-                final long offset, final long size
+                final Pair<String, Integer> node, final String containerName, final String id,
+                final long offset, final long size, final JmDNS jmDns
         ) {
             super(resultRef, sharedLatch);
             this.node = node;
@@ -103,6 +96,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
             this.id = id;
             this.offset = offset;
             this.size = size;
+            this.jmDns = jmDns;
         }
 
         @Override
@@ -117,7 +111,8 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
                         .build();
                 final ServerMessage response;
                 final ChannelFactory channelFactory = new ChannelFactory();
-                response = RemoteQuerierGrpc.newBlockingStub(channelFactory.newChannel()).getRemoteObject(request);
+                response = RemoteQuerierGrpc.newBlockingStub(channelFactory.newChannel(node.getKey(), node.getValue()))
+                        .getRemoteObject(request);
                 final T remoteObject = response.getIsPresent()
                         ? (T) new BasicMutableDataItem(
                                 response.getContainerName(), response.getOffset(), response.getSize(),
@@ -127,7 +122,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
                         : null;
                 set(remoteObject);
             } catch (StatusRuntimeException e) {
-                LOG.info(Markers.ERR, "RPC failed: {0}", e.getStatus());
+                LOG.info(Markers.ERR, "RPC failed: " + e.getStatus());
                 setException(e);
             }
         }
@@ -137,13 +132,12 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
     public T getObject(
             final String containerName, final String id, final long offset, final long size
     ) throws ExecutionException, InterruptedException {
-        final Collection<StorageMockServer<T>> remoteNodes = remoteNodeMap.values();
-        final CountDownLatch sharedCountDown = new CountDownLatch(remoteNodes.size());
+        final CountDownLatch sharedCountDown = new CountDownLatch(remoteNodeList.size());
         final AtomicReference<T> resultRef = new AtomicReference<>(null);
-        for(final StorageMockServer<T> node : remoteNodes) {
+        for(final Pair<String, Integer> node : remoteNodeList) {
             executor.submit(
                     new ProtoStorageMockClient.GetRemoteObjectTask<>(
-                            resultRef, sharedCountDown, node, containerName, id, offset, size
+                            resultRef, sharedCountDown, node, containerName, id, offset, size, jmDns
                     )
             );
         }
@@ -182,7 +176,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
     @Override
     protected void doClose()
             throws IOException {
-        remoteNodeMap.clear();
+        remoteNodeList.clear();
     }
 
     @Override
@@ -192,25 +186,16 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
 
     @Override
     public void serviceRemoved(final ServiceEvent event) {
-        handleServiceEvent(event, remoteNodeMap::remove, "Node removed");
+        handleServiceEvent(event, remoteNodeList::remove, "Node removed");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void serviceResolved(final ServiceEvent event) {
         final Consumer<String> c = hostAddress -> {
-            try {
-                final URI rmiUrl = new URI(
-                        "rmi", null, hostAddress, REGISTRY_PORT, "/" + SVC_NAME, null, null
-                );
-                final StorageMockServer<T> mock = (StorageMockServer<T>) Naming.lookup(
-                        rmiUrl.toString()
-                );
-                remoteNodeMap.putIfAbsent(hostAddress, mock);
-            } catch(final NotBoundException | MalformedURLException | RemoteException e) {
-                LogUtil.exception(LOG, Level.ERROR, e, "Failed to lookup node");
-            } catch(final URISyntaxException e) {
-                LOG.debug(Markers.ERR, "RMI URL syntax error {}", e);
+            final Pair<String, Integer> address = new Pair<>(hostAddress, REGISTRY_PORT);
+            if (!remoteNodeList.contains(address)) {
+                remoteNodeList.add(address);
             }
         };
         handleServiceEvent(event, c, "Node added");
@@ -218,7 +203,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
 
     private void printNodeList() {
         final StringJoiner joiner = new StringJoiner(",");
-        remoteNodeMap.keySet().forEach(joiner::add);
+        remoteNodeList.forEach(x -> joiner.add(x.toString()));
         LOG.info(Markers.MSG, "Detected nodes: " + joiner.toString());
     }
 

@@ -87,6 +87,7 @@ implements MutableDataItem {
 		this.layerNum = layerNum;
 		this.maskRangesRead = maskRangesRead;
 		this.position = position;
+
 	}
 
 	@Override

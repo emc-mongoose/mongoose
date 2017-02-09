@@ -5,9 +5,13 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+import io.grpc.BindableService;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,24 +53,6 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
             throws IllegalStateException {
         try {
             LOG.info(Markers.MSG, "Register the service");
-
-            // TODO move the registry obtaining section to some kind of init
-            try {
-                LocateRegistry.createRegistry(REGISTRY_PORT);
-            } catch(final RemoteException e) {
-                try {
-                    LocateRegistry.getRegistry(REGISTRY_PORT);
-                } catch(final RemoteException ee) {
-                    LogUtil.exception(
-                            LOG, Level.ERROR, ee, "Failed to obtain RMI registry"
-                    );
-                }
-            }
-
-            // export
-            UnicastRemoteObject.exportObject(this, 0);
-            Naming.rebind(SVC_NAME, this);
-
             serviceInfo = ServiceInfo.create(
                     MDns.Type.HTTP.toString(), SVC_NAME, MDns.DEFAULT_PORT, "storage mock"
             );
@@ -77,9 +63,10 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
                     LOG, Level.ERROR, e, "Failed to register as service"
             );
         }
+
         try {
             storage.start();
-        } catch(final RemoteException e) {
+        } catch(final IOException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -98,7 +85,6 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
     protected void doInterrupt()
             throws IllegalStateException {
         try {
-            UnicastRemoteObject.unexportObject(this, true);
             storage.interrupt();
         } catch(final RemoteException e) {
             throw new IllegalStateException(e);

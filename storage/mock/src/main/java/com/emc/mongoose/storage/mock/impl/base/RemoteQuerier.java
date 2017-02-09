@@ -18,10 +18,10 @@ import java.util.Optional;
 public class RemoteQuerier<T extends MutableDataItemMock>
         extends RemoteQuerierGrpc.RemoteQuerierImplBase {
 
-    private StorageMockServer<T> server;
+    private StorageMock<T> storage;
 
-    public RemoteQuerier(StorageMockServer<T> server) {
-        this.server = server;
+    public RemoteQuerier(final StorageMock<T> storage) {
+        this.storage = storage;
     }
 
     @Override
@@ -30,7 +30,7 @@ public class RemoteQuerier<T extends MutableDataItemMock>
         try {
             //there is no class cast error here; it's only type erasing, so java don't sure if it can be cast to T
              object = Optional.ofNullable(
-                     (BasicMutableDataItem) server.getObjectRemotely(
+                     (BasicMutableDataItem) storage.getObject(
                              request.getContainerName(), request.getId(), request.getOffset(), request.getSize()
                      )
              );

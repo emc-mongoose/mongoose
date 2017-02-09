@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  Created on 31.08.16.
  */
 public interface StorageMockServer<T extends MutableDataItemMock>
-extends Remote, Daemon {
+extends Daemon {
 	T getObjectRemotely(
 		final String containerName, final String id, final long offset, final long size
 	) throws ContainerMockException;

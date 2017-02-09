@@ -4,7 +4,7 @@ option java_package = "com.emc.mongoose.storage.mock.impl.proto";
 option java_outer_classname = "StorageMockProto";
 option java_multiple_files = true;
 
-service ProtoStorageMockServer {
+service RemoteQuerier {
     rpc GetRemoteObject(ClientMessage) returns (ServerMessage) {}
 }
 
@@ -16,11 +16,12 @@ message ClientMessage {
 }
 
 message ServerMessage {
-    required fixed64 maskRangesRead = 1;
-    required int32 layerNum = 2 [default = 0];
-    required int64 position = 3 [default = 0];
-    required string containerName = 4 [default = ""];
-    required string id = 5 [default = ""];
-    required int64 offset = 6 [default = 0];
-    required fixed64 size = 7 [default = 0];
+    optional fixed64 maskRangesRead = 1;
+    optional fixed32 layerNum = 2;
+    optional fixed64 position = 3;
+    optional string containerName = 4;
+    optional string id = 5;
+    optional fixed64 offset = 6;
+    optional fixed64 size = 7;
+    required bool isPresent = 8 [default = false];
 }
