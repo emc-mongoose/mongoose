@@ -1,0 +1,73 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "1KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "read-multiple-fixed-ranges-0.csv"
+					}
+				}
+			}
+		},
+		{
+			"type": "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 5
+						}
+					},
+					"input" : {
+						"file" : "read-multiple-fixed-ranges-0.csv"
+					},
+					"output" : {
+						"file" : "read-multiple-fixed-ranges-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"fixed" : [
+								"12-34",
+								"56-78",
+								"910-"
+							]
+						},
+						"verify" : true
+					},
+					"input" : {
+						"file" : "read-multiple-fixed-ranges-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+
+

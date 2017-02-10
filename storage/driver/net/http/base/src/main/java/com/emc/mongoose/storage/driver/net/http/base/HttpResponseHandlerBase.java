@@ -8,6 +8,7 @@ import com.emc.mongoose.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.base.ResponseHandlerBase;
+import static com.emc.mongoose.storage.driver.net.base.data.ResponseContentUtil.verifyChunk;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_AUTH;
@@ -115,9 +116,7 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					if(verifyFlag && !RESP_FAIL_CORRUPT.equals(ioTask.getStatus())) {
-						verifyChunk(dataIoTask, contentChunk, chunkSize);
-					} else {
-						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+						verifyChunk(dataIoTask, countBytesDone, contentChunk, chunkSize);
 					}
 				}
 			} else if(ioTask instanceof PathIoTask) {

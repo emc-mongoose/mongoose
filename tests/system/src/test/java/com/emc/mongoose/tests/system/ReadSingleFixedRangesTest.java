@@ -2,36 +2,32 @@ package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.FileStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
  Created by andrey on 07.02.17.
  Covered use cases:
- * 2.1.1.1.2. Small Data Items (1KB-100KB)
+ * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
  * 2.2.1. Items Input File
  * 2.2.3.1. Random Item Ids
  * 2.3.2. Items Output File
@@ -41,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * 6.2.2. Limit Load Job by Processed Item Count
  * 8.2.1. Create New Items
  * 8.3.2. Read With Enabled Validation
- * 8.3.3.1.1. Single Random Byte Range Read
+ * 8.3.3.2.4. Read Multiple Fixed Ranges
  * 9.3. Custom Scenario File
  * 9.4.3. Reusing The Items in the Scenario
  * 9.5.2. Load Job
@@ -49,17 +45,16 @@ import java.util.concurrent.TimeUnit;
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  * 10.3. Filesystem Storage Driver
  */
-public class ReadSingleRandomFileRangesTest
-extends FileStorageDistributedScenarioTestBase {
+public class ReadSingleFixedRangesTest
+extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "partial", "read-random-ranges.json"
+		getBaseDir(), DIR_SCENARIO, "partial", "read-fixed-ranges.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1-1KB");
+	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1MB");
 	private static final int EXPECTED_CONCURRENCY = 1;
-	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE = "read-random-ranges.csv";
-	private static final String ITEM_OUTPUT_PATH = "/tmp/read-random-ranges";
+	private static final long EXPECTED_COUNT = 100;
+	private static final String ITEM_OUTPUT_FILE = "read-fixed-ranges.csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
@@ -67,17 +62,15 @@ extends FileStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadSingleRandomFileRangesTest.class.getSimpleName();
+		JOB_NAME = ReadSingleFixedRangesTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
-			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--scenario-file=" + SCENARIO_PATH.toString());
-		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--item-data-verify=true");
-		FileStorageDistributedScenarioTestBase.setUpClass();
+		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
 				try {
@@ -99,7 +92,7 @@ extends FileStorageDistributedScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		FileStorageDistributedScenarioTestBase.tearDownClass();
+		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
 	@Test

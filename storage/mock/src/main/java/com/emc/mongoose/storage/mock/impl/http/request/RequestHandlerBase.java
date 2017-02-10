@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.DataItemMock;
@@ -13,6 +14,9 @@ import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 
@@ -300,71 +304,48 @@ extends ChannelInboundHandlerAdapter {
 				localStorage.createObject(containerName, id, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
-				final long contentLen = Long.parseLong(reqHeaders.get(CONTENT_LENGTH));
 				final boolean success = handlePartialWrite(
-					containerName, id, rangeHeadersValues, size, contentLen
+					containerName, id, size, rangeHeadersValues
 				);
 				ioStats.markWrite(success, size);
 			}
-		} catch (final StorageMockCapacityLimitReachedException e) {
+		} catch(final StorageMockCapacityLimitReachedException e) {
 			setHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
 			ioStats.markWrite(false, size);
-		} catch (final ContainerMockNotFoundException e) {
+		} catch(final ContainerMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, size);
-		} catch (final ObjectMockNotFoundException e) {
+		} catch(final ObjectMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, 0);
-		} catch (final ContainerMockException | NumberFormatException | IllegalStateException e) {
-			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
-			ioStats.markWrite(false, 0);
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", id
-			);
 		} catch(final IllegalArgumentException e) {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 			ioStats.markWrite(false, 0);
+		} catch(final Throwable t) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			ioStats.markWrite(false, 0);
+			LogUtil.exception(
+				LOG, Level.ERROR, t, "Failed to perform a range update/append for \"{}\"", id
+			);
 		}
 	}
 
 	private static final String VALUE_RANGE_PREFIX = "bytes=";
 
 	private boolean handlePartialWrite(
-		final String containerName, final String id, final List<String> rangeHeadersValues,
-		final long size, final long contentLength
+		final String containerName, final String id, final long size,
+		final List<String> rangeHeadersValues
 	) throws ContainerMockException, ObjectMockNotFoundException, NumberFormatException {
 		String ranges[];
 		ByteRange byteRange;
-		long beg;
-		long end;
-		long len;
 		for(final String rangeValues: rangeHeadersValues) {
 			if(rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
-				final String rangeValueWithoutPrefix = rangeValues.substring(
-					VALUE_RANGE_PREFIX.length(), rangeValues.length()
-				);
-				ranges = rangeValueWithoutPrefix.split(",");
+				ranges = rangeValues
+					.substring(VALUE_RANGE_PREFIX.length(), rangeValues.length())
+					.split(",");
 				for(final String range : ranges) {
 					byteRange = new ByteRange(range);
-					beg = byteRange.getBeg();
-					end = byteRange.getEnd();
-					len = byteRange.getSize();
-					if(len > 0) {
-						localStorage.appendObject(containerName, id, len);
-					} else if(beg > -1) {
-						if(end > -1) {
-							localStorage.updateObject(containerName, id, beg, end - beg + 1);
-						} else if(beg == size) {
-							localStorage.appendObject(containerName, id, contentLength);
-						} else {
-							localStorage.updateObject(containerName, id, beg, size - beg);
-						}
-					} else if(end > -1) {
-						localStorage.updateObject(containerName, id, size - end, end);
-					} else {
-						LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
-						return false;
-					}
+					localStorage.updateObject(containerName, id, size, byteRange);
 				}
 			} else {
 				LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
@@ -422,7 +403,6 @@ extends ChannelInboundHandlerAdapter {
 		if(localStorage.missResponse()) {
 			return;
 		}
-		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		final long size = object.size();
 		HttpUtil.setContentLength(response, size);
@@ -433,6 +413,7 @@ extends ChannelInboundHandlerAdapter {
 			ctx.write(new DataItemFileRegion<>(object));
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		ioStats.markRead(true, size);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Send data object with ID {}", object.getName());
@@ -443,47 +424,75 @@ extends ChannelInboundHandlerAdapter {
 		final T object, final ChannelHandlerContext ctx, final List<String> rangeHeadersValues
 	) throws IOException {
 
+		String ranges[];
 		ByteRange byteRange;
 		long beg, end, size, sumSize = 0;
+		int cellIdx;
+		long cellSize;
+		DataItem cellData;
 		final long objSize = object.size();
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		final List<DataItemFileRegion<T>> rangesContent = new ArrayList<>(rangeHeadersValues.size());
 
 		for(final String rangeValue : rangeHeadersValues) {
-
-			byteRange = new ByteRange(rangeValue);
-			beg = byteRange.getBeg();
-			end = byteRange.getEnd();
-
-			if(beg == -1) {
-				if(end == -1) {
-					setHttpResponseStatusInContext(ctx, REQUESTED_RANGE_NOT_SATISFIABLE);
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						LOG.trace(Markers.ERR, "Request range not satisfiable: {}", rangeValue);
+			if(rangeValue.startsWith(VALUE_RANGE_PREFIX)) {
+				ranges = rangeValue
+					.substring(VALUE_RANGE_PREFIX.length(), rangeValue.length())
+					.split(",");
+				for(final String range : ranges) {
+					
+					byteRange = new ByteRange(range);
+					beg = byteRange.getBeg();
+					end = byteRange.getEnd();
+		
+					if(beg == -1) {
+						if(end == -1) {
+							setHttpResponseStatusInContext(ctx, REQUESTED_RANGE_NOT_SATISFIABLE);
+							if(LOG.isTraceEnabled(Markers.ERR)) {
+								LOG.trace(
+									Markers.ERR, "Request range not satisfiable: {}", rangeValue
+								);
+							}
+							ioStats.markRead(false, 0);
+							return;
+						} else { // final "end" bytes
+							beg = 0;
+							size = end;
+						}
+					} else {
+						if(end == -1) { // start from "beg" to the end of the object
+							size = objSize - beg;
+						} else { // from "beg" to "end"
+							size = end - beg + 1;
+						}
 					}
-					ioStats.markRead(false, 0);
-					return;
-				} else { // final "end" bytes
-					beg = 0;
-					size = end;
-				}
-			} else {
-				if(end == -1) { // start from "beg" to the end of the object
-					size = objSize - beg;
-				} else { // from "beg" to "end"
-					size = end - beg + 1;
+
+					if(object.isUpdated()) {
+						while(beg < size) {
+							cellIdx = getRangeCount(beg + 1) - 1;
+							cellSize = object.getRangeSize(cellIdx);
+							cellData = object.slice(beg, Math.min(cellSize, size - beg));
+							if(object.isRangeUpdated(cellIdx)) {
+								cellData.layer(object.layer() + 1);
+							}
+							rangesContent.add(new DataItemFileRegion(cellData));
+							beg += cellSize;
+						}
+					} else {
+						rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
+					}
+					sumSize += size;
 				}
 			}
-
-			rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
-			sumSize += size;
 		}
-
+		
+		HttpUtil.setContentLength(response, sumSize);
 		ctx.write(response);
 		for(final DataItemFileRegion<T> rangeContent : rangesContent) {
 			ctx.write(rangeContent);
 		}
 		ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		ctx.channel().attr(ATTR_KEY_CTX_WRITE_FLAG).set(false);
 		ioStats.markRead(true, sumSize);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Partially sent the data object with ID {}", object.getName());

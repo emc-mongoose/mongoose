@@ -6,12 +6,12 @@
 				"size" : "10MB"
 			},
 			"output" : {
-				"path" : "linear-read-partial"
+				"path" : "read-fixed-ranges"
 			}
 		},
 		"load" : {
 			"limit" : {
-				"count" : 1000
+				"count" : 100
 			}
 		}
 	},
@@ -21,7 +21,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-fixed-ranges.csv"
 					}
 				}
 			}
@@ -35,7 +35,7 @@
 						}
 					},
 					"input" : {
-						"file" : "linear-read-partial.csv"
+						"file" : "read-fixed-ranges.csv"
 					}
 				},
 				"load" : {
@@ -45,5 +45,3 @@
 		}
 	]
 }
-
-

@@ -70,7 +70,7 @@ extends FileStorageDistributedScenarioTestBase {
 		JOB_NAME = ReadMultipleFixedFileRangesTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
-			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_FILE));
+			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);

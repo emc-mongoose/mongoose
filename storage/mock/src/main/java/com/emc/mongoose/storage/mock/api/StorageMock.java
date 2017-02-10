@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.api;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
@@ -47,11 +48,8 @@ extends Daemon {
 	) throws ContainerMockNotFoundException;
 	//
 	void updateObject(
-		final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long size, final ByteRange byteRange
 	) throws ContainerMockException, ObjectMockNotFoundException;
-	//
-	void appendObject(final String containerName, final String id, final long size)
-	throws ContainerMockException, ObjectMockNotFoundException;
 	//
 	T listObjects(
 		final String containerName, final String marker,

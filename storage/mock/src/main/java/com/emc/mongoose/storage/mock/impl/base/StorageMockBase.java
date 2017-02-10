@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.base;
 
+import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.collection.ListingLRUMap;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.data.ContentSource;
@@ -18,9 +19,11 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.FailConfig;
+
+import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -129,32 +132,44 @@ implements StorageMock<I> {
 			throw new ContainerMockNotFoundException(containerName);
 		}
 	}
-
+	
 	@Override
 	public final void updateObject(
-		final String containerName, final String id, final long offset, final long size
+		final String containerName, final String id, final long size, final ByteRange byteRange
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		final ObjectContainerMock<I> c = getContainer(containerName);
 		if(c != null) {
 			final I obj = c.get(id);
 			if(obj != null) {
-				obj.update(offset, size);
-			} else {
-				throw new ObjectMockNotFoundException(id);
-			}
-		} else {
-			throw new ContainerMockNotFoundException(containerName);
-		}
-	}
-	//
-	@Override
-	public final void appendObject(final String containerName, final String id, final long size)
-	throws ContainerMockException, ObjectMockNotFoundException {
-		final ObjectContainerMock<I> c = getContainer(containerName);
-		if(c != null) {
-			final I obj = c.get(id);
-			if(obj != null) {
-				obj.append(size);
+				final long rangeBeg = byteRange.getBeg();
+				final long rangeEnd = byteRange.getEnd();
+				final long rangeSize = byteRange.getSize();
+				try {
+					final long baseObjSize = obj.size();
+					if(rangeSize > -1) {
+						obj.append(rangeSize);
+					} else {
+						if(rangeBeg > -1) {
+							if(rangeEnd > -1) {
+								if(rangeEnd >= rangeBeg) {
+									obj.update(rangeBeg, rangeEnd - rangeBeg + 1);
+								} else {
+									throw new AssertionError();
+								}
+							} else if(rangeBeg == baseObjSize){
+								obj.append(size);
+							} else {
+								obj.update(rangeBeg, baseObjSize - rangeBeg);
+							}
+						} else if(rangeEnd > -1) {
+							obj.update(baseObjSize - rangeEnd, baseObjSize);
+						} else {
+							throw new AssertionError();
+						}
+					}
+				} catch(final IOException e) {
+					throw new AssertionError(e);
+				}
 			} else {
 				throw new ObjectMockNotFoundException(id);
 			}

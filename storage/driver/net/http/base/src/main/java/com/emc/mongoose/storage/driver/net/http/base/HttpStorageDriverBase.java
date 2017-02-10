@@ -147,14 +147,6 @@ implements HttpStorageDriver<I, O, R> {
 		pipeline.addLast(new ChunkedWriteHandler());
 	}
 
-	private final static ThreadLocal<StringBuilder>
-		THR_LOC_RANGES_BUILDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
-
 	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
 
@@ -269,7 +261,15 @@ implements HttpStorageDriver<I, O, R> {
 	protected abstract String getPathUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	);
-
+	
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_RANGES_BUILDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
+	
 	protected void applyByteRangesHeaders(
 		final HttpHeaders httpHeaders, final DataIoTask dataIoTask
 	) {
@@ -285,7 +285,7 @@ implements HttpStorageDriver<I, O, R> {
 
 		if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
 			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
-			if(rangesMaskPair[0].isEmpty() || rangesMaskPair[1].isEmpty()) {
+			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
 			}
 			// current layer first
@@ -314,9 +314,14 @@ implements HttpStorageDriver<I, O, R> {
 			}
 
 		} else { // fixed byte ranges
+			ByteRange nextFixedByteRange;
 			long nextRangeSize;
-			for(final ByteRange nextFixedByteRange : fixedByteRanges) {
+			for(int i = 0; i < fixedByteRanges.size(); i ++) {
+				nextFixedByteRange = fixedByteRanges.get(i);
 				nextRangeSize = nextFixedByteRange.getSize();
+				if(i > 0) {
+					strb.append(',');
+				}
 				if(nextRangeSize == -1) {
 					strb.append(nextFixedByteRange.toString());
 				} else {
