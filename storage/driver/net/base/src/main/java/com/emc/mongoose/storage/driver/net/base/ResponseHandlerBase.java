@@ -133,7 +133,10 @@ extends SimpleChannelInboundHandler<M> {
 						dataIoTask.getMarkedRangesMaskPair()
 					);
 				} else {
-					verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+					if(chunkSize > item.size() - countBytesDone) {
+						throw new DataSizeException(item.size(), countBytesDone + chunkSize);
+					}
+					verifyChunkData(item, contentChunk, 0, chunkSize);
 					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
 			}
@@ -161,16 +164,6 @@ extends SimpleChannelInboundHandler<M> {
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataItem item, final long countBytesDone, final ByteBuf chunkData,
-		final int chunkSize
-	) throws DataCorruptionException, IOException {
-		if(chunkSize > item.size() - countBytesDone) {
-			throw new DataSizeException(item.size(), countBytesDone + chunkSize);
-		}
-		verifyChunkData(item, chunkData, 0, chunkSize);
-	}
-
-	private static void verifyChunkDataAndSize(
 		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
 		final ByteBuf chunkData, final int chunkSize, final List<ByteRange> byteRanges
 	) throws DataCorruptionException, IOException {
@@ -185,6 +178,7 @@ extends SimpleChannelInboundHandler<M> {
 		
 		ByteRange byteRange;
 		DataItem currRange;
+		// "countBytesDone" is the current range done bytes counter here
 		long rangeBytesDone = countBytesDone;
 		long rangeBeg;
 		long rangeEnd;
@@ -239,8 +233,56 @@ extends SimpleChannelInboundHandler<M> {
 				dataIoTask.getMarkedRangesSize(), countBytesDone + chunkSize
 			);
 		}
-		// TODO
+
+		DataItem currRange;
 		// "countBytesDone" is the current range done bytes counter here
+		long rangeBytesDone = countBytesDone;
+		long rangeSize;
+		int currRangeIdx;
+		int chunkOffset = 0;
+		int n;
+
+		while(chunkOffset < chunkSize) {
+			currRangeIdx = dataIoTask.getCurrRangeIdx();
+			if(
+				!markedRangesMaskPair[0].get(currRangeIdx) &&
+				!markedRangesMaskPair[1].get(currRangeIdx)
+			) {
+				if(
+					-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx) &&
+					-1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx)
+				) {
+					dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
+					return;
+				}
+				dataIoTask.setCurrRangeIdx(currRangeIdx + 1);
+				continue;
+			}
+			currRange = dataIoTask.getCurrRange();
+			rangeSize = dataItem.getRangeSize(currRangeIdx);
+
+			currRange.position(rangeBytesDone);
+			n = (int) Math.min(chunkSize - chunkOffset, rangeSize - rangeBytesDone);
+			verifyChunkData(currRange, chunkData, chunkOffset, n);
+			chunkOffset += n;
+			rangeBytesDone += n;
+
+			if(rangeBytesDone == rangeSize) {
+				// current byte range verification is finished
+				if(
+					-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx + 1) &&
+					-1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx + 1)
+				) {
+					// current byte range was last in the list
+					dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
+					return;
+				} else {
+					dataIoTask.setCurrRangeIdx(currRangeIdx + 1);
+					rangeBytesDone = 0;
+				}
+			}
+			dataIoTask.setCountBytesDone(rangeBytesDone);
+		}
 	}
 	
 	private static void verifyChunkUpdatedData(
