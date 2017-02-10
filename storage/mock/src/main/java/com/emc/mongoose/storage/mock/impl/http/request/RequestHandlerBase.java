@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.UpdatedFullDataFileRegion;
 import com.emc.mongoose.storage.mock.api.DataItemMock;
@@ -13,6 +14,9 @@ import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 
@@ -423,6 +427,9 @@ extends ChannelInboundHandlerAdapter {
 		String ranges[];
 		ByteRange byteRange;
 		long beg, end, size, sumSize = 0;
+		int cellIdx;
+		long cellSize;
+		DataItem cellData;
 		final long objSize = object.size();
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		final List<DataItemFileRegion<T>> rangesContent = new ArrayList<>(rangeHeadersValues.size());
@@ -459,8 +466,21 @@ extends ChannelInboundHandlerAdapter {
 							size = end - beg + 1;
 						}
 					}
-		
-					rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
+
+					if(object.isUpdated()) {
+						while(beg < size) {
+							cellIdx = getRangeCount(beg + 1) - 1;
+							cellSize = object.getRangeSize(cellIdx);
+							cellData = object.slice(beg, Math.min(cellSize, size - beg));
+							if(object.isRangeUpdated(cellIdx)) {
+								cellData.layer(object.layer() + 1);
+							}
+							rangesContent.add(new DataItemFileRegion(cellData));
+							beg += cellSize;
+						}
+					} else {
+						rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
+					}
 					sumSize += size;
 				}
 			}

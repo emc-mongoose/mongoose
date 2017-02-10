@@ -9,6 +9,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.ui.log.Markers;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
 import io.netty.buffer.ByteBuf;
@@ -98,9 +99,11 @@ public abstract class ResponseContentUtil {
 		DataItem currRange;
 		// "countBytesDone" is the current range done bytes counter here
 		long rangeBytesDone = countBytesDone;
-		long rangeBeg;
+		long currOffset;
 		long rangeEnd;
 		long rangeSize;
+		long cellOffset;
+		long cellEnd;
 		int currRangeIdx;
 		int chunkOffset = 0;
 		int n;
@@ -108,31 +111,37 @@ public abstract class ResponseContentUtil {
 		while(chunkOffset < chunkSize) {
 			currRangeIdx = dataIoTask.getCurrRangeIdx();
 			byteRange = byteRanges.get(currRangeIdx);
-			rangeBeg = byteRange.getBeg();
+			currOffset = byteRange.getBeg();
 			rangeEnd = byteRange.getEnd();
-			if(rangeBeg == -1) {
+			if(currOffset == -1) {
 				// last "rangeEnd" bytes
-				rangeBeg = baseItemSize - rangeEnd;
+				currOffset = baseItemSize - rangeEnd;
 				rangeSize = rangeEnd;
 			} else if(rangeEnd == -1) {
-				// start @ offset equal to "rangeBeg"
-				rangeSize = baseItemSize - rangeBeg;
+				// start @ offset equal to "currOffset"
+				rangeSize = baseItemSize - currOffset;
 			} else {
-				rangeSize = rangeEnd - rangeBeg + 1;
+				rangeSize = rangeEnd - currOffset + 1;
 			}
 
-			// TODO
 			// let (current offset = rangeBeg + rangeBytesDone)
-			// find the internal data item's cell which has:
+			currOffset += rangeBytesDone;
+			// find the internal data item's cell index which has:
 			// (cell's offset <= current offset) && (cell's end > current offset)
+			n = getRangeCount(currOffset + 1) - 1;
+			cellOffset = getRangeOffset(n);
+			cellEnd = Math.min(baseItemSize, getRangeOffset(n + 1));
 			// get the found cell data item (updated or not)
-			currRange = dataItem.slice(rangeBeg, rangeSize);
-			// TODO
+			currRange = dataItem.slice(cellOffset, cellEnd);
+			if(dataItem.isRangeUpdated(n)) {
+				currRange.layer(dataItem.layer() + 1);
+			}
 			// set the cell data item internal position to (current offset - cell's offset)
-			currRange.position(rangeBytesDone);
-			// TODO
-			// 2nd min(...) argument should be: (cell's end - current offset)
-			n = (int) Math.min(chunkSize - chunkOffset, rangeSize - rangeBytesDone);
+			currRange.position(currOffset - cellOffset);
+			n = (int) Math.min(
+				chunkSize - chunkOffset,
+				Math.min(rangeSize - rangeBytesDone, cellEnd - currOffset)
+			);
 
 			verifyChunkData(currRange, chunkData, chunkOffset, n);
 			chunkOffset += n;
@@ -276,8 +285,8 @@ public abstract class ResponseContentUtil {
 
 		if(
 			buff.writerIndex() - remainingSize < buffPos ||
-				chunkData.writerIndex() - remainingSize < chunkPos
-			) {
+			chunkData.writerIndex() - remainingSize < chunkPos
+		) {
 			fastEquals = false;
 		} else {
 			final int longCount = remainingSize >>> 3;
