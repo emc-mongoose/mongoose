@@ -1,3 +1,9 @@
+import java.nio.file.Paths
+import jawn.support.json4s.Parser
+import scala.language.postfixOps
+
+val mongooseConfig = (Parser parseFromFile(Paths.get("config", "defaults.json") toFile)) get
+
 // core dependencies
 val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
 val commonsCollections4 = "org.apache.commons" % "commons-collections4" % "4.1"
@@ -31,7 +37,7 @@ val junit = "junit" % "junit" % "4.12" % Test
 
 lazy val commonSettings = Seq(
 	organization := "com.emc.mongoose",
-	version := "3.2.0",
+	version := ((mongooseConfig \ "version") toString),
 	// Enables publishing to maven repo
 	publishMavenStyle := true,
 	// Do not append Scala versions to the generated artifacts
@@ -43,6 +49,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val mongoose = (project in file("."))
+	.settings(commonSettings)
 	.aggregate(
 		common,
 		loadGenerator,
@@ -76,7 +83,7 @@ lazy val common = (project in file("common"))
 		name := "mongoose-core"
 	)
 
-lazy val loadGenerator = (project in file("load/generator"))
+lazy val loadGenerator = (project in Paths.get("load", "generator").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -91,7 +98,7 @@ lazy val loadGenerator = (project in file("load/generator"))
 		name := "mongoose-load-generator"
 	)
 
-lazy val loadMonitor = (project in file("load/monitor"))
+lazy val loadMonitor = (project in Paths.get("load", "monitor").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -139,7 +146,7 @@ lazy val run = (project in file("run"))
 		name := "mongoose-run"
 	)
 
-lazy val storageDriverBase = (project in file("storage/driver/base"))
+lazy val storageDriverBase = (project in Paths.get("storage", "driver", "base").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -154,7 +161,7 @@ lazy val storageDriverBase = (project in file("storage/driver/base"))
 		name := "mongoose-storage-driver-base"
 	)
 
-lazy val storageDriverBuilder = (project in file("storage/driver/builder"))
+lazy val storageDriverBuilder = (project in Paths.get("storage", "driver", "builder").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -176,7 +183,7 @@ lazy val storageDriverBuilder = (project in file("storage/driver/builder"))
 		name := "mongoose-storage-driver-builder"
 	)
 
-lazy val storageDriverNetBase = (project in file("storage/driver/net/base"))
+lazy val storageDriverNetBase = (project in Paths.get("storage", "driver", "net", "base").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -198,7 +205,7 @@ lazy val storageDriverNetBase = (project in file("storage/driver/net/base"))
 		name := "mongoose-storage-driver-net-base"
 	)
 
-lazy val storageDriverNetHttpAtmos = (project in file("storage/driver/net/http/atmos"))
+lazy val storageDriverNetHttpAtmos = (project in Paths.get("storage", "driver", "net", "http", "atmos").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -221,7 +228,7 @@ lazy val storageDriverNetHttpAtmos = (project in file("storage/driver/net/http/a
 		name := "mongoose-storage-driver-net-http-atmos"
 	)
 
-lazy val storageDriverNetHttpBase = (project in file("storage/driver/net/http/base"))
+lazy val storageDriverNetHttpBase = (project in Paths.get("storage", "driver", "net", "http", "base").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -243,7 +250,7 @@ lazy val storageDriverNetHttpBase = (project in file("storage/driver/net/http/ba
 		name := "mongoose-storage-driver-net-http-base"
 	)
 
-lazy val storageDriverNetHttpS3 = (project in file("storage/driver/net/http/s3"))
+lazy val storageDriverNetHttpS3 = (project in Paths.get("storage", "driver", "net", "http", "s3").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -266,7 +273,7 @@ lazy val storageDriverNetHttpS3 = (project in file("storage/driver/net/http/s3")
 		name := "mongoose-storage-driver-net-http-s3"
 	)
 
-lazy val storageDriverNetHttpSwift = (project in file("storage/driver/net/http/swift"))
+lazy val storageDriverNetHttpSwift = (project in Paths.get("storage", "driver", "net", "http", "swift").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -290,7 +297,7 @@ lazy val storageDriverNetHttpSwift = (project in file("storage/driver/net/http/s
 		name := "mongoose-storage-driver-net-http-swift"
 	)
 
-lazy val storageDriverNioBase = (project in file("storage/driver/nio/base"))
+lazy val storageDriverNioBase = (project in Paths.get("storage", "driver", "nio", "base").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -306,7 +313,7 @@ lazy val storageDriverNioBase = (project in file("storage/driver/nio/base"))
 		name := "mongoose-storage-driver-nio-base"
 	)
 
-lazy val storageDriverNioFs = (project in file("storage/driver/nio/fs"))
+lazy val storageDriverNioFs = (project in Paths.get("storage", "driver", "nio", "fs").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -323,7 +330,7 @@ lazy val storageDriverNioFs = (project in file("storage/driver/nio/fs"))
 		name := "mongoose-storage-driver-nio-fs"
 	)
 
-lazy val storageDriverService = (project in file("storage/driver/service"))
+lazy val storageDriverService = (project in Paths.get("storage", "driver", "service").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -347,7 +354,7 @@ lazy val storageDriverService = (project in file("storage/driver/service"))
 		name := "mongoose-storage-driver-service"
 	)
 
-lazy val storageMock = (project in file("storage/mock"))
+lazy val storageMock = (project in Paths.get("storage", "mock").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -375,7 +382,7 @@ lazy val storageMock = (project in file("storage/mock"))
 		name := "mongoose-storage-mock"
 	)
 
-lazy val testsPerf = (project in file("tests/perf"))
+lazy val testsPerf = (project in Paths.get("tests", "perf").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -403,7 +410,7 @@ lazy val testsPerf = (project in file("tests/perf"))
 		name := "mongoose-tests-perf"
 	)
 
-lazy val testsSystem = (project in file("tests/system"))
+lazy val testsSystem = (project in Paths.get("tests", "system").toFile())
 	.dependsOn(
 		common,
 		model,
@@ -436,7 +443,7 @@ lazy val testsSystem = (project in file("tests/system"))
 		name := "mongoose-tests-system"
 	)
 
-lazy val testsUnit = (project in file("tests/unit"))
+lazy val testsUnit = (project in Paths.get("tests", "unit").toFile())
 	.dependsOn(
 		common,
 		model,
