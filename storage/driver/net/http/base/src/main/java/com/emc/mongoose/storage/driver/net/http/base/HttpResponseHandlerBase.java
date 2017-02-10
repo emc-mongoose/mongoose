@@ -8,6 +8,7 @@ import com.emc.mongoose.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.net.base.ResponseHandlerBase;
+import static com.emc.mongoose.storage.driver.net.base.data.ResponseContentUtil.verifyChunk;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_AUTH;
