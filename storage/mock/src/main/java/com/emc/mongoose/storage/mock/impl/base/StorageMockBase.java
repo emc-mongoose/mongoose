@@ -151,7 +151,7 @@ implements StorageMock<I> {
 					} else {
 						if(rangeBeg > -1) {
 							if(rangeEnd > -1) {
-								if(rangeEnd > rangeBeg) {
+								if(rangeEnd >= rangeBeg) {
 									obj.update(rangeBeg, rangeEnd - rangeBeg + 1);
 								} else {
 									throw new AssertionError();

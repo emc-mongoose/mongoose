@@ -305,24 +305,24 @@ extends ChannelInboundHandlerAdapter {
 				);
 				ioStats.markWrite(success, size);
 			}
-		} catch (final StorageMockCapacityLimitReachedException e) {
+		} catch(final StorageMockCapacityLimitReachedException e) {
 			setHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
 			ioStats.markWrite(false, size);
-		} catch (final ContainerMockNotFoundException e) {
+		} catch(final ContainerMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, size);
-		} catch (final ObjectMockNotFoundException e) {
+		} catch(final ObjectMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, 0);
-		} catch (final ContainerMockException | NumberFormatException | IllegalStateException e) {
-			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
-			ioStats.markWrite(false, 0);
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", id
-			);
 		} catch(final IllegalArgumentException e) {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 			ioStats.markWrite(false, 0);
+		} catch(final Throwable t) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			ioStats.markWrite(false, 0);
+			LogUtil.exception(
+				LOG, Level.ERROR, t, "Failed to perform a range update/append for \"{}\"", id
+			);
 		}
 	}
 
