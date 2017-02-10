@@ -102,39 +102,40 @@ extends SimpleChannelInboundHandler<M> {
 	}
 	
 	protected static void verifyChunk(
-		final DataIoTask dataIoTask, final ByteBuf contentChunk, final int chunkSize
+		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf contentChunk,
+		final int chunkSize
 	) throws IOException {
-
-		final long countBytesDone = dataIoTask.getCountBytesDone();
 		final List<ByteRange> byteRanges = dataIoTask.getFixedRanges();
-
 		final DataItem item = dataIoTask.getItem();
 		try {
 			if(item.isUpdated()) {
 				if(byteRanges != null && !byteRanges.isEmpty()) {
-					verifyChunkUpdatedData(dataIoTask, contentChunk, chunkSize, byteRanges);
+					verifyChunkUpdatedData(dataIoTask, item, contentChunk, chunkSize, byteRanges);
 				} else if(dataIoTask.hasMarkedRanges()) {
 					verifyChunkUpdatedData(
-						dataIoTask, contentChunk, chunkSize, dataIoTask.getMarkedRangesMaskPair()
+						dataIoTask, item, contentChunk, chunkSize,
+						dataIoTask.getMarkedRangesMaskPair()
 					);
 				} else {
-					verifyChunkUpdatedData(item, dataIoTask, contentChunk, chunkSize);
+					verifyChunkUpdatedData(
+						dataIoTask, item, countBytesDone, contentChunk, chunkSize
+					);
+					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
-				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			} else {
 				if(byteRanges != null && !byteRanges.isEmpty()) {
 					verifyChunkDataAndSize(
-						dataIoTask, countBytesDone, contentChunk, chunkSize, byteRanges
+						dataIoTask, item, countBytesDone, contentChunk, chunkSize, byteRanges
 					);
 				} else if(dataIoTask.hasMarkedRanges()) {
 					verifyChunkDataAndSize(
-						dataIoTask, countBytesDone, contentChunk, chunkSize,
+						dataIoTask, item, countBytesDone, contentChunk, chunkSize,
 						dataIoTask.getMarkedRangesMaskPair()
 					);
 				} else {
 					verifyChunkDataAndSize(item, countBytesDone, contentChunk, chunkSize);
+					dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
-				dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 			}
 		} catch(final DataVerificationException e) {
 			final DataItem dataItem = dataIoTask.getItem();
@@ -170,18 +171,16 @@ extends SimpleChannelInboundHandler<M> {
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf chunkData,
-		final int chunkSize, final List<ByteRange> byteRanges
+		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
+		final ByteBuf chunkData, final int chunkSize, final List<ByteRange> byteRanges
 	) throws DataCorruptionException, IOException {
-		
+
 		final long rangesSizeSum = dataIoTask.getMarkedRangesSize();
 		if(chunkSize > rangesSizeSum - countBytesDone) {
 			throw new DataSizeException(
 				dataIoTask.getMarkedRangesSize(), countBytesDone + chunkSize
 			);
 		}
-		// "countBytesDone" is the current range done bytes counter here
-		final DataItem dataItem = dataIoTask.getItem();
 		final long baseItemSize = dataItem.size();
 		
 		ByteRange byteRange;
@@ -196,42 +195,44 @@ extends SimpleChannelInboundHandler<M> {
 		
 		while(chunkOffset < chunkSize) {
 			currRangeIdx = dataIoTask.getCurrRangeIdx();
-			if(currRangeIdx < byteRanges.size()) {
-				byteRange = byteRanges.get(currRangeIdx);
-				rangeBeg = byteRange.getBeg();
-				rangeEnd = byteRange.getEnd();
-				if(rangeBeg == -1) {
-					// last "rangeEnd" bytes
-					rangeBeg = baseItemSize - rangeEnd;
-					rangeSize = rangeEnd;
-				} else if(rangeEnd == -1) {
-					// start @ offset equal to "rangeBeg"
-					rangeSize = baseItemSize - rangeBeg;
+			byteRange = byteRanges.get(currRangeIdx);
+			rangeBeg = byteRange.getBeg();
+			rangeEnd = byteRange.getEnd();
+			if(rangeBeg == -1) {
+				// last "rangeEnd" bytes
+				rangeBeg = baseItemSize - rangeEnd;
+				rangeSize = rangeEnd;
+			} else if(rangeEnd == -1) {
+				// start @ offset equal to "rangeBeg"
+				rangeSize = baseItemSize - rangeBeg;
+			} else {
+				rangeSize = rangeEnd - rangeBeg + 1;
+			}
+			currRange = dataItem.slice(rangeBeg, rangeSize);
+			currRange.position(rangeBytesDone);
+			n = (int) Math.min(chunkSize - chunkOffset, rangeSize - rangeBytesDone);
+			verifyChunkData(currRange, chunkData, chunkOffset, n);
+			chunkOffset += n;
+			rangeBytesDone += n;
+
+			if(rangeBytesDone == rangeSize) {
+				// current byte range verification is finished
+				if(currRangeIdx == byteRanges.size() - 1) {
+					// current byte range was last in the list
+					dataIoTask.setCountBytesDone(rangesSizeSum);
+					break;
 				} else {
-					rangeSize = rangeEnd - rangeBeg + 1;
-				}
-				currRange = dataItem.slice(rangeBeg, rangeSize);
-				currRange.position(rangeBytesDone);
-				n = (int) Math.min(chunkSize - chunkOffset, rangeSize - rangeBytesDone);
-				verifyChunkData(currRange, chunkData, chunkOffset, n);
-				chunkOffset += n;
-				rangeBytesDone += n;
-				
-				if(rangeBytesDone == rangeSize) {
 					dataIoTask.setCurrRangeIdx(currRangeIdx + 1);
 					rangeBytesDone = 0;
 				}
-				dataIoTask.setCountBytesDone(rangeBytesDone);
-			} else {
-				dataIoTask.setCountBytesDone(rangesSizeSum);
-				break;
 			}
+			dataIoTask.setCountBytesDone(rangeBytesDone);
 		}
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf chunkData,
-		final int chunkSize, final BitSet markedRangesMaskPair[]
+		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
+		final ByteBuf chunkData, final int chunkSize, final BitSet markedRangesMaskPair[]
 	) throws DataCorruptionException, IOException {
 		if(chunkSize > dataIoTask.getMarkedRangesSize() - countBytesDone) {
 			throw new DataSizeException(
@@ -243,11 +244,10 @@ extends SimpleChannelInboundHandler<M> {
 	}
 	
 	private static void verifyChunkUpdatedData(
-		final DataItem item, final DataIoTask ioTask, final ByteBuf chunkData,
-		final int chunkSize
+		final DataIoTask dataIoTask, final DataItem item, final long countBytesDone,
+		final ByteBuf chunkData, final int chunkSize
 	) throws DataCorruptionException, IOException {
 		
-		final long countBytesDone = ioTask.getCountBytesDone();
 		int chunkCountDone = 0, remainingSize;
 		long nextRangeOffset;
 		int currRangeIdx;
@@ -255,18 +255,18 @@ extends SimpleChannelInboundHandler<M> {
 		
 		while(chunkCountDone < chunkSize) {
 			
-			currRangeIdx = ioTask.getCurrRangeIdx();
+			currRangeIdx = dataIoTask.getCurrRangeIdx();
 			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
 			if(countBytesDone + chunkCountDone == nextRangeOffset) {
 				if(nextRangeOffset < item.size()) {
 					currRangeIdx ++;
 					nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-					ioTask.setCurrRangeIdx(currRangeIdx);
+					dataIoTask.setCurrRangeIdx(currRangeIdx);
 				} else {
 					throw new DataSizeException(item.size(), countBytesDone + chunkSize);
 				}
 			}
-			currRange = ioTask.getCurrRange();
+			currRange = dataIoTask.getCurrRange();
 			
 			try {
 				remainingSize = (int) Math.min(
@@ -276,7 +276,7 @@ extends SimpleChannelInboundHandler<M> {
 				chunkCountDone += remainingSize;
 			} catch(final DataCorruptionException e) {
 				throw new DataCorruptionException(
-					getRangeOffset(ioTask.getCurrRangeIdx()) + e.getOffset(), e.expected,
+					getRangeOffset(dataIoTask.getCurrRangeIdx()) + e.getOffset(), e.expected,
 					e.actual
 				);
 			}
@@ -284,15 +284,15 @@ extends SimpleChannelInboundHandler<M> {
 	}
 
 	private static void verifyChunkUpdatedData(
-		final DataIoTask ioTask, final ByteBuf chunkData, final int chunkSize,
-		final List<ByteRange> byteRanges
+		final DataIoTask ioTask, final DataItem dataItem, final ByteBuf chunkData,
+		final int chunkSize, final List<ByteRange> byteRanges
 	) throws DataCorruptionException, IOException {
 
 	}
 
 	private static void verifyChunkUpdatedData(
-		final DataIoTask ioTask, final ByteBuf chunkData, final int chunkSize,
-		final BitSet markedRangesMaskPair[]
+		final DataIoTask ioTask, final DataItem dataItem, final ByteBuf chunkData,
+		final int chunkSize, final BitSet markedRangesMaskPair[]
 	) throws DataCorruptionException, IOException {
 
 	}
