@@ -34,6 +34,7 @@ val commonsIo = "commons-io" % "commons-io" % "2.5" % Test
 val commonsMath = "org.apache.commons" % "commons-math3" % "3.6.1" % Test
 val jsonSchemaValidator = "com.github.fge" % "json-schema-validator" % "2.2.6" % Test
 val junit = "junit" % "junit" % "4.12" % Test
+val junitInterface = "com.novocode" % "junit-interface" % "0.11" % Test
 
 lazy val commonSettings = Seq(
 	organization := "com.emc.mongoose",
@@ -468,7 +469,8 @@ lazy val testsUnit = (project in Paths.get("tests", "unit").toFile())
 		libraryDependencies ++= Seq(
 			commonsIo,
 			jsonSchemaValidator,
-			junit
+			junit,
+			junitInterface
 		),
 		name := "mongoose-tests-unit"
 	)

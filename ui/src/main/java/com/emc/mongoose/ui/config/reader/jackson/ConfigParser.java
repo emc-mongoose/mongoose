@@ -29,8 +29,8 @@ public abstract class ConfigParser {
 
 	public static Config loadDefaultConfig()
 	throws IOException {
-		final String defaultConfigPath = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
-			File.separator + FNAME_CONFIG;
+		final String defaultConfigPath = PathUtil.getBaseDir() +
+			File.separator + DIR_CONFIG + File.separator + FNAME_CONFIG;
 		final ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new File(defaultConfigPath), Config.class);
 	}
