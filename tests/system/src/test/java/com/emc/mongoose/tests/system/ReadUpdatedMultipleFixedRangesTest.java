@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
  * 9.4.3. Reusing The Items in the Scenario
  * 9.5.2. Load Job
  * 9.5.5. Sequential Job
- * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
+ * 10.1.1. Single Local Separate Storage Driver Service
  * 10.3. Filesystem Storage Driver
  */
 public class ReadUpdatedMultipleFixedRangesTest
@@ -77,6 +77,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-data-verify=true");
+		STORAGE_DRIVERS_COUNT = 1;
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
@@ -100,6 +101,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
+		STORAGE_DRIVERS_COUNT = 2; // to default
 	}
 
 	@Test
