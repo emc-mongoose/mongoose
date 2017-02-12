@@ -52,7 +52,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-fixed-ranges-updated.json"
 	);
 	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes(
-		(34 - 12 + 1) + (78 - 56 + 1) + (1024 - 910 + 1)
+		(0 - 0 + 1) + (34 - 12 + 1) + (78 - 56 + 1) + (1024 - 910 + 1)
 	);
 	private static final int EXPECTED_CONCURRENCY = 1;
 	private static final long EXPECTED_COUNT = 1000;
@@ -91,7 +91,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 20000);
+		TimeUnit.MINUTES.timedJoin(runner, 2);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
 		TimeUnit.SECONDS.sleep(20);

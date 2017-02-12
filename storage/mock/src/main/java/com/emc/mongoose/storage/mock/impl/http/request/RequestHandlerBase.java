@@ -469,12 +469,15 @@ extends ChannelInboundHandlerAdapter {
 					}
 
 					if(object.isUpdated()) {
-						while(beg < end) {
+						while(beg <= end) {
 							cellIdx = getRangeCount(beg + 1) - 1;
 							cellOffset = getRangeOffset(cellIdx);
-							cellSize = Math.min(object.getRangeSize(cellIdx), end - cellOffset);
-							sliceOffset = Math.max(beg, cellOffset);
+							cellSize = Math.min(object.getRangeSize(cellIdx), end - cellOffset + 1);
 							sliceSize = cellSize - beg + cellOffset;
+							if(sliceSize < 1) {
+								break;
+							}
+							sliceOffset = Math.max(beg, cellOffset);
 							sliceData = object.slice(sliceOffset, sliceSize);
 							if(object.isRangeUpdated(cellIdx)) {
 								sliceData.layer(object.layer() + 1);
