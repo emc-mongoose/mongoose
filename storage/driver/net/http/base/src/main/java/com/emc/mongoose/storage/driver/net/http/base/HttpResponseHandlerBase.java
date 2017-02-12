@@ -115,8 +115,12 @@ extends ResponseHandlerBase<HttpObject, I, O, R> {
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
-					if(verifyFlag && !RESP_FAIL_CORRUPT.equals(ioTask.getStatus())) {
-						verifyChunk(dataIoTask, countBytesDone, contentChunk, chunkSize);
+					if(verifyFlag) {
+						if(!RESP_FAIL_CORRUPT.equals(ioTask.getStatus())) {
+							verifyChunk(dataIoTask, countBytesDone, contentChunk, chunkSize);
+						}
+					} else {
+						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
 					}
 				}
 			} else if(ioTask instanceof PathIoTask) {
