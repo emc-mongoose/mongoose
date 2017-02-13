@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.io.task.path;
 
-import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
+import com.emc.mongoose.model.io.task.IoTaskBuilderBase;
 import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
 import com.emc.mongoose.model.item.PathItem;
 
@@ -14,13 +14,13 @@ import java.util.List;
 public class BasicPathIoTaskBuilder<
 	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult
 >
-extends BasicIoTaskBuilder<I, O, R>
+extends IoTaskBuilderBase<I, O, R>
 implements PathIoTaskBuilder<I, O, R> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem, final String dstPath)
 	throws IOException {
-		return (O) new BasicPathIoTask<>(ioType, dataItem);
+		return (O) new BasicPathIoTask<>(originCode, ioType, dataItem);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -28,7 +28,7 @@ implements PathIoTaskBuilder<I, O, R> {
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
 		for(final I nextItem : items) {
-			tasks.add((O) new BasicPathIoTask<>(ioType, nextItem));
+			tasks.add((O) new BasicPathIoTask<>(originCode, ioType, nextItem));
 		}
 		return tasks;
 	}
@@ -38,7 +38,7 @@ implements PathIoTaskBuilder<I, O, R> {
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
 		for(final I nextItem : items) {
-			tasks.add((O) new BasicPathIoTask<>(ioType, nextItem));
+			tasks.add((O) new BasicPathIoTask<>(originCode, ioType, nextItem));
 		}
 		return tasks;
 	}
@@ -54,7 +54,7 @@ implements PathIoTaskBuilder<I, O, R> {
 		I nextItem;
 		for(int i = 0; i < n; i ++) {
 			nextItem = items.get(i);
-			tasks.add((O) new BasicPathIoTask<>(ioType, nextItem));
+			tasks.add((O) new BasicPathIoTask<>(originCode, ioType, nextItem));
 		}
 		return tasks;
 	}

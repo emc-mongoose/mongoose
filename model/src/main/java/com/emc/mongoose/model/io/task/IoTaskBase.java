@@ -13,9 +13,10 @@ import java.io.ObjectOutput;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIoTask<I extends Item, R extends IoResult>
+public abstract class IoTaskBase<I extends Item, R extends IoResult>
 implements IoTask<I, R> {
 	
+	protected int originCode;
 	protected IoType ioType;
 	protected I item;
 	protected String srcPath;
@@ -28,12 +29,14 @@ implements IoTask<I, R> {
 	protected volatile long respTimeStart;
 	protected volatile long respTimeDone;
 	
-	public BasicIoTask() {
+	public IoTaskBase() {
 	}
 	
-	public BasicIoTask(
-		final IoType ioType, final I item, final String srcPath, final String dstPath
+	public IoTaskBase(
+		final int originCode, final IoType ioType, final I item, final String srcPath,
+		final String dstPath
 	) {
+		this.originCode = originCode;
 		this.ioType = ioType;
 		this.item = item;
 
@@ -64,6 +67,11 @@ implements IoTask<I, R> {
 		nodeAddr = null;
 		status = Status.PENDING;
 		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = 0;
+	}
+	
+	@Override
+	public final int getOriginCode() {
+		return originCode;
 	}
 	
 	@Override
@@ -332,6 +340,7 @@ implements IoTask<I, R> {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
+		out.writeInt(originCode);
 		out.writeInt(ioType.ordinal());
 		out.writeObject(item);
 		out.writeUTF(srcPath == null ? "" : srcPath);
@@ -341,6 +350,7 @@ implements IoTask<I, R> {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
+		originCode = in.readInt();
 		ioType = IoType.values()[in.readInt()];
 		item = (I) in.readObject();
 		srcPath = in.readUTF();

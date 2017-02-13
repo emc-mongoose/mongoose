@@ -35,10 +35,11 @@ implements CompositeDataIoTask<I, R> {
 	}
 
 	public BasicCompositeDataIoTask(
-		final IoType ioType, final I item, final String srcPath, final String dstPath,
-		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
+		final int originCode, final IoType ioType, final I item, final String srcPath,
+		final String dstPath, final List<ByteRange> fixedRanges, final int randomRangesCount,
+		final long sizeThreshold
 	) {
-		super(ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
+		super(originCode, ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
 		this.sizeThreshold = sizeThreshold;
 	}
 
@@ -66,14 +67,14 @@ implements CompositeDataIoTask<I, R> {
 		for(int i = 0; i < equalPartsCount; i ++) {
 			nextPart = item.slice(i * sizeThreshold, sizeThreshold);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				ioType, nextPart, srcPath, dstPath, i, this
+				originCode, ioType, nextPart, srcPath, dstPath, i, this
 			);
 			subTasks.add(nextSubTask);
 		}
 		if(tailPartSize > 0) {
 			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				ioType, nextPart, srcPath, dstPath, equalPartsCount, this
+				originCode, ioType, nextPart, srcPath, dstPath, equalPartsCount, this
 			);
 			subTasks.add(nextSubTask);
 		}

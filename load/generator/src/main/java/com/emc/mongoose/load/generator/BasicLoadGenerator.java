@@ -301,4 +301,9 @@ implements LoadGenerator<I, O, R> {
 	public final String toString() {
 		return worker.getName();
 	}
+	
+	@Override
+	public final int hashCode() {
+		return ioTaskBuilder.hashCode();
+	}
 }

@@ -18,10 +18,11 @@ implements PartialDataIoTask<I, R> {
 	private CompositeDataIoTask<I, ? extends DataIoResult> parent;
 
 	public BasicPartialDataIoTask(
-		final IoType ioType, final I part, final String srcPath, final String dstPath,
-		final int partNumber, final CompositeDataIoTask<I, ? extends DataIoResult> parent
+		final int originCode, final IoType ioType, final I part, final String srcPath,
+		final String dstPath, final int partNumber,
+		final CompositeDataIoTask<I, ? extends DataIoResult> parent
 	) {
-		super(ioType, part, srcPath, dstPath, null, 0);
+		super(originCode, ioType, part, srcPath, dstPath, null, 0);
 		this.partNumber = partNumber;
 		this.parent = parent;
 	}

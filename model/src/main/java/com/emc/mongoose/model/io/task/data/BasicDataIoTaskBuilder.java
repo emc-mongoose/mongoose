@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
+import com.emc.mongoose.model.io.task.IoTaskBuilderBase;
 import com.emc.mongoose.model.io.task.composite.data.BasicCompositeDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class BasicDataIoTaskBuilder<
 	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoTask.DataIoResult
 >
-extends BasicIoTaskBuilder<I, O, R>
+extends IoTaskBuilderBase<I, O, R>
 implements DataIoTaskBuilder<I, O, R> {
 
 	protected volatile List<ByteRange> fixedRanges = null;
@@ -43,11 +43,12 @@ implements DataIoTaskBuilder<I, O, R> {
 	throws IOException {
 		if(dataItem.size() > sizeThreshold) {
 			return (O) new BasicCompositeDataIoTask<>(
-				ioType, dataItem, srcPath, dstPath, fixedRanges, randomRangesCount, sizeThreshold
+				originCode, ioType, dataItem, srcPath, dstPath, fixedRanges, randomRangesCount,
+				sizeThreshold
 			);
 		} else {
 			return (O) new BasicDataIoTask<>(
-				ioType, dataItem, srcPath, dstPath, fixedRanges, randomRangesCount
+				originCode, ioType, dataItem, srcPath, dstPath, fixedRanges, randomRangesCount
 			);
 		}
 	}
@@ -60,14 +61,14 @@ implements DataIoTaskBuilder<I, O, R> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount,
+						originCode, ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount,
 						sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicDataIoTask<>(
-						ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount
+						originCode, ioType, nextItem, srcPath, null, fixedRanges, randomRangesCount
 					)
 				);
 			}
@@ -83,14 +84,15 @@ implements DataIoTaskBuilder<I, O, R> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, dstPath, fixedRanges, randomRangesCount,
-						sizeThreshold
+						originCode, ioType, nextItem, srcPath, dstPath, fixedRanges,
+						randomRangesCount, sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicDataIoTask<>(
-						ioType, nextItem, srcPath, dstPath, fixedRanges, randomRangesCount
+						originCode, ioType, nextItem, srcPath, dstPath, fixedRanges,
+						randomRangesCount
 					)
 				);
 			}
@@ -112,14 +114,15 @@ implements DataIoTaskBuilder<I, O, R> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount,
-						sizeThreshold
+						originCode, ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges,
+						randomRangesCount, sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicDataIoTask<>(
-						ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges, randomRangesCount
+						originCode, ioType, nextItem, srcPath, dstPaths.get(i), fixedRanges,
+						randomRangesCount
 					)
 				);
 			}

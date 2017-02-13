@@ -2,7 +2,7 @@ package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.BasicIoTask;
+import com.emc.mongoose.model.io.task.IoTaskBase;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.IoType.UPDATE;
@@ -21,7 +21,7 @@ import static java.lang.System.nanoTime;
  Created by andrey on 25.09.16.
  */
 public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult>
-extends BasicIoTask<T, R>
+extends IoTaskBase<T, R>
 implements DataIoTask<T, R> {
 	
 	protected long contentSize;
@@ -42,10 +42,10 @@ implements DataIoTask<T, R> {
 	}
 	
 	public BasicDataIoTask(
-		final IoType ioType, final T item, final String srcPath, final String dstPath,
-		final List<ByteRange> fixedRanges, final int randomRangesCount
+		final int originCode, final IoType ioType, final T item, final String srcPath,
+		final String dstPath, final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
-		super(ioType, item, srcPath, dstPath);
+		super(originCode, ioType, item, srcPath, dstPath);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		item.reset();

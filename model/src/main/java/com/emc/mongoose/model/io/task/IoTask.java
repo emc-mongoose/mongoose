@@ -16,6 +16,8 @@ extends Externalizable {
 	long START_OFFSET_MICROS = currentTimeMillis() * 1000 - nanoTime() / 1000;
 
 	String SLASH = "/";
+	
+	int getOriginCode();
 
 	enum Status {
 		PENDING, // 0
