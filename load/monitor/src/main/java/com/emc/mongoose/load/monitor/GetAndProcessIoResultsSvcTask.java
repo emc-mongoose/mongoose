@@ -18,7 +18,7 @@ import java.util.List;
  Created by andrey on 15.12.16.
  */
 public final class GetAndProcessIoResultsSvcTask<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
 >
 implements Runnable {
 

@@ -10,7 +10,7 @@ import com.emc.mongoose.model.item.DataItem;
 /**
  Created by andrey on 23.11.16.
  */
-public class BasicPartialDataIoTask<I extends DataItem, R extends PartialDataIoResult>
+public class BasicPartialDataIoTask<I extends DataItem, R extends PartialDataIoResult<I>>
 extends BasicDataIoTask<I, R>
 implements PartialDataIoTask<I, R> {
 

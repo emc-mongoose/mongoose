@@ -11,7 +11,7 @@ import java.util.List;
 /**
  Created by kurila on 14.07.16.
  */
-public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 implements IoTaskBuilder<I, O, R> {
 	
 	protected volatile IoType ioType = IoType.CREATE; // by default

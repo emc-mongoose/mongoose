@@ -19,7 +19,7 @@ import java.rmi.RemoteException;
 public interface StorageDriverBuilderSvc<
 	I extends Item,
 	O extends IoTask<I, R>,
-	R extends IoResult,
+	R extends IoResult<I>,
 	T extends StorageDriverSvc<I, O, R>
 > extends StorageDriverBuilder<I, O, R, T>, Service {
 

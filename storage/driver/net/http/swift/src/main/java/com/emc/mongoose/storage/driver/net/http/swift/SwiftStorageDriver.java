@@ -66,7 +66,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 07.10.16.
  */
-public class SwiftStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public class SwiftStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends HttpStorageDriverBase<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();

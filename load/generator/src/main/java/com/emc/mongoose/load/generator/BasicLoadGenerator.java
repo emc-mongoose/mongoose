@@ -34,7 +34,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  */
-public class BasicLoadGenerator<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public class BasicLoadGenerator<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends DaemonBase
 implements LoadGenerator<I, O, R> {
 

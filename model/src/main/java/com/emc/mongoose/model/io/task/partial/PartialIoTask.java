@@ -9,7 +9,7 @@ import com.emc.mongoose.model.item.Item;
  Attention: not more serializable/externalizable!
  The partial I/O tasks should be constructed locally and should NOT be transferred via I/O channels.
  */
-public interface PartialIoTask<I extends Item, R extends PartialIoTask.PartialIoResult>
+public interface PartialIoTask<I extends Item, R extends PartialIoTask.PartialIoResult<I>>
 extends IoTask<I, R> {
 	
 	interface PartialIoResult<I extends Item>

@@ -51,7 +51,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public abstract class NetStorageDriverBase<
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
+>
 extends StorageDriverBase<I, O, R>
 implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
 	

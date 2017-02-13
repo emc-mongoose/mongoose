@@ -34,7 +34,9 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 11.07.16.
  */
-public abstract class StorageDriverBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public abstract class StorageDriverBase<
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
+>
 extends DaemonBase
 implements StorageDriver<I, O, R> {
 

@@ -10,7 +10,7 @@ import java.util.List;
  Created by andrey on 25.11.16.
  Marker interface
  */
-public interface CompositeIoTask<I extends Item, R extends CompositeIoTask.CompositeIoResult>
+public interface CompositeIoTask<I extends Item, R extends CompositeIoTask.CompositeIoResult<I>>
 extends IoTask<I, R> {
 	
 	interface CompositeIoResult<I extends Item>

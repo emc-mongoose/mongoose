@@ -27,7 +27,7 @@ import java.util.concurrent.RejectedExecutionException;
  Contains the content validation functionality
  */
 public abstract class ResponseHandlerBase<
-	M, I extends Item, O extends IoTask<I, R>, R extends IoResult
+	M, I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
 >
 extends SimpleChannelInboundHandler<M> {
 	

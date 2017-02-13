@@ -39,7 +39,9 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public abstract class HttpResponseHandlerBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public abstract class HttpResponseHandlerBase<
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
+>
 extends ResponseHandlerBase<HttpObject, I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();

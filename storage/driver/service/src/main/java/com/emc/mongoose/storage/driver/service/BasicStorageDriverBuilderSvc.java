@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilderSvc<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends StorageDriverSvc<I, O, R>
+	I extends Item,
+	O extends IoTask<I, R>, R extends IoResult<I>, T extends StorageDriverSvc<I, O, R>
 > extends BasicStorageDriverBuilder<I, O, R, T>
 implements StorageDriverBuilderSvc<I, O, R, T> {
 

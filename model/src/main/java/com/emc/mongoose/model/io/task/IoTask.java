@@ -73,7 +73,7 @@ extends Externalizable {
 	
 	interface IoResult<I extends Item>
 	extends Externalizable {
-		
+
 		String getStorageDriverAddr();
 		
 		String getStorageNodeAddr();

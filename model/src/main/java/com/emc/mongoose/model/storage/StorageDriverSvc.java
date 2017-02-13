@@ -10,6 +10,6 @@ import java.rmi.RemoteException;
 /**
  Created by andrey on 05.10.16.
  */
-public interface StorageDriverSvc<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public interface StorageDriverSvc<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends StorageDriver<I, O, R>, Service {
 }

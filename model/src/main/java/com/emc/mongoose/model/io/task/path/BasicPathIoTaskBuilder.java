@@ -12,7 +12,7 @@ import java.util.List;
  Created by kurila on 30.01.17.
  */
 public class BasicPathIoTaskBuilder<
-	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult
+	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult<I>
 >
 extends BasicIoTaskBuilder<I, O, R>
 implements PathIoTaskBuilder<I, O, R> {

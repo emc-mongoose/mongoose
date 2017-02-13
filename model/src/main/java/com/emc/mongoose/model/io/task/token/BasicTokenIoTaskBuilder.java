@@ -12,7 +12,7 @@ import java.util.List;
  Created by kurila on 14.07.16.
  */
 public class BasicTokenIoTaskBuilder<
-	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult
+	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult<I>
 >
 extends BasicIoTaskBuilder<I, O, R>
 implements TokenIoTaskBuilder<I, O, R> {

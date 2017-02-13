@@ -12,7 +12,7 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 30.01.17.
  */
-public class BasicPathIoTask<I extends PathItem, R extends BasicPathIoTask.BasicPathIoResult>
+public class BasicPathIoTask<I extends PathItem, R extends BasicPathIoTask.BasicPathIoResult<I>>
 extends BasicIoTask<I, R>
 implements PathIoTask<I, R> {
 	

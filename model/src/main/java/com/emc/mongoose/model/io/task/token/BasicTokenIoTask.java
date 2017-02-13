@@ -14,7 +14,7 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicTokenIoTask<I extends TokenItem, R extends TokenIoResult>
+public class BasicTokenIoTask<I extends TokenItem, R extends TokenIoResult<I>>
 extends BasicIoTask<I, R>
 implements TokenIoTask<I, R> {
 	

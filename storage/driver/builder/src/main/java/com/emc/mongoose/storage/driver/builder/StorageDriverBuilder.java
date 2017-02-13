@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
  Created by andrey on 05.10.16.
  */
 public interface StorageDriverBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends StorageDriver<I, O, R>
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>, T extends StorageDriver<I, O, R>
 > {
 
 	String API_ATMOS = "atmos";

@@ -11,7 +11,7 @@ import java.util.List;
  Created by kurila on 14.07.16.
  */
 public interface TokenIoTaskBuilder<
-	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult
+	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult<I>
 >
 extends IoTaskBuilder<I, O, R> {
 

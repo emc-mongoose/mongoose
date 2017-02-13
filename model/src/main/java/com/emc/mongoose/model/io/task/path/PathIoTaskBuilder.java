@@ -11,7 +11,7 @@ import java.util.List;
  Created by andrey on 31.01.17.
  */
 public interface PathIoTaskBuilder<
-	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult
+	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult<I>
 >
 extends IoTaskBuilder<I, O, R> {
 

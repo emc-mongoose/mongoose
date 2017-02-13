@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created on 11.07.16.
  */
-public interface StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public interface StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends Daemon, Output<O>, Remote {
 	
 	Map<StorageDriver, Runnable> SVC_TASKS = new ConcurrentHashMap<>();

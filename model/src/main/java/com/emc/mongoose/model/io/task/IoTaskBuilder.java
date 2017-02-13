@@ -9,7 +9,7 @@ import java.util.List;
 /**
  Created by kurila on 14.07.16.
  */
-public interface IoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult> {
+public interface IoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>> {
 	
 	int getOriginCode();
 	

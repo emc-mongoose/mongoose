@@ -20,7 +20,7 @@ import static java.lang.System.nanoTime;
 /**
  Created by andrey on 25.09.16.
  */
-public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult>
+public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult<T>>
 extends BasicIoTask<T, R>
 implements DataIoTask<T, R> {
 	

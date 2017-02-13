@@ -11,7 +11,7 @@ import java.util.List;
  Created by andrey on 25.11.16.
  */
 public interface CompositeDataIoTask<
-	I extends DataItem, R extends CompositeDataIoTask.CompositeDataIoResult
+	I extends DataItem, R extends CompositeDataIoTask.CompositeDataIoResult<I>
 >
 extends CompositeIoTask<I, R> {
 	

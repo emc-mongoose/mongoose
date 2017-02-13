@@ -49,7 +49,7 @@ import java.util.List;
  Created by andrey on 12.11.16.
  */
 public class BasicLoadGeneratorBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult,
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>,
 	T extends BasicLoadGenerator<I, O, R>
 >
 implements LoadGeneratorBuilder<I, O, R, T> {

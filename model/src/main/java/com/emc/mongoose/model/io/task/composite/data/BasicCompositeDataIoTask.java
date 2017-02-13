@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by andrey on 25.11.16.
  */
-public class BasicCompositeDataIoTask<I extends DataItem, R extends CompositeDataIoResult>
+public class BasicCompositeDataIoTask<I extends DataItem, R extends CompositeDataIoResult<I>>
 extends BasicDataIoTask<I, R>
 implements CompositeDataIoTask<I, R> {
 

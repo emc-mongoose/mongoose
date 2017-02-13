@@ -10,7 +10,7 @@ import io.netty.util.AttributeKey;
 /**
  Created by kurila on 30.09.16.
  */
-public interface NetStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public interface NetStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends StorageDriver<I, O, R> {
 	
 	AttributeKey<IoTask> ATTR_KEY_IOTASK = AttributeKey.valueOf("ioTask");

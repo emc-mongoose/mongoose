@@ -28,7 +28,7 @@ import java.io.IOException;
  Created by andrey on 05.10.16.
  */
 public class BasicStorageDriverBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends StorageDriver<I, O, R>
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>, T extends StorageDriver<I, O, R>
 > implements StorageDriverBuilder<I, O, R, T> {
 
 	private static final Logger LOG = LogManager.getLogger();

@@ -45,7 +45,7 @@ import java.util.function.Function;
  Created by kurila on 19.07.16.
  */
 public final class BasicFileStorageDriver<
-	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoResult
+	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoResult<I>
 >
 extends NioStorageDriverBase<I, O, R>
 implements FileStorageDriver<I, O, R> {

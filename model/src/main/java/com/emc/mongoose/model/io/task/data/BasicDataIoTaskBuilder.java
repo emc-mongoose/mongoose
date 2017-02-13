@@ -13,7 +13,7 @@ import java.util.List;
  Created by kurila on 14.07.16.
  */
 public class BasicDataIoTaskBuilder<
-	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoTask.DataIoResult
+	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoTask.DataIoResult<I>
 >
 extends BasicIoTaskBuilder<I, O, R>
 implements DataIoTaskBuilder<I, O, R> {

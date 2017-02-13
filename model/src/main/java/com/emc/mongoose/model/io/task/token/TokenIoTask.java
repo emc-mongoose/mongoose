@@ -6,7 +6,7 @@ import com.emc.mongoose.model.item.TokenItem;
 /**
  Created by kurila on 11.07.16.
  */
-public interface TokenIoTask<I extends TokenItem, R extends TokenIoTask.TokenIoResult>
+public interface TokenIoTask<I extends TokenItem, R extends TokenIoTask.TokenIoResult<I>>
 extends IoTask<I, R> {
 
 	interface TokenIoResult<I extends TokenItem>

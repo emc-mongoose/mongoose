@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
 import com.emc.mongoose.model.io.task.IoTask;
+import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.Item;
@@ -29,7 +30,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by andrey on 25.11.16.
  */
-public final class S3ResponseHandler<I extends Item, O extends IoTask<I, R>, R extends IoTask.IoResult>
+public final class S3ResponseHandler<
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
+>
 extends HttpResponseHandlerBase<I, O, R> {
 
 	private static final Logger LOG = LogManager.getLogger();

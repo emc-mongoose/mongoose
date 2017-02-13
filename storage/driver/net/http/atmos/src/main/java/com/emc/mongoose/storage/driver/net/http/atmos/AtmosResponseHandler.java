@@ -12,7 +12,9 @@ import io.netty.handler.codec.http.HttpHeaders;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosResponseHandler<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public final class AtmosResponseHandler<
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
+>
 extends HttpResponseHandlerBase<I, O, R> {
 	
 	private final boolean fsAccess;

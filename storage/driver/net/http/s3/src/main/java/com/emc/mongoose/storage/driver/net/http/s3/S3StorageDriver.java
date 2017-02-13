@@ -85,7 +85,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 01.08.16.
  */
-public final class S3StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public final class S3StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends HttpStorageDriverBase<I, O, R> {
 	
 	private static final Logger LOG = LogManager.getLogger();

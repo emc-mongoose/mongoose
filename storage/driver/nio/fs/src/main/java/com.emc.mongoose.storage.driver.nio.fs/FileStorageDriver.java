@@ -24,7 +24,7 @@ import java.util.List;
  Created by andrey on 01.12.16.
  */
 public interface FileStorageDriver<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
 >
 extends StorageDriver<I, O, R> {
 

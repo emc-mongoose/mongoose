@@ -8,7 +8,7 @@ import com.emc.mongoose.storage.driver.net.base.NetStorageDriver;
 /**
  Created by kurila on 30.08.16.
  */
-public interface HttpStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public interface HttpStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
 extends NetStorageDriver<I, O, R> {
 	
 	int REQ_LINE_LEN = 1024;

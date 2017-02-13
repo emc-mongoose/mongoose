@@ -170,7 +170,7 @@ implements IoTask<I, R> {
 	
 	public static class BasicIoResult<I extends Item>
 	implements IoResult<I> {
-		
+
 		private String storageDriverAddr;
 		private String storageNodeAddr;
 		private I item;

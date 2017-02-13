@@ -19,7 +19,7 @@ import java.util.List;
  Created by andrey on 12.11.16.
  */
 public interface LoadGeneratorBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends LoadGenerator<I, O, R>
+	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>, T extends LoadGenerator<I, O, R>
 > {
 
 	LoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig);

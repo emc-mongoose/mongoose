@@ -6,7 +6,7 @@ import com.emc.mongoose.model.item.PathItem;
 /**
  Created by kurila on 30.01.17.
  */
-public interface PathIoTask<I extends PathItem, R extends PathIoTask.PathIoResult>
+public interface PathIoTask<I extends PathItem, R extends PathIoTask.PathIoResult<I>>
 extends IoTask<I, R> {
 	
 	interface PathIoResult<I extends PathItem>

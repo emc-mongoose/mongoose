@@ -12,7 +12,7 @@ import java.util.List;
 /**
  Created by kurila on 11.07.16.
  */
-public interface DataIoTask<I extends DataItem, R extends DataIoResult>
+public interface DataIoTask<I extends DataItem, R extends DataIoResult<I>>
 extends IoTask<I, R> {
 	
 	interface DataIoResult<I extends DataItem>
