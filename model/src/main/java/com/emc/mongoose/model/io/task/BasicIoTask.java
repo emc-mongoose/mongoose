@@ -12,7 +12,7 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIoTask<I extends Item, R extends IoResult>
+public class BasicIoTask<I extends Item, R extends IoResult<I>>
 implements IoTask<I, R> {
 	
 	protected int originCode;
@@ -58,6 +58,10 @@ implements IoTask<I, R> {
 		} else {
 			this.dstPath = dstPath;
 		}
+	}
+	
+	public BasicIoTask(final R ioResult) {
+		this(-1, IoType.values()[ioResult.getIoTypeCode()], ioResult.getItem(), null, null);
 	}
 
 	@Override
