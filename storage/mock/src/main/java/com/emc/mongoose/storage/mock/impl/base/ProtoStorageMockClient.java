@@ -84,12 +84,11 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
         private final String id;
         private final long offset;
         private final long size;
-        private final JmDNS jmDns;
 
-        public GetRemoteObjectTask(
+        private GetRemoteObjectTask(
                 final AtomicReference<T> resultRef, final CountDownLatch sharedLatch,
                 final Pair<String, Integer> node, final String containerName, final String id,
-                final long offset, final long size, final JmDNS jmDns
+                final long offset, final long size
         ) {
             super(resultRef, sharedLatch);
             this.node = node;
@@ -97,7 +96,6 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
             this.id = id;
             this.offset = offset;
             this.size = size;
-            this.jmDns = jmDns;
         }
 
         @Override
@@ -111,8 +109,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
                         .setSize(size)
                         .build();
                 final ServerMessage response;
-                final ChannelFactory channelFactory = new ChannelFactory();
-                response = RemoteQuerierGrpc.newBlockingStub(channelFactory.newChannel(
+                response = RemoteQuerierGrpc.newBlockingStub(ChannelFactory.newChannel(
                         node.getKey(), ChannelFactory.getDefaultPort())
                 ).getRemoteObject(request);
                 final T remoteObject = response.getIsPresent()
@@ -139,7 +136,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
         for(final Pair<String, Integer> node : remoteNodeList) {
             executor.submit(
                     new ProtoStorageMockClient.GetRemoteObjectTask<>(
-                            resultRef, sharedCountDown, node, containerName, id, offset, size, jmDns
+                            resultRef, sharedCountDown, node, containerName, id, offset, size
                     )
             );
         }
