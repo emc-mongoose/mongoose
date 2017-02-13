@@ -14,7 +14,11 @@ import java.net.UnknownHostException;
  * Created by reddy on 03.02.17.
  */
 public class ChannelFactory {
-    private static final int defaultPort = 135;
+    private static final int defaultPort = 9555;
+
+    public static final int getDefaultPort() {
+        return defaultPort;
+    }
 
     public Channel newChannel(final String host, final int port, final boolean usePlainText) {
         return ManagedChannelBuilder.forAddress(host, port).usePlaintext(usePlainText).build();

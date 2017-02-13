@@ -7,6 +7,8 @@ import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.BitSet;
+
 import static com.emc.mongoose.model.item.MutableDataItem.getRangeCount;
 
 public class BasicMutableDataItemMock
@@ -40,6 +42,18 @@ implements MutableDataItemMock {
 		final ContentSource contentSrc
 	) {
 		super(name, offset, size, layerNum, contentSrc);
+	}
+	//
+	public BasicMutableDataItemMock(
+			final String name, final long offset, final long size, final int layerNum,
+			final BitSet maskRangesRead, final long position, final String id
+	) {
+		this.name = name;
+		this.offset = offset;
+		this.size = size;
+		this.layerNum = layerNum;
+		this.maskRangesRead = maskRangesRead;
+		this.position = position;
 	}
 	//
 	public final synchronized void update(final long offset, final long size)

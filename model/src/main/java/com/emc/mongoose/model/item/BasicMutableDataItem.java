@@ -77,19 +77,6 @@ implements MutableDataItem {
 		super(name, offset, size, layerNum, contentSrc);
 	}
 
-	public BasicMutableDataItem(
-			final String name, final long offset, final long size, final int layerNum,
-			final BitSet maskRangesRead, final long position, final String id
-	) {
-		this.name = name;
-		this.offset = offset;
-		this.size = size;
-		this.layerNum = layerNum;
-		this.maskRangesRead = maskRangesRead;
-		this.position = position;
-
-	}
-
 	@Override
 	public BasicMutableDataItem slice(final long from, final long partSize) {
 		if(from < 0) {

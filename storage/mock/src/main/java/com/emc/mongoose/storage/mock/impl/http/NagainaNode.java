@@ -12,10 +12,7 @@ import com.emc.mongoose.storage.mock.api.StorageMockNode;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.impl.base.*;
 import com.emc.mongoose.storage.mock.impl.proto.StorageMockProto;
-import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,18 +32,16 @@ implements StorageMockNode<MutableDataItemMock> {
 	private static final Logger LOG = LogManager.getLogger();
 	private JmDNS jmDns;
 	private StorageMockClient<MutableDataItemMock> client;
-	private Server server;
+	private StorageMockServer<MutableDataItemMock> server;
 
 	public NagainaNode(
 		final StorageMock<MutableDataItemMock> storage, final ContentSource contentSrc
 	) {
+		// System.setProperty("java.rmi.server.hostname", NetUtil.getHostAddrString()); workaround
 		try {
 			jmDns = JmDNS.create(NetUtil.getHostAddr());
 			LOG.info("mDNS address: " + jmDns.getInetAddress());
-			server = ServerBuilder
-					.forPort(MDns.DEFAULT_PORT)
-					.addService(new RemoteQuerier<>(storage))
-					.build();
+			server = new ProtoStorageMockServer<>(storage, jmDns);
 			client = new ProtoStorageMockClient<>(contentSrc, jmDns);
 		} catch(final IOException | OmgDoesNotPerformException | OmgLookAtMyConsoleException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create storage mock node");
@@ -60,7 +55,7 @@ implements StorageMockNode<MutableDataItemMock> {
 
 	@Override
 	public StorageMockServer<MutableDataItemMock> server() {
-		return null;
+		return server;
 	}
 
 	@Override
@@ -69,7 +64,7 @@ implements StorageMockNode<MutableDataItemMock> {
 		try {
 			server.start();
 			client.start();
-		} catch(final IOException e) {
+		} catch(final RemoteException e) {
 			throw new IllegalStateException(e);
 		}
 	}
@@ -89,9 +84,9 @@ implements StorageMockNode<MutableDataItemMock> {
 	protected void doInterrupt()
 	throws IllegalStateException {
 		try {
-			server.awaitTermination();
+			server.interrupt();
 			client.interrupt();
-		} catch(final RemoteException  | InterruptedException e) {
+		} catch(final RemoteException e) {
 			throw new IllegalStateException(e);
 		}
 	}
@@ -100,8 +95,8 @@ implements StorageMockNode<MutableDataItemMock> {
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		try {
-			return server.awaitTermination(timeout, timeUnit);
-		} catch(final InterruptedException ignore) {
+			return server.await(timeout, timeUnit);
+		} catch(final RemoteException ignore) {
 		}
 		return false;
 	}
@@ -109,7 +104,7 @@ implements StorageMockNode<MutableDataItemMock> {
 	@Override
 	protected void doClose()
 	throws IOException {
-		server.shutdownNow();
+		server.close();
 		client.close();
 		jmDns.close();
 	}

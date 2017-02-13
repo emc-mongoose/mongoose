@@ -6,6 +6,7 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.item.BasicMutableDataItem;
+import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
@@ -111,10 +112,11 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
                         .build();
                 final ServerMessage response;
                 final ChannelFactory channelFactory = new ChannelFactory();
-                response = RemoteQuerierGrpc.newBlockingStub(channelFactory.newChannel(node.getKey(), node.getValue()))
-                        .getRemoteObject(request);
+                response = RemoteQuerierGrpc.newBlockingStub(channelFactory.newChannel(
+                        node.getKey(), ChannelFactory.getDefaultPort())
+                ).getRemoteObject(request);
                 final T remoteObject = response.getIsPresent()
-                        ? (T) new BasicMutableDataItem(
+                        ? (T) new BasicMutableDataItemMock(
                                 response.getContainerName(), response.getOffset(), response.getSize(),
                                 response.getLayerNum(), BitSet.valueOf(new long[]{response.getMaskRangesRead()}),
                                 response.getPosition(), response.getId()

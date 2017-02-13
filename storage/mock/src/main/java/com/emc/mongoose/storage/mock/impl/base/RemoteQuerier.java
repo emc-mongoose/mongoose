@@ -10,6 +10,7 @@ import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
 import com.emc.mongoose.storage.mock.impl.proto.ServerMessage;
 import io.grpc.stub.StreamObserver;
 
+import java.util.BitSet;
 import java.util.Optional;
 
 /**
@@ -22,6 +23,14 @@ public class RemoteQuerier<T extends MutableDataItemMock>
 
     public RemoteQuerier(final StorageMock<T> storage) {
         this.storage = storage;
+    }
+
+    private static long bitSetToInt(BitSet bitSet) {
+        long bitLong = 0;
+        for(int i = 0 ; i < 64; i++)
+            if(bitSet.get(i))
+                bitLong |= (1 << i);
+        return bitLong;
     }
 
     @Override
@@ -42,7 +51,7 @@ public class RemoteQuerier<T extends MutableDataItemMock>
         if (object.isPresent()) {
             BasicMutableDataItem dataItem = object.get();
             response = ServerMessage.newBuilder()
-                    .setMaskRangesRead(dataItem.maskRangesRead.toLongArray()[0])
+                    .setMaskRangesRead(bitSetToInt(dataItem.maskRangesRead))
                     .setLayerNum(dataItem.layer())
                     .setPosition(dataItem.position())
                     .setContainerName(dataItem.getName())

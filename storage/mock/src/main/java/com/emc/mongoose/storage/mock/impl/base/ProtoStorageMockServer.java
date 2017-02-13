@@ -5,6 +5,7 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
+import com.emc.mongoose.storage.mock.impl.http.ChannelFactory;
 import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -41,11 +42,16 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
     private final StorageMock<T> storage;
     private final JmDNS jmDns;
     private ServiceInfo serviceInfo;
+    private final Server server;
 
     public ProtoStorageMockServer(final StorageMock<T> storage, final JmDNS jmDns)
             throws RemoteException {
         this.storage = storage;
         this.jmDns = jmDns;
+        this.server = ServerBuilder
+                .forPort(ChannelFactory.getDefaultPort())
+                .addService(new RemoteQuerier<>(storage))
+                .build();
     }
 
     @Override
@@ -66,6 +72,7 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
 
         try {
             storage.start();
+            server.start();
         } catch(final IOException e) {
             throw new IllegalStateException(e);
         }
@@ -75,6 +82,7 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
     protected void doShutdown()
             throws IllegalStateException {
         try {
+            server.shutdown();
             storage.shutdown();
         } catch(final RemoteException e) {
             throw new IllegalStateException(e);
@@ -94,6 +102,7 @@ public class ProtoStorageMockServer<T extends MutableDataItemMock>
     @Override
     public boolean await(final long timeout, final TimeUnit timeUnit)
             throws InterruptedException, RemoteException {
+        server.awaitTermination(timeout, timeUnit);
         return storage.await(timeout, timeUnit);
     }
 
