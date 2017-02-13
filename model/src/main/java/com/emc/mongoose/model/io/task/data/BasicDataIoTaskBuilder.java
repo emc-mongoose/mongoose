@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.model.io.task.IoTaskBuilderBase;
+import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.composite.data.BasicCompositeDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class BasicDataIoTaskBuilder<
 	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoTask.DataIoResult
 >
-extends IoTaskBuilderBase<I, O, R>
+extends BasicIoTaskBuilder<I, O, R>
 implements DataIoTaskBuilder<I, O, R> {
 
 	protected volatile List<ByteRange> fixedRanges = null;

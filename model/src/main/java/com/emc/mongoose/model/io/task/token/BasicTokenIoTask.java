@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task.token;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTaskBase;
+import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.io.task.token.TokenIoTask.TokenIoResult;
 import com.emc.mongoose.model.item.TokenItem;
 
@@ -15,7 +15,7 @@ import static java.lang.System.nanoTime;
  Created by kurila on 20.10.15.
  */
 public class BasicTokenIoTask<I extends TokenItem, R extends TokenIoResult>
-extends IoTaskBase<I, R>
+extends BasicIoTask<I, R>
 implements TokenIoTask<I, R> {
 	
 	protected transient volatile long countBytesDone;

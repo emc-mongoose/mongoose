@@ -1,19 +1,18 @@
 package com.emc.mongoose.model.io.task;
 
 import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import static java.lang.System.nanoTime;
-
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import static java.lang.System.nanoTime;
 
 /**
  Created by kurila on 20.10.15.
  */
-public abstract class IoTaskBase<I extends Item, R extends IoResult>
+public class BasicIoTask<I extends Item, R extends IoResult>
 implements IoTask<I, R> {
 	
 	protected int originCode;
@@ -29,10 +28,10 @@ implements IoTask<I, R> {
 	protected volatile long respTimeStart;
 	protected volatile long respTimeDone;
 	
-	public IoTaskBase() {
+	public BasicIoTask() {
 	}
 	
-	public IoTaskBase(
+	public BasicIoTask(
 		final int originCode, final IoType ioType, final I item, final String srcPath,
 		final String dstPath
 	) {

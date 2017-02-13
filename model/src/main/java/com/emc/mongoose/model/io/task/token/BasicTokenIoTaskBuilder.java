@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.io.task.token;
 
-import com.emc.mongoose.model.io.task.IoTaskBuilderBase;
+import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import static com.emc.mongoose.model.io.task.token.TokenIoTask.TokenIoResult;
 import com.emc.mongoose.model.item.TokenItem;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class BasicTokenIoTaskBuilder<
 	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult
 >
-extends IoTaskBuilderBase<I, O, R>
+extends BasicIoTaskBuilder<I, O, R>
 implements TokenIoTaskBuilder<I, O, R> {
 
 	@Override @SuppressWarnings("unchecked")

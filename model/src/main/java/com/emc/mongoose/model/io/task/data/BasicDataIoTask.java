@@ -2,7 +2,7 @@ package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTaskBase;
+import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.io.IoType.UPDATE;
@@ -21,7 +21,7 @@ import static java.lang.System.nanoTime;
  Created by andrey on 25.09.16.
  */
 public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult>
-extends IoTaskBase<T, R>
+extends BasicIoTask<T, R>
 implements DataIoTask<T, R> {
 	
 	protected long contentSize;

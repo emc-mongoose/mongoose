@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.io.task.path;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTaskBase;
+import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.PathItem;
 
 import java.io.IOException;
@@ -13,7 +13,7 @@ import static java.lang.System.nanoTime;
  Created by kurila on 30.01.17.
  */
 public class BasicPathIoTask<I extends PathItem, R extends BasicPathIoTask.BasicPathIoResult>
-extends IoTaskBase<I, R>
+extends BasicIoTask<I, R>
 implements PathIoTask<I, R> {
 	
 	protected transient volatile long countBytesDone;

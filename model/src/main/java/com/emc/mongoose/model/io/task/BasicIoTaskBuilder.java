@@ -4,10 +4,14 @@ import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  Created by kurila on 14.07.16.
  */
-public abstract class IoTaskBuilderBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult>
 implements IoTaskBuilder<I, O, R> {
 	
 	protected volatile IoType ioType = IoType.CREATE; // by default
@@ -25,7 +29,7 @@ implements IoTaskBuilder<I, O, R> {
 	}
 
 	@Override
-	public final IoTaskBuilderBase<I, O, R> setIoType(final IoType ioType) {
+	public final BasicIoTaskBuilder<I, O, R> setIoType(final IoType ioType) {
 		this.ioType = ioType;
 		return this;
 	}
@@ -36,15 +40,15 @@ implements IoTaskBuilder<I, O, R> {
 	}
 
 	@Override
-	public final IoTaskBuilderBase<I, O, R> setSrcPath(final String srcPath) {
+	public final BasicIoTaskBuilder<I, O, R> setSrcPath(final String srcPath) {
 		this.srcPath = srcPath;
 		return this;
 	}
 
-	/*@Override @SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I item, final String dstPath)
 	throws IOException {
-		return (O) new IoTaskBase<>(originCode, ioType, item, srcPath, dstPath);
+		return (O) new BasicIoTask<>(originCode, ioType, item, srcPath, dstPath);
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -52,7 +56,7 @@ implements IoTaskBuilder<I, O, R> {
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
 		for(final I item : items) {
-			tasks.add((O) new IoTaskBase<>(originCode, ioType, item, srcPath, null));
+			tasks.add((O) new BasicIoTask<>(originCode, ioType, item, srcPath, null));
 		}
 		return tasks;
 	}
@@ -62,7 +66,7 @@ implements IoTaskBuilder<I, O, R> {
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
 		for(final I item : items) {
-			tasks.add((O) new IoTaskBase<>(originCode, ioType, item, srcPath, dstPath));
+			tasks.add((O) new BasicIoTask<>(originCode, ioType, item, srcPath, dstPath));
 		}
 		return tasks;
 	}
@@ -77,9 +81,9 @@ implements IoTaskBuilder<I, O, R> {
 		final List<O> tasks = new ArrayList<>(n);
 		for(int i = 0; i < n; i ++) {
 			tasks.add(
-				(O) new IoTaskBase<>(originCode, ioType, items.get(i), srcPath, dstPaths.get(i))
+				(O) new BasicIoTask<>(originCode, ioType, items.get(i), srcPath, dstPaths.get(i))
 			);
 		}
 		return tasks;
-	}*/
+	}
 }

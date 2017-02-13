@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.io.task.path;
 
-import com.emc.mongoose.model.io.task.IoTaskBuilderBase;
+import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
 import com.emc.mongoose.model.item.PathItem;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class BasicPathIoTaskBuilder<
 	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult
 >
-extends IoTaskBuilderBase<I, O, R>
+extends BasicIoTaskBuilder<I, O, R>
 implements PathIoTaskBuilder<I, O, R> {
 	
 	@Override @SuppressWarnings("unchecked")
