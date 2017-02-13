@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.io.task;
 
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
@@ -11,8 +10,8 @@ import java.util.List;
 /**
  Created by kurila on 14.07.16.
  */
-public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
-implements IoTaskBuilder<I, O, R> {
+public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I>>
+implements IoTaskBuilder<I, O> {
 	
 	protected volatile IoType ioType = IoType.CREATE; // by default
 	protected volatile String srcPath = null;
@@ -29,7 +28,7 @@ implements IoTaskBuilder<I, O, R> {
 	}
 
 	@Override
-	public final BasicIoTaskBuilder<I, O, R> setIoType(final IoType ioType) {
+	public final BasicIoTaskBuilder<I, O> setIoType(final IoType ioType) {
 		this.ioType = ioType;
 		return this;
 	}
@@ -40,7 +39,7 @@ implements IoTaskBuilder<I, O, R> {
 	}
 
 	@Override
-	public final BasicIoTaskBuilder<I, O, R> setSrcPath(final String srcPath) {
+	public final BasicIoTaskBuilder<I, O> setSrcPath(final String srcPath) {
 		this.srcPath = srcPath;
 		return this;
 	}

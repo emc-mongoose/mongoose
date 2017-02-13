@@ -12,12 +12,12 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 30.01.17.
  */
-public class BasicPathIoTask<I extends PathItem, R extends BasicPathIoTask.BasicPathIoResult<I>>
-extends BasicIoTask<I, R>
-implements PathIoTask<I, R> {
+public class BasicPathIoTask<I extends PathItem>
+extends BasicIoTask<I>
+implements PathIoTask<I> {
 	
-	protected transient volatile long countBytesDone;
-	protected transient volatile long respDataTimeStart;
+	protected volatile long countBytesDone;
+	protected volatile long respDataTimeStart;
 	
 	public BasicPathIoTask() {
 		super();
@@ -28,85 +28,32 @@ implements PathIoTask<I, R> {
 		item.reset();
 	}
 	
-	public static class BasicPathIoResult<T extends PathItem>
-	extends BasicIoResult<T>
-	implements PathIoResult<T> {
-		
-		private long dataLatency;
-		private long transferredByteCount;
-		
-		public BasicPathIoResult() {
-			super();
-		}
-		
-		public BasicPathIoResult(
-			final String storageDriverAddr, final String storageNodeAddr, final T item,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
-			final long duration, final long latency, final long dataLatency,
-			final long transferredByteCount
-		) {
-			super(
-				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency
-			);
-			this.dataLatency = dataLatency > latency && duration > latency ? dataLatency : -1;
-			this.transferredByteCount = transferredByteCount;
-		}
-		
-		@Override
-		public final long getDataLatency() {
-			return dataLatency;
-		}
-		
-		@Override
-		public final long getCountBytesDone() {
-			return transferredByteCount;
-		}
-		
-		@Override
-		public void writeExternal(final ObjectOutput out)
-		throws IOException {
-			super.writeExternal(out);
-			out.writeLong(dataLatency);
-			out.writeLong(transferredByteCount);
-		}
-		
-		@Override
-		public void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-			super.readExternal(in);
-			dataLatency = in.readLong();
-			transferredByteCount = in.readLong();
-		}
+	protected BasicPathIoTask(final BasicPathIoTask<I> other) {
+		super(other);
+		this.countBytesDone = other.countBytesDone;
+		this.respDataTimeStart = other.respDataTimeStart;
 	}
 	
-	@Override @SuppressWarnings("unchecked")
-	public R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	) {
+	@Override
+	public BasicPathIoTask<I> getResult() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
-		return (R) new BasicPathIoResult(
-			useStorageDriverResult ? hostAddr : null,
-			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : - 1,
-			useStatusCodeResult ? status.ordinal() : - 1,
-			useReqTimeStartResult ? reqTimeStart : - 1,
-			useDurationResult ? respTimeDone - reqTimeStart : - 1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1,
-			useDataLatencyResult ? respDataTimeStart - reqTimeDone : - 1,
-			useTransferSizeResult ? countBytesDone : -1
-		);
+		return new BasicPathIoTask<>(this);
+	}
+
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeLong(countBytesDone);
+		out.writeLong(respDataTimeStart);
+	}
+
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		countBytesDone = in.readLong();
+		respDataTimeStart = in.readLong();
 	}
 	
 	@Override

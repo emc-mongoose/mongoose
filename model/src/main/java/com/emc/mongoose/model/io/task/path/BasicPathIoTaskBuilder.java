@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.io.task.path;
 
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
-import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
 import com.emc.mongoose.model.item.PathItem;
 
 import java.io.IOException;
@@ -11,11 +10,9 @@ import java.util.List;
 /**
  Created by kurila on 30.01.17.
  */
-public class BasicPathIoTaskBuilder<
-	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult<I>
->
-extends BasicIoTaskBuilder<I, O, R>
-implements PathIoTaskBuilder<I, O, R> {
+public class BasicPathIoTaskBuilder<I extends PathItem, O extends PathIoTask<I>>
+extends BasicIoTaskBuilder<I, O>
+implements PathIoTaskBuilder<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem, final String dstPath)

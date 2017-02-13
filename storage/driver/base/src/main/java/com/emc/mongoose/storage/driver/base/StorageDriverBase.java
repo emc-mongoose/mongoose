@@ -34,18 +34,16 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 11.07.16.
  */
-public abstract class StorageDriverBase<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
->
+public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements StorageDriver<I, O, R> {
+implements StorageDriver<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
 	private final int queueCapacity;
 	private final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
-	private final BlockingQueue<R> ioResultsQueue;
+	private final BlockingQueue<O> ioResultsQueue;
 	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
@@ -236,9 +234,9 @@ implements StorageDriver<I, O, R> {
 	}
 
 	@Override
-	public List<R> getResults()
+	public List<O> getResults()
 	throws IOException {
-		final List<R> ioTaskResults = new ArrayList<>(BATCH_SIZE);
+		final List<O> ioTaskResults = new ArrayList<>(BATCH_SIZE);
 		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
 		return ioTaskResults;
 	}
@@ -250,20 +248,7 @@ implements StorageDriver<I, O, R> {
 
 		try {
 
-			final R ioResult = ioTask.getResult(
-				HOST_ADDR,
-				useStorageDriverResult,
-				useStorageNodeResult,
-				useItemInfoResult,
-				useIoTypeCodeResult,
-				useStatusCodeResult,
-				useReqTimeStartResult,
-				useDurationResult,
-				useRespLatencyResult,
-				useDataLatencyResult,
-				useTransferSizeResult
-			);
-			if(!ioResultsQueue.offer(ioResult, 1, TimeUnit.MILLISECONDS)) {
+			if(!ioResultsQueue.offer(ioTask.getResult(), 1, TimeUnit.MILLISECONDS)) {
 				LOG.warn(
 					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
 					toString()

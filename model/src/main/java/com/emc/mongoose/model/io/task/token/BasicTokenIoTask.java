@@ -2,7 +2,6 @@ package com.emc.mongoose.model.io.task.token;
 
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.BasicIoTask;
-import com.emc.mongoose.model.io.task.token.TokenIoTask.TokenIoResult;
 import com.emc.mongoose.model.item.TokenItem;
 
 import java.io.IOException;
@@ -14,9 +13,9 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicTokenIoTask<I extends TokenItem, R extends TokenIoResult<I>>
-extends BasicIoTask<I, R>
-implements TokenIoTask<I, R> {
+public class BasicTokenIoTask<I extends TokenItem>
+extends BasicIoTask<I>
+implements TokenIoTask<I> {
 	
 	protected transient volatile long countBytesDone;
 	protected transient volatile long respDataTimeStart;
@@ -39,12 +38,14 @@ implements TokenIoTask<I, R> {
 		}
 		
 		public BasicTokenIoResult(
+			final int originCode,
 			final String storageDriverAddr, final String storageNodeAddr, final I item,
 			final int ioTypeCode, final int statusCode, final long reqTimeStart,
 			final long duration, final long latency, final long dataLatency,
 			final long transferredByteCount
 		) {
 			super(
+				originCode,
 				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
 				duration, latency
 			);
@@ -96,6 +97,7 @@ implements TokenIoTask<I, R> {
 	) {
 		//buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return (R) new BasicTokenIoResult(
+			originCode,
 			useStorageDriverResult ? hostAddr : null,
 			useStorageNodeResult ? nodeAddr : null,
 			useItemInfoResult ? item : null,

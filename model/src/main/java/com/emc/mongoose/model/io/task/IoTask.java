@@ -10,7 +10,7 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 11.07.16.
  */
-public interface IoTask<I extends Item, R extends IoTask.IoResult>
+public interface IoTask<I extends Item>
 extends Externalizable {
 
 	long START_OFFSET_MICROS = currentTimeMillis() * 1000 - nanoTime() / 1000;
@@ -70,26 +70,6 @@ extends Externalizable {
 	long getRespTimeStart();
 
 	long getRespTimeDone();
-	
-	interface IoResult<I extends Item>
-	extends Externalizable {
-
-		String getStorageDriverAddr();
-		
-		String getStorageNodeAddr();
-
-		I getItem();
-		
-		int getIoTypeCode();
-		
-		int getStatusCode();
-		
-		long getTimeStart();
-		
-		long getDuration();
-		
-		long getLatency();
-	}
 
 	default void buildItemPath(final I item, final String itemPath) {
 		String itemName = item.getName();
@@ -106,19 +86,7 @@ extends Externalizable {
 		}
 	}
 	
-	R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	);
+	<O extends IoTask<I>> O getResult();
 
 	void reset();
 }

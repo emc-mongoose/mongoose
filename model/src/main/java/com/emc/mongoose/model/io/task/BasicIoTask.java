@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.io.task;
 
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
@@ -12,8 +11,8 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIoTask<I extends Item, R extends IoResult<I>>
-implements IoTask<I, R> {
+public class BasicIoTask<I extends Item>
+implements IoTask<I> {
 	
 	protected int originCode;
 	protected IoType ioType;
@@ -59,9 +58,25 @@ implements IoTask<I, R> {
 			this.dstPath = dstPath;
 		}
 	}
-	
-	public BasicIoTask(final R ioResult) {
-		this(-1, IoType.values()[ioResult.getIoTypeCode()], ioResult.getItem(), null, null);
+
+	protected BasicIoTask(final BasicIoTask<I> other) {
+		this.originCode = other.originCode;
+		this.ioType = other.ioType;
+		this.item = other.item;
+		this.srcPath = other.srcPath;
+		this.dstPath = other.dstPath;
+		this.nodeAddr = other.nodeAddr;
+		this.status = other.status;
+		this.reqTimeStart = other.reqTimeStart;
+		this.reqTimeDone = other.reqTimeDone;
+		this.respTimeStart = other.reqTimeStart;
+		this.respTimeDone = other.respTimeDone;
+	}
+
+	@Override
+	public BasicIoTask<I> getResult() {
+		buildItemPath(item, dstPath == null ? srcPath : dstPath);
+		return new BasicIoTask<>(this);
 	}
 
 	@Override
@@ -167,160 +182,6 @@ implements IoTask<I, R> {
 	public final long getRespTimeDone() {
 		return respTimeDone;
 	}
-	
-	public static class BasicIoResult<I extends Item>
-	implements IoResult<I> {
-
-		private String storageDriverAddr;
-		private String storageNodeAddr;
-		private I item;
-		private int ioTypeCode;
-		private int statusCode;
-		private long reqTimeStart;
-		private long duration;
-		private long latency;
-
-		public BasicIoResult() {
-		}
-		
-		public BasicIoResult(
-			final String storageDriverAddr, final String storageNodeAddr, final I item,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
-			final long duration, final long latency
-		) {
-			this.storageDriverAddr = storageDriverAddr;
-			this.storageNodeAddr = storageNodeAddr;
-			this.item = item;
-			this.ioTypeCode = ioTypeCode;
-			this.statusCode = statusCode;
-			this.reqTimeStart = reqTimeStart;
-			this.duration = duration;
-			this.latency = duration > latency ? latency : -1;
-		}
-		
-		@Override
-		public final String getStorageDriverAddr() {
-			return storageDriverAddr;
-		}
-		
-		@Override
-		public final String getStorageNodeAddr() {
-			return storageNodeAddr;
-		}
-
-		@Override
-		public final I getItem() {
-			return item;
-		}
-		
-		@Override
-		public final int getIoTypeCode() {
-			return ioTypeCode;
-		}
-		
-		@Override
-		public final int getStatusCode() {
-			return statusCode;
-		}
-		
-		@Override
-		public final long getTimeStart() {
-			return reqTimeStart;
-		}
-		
-		@Override
-		public final long getDuration() {
-			return duration;
-		}
-		
-		@Override
-		public final long getLatency() {
-			return latency;
-		}
-		
-		@Override
-		public void writeExternal(final ObjectOutput out)
-		throws IOException {
-			out.writeUTF(storageDriverAddr == null ? "" : storageDriverAddr);
-			out.writeUTF(storageNodeAddr == null ? "" : storageNodeAddr);
-			out.writeObject(item);
-			out.writeInt(ioTypeCode);
-			out.writeInt(statusCode);
-			out.writeLong(reqTimeStart);
-			out.writeLong(duration);
-			out.writeLong(latency);
-		}
-		
-		@Override @SuppressWarnings("unchecked")
-		public void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-			storageDriverAddr = in.readUTF();
-			storageNodeAddr = in.readUTF();
-			item = (I) in.readObject();
-			ioTypeCode = in.readInt();
-			statusCode = in.readInt();
-			reqTimeStart = in.readLong();
-			duration = in.readLong();
-			latency = in.readLong();
-		}
-		
-		protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
-		
-		@Override
-		public final String toString() {
-			final StringBuilder strb = STRB.get();
-			strb.setLength(0);
-			if(storageNodeAddr != null && !storageNodeAddr.isEmpty()) {
-				strb.append("endpoint: ").append(storageNodeAddr).append(", ");
-			}
-			if(storageDriverAddr != null && !storageDriverAddr.isEmpty()) {
-				strb.append("client: ").append(storageDriverAddr).append(", ");
-			}
-			if(item != null) {
-				strb.append("item: ").append(item.getName()).append(", ");
-			}
-			if(ioTypeCode > -1) {
-				strb.append("operation: ").append(IoType.values()[ioTypeCode]).append(", ");
-			}
-			if(statusCode > -1) {
-				strb.append("status: ").append(Status.values()[statusCode]);
-			}
-			return strb.toString();
-		}
-	}
-	
-	
-	@Override @SuppressWarnings("unchecked")
-	public R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	) {
-		buildItemPath(item, dstPath == null ? srcPath : dstPath);
-		return (R) new BasicIoResult(
-			useStorageDriverResult ? hostAddr : null,
-			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : -1,
-			useStatusCodeResult ? status.ordinal() : -1,
-			useReqTimeStartResult ? reqTimeStart : -1,
-			useDurationResult ? respTimeDone - reqTimeStart : -1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : -1
-		);
-	}
 
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
@@ -348,6 +209,12 @@ implements IoTask<I, R> {
 		out.writeObject(item);
 		out.writeUTF(srcPath == null ? "" : srcPath);
 		out.writeUTF(dstPath == null ? "" : dstPath);
+		out.writeUTF(nodeAddr == null ? "" : nodeAddr);
+		out.writeInt(status.ordinal());
+		out.writeLong(reqTimeStart);
+		out.writeLong(reqTimeDone);
+		out.writeLong(respTimeStart);
+		out.writeLong(respTimeDone);
 	}
 	
 	@Override
@@ -358,10 +225,16 @@ implements IoTask<I, R> {
 		item = (I) in.readObject();
 		srcPath = in.readUTF();
 		dstPath = in.readUTF();
+		nodeAddr = in.readUTF();
+		status = Status.values()[in.readInt()];
+		reqTimeStart = in.readLong();
+		reqTimeDone = in.readLong();
+		respTimeStart = in.readLong();
+		respTimeDone = in.readLong();
 	}
 
 	@Override
 	public final int hashCode() {
-		return item.hashCode();
+		return originCode ^ ioType.ordinal() ^ item.hashCode();
 	}
 }
