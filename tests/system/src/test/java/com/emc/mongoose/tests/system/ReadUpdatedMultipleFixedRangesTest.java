@@ -38,12 +38,12 @@ import static org.junit.Assert.assertTrue;
  * 8.2.1. Create New Items
  * 8.3.2. Read With Enabled Validation
  * 8.3.3.2.4. Read Multiple Fixed Ranges
+ * 8.4.2.2. Multiple Random Ranges Update
  * 9.3. Custom Scenario File
  * 9.4.3. Reusing The Items in the Scenario
  * 9.5.2. Load Job
  * 9.5.5. Sequential Job
  * 10.1.1. Single Local Separate Storage Driver Service
- * 10.3. Filesystem Storage Driver
  */
 public class ReadUpdatedMultipleFixedRangesTest
 extends HttpStorageDistributedScenarioTestBase {
@@ -94,7 +94,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 2);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(1);
 	}
 
 	@AfterClass

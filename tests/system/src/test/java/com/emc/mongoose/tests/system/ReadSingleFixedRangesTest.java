@@ -37,13 +37,12 @@ import static org.junit.Assert.assertTrue;
  * 6.2.2. Limit Load Job by Processed Item Count
  * 8.2.1. Create New Items
  * 8.3.2. Read With Enabled Validation
- * 8.3.3.2.4. Read Multiple Fixed Ranges
+ * 8.3.3.2.3. Read Bytes from N1 to N2
  * 9.3. Custom Scenario File
  * 9.4.3. Reusing The Items in the Scenario
  * 9.5.2. Load Job
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
- * 10.3. Filesystem Storage Driver
  */
 public class ReadSingleFixedRangesTest
 extends HttpStorageDistributedScenarioTestBase {
@@ -86,7 +85,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 1);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(1);
 	}
 
 	@AfterClass

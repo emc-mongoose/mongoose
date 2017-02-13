@@ -13,6 +13,9 @@ import org.apache.logging.log4j.Level;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +64,10 @@ extends HttpStorageDistributedScenarioTestBase {
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.add("--load-limit-time=" + LOAD_LIMIT_TIME);
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
+		try {
+			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
+		} catch(final IOException ignored) {
+		}
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
@@ -80,7 +87,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			FINISHED_IN_TIME = false;
 		}
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(15);
+		TimeUnit.SECONDS.sleep(1);
 	}
 
 	@AfterClass public static void tearDownClass()
