@@ -126,7 +126,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+	@Test @Ignore
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -154,7 +154,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMedTotalMetricsLogFile()
+	@Test @Ignore public void testMedTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
 			getMetricsMedTotalLogRecords().get(0),

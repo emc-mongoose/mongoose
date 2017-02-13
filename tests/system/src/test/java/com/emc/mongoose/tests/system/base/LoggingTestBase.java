@@ -52,7 +52,7 @@ public abstract class LoggingTestBase {
 	protected static Logger LOG;
 	protected static String JOB_NAME;
 	protected static BufferingOutputStream STD_OUT_STREAM;
-	protected static int LOG_FILE_TIMEOUT_SEC = 100;
+	protected static int LOG_FILE_TIMEOUT_SEC = 30;
 
 	@BeforeClass
 	public static void setUpClass()
