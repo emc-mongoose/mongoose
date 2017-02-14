@@ -183,6 +183,16 @@ implements IoTask<I> {
 		return respTimeDone;
 	}
 
+	@Override
+	public final long getDuration() {
+		return respTimeDone - reqTimeStart;
+	}
+
+	@Override
+	public final long getLatency() {
+		return respTimeStart - reqTimeDone;
+	}
+
 	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {

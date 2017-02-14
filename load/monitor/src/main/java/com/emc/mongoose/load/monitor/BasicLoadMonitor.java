@@ -48,6 +48,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -368,6 +369,7 @@ implements LoadMonitor<I, O> {
 	public final void processIoResults(final List<O> ioTaskResults, final int n) {
 
 		int m = n; // count of complete whole tasks
+		final List<O> passedIoTasks = new ArrayList<O>(n);
 
 		// I/O trace logging
 		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
@@ -388,11 +390,11 @@ implements LoadMonitor<I, O> {
 
 		try {
 			for(int i = 0; i < n; i ++) {
-				
+
 				if(i > 0) {
 					ioTaskResult = ioTaskResults.get(i);
 				}
-				
+
 				if( // account only completed composite I/O tasks
 					ioTaskResult instanceof CompositeIoTask &&
 					!((CompositeIoTask) ioTaskResult).allSubTasksDone()
@@ -400,24 +402,26 @@ implements LoadMonitor<I, O> {
 					m --;
 					continue;
 				}
-				
+
 				originCode = ioTaskResult.getOriginCode();
 				ioTypeCode = ioTaskResult.getIoType().ordinal();
 				status = ioTaskResult.getStatus();
-				reqDuration = ioTaskResult.getRespTimeDone() - ioTaskResult.getReqTimeStart();
-				respLatency = ioTaskResult.getRespTimeStart() - ioTaskResult.getReqTimeDone();
+				reqDuration = ioTaskResult.getDuration();
+				respLatency = ioTaskResult.getLatency();
 				if(ioTaskResult instanceof DataIoTask) {
 					countBytesDone = ((DataIoTask) ioTaskResult).getCountBytesDone();
 				} else if(ioTaskResult instanceof PathIoTask) {
 					countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
 				}
-				
+
 				ioTypeStats = ioStats.get(ioTypeCode);
 				ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
-				
+
 				if(Status.SUCC.equals(status)) {
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.debug(Markers.ERR, "Dropping invalid latency value {}", respLatency);
+						m --;
+						continue;
 					}
 					if(ioTaskResult instanceof PartialIoTask) {
 						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
@@ -426,7 +430,7 @@ implements LoadMonitor<I, O> {
 						}
 						m --;
 					} else {
-						
+
 						if(circularityMap.get(originCode)) {
 							item = ioTaskResult.getItem();
 							latestIoResultsPerItem.put(item, ioTaskResult);
@@ -444,13 +448,13 @@ implements LoadMonitor<I, O> {
 						} else {
 							ioTaskDest = ioResultsOutput;
 						}
-						
+
 						if(ioTaskDest != null) {
 							while(!ioTaskDest.put(ioTaskResult)) {
 								LockSupport.parkNanos(1);
 							}
 						}
-						
+
 						// update the metrics with success
 						ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
 						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {

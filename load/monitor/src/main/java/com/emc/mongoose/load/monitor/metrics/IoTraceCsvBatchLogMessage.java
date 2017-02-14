@@ -29,12 +29,17 @@ extends LogMessageBase {
 			final O anyIoResult = ioResults.get(0);
 			String nextItemInfo;
 			int commaPos;
-			long nextReqTimeStart, nextReqTimeDone;
+			long nextReqTimeStart, nextDuration, nextLatency;
 			if(anyIoResult instanceof DataIoTask) {
 				final List<DataIoTask> dataIoResults = (List) ioResults;
 				DataIoTask nextResult;
 				for(int i = from; i < to; i ++) {
 					nextResult = dataIoResults.get(i);
+					nextDuration = nextResult.getDuration();
+					nextLatency = nextResult.getLatency();
+					if(nextDuration < nextLatency || nextLatency <= 0) {
+						continue;
+					}
 					nextItemInfo = nextResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
@@ -43,7 +48,6 @@ extends LogMessageBase {
 						}
 					}
 					nextReqTimeStart = nextResult.getReqTimeStart();
-					nextReqTimeDone = nextResult.getReqTimeDone();
 					IoTraceCsvLogMessage.format(
 						strb,
 						nextResult.getNodeAddr(),
@@ -51,9 +55,9 @@ extends LogMessageBase {
 						nextResult.getIoType().ordinal(),
 						nextResult.getStatus().ordinal(),
 						nextReqTimeStart,
-						nextResult.getRespTimeDone() - nextReqTimeStart,
-						nextResult.getRespTimeStart() - nextReqTimeDone,
-						nextResult.getRespDataTimeStart() - nextReqTimeDone,
+						nextDuration,
+						nextLatency,
+						nextResult.getDataLatency(),
 						nextResult.getCountBytesDone()
 					);
 					if(i < to - 1) {
@@ -64,6 +68,11 @@ extends LogMessageBase {
 				O nextResult;
 				for(int i = from; i < to; i ++) {
 					nextResult = ioResults.get(i);
+					nextDuration = nextResult.getDuration();
+					nextLatency = nextResult.getLatency();
+					if(nextDuration < nextLatency || nextLatency <= 0) {
+						continue;
+					}
 					nextItemInfo = nextResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
@@ -72,7 +81,6 @@ extends LogMessageBase {
 						}
 					}
 					nextReqTimeStart = nextResult.getReqTimeStart();
-					nextReqTimeDone = nextResult.getReqTimeDone();
 					IoTraceCsvLogMessage.format(
 						strb,
 						nextResult.getNodeAddr(),
@@ -80,8 +88,8 @@ extends LogMessageBase {
 						nextResult.getIoType().ordinal(),
 						nextResult.getStatus().ordinal(),
 						nextReqTimeStart,
-						nextResult.getRespTimeDone() - nextReqTimeStart,
-						nextResult.getRespTimeStart() - nextReqTimeDone,
+						nextDuration,
+						nextLatency,
 						-1,
 						-1
 					);

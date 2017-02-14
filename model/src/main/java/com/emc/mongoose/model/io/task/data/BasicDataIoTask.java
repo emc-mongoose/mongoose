@@ -268,6 +268,11 @@ implements DataIoTask<T> {
 	}
 
 	@Override
+	public final long getDataLatency() {
+		return respDataTimeStart - reqTimeDone;
+	}
+
+	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);

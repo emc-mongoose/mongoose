@@ -71,6 +71,10 @@ extends Externalizable {
 
 	long getRespTimeDone();
 
+	long getDuration();
+
+	long getLatency();
+
 	default void buildItemPath(final I item, final String itemPath) {
 		String itemName = item.getName();
 		if(itemPath == null || itemPath.isEmpty()) {

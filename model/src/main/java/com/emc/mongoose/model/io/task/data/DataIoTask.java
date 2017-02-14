@@ -41,5 +41,7 @@ extends IoTask<I> {
 	long getRespDataTimeStart();
 
 	void startDataResponse();
+
+	long getDataLatency();
 }
 
