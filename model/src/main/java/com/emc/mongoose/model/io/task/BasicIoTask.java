@@ -69,7 +69,7 @@ implements IoTask<I> {
 		this.status = other.status;
 		this.reqTimeStart = other.reqTimeStart;
 		this.reqTimeDone = other.reqTimeDone;
-		this.respTimeStart = other.reqTimeStart;
+		this.respTimeStart = other.respTimeStart;
 		this.respTimeDone = other.respTimeDone;
 	}
 
@@ -210,7 +210,7 @@ implements IoTask<I> {
 		out.writeUTF(srcPath == null ? "" : srcPath);
 		out.writeUTF(dstPath == null ? "" : dstPath);
 		out.writeUTF(nodeAddr == null ? "" : nodeAddr);
-		out.writeInt(status.ordinal());
+		out.writeInt(status == null ? Status.PENDING.ordinal() : status.ordinal());
 		out.writeLong(reqTimeStart);
 		out.writeLong(reqTimeDone);
 		out.writeLong(respTimeStart);

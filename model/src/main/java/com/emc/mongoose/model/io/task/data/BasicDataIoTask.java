@@ -280,6 +280,8 @@ implements DataIoTask<T> {
 		out.writeLong(
 			markedRangesMaskPair[1].isEmpty() ? 0 : markedRangesMaskPair[1].toLongArray()[0]
 		);
+		out.writeLong(countBytesDone);
+		out.writeLong(respDataTimeStart);
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -292,5 +294,7 @@ implements DataIoTask<T> {
 		randomRangesCount = in.readInt();
 		markedRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
 		markedRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
+		countBytesDone = in.readLong();
+		respDataTimeStart = in.readLong();
 	}
 }

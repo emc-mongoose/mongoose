@@ -52,7 +52,7 @@ implements Runnable {
 					if(!driver.isClosed()) {
 						LogUtil.exception(
 							LOG, Level.WARN, e,
-							"Failed to process the results from the driver \"{}\"",
+							"Failed to get the results from the driver \"{}\"",
 							driver.toString()
 						);
 						Thread.sleep(1);

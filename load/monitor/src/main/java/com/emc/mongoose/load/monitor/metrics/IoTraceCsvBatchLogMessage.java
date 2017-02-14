@@ -72,6 +72,7 @@ extends LogMessageBase {
 						}
 					}
 					nextReqTimeStart = nextResult.getReqTimeStart();
+					nextReqTimeDone = nextResult.getReqTimeDone();
 					IoTraceCsvLogMessage.format(
 						strb,
 						nextResult.getNodeAddr(),
@@ -80,7 +81,7 @@ extends LogMessageBase {
 						nextResult.getStatus().ordinal(),
 						nextReqTimeStart,
 						nextResult.getRespTimeDone() - nextReqTimeStart,
-						nextResult.getRespTimeStart() - nextResult.getReqTimeDone(),
+						nextResult.getRespTimeStart() - nextReqTimeDone,
 						-1,
 						-1
 					);

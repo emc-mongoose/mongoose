@@ -197,7 +197,8 @@ implements StorageDriver<I, O> {
 
 		try {
 
-			if(!ioResultsQueue.offer(ioTask.getResult(), 1, TimeUnit.MILLISECONDS)) {
+			final O ioTaskResult = ioTask.getResult();
+			if(!ioResultsQueue.offer(ioTaskResult, 1, TimeUnit.MILLISECONDS)) {
 				LOG.warn(
 					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
 					toString()
@@ -227,7 +228,8 @@ implements StorageDriver<I, O> {
 					// complete the multipart upload, for example
 					if(!childTasksQueue.offer((O) parentTask, 1, TimeUnit.MILLISECONDS)) {
 						LOG.warn(
-							Markers.ERR, "{}: I/O child tasks queue overflow, dropping the I/O task",
+							Markers.ERR,
+							"{}: I/O child tasks queue overflow, dropping the I/O task",
 							toString()
 						);
 					}
