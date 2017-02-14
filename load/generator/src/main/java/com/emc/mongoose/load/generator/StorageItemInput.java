@@ -3,7 +3,6 @@ package com.emc.mongoose.load.generator;
 import com.emc.mongoose.common.io.collection.BufferingInputBase;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 
 import com.emc.mongoose.model.item.DataItemFactory;
 import com.emc.mongoose.model.item.Item;
@@ -18,14 +17,14 @@ import java.io.IOException;
 public final class StorageItemInput<I extends Item>
 extends BufferingInputBase<I> {
 
-	private final StorageDriver<I, ? extends IoTask<I, ?>, ? extends IoResult> storageDriver;
+	private final StorageDriver<I, ? extends IoTask<I>> storageDriver;
 	private final ItemFactory<I> itemFactory;
 	private final String path;
 	private final String prefix;
 	private final int idRadix;
 
 	public StorageItemInput(
-		final StorageDriver<I, ? extends IoTask<I, ?>, ? extends IoResult> storageDriver,
+		final StorageDriver<I, ? extends IoTask<I>> storageDriver,
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix
 	) {
 		super(BATCH_SIZE);

@@ -438,42 +438,6 @@
 											"pattern" : "\\$\\{.+\\}"
 										}
 									]
-								},
-								"trace" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"storageDriver" : {
-											"type" : "boolean"
-										},
-										"storageNode" : {
-											"type" : "boolean"
-										},
-										"itemInfo" : {
-											"type" : "boolean"
-										},
-										"ioTypeCode" : {
-											"type" : "boolean"
-										},
-										"statusCode" : {
-											"type" : "boolean"
-										},
-										"reqTimeStart" : {
-											"type" : "boolean"
-										},
-										"duration" : {
-											"type" : "boolean"
-										},
-										"respLatency" : {
-											"type" : "boolean"
-										},
-										"dataLatency" : {
-											"type" : "boolean"
-										},
-										"transferSize" : {
-											"type" : "boolean"
-										}
-									}
 								}
 							}
 						},

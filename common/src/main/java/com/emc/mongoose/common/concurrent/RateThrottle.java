@@ -1,10 +1,4 @@
-package com.emc.mongoose.load.monitor;
-
-import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+package com.emc.mongoose.common.concurrent;
 
 import java.util.concurrent.TimeUnit;
 import static java.lang.System.nanoTime;
@@ -14,8 +8,6 @@ import static java.lang.System.nanoTime;
  */
 public final class RateThrottle<X>
 implements Throttle<X> {
-
-	private final static Logger LOG = LogManager.getLogger();
 
 	private final long periodNanos;
 	private volatile long startTime = -1;
@@ -28,14 +20,10 @@ implements Throttle<X> {
 			);
 		}
 		periodNanos = (long) (TimeUnit.SECONDS.toNanos(1) / rateLimit);
-		LOG.info(
-			Markers.MSG, "Rate limit throttle is configured to pass the request each {}[ns]",
-			periodNanos
-		);
 	}
 
 	@Override
-	public final boolean getPassFor(final X item) {
+	public final boolean tryAcquire(final X item) {
 		synchronized(this) {
 			if(startTime > 0) {
 				final long periodCount = (nanoTime() - startTime) / periodNanos;
@@ -54,7 +42,7 @@ implements Throttle<X> {
 	}
 	
 	@Override
-	public final int getPassFor(final X item, final int requiredCount) {
+	public final int tryAcquire(final X item, final int requiredCount) {
 		synchronized(this) {
 			if(startTime > 0) {
 				final int availableCount = (int) (

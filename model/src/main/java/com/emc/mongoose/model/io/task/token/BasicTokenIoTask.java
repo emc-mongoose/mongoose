@@ -7,7 +7,6 @@ import com.emc.mongoose.model.item.TokenItem;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
 import static java.lang.System.nanoTime;
 
 /**
@@ -26,89 +25,32 @@ implements TokenIoTask<I> {
 	public BasicTokenIoTask(final int originCode, final IoType ioType, final I item) {
 		super(originCode, ioType, item, null, null);
 	}
+	
+	protected BasicTokenIoTask(final BasicTokenIoTask<I> other) {
+		super(other);
+		this.countBytesDone = other.countBytesDone;
+		this.respDataTimeStart = other.respDataTimeStart;
+	}
 
-	public static class BasicTokenIoResult<I extends TokenItem>
-	extends BasicIoResult<I>
-	implements TokenIoResult<I> {
-		
-		private long dataLatency;
-		private long transferredByteCount;
-		
-		public BasicTokenIoResult() {
-		}
-		
-		public BasicTokenIoResult(
-			final int originCode,
-			final String storageDriverAddr, final String storageNodeAddr, final I item,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
-			final long duration, final long latency, final long dataLatency,
-			final long transferredByteCount
-		) {
-			super(
-				originCode,
-				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency
-			);
-			this.dataLatency = dataLatency;
-			this.transferredByteCount = transferredByteCount;
-		}
-		
-		@Override
-		public final long getDataLatency() {
-			return dataLatency;
-		}
-		
-		@Override
-		public final long getCountBytesDone() {
-			return transferredByteCount;
-		}
-		
-		@Override
-		public void writeExternal(final ObjectOutput out)
-		throws IOException {
-			super.writeExternal(out);
-			out.writeLong(dataLatency);
-			out.writeLong(transferredByteCount);
-		}
-		
-		@Override
-		public void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-			super.readExternal(in);
-			dataLatency = in.readLong();
-			transferredByteCount = in.readLong();
-		}
+	@Override @SuppressWarnings("unchecked")
+	public BasicTokenIoTask<I> getResult() {
+		return new BasicTokenIoTask<>(this);
 	}
 	
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeLong(countBytesDone);
+		out.writeLong(respDataTimeStart);
+	}
 	
-	@Override @SuppressWarnings("unchecked")
-	public R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	) {
-		//buildItemPath(item, dstPath == null ? srcPath : dstPath);
-		return (R) new BasicTokenIoResult(
-			originCode,
-			useStorageDriverResult ? hostAddr : null,
-			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : -1,
-			useStatusCodeResult ? status.ordinal() : -1,
-			useReqTimeStartResult ? reqTimeStart : -1,
-			useDurationResult ? respTimeDone - reqTimeStart : -1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : -1,
-			useDataLatencyResult ? respDataTimeStart - reqTimeDone : -1,
-			useTransferSizeResult ? countBytesDone : -1
-		);
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		countBytesDone = in.readLong();
+		respDataTimeStart = in.readLong();
 	}
 	
 	@Override
@@ -130,4 +72,6 @@ implements TokenIoTask<I> {
 	public void startDataResponse() {
 		respDataTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
 	}
+	
+	
 }

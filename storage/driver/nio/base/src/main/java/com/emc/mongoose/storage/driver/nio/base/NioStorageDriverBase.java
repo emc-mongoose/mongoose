@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.nio.base;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -31,11 +30,9 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 19.07.16.
  The multi-threaded non-blocking I/O storage driver.
  */
-public abstract class NioStorageDriverBase<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
->
-extends StorageDriverBase<I, O, R>
-implements StorageDriver<I, O, R> {
+public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends StorageDriverBase<I, O>
+implements StorageDriver<I, O> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int MIN_TASK_BUFF_CAPACITY = 0x4000;

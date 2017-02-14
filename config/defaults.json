@@ -191,19 +191,7 @@
 		"metrics" : {
 			"period" : "10s",
 			"precondition" : false,
-			"threshold" : 0,
-			"trace" : {
-				"storageDriver" : false,
-				"storageNode" : false,
-				"itemInfo" : true,
-				"ioTypeCode" : true,
-				"statusCode" : true,
-				"reqTimeStart" : false,
-				"duration" : true,
-				"respLatency" : true,
-				"dataLatency" : false,
-				"transferSize" : true
-			}
+			"threshold" : 0
 		},
 		"queue" : {
 			"size" : 1000000

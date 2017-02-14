@@ -4,15 +4,12 @@ import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig.TraceConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -44,7 +41,6 @@ implements StorageDriver<I, O> {
 	private final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
 	private final BlockingQueue<O> ioResultsQueue;
-	private final boolean isCircular;
 	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
@@ -53,17 +49,6 @@ implements StorageDriver<I, O> {
 	protected volatile String authToken;
 	protected final boolean verifyFlag;
 
-	private final boolean useStorageDriverResult;
-	private final boolean useStorageNodeResult;
-	private final boolean useItemInfoResult;
-	private final boolean useIoTypeCodeResult;
-	private final boolean useStatusCodeResult;
-	private final boolean useReqTimeStartResult;
-	private final boolean useDurationResult;
-	private final boolean useRespLatencyResult;
-	private final boolean useDataLatencyResult;
-	private final boolean useTransferSizeResult;
-	
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
 	private final LongAdder recycledTaskCount = new LongAdder();
@@ -82,21 +67,7 @@ implements StorageDriver<I, O> {
 		authToken = authConfig == null ? null : authConfig.getToken();
 		concurrencyLevel = loadConfig.getConcurrency();
 		concurrencyThrottle = new Semaphore(concurrencyLevel, true);
-		isCircular = loadConfig.getCircular();
 		this.verifyFlag = verifyFlag;
-
-		final MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
-		final TraceConfig traceConfig = metricsConfig.getTraceConfig();
-		useStorageDriverResult = traceConfig.getStorageDriver();
-		useStorageNodeResult = traceConfig.getStorageNode();
-		useItemInfoResult = traceConfig.getItemInfo();
-		useIoTypeCodeResult = traceConfig.getIoTypeCode();
-		useStatusCodeResult = traceConfig.getStatusCode();
-		useReqTimeStartResult = traceConfig.getReqTimeStart();
-		useDurationResult = traceConfig.getDuration();
-		useRespLatencyResult = traceConfig.getRespLatency();
-		useDataLatencyResult = traceConfig.getDataLatency();
-		useTransferSizeResult = traceConfig.getTransferSize();
 
 		SVC_TASKS.put(this, new IoTasksDispatch());
 	}
@@ -140,9 +111,6 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		if(isCircular && scheduledTaskCount.sum() >= queueCapacity) {
-			throw new EOFException();
-		}
 		if(inTasksQueue.offer(task)) {
 			scheduledTaskCount.increment();
 			return true;
@@ -157,18 +125,8 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		int j;
-		if(isCircular) {
-			final long remaining = queueCapacity - scheduledTaskCount.sum();
-			if(remaining < 1) {
-				throw new EOFException();
-			}
-			j = (int) (from + Math.min(to - from, remaining));
-		} else {
-			j = to;
-		}
 		int i = from;
-		while(i < j && isStarted()) {
+		while(i < to && isStarted()) {
 			if(inTasksQueue.offer(tasks.get(i))) {
 				i ++;
 			} else {
@@ -185,15 +143,6 @@ implements StorageDriver<I, O> {
 	throws EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
-		}
-		if(isCircular) {
-			final long remaining = queueCapacity - scheduledTaskCount.sum();
-			if(remaining < 1) {
-				throw new EOFException();
-			}
-			if(remaining < tasks.size()) {
-				return put(tasks, 0, (int) remaining);
-			}
 		}
 		int n = 0;
 		for(final O nextIoTask : tasks) {
@@ -255,19 +204,7 @@ implements StorageDriver<I, O> {
 				);
 			}
 
-			if(isCircular) {
-				if(IoTask.Status.SUCC.equals(ioTask.getStatus())) {
-					if(inTasksQueue.offer(ioTask, 1, TimeUnit.MILLISECONDS)) {
-						recycledTaskCount.increment();
-					} else {
-						LOG.warn(
-							Markers.ERR,
-							"{}: incoming I/O tasks queue overflow, dropping the I/O task",
-							toString()
-						);
-					}
-				}
-			} else if(ioTask instanceof CompositeIoTask) {
+			if(ioTask instanceof CompositeIoTask) {
 				final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
 				if(!parentTask.allSubTasksDone()) {
 					final List<O> subTasks = parentTask.getSubTasks();

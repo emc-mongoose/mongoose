@@ -26,9 +26,10 @@
 
 /* Equality */
 /* Object/Reference-only definitions (keys) */
+/* Primitive-type-only definitions (keys) */
 /* Object/Reference-only definitions (values) */
 /* Primitive-type-only definitions (values) */
-/*		 
+/*
  * Copyright (C) 2002-2016 Sebastiano Vigna
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,10 +42,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. 
+ * limitations under the License.
  */
 
-package it.unimi.dsi.fastutil.objects;
+package it.unimi.dsi.fastutil.ints;
 
 import it.unimi.dsi.fastutil.Function;
 
@@ -77,8 +78,8 @@ import it.unimi.dsi.fastutil.Function;
  * @see Function
  */
 
-public interface Object2BooleanFunction<K> extends Function<K, Boolean> {
-
+public interface Int2BooleanFunction extends Function<Integer, Boolean> {
+	
 	/**
 	 * Adds a pair to the map.
 	 *
@@ -90,9 +91,9 @@ public interface Object2BooleanFunction<K> extends Function<K, Boolean> {
 	 *         return value} if no value was present for the given key.
 	 * @see Function#put(Object,Object)
 	 */
-
-	boolean put(K key, boolean value);
-
+	
+	boolean put(int key, boolean value);
+	
 	/**
 	 * Returns the value to which the given key is mapped.
 	 *
@@ -103,20 +104,27 @@ public interface Object2BooleanFunction<K> extends Function<K, Boolean> {
 	 *         value was present for the given key.
 	 * @see Function#get(Object)
 	 */
-
-	boolean getBoolean(Object key);
-
+	
+	boolean get(int key);
+	
 	/**
 	 * Removes the mapping with the given key.
-	 * 
+	 *
 	 * @param key
 	 *            the key.
 	 * @return the old value, or the {@linkplain #defaultReturnValue() default
 	 *         return value} if no value was present for the given key.
 	 * @see Function#remove(Object)
 	 */
-
-	boolean removeBoolean(Object key);
+	
+	boolean remove(int key);
+	
+	/**
+	 * @see Function#containsKey(Object)
+	 */
+	
+	boolean containsKey(int key);
+	
 	/**
 	 * Sets the default return value.
 	 *
@@ -129,15 +137,15 @@ public interface Object2BooleanFunction<K> extends Function<K, Boolean> {
 	 *            the new default return value.
 	 * @see #defaultReturnValue()
 	 */
-
+	
 	void defaultReturnValue(boolean rv);
-
+	
 	/**
 	 * Gets the default return value.
 	 *
 	 * @return the current default return value.
 	 */
-
+	
 	boolean defaultReturnValue();
-
+	
 }

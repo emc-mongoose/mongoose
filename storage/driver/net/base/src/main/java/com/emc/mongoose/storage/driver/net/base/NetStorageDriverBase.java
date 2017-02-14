@@ -8,7 +8,6 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
@@ -51,11 +50,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
->
-extends StorageDriverBase<I, O, R>
-implements NetStorageDriver<I, O, R>, ChannelPoolHandler {
+public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends StorageDriverBase<I, O>
+implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	

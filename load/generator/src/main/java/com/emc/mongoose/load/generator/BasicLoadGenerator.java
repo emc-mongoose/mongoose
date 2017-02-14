@@ -1,13 +1,13 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -34,13 +34,13 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  */
-public class BasicLoadGenerator<I extends Item, O extends IoTask<I, R>, R extends IoResult<I>>
+public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadGenerator<I, O, R> {
+implements LoadGenerator<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private volatile Throttle<LoadGenerator<I, O, R>> weightThrottle = null;
+	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 
@@ -50,14 +50,14 @@ implements LoadGenerator<I, O, R> {
 	private final Thread worker;
 	private final long countLimit;
 	private final boolean shuffleFlag;
-	private final IoTaskBuilder<I, O, R> ioTaskBuilder;
+	private final IoTaskBuilder<I, O> ioTaskBuilder;
 
 	private long generatedIoTaskCount = 0;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final SizeInBytes itemSizeEstimate,
-		final Input<String> dstPathInput, final IoTaskBuilder<I, O, R> ioTaskBuilder,
+		final Input<String> dstPathInput, final IoTaskBuilder<I, O> ioTaskBuilder,
 		final long countLimit, final SizeInBytes sizeLimit, final boolean shuffleFlag
 	) throws UserShootHisFootException {
 
@@ -88,7 +88,7 @@ implements LoadGenerator<I, O, R> {
 	}
 	
 	@Override
-	public final void setWeightThrottle(final Throttle<LoadGenerator<I, O, R>> weightThrottle) {
+	public final void setWeightThrottle(final WeightThrottle weightThrottle) {
 		this.weightThrottle = weightThrottle;
 	}
 
@@ -254,11 +254,12 @@ implements LoadGenerator<I, O, R> {
 
 	private int acquireThrottlesPermit(final List<O> ioTasks, final int from, final int to) {
 		int n = to - from;
+		final int originCode = hashCode();
 		if(weightThrottle != null) {
-			n = weightThrottle.getPassFor(this, n);
+			n = weightThrottle.tryAcquire(originCode, n);
 		}
 		if(rateThrottle != null) {
-			n = rateThrottle.getPassFor(this, n);
+			n = rateThrottle.tryAcquire(originCode, n);
 		}
 		return n;
 	}

@@ -1,13 +1,13 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
 /**
  Created by andrey on 17.11.16.
 
- StorageDriver,
  StorageNode,
  ItemPath,
  IoTypeCode,
@@ -18,10 +18,9 @@ import com.emc.mongoose.ui.log.LogMessageBase;
  DataLatency[us],
  TransferSize
  */
-public final class IoTraceCsvLogMessage<R extends IoResult>
+public final class IoTraceCsvLogMessage<I extends Item, O extends IoTask<I>>
 extends LogMessageBase {
 
-	private final String storageDriver;
 	private final String storageNode;
 	private final String itemPath;
 	private final int ioTypeCode;
@@ -32,9 +31,8 @@ extends LogMessageBase {
 	private final long dataLatency;
 	private final long transferSize;
 
-	public IoTraceCsvLogMessage(final R ioResult) {
-		storageDriver = ioResult.getStorageDriverAddr();
-		storageNode = ioResult.getStorageNodeAddr();
+	public IoTraceCsvLogMessage(final O ioResult) {
+		storageNode = ioResult.getNodeAddr();
 		final String itemInfo = ioResult.getItem().toString();
 		if(itemInfo != null) {
 			final int commaPos = itemInfo.indexOf(',', 0);
@@ -46,14 +44,14 @@ extends LogMessageBase {
 		} else {
 			itemPath = null;
 		}
-		ioTypeCode = ioResult.getIoTypeCode();
-		statusCode = ioResult.getStatusCode();
-		reqTimeStart = ioResult.getTimeStart();
-		duration = ioResult.getDuration();
-		respLatency = ioResult.getLatency();
-		if(ioResult instanceof DataIoResult) {
-			final DataIoResult dataIoResult = (DataIoResult) ioResult;
-			dataLatency = dataIoResult.getDataLatency();
+		ioTypeCode = ioResult.getIoType().ordinal();
+		statusCode = ioResult.getStatus().ordinal();
+		reqTimeStart = ioResult.getReqTimeStart();
+		duration = ioResult.getRespTimeDone() - reqTimeStart;
+		respLatency = ioResult.getRespTimeStart() - ioResult.getReqTimeDone();
+		if(ioResult instanceof DataIoTask) {
+			final DataIoTask dataIoResult = (DataIoTask) ioResult;
+			dataLatency = ioResult.getReqTimeDone() - dataIoResult.getRespDataTimeStart();
 			transferSize = dataIoResult.getCountBytesDone();
 		} else {
 			dataLatency = -1;
@@ -64,20 +62,16 @@ extends LogMessageBase {
 	@Override
 	public final void formatTo(final StringBuilder strb) {
 		format(
-			strb, storageDriver, storageNode, itemPath, ioTypeCode, statusCode, reqTimeStart,
-			duration, respLatency, dataLatency, transferSize
+			strb, storageNode, itemPath, ioTypeCode, statusCode, reqTimeStart, duration,
+			respLatency, dataLatency, transferSize
 		);
 	}
 
 	public static void format(
-		final StringBuilder strb, final String storageDriver, final String storageNode,
-		final String itemPath, final int ioTypeCode, final int statusCode, final long reqTimeStart,
-		final long duration, final long respLatency, final long dataLatency, final long transferSize
+		final StringBuilder strb, final String storageNode, final String itemPath,
+		final int ioTypeCode, final int statusCode, final long reqTimeStart, final long duration,
+		final long respLatency, final long dataLatency, final long transferSize
 	) {
-		if(storageDriver != null) {
-			strb.append(storageDriver);
-		}
-		strb.append(',');
 		if(storageNode != null) {
 			strb.append(storageNode);
 		}

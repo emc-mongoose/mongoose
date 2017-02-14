@@ -7,15 +7,6 @@
 					"delay" : "1m",
 					"path" : "/default"
 				}
-			},
-			"load" : {
-				"metrics" : {
-					"trace" : {
-						"itemInfo" : true,
-						"reqTimeStart" : true,
-						"duration" : true
-					}
-				}
 			}
 		},
 		{

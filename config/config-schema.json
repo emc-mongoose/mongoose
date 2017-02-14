@@ -322,51 +322,10 @@
 							"type" : "number",
 							"minimum" : 0,
 							"maximum" : 1
-						},
-						"trace" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
-								"storageDriver" : {
-									"type" : "boolean"
-								},
-								"storageNode" : {
-									"type" : "boolean"
-								},
-								"itemInfo" : {
-									"type" : "boolean"
-								},
-								"ioTypeCode" : {
-									"type" : "boolean"
-								},
-								"statusCode" : {
-									"type" : "boolean"
-								},
-								"reqTimeStart" : {
-									"type" : "boolean"
-								},
-								"duration" : {
-									"type" : "boolean"
-								},
-								"respLatency" : {
-									"type" : "boolean"
-								},
-								"dataLatency" : {
-									"type" : "boolean"
-								},
-								"transferSize" : {
-									"type" : "boolean"
-								}
-							},
-							"required" : [
-								"storageDriver", "storageNode", "itemInfo", "ioTypeCode",
-								"statusCode", "reqTimeStart", "duration", "respLatency",
-								"dataLatency", "transferSize"
-							]
 						}
 					},
 					"required" : [
-						"period", "precondition", "threshold", "trace"
+						"period", "precondition", "threshold"
 					]
 				},
 				"queue" : {

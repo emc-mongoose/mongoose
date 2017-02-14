@@ -2,21 +2,24 @@ package com.emc.mongoose.model.load;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.io.Output;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
  Created on 11.07.16.
  */
-public interface LoadMonitor<R extends IoResult>
+public interface LoadMonitor<I extends Item, O extends IoTask<I>>
 extends Daemon {
 	
 	String getName();
 	
-	void setIoResultsOutput(final Output<R> ioTaskResultsOutput);
+	void setIoResultsOutput(final Output<O> ioTaskResultsOutput);
 
-	void processIoResults(final List<R> ioTaskResults, final int n, final boolean isCircular);
+	void processIoResults(final List<O> ioTaskResults, final int n)
+	throws IOException;
 	
 	int getActiveTaskCount();
 }

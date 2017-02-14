@@ -26,9 +26,10 @@
 
 /* Equality */
 /* Object/Reference-only definitions (keys) */
+/* Primitive-type-only definitions (keys) */
 /* Object/Reference-only definitions (values) */
 /* Primitive-type-only definitions (values) */
-/*		 
+/*
  * Copyright (C) 2002-2016 Sebastiano Vigna
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,12 +42,15 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. 
+ * limitations under the License.
  */
 
-package it.unimi.dsi.fastutil.objects;
+package it.unimi.dsi.fastutil.ints;
 
 import it.unimi.dsi.fastutil.booleans.BooleanCollection;
+
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 
 import java.util.Map;
 
@@ -69,17 +73,17 @@ import java.util.Map;
  * @see Map
  */
 
-public interface Object2BooleanMap<K>
-		extends
-			Object2BooleanFunction<K>,
-			Map<K, Boolean> {
-
+public interface Int2BooleanMap
+	extends
+	Int2BooleanFunction,
+	Map<Integer, Boolean> {
+	
 	/**
 	 * An entry set providing fast iteration.
 	 *
 	 * <p>
 	 * In some cases (e.g., hash-based classes) iteration over an entry set
-	 * requires the creation of a large number of {@link Map.Entry}
+	 * requires the creation of a large number of {@link java.util.Map.Entry}
 	 * objects. Some <code>fastutil</code> maps might return
 	 * {@linkplain #entrySet() entry set} objects of type
 	 * <code>FastEntrySet</code>: in this case, {@link #fastIterator()
@@ -87,21 +91,19 @@ public interface Object2BooleanMap<K>
 	 * large number of objects, <em>possibly
 	 * by returning always the same entry</em> (of course, mutated).
 	 */
-
-	public interface FastEntrySet<K>
-			extends
-				ObjectSet<Entry<K>> {
+	
+	public interface FastEntrySet extends ObjectSet<Int2BooleanMap.Entry> {
 		/**
 		 * Returns a fast iterator over this entry set; the iterator might
 		 * return always the same entry object, suitably mutated.
 		 *
 		 * @return a fast iterator over this entry set; the iterator might
-		 *         return always the same {@link Map.Entry} object,
+		 *         return always the same {@link java.util.Map.Entry} object,
 		 *         suitably mutated.
 		 */
-		public ObjectIterator<Entry<K>> fastIterator();
+		public ObjectIterator<Int2BooleanMap.Entry> fastIterator();
 	}
-
+	
 	/**
 	 * Returns a set view of the mappings contained in this map.
 	 * <P>
@@ -111,25 +113,25 @@ public interface Object2BooleanMap<K>
 	 * @return a set view of the mappings contained in this map.
 	 * @see Map#entrySet()
 	 */
-
-	ObjectSet<Map.Entry<K, Boolean>> entrySet();
-
+	
+	ObjectSet<Map.Entry<Integer, Boolean>> entrySet();
+	
 	/**
 	 * Returns a type-specific set view of the mappings contained in this map.
 	 *
 	 * <p>
 	 * This method is necessary because there is no inheritance along type
 	 * parameters: it is thus impossible to strengthen {@link #entrySet()} so
-	 * that it returns an {@link ObjectSet} of
+	 * that it returns an {@link it.unimi.dsi.fastutil.objects.ObjectSet} of
 	 * type-specific entries (the latter makes it possible to access keys and
 	 * values with type-specific methods).
 	 *
 	 * @return a type-specific set view of the mappings contained in this map.
 	 * @see #entrySet()
 	 */
-
-	ObjectSet<Entry<K>> object2BooleanEntrySet();
-
+	
+	ObjectSet<Int2BooleanMap.Entry> int2BooleanEntrySet();
+	
 	/**
 	 * Returns a set view of the keys contained in this map.
 	 * <P>
@@ -139,9 +141,9 @@ public interface Object2BooleanMap<K>
 	 * @return a set view of the keys contained in this map.
 	 * @see Map#keySet()
 	 */
-
-	ObjectSet<K> keySet();
-
+	
+	IntSet keySet();
+	
 	/**
 	 * Returns a set view of the values contained in this map.
 	 * <P>
@@ -151,23 +153,39 @@ public interface Object2BooleanMap<K>
 	 * @return a set view of the values contained in this map.
 	 * @see Map#values()
 	 */
-
+	
 	BooleanCollection values();
-
+	
 	/**
 	 * @see Map#containsValue(Object)
 	 */
-
+	
 	boolean containsValue(boolean value);
-
+	
 	/**
-	 * A type-specific {@link Map.Entry}; provides some additional
+	 * A type-specific {@link java.util.Map.Entry}; provides some additional
 	 * methods that use polymorphism to avoid (un)boxing.
 	 *
-	 * @see Map.Entry
+	 * @see java.util.Map.Entry
 	 */
-
-	interface Entry<K> extends Map.Entry<K, Boolean> {
+	
+	interface Entry extends Map.Entry<Integer, Boolean> {
+		
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated Please use the corresponding type-specific method
+		 *             instead.
+		 */
+		@Deprecated
+		@Override
+		Integer getKey();
+		
+		/**
+		 * @see java.util.Map.Entry#getKey()
+		 */
+		int getIntKey();
+		
 		/**
 		 * {@inheritDoc}
 		 *
@@ -177,16 +195,16 @@ public interface Object2BooleanMap<K>
 		@Deprecated
 		@Override
 		Boolean getValue();
-
+		
 		/**
-		 * @see Map.Entry#setValue(Object)
+		 * @see java.util.Map.Entry#setValue(Object)
 		 */
 		boolean setValue(boolean value);
-
+		
 		/**
-		 * @see Map.Entry#getValue()
+		 * @see java.util.Map.Entry#getValue()
 		 */
 		boolean getBooleanValue();
-
+		
 	}
 }

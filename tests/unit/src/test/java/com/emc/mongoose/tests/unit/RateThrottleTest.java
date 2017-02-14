@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.load.monitor.RateThrottle;
+import com.emc.mongoose.common.concurrent.RateThrottle;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutorService;
@@ -27,7 +27,7 @@ public class RateThrottleTest {
 		final Thread submThread = new Thread(
 			() -> {
 				while(true) {
-					if(throttle.getPassFor(subj)) {
+					if(throttle.tryAcquire(subj)) {
 						counter.increment();
 					} else {
 						LockSupport.parkNanos(1);
@@ -53,7 +53,7 @@ public class RateThrottleTest {
 		final Thread submThread = new Thread(
 			() -> {
 				while(true) {
-					if(throttle.getPassFor(subj)) {
+					if(throttle.tryAcquire(subj)) {
 						counter.increment();
 					} else {
 						LockSupport.parkNanos(1);
@@ -79,7 +79,7 @@ public class RateThrottleTest {
 		final Thread submThread = new Thread(
 			() -> {
 				while(true) {
-					if(throttle.getPassFor(subj)) {
+					if(throttle.tryAcquire(subj)) {
 						counter.increment();
 					} else {
 						LockSupport.parkNanos(1);
@@ -106,7 +106,7 @@ public class RateThrottleTest {
 			() -> {
 				int n;
 				while(true) {
-					n = throttle.getPassFor(subj, 10);
+					n = throttle.tryAcquire(subj, 10);
 					if(n > 0) {
 						counter.add(n);
 					} else {
@@ -134,7 +134,7 @@ public class RateThrottleTest {
 			() -> {
 				int n;
 				while(true) {
-					n = throttle.getPassFor(subj, 100);
+					n = throttle.tryAcquire(subj, 100);
 					if(n > 0) {
 						counter.add(n);
 					} else {
@@ -162,7 +162,7 @@ public class RateThrottleTest {
 			() -> {
 				int n;
 				while(true) {
-					n = throttle.getPassFor(subj, 100);
+					n = throttle.tryAcquire(subj, 100);
 					if(n > 0) {
 						counter.add(n);
 					} else {
@@ -193,13 +193,13 @@ public class RateThrottleTest {
 					int n;
 					while(true) {
 						if(j == 0) {
-							if(throttle.getPassFor(subj)) {
+							if(throttle.tryAcquire(subj)) {
 								counter.increment();
 							} else {
 								LockSupport.parkNanos(1);
 							}
 						} else {
-							n = throttle.getPassFor(subj, 1 + j);
+							n = throttle.tryAcquire(subj, 1 + j);
 							if(n > 0) {
 								counter.add(n);
 							} else {

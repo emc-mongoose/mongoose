@@ -7,7 +7,6 @@ import com.emc.mongoose.common.io.ConstantStringInput;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
@@ -49,10 +48,9 @@ import java.util.List;
  Created by andrey on 12.11.16.
  */
 public class BasicLoadGeneratorBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult<I>,
-	T extends BasicLoadGenerator<I, O, R>
+	I extends Item, O extends IoTask<I>, T extends BasicLoadGenerator<I, O>
 >
-implements LoadGeneratorBuilder<I, O, R, T> {
+implements LoadGeneratorBuilder<I, O, T> {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -60,44 +58,44 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 	private LoadConfig loadConfig;
 	private ItemType itemType;
 	private ItemFactory<I> itemFactory;
-	private List<StorageDriver<I, O, R>> storageDrivers;
+	private List<StorageDriver<I, O>> storageDrivers;
 	private Input<I> itemInput = null;
 	private SizeInBytes itemSizeEstimate = null;
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, R, T> setItemType(final ItemType itemType) {
+	public BasicLoadGeneratorBuilder<I, O, T> setItemType(final ItemType itemType) {
 		this.itemType = itemType;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, R, T> setItemFactory(final ItemFactory<I> itemFactory) {
+	public BasicLoadGeneratorBuilder<I, O, T> setItemFactory(final ItemFactory<I> itemFactory) {
 		this.itemFactory = itemFactory;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, R, T> setStorageDrivers(
-		final List<StorageDriver<I, O, R>> storageDrivers
+	public BasicLoadGeneratorBuilder<I, O, T> setStorageDrivers(
+		final List<StorageDriver<I, O>> storageDrivers
 	) {
 		this.storageDrivers = storageDrivers;
 		return this;
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	public BasicLoadGeneratorBuilder<I, O, R, T> setItemInput(final Input<I> itemInput) {
+	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
 		if(!(itemInput instanceof IoResultsItemInput)) {
 			this.itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
@@ -113,7 +111,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		final LimitConfig limitConfig = loadConfig.getLimitConfig();
 
 		final Input<String> dstPathInput;
-		final IoTaskBuilder<I, O, R> ioTaskBuilder;
+		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
 		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
@@ -129,14 +127,14 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 					fixedRanges.add(new ByteRange(fixedRangeConfig));
 				}
 			}
-			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicDataIoTaskBuilder()
+			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder()
 				.setFixedRanges(fixedRanges)
 				.setRandomRangesCount(rangesConfig.getRandom())
 				.setSizeThreshold(rangesConfig.getThreshold().get());
 		} else if(ItemType.PATH.equals(itemType)){
-			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicPathIoTaskBuilder();
+			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicPathIoTaskBuilder();
 		} else {
-			ioTaskBuilder = (IoTaskBuilder<I, O, R>) new BasicTokenIoTaskBuilder();
+			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicTokenIoTaskBuilder();
 		}
 		
 		String itemInputPath = inputConfig.getPath();
@@ -151,7 +149,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 		if(!IoType.NOOP.equals(ioType) && !ItemType.TOKEN.equals(itemType)) {
 			String authToken = null;
 			try {
-				for(final StorageDriver<I, O, R> nextDriver : storageDrivers) {
+				for(final StorageDriver<I, O> nextDriver : storageDrivers) {
 					if(authToken == null) {
 						authToken = nextDriver.getAuthToken();
 					} else {
@@ -177,7 +175,7 @@ implements LoadGeneratorBuilder<I, O, R, T> {
 
 		if(itemSizeEstimate != null && ItemType.DATA.equals(itemType)) {
 			try {
-				for(final StorageDriver<I, O, R> storageDriver : storageDrivers) {
+				for(final StorageDriver<I, O> storageDriver : storageDrivers) {
 					try {
 						storageDriver.adjustIoBuffers(itemSizeEstimate, ioType);
 					} catch(final RemoteException e) {

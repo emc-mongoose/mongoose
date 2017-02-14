@@ -88,16 +88,6 @@ subprojects {
 		}
 	}
 
-	javadocJar(type: Jar) {
-		classifier = "javadoc"
-		from javadoc
-	}
-
-	sourcesJar(type: Jar) {
-		classifier = "sources"
-		from sourceSets.main.allSource
-	}
-
 	test {
 		maxHeapSize "2560m"
 		testLogging {
@@ -108,7 +98,7 @@ subprojects {
 	}
 
 	artifacts {
-		archives jar, javadocJar, sourcesJar
+		archives jar
 	}
 
 	signing {

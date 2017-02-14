@@ -308,7 +308,7 @@
 					"type": "loadJobFile",
 					"fileName": "io.trace.csv",
 					"PatternLayout": {
-						"header": "StorageDriver,StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
+						"header": "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
 						"pattern": "%m%n"
 					},
 					"Filters": {

@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
@@ -26,17 +25,15 @@ import java.util.concurrent.RejectedExecutionException;
  Created by kurila on 04.10.16.
  Contains the content validation functionality
  */
-public abstract class ResponseHandlerBase<
-	M, I extends Item, O extends IoTask<I, R>, R extends IoResult<I>
->
+public abstract class ResponseHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 
-	protected final NetStorageDriverBase<I, O, R> driver;
+	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
 	
-	protected ResponseHandlerBase(final NetStorageDriverBase<I, O, R> driver, boolean verifyFlag) {
+	protected ResponseHandlerBase(final NetStorageDriverBase<I, O> driver, boolean verifyFlag) {
 		this.driver = driver;
 		this.verifyFlag = verifyFlag;
 	}

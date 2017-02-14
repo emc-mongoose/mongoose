@@ -12,7 +12,7 @@ public interface Throttle<X> {
 	 @param thing the subject of the decision
 	 @return true if the thing should be passed, false otherwise
 	 */
-	boolean getPassFor(final X thing);
+	boolean tryAcquire(final X thing);
 
 	/**
 	 Request a decision about a set of things
@@ -20,5 +20,5 @@ public interface Throttle<X> {
 	 @param times how many acquires is requested
 	 @return how many acquires is got
 	 */
-	int getPassFor(final X thing, int times);
+	int tryAcquire(final X thing, int times);
 }

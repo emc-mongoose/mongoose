@@ -7,7 +7,6 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.ServiceTaskDispatcher;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 

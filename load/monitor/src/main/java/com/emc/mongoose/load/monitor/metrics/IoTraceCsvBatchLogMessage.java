@@ -1,7 +1,8 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
 import java.util.List;
@@ -9,14 +10,14 @@ import java.util.List;
 /**
  Created by andrey on 17.11.16.
  */
-public final class IoTraceCsvBatchLogMessage<R extends IoResult>
+public final class IoTraceCsvBatchLogMessage<I extends Item, O extends IoTask<I>>
 extends LogMessageBase {
 
-	private final List<R> ioResults;
+	private final List<O> ioResults;
 	private final int from;
 	private final int to;
 
-	public IoTraceCsvBatchLogMessage(final List<R> ioResults, final int from, final int to) {
+	public IoTraceCsvBatchLogMessage(final List<O> ioResults, final int from, final int to) {
 		this.ioResults = ioResults;
 		this.from = from;
 		this.to = to;
@@ -25,60 +26,61 @@ extends LogMessageBase {
 	@Override @SuppressWarnings("unchecked")
 	public final void formatTo(final StringBuilder strb) {
 		if(to > from) {
-			final R anyIoResult = ioResults.get(0);
+			final O anyIoResult = ioResults.get(0);
 			String nextItemInfo;
 			int commaPos;
-			if(anyIoResult instanceof DataIoResult) {
-				final List<DataIoResult>
-					dataIoResults = (List<DataIoResult>) ioResults;
-				DataIoResult nextDataIoResult;
+			long nextReqTimeStart, nextReqTimeDone;
+			if(anyIoResult instanceof DataIoTask) {
+				final List<DataIoTask> dataIoResults = (List) ioResults;
+				DataIoTask nextResult;
 				for(int i = from; i < to; i ++) {
-					nextDataIoResult = dataIoResults.get(i);
-					nextItemInfo = nextDataIoResult.getItem().toString();
+					nextResult = dataIoResults.get(i);
+					nextItemInfo = nextResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
 						if(commaPos > 0) {
 							nextItemInfo = nextItemInfo.substring(0, commaPos);
 						}
 					}
+					nextReqTimeStart = nextResult.getReqTimeStart();
+					nextReqTimeDone = nextResult.getReqTimeDone();
 					IoTraceCsvLogMessage.format(
 						strb,
-						nextDataIoResult.getStorageDriverAddr(),
-						nextDataIoResult.getStorageNodeAddr(),
+						nextResult.getNodeAddr(),
 						nextItemInfo,
-						nextDataIoResult.getIoTypeCode(),
-						nextDataIoResult.getStatusCode(),
-						nextDataIoResult.getTimeStart(),
-						nextDataIoResult.getDuration(),
-						nextDataIoResult.getLatency(),
-						nextDataIoResult.getDataLatency(),
-						nextDataIoResult.getCountBytesDone()
+						nextResult.getIoType().ordinal(),
+						nextResult.getStatus().ordinal(),
+						nextReqTimeStart,
+						nextResult.getRespTimeDone() - nextReqTimeStart,
+						nextResult.getRespTimeStart() - nextReqTimeDone,
+						nextResult.getRespDataTimeStart() - nextReqTimeDone,
+						nextResult.getCountBytesDone()
 					);
 					if(i < to - 1) {
 						strb.append('\n');
 					}
 				}
 			} else {
-				R nextIoResult;
+				O nextResult;
 				for(int i = from; i < to; i ++) {
-					nextIoResult = ioResults.get(i);
-					nextItemInfo = nextIoResult.getItem().toString();
+					nextResult = ioResults.get(i);
+					nextItemInfo = nextResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
 						if(commaPos > 0) {
 							nextItemInfo = nextItemInfo.substring(0, commaPos);
 						}
 					}
+					nextReqTimeStart = nextResult.getReqTimeStart();
 					IoTraceCsvLogMessage.format(
 						strb,
-						nextIoResult.getStorageDriverAddr(),
-						nextIoResult.getStorageNodeAddr(),
+						nextResult.getNodeAddr(),
 						nextItemInfo,
-						nextIoResult.getIoTypeCode(),
-						nextIoResult.getStatusCode(),
-						nextIoResult.getTimeStart(),
-						nextIoResult.getDuration(),
-						nextIoResult.getLatency(),
+						nextResult.getIoType().ordinal(),
+						nextResult.getStatus().ordinal(),
+						nextReqTimeStart,
+						nextResult.getRespTimeDone() - nextReqTimeStart,
+						nextResult.getRespTimeStart() - nextResult.getReqTimeDone(),
 						-1,
 						-1
 					);
