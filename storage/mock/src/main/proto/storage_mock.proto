@@ -5,7 +5,7 @@ option java_outer_classname = "StorageMockProto";
 option java_multiple_files = true;
 
 service RemoteQuerier {
-    rpc GetRemoteObject(ClientMessage) returns (ServerMessage) {}
+    rpc GetRemoteObject(stream ClientMessage) returns (stream ServerMessage) {}
 }
 
 message ClientMessage {

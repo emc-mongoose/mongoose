@@ -5,11 +5,8 @@ import com.emc.mongoose.common.concurrent.TaskSequencer;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.item.BasicMutableDataItem;
-import com.emc.mongoose.model.item.MutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.StorageMockClient;
-import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.impl.http.ChannelFactory;
 import com.emc.mongoose.storage.mock.impl.proto.ClientMessage;
 import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
@@ -18,7 +15,9 @@ import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 import javafx.util.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -29,12 +28,6 @@ import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -98,21 +91,87 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
             this.size = size;
         }
 
+        private class SingletonResponseWrapper {
+            private volatile ServerMessage response;
+            private volatile boolean isInitialised = false;
+
+            public ServerMessage getResponse() {
+                synchronized (this) {
+                    return isInitialised ? response : null;
+                }
+            }
+
+            public void set(ServerMessage response) {
+                synchronized (this) {
+                    this.response = response;
+                    this.isInitialised = true;
+                }
+            }
+        }
+
         @Override
         public final void run() {
             try {
-                //final T remoteObject = node.getObjectRemotely(containerName, id, offset, size);
+                final CountDownLatch finishLatch = new CountDownLatch(1);
+                final RemoteQuerierGrpc.RemoteQuerierStub asyncStub;
+                asyncStub = RemoteQuerierGrpc.newStub(ChannelFactory.newChannel(
+                        node.getKey(), ChannelFactory.getDefaultPort())
+                );
+                final SingletonResponseWrapper responseContainer = new SingletonResponseWrapper();
+
+                final StreamObserver<ServerMessage> responseObserver = new StreamObserver<ServerMessage>() {
+                    @Override
+                    public void onNext(ServerMessage value) {
+                            responseContainer.set(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        Status status = Status.fromThrowable(t);
+                        LOG.error(Markers.ERR, "gRPC err:" + status);
+                        finishLatch.countDown();
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        finishLatch.countDown();
+                    }
+                };
+
+                final StreamObserver<ClientMessage> requestObserver;
+                requestObserver = asyncStub.getRemoteObject(responseObserver);
+
                 ClientMessage request = ClientMessage.newBuilder()
                         .setContainerName(containerName)
                         .setId(id)
                         .setOffset(offset)
                         .setSize(size)
                         .build();
-                final ServerMessage response;
-                response = RemoteQuerierGrpc.newBlockingStub(ChannelFactory.newChannel(
-                        node.getKey(), ChannelFactory.getDefaultPort())
-                ).getRemoteObject(request);
-                final T remoteObject = response.getIsPresent()
+
+                try {
+                    requestObserver.onNext(request);
+                    if (finishLatch.getCount() == 0) {
+                        // RPC completed or errored before we finished sending.
+                        // Sending further requests won't error, but they will just be thrown away.
+                        return;
+                    }
+                } catch (RuntimeException e) {
+                    // Cancel RPC
+                    requestObserver.onError(e);
+                    throw e;
+                }
+
+                requestObserver.onCompleted();
+
+                try {
+                    finishLatch.await();
+                } catch (InterruptedException e) {
+                    LOG.error(Markers.ERR, "gRPC request has been interrupted: " + e);
+                }
+
+                ServerMessage response = responseContainer.getResponse();
+
+                final T remoteObject = (response == null || response.getIsPresent())
                         ? (T) new BasicMutableDataItemMock(
                                 response.getContainerName(), response.getOffset(), response.getSize(),
                                 response.getLayerNum(), BitSet.valueOf(new long[]{response.getMaskRangesRead()}),

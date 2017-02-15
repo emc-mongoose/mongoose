@@ -6,11 +6,9 @@ import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageMockServer;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.impl.http.ChannelFactory;
-import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
 import com.emc.mongoose.storage.mock.impl.remote.MDns;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.apache.logging.log4j.Level;
@@ -23,12 +21,9 @@ import java.io.IOException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.TimeUnit;
 
 import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;
-import static java.rmi.registry.Registry.REGISTRY_PORT;
 
 /**
  * Created by Dmitry Kossovich on 02.02.17.

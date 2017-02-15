@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.mock;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
-import com.emc.mongoose.storage.mock.impl.proto.StorageMockProto;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;

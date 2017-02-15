@@ -10,17 +10,25 @@ import org.apache.logging.log4j.Logger;
 import javax.jmdns.JmDNS;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by reddy on 03.02.17.
  */
-public class ChannelFactory {
+public final class ChannelFactory {
     private static final int defaultPort = 9555;
+    private static final int channelConcurrency = 50;
 
-    private static ConcurrentLinkedQueue<Pair<String, Channel>> openedChannels = new ConcurrentLinkedQueue<>();
+    private ChannelFactory(){}
+
+    private static ConcurrentMap<String, List<Channel>> openedChannels = new ConcurrentHashMap<>();
+    private static int i = 0;
 
     public static final int getDefaultPort() {
         return defaultPort;
@@ -34,14 +42,24 @@ public class ChannelFactory {
      * @return
      */
     public static Channel newChannel(final String host, final int port, final boolean usePlainText) {
-        if (openedChannels.stream().parallel().map(Pair::getKey).filter(x -> x.equals(host)).count() > 0) {
-            return openedChannels.stream().parallel()
-                    .filter(x -> x.getKey().equals(host))
-                    .findFirst().get()
-                    .getValue();
+        if (openedChannels.containsKey(host)) {
+            List<Channel> channels = openedChannels.get(host);
+            if (channels.size() > channelConcurrency) {
+                i++;
+                if (i > channelConcurrency - 1) {
+                    i = 0;
+                }
+                return openedChannels.get(host).get(i);
+            }
+            Channel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext(usePlainText).build();
+            channels.add(channel);
+            return channel;
         }
+        // no any channels of this host
         Channel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext(usePlainText).build();
-        openedChannels.add(new Pair<>(host, channel));
+        List<Channel> channels = new ArrayList<>(channelConcurrency);
+        channels.add(channel);
+        openedChannels.put(host, channels);
         return channel;
     }
 
