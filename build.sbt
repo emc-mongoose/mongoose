@@ -1,7 +1,9 @@
 import java.nio.file.Paths
 import jawn.support.json4s.Parser
+import org.json4s.DefaultFormats
 import scala.language.postfixOps
 
+implicit val formats = DefaultFormats
 val mongooseConfig = (Parser parseFromFile(Paths.get("config", "defaults.json") toFile)) get
 
 // core dependencies
@@ -38,7 +40,7 @@ val junitInterface = "com.novocode" % "junit-interface" % "0.11" % Test
 
 lazy val commonSettings = Seq(
 	organization := "com.emc.mongoose",
-	version := ((mongooseConfig \ "version") toString),
+	version := (mongooseConfig \ "version").extract[String],
 	// Enables publishing to maven repo
 	publishMavenStyle := true,
 	// Do not append Scala versions to the generated artifacts
@@ -46,7 +48,8 @@ lazy val commonSettings = Seq(
 	// This forbids including Scala related libraries into the dependency
 	autoScalaLibrary := false,
 	javacOptions in (Compile, compile) ++= Seq("-source", "1.8", "-target", "1.8"),
-	compileOrder := CompileOrder.JavaThenScala
+	compileOrder := CompileOrder.JavaThenScala,
+	exportJars := true
 )
 
 lazy val mongoose = (project in file("."))
@@ -144,7 +147,8 @@ lazy val run = (project in file("run"))
 		libraryDependencies ++= Seq(
 			log4jApi
 		),
-		name := "mongoose-run"
+		name := "mongoose-run",
+		mainClass := Some("com.emc.mongoose.run.Main")
 	)
 
 lazy val storageDriverBase = (project in Paths.get("storage", "driver", "base").toFile())
@@ -352,7 +356,8 @@ lazy val storageDriverService = (project in Paths.get("storage", "driver", "serv
 			log4jApi,
 			log4jCore
 		),
-		name := "mongoose-storage-driver-service"
+		name := "mongoose-storage-driver-service",
+		mainClass := Some("com.emc.mongoose.storage.driver.service.Main")
 	)
 
 lazy val storageMock = (project in Paths.get("storage", "mock").toFile())
@@ -380,7 +385,8 @@ lazy val storageMock = (project in Paths.get("storage", "mock").toFile())
 			nettyTransport,
 			nettyTransportNativeEpoll
 		),
-		name := "mongoose-storage-mock"
+		name := "mongoose-storage-mock",
+		mainClass := Some("com.emc.mongoose.storage.mock.Main")
 	)
 
 lazy val testsPerf = (project in Paths.get("tests", "perf").toFile())
