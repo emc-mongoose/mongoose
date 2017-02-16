@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
+
 /**
  Created by andrey on 15.12.16.
  */
@@ -36,7 +37,7 @@ implements Runnable {
 		List<O> results;
 		int resultsCount;
 		final Thread currThread = Thread.currentThread();
-		currThread.setName(currThread.getName() + "-" + "getIoResults");
+		currThread.setName(currThread.getName() + "-getIoResults");
 		while(!currThread.isInterrupted()) {
 			try {
 				results = driver.getResults();

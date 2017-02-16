@@ -37,30 +37,27 @@ extends LogMessageBase {
 					nextResult = dataIoResults.get(i);
 					nextDuration = nextResult.getDuration();
 					nextLatency = nextResult.getLatency();
-					if(nextDuration < nextLatency || nextLatency <= 0) {
-						continue;
-					}
-					nextItemInfo = nextResult.getItem().toString();
-					if(nextItemInfo != null) {
-						commaPos = nextItemInfo.indexOf(',', 0);
-						if(commaPos > 0) {
-							nextItemInfo = nextItemInfo.substring(0, commaPos);
+					if(nextDuration > nextLatency && nextLatency >= 0) {
+						nextItemInfo = nextResult.getItem().toString();
+						if(nextItemInfo != null) {
+							commaPos = nextItemInfo.indexOf(',', 0);
+							if(commaPos > 0) {
+								nextItemInfo = nextItemInfo.substring(0, commaPos);
+							}
 						}
-					}
-					nextReqTimeStart = nextResult.getReqTimeStart();
-					IoTraceCsvLogMessage.format(
-						strb,
-						nextResult.getNodeAddr(),
-						nextItemInfo,
-						nextResult.getIoType().ordinal(),
-						nextResult.getStatus().ordinal(),
-						nextReqTimeStart,
-						nextDuration,
-						nextLatency,
-						nextResult.getDataLatency(),
-						nextResult.getCountBytesDone()
-					);
-					if(i < to - 1) {
+						nextReqTimeStart = nextResult.getReqTimeStart();
+						IoTraceCsvLogMessage.format(
+							strb,
+							nextResult.getNodeAddr(),
+							nextItemInfo,
+							nextResult.getIoType().ordinal(),
+							nextResult.getStatus().ordinal(),
+							nextReqTimeStart,
+							nextDuration,
+							nextLatency,
+							nextResult.getDataLatency(),
+							nextResult.getCountBytesDone()
+						);
 						strb.append('\n');
 					}
 				}
@@ -70,30 +67,27 @@ extends LogMessageBase {
 					nextResult = ioResults.get(i);
 					nextDuration = nextResult.getDuration();
 					nextLatency = nextResult.getLatency();
-					if(nextDuration < nextLatency || nextLatency <= 0) {
-						continue;
-					}
-					nextItemInfo = nextResult.getItem().toString();
-					if(nextItemInfo != null) {
-						commaPos = nextItemInfo.indexOf(',', 0);
-						if(commaPos > 0) {
-							nextItemInfo = nextItemInfo.substring(0, commaPos);
+					if(nextDuration > nextLatency && nextLatency >= 0) {
+						nextItemInfo = nextResult.getItem().toString();
+						if(nextItemInfo != null) {
+							commaPos = nextItemInfo.indexOf(',', 0);
+							if(commaPos > 0) {
+								nextItemInfo = nextItemInfo.substring(0, commaPos);
+							}
 						}
-					}
-					nextReqTimeStart = nextResult.getReqTimeStart();
-					IoTraceCsvLogMessage.format(
-						strb,
-						nextResult.getNodeAddr(),
-						nextItemInfo,
-						nextResult.getIoType().ordinal(),
-						nextResult.getStatus().ordinal(),
-						nextReqTimeStart,
-						nextDuration,
-						nextLatency,
-						-1,
-						-1
-					);
-					if(i < to - 1) {
+						nextReqTimeStart = nextResult.getReqTimeStart();
+						IoTraceCsvLogMessage.format(
+							strb,
+							nextResult.getNodeAddr(),
+							nextItemInfo,
+							nextResult.getIoType().ordinal(),
+							nextResult.getStatus().ordinal(),
+							nextReqTimeStart,
+							nextDuration,
+							nextLatency,
+							-1,
+							-1
+						);
 						strb.append('\n');
 					}
 				}

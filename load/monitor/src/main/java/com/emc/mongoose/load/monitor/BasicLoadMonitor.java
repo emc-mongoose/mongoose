@@ -367,9 +367,8 @@ implements LoadMonitor<I, O> {
 
 	@Override
 	public final void processIoResults(final List<O> ioTaskResults, final int n) {
-
+		
 		int m = n; // count of complete whole tasks
-		final List<O> passedIoTasks = new ArrayList<O>(n);
 
 		// I/O trace logging
 		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
@@ -418,11 +417,6 @@ implements LoadMonitor<I, O> {
 				ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
 
 				if(Status.SUCC.equals(status)) {
-					if(respLatency > 0 && respLatency > reqDuration) {
-						LOG.debug(Markers.ERR, "Dropping invalid latency value {}", respLatency);
-						m --;
-						continue;
-					}
 					if(ioTaskResult instanceof PartialIoTask) {
 						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {

@@ -171,7 +171,10 @@ extends HttpStorageDistributedScenarioTestBase {
 			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
 			freq.addValue(itemOffset);
 			itemSize = Long.parseLong(itemRec.get(2));
-			assertTrue(EXPECTED_FINAL_SIZE.getMin() <= itemSize && itemSize <= EXPECTED_FINAL_SIZE.getMax());
+			assertTrue(
+				"Expected size: " + EXPECTED_FINAL_SIZE.toString() + ", actual: " + itemSize,
+				EXPECTED_FINAL_SIZE.getMin() <= itemSize && itemSize <= EXPECTED_FINAL_SIZE.getMax()
+			);
 			assertEquals("0/0", itemRec.get(3));
 		}
 		assertEquals(EXPECTED_COUNT, freq.getUniqueCount());

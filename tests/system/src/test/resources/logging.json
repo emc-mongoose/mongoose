@@ -305,7 +305,7 @@
 					"fileName": "io.trace.csv",
 					"PatternLayout": {
 						"header": "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
-						"pattern": "%m%n"
+						"pattern": "%m"
 					},
 					"Filters": {
 						"Filter": [
