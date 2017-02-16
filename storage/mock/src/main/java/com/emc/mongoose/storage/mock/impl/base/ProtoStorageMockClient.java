@@ -31,6 +31,7 @@ import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 import static com.emc.mongoose.storage.mock.impl.http.Nagaina.SVC_NAME;
@@ -53,7 +54,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
 
     public ProtoStorageMockClient(final ContentSource contentSrc, final JmDNS jmDns) {
         this.executor = new ThreadPoolExecutor(
-                ThreadUtil.getHardwareConcurrencyLevel(), ThreadUtil.getHardwareConcurrencyLevel(),
+                ThreadUtil.getHardwareConcurrencyLevel() * 4, ThreadUtil.getHardwareConcurrencyLevel() * 4,
                 0, TimeUnit.DAYS, new ArrayBlockingQueue<>(TaskSequencer.DEFAULT_TASK_QUEUE_SIZE_LIMIT),
                 new NamingThreadFactory("storageMockClientWorker", true),
                 (r, e) -> LOG.error("Task {} rejected", r.toString())
@@ -109,34 +110,51 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
             }
         }
 
+        private StreamObserver<ServerMessage> saveResponseObserver = null;
+
         @Override
         public final void run() {
             try {
-                final CountDownLatch finishLatch = new CountDownLatch(1);
                 final RemoteQuerierGrpc.RemoteQuerierStub asyncStub;
+                //TODO responseObserver is connected to stub, and stub connected to channel
+                //TODO we need a pool of HostName-<Stub-responseObserver> to make this shit quicker
                 asyncStub = RemoteQuerierGrpc.newStub(ChannelFactory.newChannel(
                         node.getKey(), ChannelFactory.getDefaultPort())
                 );
                 final SingletonResponseWrapper responseContainer = new SingletonResponseWrapper();
 
-                final StreamObserver<ServerMessage> responseObserver = new StreamObserver<ServerMessage>() {
-                    @Override
-                    public void onNext(ServerMessage value) {
+                final StreamObserver<ServerMessage> responseObserver;
+//                if (saveResponseObserver == null) {
+                    responseObserver = new StreamObserver<ServerMessage>() {
+                        @Override
+                        public void onNext(ServerMessage value) {
                             responseContainer.set(value);
-                    }
+                        }
 
-                    @Override
-                    public void onError(Throwable t) {
-                        Status status = Status.fromThrowable(t);
-                        LOG.error(Markers.ERR, "gRPC err:" + status);
-                        finishLatch.countDown();
-                    }
+                        @Override
+                        public void onError(Throwable t) {
+                            Status status = Status.fromThrowable(t);
+                            LOG.error(Markers.ERR, "gRPC err:" + status);
+                        }
 
-                    @Override
-                    public void onCompleted() {
-                        finishLatch.countDown();
-                    }
-                };
+                        @Override
+                        public void onCompleted() {
+                            final ServerMessage response = responseContainer.getResponse();
+
+                            final T remoteObject = (response == null || response.getIsPresent())
+                                    ? (T) new BasicMutableDataItemMock(
+                                    response.getContainerName(), response.getOffset(), response.getSize(),
+                                    response.getLayerNum(), BitSet.valueOf(new long[]{response.getMaskRangesRead()}),
+                                    response.getPosition(), response.getId()
+                            )
+                                    : null;
+                            set(remoteObject);
+                        }
+                    };
+                    saveResponseObserver = responseObserver;
+//                } else {
+//                    responseObserver = saveResponseObserver;
+//                }
 
                 final StreamObserver<ClientMessage> requestObserver;
                 requestObserver = asyncStub.getRemoteObject(responseObserver);
@@ -150,11 +168,6 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
 
                 try {
                     requestObserver.onNext(request);
-                    if (finishLatch.getCount() == 0) {
-                        // RPC completed or errored before we finished sending.
-                        // Sending further requests won't error, but they will just be thrown away.
-                        return;
-                    }
                 } catch (RuntimeException e) {
                     // Cancel RPC
                     requestObserver.onError(e);
@@ -163,22 +176,6 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
 
                 requestObserver.onCompleted();
 
-                try {
-                    finishLatch.await();
-                } catch (InterruptedException e) {
-                    LOG.error(Markers.ERR, "gRPC request has been interrupted: " + e);
-                }
-
-                ServerMessage response = responseContainer.getResponse();
-
-                final T remoteObject = (response == null || response.getIsPresent())
-                        ? (T) new BasicMutableDataItemMock(
-                                response.getContainerName(), response.getOffset(), response.getSize(),
-                                response.getLayerNum(), BitSet.valueOf(new long[]{response.getMaskRangesRead()}),
-                                response.getPosition(), response.getId()
-                            )
-                        : null;
-                set(remoteObject);
             } catch (StatusRuntimeException e) {
                 LOG.info(Markers.ERR, "RPC failed: " + e.getStatus());
                 setException(e);
@@ -201,7 +198,7 @@ public class ProtoStorageMockClient <T extends MutableDataItemMock>
         }
         T result;
         while(null == (result = resultRef.get()) && sharedCountDown.getCount() > 0) {
-            Thread.sleep(1);
+            LockSupport.parkNanos(1);
         }
         if(result != null) {
             result.setContentSrc(contentSrc);

@@ -22,8 +22,8 @@ import java.util.concurrent.ConcurrentMap;
  * Created by reddy on 03.02.17.
  */
 public final class ChannelFactory {
-    private static final int defaultPort = 9555;
-    private static final int channelConcurrency = 50;
+    private static final int defaultPort = 9556;
+    private static final int channelConcurrency = 100;
 
     private ChannelFactory(){}
 

@@ -7,7 +7,10 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.impl.proto.ClientMessage;
 import com.emc.mongoose.storage.mock.impl.proto.RemoteQuerierGrpc;
 import com.emc.mongoose.storage.mock.impl.proto.ServerMessage;
+import com.emc.mongoose.ui.log.Markers;
 import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.BitSet;
 import java.util.Optional;
