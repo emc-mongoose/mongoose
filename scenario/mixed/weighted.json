@@ -53,7 +53,7 @@
 					"load" : {
 						"circular" : true,
 						"limit" : {
-							"time" : "5m"
+							"time" : "100s"
 						},
 						"type" : "read"
 					}

@@ -243,7 +243,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				throw new AssertionError(e);
 			}
 			return minSize == maxSize ?
-				new SizeInBytes(sumSize / n) : new SizeInBytes(minSize, maxCount, 1);
+				new SizeInBytes(sumSize / n) : new SizeInBytes(minSize, maxSize, 1);
 		}
 		return null;
 	}
