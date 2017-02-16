@@ -20,7 +20,7 @@ public class RateThrottleTest {
 	public void testRate100mHzNonBatch()
 	throws Exception {
 		final double rateLimit = 0.1;
-		final int timeLimitSec = 100;
+		final int timeLimitSec = 50;
 		final RateThrottle throttle = new RateThrottle(rateLimit);
 		final Object subj = new Object();
 		final LongAdder counter = new LongAdder();
@@ -98,7 +98,7 @@ public class RateThrottleTest {
 	public void testRate1HzBatch()
 	throws Exception {
 		final int rateLimit = 1;
-		final int timeLimitSec = 100;
+		final int timeLimitSec = 50;
 		final RateThrottle throttle = new RateThrottle(rateLimit);
 		final Object subj = new Object();
 		final LongAdder counter = new LongAdder();
@@ -126,7 +126,7 @@ public class RateThrottleTest {
 	public void testRate100HzBatch()
 	throws Exception {
 		final int rateLimit = 100;
-		final int timeLimitSec = 100;
+		final int timeLimitSec = 50;
 		final RateThrottle throttle = new RateThrottle(rateLimit);
 		final Object subj = new Object();
 		final LongAdder counter = new LongAdder();
