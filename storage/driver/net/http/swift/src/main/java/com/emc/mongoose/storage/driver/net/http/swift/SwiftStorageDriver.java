@@ -4,7 +4,6 @@ import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.IoType.CREATE;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -66,8 +65,8 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 07.10.16.
  */
-public class SwiftStorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
-extends HttpStorageDriverBase<I, O, R> {
+public class SwiftStorageDriver<I extends Item, O extends IoTask<I>>
+extends HttpStorageDriverBase<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final String PART_NUM_MASK = "0000000";

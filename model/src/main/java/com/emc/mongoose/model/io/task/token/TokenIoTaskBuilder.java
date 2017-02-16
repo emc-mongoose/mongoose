@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.io.task.token;
 
-import static com.emc.mongoose.model.io.task.token.TokenIoTask.TokenIoResult;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.TokenItem;
 
@@ -10,10 +9,8 @@ import java.util.List;
 /**
  Created by kurila on 14.07.16.
  */
-public interface TokenIoTaskBuilder<
-	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult
->
-extends IoTaskBuilder<I, O, R> {
+public interface TokenIoTaskBuilder<I extends TokenItem, O extends TokenIoTask<I>>
+extends IoTaskBuilder<I, O> {
 
 	@Override
 	O getInstance(final I item, final String dstPath)

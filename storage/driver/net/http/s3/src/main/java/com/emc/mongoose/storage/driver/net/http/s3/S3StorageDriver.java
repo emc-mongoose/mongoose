@@ -5,7 +5,6 @@ import com.emc.mongoose.common.io.AsyncCurrentDateInput;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -85,8 +84,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 01.08.16.
  */
-public final class S3StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
-extends HttpStorageDriverBase<I, O, R> {
+public final class S3StorageDriver<I extends Item, O extends IoTask<I>>
+extends HttpStorageDriverBase<I, O> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	private static final ThreadLocal<StringBuilder>

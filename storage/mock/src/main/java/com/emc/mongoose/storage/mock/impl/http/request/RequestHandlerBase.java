@@ -428,8 +428,8 @@ extends ChannelInboundHandlerAdapter {
 		ByteRange byteRange;
 		long beg, end, size, sumSize = 0;
 		int cellIdx;
-		long cellSize;
-		DataItem cellData;
+		long cellOffset, cellSize, sliceOffset, sliceSize;
+		DataItem sliceData;
 		final long objSize = object.size();
 		final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, OK);
 		final List<DataItemFileRegion<T>> rangesContent = new ArrayList<>(rangeHeadersValues.size());
@@ -444,7 +444,7 @@ extends ChannelInboundHandlerAdapter {
 					byteRange = new ByteRange(range);
 					beg = byteRange.getBeg();
 					end = byteRange.getEnd();
-		
+
 					if(beg == -1) {
 						if(end == -1) {
 							setHttpResponseStatusInContext(ctx, REQUESTED_RANGE_NOT_SATISFIABLE);
@@ -462,26 +462,34 @@ extends ChannelInboundHandlerAdapter {
 					} else {
 						if(end == -1) { // start from "beg" to the end of the object
 							size = objSize - beg;
+							end = beg + size;
 						} else { // from "beg" to "end"
 							size = end - beg + 1;
 						}
 					}
 
 					if(object.isUpdated()) {
-						while(beg < size) {
+						while(beg <= end) {
 							cellIdx = getRangeCount(beg + 1) - 1;
-							cellSize = object.getRangeSize(cellIdx);
-							cellData = object.slice(beg, Math.min(cellSize, size - beg));
-							if(object.isRangeUpdated(cellIdx)) {
-								cellData.layer(object.layer() + 1);
+							cellOffset = getRangeOffset(cellIdx);
+							cellSize = Math.min(object.getRangeSize(cellIdx), end - cellOffset + 1);
+							sliceSize = cellSize - beg + cellOffset;
+							if(sliceSize < 1) {
+								break;
 							}
-							rangesContent.add(new DataItemFileRegion(cellData));
-							beg += cellSize;
+							sliceOffset = Math.max(beg, cellOffset);
+							sliceData = object.slice(sliceOffset, sliceSize);
+							if(object.isRangeUpdated(cellIdx)) {
+								sliceData.layer(object.layer() + 1);
+							}
+							rangesContent.add(new DataItemFileRegion(sliceData));
+							beg += sliceSize;
+							sumSize += sliceSize;
 						}
 					} else {
 						rangesContent.add(new DataItemFileRegion<>(object.slice(beg, size)));
+						sumSize += size;
 					}
-					sumSize += size;
 				}
 			}
 		}

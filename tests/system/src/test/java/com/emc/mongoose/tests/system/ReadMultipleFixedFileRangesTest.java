@@ -93,7 +93,7 @@ extends FileStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 1);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass

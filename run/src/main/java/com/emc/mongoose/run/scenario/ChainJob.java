@@ -7,7 +7,7 @@ import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.BasicIoResultsItemInput;
 import com.emc.mongoose.model.item.IoResultsItemInput;
 import com.emc.mongoose.model.item.ItemFactory;
@@ -265,7 +265,7 @@ extends JobBase {
 							);
 						}
 						// NOTE: using null as an ItemFactory
-						final Output<IoResult> itemOutput = new ItemInfoFileOutput<>(
+						final Output itemOutput = new ItemInfoFileOutput<>(
 							itemOutputPath
 						);
 						loadMonitor.setIoResultsOutput(itemOutput);

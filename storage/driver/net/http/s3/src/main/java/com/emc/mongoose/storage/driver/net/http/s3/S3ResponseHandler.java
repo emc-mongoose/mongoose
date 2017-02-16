@@ -29,8 +29,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by andrey on 25.11.16.
  */
-public final class S3ResponseHandler<I extends Item, O extends IoTask<I, R>, R extends IoTask.IoResult>
-extends HttpResponseHandlerBase<I, O, R> {
+public final class S3ResponseHandler<I extends Item, O extends IoTask<I>>
+extends HttpResponseHandlerBase<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final AttributeKey<ByteBuf> contentAttrKey = AttributeKey.newInstance("content");
@@ -40,7 +40,7 @@ extends HttpResponseHandlerBase<I, O, R> {
 		"<UploadId>([a-zA-Z\\d\\-_+=/]+)</UploadId>", Pattern.MULTILINE
 	);
 
-	public S3ResponseHandler(final S3StorageDriver<I, O, R> driver, final boolean verifyFlag) {
+	public S3ResponseHandler(final S3StorageDriver<I, O> driver, final boolean verifyFlag) {
 		super(driver, verifyFlag);
 	}
 

@@ -2,7 +2,6 @@ package com.emc.mongoose.model.io.task.composite.data;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask.CompositeDataIoResult;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.BasicPartialDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
@@ -20,9 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by andrey on 25.11.16.
  */
-public class BasicCompositeDataIoTask<I extends DataItem, R extends CompositeDataIoResult>
-extends BasicDataIoTask<I, R>
-implements CompositeDataIoTask<I, R> {
+public class BasicCompositeDataIoTask<I extends DataItem>
+extends BasicDataIoTask<I>
+implements CompositeDataIoTask<I> {
 
 	private long sizeThreshold;
 
@@ -35,11 +34,17 @@ implements CompositeDataIoTask<I, R> {
 	}
 
 	public BasicCompositeDataIoTask(
-		final IoType ioType, final I item, final String srcPath, final String dstPath,
-		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
+		final int originCode, final IoType ioType, final I item, final String srcPath,
+		final String dstPath, final List<ByteRange> fixedRanges, final int randomRangesCount,
+		final long sizeThreshold
 	) {
-		super(ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
+		super(originCode, ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
 		this.sizeThreshold = sizeThreshold;
+	}
+
+	protected BasicCompositeDataIoTask(final BasicCompositeDataIoTask<I> other) {
+		super(other);
+		this.sizeThreshold = other.sizeThreshold;
 	}
 
 	@Override
@@ -66,14 +71,14 @@ implements CompositeDataIoTask<I, R> {
 		for(int i = 0; i < equalPartsCount; i ++) {
 			nextPart = item.slice(i * sizeThreshold, sizeThreshold);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				ioType, nextPart, srcPath, dstPath, i, this
+				originCode, ioType, nextPart, srcPath, dstPath, i, this
 			);
 			subTasks.add(nextSubTask);
 		}
 		if(tailPartSize > 0) {
 			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				ioType, nextPart, srcPath, dstPath, equalPartsCount, this
+				originCode, ioType, nextPart, srcPath, dstPath, equalPartsCount, this
 			);
 			subTasks.add(nextSubTask);
 		}
@@ -92,78 +97,11 @@ implements CompositeDataIoTask<I, R> {
 	public final boolean allSubTasksDone() {
 		return pendingSubTasksCount.get() == 0;
 	}
-	
-	public final static class BasicCompositeDataIoResult<I extends DataItem>
-	extends BasicDataIoResult<I>
-	implements CompositeDataIoResult<I> {
-		
-		private boolean completeFlag;
 
-		public BasicCompositeDataIoResult() {
-			super();
-		}
-		
-		public BasicCompositeDataIoResult(
-			final String storageDriverAddr, final String storageNodeAddr, final I item,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
-			final long duration, final long latency, final long dataLatency,
-			final long transferredByteCount, final boolean completeFlag
-		) {
-			super(
-				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency, dataLatency, transferredByteCount
-			);
-			this.completeFlag = completeFlag;
-		}
-		
-		@Override
-		public final boolean getCompleteFlag() {
-			return completeFlag;
-		}
-		
-		@Override
-		public final void writeExternal(final ObjectOutput out)
-		throws IOException {
-			super.writeExternal(out);
-			out.writeBoolean(completeFlag);
-		}
-		
-		@Override
-		public final void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-			super.readExternal(in);
-			completeFlag = in.readBoolean();
-		}
-	}
-	
 	@Override @SuppressWarnings("unchecked")
-	public final R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	) {
+	public final BasicCompositeDataIoTask<I> getResult() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
-		return (R) new BasicCompositeDataIoResult(
-			useStorageDriverResult ? hostAddr : null,
-			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : - 1,
-			useStatusCodeResult ? status.ordinal() : - 1,
-			useReqTimeStartResult ? reqTimeStart : - 1,
-			useDurationResult ? respTimeDone - reqTimeStart : - 1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1,
-			useDataLatencyResult ? respDataTimeStart - reqTimeDone : - 1,
-			useTransferSizeResult ? 0 : -1,
-			allSubTasksDone()
-		);
+		return new BasicCompositeDataIoTask<>(this);
 	}
 
 	@Override

@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
@@ -15,7 +14,7 @@ import java.rmi.RemoteException;
  Created by andrey on 05.10.16.
  */
 public interface StorageDriverBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends StorageDriver<I, O, R>
+	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
 > {
 
 	String API_ATMOS = "atmos";
@@ -31,16 +30,16 @@ public interface StorageDriverBuilder<
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, R, T> setJobName(final String runId)
+	StorageDriverBuilder<I, O, T> setJobName(final String runId)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig)
+	StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig)
+	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, R, T> setStorageConfig(final StorageConfig storageConfig)
+	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)
 	throws RemoteException;
 
 	T build()

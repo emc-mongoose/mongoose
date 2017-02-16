@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -23,10 +22,8 @@ import java.util.List;
 /**
  Created by andrey on 01.12.16.
  */
-public interface FileStorageDriver<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult
->
-extends StorageDriver<I, O, R> {
+public interface FileStorageDriver<I extends Item, O extends IoTask<I>>
+extends StorageDriver<I, O> {
 
 	FileSystem FS = FileSystems.getDefault();
 	FileSystemProvider FS_PROVIDER = FS.provider();

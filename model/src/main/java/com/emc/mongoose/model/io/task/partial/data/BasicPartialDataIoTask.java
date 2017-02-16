@@ -3,27 +3,42 @@ package com.emc.mongoose.model.io.task.partial.data;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
-import static com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask.PartialDataIoResult;
-
 import com.emc.mongoose.model.item.DataItem;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  Created by andrey on 23.11.16.
  */
-public class BasicPartialDataIoTask<I extends DataItem, R extends PartialDataIoResult>
-extends BasicDataIoTask<I, R>
-implements PartialDataIoTask<I, R> {
+public class BasicPartialDataIoTask<I extends DataItem>
+extends BasicDataIoTask<I>
+implements PartialDataIoTask<I> {
 
-	private final int partNumber;
-	private CompositeDataIoTask<I, ? extends DataIoResult> parent;
+	private int partNumber;
+	private CompositeDataIoTask<I> parent;
 
 	public BasicPartialDataIoTask(
-		final IoType ioType, final I part, final String srcPath, final String dstPath,
-		final int partNumber, final CompositeDataIoTask<I, ? extends DataIoResult> parent
+		final int originCode, final IoType ioType, final I part, final String srcPath,
+		final String dstPath, final int partNumber,
+		final CompositeDataIoTask<I> parent
 	) {
-		super(ioType, part, srcPath, dstPath, null, 0);
+		super(originCode, ioType, part, srcPath, dstPath, null, 0);
 		this.partNumber = partNumber;
 		this.parent = parent;
+	}
+
+	protected BasicPartialDataIoTask(final BasicPartialDataIoTask<I> other) {
+		super(other);
+		this.partNumber = other.partNumber;
+		this.parent = other.parent;
+	}
+
+	@Override
+	public BasicPartialDataIoTask<I> getResult() {
+		buildItemPath(item, dstPath == null ? srcPath : dstPath);
+		return new BasicPartialDataIoTask<>(this);
 	}
 
 	@Override
@@ -32,7 +47,7 @@ implements PartialDataIoTask<I, R> {
 	}
 
 	@Override
-	public final CompositeDataIoTask<I, ? extends DataIoResult> getParent() {
+	public final CompositeDataIoTask<I> getParent() {
 		return parent;
 	}
 
@@ -42,54 +57,19 @@ implements PartialDataIoTask<I, R> {
 		parent.subTaskCompleted();
 	}
 
-	public static class BasicPartialDataIoResult<I extends DataItem>
-	extends BasicDataIoResult<I>
-	implements PartialDataIoResult<I> {
-
-		public BasicPartialDataIoResult() {
-			super();
-		}
-
-		public BasicPartialDataIoResult(
-			final String storageDriverAddr, final String storageNodeAddr, final I item,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
-			final long duration, final long latency, final long dataLatency,
-			final long transferredByteCount
-		) {
-			super(
-				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency, dataLatency, transferredByteCount
-			);
-		}
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeInt(partNumber);
+		out.writeObject(parent);
 	}
-	
-	
+
 	@Override @SuppressWarnings("unchecked")
-	public R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	) {
-		buildItemPath(item, dstPath == null ? srcPath : dstPath);
-		return (R) new BasicPartialDataIoResult(
-			useStorageDriverResult ? hostAddr : null,
-			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : - 1,
-			useStatusCodeResult ? status.ordinal() : - 1,
-			useReqTimeStartResult ? reqTimeStart : - 1,
-			useDurationResult ? respTimeDone - reqTimeStart : - 1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1,
-			useDataLatencyResult ? respDataTimeStart - reqTimeDone : - 1,
-			useTransferSizeResult ? countBytesDone : -1
-		);
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		this.partNumber = in.readInt();
+		this.parent = (CompositeDataIoTask<I>) in.readObject();
 	}
 }

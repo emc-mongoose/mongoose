@@ -6,7 +6,6 @@ import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
@@ -27,7 +26,8 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
@@ -95,8 +95,8 @@ extends JobBase {
 		
 		final int loadGeneratorCount = nodeConfigList.size();
 		final Map<LoadGenerator, List<StorageDriver>> driverMap = new HashMap<>(loadGeneratorCount);
-		final Object2IntMap<LoadGenerator> weightMap = weights == null ?
-			null : new Object2IntOpenHashMap<>(loadGeneratorCount);
+		final Int2IntMap weightMap = weights == null ?
+			null : new Int2IntOpenHashMap(loadGeneratorCount);
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>(loadGeneratorCount);
 		
 		try {
@@ -235,7 +235,7 @@ extends JobBase {
 				
 				driverMap.put(loadGenerator, drivers);
 				if(weightMap != null) {
-					weightMap.put(loadGenerator, weights.get(i));
+					weightMap.put(loadGenerator.hashCode(), (int) weights.get(i));
 				}
 				loadConfigMap.put(loadGenerator, loadConfig);
 			}
@@ -259,7 +259,7 @@ extends JobBase {
 					);
 				}
 				// NOTE: using null as an ItemFactory
-				final Output<IoResult> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
 				monitor.setIoResultsOutput(itemOutput);
 			}
 			monitor.start();

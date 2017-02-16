@@ -3,7 +3,7 @@ package com.emc.mongoose.model.item;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.TextFileOutput;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.IoTask;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -13,8 +13,8 @@ import java.util.List;
 /**
  Created by kurila on 09.01.17.
  */
-public final class ItemInfoFileOutput<R extends IoResult>
-implements Output<R> {
+public final class ItemInfoFileOutput<I extends Item, O extends IoTask>
+implements Output<O> {
 	
 	private final Output<String> itemInfoOutput;
 	
@@ -24,13 +24,13 @@ implements Output<R> {
 	}
 	
 	@Override
-	public final boolean put(final R ioResult)
+	public final boolean put(final O ioResult)
 	throws IOException {
 		return itemInfoOutput.put(ioResult.getItem().toString());
 	}
 	
 	@Override
-	public final int put(final List<R> ioResults, final int from, final int to)
+	public final int put(final List<O> ioResults, final int from, final int to)
 	throws IOException {
 		final int n = to - from;
 		final List<String> itemsInfo = new ArrayList<>(n);
@@ -41,17 +41,17 @@ implements Output<R> {
 	}
 	
 	@Override
-	public final int put(final List<R> ioResults)
+	public final int put(final List<O> ioResults)
 	throws IOException {
 		final List<String> itemsInfo = new ArrayList<>(ioResults.size());
-		for(final R nextIoResult : ioResults) {
+		for(final O nextIoResult : ioResults) {
 			itemsInfo.add(nextIoResult.getItem().toString());
 		}
 		return itemInfoOutput.put(itemsInfo);
 	}
 	
 	@Override
-	public final Input<R> getInput()
+	public final Input<O> getInput()
 	throws IOException {
 		throw new AssertionError();
 	}

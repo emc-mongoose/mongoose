@@ -6,7 +6,6 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.io.AsyncCurrentDateInput;
@@ -65,9 +64,9 @@ import java.util.function.Function;
  Created by kurila on 29.07.16.
  Netty-based concurrent HTTP client executing the submitted I/O tasks.
  */
-public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I, R>, R extends IoResult>
-extends NetStorageDriverBase<I, O, R>
-implements HttpStorageDriver<I, O, R> {
+public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends NetStorageDriverBase<I, O>
+implements HttpStorageDriver<I, O> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	

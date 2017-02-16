@@ -7,7 +7,6 @@ import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
@@ -44,11 +43,9 @@ import java.util.function.Function;
 /**
  Created by kurila on 19.07.16.
  */
-public final class BasicFileStorageDriver<
-	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoResult
->
-extends NioStorageDriverBase<I, O, R>
-implements FileStorageDriver<I, O, R> {
+public final class BasicFileStorageDriver<I extends DataItem, O extends DataIoTask<I>>
+extends NioStorageDriverBase<I, O>
+implements FileStorageDriver<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {

@@ -33,7 +33,6 @@ import static org.junit.Assert.assertTrue;
  Covered use cases:
  * 2.1.1.1.2. Small Data Items (1KB-100KB)
  * 2.2.1. Items Input File
- * 2.2.3.1. Random Item Ids
  * 2.3.2. Items Output File
  * 2.3.3.1. Constant Items Destination Path
  * 4.1. Default Concurrency Level (1)
@@ -89,7 +88,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 1);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass

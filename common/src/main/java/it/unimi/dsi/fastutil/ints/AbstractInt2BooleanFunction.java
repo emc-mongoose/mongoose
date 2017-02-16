@@ -26,9 +26,10 @@
 
 /* Equality */
 /* Object/Reference-only definitions (keys) */
+/* Primitive-type-only definitions (keys) */
 /* Object/Reference-only definitions (values) */
 /* Primitive-type-only definitions (values) */
-/*		 
+/*
  * Copyright (C) 2002-2016 Sebastiano Vigna
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,10 +42,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. 
+ * limitations under the License.
  */
 
-package it.unimi.dsi.fastutil.objects;
+package it.unimi.dsi.fastutil.ints;
 
 /**
  * An abstract class providing basic methods for functions implementing a
@@ -68,42 +69,49 @@ package it.unimi.dsi.fastutil.objects;
  *
  */
 
-public abstract class AbstractObject2BooleanFunction<K>
-		implements
-			Object2BooleanFunction<K>,
-			java.io.Serializable {
-
+public abstract class AbstractInt2BooleanFunction
+	implements
+	Int2BooleanFunction,
+	java.io.Serializable {
+	
 	private static final long serialVersionUID = -4940583368468432370L;
-
-	protected AbstractObject2BooleanFunction() {
+	
+	protected AbstractInt2BooleanFunction() {
 	}
-
+	
 	/**
 	 * The default return value for <code>get()</code>, <code>put()</code> and
 	 * <code>remove()</code>.
 	 */
-
+	
 	protected boolean defRetValue;
-
+	
 	public void defaultReturnValue(final boolean rv) {
 		defRetValue = rv;
 	}
-
+	
 	public boolean defaultReturnValue() {
 		return defRetValue;
 	}
-
-	public boolean put(K key, boolean value) {
+	
+	public boolean put(int key, boolean value) {
 		throw new UnsupportedOperationException();
 	}
-
-	public boolean removeBoolean(Object key) {
+	
+	public boolean remove(int key) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	public void clear() {
 		throw new UnsupportedOperationException();
 	}
+	
+	public boolean containsKey(final Object ok) {
+		if (ok == null)
+			return false;
+		return containsKey(((((Integer) (ok)).intValue())));
+	}
+	
 	/**
 	 * Delegates to the corresponding type-specific method, taking care of
 	 * returning <code>null</code> on a missing key.
@@ -118,11 +126,14 @@ public abstract class AbstractObject2BooleanFunction<K>
 	 */
 	@Deprecated
 	public Boolean get(final Object ok) {
-
-		final Object k = (ok);
-		return containsKey(k) ? (Boolean.valueOf(getBoolean(k))) : null;
+		
+		if (ok == null)
+			return null;
+		
+		final int k = ((((Integer) (ok)).intValue()));
+		return containsKey(k) ? (Boolean.valueOf(get(k))) : null;
 	}
-
+	
 	/**
 	 * Delegates to the corresponding type-specific method, taking care of
 	 * returning <code>null</code> on a missing key.
@@ -136,13 +147,13 @@ public abstract class AbstractObject2BooleanFunction<K>
 	 * @deprecated Please use the corresponding type-specific method instead.
 	 */
 	@Deprecated
-	public Boolean put(final K ok, final Boolean ov) {
-		final K k = (ok);
+	public Boolean put(final Integer ok, final Boolean ov) {
+		final int k = ((ok).intValue());
 		final boolean containsKey = containsKey(k);
 		final boolean v = put(k, ((ov).booleanValue()));
 		return containsKey ? (Boolean.valueOf(v)) : null;
 	}
-
+	
 	/**
 	 * Delegates to the corresponding type-specific method, taking care of
 	 * returning <code>null</code> on a missing key.
@@ -157,11 +168,14 @@ public abstract class AbstractObject2BooleanFunction<K>
 	 */
 	@Deprecated
 	public Boolean remove(final Object ok) {
-
-		final Object k = (ok);
+		
+		if (ok == null)
+			return null;
+		
+		final int k = ((((Integer) (ok)).intValue()));
 		final boolean containsKey = containsKey(k);
-		final boolean v = removeBoolean(k);
+		final boolean v = remove(k);
 		return containsKey ? (Boolean.valueOf(v)) : null;
 	}
-
+	
 }

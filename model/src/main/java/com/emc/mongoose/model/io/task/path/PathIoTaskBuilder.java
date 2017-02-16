@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.io.task.path;
 
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import static com.emc.mongoose.model.io.task.path.PathIoTask.PathIoResult;
 import com.emc.mongoose.model.item.PathItem;
 
 import java.io.IOException;
@@ -10,10 +9,8 @@ import java.util.List;
 /**
  Created by andrey on 31.01.17.
  */
-public interface PathIoTaskBuilder<
-	I extends PathItem, O extends PathIoTask<I, R>, R extends PathIoResult
->
-extends IoTaskBuilder<I, O, R> {
+public interface PathIoTaskBuilder<I extends PathItem, O extends PathIoTask<I>>
+extends IoTaskBuilder<I, O> {
 
 	@Override
 	O getInstance(final I item, final String dstPath)

@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.io.task.token;
 
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
-import static com.emc.mongoose.model.io.task.token.TokenIoTask.TokenIoResult;
 import com.emc.mongoose.model.item.TokenItem;
 
 import java.io.IOException;
@@ -11,16 +10,14 @@ import java.util.List;
 /**
  Created by kurila on 14.07.16.
  */
-public class BasicTokenIoTaskBuilder<
-	I extends TokenItem, O extends TokenIoTask<I, R>, R extends TokenIoResult
->
-extends BasicIoTaskBuilder<I, O, R>
-implements TokenIoTaskBuilder<I, O, R> {
+public class BasicTokenIoTaskBuilder<I extends TokenItem, O extends TokenIoTask<I>>
+extends BasicIoTaskBuilder<I, O>
+implements TokenIoTaskBuilder<I, O> {
 
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I item, final String dstPath)
 	throws IOException {
-		return (O) new BasicTokenIoTask<>(ioType, item);
+		return (O) new BasicTokenIoTask<>(originCode, ioType, item);
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -28,7 +25,7 @@ implements TokenIoTaskBuilder<I, O, R> {
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
 		for(final I item : items) {
-			tasks.add((O) new BasicTokenIoTask<>(ioType, item));
+			tasks.add((O) new BasicTokenIoTask<>(originCode, ioType, item));
 		}
 		return tasks;
 	}
@@ -38,7 +35,7 @@ implements TokenIoTaskBuilder<I, O, R> {
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
 		for(final I item : items) {
-			tasks.add((O) new BasicTokenIoTask<>(ioType, item));
+			tasks.add((O) new BasicTokenIoTask<>(originCode, ioType, item));
 		}
 		return tasks;
 	}
@@ -52,7 +49,7 @@ implements TokenIoTaskBuilder<I, O, R> {
 		}
 		final List<O> tasks = new ArrayList<>(n);
 		for(int i = 0; i < n; i ++) {
-			tasks.add((O) new BasicTokenIoTask<>(ioType, items.get(i)));
+			tasks.add((O) new BasicTokenIoTask<>(originCode, ioType, items.get(i)));
 		}
 		return tasks;
 	}

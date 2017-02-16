@@ -20,9 +20,9 @@ import static java.lang.System.nanoTime;
 /**
  Created by andrey on 25.09.16.
  */
-public class BasicDataIoTask<T extends DataItem, R extends DataIoTask.DataIoResult>
-extends BasicIoTask<T, R>
-implements DataIoTask<T, R> {
+public class BasicDataIoTask<T extends DataItem>
+extends BasicIoTask<T>
+implements DataIoTask<T> {
 	
 	protected long contentSize;
 	protected final BitSet[] markedRangesMaskPair = new BitSet[] {
@@ -42,95 +42,29 @@ implements DataIoTask<T, R> {
 	}
 	
 	public BasicDataIoTask(
-		final IoType ioType, final T item, final String srcPath, final String dstPath,
-		final List<ByteRange> fixedRanges, final int randomRangesCount
+		final int originCode, final IoType ioType, final T item, final String srcPath,
+		final String dstPath, final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
-		super(ioType, item, srcPath, dstPath);
+		super(originCode, ioType, item, srcPath, dstPath);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		item.reset();
 		contentSrc = item.getContentSrc();
 	}
-	
-	public static class BasicDataIoResult<T extends DataItem>
-	extends BasicIoResult<T>
-	implements DataIoResult<T> {
-		
-		private long dataLatency;
-		private long transferredByteCount;
 
-		public BasicDataIoResult() {
-			super();
-		}
-		
-		public BasicDataIoResult(
-			final String storageDriverAddr, final String storageNodeAddr, final T item,
-			final int ioTypeCode, final int statusCode, final long reqTimeStart,
-			final long duration, final long latency, final long dataLatency,
-			final long transferredByteCount
-		) {
-			super(
-				storageDriverAddr, storageNodeAddr, item, ioTypeCode, statusCode, reqTimeStart,
-				duration, latency
-			);
-			this.dataLatency = dataLatency > latency && duration > latency ? dataLatency : -1;
-			this.transferredByteCount = transferredByteCount;
-		}
-		
-		@Override
-		public final long getDataLatency() {
-			return dataLatency;
-		}
-		
-		@Override
-		public final long getCountBytesDone() {
-			return transferredByteCount;
-		}
-		
-		@Override
-		public void writeExternal(final ObjectOutput out)
-		throws IOException {
-			super.writeExternal(out);
-			out.writeLong(dataLatency);
-			out.writeLong(transferredByteCount);
-		}
-		
-		@Override
-		public void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-			super.readExternal(in);
-			dataLatency = in.readLong();
-			transferredByteCount = in.readLong();
-		}
+	protected BasicDataIoTask(final BasicDataIoTask<T> other) {
+		super(other);
+		this.contentSize = other.contentSize;
+		this.randomRangesCount = other.randomRangesCount;
+		this.fixedRanges = other.fixedRanges;
+		this.countBytesDone = other.countBytesDone;
+		this.respDataTimeStart = other.respDataTimeStart;
 	}
-	
-	@Override @SuppressWarnings("unchecked")
-	public R getResult(
-		final String hostAddr,
-		final boolean useStorageDriverResult,
-		final boolean useStorageNodeResult,
-		final boolean useItemInfoResult,
-		final boolean useIoTypeCodeResult,
-		final boolean useStatusCodeResult,
-		final boolean useReqTimeStartResult,
-		final boolean useDurationResult,
-		final boolean useRespLatencyResult,
-		final boolean useDataLatencyResult,
-		final boolean useTransferSizeResult
-	) {
+
+	@Override
+	public BasicDataIoTask<T> getResult() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
-		return (R) new BasicDataIoResult(
-			useStorageDriverResult ? hostAddr : null,
-			useStorageNodeResult ? nodeAddr : null,
-			useItemInfoResult ? item : null,
-			useIoTypeCodeResult ? ioType.ordinal() : - 1,
-			useStatusCodeResult ? status.ordinal() : - 1,
-			useReqTimeStartResult ? reqTimeStart : - 1,
-			useDurationResult ? respTimeDone - reqTimeStart : - 1,
-			useRespLatencyResult ? respTimeStart - reqTimeDone : - 1,
-			useDataLatencyResult ? respDataTimeStart - reqTimeDone : - 1,
-			useTransferSizeResult ? countBytesDone : -1
-		);
+		return new BasicDataIoTask<>(this);
 	}
 
 	@Override
@@ -139,7 +73,6 @@ implements DataIoTask<T, R> {
 		switch(ioType) {
 			case CREATE:
 			case READ:
-				// TODO partial read support, use rangesConfig
 				try {
 					contentSize = item.size();
 				} catch(IOException e) {
@@ -335,6 +268,11 @@ implements DataIoTask<T, R> {
 	}
 
 	@Override
+	public final long getDataLatency() {
+		return respDataTimeStart - reqTimeDone;
+	}
+
+	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
@@ -347,6 +285,8 @@ implements DataIoTask<T, R> {
 		out.writeLong(
 			markedRangesMaskPair[1].isEmpty() ? 0 : markedRangesMaskPair[1].toLongArray()[0]
 		);
+		out.writeLong(countBytesDone);
+		out.writeLong(respDataTimeStart);
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -359,5 +299,7 @@ implements DataIoTask<T, R> {
 		randomRangesCount = in.readInt();
 		markedRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
 		markedRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
+		countBytesDone = in.readLong();
+		respDataTimeStart = in.readLong();
 	}
 }

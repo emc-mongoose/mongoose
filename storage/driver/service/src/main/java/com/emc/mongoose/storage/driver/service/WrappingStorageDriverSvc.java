@@ -7,8 +7,6 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
-import static java.lang.System.nanoTime;
 
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.DataItemFactory;
@@ -25,23 +23,22 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import static java.lang.System.nanoTime;
 
 /**
  Created by andrey on 05.10.16.
  */
-public final class WrappingStorageDriverSvc<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult
->
-implements StorageDriverSvc<I, O, R> {
+public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
+implements StorageDriverSvc<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final int port;
-	private final StorageDriver<I, O, R> driver;
+	private final StorageDriver<I, O> driver;
 	private final ContentSource contentSrc;
 
 	public WrappingStorageDriverSvc(
-		final int port, final StorageDriver<I, O, R> driver, final ContentSource contentSrc,
+		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
 		final long metricsPeriodSec
 	) {
 		this.port = port;
@@ -108,7 +105,7 @@ implements StorageDriverSvc<I, O, R> {
 	}
 
 	@Override
-	public final List<R> getResults()
+	public final List<O> getResults()
 	throws IOException {
 		return driver.getResults();
 	}

@@ -6,7 +6,6 @@ import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
@@ -242,7 +241,7 @@ extends JobBase {
 						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
 					);
 				}
-				final Output<IoResult> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
 				monitor.setIoResultsOutput(itemOutput);
 			}
 			monitor.start();

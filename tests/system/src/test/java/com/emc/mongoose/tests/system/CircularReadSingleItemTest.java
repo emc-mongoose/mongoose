@@ -13,6 +13,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -88,7 +89,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 65); // 1m + up to 5s for the precondition job
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
@@ -115,7 +116,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testTotalMetricsLogFile()
+	@Test @Ignore
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

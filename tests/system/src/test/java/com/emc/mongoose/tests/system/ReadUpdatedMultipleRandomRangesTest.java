@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -43,7 +44,6 @@ import static org.junit.Assert.assertTrue;
  * 9.5.2. Load Job
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
- * 10.3. Filesystem Storage Driver
  */
 public class ReadUpdatedMultipleRandomRangesTest
 extends HttpStorageDistributedScenarioTestBase {
@@ -88,10 +88,10 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 20000);
+		TimeUnit.MINUTES.timedJoin(runner, 2);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
@@ -119,7 +119,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testTotalMetricsLogFile()
+	@Test @Ignore
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

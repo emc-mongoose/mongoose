@@ -2,7 +2,7 @@ package com.emc.mongoose.model.item;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.collection.ListInput;
-import com.emc.mongoose.model.io.task.IoTask.IoResult;
+import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.START_OFFSET_MICROS;
 
 import java.io.EOFException;
@@ -16,10 +16,10 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 16.01.17.
  */
-public final class BasicIoResultsItemInput<I extends Item, R extends IoResult<I>>
-implements IoResultsItemInput<I, R> {
+public final class BasicIoResultsItemInput<I extends Item, O extends IoTask<I>>
+implements IoResultsItemInput<I, O> {
 	
-	private final List<R> ioResultsBuff;
+	private final List<O> ioResultsBuff;
 	private volatile int ioResultsBuffSize = 0;
 	private final int ioResultsBuffCapacity;
 	private final long delayMicroseconds;
@@ -33,7 +33,7 @@ implements IoResultsItemInput<I, R> {
 	}
 
 	@Override
-	public final synchronized boolean put(final R ioResult)
+	public final synchronized boolean put(final O ioResult)
 	throws IOException {
 		if(ioResultsBuffSize < ioResultsBuffCapacity) {
 			ioResultsBuff.add(ioResult);
@@ -45,7 +45,7 @@ implements IoResultsItemInput<I, R> {
 	}
 	
 	@Override
-	public final synchronized int put(final List<R> ioResults, final int from, final int to)
+	public final synchronized int put(final List<O> ioResults, final int from, final int to)
 	throws IOException {
 		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, to - from);
 		ioResultsBuff.addAll(ioResults.subList(from, from + n));
@@ -54,7 +54,7 @@ implements IoResultsItemInput<I, R> {
 	}
 	
 	@Override
-	public final synchronized int put(final List<R> ioResults)
+	public final synchronized int put(final List<O> ioResults)
 	throws IOException {
 		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, ioResults.size());
 		ioResultsBuff.addAll(ioResults.subList(0, n));
@@ -64,7 +64,7 @@ implements IoResultsItemInput<I, R> {
 
 	/** Please don't use this method, it's unsafe and provided just for convenience */
 	@Override
-	public final Input<R> getInput()
+	public final Input<O> getInput()
 	throws IOException {
 		return new ListInput<>(ioResultsBuff);
 	}
@@ -72,14 +72,14 @@ implements IoResultsItemInput<I, R> {
 	@Override
 	public final synchronized I get()
 	throws EOFException, IOException {
-		R nextIoResult;
+		O nextIoResult;
 		long nextFinishTime, currTime;
 		I item = null;
-		final ListIterator<R> ioResultsIter = ioResultsBuff.listIterator();
+		final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
 		while(ioResultsIter.hasNext()) {
 			nextIoResult = ioResultsIter.next();
 			if(delayMicroseconds > 0) {
-				nextFinishTime = nextIoResult.getTimeStart() + nextIoResult.getDuration();
+				nextFinishTime = nextIoResult.getRespTimeDone();
 				currTime = START_OFFSET_MICROS + nanoTime() / 1000;
 				if(currTime - nextFinishTime > delayMicroseconds) {
 					item = nextIoResult.getItem();
@@ -100,14 +100,14 @@ implements IoResultsItemInput<I, R> {
 	@Override
 	public final synchronized int get(final List<I> buffer, final int limit)
 	throws IOException {
-		R nextIoResult;
+		O nextIoResult;
 		long nextFinishTime, currTime;
 		int n = 0;
-		final ListIterator<R> ioResultsIter = ioResultsBuff.listIterator();
+		final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
 		if(delayMicroseconds > 0) {
 			while(ioResultsIter.hasNext()) {
 				nextIoResult = ioResultsIter.next();
-				nextFinishTime = nextIoResult.getTimeStart() + nextIoResult.getDuration();
+				nextFinishTime = nextIoResult.getRespTimeDone();
 				currTime = START_OFFSET_MICROS + nanoTime() / 1000;
 				if(currTime - nextFinishTime > delayMicroseconds) {
 					buffer.add(nextIoResult.getItem());
@@ -130,7 +130,7 @@ implements IoResultsItemInput<I, R> {
 	@Override
 	public final long skip(final long count)
 	throws IOException {
-		final ListIterator<R> ioResultsIter = ioResultsBuff.listIterator();
+		final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
 		long n;
 		for(n = 0; n < count; n ++) {
 			if(ioResultsIter.hasNext()) {

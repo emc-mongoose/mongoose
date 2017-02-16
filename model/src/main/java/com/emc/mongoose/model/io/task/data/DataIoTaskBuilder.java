@@ -2,7 +2,6 @@ package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import static com.emc.mongoose.model.io.task.data.DataIoTask.DataIoResult;
 import com.emc.mongoose.model.item.DataItem;
 
 import java.util.List;
@@ -10,13 +9,12 @@ import java.util.List;
 /**
  Created by kurila on 27.09.16.
  */
-public interface DataIoTaskBuilder<
-	I extends DataItem, O extends DataIoTask<I, R>, R extends DataIoResult
-> extends IoTaskBuilder<I, O, R> {
+public interface DataIoTaskBuilder<I extends DataItem, O extends DataIoTask<I>>
+extends IoTaskBuilder<I, O> {
 	
-	DataIoTaskBuilder<I, O, R> setFixedRanges(final List<ByteRange> fixedRanges);
+	DataIoTaskBuilder<I, O> setFixedRanges(final List<ByteRange> fixedRanges);
 
-	DataIoTaskBuilder<I, O, R> setRandomRangesCount(final int count);
+	DataIoTaskBuilder<I, O> setRandomRangesCount(final int count);
 
-	DataIoTaskBuilder<I, O, R> setSizeThreshold(final long sizeThreshold);
+	DataIoTaskBuilder<I, O> setSizeThreshold(final long sizeThreshold);
 }

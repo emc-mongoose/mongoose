@@ -7,7 +7,6 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.ServiceTaskDispatcher;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 
@@ -21,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created on 11.07.16.
  */
-public interface StorageDriver<I extends Item, O extends IoTask<I, R>, R extends IoResult>
+public interface StorageDriver<I extends Item, O extends IoTask<I>>
 extends Daemon, Output<O>, Remote {
 	
 	Map<StorageDriver, Runnable> SVC_TASKS = new ConcurrentHashMap<>();
@@ -52,7 +51,7 @@ extends Daemon, Output<O>, Remote {
 	void setAuthToken(final String authToken)
 	throws RemoteException;
 
-	List<R> getResults()
+	List<O> getResults()
 	throws IOException;
 
 	int getActiveTaskCount()

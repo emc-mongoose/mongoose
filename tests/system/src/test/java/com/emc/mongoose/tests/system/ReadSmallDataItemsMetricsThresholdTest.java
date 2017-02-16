@@ -107,7 +107,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		runner.start();
 		TimeUnit.MINUTES.timedJoin(runner, 10);
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(15);
+		TimeUnit.SECONDS.sleep(10);
 	}
 	
 	@AfterClass
@@ -126,7 +126,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+	@Test @Ignore
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -154,7 +154,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMedTotalMetricsLogFile()
+	@Test @Ignore public void testMedTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
 			getMetricsMedTotalLogRecords().get(0),

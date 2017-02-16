@@ -1,14 +1,13 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.load.monitor.WeightThrottle;
+import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.io.IoType;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,21 +21,21 @@ import static org.junit.Assert.assertEquals;
 
 public class WeightThrottleTest {
 
-	private final Object2IntMap<IoType> weightMap = new Object2IntOpenHashMap<IoType>() {
+	private final Int2IntMap weightMap = new Int2IntOpenHashMap() {
 		{
-			put(IoType.CREATE, 80);
-			put(IoType.READ, 20);
+			put(IoType.CREATE.ordinal(), 80);
+			put(IoType.READ.ordinal(), 20);
 		}
 	};
 
-	private final Map<IoType, LongAdder> resultsMap = new HashMap<IoType, LongAdder>() {
+	private final Int2ObjectMap<LongAdder> resultsMap = new Int2ObjectOpenHashMap<LongAdder>() {
 		{
-			put(IoType.CREATE, new LongAdder());
-			put(IoType.READ, new LongAdder());
+			put(IoType.CREATE.ordinal(), new LongAdder());
+			put(IoType.READ.ordinal(), new LongAdder());
 		}
 	};
 
-	private final Throttle<IoType> fc = new WeightThrottle<>(weightMap);
+	private final WeightThrottle wt = new WeightThrottle(weightMap);
 
 	private final class SubmTask
 		implements Runnable {
@@ -47,8 +46,8 @@ public class WeightThrottleTest {
 		@Override
 		public final void run() {
 			while(true) {
-				if(fc.getPassFor(ioType)) {
-					resultsMap.get(ioType).increment();
+				if(wt.tryAcquire(ioType.ordinal())) {
+					resultsMap.get(ioType.ordinal()).increment();
 				} else {
 					LockSupport.parkNanos(1);
 				}
@@ -64,8 +63,8 @@ public class WeightThrottleTest {
 		es.submit(new SubmTask(IoType.READ));
 		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(IoType.CREATE).sum();
-		final long reads = resultsMap.get(IoType.READ).sum();
+		final double writes = resultsMap.get(IoType.CREATE.ordinal()).sum();
+		final long reads = resultsMap.get(IoType.READ.ordinal()).sum();
 		assertEquals(80/20, writes / reads, 0.01);
 		System.out.println("Write rate: " + writes / 10 + " Hz, read rate: " + reads / 10 + " Hz");
 	}
@@ -80,9 +79,9 @@ public class WeightThrottleTest {
 		public final void run() {
 			int n;
 			while(true) {
-				n = fc.getPassFor(ioType, 128);
+				n = wt.tryAcquire(ioType.ordinal(), 128);
 				if(n > 0) {
-					resultsMap.get(ioType).add(n);
+					resultsMap.get(ioType.ordinal()).add(n);
 				} else {
 					LockSupport.parkNanos(1);
 				}
@@ -98,8 +97,8 @@ public class WeightThrottleTest {
 		es.submit(new BatchSubmTask(IoType.READ));
 		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(IoType.CREATE).sum();
-		final long reads = resultsMap.get(IoType.READ).sum();
+		final double writes = resultsMap.get(IoType.CREATE.ordinal()).sum();
+		final long reads = resultsMap.get(IoType.READ.ordinal()).sum();
 		assertEquals(80/20, writes / reads, 0.01);
 		System.out.println("Write rate: " + writes / 10 + " Hz, read rate: " + reads / 10 + " Hz");
 	}

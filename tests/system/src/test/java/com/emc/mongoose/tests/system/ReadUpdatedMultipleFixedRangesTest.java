@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -38,12 +39,12 @@ import static org.junit.Assert.assertTrue;
  * 8.2.1. Create New Items
  * 8.3.2. Read With Enabled Validation
  * 8.3.3.2.4. Read Multiple Fixed Ranges
+ * 8.4.2.2. Multiple Random Ranges Update
  * 9.3. Custom Scenario File
  * 9.4.3. Reusing The Items in the Scenario
  * 9.5.2. Load Job
  * 9.5.5. Sequential Job
- * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
- * 10.3. Filesystem Storage Driver
+ * 10.1.1. Single Local Separate Storage Driver Service
  */
 public class ReadUpdatedMultipleFixedRangesTest
 extends HttpStorageDistributedScenarioTestBase {
@@ -52,7 +53,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-fixed-ranges-updated.json"
 	);
 	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes(
-		(34 - 12 + 1) + (78 - 56 + 1) + (1024 - 910 + 1)
+		(0 - 0 + 1) + (34 - 12 + 1) + (78 - 56 + 1) + (1024 - 910 + 1)
 	);
 	private static final int EXPECTED_CONCURRENCY = 1;
 	private static final long EXPECTED_COUNT = 1000;
@@ -77,6 +78,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-data-verify=true");
+		STORAGE_DRIVERS_COUNT = 1;
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
@@ -90,16 +92,17 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 20000);
+		TimeUnit.MINUTES.timedJoin(runner, 2);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
+		STORAGE_DRIVERS_COUNT = 2; // to default
 	}
 
 	@Test
@@ -107,7 +110,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test public void testMetricsLogFile()
+	@Test @Ignore
+	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -121,7 +125,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testTotalMetricsLogFile()
+	@Test @Ignore
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

@@ -40,6 +40,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,7 @@ public abstract class LoggingTestBase {
 	protected static Logger LOG;
 	protected static String JOB_NAME;
 	protected static BufferingOutputStream STD_OUT_STREAM;
+	protected static int LOG_FILE_TIMEOUT_SEC = 30;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -103,6 +105,16 @@ public abstract class LoggingTestBase {
 	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
 		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME, fileName).toFile();
+		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
+			if(logFile.exists() && logFile.length() > 0) {
+				break;
+			}
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch(final InterruptedException e) {
+				return null;
+			}
+		}
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br);
 			final List<CSVRecord> csvRecords = new ArrayList<>();

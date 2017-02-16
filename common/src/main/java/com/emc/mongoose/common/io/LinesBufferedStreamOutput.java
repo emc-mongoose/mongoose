@@ -33,8 +33,7 @@ implements Output<String> {
 	@Override
 	public boolean put(final String line)
 	throws IOException {
-		writer.write(line);
-		writer.newLine();
+		writer.write(line + LINE_SEP);
 		return true;
 	}
 	

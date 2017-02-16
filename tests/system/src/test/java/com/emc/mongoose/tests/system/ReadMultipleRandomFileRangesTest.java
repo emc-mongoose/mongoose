@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -92,7 +93,7 @@ extends FileStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 1);
 		FINISHED_IN_TIME = !runner.isAlive();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
@@ -120,7 +121,8 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testTotalMetricsLogFile()
+	@Test @Ignore
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

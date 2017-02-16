@@ -3,7 +3,6 @@ package com.emc.mongoose.load.generator;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.task.IoTask.IoResult;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
@@ -19,22 +18,22 @@ import java.util.List;
  Created by andrey on 12.11.16.
  */
 public interface LoadGeneratorBuilder<
-	I extends Item, O extends IoTask<I, R>, R extends IoResult, T extends LoadGenerator<I, O, R>
+	I extends Item, O extends IoTask<I>, T extends LoadGenerator<I, O>
 > {
 
-	LoadGeneratorBuilder<I, O, R, T> setItemConfig(final ItemConfig itemConfig);
+	LoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig);
 
-	LoadGeneratorBuilder<I, O, R, T> setLoadConfig(final LoadConfig loadConfig);
+	LoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig);
 
-	LoadGeneratorBuilder<I, O, R, T> setItemType(final ItemType itemType);
+	LoadGeneratorBuilder<I, O, T> setItemType(final ItemType itemType);
 
-	LoadGeneratorBuilder<I, O, R, T> setItemFactory(final ItemFactory<I> itemFactory);
+	LoadGeneratorBuilder<I, O, T> setItemFactory(final ItemFactory<I> itemFactory);
 
-	LoadGeneratorBuilder<I, O, R, T> setStorageDrivers(
-		final List<StorageDriver<I, O, R>> storageDrivers
+	LoadGeneratorBuilder<I, O, T> setStorageDrivers(
+		final List<StorageDriver<I, O>> storageDrivers
 	);
 	
-	LoadGeneratorBuilder<I, O, R, T> setItemInput(final Input<I> itemInput);
+	LoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput);
 
 	T build()
 	throws UserShootHisFootException, IOException;
