@@ -202,23 +202,27 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			throw new InterruptedException();
 		}
 		ioTask.reset();
-		if(IoType.NOOP.equals(ioTask.getIoType())) {
-			concurrencyThrottle.acquire();
-			ioTask.startRequest();
-			sendRequest(null, ioTask);
-			ioTask.finishRequest();
-			concurrencyThrottle.release();
-			ioTask.setStatus(SUCC);
-			complete(null, ioTask);
-		} else {
-			final Channel conn = connPool.lease();
-			if(conn == null) {
-				return false;
+		try {
+			if(IoType.NOOP.equals(ioTask.getIoType())) {
+				concurrencyThrottle.acquire();
+				ioTask.startRequest();
+				sendRequest(null, ioTask);
+				ioTask.finishRequest();
+				concurrencyThrottle.release();
+				ioTask.setStatus(SUCC);
+				complete(null, ioTask);
+			} else {
+				final Channel conn = connPool.lease();
+				if(conn == null) {
+					return false;
+				}
+				conn.attr(ATTR_KEY_IOTASK).set(ioTask);
+				ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+				ioTask.startRequest();
+				sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
 			}
-			conn.attr(ATTR_KEY_IOTASK).set(ioTask);
-			ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
-			ioTask.startRequest();
-			sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
 		}
 		return true;
 
@@ -229,27 +233,31 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws InterruptedException {
 		Channel conn;
 		O nextIoTask;
-		for(int i = from; i < to && isStarted(); i ++) {
-			nextIoTask = ioTasks.get(i);
-			nextIoTask.reset();
-			if(IoType.NOOP.equals(nextIoTask.getIoType())) {
-				concurrencyThrottle.acquire();
-				nextIoTask.startRequest();
-				sendRequest(null, nextIoTask);
-				nextIoTask.finishRequest();
-				concurrencyThrottle.release();
-				nextIoTask.setStatus(SUCC);
-				complete(null, nextIoTask);
-			} else {
-				conn = connPool.lease();
-				if(conn == null) {
-					return i - from;
+		try {
+			for(int i = from; i < to && isStarted(); i ++) {
+				nextIoTask = ioTasks.get(i);
+				nextIoTask.reset();
+				if(IoType.NOOP.equals(nextIoTask.getIoType())) {
+					concurrencyThrottle.acquire();
+					nextIoTask.startRequest();
+					sendRequest(null, nextIoTask);
+					nextIoTask.finishRequest();
+					concurrencyThrottle.release();
+					nextIoTask.setStatus(SUCC);
+					complete(null, nextIoTask);
+				} else {
+					conn = connPool.lease();
+					if(conn == null) {
+						return i - from;
+					}
+					conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
+					nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+					nextIoTask.startRequest();
+					sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
 				}
-				conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
-				nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
-				nextIoTask.startRequest();
-				sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
 			}
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
 		}
 		return to - from;
 	}
@@ -264,7 +272,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
-		ioTask.finishResponse();
+		try {
+			ioTask.finishResponse();
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "{}: invalid I/O task state", ioTask.toString());
+		}
 		if(!IoType.NOOP.equals(ioTask.getIoType())) {
 			connPool.release(channel);
 		}

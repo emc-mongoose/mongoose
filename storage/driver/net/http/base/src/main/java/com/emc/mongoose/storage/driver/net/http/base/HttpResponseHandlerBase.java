@@ -17,6 +17,8 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SPACE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SVC;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
+
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
 import io.netty.buffer.ByteBuf;
@@ -29,7 +31,7 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.LastHttpContent;
-
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -157,7 +159,11 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	throws IOException {
 		
 		if(msg instanceof HttpResponse) {
-			ioTask.startResponse();
+			try {
+				ioTask.startResponse();
+			} catch(final IllegalStateException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "{}", ioTask.toString());
+			}
 			final HttpResponse httpResponse = (HttpResponse) msg;
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);

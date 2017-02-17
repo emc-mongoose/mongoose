@@ -151,16 +151,25 @@ implements IoTask<I> {
 	@Override
 	public final void finishRequest() {
 		reqTimeDone = START_OFFSET_MICROS + nanoTime() / 1000;
+		if(respTimeStart > 0) {
+			throw new IllegalStateException("Request is finished after the response is started");
+		}
 	}
 
 	@Override
 	public final void startResponse() {
 		respTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
+		if(reqTimeDone == 0) {
+			throw new IllegalStateException("Response is started before the request is finished");
+		}
 	}
 
 	@Override
 	public void finishResponse() {
 		respTimeDone = START_OFFSET_MICROS + nanoTime() / 1000;
+		if(respTimeStart == 0) {
+			throw new IllegalStateException("Response is finished while not started");
+		}
 	}
 
 	@Override

@@ -55,13 +55,17 @@ extends Externalizable {
 	
 	void setDstPath(final String dstPath);
 
-	void startRequest();
+	void startRequest()
+	throws IllegalStateException;
 
-	void finishRequest();
+	void finishRequest()
+	throws IllegalStateException;
 
-	void startResponse();
+	void startResponse()
+	throws IllegalStateException;
 
-	void finishResponse();
+	void finishResponse()
+	throws IllegalStateException;
 
 	long getReqTimeStart();
 

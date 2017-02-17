@@ -305,9 +305,17 @@ implements FileStorageDriver<I, O> {
 	}
 	
 	private void finishIoTask(final O ioTask) {
-		ioTask.startResponse();
-		ioTask.finishResponse();
-		ioTask.setStatus(Status.SUCC);
+		try {
+			ioTask.startResponse();
+			ioTask.finishResponse();
+			ioTask.setStatus(Status.SUCC);
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "{}: finishing the I/O task which is in an invalid state",
+				ioTask.toString()
+			);
+			ioTask.setStatus(Status.FAIL_UNKNOWN);
+		}
 	}
 
 	private void invokeCreate(final I fileItem, final O ioTask, final FileChannel dstChannel)
