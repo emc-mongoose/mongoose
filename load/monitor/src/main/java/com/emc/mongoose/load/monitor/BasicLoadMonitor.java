@@ -367,7 +367,7 @@ implements LoadMonitor<I, O> {
 
 	@Override
 	public final void processIoResults(final List<O> ioTaskResults, final int n) {
-		
+
 		int m = n; // count of complete whole tasks
 
 		// I/O trace logging
@@ -387,90 +387,95 @@ implements LoadMonitor<I, O> {
 		IoStats ioTypeStats, ioTypeMedStats;
 		Output<O> ioTaskDest;
 
-		try {
-			for(int i = 0; i < n; i ++) {
+		for(int i = 0; i < n; i ++) {
 
-				if(i > 0) {
-					ioTaskResult = ioTaskResults.get(i);
-				}
+			if(i > 0) {
+				ioTaskResult = ioTaskResults.get(i);
+			}
 
-				if( // account only completed composite I/O tasks
-					ioTaskResult instanceof CompositeIoTask &&
-					!((CompositeIoTask) ioTaskResult).allSubTasksDone()
-				) {
+			if( // account only completed composite I/O tasks
+				ioTaskResult instanceof CompositeIoTask &&
+				!((CompositeIoTask) ioTaskResult).allSubTasksDone()
+			) {
+				m --;
+				continue;
+			}
+
+			originCode = ioTaskResult.getOriginCode();
+			ioTypeCode = ioTaskResult.getIoType().ordinal();
+			status = ioTaskResult.getStatus();
+			reqDuration = ioTaskResult.getDuration();
+			respLatency = ioTaskResult.getLatency();
+			if(ioTaskResult instanceof DataIoTask) {
+				countBytesDone = ((DataIoTask) ioTaskResult).getCountBytesDone();
+			} else if(ioTaskResult instanceof PathIoTask) {
+				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
+			}
+
+			ioTypeStats = ioStats.get(ioTypeCode);
+			ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
+
+			if(Status.SUCC.equals(status)) {
+				if(ioTaskResult instanceof PartialIoTask) {
+					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+					}
 					m --;
-					continue;
-				}
+				} else {
 
-				originCode = ioTaskResult.getOriginCode();
-				ioTypeCode = ioTaskResult.getIoType().ordinal();
-				status = ioTaskResult.getStatus();
-				reqDuration = ioTaskResult.getDuration();
-				respLatency = ioTaskResult.getLatency();
-				if(ioTaskResult instanceof DataIoTask) {
-					countBytesDone = ((DataIoTask) ioTaskResult).getCountBytesDone();
-				} else if(ioTaskResult instanceof PathIoTask) {
-					countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
-				}
-
-				ioTypeStats = ioStats.get(ioTypeCode);
-				ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
-
-				if(Status.SUCC.equals(status)) {
-					if(ioTaskResult instanceof PartialIoTask) {
-						ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-							ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
-						}
-						m --;
-					} else {
-
-						if(circularityMap.get(originCode)) {
-							item = ioTaskResult.getItem();
-							latestIoResultsPerItem.put(item, ioTaskResult);
-							if(rateThrottle != null) {
-								while(!rateThrottle.tryAcquire(ioTaskResult)) {
-									LockSupport.parkNanos(1);
-								}
-							}
-							if(weightThrottle != null) {
-								while(!weightThrottle.tryAcquire(originCode)) {
-									LockSupport.parkNanos(1);
-								}
-							}
-							ioTaskDest = ioTaskOutputs.get(originCode);
-						} else {
-							ioTaskDest = ioResultsOutput;
-						}
-
-						if(ioTaskDest != null) {
-							while(!ioTaskDest.put(ioTaskResult)) {
+					if(circularityMap.get(originCode)) {
+						item = ioTaskResult.getItem();
+						latestIoResultsPerItem.put(item, ioTaskResult);
+						if(rateThrottle != null) {
+							while(!rateThrottle.tryAcquire(ioTaskResult)) {
 								LockSupport.parkNanos(1);
 							}
 						}
+						if(weightThrottle != null) {
+							while(!weightThrottle.tryAcquire(originCode)) {
+								LockSupport.parkNanos(1);
+							}
+						}
+						ioTaskDest = ioTaskOutputs.get(originCode);
+					} else {
+						ioTaskDest = ioResultsOutput;
+					}
 
-						// update the metrics with success
-						ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-						if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-							ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					// update the metrics with success
+					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
+
+					if(ioTaskDest != null) {
+						try {
+							while(!ioTaskDest.put(ioTaskResult)) {
+								LockSupport.parkNanos(1);
+							}
+						} catch(final EOFException e) {
+							LogUtil.exception(
+								LOG, Level.DEBUG, e, "I/O task destination end of input"
+							);
+						} catch(final NoSuchObjectException e) {
+							LogUtil.exception(
+								LOG, Level.DEBUG, e,
+								"Remote I/O task destination is not more available"
+							);
+						} catch(final IOException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to put the I/O task to the destionation"
+							);
 						}
 					}
-				} else if(!Status.CANCELLED.equals(status)) {
-					LOG.debug(Markers.ERR, ioTaskResult.toString());
-					ioTypeStats.markFail();
-					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-						ioTypeMedStats.markFail();
-					}
+				}
+			} else if(!Status.CANCELLED.equals(status)) {
+				LOG.debug(Markers.ERR, ioTaskResult.toString());
+				ioTypeStats.markFail();
+				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+					ioTypeMedStats.markFail();
 				}
 			}
-		} catch(final EOFException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "I/O task destination end of input");
-		} catch(final NoSuchObjectException e) {
-			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Remote I/O task destination is not more available"
-			);
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to process the I/O task results");
 		}
 
 		counterResults.add(m);

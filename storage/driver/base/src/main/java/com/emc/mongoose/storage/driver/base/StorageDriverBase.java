@@ -319,6 +319,13 @@ implements StorageDriver<I, O> {
 	throws IOException, IllegalStateException {
 		childTasksQueue.clear();
 		inTasksQueue.clear();
+		final int ioResultsQueueSize = ioResultsQueue.size();
+		if(ioResultsQueueSize > 0) {
+			LOG.warn(
+				Markers.ERR, "{}: I/O results queue contains {} unhandled elements", toString(),
+				ioResultsQueueSize
+			);
+		}
 		ioResultsQueue.clear();
 		LOG.debug(Markers.MSG, "{}: closed", toString());
 	}
