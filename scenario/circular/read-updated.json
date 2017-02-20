@@ -2,7 +2,7 @@
 	"type" : "sequential",
 	"config" : {
 		"load" : {
-			"concurrency" : 1
+			"concurrency" : 10
 		}
 	},
 	"jobs": [
