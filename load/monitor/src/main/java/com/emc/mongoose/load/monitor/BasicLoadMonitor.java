@@ -48,7 +48,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -298,6 +297,22 @@ implements LoadMonitor<I, O> {
 			}
 		}
 		return counterResults.longValue() >= generatedIoTasks;
+	}
+
+	// issue SLTM-938 fix
+	private boolean nothingToRecycle() {
+		if(driversMap.size() == 1) {
+			final LoadGenerator<I, O> soleLoadGenerator = driversMap.keySet().iterator().next();
+			final long generatedIoTasks = soleLoadGenerator.getGeneratedIoTasksCount();
+			if(
+				circularityMap.get(soleLoadGenerator.hashCode()) && // circular load job
+				counterResults.sum() >= generatedIoTasks && // all generated I/O tasks executed at least once
+				latestIoResultsPerItem.size() == 0 // no successful I/O results
+			) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean isDone() {
@@ -719,7 +734,16 @@ implements LoadMonitor<I, O> {
 			}
 			if(!isAnyCircular && allIoTasksCompleted()) {
 				LOG.debug(
-					Markers.MSG, "{}: await exit because all I/O tasks have been completed", getName()
+					Markers.MSG, "{}: await exit because all I/O tasks have been completed",
+					getName()
+				);
+				return true;
+			}
+			// issue SLTM-938 fix
+			if(nothingToRecycle()) {
+				LOG.debug(
+					Markers.ERR, "{}: exit because there's no I/O task to recycle (all failed)",
+					getName()
 				);
 				return true;
 			}
