@@ -332,12 +332,8 @@ implements HttpStorageDriver<I, O> {
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		String sharedHeaderName;
 		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
-			sharedHeaderName = sharedHeader.getKey();
-			if(!httpHeaders.contains(sharedHeaderName)) {
-				httpHeaders.add(new AsciiString(sharedHeaderName), sharedHeader.getValue());
-			}
+			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
 	}
 
@@ -382,7 +378,7 @@ implements HttpStorageDriver<I, O> {
 				continue;
 			}
 			// put the generated header value into the request
-			httpHeaders.set(new AsciiString(headerName), headerValue);
+			httpHeaders.set(headerName, headerValue);
 		}
 	}
 
