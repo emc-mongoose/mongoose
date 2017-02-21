@@ -265,6 +265,10 @@ implements LoadMonitor<I, O> {
 	private boolean isDoneCountLimit() {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
+				LOG.debug(
+					Markers.MSG, "{}: {} results >= {} limit", counterResults.sum(),
+					countLimit
+				);
 				return true;
 			}
 			long succCountSum = 0;
@@ -273,6 +277,10 @@ implements LoadMonitor<I, O> {
 				succCountSum += lastStats.get(ioTypeCode).getSuccCount();
 				failCountSum += lastStats.get(ioTypeCode).getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
+					LOG.debug(
+						Markers.MSG, "{}: {} successful + {} failed >= {} limit", succCountSum,
+						failCountSum, countLimit
+					);
 					return true;
 				}
 			}
@@ -413,7 +421,6 @@ implements LoadMonitor<I, O> {
 		long countBytesDone = 0;
 		ioTaskResult = ioTaskResults.get(0);
 		IoStats ioTypeStats, ioTypeMedStats;
-		Output<O> ioTaskDest;
 
 		for(int i = 0; i < n; i ++) {
 
