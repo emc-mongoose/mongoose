@@ -490,7 +490,7 @@ implements HttpStorageDriver<I, O> {
 			e.printStackTrace(System.err);
 		}
 
-		return channel.write(LastHttpContent.EMPTY_LAST_CONTENT);
+		return channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 	}
 
 	@Override
