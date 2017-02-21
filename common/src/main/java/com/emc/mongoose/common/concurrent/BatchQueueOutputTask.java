@@ -1,12 +1,7 @@
-package com.emc.mongoose.load.monitor;
+package com.emc.mongoose.common.concurrent;
 
 import com.emc.mongoose.common.io.Output;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-import com.emc.mongoose.ui.log.LogUtil;
-
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -20,8 +15,6 @@ import java.util.concurrent.locks.LockSupport;
 public final class BatchQueueOutputTask<T>
 extends ArrayList<T>
 implements Runnable {
-	
-	private static final Logger LOG = LogManager.getLogger();
 	
 	private final transient BlockingQueue<T> queue;
 	private final transient Output<T> output;
@@ -51,7 +44,7 @@ implements Runnable {
 				} catch(final EOFException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Output failure");
+					e.printStackTrace(System.err);
 				}
 			}
 		}

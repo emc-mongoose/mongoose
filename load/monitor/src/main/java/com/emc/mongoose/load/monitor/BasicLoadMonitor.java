@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.concurrent.BatchQueueOutputTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
