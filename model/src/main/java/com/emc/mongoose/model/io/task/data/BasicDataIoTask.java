@@ -300,6 +300,7 @@ implements DataIoTask<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		contentSrc = item.getContentSrc();
+		contentSize = in.readLong();
 		final int fixedByteRangesCount = in.readInt();
 		if(fixedByteRangesCount == 0) {
 			fixedRanges = null;
@@ -309,8 +310,6 @@ implements DataIoTask<T> {
 				fixedRanges.add(new ByteRange(in.readLong(), in.readLong(), in.readLong()));
 			}
 		}
-		contentSize = in.readLong();
-		fixedRanges = (List<ByteRange>) in.readObject();
 		randomRangesCount = in.readInt();
 		markedRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
 		markedRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
