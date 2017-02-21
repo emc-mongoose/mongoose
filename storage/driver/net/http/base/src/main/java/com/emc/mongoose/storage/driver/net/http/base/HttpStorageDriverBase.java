@@ -43,7 +43,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import io.netty.util.AsciiString;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -491,7 +490,7 @@ implements HttpStorageDriver<I, O> {
 			e.printStackTrace(System.err);
 		}
 
-		return channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		return channel.write(LastHttpContent.EMPTY_LAST_CONTENT);
 	}
 
 	@Override
