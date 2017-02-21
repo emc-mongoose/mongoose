@@ -278,11 +278,15 @@ implements DataIoTask<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
-		out.writeInt(fixedRanges == null ? 0 : fixedRanges.size());
-		for(final ByteRange br : fixedRanges) {
-			out.writeLong(br.getBeg());
-			out.writeLong(br.getEnd());
-			out.writeLong(br.getSize());
+		if(fixedRanges == null || fixedRanges.size() == 0) {
+			out.writeInt(0);
+		} else {
+			out.writeInt(fixedRanges.size());
+			for(final ByteRange br : fixedRanges) {
+				out.writeLong(br.getBeg());
+				out.writeLong(br.getEnd());
+				out.writeLong(br.getSize());
+			}
 		}
 		out.writeInt(randomRangesCount);
 		out.writeLong(
