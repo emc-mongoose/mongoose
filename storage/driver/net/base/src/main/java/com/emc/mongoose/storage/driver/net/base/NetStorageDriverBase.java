@@ -278,6 +278,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
 		try {
+			ioTask.startResponse();
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: invalid I/O task state", ioTask.toString());
