@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.LockSupport;
 
@@ -19,6 +18,7 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 21.02.17.
  */
 public final class BatchQueueOutputTask<T>
+extends ArrayList<T>
 implements Runnable {
 	
 	private static final Logger LOG = LogManager.getLogger();
@@ -27,25 +27,27 @@ implements Runnable {
 	private final Output<T> output;
 	
 	public BatchQueueOutputTask(final BlockingQueue<T> queue, final Output<T> output) {
+		super(BATCH_SIZE);
 		this.queue = queue;
 		this.output = output;
 	}
 	
 	@Override
 	public final void run() {
-		final List<T> buff = new ArrayList<>(BATCH_SIZE);
-		int n = 0;
+		int n, m;
 		while(true) {
+			n = size();
 			if(n == BATCH_SIZE) {
 				LockSupport.parkNanos(1);
 			} else {
-				n = queue.drainTo(buff, BATCH_SIZE - n);
+				n = queue.drainTo(this, BATCH_SIZE - n);
 			}
 			if(n == 0) {
 				LockSupport.parkNanos(1);
 			} else {
 				try {
-					n -= output.put(buff, 0, n);
+					m = output.put(this, 0, n);
+					removeRange(0, m);
 				} catch(final EOFException e) {
 					break;
 				} catch(final IOException e) {
