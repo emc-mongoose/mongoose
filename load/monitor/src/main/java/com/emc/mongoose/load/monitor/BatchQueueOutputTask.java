@@ -23,8 +23,8 @@ implements Runnable {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	
-	private final BlockingQueue<T> queue;
-	private final Output<T> output;
+	private final transient BlockingQueue<T> queue;
+	private final transient Output<T> output;
 	
 	public BatchQueueOutputTask(final BlockingQueue<T> queue, final Output<T> output) {
 		super(BATCH_SIZE);
