@@ -12,6 +12,7 @@ import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -277,7 +278,12 @@ implements DataIoTask<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
-		out.writeObject(fixedRanges);
+		out.writeInt(fixedRanges == null ? 0 : fixedRanges.size());
+		for(final ByteRange br : fixedRanges) {
+			out.writeLong(br.getBeg());
+			out.writeLong(br.getEnd());
+			out.writeLong(br.getSize());
+		}
 		out.writeInt(randomRangesCount);
 		out.writeLong(
 			markedRangesMaskPair[0].isEmpty() ? 0 : markedRangesMaskPair[0].toLongArray()[0]
@@ -294,6 +300,15 @@ implements DataIoTask<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		contentSrc = item.getContentSrc();
+		final int fixedByteRangesCount = in.readInt();
+		if(fixedByteRangesCount == 0) {
+			fixedRanges = null;
+		} else {
+			fixedRanges = new ArrayList<>(fixedByteRangesCount);
+			for(int i = 0; i < fixedByteRangesCount; i ++) {
+				fixedRanges.add(new ByteRange(in.readLong(), in.readLong(), in.readLong()));
+			}
+		}
 		contentSize = in.readLong();
 		fixedRanges = (List<ByteRange>) in.readObject();
 		randomRangesCount = in.readInt();

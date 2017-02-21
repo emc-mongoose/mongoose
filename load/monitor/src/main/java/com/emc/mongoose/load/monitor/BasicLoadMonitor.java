@@ -266,8 +266,8 @@ implements LoadMonitor<I, O> {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
 				LOG.debug(
-					Markers.MSG, "{}: {} results >= {} limit", counterResults.sum(),
-					countLimit
+					Markers.MSG, "{}: count limit reached, {} results >= {} limit",
+					counterResults.sum(), countLimit
 				);
 				return true;
 			}
@@ -278,8 +278,9 @@ implements LoadMonitor<I, O> {
 				failCountSum += lastStats.get(ioTypeCode).getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					LOG.debug(
-						Markers.MSG, "{}: {} successful + {} failed >= {} limit", succCountSum,
-						failCountSum, countLimit
+						Markers.MSG,
+						"{}: count limit reached, {} successful + {} failed >= {} limit",
+						succCountSum, failCountSum, countLimit
 					);
 					return true;
 				}
@@ -294,6 +295,10 @@ implements LoadMonitor<I, O> {
 			for(final int ioTypeCode : lastStats.keySet()) {
 				sizeSum += lastStats.get(ioTypeCode).getByteCount();
 				if(sizeSum >= sizeLimit) {
+					LOG.debug(
+						Markers.MSG, "{}: size limit reached, done {} >= {} limit",
+						SizeInBytes.formatFixedSize(sizeSum), sizeLimit
+					);
 					return true;
 				}
 			}
