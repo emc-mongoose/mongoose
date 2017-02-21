@@ -56,7 +56,6 @@ implements Runnable {
 							"Failed to get the results from the driver \"{}\"",
 							driver.toString()
 						);
-						e.printStackTrace(System.err);
 						Thread.sleep(1);
 					} else {
 						break;
