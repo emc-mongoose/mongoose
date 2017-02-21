@@ -116,7 +116,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test @Ignore public void testTotalMetricsLogFile()
+	@Test
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

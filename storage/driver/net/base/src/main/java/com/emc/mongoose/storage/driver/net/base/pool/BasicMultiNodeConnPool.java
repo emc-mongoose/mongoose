@@ -174,7 +174,9 @@ implements NonBlockingConnPool {
 		final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
 		if(conn.isActive()) {
 			final Queue<Channel> connQueue = connsMap.get(nodeAddr);
-			connQueue.add(conn);
+			if(connQueue != null) {
+				connQueue.add(conn);
+			}
 		} else {
 			synchronized(connsCountMap) {
 				connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
@@ -215,6 +217,9 @@ implements NonBlockingConnPool {
 			}
 		}
 		connsMap.clear();
+		synchronized(connsCountMap) {
+			connsCountMap.clear();
+		}
 		bootstrapMap.clear();
 	}
 }

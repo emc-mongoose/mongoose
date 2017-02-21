@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -258,6 +259,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
+		} catch(final RejectedExecutionException e) {
+			if(!isInterrupted()) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the I/O task");
+			}
 		}
 		return to - from;
 	}
