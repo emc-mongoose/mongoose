@@ -59,7 +59,7 @@ implements StorageDriver<I, O> {
 		ioTaskExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(ioWorkerCount),
-			new NamingThreadFactory(this.jobName + "-ioWorker", true)
+			new NamingThreadFactory(toString() + "/ioWorker", true)
 		);
 	}
 

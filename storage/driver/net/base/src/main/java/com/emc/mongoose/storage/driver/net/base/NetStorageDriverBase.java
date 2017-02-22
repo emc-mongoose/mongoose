@@ -93,12 +93,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(SystemUtils.IS_OS_LINUX) {
 			workerGroup = new EpollEventLoopGroup(
 				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
-				new NamingThreadFactory("ioWorker", true)
+				new NamingThreadFactory(toString() + "/ioWorker", true)
 			);
 		} else {
 			workerGroup = new NioEventLoopGroup(
 				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
-				new NamingThreadFactory("ioWorker", true)
+				new NamingThreadFactory(toString() + "/ioWorker", true)
 			);
 		}
 		bootstrap = new Bootstrap()
@@ -211,6 +211,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				ioTask.finishRequest();
 				concurrencyThrottle.release();
 				ioTask.setStatus(SUCC);
+				ioTask.startResponse();
 				complete(null, ioTask);
 			} else {
 				final Channel conn = connPool.lease();
@@ -245,6 +246,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					nextIoTask.finishRequest();
 					concurrencyThrottle.release();
 					nextIoTask.setStatus(SUCC);
+					nextIoTask.startResponse();
 					complete(null, nextIoTask);
 				} else {
 					conn = connPool.lease();
@@ -278,10 +280,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
 		try {
-			ioTask.startResponse();
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "{}: invalid I/O task state", ioTask.toString());
+			LogUtil.exception(LOG, Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
 		}
 		if(!IoType.NOOP.equals(ioTask.getIoType())) {
 			connPool.release(channel);
