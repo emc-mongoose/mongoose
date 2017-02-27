@@ -53,7 +53,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		getBaseDir(), DIR_SCENARIO, "circular", "append.json"
 	);
 	private static final SizeInBytes EXPECTED_INITIAL_SIZE = new SizeInBytes("16KB");
-	private static final SizeInBytes EXPECTED_FINAL_SIZE = new SizeInBytes("32KB-640KB");
+	private static final SizeInBytes EXPECTED_FINAL_SIZE = new SizeInBytes("32KB-1MB");
 	private static final int EXPECTED_CONCURRENCY = 10;
 	private static final long EXPECTED_COUNT = 1000;
 	private static final String ITEM_OUTPUT_FILE_0 = "circular-append-before.csv";
@@ -112,11 +112,11 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 		testMetricsLogRecords(
 			metricsLogRecords, IoType.UPDATE, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_INITIAL_SIZE, 31000, 0, CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+			EXPECTED_INITIAL_SIZE, 31100, 0, CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
-	@Test @Ignore public void testTotalMetricsLogFile()
+	@Test public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
@@ -142,7 +142,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(
-			"There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file",
+			"There should be more than " + EXPECTED_COUNT +
+				" records in the I/O trace log file, but got: " + ioTraceRecords.size(),
 			EXPECTED_COUNT < ioTraceRecords.size()
 		);
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {

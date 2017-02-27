@@ -24,7 +24,7 @@ implements Output<String> {
 	private static final String LINE_SEP = System.getProperty("line.separator");
 	
 	protected final BufferedWriter writer;
-	
+
 	public LinesBufferedStreamOutput(final OutputStream out)
 	throws IOException {
 		writer = new BufferedWriter(new OutputStreamWriter(out), Constants.MIB);
@@ -66,6 +66,7 @@ implements Output<String> {
 	@Override
 	public void close()
 	throws IOException {
+		writer.flush();
 		writer.close();
 	}
 }

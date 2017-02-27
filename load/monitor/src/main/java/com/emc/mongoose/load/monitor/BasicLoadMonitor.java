@@ -303,6 +303,14 @@ implements LoadMonitor<I, O> {
 	private boolean nothingToRecycle() {
 		if(driversMap.size() == 1) {
 			final LoadGenerator<I, O> soleLoadGenerator = driversMap.keySet().iterator().next();
+			try {
+				if(soleLoadGenerator.isStarted()) {
+					return false;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to check the load generator state");
+			}
+			// load generator has done its work
 			final long generatedIoTasks = soleLoadGenerator.getGeneratedIoTasksCount();
 			if(
 				circularityMap.get(soleLoadGenerator.hashCode()) && // circular load job

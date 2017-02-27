@@ -17,7 +17,7 @@ public final class ItemInfoFileOutput<I extends Item, O extends IoTask>
 implements Output<O> {
 	
 	private final Output<String> itemInfoOutput;
-	
+
 	public ItemInfoFileOutput(final Path filePath)
 	throws IOException {
 		itemInfoOutput = new TextFileOutput(filePath);
