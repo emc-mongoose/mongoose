@@ -4,7 +4,6 @@ import com.emc.mongoose.common.reflection.TypeUtil;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
-import static com.emc.mongoose.ui.cli.CliArgParser.ARG_SEP;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -26,6 +25,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +34,11 @@ import java.util.Map;
  */
 public final class Config
 implements Serializable {
+
+	public static final String KEY_NAME = "name";
+	public static final String KEY_DEPRECATED = "deprecated";
+	public static final String KEY_TARGET = "target";
+	public static final String PATH_SEP = "-";
 
 	private static final class TimeStrToLongDeserializer
 	extends JsonDeserializer<Long> {
@@ -1398,12 +1403,120 @@ implements Serializable {
 	
 	public void apply(final Map<String, Object> tree)
 	throws IllegalArgumentException {
+		applyAliasing(tree, getAliasingConfig());
 		try {
 			applyRecursively(this, tree);
 		} catch(final IllegalArgumentNameException e) {
 			throw new IllegalArgumentNameException(ARG_PREFIX + e.getMessage());
 		} catch(final InvocationTargetException | IllegalAccessException e) {
 			e.printStackTrace(System.err);
+		}
+	}
+
+	private static void applyAliasing(
+		final Map<String, Object> tree, final List<Map<String, Object>> rawAliases
+	) {
+		String aliasName, aliasTarget, aliasNamePath[], aliasNamePart;
+		Map<String, Object> subTree;
+		Object t;
+
+		for(final Map<String, Object> nextAliasNode : rawAliases) {
+
+			aliasName = (String) nextAliasNode.get(KEY_NAME);
+			aliasTarget = (String) nextAliasNode.get(KEY_TARGET);
+			if(aliasName.equals(aliasTarget)) {
+				throw new IllegalAliasNameException(aliasName);
+			}
+			aliasNamePath = aliasName.split(PATH_SEP);
+			subTree = tree;
+
+			for(int i = 0; i < aliasNamePath.length; i ++) {
+
+				aliasNamePart = aliasNamePath[i];
+				t = subTree.get(aliasNamePart);
+
+				if(t != null) {
+					if(t instanceof Map) {
+						subTree = (Map<String, Object>) t;
+					} else if(i == aliasNamePath.length - 1) {
+						if(nextAliasNode.containsKey(KEY_DEPRECATED)) {
+							if((boolean) nextAliasNode.get(KEY_DEPRECATED)) {
+								System.err.println(
+									"WARNING: configuration value @ \"" + aliasName +
+										"\" is deprecated, please use \"" + aliasTarget +
+										"\" instead"
+								);
+							}
+						}
+						setNewPath(tree, aliasTarget, t);
+						subTree.remove(aliasNamePart);
+					} else {
+						throw new IllegalAliasNameException(aliasName);
+					}
+				} else {
+					break;
+				}
+			}
+		}
+
+		cleanEmptyPaths(tree);
+	}
+
+	private static void setNewPath(
+		final Map<String, Object> tree, final String rawPath, final Object value
+	) {
+		final String newPath[] = rawPath.split(PATH_SEP);
+		Map<String, Object> subTree = tree;
+		Object t;
+		String newPathPart;
+
+		for(int i = 0; i < newPath.length; i ++) {
+			newPathPart = newPath[i];
+			t = subTree.get(newPathPart);
+
+			if(t != null) {
+				if(t instanceof Map) {
+					subTree = (Map<String, Object>) t;
+					if(i == newPath.length - 1) {
+						subTree.put(newPathPart, value);
+					}
+				} else {
+					throw new IllegalAliasTargetException(rawPath);
+				}
+			} else {
+				if(i == newPath.length - 1) {
+					subTree.put(newPathPart, value);
+				} else {
+					t = new HashMap<String, Object>();
+					subTree.put(newPathPart, t);
+					subTree = (Map<String, Object>) t;
+				}
+			}
+		}
+	}
+
+	private static void cleanEmptyPaths(final Map<String, Object> tree) {
+
+		boolean emptyBranchFound = true; // assume
+		Object t;
+		Iterator<Map.Entry<String, Object>> i;
+		Map.Entry<String, Object> nextEntry;
+
+		while(emptyBranchFound) {
+			i = tree.entrySet().iterator();
+			while(i.hasNext()) {
+				nextEntry = i.next();
+				emptyBranchFound = false;
+				t = nextEntry.getValue();
+				if(t instanceof Map) {
+					if(((Map) t).isEmpty()) {
+						i.remove();
+						emptyBranchFound = true;
+					} else {
+						cleanEmptyPaths((Map<String, Object>) t);
+					}
+				}
+			}
 		}
 	}
 
@@ -1422,7 +1535,7 @@ implements Serializable {
 					try {
 						applyRecursively(subConfig, childBranch);
 					} catch(final IllegalArgumentNameException e) {
-						throw new IllegalArgumentNameException(key + ARG_SEP + e.getMessage());
+						throw new IllegalArgumentNameException(key + PATH_SEP + e.getMessage());
 					}
 				} catch(final NoSuchMethodException e) {
 					throw new IllegalArgumentNameException(key);

@@ -1,0 +1,18 @@
+{
+	"type" : "load",
+	"config" : {
+		"load" : {
+			"threads" : 10
+		},
+		"run" : {
+			"id" : "backward-compatibility-test"
+		},
+		"storage" : {
+			"node" : {
+				"addrs" : [
+					"127.0.0.1"
+				]
+			}
+		}
+	}
+}

@@ -1,5 +1,6 @@
 package com.emc.mongoose.ui.cli;
 
+import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,12 +17,7 @@ public final class CliArgParser {
 	private static final Logger LOG = LogManager.getLogger();
 
 	public static final String ARG_PREFIX = "--";
-	public static final String ARG_SEP = "-";
 
-	private static final String KEY_NAME = "name";
-	private static final String KEY_DEPRECATED = "deprecated";
-	private static final String KEY_TARGET = "target";
-	
 	public static void main(final String... args)
 	throws IllegalArgumentException {
 		final Map<String, Object> argTree = parseArgs(null, args);
@@ -46,10 +42,10 @@ public final class CliArgParser {
 
 			if(aliasingConfig != null) {
 				for(final Map<String, Object> aliasingNode : aliasingConfig) {
-					nextAliasName = ARG_PREFIX + aliasingNode.get(KEY_NAME);
-					nextAliasTarget = ARG_PREFIX + aliasingNode.get(KEY_TARGET);
-					nextDeprecatedFlag = aliasingNode.containsKey(KEY_DEPRECATED) ?
-						(boolean) aliasingNode.get(KEY_DEPRECATED) : false;
+					nextAliasName = ARG_PREFIX + aliasingNode.get(Config.KEY_NAME);
+					nextAliasTarget = ARG_PREFIX + aliasingNode.get(Config.KEY_TARGET);
+					nextDeprecatedFlag = aliasingNode.containsKey(Config.KEY_DEPRECATED) ?
+										 (boolean) aliasingNode.get(Config.KEY_DEPRECATED) : false;
 					if(arg.startsWith(nextAliasName)) {
 						if(nextDeprecatedFlag) {
 							LOG.warn(
@@ -86,7 +82,7 @@ public final class CliArgParser {
 		final Map<String, Object> tree, final String arg, final String value
 	) throws IllegalArgumentException {
 		if(arg.startsWith(ARG_PREFIX) && arg.length() > ARG_PREFIX.length()) {
-			final String argParts[] = arg.substring(ARG_PREFIX.length()).split(ARG_SEP);
+			final String argParts[] = arg.substring(ARG_PREFIX.length()).split(Config.PATH_SEP);
 			Map<String, Object> subTree = tree;
 			String argPart;
 			for(int i = 0; i < argParts.length; i ++) {
