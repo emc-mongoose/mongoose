@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
@@ -109,7 +110,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testTotalMetricsLogFile()
+	@Test @Ignore
+	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
 			getMetricsTotalLogRecords().get(0),

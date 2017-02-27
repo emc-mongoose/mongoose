@@ -82,6 +82,11 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
+								"type": "MarkerFilter",
+								"marker": "extResultsMedFile",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "ACCEPT",
