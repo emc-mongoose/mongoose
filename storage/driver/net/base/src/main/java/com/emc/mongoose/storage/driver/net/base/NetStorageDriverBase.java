@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -92,12 +93,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(SystemUtils.IS_OS_LINUX) {
 			workerGroup = new EpollEventLoopGroup(
 				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
-				new NamingThreadFactory("ioWorker", true)
+				new NamingThreadFactory(toString() + "/ioWorker", true)
 			);
 		} else {
 			workerGroup = new NioEventLoopGroup(
 				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
-				new NamingThreadFactory("ioWorker", true)
+				new NamingThreadFactory(toString() + "/ioWorker", true)
 			);
 		}
 		bootstrap = new Bootstrap()
@@ -210,6 +211,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				ioTask.finishRequest();
 				concurrencyThrottle.release();
 				ioTask.setStatus(SUCC);
+				ioTask.startResponse();
 				complete(null, ioTask);
 			} else {
 				final Channel conn = connPool.lease();
@@ -244,6 +246,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					nextIoTask.finishRequest();
 					concurrencyThrottle.release();
 					nextIoTask.setStatus(SUCC);
+					nextIoTask.startResponse();
 					complete(null, nextIoTask);
 				} else {
 					conn = connPool.lease();
@@ -258,6 +261,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
+		} catch(final RejectedExecutionException e) {
+			if(!isInterrupted()) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the I/O task");
+			}
 		}
 		return to - from;
 	}
@@ -275,7 +282,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try {
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "{}: invalid I/O task state", ioTask.toString());
+			LogUtil.exception(LOG, Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
 		}
 		if(!IoType.NOOP.equals(ioTask.getIoType())) {
 			connPool.release(channel);

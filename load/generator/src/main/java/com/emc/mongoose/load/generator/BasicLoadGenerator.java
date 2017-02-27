@@ -225,8 +225,8 @@ implements LoadGenerator<I, O> {
 			}
 
 			LOG.debug(
-				Markers.MSG, "{}: produced {} items", generatedIoTaskCount,
-				BasicLoadGenerator.this.toString()
+				Markers.MSG, "{}: produced {} items", BasicLoadGenerator.this.toString(),
+				generatedIoTaskCount
 			);
 			try {
 				shutdown();

@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.concurrent.BatchQueueOutputTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
@@ -24,8 +25,6 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
-import static java.lang.System.nanoTime;
-
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -34,12 +33,14 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
+
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -61,6 +63,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
+import static java.lang.System.nanoTime;
 
 /**
  Created by kurila on 12.07.16.
@@ -82,6 +85,7 @@ implements LoadMonitor<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
 	private final boolean isAnyCircular;
 	private final ThreadPoolExecutor svcTaskExecutor;
+	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
 	private final Int2ObjectMap<IoStats> medIoStats;
@@ -187,16 +191,21 @@ implements LoadMonitor<I, O> {
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		circularityMap = new Int2BooleanArrayMap(driversMap.size());
+		recycleQueuesMap = new Int2ObjectOpenHashMap<>(driversMap.size());
+		final int queueSizeLimit = firstLoadConfig.getQueueConfig().getSize();
 		int concurrencySum = 0;
-		int driversCountSum = 0;
+		int svcWorkerCount = 0;
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
-			driversCountSum += nextDrivers.size();
+			svcWorkerCount += nextDrivers.size();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
-			circularityMap.put(nextGenerator.hashCode(), nextLoadConfig.getCircular());
-			if(circularityMap.get(nextGenerator.hashCode())) {
+			final int nextOriginCode = nextGenerator.hashCode();
+			circularityMap.put(nextOriginCode, nextLoadConfig.getCircular());
+			if(circularityMap.get(nextOriginCode)) {
 				anyCircularFlag = true;
+				recycleQueuesMap.put(nextOriginCode, new ArrayBlockingQueue<O>(queueSizeLimit));
+				svcWorkerCount ++;
 			}
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
@@ -217,7 +226,7 @@ implements LoadMonitor<I, O> {
 		this.totalConcurrency = concurrencySum;
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
-			latestIoResultsPerItem = new ConcurrentHashMap<>(firstLoadConfig.getQueueConfig().getSize());
+			latestIoResultsPerItem = new ConcurrentHashMap<>(queueSizeLimit);
 		} else {
 			latestIoResultsPerItem = null;
 		}
@@ -240,7 +249,11 @@ implements LoadMonitor<I, O> {
 		this.countLimit = countLimitSum;
 		this.sizeLimit = sizeLimitSum;
 
-		final int svcWorkerCount = driversCountSum + (medIoStats == null ? 1 : 2);
+		if(medIoStats == null) {
+			svcWorkerCount ++;
+		} else {
+			svcWorkerCount += 2;
+		}
 		this.svcTaskExecutor = new ThreadPoolExecutor(
 			svcWorkerCount, svcWorkerCount, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
 			new NamingThreadFactory("svcTasksExecutor", true)
@@ -252,6 +265,10 @@ implements LoadMonitor<I, O> {
 	private boolean isDoneCountLimit() {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
+				LOG.debug(
+					Markers.MSG, "{}: count limit reached, {} results >= {} limit",
+					counterResults.sum(), countLimit
+				);
 				return true;
 			}
 			long succCountSum = 0;
@@ -260,6 +277,11 @@ implements LoadMonitor<I, O> {
 				succCountSum += lastStats.get(ioTypeCode).getSuccCount();
 				failCountSum += lastStats.get(ioTypeCode).getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
+					LOG.debug(
+						Markers.MSG,
+						"{}: count limit reached, {} successful + {} failed >= {} limit",
+						succCountSum, failCountSum, countLimit
+					);
 					return true;
 				}
 			}
@@ -273,6 +295,10 @@ implements LoadMonitor<I, O> {
 			for(final int ioTypeCode : lastStats.keySet()) {
 				sizeSum += lastStats.get(ioTypeCode).getByteCount();
 				if(sizeSum >= sizeLimit) {
+					LOG.debug(
+						Markers.MSG, "{}: size limit reached, done {} >= {} limit",
+						SizeInBytes.formatFixedSize(sizeSum), sizeLimit
+					);
 					return true;
 				}
 			}
@@ -408,7 +434,6 @@ implements LoadMonitor<I, O> {
 		long countBytesDone = 0;
 		ioTaskResult = ioTaskResults.get(0);
 		IoStats ioTypeStats, ioTypeMedStats;
-		Output<O> ioTaskDest;
 
 		for(int i = 0; i < n; i ++) {
 
@@ -440,12 +465,20 @@ implements LoadMonitor<I, O> {
 
 			if(Status.SUCC.equals(status)) {
 				if(ioTaskResult instanceof PartialIoTask) {
+					
 					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 						ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 					}
+					
 					m --;
+					
 				} else {
+					
+					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
 
 					if(circularityMap.get(originCode)) {
 						item = ioTaskResult.getItem();
@@ -460,20 +493,14 @@ implements LoadMonitor<I, O> {
 								LockSupport.parkNanos(1);
 							}
 						}
-						ioTaskDest = ioTaskOutputs.get(originCode);
-					} else {
-						ioTaskDest = ioResultsOutput;
-					}
-
-					// update the metrics with success
-					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
-					}
-
-					if(ioTaskDest != null) {
+						if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
+							LOG.warn(
+								Markers.ERR, "Failed to put the I/O task into the recycle queue"
+							);
+						}
+					} else if(ioResultsOutput != null){
 						try {
-							while(!ioTaskDest.put(ioTaskResult)) {
+							while(!ioResultsOutput.put(ioTaskResult)) {
 								LockSupport.parkNanos(1);
 							}
 						} catch(final EOFException e) {
@@ -634,6 +661,15 @@ implements LoadMonitor<I, O> {
 		);
 		if(medIoStats != null) {
 			svcTaskExecutor.submit(new IntermediateMetricsSvcTask());
+		}
+		for(final int originCode : recycleQueuesMap.keySet()) {
+			if(circularityMap.get(originCode)) {
+				svcTaskExecutor.submit(
+					new BatchQueueOutputTask<>(
+						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode)
+					)
+				);
+			}
 		}
 		for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
@@ -902,6 +938,10 @@ implements LoadMonitor<I, O> {
 		driversMap.clear();
 		ioTaskOutputs.clear();
 		circularityMap.clear();
+		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
+			recycleQueue.clear();
+		}
+		recycleQueuesMap.clear();
 
 		LOG.info(
 			Markers.METRICS_STDOUT,

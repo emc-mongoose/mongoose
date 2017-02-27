@@ -43,7 +43,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import io.netty.util.AsciiString;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -332,12 +331,8 @@ implements HttpStorageDriver<I, O> {
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		String sharedHeaderName;
 		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
-			sharedHeaderName = sharedHeader.getKey();
-			if(!httpHeaders.contains(sharedHeaderName)) {
-				httpHeaders.add(new AsciiString(sharedHeaderName), sharedHeader.getValue());
-			}
+			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
 	}
 
@@ -382,7 +377,7 @@ implements HttpStorageDriver<I, O> {
 				continue;
 			}
 			// put the generated header value into the request
-			httpHeaders.set(new AsciiString(headerName), headerValue);
+			httpHeaders.set(headerName, headerValue);
 		}
 	}
 

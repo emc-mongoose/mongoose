@@ -1,20 +1,22 @@
 package com.emc.mongoose.common.api;
 
 import com.emc.mongoose.common.exception.InvalidByteRangeException;
-
-import java.io.Serializable;
-
 import static com.emc.mongoose.common.api.SizeInBytes.toFixedSize;
 
 /**
  Created by kurila on 26.09.16.
  */
-public final class ByteRange
-implements Serializable {
+public final class ByteRange {
 	
 	private final long beg;
 	private final long end;
 	private final long size;
+	
+	public ByteRange(final long beg, final long end, final long size) {
+		this.beg = beg;
+		this.end = end;
+		this.size = size;
+	}
 	
 	public ByteRange(final String rawRange)
 	throws InvalidByteRangeException, NumberFormatException {
