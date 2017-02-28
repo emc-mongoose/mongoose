@@ -30,7 +30,7 @@ package it.unimi.dsi.fastutil;
  * extends {@link it.unimi.dsi.fastutil.ints.Int2IntFunction}). However, {@link #size()} is allowed to return -1 to denote
  * that the number of keys is not available (e.g., in the case of a string hash function).
  * 
- * <p>Note that there is an {@link it.unimi.dsi.fastutil.objects.Object2ObjectFunction} that
+ 
  * can also set its default return value.
  * 
  * <p><strong>Warning</strong>: Equality of functions is <em>not specified</em>

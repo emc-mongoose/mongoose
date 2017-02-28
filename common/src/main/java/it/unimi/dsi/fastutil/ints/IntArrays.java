@@ -83,8 +83,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * syntactic simplicity) reasons make array lists unsuitable.
  *
  * <P>
- * Note that {@link it.unimi.dsi.fastutil.io.BinIO} and
- * {@link it.unimi.dsi.fastutil.io.TextIO} contain several methods make it
+ 
+ 
  * possible to load and save arrays of primitive types as sequences of elements
  * in {@link java.io.DataInput} format (i.e., not as objects) or as sequences of
  * lines of text.

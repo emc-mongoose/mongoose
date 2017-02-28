@@ -74,8 +74,8 @@ public interface Hash {
 
 	/** A generic hash strategy.
 	 *
-	 * <P>Custom hash structures (e.g., {@link
-	 * it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet}) allow to hash objects
+	 
+	 
 	 * using arbitrary functions, a typical example being that of {@linkplain
 	 * it.unimi.dsi.fastutil.ints.IntArrays#HASH_STRATEGY arrays}. Of course,
 	 * one has to compare objects for equality consistently with the chosen

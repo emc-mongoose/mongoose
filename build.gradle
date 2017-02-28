@@ -52,8 +52,6 @@ ext {
 }
 
 subprojects {
-	apply plugin: "maven"
-	apply plugin: "signing"
 	apply plugin: "com.google.osdetector"
 
 	tasks.withType(JavaCompile) {
@@ -89,6 +87,30 @@ subprojects {
 		}
 	}
 
+	task sourcesJar(type: Jar, dependsOn: classes) {
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join("-")
+		classifier = "sources"
+		archiveName "$name-$classifier.$extension"
+		from sourceSets.main.allSource
+	}
+
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join("-")
+		classifier = "javadoc"
+		archiveName "$name-$classifier.$extension"
+		from javadoc.destinationDir
+	}
+
+	artifacts {
+		archives jar
+		archives sourcesJar
+		archives javadocJar
+	}
+
 	test {
 		maxHeapSize "2g"
 		testLogging {
@@ -97,59 +119,6 @@ subprojects {
 			showStandardStreams = true
 		}
 	}
-
-	artifacts {
-		archives jar
-	}
-
-	/*signing {
-		sign configurations.archives
-	}
-
-	// see http://central.sonatype.org/pages/gradle.html for details
-	uploadArchives {
-		repositories {
-			mavenDeployer {
-				beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				pom.project {
-					name "mongoose"
-					packaging "jar"
-					artifactId "$name"
-					url "https://github.com/emc-mongoose/mongoose/wiki"
-
-					scm {
-						connection "https://github.com/emc-mongoose/mongoose.git"
-						developerConnection "https://github.com/emc-mongoose/mongoose.git"
-						url "https://github.com/emc-mongoose/mongoose.git"
-					}
-
-					licenses {
-						license {
-							name "The MIT License (MIT)"
-							url "https://github.com/emc-mongoose/mongoose/wiki/License"
-						}
-					}
-
-					developers {
-						developer {
-							id "akurilov"
-							name "Andrey Kurilov"
-							email "akurilov123@gmail.com"
-						}
-					}
-				}
-			}
-		}
-	}*/
 }
 
 task dist(type: Tar) {
