@@ -102,9 +102,9 @@ subprojects {
 		archives jar
 	}
 
-	signing {
+	/*signing {
 		sign configurations.archives
-	}
+	}*/
 
 	/* see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
