@@ -89,7 +89,7 @@ subprojects {
 	}
 
 	test {
-		maxHeapSize "2560m"
+		maxHeapSize "2g"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
