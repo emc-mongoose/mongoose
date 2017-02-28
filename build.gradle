@@ -102,7 +102,7 @@ subprojects {
 		archives jar
 	}
 
-	signing {
+	/*signing {
 		sign configurations.archives
 	}
 
@@ -149,7 +149,7 @@ subprojects {
 				}
 			}
 		}
-	}
+	}*/
 }
 
 task dist(type: Tar) {
