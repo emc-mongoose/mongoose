@@ -83,7 +83,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "extResultsMedFile",
+								"marker": "extMedResultsFile",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
