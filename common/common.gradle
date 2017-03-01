@@ -1,4 +1,4 @@
-description = 'mongoose-common'
+description = "mongoose-common"
 
 dependencies {
 	compile "org.apache.commons:commons-collections4:${depVersion.commonsCollections}"

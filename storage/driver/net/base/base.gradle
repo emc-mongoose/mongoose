@@ -1,12 +1,12 @@
-description = 'mongoose-storage-driver-net-base'
+description = "mongoose-storage-driver-net-base"
 
 dependencies {
 
 	compileOnly(
-		project(':common'),
-		project(':model'),
-		project(':ui'),
-		project(':storage:driver:base')
+		project(":common"),
+		project(":model"),
+		project(":ui"),
+		project(":storage:driver:base")
 	)
 
 	compile(

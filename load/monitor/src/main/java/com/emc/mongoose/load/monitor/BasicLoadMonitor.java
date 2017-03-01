@@ -840,7 +840,7 @@ implements LoadMonitor<I, O> {
 		svcTaskExecutor.shutdownNow();
 		try {
 			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.error(
+				LOG.warn(
 					Markers.ERR, "{}: failed to terminate the service tasks in 1 second", getName()
 				);
 			}

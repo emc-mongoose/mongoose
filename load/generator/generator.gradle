@@ -1,4 +1,4 @@
-description = 'mongoose-load-generator'
+description = "mongoose-load-generator"
 
 dependencies {
 
@@ -8,9 +8,9 @@ dependencies {
 	)
 
 	compileOnly(
-		project(':common'),
-		project(':model'),
-		project(':ui')
+		project(":common"),
+		project(":model"),
+		project(":ui")
 	)
 
 	runtime(

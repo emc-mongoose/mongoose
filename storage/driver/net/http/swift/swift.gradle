@@ -1,13 +1,13 @@
-description = 'mongoose-storage-driver-net-http-swift'
+description = "mongoose-storage-driver-net-http-swift"
 
 dependencies {
 	compileOnly(
-		project(':common'),
-		project(':model'),
-		project(':ui'),
-		project(':storage:driver:base'),
-		project(':storage:driver:net:base'),
-		project(':storage:driver:net:http:base'),
+		project(":common"),
+		project(":model"),
+		project(":ui"),
+		project(":storage:driver:base"),
+		project(":storage:driver:net:base"),
+		project(":storage:driver:net:http:base"),
 	)
 
 	compile(
