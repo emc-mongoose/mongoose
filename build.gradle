@@ -167,11 +167,12 @@ subprojects {
 
 					LinkedList names = new LinkedList()
 					collectName(project, names)
-					artifactId = names.join("-")
 
+					name = names.join("-")
+					description = project.description
+					artifactId = name
 					groupId = "com.github.emc-mongoose"
 					project {
-						packaging "jar"
 						url "https://github.com/emc-mongoose/mongoose/wiki"
 
 						scm {
