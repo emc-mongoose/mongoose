@@ -14,6 +14,7 @@ group = "com.github.emc-mongoose"
 
 allprojects {
 	apply plugin: "java"
+	apply plugin: "maven"
 	version = defineVersion()
 }
 
@@ -109,6 +110,23 @@ subprojects {
 		archives jar
 		archives sourcesJar
 		archives javadocJar
+	}
+
+	task makePomFile {
+		doLast {
+			pom {
+				groupId = "com.github.emc-mongoose"
+				project {
+					licenses {
+						license {
+							name "The MIT License (MIT)"
+							url "https://github.com/emc-mongoose/mongoose/wiki/License"
+							distribution "repo"
+						}
+					}
+				}
+			}.writeTo("$buildDir/pom.xml")
+		}
 	}
 
 	test {
