@@ -1,5 +1,4 @@
 package com.emc.mongoose.model.metrics;
-//
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
@@ -202,7 +201,7 @@ implements Closeable, MetricSet {
 	/**
 	 * Adds a {@link MetricRegistryListener} to a collection of listeners that will be notified on
 	 * metric creation.  Listeners will be notified in the order in which they are added.
-	 * <p/>
+	 * <p>
 	 * <b>N.B.:</b> The listener will be notified of all existing metrics when it first registers.
 	 *
 	 * @param listener the listener that will be notified

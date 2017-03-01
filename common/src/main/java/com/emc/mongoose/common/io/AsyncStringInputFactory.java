@@ -68,7 +68,7 @@ implements ValueInputFactory<String, G> {
 	/**
 	 *
 	 * @param type - a type of the generator
-	 * @param parameters - an array of parameters (if length > 1, first arg - a format, second - a range, by default)
+	 * @param parameters - an array of parameters (if length &gt; 1, first arg - a format, second - a range, by default)
 	 * @return a suitable generator
 	 */
 	@Override @SuppressWarnings("unchecked")

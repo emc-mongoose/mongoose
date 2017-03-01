@@ -89,6 +89,30 @@ subprojects {
 		}
 	}
 
+	task sourcesJar(type: Jar, dependsOn: classes) {
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join("-")
+		classifier = "sources"
+		archiveName "$name-$classifier.$extension"
+		from sourceSets.main.allSource
+	}
+
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join("-")
+		classifier = "javadoc"
+		archiveName "$name-$classifier.$extension"
+		from javadoc.destinationDir
+	}
+
+	artifacts {
+		archives jar
+		archives sourcesJar
+		archives javadocJar
+	}
+
 	test {
 		maxHeapSize "2g"
 		testLogging {
