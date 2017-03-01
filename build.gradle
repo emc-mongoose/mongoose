@@ -164,6 +164,11 @@ subprojects {
 				}
 
 				pom {
+
+					LinkedList names = new LinkedList()
+					collectName(project, names)
+					artifactId = names.join("-")
+
 					groupId = "com.github.emc-mongoose"
 					project {
 						packaging "jar"
