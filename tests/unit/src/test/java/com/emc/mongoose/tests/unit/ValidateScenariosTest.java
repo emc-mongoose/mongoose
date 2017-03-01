@@ -41,10 +41,12 @@ public class ValidateScenariosTest {
 		JsonNode nextScenario;
 		ProcessingReport report;
 		for(final Path nextScenarioPath : scenarioPaths) {
-			System.out.println("Validating the scenario file: " + nextScenarioPath.toString());
-			nextScenario = m.readTree(nextScenarioPath.toFile());
-			report = validator.validate(jsonSchema, nextScenario);
-			assertTrue(report.toString(), report.isSuccess());
+			if(!nextScenarioPath.toString().contains("compat")) {
+				System.out.println("Validating the scenario file: " + nextScenarioPath.toString());
+				nextScenario = m.readTree(nextScenarioPath.toFile());
+				report = validator.validate(jsonSchema, nextScenario);
+				assertTrue(report.toString(), report.isSuccess());
+			}
 		}
 	}
 }

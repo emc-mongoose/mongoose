@@ -9,11 +9,12 @@ buildscript {
 	}
 }
 
-description = "Mongoose - high-load storage performance testing automation tool"
+description = "Mongoose is a high-load storage performance testing tool"
+group = "com.github.emc-mongoose"
 
 allprojects {
-	version = defineVersion()
 	apply plugin: "java"
+	version = defineVersion()
 }
 
 ext {
@@ -89,7 +90,7 @@ subprojects {
 	}
 
 	test {
-		maxHeapSize "2560m"
+		maxHeapSize "2g"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
@@ -122,28 +123,27 @@ subprojects {
 				pom.project {
 					name "mongoose"
 					packaging "jar"
-					// optionally artifactId can be defined here
-					description ""
+					artifactId "$name"
 					url "https://github.com/emc-mongoose/mongoose/wiki"
 
 					scm {
-						connection "scm:svn:http://foo.googlecode.com/svn/trunk/"
-						developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-						url 'http://foo.googlecode.com/svn/trunk/'
+						connection "https://github.com/emc-mongoose/mongoose.git"
+						developerConnection "https://github.com/emc-mongoose/mongoose.git"
+						url "https://github.com/emc-mongoose/mongoose.git"
 					}
 
 					licenses {
 						license {
-							name 'The Apache License, Version 2.0'
-							url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+							name "The MIT License (MIT)"
+							url "https://github.com/emc-mongoose/mongoose/wiki/License"
 						}
 					}
 
 					developers {
 						developer {
-							id 'manfred'
-							name 'Manfred Moser'
-							email 'manfred@sonatype.com'
+							id "akurilov"
+							name "Andrey Kurilov"
+							email "akurilov123@gmail.com"
 						}
 					}
 				}

@@ -51,7 +51,6 @@ implements StorageDriver<I, O> {
 
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
-	private final LongAdder recycledTaskCount = new LongAdder();
 
 	protected StorageDriverBase(
 		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
@@ -169,11 +168,6 @@ implements StorageDriver<I, O> {
 	@Override
 	public final long getCompletedTaskCount() {
 		return completedTaskCount.sum();
-	}
-
-	@Override
-	public final long getRecycledTaskCount() {
-		return recycledTaskCount.sum();
 	}
 
 	@Override

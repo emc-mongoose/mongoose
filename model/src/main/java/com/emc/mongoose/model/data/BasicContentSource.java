@@ -1,15 +1,15 @@
 package com.emc.mongoose.model.data;
-//
+
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.api.SizeInBytes;
+
 import org.apache.commons.collections4.map.LRUMap;
-//
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -68,7 +68,8 @@ implements ContentSource {
 	//
 	@Override
 	public final int getSize() {
-		return zeroByteLayer.capacity();
+		// NPE protection is necessary for the storage driver service
+		return zeroByteLayer == null ? 0 : zeroByteLayer.capacity();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

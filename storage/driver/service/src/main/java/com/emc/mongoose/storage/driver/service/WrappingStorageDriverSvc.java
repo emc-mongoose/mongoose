@@ -75,10 +75,9 @@ implements StorageDriverSvc<I, O> {
 				try {
 					LOG.info(
 						Markers.MSG,
-						"{} I/O tasks: scheduled={}, active={}, completed={}, recycled={}",
+						"{} I/O tasks: scheduled={}, active={}, completed={}",
 						storageDriver.getName(), storageDriver.getScheduledTaskCount(),
-						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount(),
-						storageDriver.getRecycledTaskCount()
+						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount()
 					);
 				} catch(final RemoteException ignored) {
 				}
@@ -252,11 +251,7 @@ implements StorageDriverSvc<I, O> {
 	throws RemoteException {
 		return driver.getCompletedTaskCount();
 	}
-	@Override
-	public final long getRecycledTaskCount()
-	throws RemoteException {
-		return driver.getRecycledTaskCount();
-	}
+	
 	@Override
 	public final boolean isIdle()
 	throws RemoteException {
