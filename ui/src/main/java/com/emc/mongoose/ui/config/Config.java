@@ -1497,7 +1497,7 @@ implements Serializable {
 
 	private static void cleanEmptyPaths(final Map<String, Object> tree) {
 
-		boolean emptyBranchFound = true; // assume
+		boolean emptyBranchFound = !tree.isEmpty(); // assume
 		Object t;
 		Iterator<Map.Entry<String, Object>> i;
 		Map.Entry<String, Object> nextEntry;
