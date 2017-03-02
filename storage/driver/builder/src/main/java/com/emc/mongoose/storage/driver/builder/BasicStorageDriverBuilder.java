@@ -16,14 +16,20 @@ import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
 import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
 import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
 import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.ServiceLoader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  Created by andrey on 05.10.16.
@@ -39,15 +45,33 @@ public class BasicStorageDriverBuilder<
 	private LoadConfig loadConfig;
 	private StorageConfig storageConfig;
 	
-	private final ServiceLoader<T> loader;
+	private final List<Class<T>> storageDriverImpls = new ArrayList<>();
 	
 	public BasicStorageDriverBuilder() {
-		loader = (ServiceLoader) ServiceLoader.load(StorageDriver.class);
-		final Iterator<T> implIterator = loader.iterator();
-		T nextImpl;
-		while(implIterator.hasNext()) {
-			nextImpl = implIterator.next();
-			System.out.println(nextImpl);
+		final ClassLoader cl = Thread.currentThread().getContextClassLoader();
+		try {
+			final Enumeration<URL> resUrls = cl
+				.getResources(RES_PREFIX + StorageDriver.class.getCanonicalName());
+			String nextLine;
+			while(resUrls.hasMoreElements()) {
+				try(
+					final BufferedReader br = new BufferedReader(
+						new InputStreamReader(resUrls.nextElement().openStream())
+					)
+				) {
+					while(null != (nextLine = br.readLine())) {
+						try {
+							storageDriverImpls.add((Class) Class.forName(nextLine, true, cl));
+						} catch(final ClassNotFoundException e) {
+							LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+						}
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+				}
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		}
 	}
 

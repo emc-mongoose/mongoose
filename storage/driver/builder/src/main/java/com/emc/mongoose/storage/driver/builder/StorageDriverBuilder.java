@@ -20,6 +20,8 @@ public interface StorageDriverBuilder<
 	String API_ATMOS = "atmos";
 	String API_S3 = "s3";
 	String API_SWIFT = "swift";
+	
+	String RES_PREFIX = "META-INF/services/";
 
 	ItemConfig getItemConfig()
 	throws RemoteException;
