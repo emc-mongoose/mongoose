@@ -14,7 +14,6 @@ group = "com.github.emc-mongoose"
 
 allprojects {
 	apply plugin: "java"
-	apply plugin: "maven"
 	version = defineVersion()
 }
 
@@ -53,6 +52,8 @@ ext {
 }
 
 subprojects {
+	apply plugin: "maven"
+	apply plugin: "signing"
 	apply plugin: "com.google.osdetector"
 
 	tasks.withType(JavaCompile) {
@@ -112,7 +113,7 @@ subprojects {
 		archives javadocJar
 	}
 
-	task makePomFile {
+	/*task pomFile {
 		doLast {
 			pom {
 				groupId = "com.github.emc-mongoose"
@@ -127,7 +128,7 @@ subprojects {
 				}
 			}.writeTo("$buildDir/pom.xml")
 		}
-	}
+	}*/
 
 	test {
 		maxHeapSize "2g"
@@ -135,6 +136,68 @@ subprojects {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
 			showStandardStreams = true
+		}
+	}
+
+	/*signing {
+		sign configurations.archives
+	}*/
+
+	// see http://central.sonatype.org/pages/gradle.html for details
+	uploadArchives {
+
+		def ossrhUsername = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
+		def ossrhPassword = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
+
+		repositories {
+			mavenDeployer {
+				beforeDeployment {
+					//MavenDeployment deployment -> signing.signPom(deployment)
+				}
+
+				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+					authentication(userName: ossrhUsername, password: ossrhPassword)
+				}
+
+				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+					authentication(userName: ossrhUsername, password: ossrhPassword)
+				}
+
+				pom {
+
+					LinkedList names = new LinkedList()
+					collectName(project, names)
+
+					name = names.join("-")
+					description = project.description
+					artifactId = name
+					groupId = "com.github.emc-mongoose"
+					project {
+						url "https://github.com/emc-mongoose/mongoose/wiki"
+
+						scm {
+							connection "https://github.com/emc-mongoose/mongoose.git"
+							developerConnection "https://github.com/emc-mongoose/mongoose.git"
+							url "https://github.com/emc-mongoose/mongoose.git"
+						}
+
+						licenses {
+							license {
+								name "The MIT License (MIT)"
+								url "https://github.com/emc-mongoose/mongoose/wiki/License"
+							}
+						}
+
+						developers {
+							developer {
+								id "akurilov"
+								name "Andrey Kurilov"
+								email "akurilov123@gmail.com"
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
