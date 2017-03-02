@@ -22,6 +22,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 /**
  Created by andrey on 05.10.16.
@@ -36,6 +38,18 @@ public class BasicStorageDriverBuilder<
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private StorageConfig storageConfig;
+	
+	private final ServiceLoader<T> loader;
+	
+	public BasicStorageDriverBuilder() {
+		loader = (ServiceLoader) ServiceLoader.load(StorageDriver.class);
+		final Iterator<T> implIterator = loader.iterator();
+		T nextImpl;
+		while(implIterator.hasNext()) {
+			nextImpl = implIterator.next();
+			System.out.println(nextImpl);
+		}
+	}
 
 	protected final ContentSource getContentSource()
 	throws IOException {
@@ -49,7 +63,7 @@ public class BasicStorageDriverBuilder<
 	public ItemConfig getItemConfig() {
 		return itemConfig;
 	}
-
+	
 	@Override
 	public LoadConfig getLoadConfig() {
 		return loadConfig;
