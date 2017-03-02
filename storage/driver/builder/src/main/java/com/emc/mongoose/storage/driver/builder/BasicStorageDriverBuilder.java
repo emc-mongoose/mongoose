@@ -5,16 +5,10 @@ import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageType;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.storage.driver.net.http.atmos.AtmosStorageDriver;
-import com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver;
-import com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver;
-import com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver;
 import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -26,10 +20,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.regex.Matcher;
 
 /**
  Created by andrey on 05.10.16.
@@ -53,6 +50,7 @@ public class BasicStorageDriverBuilder<
 			final Enumeration<URL> resUrls = cl
 				.getResources(RES_PREFIX + StorageDriver.class.getCanonicalName());
 			String nextLine;
+			Class<T> nextImplCls;
 			while(resUrls.hasMoreElements()) {
 				try(
 					final BufferedReader br = new BufferedReader(
@@ -61,7 +59,12 @@ public class BasicStorageDriverBuilder<
 				) {
 					while(null != (nextLine = br.readLine())) {
 						try {
-							storageDriverImpls.add((Class) Class.forName(nextLine, true, cl));
+							nextImplCls = (Class) Class.forName(nextLine, true, cl);
+							LOG.info(
+								Markers.MSG, "Loaded storage driver implementation: {}",
+								nextImplCls.getCanonicalName()
+							);
+							storageDriverImpls.add(nextImplCls);
 						} catch(final ClassNotFoundException e) {
 							LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 						}
@@ -72,6 +75,10 @@ public class BasicStorageDriverBuilder<
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+		}
+
+		if(storageDriverImpls.size() == 0) {
+			LOG.warn(Markers.ERR, "No storage driver implementations loaded");
 		}
 	}
 
@@ -126,49 +133,49 @@ public class BasicStorageDriverBuilder<
 	public T build()
 	throws UserShootHisFootException {
 		
-		T driver = null;
-
-		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final StorageType storageType = StorageType.valueOf(storageConfig.getType().toUpperCase());
+		final String storageDriverType = storageConfig.getDriverConfig().getType();
 		final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
-		
-		if(StorageType.FS.equals(storageType)) {
-			LOG.info(Markers.MSG, "Work on the filesystem");
-			if(ItemType.PATH.equals(itemType)) {
-				LOG.info(Markers.MSG, "Work on the directories");
-				throw new AssertionError("Not implemented yet");
-			} else {
-				LOG.info(Markers.MSG, "Work on the files");
-				driver = (T) new BasicFileStorageDriver<>(jobName, loadConfig, verifyFlag);
-			}
-		} else {
-			if(StorageType.HTTP.equals(storageType)){
-				final String apiType = storageConfig.getNetConfig().getHttpConfig().getApi();
-				LOG.info(Markers.MSG, "Work via HTTP using \"{}\" cloud storage API", apiType);
-				switch(apiType.toLowerCase()) {
-					case API_ATMOS:
-						driver = (T) new AtmosStorageDriver<>(
-							jobName, loadConfig, storageConfig, verifyFlag
-						);
+
+		Matcher m;
+		String implFqcn, sdt;
+		Class<T> matchingImplCls = null;
+		for(final Class<T> implCls : storageDriverImpls) {
+			implFqcn = implCls.getCanonicalName();
+			m = PATTERN_IMPL_FQCN.matcher(implFqcn);
+			if(m.matches()) {
+				sdt = m.group(STORAGE_DRIVER_TYPE);
+				if(sdt != null) {
+					if(sdt.startsWith(storageDriverType)) {
+						matchingImplCls = implCls;
 						break;
-					case API_S3:
-						driver = (T) new S3StorageDriver<>(
-							jobName, loadConfig, storageConfig, verifyFlag
-						);
-						break;
-					case API_SWIFT:
-						driver = (T) new SwiftStorageDriver<>(
-							jobName, loadConfig, storageConfig, verifyFlag
-						);
-						break;
-					default:
-						throw new IllegalArgumentException("Unknown HTTP storage API: " + apiType);
+					}
+				} else {
+					throw new AssertionError(); // shouldn't pass "matches" call
 				}
-			} else {
-				throw new UserShootHisFootException("Unsupported storage type");
 			}
 		}
 
-		return driver;
+		if(matchingImplCls == null) {
+			throw new UserShootHisFootException(
+				"Didn't found the implementation class for \"" + storageDriverType +
+					"\" storage driver type"
+			);
+		}
+
+		try {
+			final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
+				String.class, LoadConfig.class, StorageConfig.class, Boolean.TYPE
+			);
+			return constructor.newInstance(jobName, loadConfig, storageConfig, verifyFlag);
+		} catch(final NoSuchMethodException e) {
+			throw new UserShootHisFootException(
+				"No valid constructor to make the \"" + storageDriverType +
+					"\" storage driver instance"
+			);
+		} catch(
+			final InstantiationException | IllegalAccessException | InvocationTargetException e
+		) {
+			throw new UserShootHisFootException(e.getCause());
+		}
 	}
 }

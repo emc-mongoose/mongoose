@@ -1,6 +1,7 @@
 package com.emc.mongoose.ui.cli;
 
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,11 +44,16 @@ public final class CliArgParser {
 			if(aliasingConfig != null) {
 				for(final Map<String, Object> aliasingNode : aliasingConfig) {
 					nextAliasName = ARG_PREFIX + aliasingNode.get(Config.KEY_NAME);
-					nextAliasTarget = ARG_PREFIX + aliasingNode.get(Config.KEY_TARGET);
-					nextDeprecatedFlag = aliasingNode.containsKey(Config.KEY_DEPRECATED) ?
-										 (boolean) aliasingNode.get(Config.KEY_DEPRECATED) : false;
+					nextAliasTarget = (String) aliasingNode.get(Config.KEY_TARGET);
+					nextAliasTarget = nextAliasTarget == null ? null : ARG_PREFIX + nextAliasTarget;
+					nextDeprecatedFlag = aliasingNode.containsKey(Config.KEY_DEPRECATED) &&
+						(boolean) aliasingNode.get(Config.KEY_DEPRECATED);
 					if(arg.startsWith(nextAliasName)) {
-						if(nextDeprecatedFlag) {
+						if(nextAliasTarget == null) {
+							LOG.fatal(
+								Markers.ERR, "The argument \"{}\" is deprecated", nextAliasName
+							);
+						} else if(nextDeprecatedFlag) {
 							LOG.warn(
 								Markers.ERR,
 								"The argument \"{}\" is deprecated, use \"{}\" instead",

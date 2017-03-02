@@ -102,8 +102,7 @@
 		},
 		{
 			"name" : "storage-http-api",
-			"deprecated" : true,
-			"target" : "storage-net-http-api"
+			"deprecated" : true
 		},
 		{
 			"name" : "socket-http-fsAccess",
@@ -134,6 +133,14 @@
 			"name" : "storage-node-port",
 			"deprecated" : true,
 			"target" : "storage-net-node-port"
+		},
+		{
+			"name" : "storage-type",
+			"deprecated" : true
+		},
+		{
+			"name" : "storage-net-http-api",
+			"deprecated" : true
 		}
 	],
 	"item" : {
@@ -208,11 +215,12 @@
 			"token" : null
 		},
 		"driver": {
-			"remote": false,
 			"addrs" : [
 				"127.0.0.1"
 			],
-			"port" : 1099
+			"port" : 1099,
+			"remote": false,
+			"type" : "net.http.s3"
 		},
 		"mock" : {
 			"capacity" : 1000000,
@@ -238,7 +246,6 @@
 			"timeoutMilliSec" : 0,
 			"ssl" : false,
 			"http" : {
-				"api" : "S3",
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "Keep-Alive",
@@ -253,8 +260,7 @@
 				],
 				"port" : 9020
 			}
-		},
-		"type" : "http"
+		}
 	},
 	"version" : "3.3.0"
 }

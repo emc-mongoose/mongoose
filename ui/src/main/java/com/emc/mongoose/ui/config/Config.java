@@ -862,7 +862,6 @@ implements Serializable {
 		public static final String KEY_AUTH = "auth";
 		public static final String KEY_NET = "net";
 		public static final String KEY_DRIVER = "driver";
-		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
 		
 		public final void setAuthConfig(final AuthConfig authConfig) {
@@ -877,10 +876,6 @@ implements Serializable {
 			this.driverConfig = driverConfig;
 		}
 		
-		public final void setType(final String type) {
-			this.type = type;
-		}
-		
 		public final void setMockConfig(final MockConfig mockConfig) {
 			this.mockConfig = mockConfig;
 		}
@@ -888,7 +883,6 @@ implements Serializable {
 		@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
 		@JsonProperty(KEY_NET) private NetConfig netConfig;
 		@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
-		@JsonProperty(KEY_TYPE) private String type;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
 
 
@@ -899,7 +893,6 @@ implements Serializable {
 			this.authConfig = new AuthConfig(other.getAuthConfig());
 			this.netConfig = new NetConfig(other.getNetConfig());
 			this.driverConfig = new DriverConfig(other.getDriverConfig());
-			this.type = other.getType();
 			this.mockConfig = new MockConfig(other.getMockConfig());
 		}
 
@@ -915,10 +908,6 @@ implements Serializable {
 			return driverConfig;
 		}
 		
-		public String getType() {
-			return type;
-		}
-
 		public MockConfig getMockConfig() {
 			return mockConfig;
 		}
@@ -974,17 +963,12 @@ implements Serializable {
 			public static final class HttpConfig
 			implements Serializable {
 				
-				public static final String KEY_API = "api";
 				public static final String KEY_FS_ACCESS = "fsAccess";
 				public static final String KEY_HEADERS = "headers";
 				public static final String KEY_HEADER_CONNECTION = "Connection";
 				public static final String KEY_HEADER_USER_AGENT = "User-Agent";
 				public static final String KEY_NAMESPACE = "namespace";
 				public static final String KEY_VERSIONING = "versioning";
-				
-				public final void setApi(final String api) {
-					this.api = api;
-				}
 				
 				public final void setFsAccess(final boolean fsAccess) {
 					this.fsAccess = fsAccess;
@@ -1002,7 +986,6 @@ implements Serializable {
 					this.headers = headers;
 				}
 				
-				@JsonProperty(KEY_API) private String api;
 				@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
 				@JsonProperty(KEY_NAMESPACE) private String namespace;
 				@JsonProperty(KEY_VERSIONING) private boolean versioning;
@@ -1012,15 +995,10 @@ implements Serializable {
 				}
 				
 				public HttpConfig(final HttpConfig other) {
-					this.api = other.getApi();
 					this.fsAccess = other.getFsAccess();
 					this.namespace = other.getNamespace();
 					this.versioning = other.getVersioning();
 					this.headers = new HashMap<>(other.getHeaders());
-				}
-				
-				public String getApi() {
-					return api;
 				}
 				
 				public boolean getFsAccess() {
@@ -1233,25 +1211,31 @@ implements Serializable {
 		public static final class DriverConfig
 		implements Serializable {
 			
-			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_ADDRS = "addrs";
 			public static final String KEY_PORT = "port";
+			public static final String KEY_REMOTE = "remote";
+			public static final String KEY_TYPE = "type";
 
 			public final void setAddrs(final List<String> addrs) {
 				this.addrs = addrs;
-			}
-
-			public final void setRemote(final boolean remote) {
-				this.remote = remote;
 			}
 
 			public final void setPort(final int port) {
 				this.port = port;
 			}
 
+			public final void setRemote(final boolean remote) {
+				this.remote = remote;
+			}
+
+			public final void setType(final String type) {
+				this.type = type;
+			}
+
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
-			@JsonProperty(KEY_REMOTE) private boolean remote;
 			@JsonProperty(KEY_PORT) private int port;
+			@JsonProperty(KEY_REMOTE) private boolean remote;
+			@JsonProperty(KEY_TYPE) private String type;
 
 			public DriverConfig() {
 			}
@@ -1260,18 +1244,23 @@ implements Serializable {
 				this.remote = other.getRemote();
 				this.addrs = new ArrayList<>(other.getAddrs());
 				this.port = other.getPort();
+				this.type = other.getType();
 			}
 
 			public List<String> getAddrs() {
 				return addrs;
 			}
 
+			public int getPort() {
+				return port;
+			}
+
 			public boolean getRemote() {
 				return remote;
 			}
 
-			public int getPort() {
-				return port;
+			public String getType() {
+				return type;
 			}
 		}
 
@@ -1439,7 +1428,11 @@ implements Serializable {
 					if(t instanceof Map) {
 						subTree = (Map<String, Object>) t;
 					} else if(i == aliasNamePath.length - 1) {
-						if(nextAliasNode.containsKey(KEY_DEPRECATED)) {
+						if(aliasTarget == null) {
+							System.err.println(
+								"ERROR: configuration value @ \"" + aliasName + "\" is deprecated"
+							);
+						} else if(nextAliasNode.containsKey(KEY_DEPRECATED)) {
 							if((boolean) nextAliasNode.get(KEY_DEPRECATED)) {
 								System.err.println(
 									"WARNING: configuration value @ \"" + aliasName +

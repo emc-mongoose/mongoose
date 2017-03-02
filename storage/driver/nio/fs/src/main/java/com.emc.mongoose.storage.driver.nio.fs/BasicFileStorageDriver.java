@@ -13,6 +13,7 @@ import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -75,7 +76,8 @@ implements FileStorageDriver<I, O> {
 	private final Function<O, FileChannel> openDstFileFunc;
 	
 	public BasicFileStorageDriver(
-		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final boolean verifyFlag
 	) {
 		super(jobName, loadConfig, verifyFlag);
 		
