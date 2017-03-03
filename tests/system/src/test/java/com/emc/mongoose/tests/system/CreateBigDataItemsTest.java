@@ -67,8 +67,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		} catch(final NoSuchFileException ignored) {
 		}
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.add("--load-limit-count=" + LOAD_LIMIT_COUNT);
-		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
+		CONFIG_ARGS.add("--test-step-limit-count=" + LOAD_LIMIT_COUNT);
+		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {

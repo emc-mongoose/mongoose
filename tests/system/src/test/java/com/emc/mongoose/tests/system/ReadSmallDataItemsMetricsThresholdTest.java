@@ -63,8 +63,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		} catch(final Exception ignored) {
 		}
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
-		CONFIG_ARGS.add("--load-limit-count=" + LOAD_LIMIT_COUNT);
+		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
+		CONFIG_ARGS.add("--test-step-limit-count=" + LOAD_LIMIT_COUNT);
 		
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		SCENARIO.run();
@@ -80,9 +80,9 @@ extends HttpStorageDistributedScenarioTestBase {
 		CONFIG_ARGS.remove("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-input-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.remove("--item-output-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.remove("--load-limit-count=" + LOAD_LIMIT_COUNT);
+		CONFIG_ARGS.remove("--test-step-limit-count=" + LOAD_LIMIT_COUNT);
 		CONFIG_ARGS.add("--read");
-		CONFIG_ARGS.add("--load-metrics-threshold=" + LOAD_THRESHOLD);
+		CONFIG_ARGS.add("--test-step-metrics-threshold=" + LOAD_THRESHOLD);
 		CONFIG.apply(
 			CliArgParser.parseArgs(
 				CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])

@@ -35,7 +35,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		ThreadContext.put(KEY_JOB_NAME, CreateByTimeTest.class.getSimpleName());
-		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
+		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		RUNNER = new Thread(
 			() -> {

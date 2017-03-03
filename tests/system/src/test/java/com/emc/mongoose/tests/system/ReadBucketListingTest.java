@@ -57,8 +57,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		ThreadContext.put(KEY_JOB_NAME, ReadBucketListingTest.class.getSimpleName());
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
-		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
-		CONFIG_ARGS.add("--load-limit-time=" + LOAD_LIMIT_TIME);
+		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
+		CONFIG_ARGS.add("--test-step-limit-time=" + LOAD_LIMIT_TIME);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		SCENARIO.run();
 		
