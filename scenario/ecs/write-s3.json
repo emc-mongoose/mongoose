@@ -2,10 +2,10 @@
 	"type": "load",
 	"config" : {
 		"storage" : {
+			"driver" : {
+				"type" : "s3"
+			},
 			"net" : {
-				"http" : {
-					"api" : "s3"
-				},
 				"node" : {
 					"addrs" : [
 						"10.77.33.100",

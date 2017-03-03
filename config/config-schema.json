@@ -396,12 +396,36 @@
 				},
 				"driver" : {
 					"type": "object",
-					"additionalProperties": false,
-					"properties": {
-						"addrs": {
-							"type": "array",
-							"items": {
+					"additionalProperties" : false,
+					"properties" : {
+						"addrs" : {
+							"type" : "array",
+							"items" : {
 								"type" : "string"
+							}
+						},
+						"impl" : {
+							"type" : "array",
+							"items" : {
+								"type" : "object",
+								"additionalProperties" : false,
+								"properties" : {
+									"type" : {
+										"type" : "string",
+										"pattern" : "[\\w\\d]+"
+									},
+									"file" : {
+										"type" : "string",
+										"pattern" : "[\\-_\\.\\w\\d]+"
+									},
+									"fqcn" : {
+										"type" : "string",
+										"pattern" : "([a-z][a-z_0-9]*\\.)*[A-Z_]($[A-Z_]|[\\w_])*"
+									}
+								},
+								"required" : [
+									"type", "file", "fqcn"
+								]
 							}
 						},
 						"port" : {
@@ -410,10 +434,14 @@
 						},
 						"remote" : {
 							"type" : "boolean"
+						},
+						"type" : {
+							"type" : "string",
+							"pattern" : "[\\w\\d]+"
 						}
 					},
 					"required" : [
-						"addrs", "port", "remote"
+						"addrs", "impl", "port", "remote", "type"
 					]
 				},
 				"mock": {
@@ -524,10 +552,6 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
-								"api": {
-									"type": "string",
-									"pattern" : "[\\w\\d]+"
-								},
 								"fsAccess": {
 									"type": "boolean"
 								},
@@ -547,7 +571,7 @@
 								}
 							},
 							"required": [
-								"api", "fsAccess", "headers", "namespace", "versioning"
+								"fsAccess", "headers", "namespace", "versioning"
 							]
 						},
 						"node" : {
@@ -575,16 +599,10 @@
 						"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl",
 						"http", "node"
 					]
-				},
-				"type": {
-					"type": "string",
-					"enum" : [
-						"fs", "http"
-					]
 				}
 			},
 			"required": [
-				"auth", "driver", "mock", "type"
+				"auth", "driver", "mock"
 			]
 		},
 		"version" : {

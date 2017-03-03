@@ -1215,6 +1215,11 @@ implements Serializable {
 			public static final String KEY_PORT = "port";
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_TYPE = "type";
+			public static final String KEY_IMPL = "impl";
+
+			public static final String KEY_IMPL_TYPE = "type";
+			public static final String KEY_IMPL_FILE = "file";
+			public static final String KEY_IMPL_FQCN = "fqcn";
 
 			public final void setAddrs(final List<String> addrs) {
 				this.addrs = addrs;
@@ -1232,10 +1237,15 @@ implements Serializable {
 				this.type = type;
 			}
 
+			public final void setImplConfig(final List<Map<String, Object>> implConfig) {
+				this.implConfig = implConfig;
+			}
+
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
 			@JsonProperty(KEY_PORT) private int port;
 			@JsonProperty(KEY_REMOTE) private boolean remote;
 			@JsonProperty(KEY_TYPE) private String type;
+			@JsonProperty(KEY_IMPL) private List<Map<String, Object>> implConfig;
 
 			public DriverConfig() {
 			}
@@ -1245,6 +1255,7 @@ implements Serializable {
 				this.addrs = new ArrayList<>(other.getAddrs());
 				this.port = other.getPort();
 				this.type = other.getType();
+				this.implConfig = other == null ? null : new ArrayList<>(other.getImplConfig());
 			}
 
 			public List<String> getAddrs() {
@@ -1261,6 +1272,10 @@ implements Serializable {
 
 			public String getType() {
 				return type;
+			}
+
+			public List<Map<String, Object>> getImplConfig() {
+				return implConfig;
 			}
 		}
 

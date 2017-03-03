@@ -12,9 +12,11 @@
 			}
 		},
 		"storage" : {
+			"driver" : {
+				"type" : "atmos"
+			},
 			"net" : {
 				"http" : {
-					"api" : "atmos",
 					"fsAccess" : true
 				}
 			}

@@ -16,7 +16,9 @@
 			"concurrency" : 5
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"type" : "fs"
+			}
 		}
 	}
 }

@@ -1,4 +1,146 @@
 {
+	"item" : {
+		"data" : {
+			"content" : {
+				"file" : null,
+				"seed" : "7a42d9c483244167",
+				"ringSize" : "4MB"
+			},
+			"ranges" : {
+				"fixed" : null,
+				"random" : 0,
+				"threshold" : 0
+			},
+			"size" : "1MB",
+			"verify" : false
+		},
+		"input" : {
+			"file" : null,
+			"path" : null
+		},
+		"naming" : {
+			"type" : "random",
+			"prefix" : null,
+			"radix" : 36,
+			"offset" : 0,
+			"length" : 13
+		},
+		"output" : {
+			"delay" : 0,
+			"file" : null,
+			"path" : null
+		},
+		"type" : "data"
+	},
+	"load" : {
+		"circular" : false,
+		"concurrency" : 1,
+		"generator" : {
+			"addrs" : [
+				"127.0.0.1"
+			],
+			"remote" : false,
+			"shuffle" : false
+		},
+		"job" :{
+			"name" : null
+		},
+		"limit" : {
+			"count" : 0,
+			"rate" : 0,
+			"size" : 0,
+			"time" : "0s"
+		},
+		"metrics" : {
+			"period" : "10s",
+			"precondition" : false,
+			"threshold" : 0
+		},
+		"queue" : {
+			"size" : 1000000
+		},
+		"type" : "create"
+	},
+	"scenario" : {
+		"file" : null
+	},
+	"storage" : {
+		"auth" : {
+			"id" : null,
+			"secret" : null,
+			"token" : null
+		},
+		"driver": {
+			"addrs" : [
+				"127.0.0.1"
+			],
+			"impl" : [
+				{
+					"type" : "fs",
+					"file" : "mongoose-storage-driver-nio-fs.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver"
+				},
+				{
+					"type" : "atmos",
+					"file" : "mongoose-storage-driver-net-http-atmos.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.net.http.atmos.AtmosStorageDriver"
+				},
+				{
+					"type" : "s3",
+					"file" : "mongoose-storage-driver-net-http-s3.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver"
+				},
+				{
+					"type" : "swift",
+					"file" : "mongoose-storage-driver-net-http-swift.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
+				}
+			],
+			"port" : 1099,
+			"remote": false,
+			"type" : "s3"
+		},
+		"mock" : {
+			"capacity" : 1000000,
+			"container" : {
+				"capacity" : 1000000,
+				"countLimit" : 1000000
+			},
+			"fail" : {
+				"connections" : 0,
+				"responses" : 0
+			},
+			"node": false
+		},
+		"net" : {
+			"bindBacklogSize" : 0,
+			"interestOpQueued" : false,
+			"keepAlive" : true,
+			"linger" : 0,
+			"reuseAddr" : true,
+			"rcvBuf" : 0,
+			"sndBuf" : 0,
+			"tcpNoDelay" : true,
+			"timeoutMilliSec" : 0,
+			"ssl" : false,
+			"http" : {
+				"fsAccess" : false,
+				"headers" : {
+					"Connection" : "Keep-Alive",
+					"User-Agent" : "mongoose/3.3.0"
+				},
+				"namespace" : null,
+				"versioning" : false
+			},
+			"node": {
+				"addrs" : [
+					"127.0.0.1"
+				],
+				"port" : 9020
+			}
+		}
+	},
+	"version" : "3.3.0",
 	"aliasing" : [
 		{
 			"name" : "load-threads",
@@ -102,7 +244,8 @@
 		},
 		{
 			"name" : "storage-http-api",
-			"deprecated" : true
+			"deprecated" : true,
+			"target" : "storage-driver-type"
 		},
 		{
 			"name" : "socket-http-fsAccess",
@@ -136,131 +279,13 @@
 		},
 		{
 			"name" : "storage-type",
-			"deprecated" : true
+			"deprecated" : true,
+			"target" : "storage-driver-type"
 		},
 		{
 			"name" : "storage-net-http-api",
-			"deprecated" : true
+			"deprecated" : true,
+			"target" : "storage-driver-type"
 		}
-	],
-	"item" : {
-		"data" : {
-			"content" : {
-				"file" : null,
-				"seed" : "7a42d9c483244167",
-				"ringSize" : "4MB"
-			},
-			"ranges" : {
-				"fixed" : null,
-				"random" : 0,
-				"threshold" : 0
-			},
-			"size" : "1MB",
-			"verify" : false
-		},
-		"input" : {
-			"file" : null,
-			"path" : null
-		},
-		"naming" : {
-			"type" : "random",
-			"prefix" : null,
-			"radix" : 36,
-			"offset" : 0,
-			"length" : 13
-		},
-		"output" : {
-			"delay" : 0,
-			"file" : null,
-			"path" : null
-		},
-		"type" : "data"
-	},
-	"load" : {
-		"circular" : false,
-		"concurrency" : 1,
-		"generator" : {
-			"addrs" : [
-				"127.0.0.1"
-			],
-			"remote" : false,
-			"shuffle" : false
-		},
-		"job" :{
-			"name" : null
-		},
-		"limit" : {
-			"count" : 0,
-			"rate" : 0,
-			"size" : 0,
-			"time" : "0s"
-		},
-		"metrics" : {
-			"period" : "10s",
-			"precondition" : false,
-			"threshold" : 0
-		},
-		"queue" : {
-			"size" : 1000000
-		},
-		"type" : "create"
-	},
-	"scenario" : {
-		"file" : null
-	},
-	"storage" : {
-		"auth" : {
-			"id" : null,
-			"secret" : null,
-			"token" : null
-		},
-		"driver": {
-			"addrs" : [
-				"127.0.0.1"
-			],
-			"port" : 1099,
-			"remote": false,
-			"type" : "net.http.s3"
-		},
-		"mock" : {
-			"capacity" : 1000000,
-			"container" : {
-				"capacity" : 1000000,
-				"countLimit" : 1000000
-			},
-			"fail" : {
-				"connections" : 0,
-				"responses" : 0
-			},
-			"node": false
-		},
-		"net" : {
-			"bindBacklogSize" : 0,
-			"interestOpQueued" : false,
-			"keepAlive" : true,
-			"linger" : 0,
-			"reuseAddr" : true,
-			"rcvBuf" : 0,
-			"sndBuf" : 0,
-			"tcpNoDelay" : true,
-			"timeoutMilliSec" : 0,
-			"ssl" : false,
-			"http" : {
-				"fsAccess" : false,
-				"headers" : {
-					"Connection" : "Keep-Alive",
-					"User-Agent" : "mongoose/3.3.0"
-				},
-				"namespace" : null,
-				"versioning" : false
-			},
-			"node": {
-				"addrs" : [
-					"127.0.0.1"
-				],
-				"port" : 9020
-			}
-		}
-	},
-	"version" : "3.3.0"
+	]
 }

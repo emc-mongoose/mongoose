@@ -10,9 +10,11 @@
 			}
 		},
 		"storage" : {
+			"driver" : {
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "Swift",
 					"namespace" : "test"
 				}
 			}

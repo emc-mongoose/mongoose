@@ -11,7 +11,9 @@
 			"concurrency" : 10
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"type" : "fs"
+			}
 		}
 	},
 	"jobs" : [

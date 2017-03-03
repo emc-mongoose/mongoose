@@ -12,10 +12,8 @@
 			}
 		},
 		"storage" : {
-			"net" : {
-				"http" : {
-					"api" : "atmos"
-				}
+			"driver" : {
+				"type" : "atmos"
 			}
 		}
 	}

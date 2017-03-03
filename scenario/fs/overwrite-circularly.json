@@ -12,7 +12,9 @@
 			}
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"type" : "fs"
+			}
 		}
 	},
 	"jobs": [

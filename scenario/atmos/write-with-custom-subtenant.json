@@ -15,10 +15,8 @@
 			"auth" : {
 				"token" : "5cc597535ed747f09b5d273154216339"
 			},
-			"net" : {
-				"http" : {
-					"api" : "atmos"
-				}
+			"driver" : {
+				"type" : "atmos"
 			}
 		}
 	}

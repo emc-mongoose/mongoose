@@ -16,9 +16,11 @@
 			}
 		},
 		"storage" : {
+			"driver" : {
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "swift",
 					"namespace" : "dlo"
 				}
 			}

@@ -529,6 +529,30 @@
 										}
 									]
 								},
+								"impl" : {
+									"type" : "array",
+									"items" : {
+										"type" : "object",
+										"additionalProperties" : false,
+										"properties" : {
+											"type" : {
+												"type" : "string",
+												"pattern" : "[\\w\\d]+"
+											},
+											"file" : {
+												"type" : "string",
+												"pattern" : "[\\-_\\.\\w\\d]+"
+											},
+											"fqcn" : {
+												"type" : "string",
+												"pattern" : "([a-z][a-z_0-9]*\\.)*[A-Z_]($[A-Z_]|[\\w_])*"
+											}
+										},
+										"required" : [
+											"type", "file", "fqcn"
+										]
+									}
+								},
 								"port" : {
 									"oneOf" : [
 										{
@@ -551,6 +575,9 @@
 											"pattern" : "\\$\\{.+\\}"
 										}
 									]
+								},
+								"type" : {
+									"type" : "string"
 								}
 							}
 						},
@@ -661,18 +688,6 @@
 									"type": "object",
 									"additionalProperties": false,
 									"properties": {
-										"api": {
-											"oneOf" : [
-												{
-													"type" : "string",
-													"pattern" : "[\\w\\d]+"
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
-												}
-											]
-										},
 										"fsAccess": {
 											"oneOf" : [
 												{
@@ -740,19 +755,6 @@
 									}
 								}
 							}
-						},
-						"type": {
-							"oneOf" : [
-								{
-									"enum" : [
-										"fs", "http"
-									]
-								},
-								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
-								}
-							]
 						}
 					}
 				},

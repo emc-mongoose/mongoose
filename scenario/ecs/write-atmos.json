@@ -2,6 +2,9 @@
 	"type": "load",
 	"config" : {
 		"storage" : {
+			"driver" : {
+				"type" : "swift"
+			},
 			"net" : {
 				"node" : {
 					"addrs" : [
@@ -10,9 +13,6 @@
 						"10.77.33.104"
 					],
 					"port" : 9022
-				},
-				"http" : {
-					"api" : "atmos"
 				}
 			},
 			"auth" : {

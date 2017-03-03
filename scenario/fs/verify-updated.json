@@ -8,7 +8,9 @@
 			"concurrency" : 2
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"type" : "fs"
+			}
 		}
 	},
 	"jobs": [

@@ -30,15 +30,11 @@
 			},
 			"jobs" : [
 				{
-					"type" : "load"
-				}, {
 					"type" : "load",
 					"config" : {
 						"storage" : {
-							"net" : {
-								"http" : {
-									"api" : "atmos"
-								}
+							"driver" : {
+								"type" : "s3"
 							}
 						}
 					}
@@ -46,10 +42,17 @@
 					"type" : "load",
 					"config" : {
 						"storage" : {
-							"net" : {
-								"http" : {
-									"api" : "swift"
-								}
+							"driver" : {
+								"type" : "atmos"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"storage" : {
+							"driver" : {
+								"type" : "swift"
 							}
 						}
 					}

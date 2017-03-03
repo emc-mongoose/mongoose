@@ -10,9 +10,11 @@
 			"auth" : {
 				"token" : "e3f86c95e6af49099aa1e6de386dbe54"
 			},
+			"driver" : {
+				"type" : "atmos"
+			},
 			"net" : {
 				"http" : {
-					"api" : "atmos",
 					"fsAccess" : true
 				}
 			}

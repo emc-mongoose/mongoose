@@ -11,9 +11,11 @@
 			"concurrency" : 10
 		},
 		"storage" : {
+			"driver" : {
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "swift",
 					"namespace" : "test"
 				}
 			}

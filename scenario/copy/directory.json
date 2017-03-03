@@ -11,7 +11,9 @@
 			"type" : "path"
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"type" : "fs"
+			}
 		}
 	},
 	"jobs" : [

@@ -133,7 +133,6 @@ public class ConfigParserTest {
 		assertThat(authConfig.getToken(), nullValue("storage.auth.token"));
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		assertThat(httpConfig, notNullValue());
-		assertThat(httpConfig.getApi(), equalTo("net.http.s3", "storage.driver.type"));
 		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.net.http.fsAccess"));
 		final Map<String, String> headers = httpConfig.getHeaders();
 		assertThat(headers, notNullValue());
