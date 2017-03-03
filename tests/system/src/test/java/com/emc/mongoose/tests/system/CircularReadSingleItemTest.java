@@ -72,7 +72,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--load-concurrency=" + LOAD_CONCURRENCY);
-		CONFIG_ARGS.add("--scenario-file=" + SCENARIO_PATH.toString());
+		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {

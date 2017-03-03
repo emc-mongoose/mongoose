@@ -215,16 +215,13 @@ implements LoadMonitor<I, O> {
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			driversCountMap.put(ioTypeCode, nextDrivers.size());
-			int ioTypeSpecificConcurrency = 0;
-			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
-				try {
-					ioTypeSpecificConcurrency += nextDriver.getConcurrencyLevel();
-				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote method");
-				}
+			try {
+				final int ioTypeSpecificConcurrency = nextDrivers.get(0).getConcurrencyLevel();
+				concurrencySum += ioTypeSpecificConcurrency;
+				concurrencyMap.put(ioTypeCode, ioTypeSpecificConcurrency);
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to invoke the remote method");
 			}
-			concurrencySum += ioTypeSpecificConcurrency;
-			concurrencyMap.put(ioTypeCode, ioTypeSpecificConcurrency);
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);

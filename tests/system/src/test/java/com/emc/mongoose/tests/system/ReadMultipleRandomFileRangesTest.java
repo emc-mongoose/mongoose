@@ -74,7 +74,7 @@ extends FileStorageDistributedScenarioTestBase {
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
-		CONFIG_ARGS.add("--scenario-file=" + SCENARIO_PATH.toString());
+		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--item-data-verify=true");
 		FileStorageDistributedScenarioTestBase.setUpClass();

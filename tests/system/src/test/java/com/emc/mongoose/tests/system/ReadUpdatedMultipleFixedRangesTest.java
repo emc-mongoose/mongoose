@@ -76,7 +76,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
-		CONFIG_ARGS.add("--scenario-file=" + SCENARIO_PATH.toString());
+		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-data-verify=true");
 		STORAGE_DRIVERS_COUNT = 1;
 		HttpStorageDistributedScenarioTestBase.setUpClass();

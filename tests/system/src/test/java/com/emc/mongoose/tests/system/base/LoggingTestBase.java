@@ -194,7 +194,7 @@ public abstract class LoggingTestBase {
 			assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals(
-				"Expected concurrency level: " + concurrencyLevel, expectedConcurrency,
+				"Expected concurrency level: " + expectedConcurrency, expectedConcurrency,
 				concurrencyLevel
 			);
 			driverCount = Integer.parseInt(nextRecord.get("DriverCount"));
