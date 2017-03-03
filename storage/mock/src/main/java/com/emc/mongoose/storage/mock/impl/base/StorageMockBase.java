@@ -15,15 +15,13 @@ import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundExceptio
 import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.FailConfig;
-
-import com.emc.mongoose.ui.config.IllegalArgumentNameException;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

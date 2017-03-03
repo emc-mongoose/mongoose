@@ -118,7 +118,7 @@ extends FileStorageDistributedScenarioTestBase {
 		testMetricsLogRecords(
 			metricsLogRecords, IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			EXPECTED_ITEM_DATA_SIZE,
-			EXPECTED_COUNT, 0, CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+			EXPECTED_COUNT, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
@@ -141,7 +141,7 @@ extends FileStorageDistributedScenarioTestBase {
 		testMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_ITEM_DATA_SIZE,
-			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 

@@ -4,11 +4,17 @@
 		"item" : {
 			"type" : "path"
 		},
-		"load" : {
-			"limit" : {
-				"count" : 100000
-			},
-			"concurrency" : 100
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000
+				}
+			}
 		}
 	},
 	"jobs" : [

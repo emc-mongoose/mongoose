@@ -12,6 +12,7 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
@@ -21,8 +22,8 @@ import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -33,7 +34,6 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
-
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -110,17 +110,21 @@ implements LoadMonitor<I, O> {
 	 */
 	public BasicLoadMonitor(
 		final String name, final LoadGenerator<I, O> loadGenerator,
-		final List<StorageDriver<I, O>> driversMap, final LoadConfig loadConfig
+		final List<StorageDriver<I, O>> driversMap, final LoadConfig loadConfig,
+		final StepConfig stepConfig
 	) {
 		this(
 			name,
 			new HashMap<LoadGenerator<I, O>, List<StorageDriver<I, O>>>() {{
 				put(loadGenerator, driversMap);
 			}},
+			null,
 			new HashMap<LoadGenerator<I, O>, LoadConfig>() {{
 				put(loadGenerator, loadConfig);
 			}},
-			null
+			new HashMap<LoadGenerator<I, O>, StepConfig>() {{
+				put(loadGenerator, stepConfig);
+			}}
 		);
 	}
 
@@ -133,9 +137,10 @@ implements LoadMonitor<I, O> {
 	public BasicLoadMonitor(
 		final String name,
 		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs
+		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
+		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
 	) {
-		this(name, driversMap, loadConfigs, null);
+		this(name, driversMap, null, loadConfigs, stepConfigs);
 	}
 
 	/**
@@ -146,14 +151,13 @@ implements LoadMonitor<I, O> {
 	 @param weightMap
 	 */
 	public BasicLoadMonitor(
-		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final Int2IntMap weightMap
+		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
+		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
+		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
 	) {
 		this.name = name;
-
-		final LoadConfig firstLoadConfig = loadConfigs.get(loadConfigs.keySet().iterator().next());
-		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
+		final StepConfig anyStepConfig = stepConfigs.values().iterator().next();
+		final double rateLimit = anyStepConfig.getLimitConfig().getRate();
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
 		} else {
@@ -175,8 +179,8 @@ implements LoadMonitor<I, O> {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
-		final MetricsConfig metricsConfig = firstLoadConfig.getMetricsConfig();
-		preconditionJobFlag = metricsConfig.getPrecondition();
+		final MetricsConfig metricsConfig = anyStepConfig.getMetricsConfig();
+		preconditionJobFlag = anyStepConfig.getPrecondition();
 		metricsPeriodSec = (int) metricsConfig.getPeriod();
 		fullLoadThreshold = metricsConfig.getThreshold();
 		if(fullLoadThreshold > 0) {
@@ -192,7 +196,8 @@ implements LoadMonitor<I, O> {
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		circularityMap = new Int2BooleanArrayMap(driversMap.size());
 		recycleQueuesMap = new Int2ObjectOpenHashMap<>(driversMap.size());
-		final int queueSizeLimit = firstLoadConfig.getQueueConfig().getSize();
+		final LoadConfig anyLoadConfig = loadConfigs.values().iterator().next();
+		final int queueSizeLimit = anyLoadConfig.getQueueConfig().getSize();
 		int concurrencySum = 0;
 		int svcWorkerCount = 0;
 		boolean anyCircularFlag = false;
@@ -210,8 +215,16 @@ implements LoadMonitor<I, O> {
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
 			driversCountMap.put(ioTypeCode, nextDrivers.size());
-			concurrencySum += loadConfigs.get(nextGenerator).getConcurrency();
-			concurrencyMap.put(ioTypeCode, loadConfigs.get(nextGenerator).getConcurrency());
+			int ioTypeSpecificConcurrency = 0;
+			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
+				try {
+					ioTypeSpecificConcurrency += nextDriver.getConcurrencyLevel();
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote method");
+				}
+			}
+			concurrencySum += ioTypeSpecificConcurrency;
+			concurrencyMap.put(ioTypeCode, ioTypeSpecificConcurrency);
 			ioStats.put(
 				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
 			);
@@ -234,7 +247,7 @@ implements LoadMonitor<I, O> {
 		long countLimitSum = 0;
 		long sizeLimitSum = 0;
 		for(final LoadGenerator<I, O> nextLoadGenerator : loadConfigs.keySet()) {
-			final LimitConfig nextLimitConfig = loadConfigs.get(nextLoadGenerator).getLimitConfig();
+			final LimitConfig nextLimitConfig = stepConfigs.get(nextLoadGenerator).getLimitConfig();
 			if(nextLimitConfig.getCount() > 0 && countLimitSum < Long.MAX_VALUE) {
 				countLimitSum += nextLimitConfig.getCount();
 			} else {

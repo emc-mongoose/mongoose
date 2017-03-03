@@ -1,14 +1,16 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 100
-			},
-			"concurrency" : 2
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100
+				}
+			}
 		},
 		"storage" : {
 			"driver" : {
+				"concurrency" : 2,
 				"type" : "fs"
 			}
 		}

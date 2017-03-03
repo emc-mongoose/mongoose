@@ -6,9 +6,11 @@
 				"file" : "linear-write-by-count-atmos.csv"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1234
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1234
+				}
 			}
 		},
 		"storage" : {

@@ -29,9 +29,11 @@
 						"length" : 1
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1
+						}
 					}
 				}
 			}
@@ -44,11 +46,17 @@
 					},
 					"type" : "data"
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100
-					},
-					"concurrency" : 10
+				"storage" : {
+					"driver" : {
+						"concurrency" : 10
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100
+						}
+					}
 				}
 			}
 		}, {
@@ -63,11 +71,17 @@
 						"file" : "copy-directory.json"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100
-					},
-					"concurrency" : 5
+				"storage" : {
+					"driver" : {
+						"concurrency" : 5
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100
+						}
+					}
 				}
 			}
 		}

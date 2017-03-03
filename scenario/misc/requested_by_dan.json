@@ -9,11 +9,17 @@
 				"path" : "test-bucket"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"time" : "5m"
-			},
-			"concurrency" : 100
+		"test" : {
+			"step" : {
+				"limit" : {
+					"time" : "5m"
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
+			}
 		}
 	},
 	"jobs" : [
@@ -26,13 +32,16 @@
 						"file" : "pre_10KB_items.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
@@ -45,7 +54,8 @@
 					"type" : "read"
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
@@ -67,7 +77,7 @@
 		// create jobs
 		{
 			"type" : "for",
-			"value" : "threads",
+			"value" : "concurrency",
 			"in" : [
 				1, 2, 3, 4, 5, 10, 15, 20, 25, 40
 			],
@@ -80,8 +90,10 @@
 						"file" : "10KB_items.csv"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${concurrency}"
+					}
 				}
 			},
 			"jobs" : [
@@ -89,9 +101,10 @@
 					"type" : "load"
 				}
 			]
-		}, {
+		},
+		{
 			"type" : "for",
-			"value" : "threads",
+			"value" : "concurrency",
 			"in" : [
 				1, 2, 3, 4, 5, 10, 15, 20, 25, 40
 			],
@@ -104,8 +117,10 @@
 						"file" : "100KB_items.csv"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${concurrency}"
+					}
 				}
 			},
 			"jobs" : [
@@ -113,9 +128,10 @@
 					"type" : "load"
 				}
 			]
-		}, {
+		},
+		{
 			"type" : "for",
-			"value" : "threads",
+			"value" : "concurrency",
 			"in" : [
 				1, 2, 3, 4, 5, 10, 15, 20, 25
 			],
@@ -128,8 +144,10 @@
 						"file" : "1MB_items.csv"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${concurrency}"
+					}
 				}
 			},
 			"jobs" : [
@@ -137,9 +155,10 @@
 					"type" : "load"
 				}
 			]
-		}, {
+		},
+		{
 			"type" : "for",
-			"value" : "threads",
+			"value" : "concurrency",
 			"in" : [
 				1, 2, 3, 4, 5, 10, 15, 20
 			],
@@ -152,8 +171,10 @@
 						"file" : "10MB_items.csv"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${concurrency}"
+					}
 				}
 			},
 			"jobs" : [
@@ -161,9 +182,10 @@
 					"type" : "load"
 				}
 			]
-		}, {
+		},
+		{
 			"type" : "for",
-			"value" : "threads",
+			"value" : "concurrency",
 			"in" : [
 				1, 2, 3, 4, 5, 10, 15
 			],
@@ -176,8 +198,10 @@
 						"file" : "100MB_items.csv"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${concurrency}"
+					}
 				}
 			},
 			"jobs" : [
@@ -185,9 +209,10 @@
 					"type" : "load"
 				}
 			]
-		}, {
+		},
+		{
 			"type" : "for",
-			"value" : "threads",
+			"value" : "concurrency",
 			"in" : [
 				1, 2, 3, 4, 5, 10
 			],
@@ -200,8 +225,10 @@
 						"file" : "200MB_items.csv"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${concurrency}"
+					}
 				}
 			},
 			"jobs" : [
@@ -225,7 +252,7 @@
 			"jobs" : [
 				{
 					"type" : "for",
-					"value" : "threads",
+					"value" : "concurrency",
 					"in" : [
 						1, 2, 3, 4, 5, 10, 15, 20, 25, 40
 					],
@@ -238,8 +265,10 @@
 								"file" : "10KB_items.csv"
 							}
 						},
-						"load" : {
-							"concurrency" : "${threads}"
+						"storage" : {
+							"driver" : {
+								"concurrency" : "${concurrency}"
+							}
 						}
 					},
 					"jobs" : [
@@ -247,9 +276,10 @@
 							"type" : "load"
 						}
 					]
-				}, {
+				},
+				{
 					"type" : "for",
-					"value" : "threads",
+					"value" : "concurrency",
 					"in" : [
 						1, 2, 3, 4, 5, 10, 15, 20, 25, 40
 					],
@@ -262,8 +292,10 @@
 								"file" : "100KB_items.csv"
 							}
 						},
-						"load" : {
-							"concurrency" : "${threads}"
+						"storage" : {
+							"driver" : {
+								"concurrency" : "${concurrency}"
+							}
 						}
 					},
 					"jobs" : [
@@ -271,9 +303,10 @@
 							"type" : "load"
 						}
 					]
-				}, {
+				},
+				{
 					"type" : "for",
-					"value" : "threads",
+					"value" : "concurrency",
 					"in" : [
 						1, 2, 3, 4, 5, 10, 15, 20, 25
 					],
@@ -286,8 +319,10 @@
 								"file" : "1MB_items.csv"
 							}
 						},
-						"load" : {
-							"concurrency" : "${threads}"
+						"storage" : {
+							"driver" : {
+								"concurrency" : "${concurrency}"
+							}
 						}
 					},
 					"jobs" : [
@@ -295,9 +330,10 @@
 							"type" : "load"
 						}
 					]
-				}, {
+				},
+				{
 					"type" : "for",
-					"value" : "threads",
+					"value" : "concurrency",
 					"in" : [
 						1, 2, 3, 4, 5, 10, 15, 20
 					],
@@ -310,8 +346,10 @@
 								"file" : "10MB_items.csv"
 							}
 						},
-						"load" : {
-							"concurrency" : "${threads}"
+						"storage" : {
+							"driver" : {
+								"concurrency" : "${concurrency}"
+							}
 						}
 					},
 					"jobs" : [
@@ -319,9 +357,10 @@
 							"type" : "load"
 						}
 					]
-				}, {
+				},
+				{
 					"type" : "for",
-					"value" : "threads",
+					"value" : "concurrency",
 					"in" : [
 						1, 2, 3, 4, 5, 10, 15
 					],
@@ -334,8 +373,10 @@
 								"file" : "100MB_items.csv"
 							}
 						},
-						"load" : {
-							"concurrency" : "${threads}"
+						"storage" : {
+							"driver" : {
+								"concurrency" : "${concurrency}"
+							}
 						}
 					},
 					"jobs" : [
@@ -343,9 +384,10 @@
 							"type" : "load"
 						}
 					]
-				}, {
+				},
+				{
 					"type" : "for",
-					"value" : "threads",
+					"value" : "concurrency",
 					"in" : [
 						1, 2, 3, 4, 5, 10
 					],
@@ -358,8 +400,10 @@
 								"file" : "200MB_items.csv"
 							}
 						},
-						"load" : {
-							"concurrency" : "${threads}"
+						"storage" : {
+							"driver" : {
+								"concurrency" : "${concurrency}"
+							}
 						}
 					},
 					"jobs" : [

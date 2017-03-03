@@ -6,14 +6,16 @@
 				"size" : "4KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10000
-			},
-			"concurrency" : 4
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10000
+				}
+			}
 		},
 		"storage" : {
 			"driver" : {
+				"concurrency" : 4,
 				"type" : "fs"
 			}
 		}

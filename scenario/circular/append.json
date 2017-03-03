@@ -6,8 +6,10 @@
 				"size" : "16KB"
 			}
 		},
-		"load" : {
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
 		}
 	},
 	"jobs" : [
@@ -19,9 +21,11 @@
 						"file" : "circular-append-before.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
 					}
 				}
 			}
@@ -46,9 +50,13 @@
 				},
 				"load" : {
 					"type" : "update",
-					"circular" : true,
-					"limit" : {
-						"count" : 31000
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 31000
+						}
 					}
 				}
 			}

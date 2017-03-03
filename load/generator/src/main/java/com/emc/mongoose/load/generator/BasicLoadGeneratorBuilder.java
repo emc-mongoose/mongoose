@@ -27,10 +27,10 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import com.emc.mongoose.model.item.NewItemInput;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.apache.logging.log4j.Level;
@@ -56,6 +56,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
+	private LimitConfig limitConfig;
+
 	private ItemType itemType;
 	private ItemFactory<I> itemFactory;
 	private List<StorageDriver<I, O>> storageDrivers;
@@ -71,6 +73,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
+		return this;
+	}
+
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> setLimitConfig(final LimitConfig limitConfig) {
+		this.limitConfig = limitConfig;
 		return this;
 	}
 
@@ -108,8 +116,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 	throws UserShootHisFootException {
 
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-
 		final Input<String> dstPathInput;
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();

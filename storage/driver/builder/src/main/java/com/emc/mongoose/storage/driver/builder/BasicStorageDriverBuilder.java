@@ -10,8 +10,9 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,7 @@ public class BasicStorageDriverBuilder<
 	private String jobName;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
+	private MetricsConfig metricsConfig;
 	private StorageConfig storageConfig;
 	
 	protected final ContentSource getContentSource()
@@ -58,6 +60,11 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public LoadConfig getLoadConfig() {
 		return loadConfig;
+	}
+
+	@Override
+	public MetricsConfig getMetricsConfig() {
+		return metricsConfig;
 	}
 
 	@Override
@@ -82,7 +89,13 @@ public class BasicStorageDriverBuilder<
 		this.loadConfig = loadConfig;
 		return this;
 	}
-	
+
+	@Override
+	public BasicStorageDriverBuilder<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig) {
+		this.metricsConfig = metricsConfig;
+		return this;
+	}
+
 	@Override
 	public BasicStorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;

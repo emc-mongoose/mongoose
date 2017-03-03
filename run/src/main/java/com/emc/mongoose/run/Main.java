@@ -38,7 +38,7 @@ public class Main {
 		}
 		config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
 
-		final String scenarioValue = config.getScenarioConfig().getFile();
+		final String scenarioValue = config.getTestConfig().getScenarioConfig().getFile();
 		final Path scenarioPath;
 		if(scenarioValue != null && !scenarioValue.isEmpty()) {
 			scenarioPath = Paths.get(scenarioValue);

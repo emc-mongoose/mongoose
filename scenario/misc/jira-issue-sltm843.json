@@ -6,14 +6,20 @@
 				"size" : "100KB"
 			}
 		},
-		"load" : {
-			"concurrency" : 40,
-			"limit" : {
-				"count" : 100000,
-				"time" : "10m"
-			},
-			"metrics" : {
-				"period" : 1
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000,
+					"time" : "10m"
+				},
+				"metrics" : {
+					"period" : 1
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 40
 			}
 		}
 	}

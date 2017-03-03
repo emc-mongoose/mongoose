@@ -13,6 +13,10 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentCon
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
+
 import io.netty.channel.ChannelInboundHandler;
 
 import java.io.IOException;
@@ -28,16 +32,17 @@ public class StorageMockFactory {
 	private final StorageConfig storageConfig;
 	private final LoadConfig loadConfig;
 	private final ItemConfig itemConfig;
-	private final LoadConfig.LimitConfig limitConfig;
-	private final ItemConfig.NamingConfig namingConfig;
+	private final StepConfig stepConfig;
+	private final NamingConfig namingConfig;
 
 	public StorageMockFactory(
-		final StorageConfig storageConfig, final LoadConfig loadConfig, final ItemConfig itemConfig
+		final StorageConfig storageConfig, final LoadConfig loadConfig, final ItemConfig itemConfig,
+		final StepConfig stepConfig
 	) {
 		this.storageConfig = storageConfig;
 		this.loadConfig = loadConfig;
 		this.itemConfig = itemConfig;
-		this.limitConfig = loadConfig.getLimitConfig();
+		this.stepConfig = stepConfig;
 		this.namingConfig = itemConfig.getNamingConfig();
 	}
 
@@ -50,12 +55,13 @@ public class StorageMockFactory {
 		);
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<DataItemMock> storage = new Nagaina(
-			storageConfig, loadConfig, itemConfig, contentSrc, handlers
+			storageConfig, loadConfig, itemConfig, stepConfig, contentSrc, handlers
 		);
 		final StorageMockNode<DataItemMock> storageMockNode = new NagainaNode(
 			storage, contentSrc
 		);
 		final StorageMockClient<DataItemMock> client = storageMockNode.client();
+		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		handlers.add(
 			new SwiftRequestHandler<>(limitConfig, namingConfig, storage, client)
 		);
@@ -77,8 +83,9 @@ public class StorageMockFactory {
 		);
 		final List<ChannelInboundHandler> handlers = new ArrayList<>();
 		final StorageMock<DataItemMock> storage = new Nagaina(
-			storageConfig, loadConfig, itemConfig, contentSrc, handlers
+			storageConfig, loadConfig, itemConfig, stepConfig, contentSrc, handlers
 		);
+		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		try {
 			handlers.add(
 				new SwiftRequestHandler<>(limitConfig, namingConfig, storage, null)

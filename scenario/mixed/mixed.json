@@ -21,10 +21,16 @@
 							"path" : "default"
 						}
 					},
-					"load" : {
-						"concurrency" : 20,
-						"limit" : {
-							"count" : 0
+					"storage" : {
+						"driver" : {
+							"concurrency" : 20
+						}
+					},
+					"test" : {
+						"step" : {
+							"limit" : {
+								"count" : 0
+							}
 						}
 					}
 				},
@@ -40,12 +46,20 @@
 							"path" : "items2read"
 						}
 					},
+					"storage" : {
+						"driver" : {
+							"concurrency" : 50
+						}
+					},
+					"test" : {
+						"step" : {
+							"limit" : {
+								"count" : 0
+							}
+						}
+					},
 					"load" : {
-						"concurrency" : 50,
 						"circular" : true,
-						"limit" : {
-							"count" : 0
-						},
 						"type" : "read"
 					}
 				}

@@ -4,6 +4,9 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -23,6 +26,9 @@ public interface StorageDriverBuilder<
 	LoadConfig getLoadConfig()
 	throws RemoteException;
 
+	MetricsConfig getMetricsConfig()
+	throws RemoteException;
+
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
@@ -33,6 +39,9 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
+	throws RemoteException;
+
+	StorageDriverBuilder<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)

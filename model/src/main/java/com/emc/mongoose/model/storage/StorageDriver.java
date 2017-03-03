@@ -54,6 +54,9 @@ extends Daemon, Output<O>, Remote {
 	List<O> getResults()
 	throws IOException;
 
+	int getConcurrencyLevel()
+	throws RemoteException;
+
 	int getActiveTaskCount()
 	throws RemoteException;
 	

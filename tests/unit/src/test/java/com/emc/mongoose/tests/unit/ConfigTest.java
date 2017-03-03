@@ -25,14 +25,14 @@ public class ConfigTest {
 	throws Exception {
 		
 		final Map<String, String> argsMap = new HashMap<>();
-		argsMap.put("--load-job-name", "goose");
+		argsMap.put("--test-step-name", "goose");
 		argsMap.put("--version", "1.2.5.10");
 		argsMap.put("--item-data-content-ringSize", "16MB");
 		argsMap.put("--item-data-ranges-random", "1");
-		argsMap.put("--load-limit-count", "1000");
-		argsMap.put("--load-limit-rate", "12.345");
-		argsMap.put("--load-limit-size", "321KB");
-		argsMap.put("--load-limit-time", "5m");
+		argsMap.put("--test-step-limit-count", "1000");
+		argsMap.put("--test-step-limit-rate", "12.345");
+		argsMap.put("--test-step-limit-size", "321KB");
+		argsMap.put("--test-step-limit-time", "5m");
 		argsMap.put("--storage-net-timeoutMilliSec", "123456");
 		argsMap.put("--storage-net-reuseAddr", "true");
 		argsMap.put("--storage-net-tcpNoDelay", "false");
@@ -71,12 +71,11 @@ public class ConfigTest {
 			dataConfig.getContentConfig().getRingSize().toString()
 		);
 		assertEquals(1, dataConfig.getRangesConfig().getRandom());
-		final Config.LoadConfig loadConfig = config.getLoadConfig();
-		assertEquals(1000, loadConfig.getLimitConfig().getCount());
-		assertEquals(12.345, loadConfig.getLimitConfig().getRate());
-		assertEquals("321KB", loadConfig.getLimitConfig().getSize().toString());
-		assertEquals(300, loadConfig.getLimitConfig().getTime());
-		final Config.StorageConfig storageConfig = config.getStorageConfig();
+		final Config.TestConfig.StepConfig.LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
+		assertEquals(1000, limitConfig.getCount());
+		assertEquals(12.345, limitConfig.getRate());
+		assertEquals("321KB", limitConfig.getSize().toString());
+		assertEquals(300, limitConfig.getTime());
 		assertEquals(4, netConfig.getNodeConfig().getAddrs().size());
 		assertEquals(true, netConfig.getHttpConfig().getFsAccess());
 		assertEquals(
@@ -108,9 +107,11 @@ public class ConfigTest {
 		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
-				put("load", new HashMap<String, Object>() {{
-					put("limit", new HashMap<String, Object>() {{
-						put("time", "100500y");
+				put("test", new HashMap<String, Object>() {{
+					put("step", new HashMap<String, Object>() {{
+						put("limit", new HashMap<String, Object>() {{
+							put("time", "100500y");
+						}});
 					}});
 				}});
 			}});
@@ -144,9 +145,11 @@ public class ConfigTest {
 		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
-				put("load", new HashMap<String, Object>() {{
-					put("limit", new HashMap<String, Object>() {{
-						put("count", "nope");
+				put("test", new HashMap<String, Object>() {{
+					put("step", new HashMap<String, Object>() {{
+						put("limit", new HashMap<String, Object>() {{
+							put("count", "nope");
+						}});
 					}});
 				}});
 			}});
@@ -161,15 +164,15 @@ public class ConfigTest {
 		final Config config = ConfigParser.loadDefaultConfig();
 		try {
 			config.apply(new HashMap<String, Object>() {{
-				put("load", new HashMap<String, Object>() {{
-					put("limit", new HashMap<String, Object>() {{
+				put("storage", new HashMap<String, Object>() {{
+					put("driver", new HashMap<String, Object>() {{
 						put("blabla", "123");
 					}});
 				}});
 			}});
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentNameException e) {
-			Assert.assertEquals("--load-limit-blabla", e.getMessage());
+			Assert.assertEquals("--storage-driver-blabla", e.getMessage());
 		}
 	}
 }

@@ -4,11 +4,17 @@
 		"item" : {
 			"type" : "path"
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10
-			},
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
+			}
 		}
 	},
 	"jobs" : [
@@ -35,11 +41,17 @@
 				"item" : {
 					"type" : "data"
 				},
-				"load" : {
-					"limit" : {
-						"count" : 10000
-					},
-					"concurrency" : 10
+				"storage" : {
+					"driver" : {
+						"concurrency" : 10
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 10000
+						}
+					}
 				}
 			},
 			"jobs" : [

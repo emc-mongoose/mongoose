@@ -6,9 +6,11 @@
 				"path" : "fs-circular-read-from-custom-dir"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
 			}
 		},
 		"storage" : {
@@ -30,11 +32,15 @@
 				},
 				"load" : {
 					"type" : "read",
-					"circular" : true,
-					"limit" : {
-						// count -> infinity, time -> 1 minute
-						"count" : 0,
-						"time" : "1m"
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							// count -> infinity, time -> 1 minute
+							"count" : 0,
+							"time" : "1m"
+						}
 					}
 				}
 			}

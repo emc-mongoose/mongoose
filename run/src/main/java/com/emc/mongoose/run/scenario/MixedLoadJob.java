@@ -21,15 +21,16 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+
+import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
+import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -83,12 +84,12 @@ extends JobBase {
 	public final void run() {
 		super.run();
 
-		final LoadConfig localLoadConfig = localConfig.getLoadConfig();
-		final String jobName = localLoadConfig.getJobConfig().getName();
+		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
+		final String jobName = localStepConfig.getName();
 		LOG.info(Markers.MSG, "Run the mixed load job \"{}\"", jobName);
-		final LimitConfig limitConfig = localLoadConfig.getLimitConfig();
+		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
 		
-		final long t = limitConfig.getTime();
+		final long t = localLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
 		final boolean remoteDriversFlag = localConfig
 			.getStorageConfig().getDriverConfig().getRemote();
@@ -98,6 +99,7 @@ extends JobBase {
 		final Int2IntMap weightMap = weights == null ?
 			null : new Int2IntOpenHashMap(loadGeneratorCount);
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>(loadGeneratorCount);
+		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>(loadGeneratorCount);
 		
 		try {
 			for(int i = 0; i < loadGeneratorCount; i ++) {
@@ -121,6 +123,9 @@ extends JobBase {
 				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();
+				final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+				final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
+				final LimitConfig limitConfig = stepConfig.getLimitConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
 				final StorageConfig storageConfig = config.getStorageConfig();
@@ -173,6 +178,7 @@ extends JobBase {
 							.setJobName(jobName)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
+							.setMetricsConfig(metricsConfig)
 							.setStorageConfig(storageConfig)
 							.buildRemotely();
 						final StorageDriverSvc driverSvc;
@@ -220,6 +226,7 @@ extends JobBase {
 							.setJobName(jobName)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
+							.setMetricsConfig(metricsConfig)
 							.setStorageConfig(storageConfig)
 							.build()
 					);
@@ -230,6 +237,7 @@ extends JobBase {
 					.setItemFactory(itemFactory)
 					.setItemType(itemType)
 					.setLoadConfig(loadConfig)
+					.setLimitConfig(limitConfig)
 					.setStorageDrivers(drivers)
 					.build();
 				
@@ -238,6 +246,7 @@ extends JobBase {
 					weightMap.put(loadGenerator.hashCode(), (int) weights.get(i));
 				}
 				loadConfigMap.put(loadGenerator, loadConfig);
+				stepConfigMap.put(loadGenerator, stepConfig);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the content source");
@@ -247,7 +256,7 @@ extends JobBase {
 		
 		try(
 			final LoadMonitor monitor = new BasicLoadMonitor(
-				jobName, driverMap, loadConfigMap, weightMap
+				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();

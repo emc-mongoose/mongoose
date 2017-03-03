@@ -7,7 +7,7 @@ import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.JobConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
+
 /**
  Created on 12.07.16.
  */
@@ -38,11 +39,11 @@ public class Main {
 		config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
 
 		final LoadConfig loadConfig = config.getLoadConfig();
-		final JobConfig jobConfig = loadConfig.getJobConfig();
-		String jobName = jobConfig.getName();
+		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+		String jobName = stepConfig.getName();
 		if(jobName == null) {
 			jobName = ThreadContext.get(KEY_JOB_NAME);
-			jobConfig.setName(jobName);
+			stepConfig.setName(jobName);
 		} else {
 			ThreadContext.put(KEY_JOB_NAME, jobName);
 		}
@@ -56,7 +57,7 @@ public class Main {
 		final StorageConfig storageConfig = config.getStorageConfig();
 		final ItemConfig itemConfig = config.getItemConfig();
 		final StorageMockFactory storageMockFactory = new StorageMockFactory(
-			storageConfig, loadConfig, itemConfig
+			storageConfig, loadConfig, itemConfig, stepConfig
 		);
 		if(storageConfig.getMockConfig().getNode()) {
 			try(final Daemon storageNodeMock = storageMockFactory.newStorageNodeMock()) {

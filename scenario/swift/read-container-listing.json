@@ -6,14 +6,16 @@
 				"path" : "read-container-listing"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 100000
-			},
-			"concurrency" : 10
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000
+				}
+			}
 		},
 		"storage" : {
 			"driver" : {
+				"concurrency" : 10,
 				"type" : "swift"
 			},
 			"net" : {
@@ -26,7 +28,8 @@
 	"jobs": [
 		{
 			"type": "precondition"
-		}, {
+		},
+		{
 			"type": "load",
 			"config" : {
 				"item" : {

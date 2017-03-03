@@ -1,5 +1,5 @@
 // example command:
-// java -DITEM_DST_CONTAINER=mongoose -DITEM_SRC_FILE= -DLOAD_THREADS=100 -DITEM_DATA_SIZE=1KB -DLOAD_TYPE=create -jar mongoose-next/mongoose.jar -f mongoose-next/scenario/misc/env-vars-substitution.json
+// java -DITEM_DST_CONTAINER=mongoose -DITEM_SRC_FILE= -DLOAD_THREADS=100 -DITEM_DATA_SIZE=1KB -DLOAD_TYPE=create -jar mongoose-<VERSION>/mongoose.jar --scenario-file=mongoose-<VERSION>/scenario/misc/env-vars-substitution.json
 {
 	"type" : "load",
 	"config" : {
@@ -15,8 +15,12 @@
 			}
 		},
 		"load" : {
-			"concurrency" : "${LOAD_THREADS}",
 			"type" : "${LOAD_TYPE}"
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : "${LOAD_THREADS}"
+			}
 		}
 	}
 }

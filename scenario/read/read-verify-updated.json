@@ -19,9 +19,11 @@
 						"file" : "linear-read-verify-updated-0.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100
+						}
 					}
 				}
 			}

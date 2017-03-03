@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -7,7 +8,6 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static java.lang.System.nanoTime;
-
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -45,9 +45,10 @@ implements StorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final boolean verifyFlag
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final boolean verifyFlag
 	) {
-		super(jobName, null, loadConfig, verifyFlag);
+		super(jobName, loadConfig, storageConfig, verifyFlag);
 		ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
 		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];

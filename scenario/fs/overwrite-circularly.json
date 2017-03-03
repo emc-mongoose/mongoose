@@ -6,9 +6,11 @@
 				"size" : "64KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1
+				}
 			}
 		},
 		"storage" : {
@@ -38,11 +40,15 @@
 				},
 				"load" : {
 					"type" : "update",
-					"circular" : true,
-					"limit" : {
-						// count -> infinity instead of inherited value, time -> 5 minutes
-						"count" : 0,
-						"time" : "5m"
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							// count -> infinity instead of inherited value, time -> 5 minutes
+							"count" : 0,
+							"time" : "5m"
+						}
 					}
 				}
 			}

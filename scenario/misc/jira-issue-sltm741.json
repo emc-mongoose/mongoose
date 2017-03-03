@@ -11,10 +11,16 @@
 						"size" : 1
 					}
 				},
-				"load" : {
-					"concurrency" : "${i}",
-					"limit" : {
-						"time" : "15s"
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "15s"
+						}
+					}
+				},
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${i}"
 					}
 				}
 			}

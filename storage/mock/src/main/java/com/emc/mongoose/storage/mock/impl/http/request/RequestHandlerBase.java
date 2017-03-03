@@ -14,11 +14,10 @@ import com.emc.mongoose.storage.mock.api.exception.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.exception.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;

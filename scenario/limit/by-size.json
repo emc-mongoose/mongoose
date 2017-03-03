@@ -1,9 +1,11 @@
 {
 	"type" : "load",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"size" : "1234MB"
+		"test" : {
+			"step" : {
+				"limit" : {
+					"size" : "1234MB"
+				}
 			}
 		}
 	}

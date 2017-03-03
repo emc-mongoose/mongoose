@@ -271,18 +271,6 @@
 								}
 							]
 						},
-						"concurrency": {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 1
-								},
-								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
-								}
-							]
-						},
 						"generator" : {
 							"type" : "object",
 							"additionalProperties" : false,
@@ -316,122 +304,6 @@
 									"oneOf" : [
 										{
 											"type" : "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								}
-							}
-						},
-						"job" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
-								"name" : {
-									"type" : [
-										"null", "string"
-									]
-								}
-							}
-						},
-						"limit": {
-							"type": "object",
-							"additionalProperties": false,
-							"properties": {
-								"count": {
-									"oneOf" : [
-										{
-											"type": "integer",
-											"minimum" : 0
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"rate": {
-									"oneOf" : [
-										{
-											"type": "number",
-											"minimum" : 0
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"size": {
-									"oneOf" : [
-										{
-											"type": "integer",
-											"minimum" : 0
-										}, {
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"time": {
-									"oneOf" : [
-										{
-											"type" : "integer",
-											"minimum" : 0
-										}, {
-											"type" : "string",
-											"pattern" : "[\\d]+[SsMmHhDd]?"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								}
-							}
-						},
-						"metrics" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
-								"period" : {
-									"oneOf" : [
-										{
-											"type" : "integer",
-											"minimum" : 0
-										}, {
-											"type" : "string",
-											"pattern" : "[\\d]+[SsMmHhDd]?"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"precondition" : {
-									"oneOf" : [
-										{
-											"type" : "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"threshold" : {
-									"oneOf" : [
-										{
-											"type" : "number",
-											"minimum" : 0,
-											"maximum" : 1
 										},
 										{
 											"type" : "string",
@@ -475,17 +347,6 @@
 						}
 					}
 				},
-				"scenario" : {
-					"type" : "object",
-					"additionalProperties" : false,
-					"properties" : {
-						"file" : {
-							"type" : [
-								"null", "string"
-							]
-						}
-					}
-				},
 				"storage": {
 					"type": "object",
 					"additionalProperties": false,
@@ -522,6 +383,18 @@
 											"items": {
 												"type" : "string"
 											}
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"concurrency": {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1
 										},
 										{
 											"type" : "string",
@@ -753,6 +626,128 @@
 											]
 										}
 									}
+								}
+							}
+						}
+					}
+				},
+				"test" : {
+					"type" : "object",
+					"additionalProperties" : false,
+					"properties" : {
+						"step" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"limit": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"count": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"rate": {
+											"oneOf" : [
+												{
+													"type": "number",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"size": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 0
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"time": {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d]+[SsMmHhDd]?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										}
+									}
+								},
+								"metrics" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"period" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d]+[SsMmHhDd]?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"threshold" : {
+											"oneOf" : [
+												{
+													"type" : "number",
+													"minimum" : 0,
+													"maximum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										}
+									}
+								},
+								"name" : {
+									"type" : [
+										"null", "string"
+									]
+								},
+								"precondition" : {
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								}
 							}
 						}

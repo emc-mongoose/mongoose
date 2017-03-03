@@ -2,7 +2,6 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
-import com.emc.mongoose.tests.system.base.FileStorageTestBase;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 
 import org.junit.AfterClass;

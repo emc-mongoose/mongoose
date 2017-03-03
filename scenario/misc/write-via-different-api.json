@@ -7,7 +7,7 @@
 			},
 			"net" : {
 				"http" : {
-					"namespace" : "s3"
+					"namespace" : "ns1"
 				}
 			}
 		}
@@ -21,11 +21,17 @@
 						"size" : "10KB"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
-					},
-					"concurrency" : 5
+				"storage" : {
+					"driver" : {
+						"concurrency" : 5
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
 				}
 			},
 			"jobs" : [

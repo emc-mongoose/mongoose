@@ -34,7 +34,6 @@
 	},
 	"load" : {
 		"circular" : false,
-		"concurrency" : 1,
 		"generator" : {
 			"addrs" : [
 				"127.0.0.1"
@@ -42,27 +41,10 @@
 			"remote" : false,
 			"shuffle" : false
 		},
-		"job" :{
-			"name" : null
-		},
-		"limit" : {
-			"count" : 0,
-			"rate" : 0,
-			"size" : 0,
-			"time" : "0s"
-		},
-		"metrics" : {
-			"period" : "10s",
-			"precondition" : false,
-			"threshold" : 0
-		},
 		"queue" : {
 			"size" : 1000000
 		},
 		"type" : "create"
-	},
-	"scenario" : {
-		"file" : null
 	},
 	"storage" : {
 		"auth" : {
@@ -74,6 +56,7 @@
 			"addrs" : [
 				"127.0.0.1"
 			],
+			"concurrency" : 1,
 			"impl" : [
 				{
 					"type" : "fs",
@@ -140,17 +123,36 @@
 			}
 		}
 	},
+	"test" : {
+		"scenario" : {
+			"file" : null
+		},
+		"step" : {
+			"limit" : {
+				"count" : 0,
+				"rate" : 0,
+				"size" : 0,
+				"time" : "0s"
+			},
+			"metrics" : {
+				"period" : "10s",
+				"threshold" : 0
+			},
+			"name" : null,
+			"precondition" : false
+		}
+	},
 	"version" : "3.3.0",
 	"aliasing" : [
 		{
 			"name" : "load-threads",
 			"deprecated" : true,
-			"target" : "load-concurrency"
+			"target" : "storage-driver-concurrency"
 		},
 		{
 			"name" : "run-id",
 			"deprecated" : true,
-			"target" : "load-job-name"
+			"target" : "test-step-name"
 		},
 		{
 			"name" : "noop",
@@ -286,6 +288,56 @@
 			"name" : "storage-net-http-api",
 			"deprecated" : true,
 			"target" : "storage-driver-type"
+		},
+		{
+			"name" : "load-concurrency",
+			"deprecated" : true,
+			"target" : "storage-driver-concurrency"
+		},
+		{
+			"name" : "load-job-name",
+			"deprecated" : true,
+			"target" : "test-step-name"
+		},
+		{
+			"name" : "load-limit-count",
+			"deprecated" : true,
+			"target" : "test-step-limit-count"
+		},
+		{
+			"name" : "load-limit-rate",
+			"deprecated" : true,
+			"target" : "test-step-limit-rate"
+		},
+		{
+			"name" : "load-limit-size",
+			"deprecated" : true,
+			"target" : "test-step-limit-size"
+		},
+		{
+			"name" : "load-limit-time",
+			"deprecated" : true,
+			"target" : "test-step-limit-time"
+		},
+		{
+			"name" : "load-metrics-period",
+			"deprecated" : true,
+			"target" : "test-step-metrics-period"
+		},
+		{
+			"name" : "load-metrics-precondition",
+			"deprecated" : true,
+			"target" : "test-step-precondition"
+		},
+		{
+			"name" : "load-metrics-threshold",
+			"deprecated" : true,
+			"target" : "test-step-metrics-threshold"
+		},
+		{
+			"name" : "scenario-file",
+			"deprecated" : true,
+			"target" : "test-scenario-file"
 		}
 	]
 }

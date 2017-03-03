@@ -16,8 +16,10 @@
 						"size" : "10KB"
 					}
 				},
-				"load" : {
-					"concurrency" : 100
+				"storage" : {
+					"driver" : {
+						"concurrency" : 100
+					}
 				}
 			}
 		},
@@ -29,10 +31,16 @@
 						"size" : "1KB"
 					}
 				},
-				"load" : {
-					"concurrency" : 10,
-					"limit" : {
-						"time" : 10
+				"storage" : {
+					"driver" : {
+						"concurrency" : 10
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : 10
+						}
 					}
 				}
 			},

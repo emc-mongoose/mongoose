@@ -9,11 +9,17 @@
 				"size" : "10KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1000
-			},
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
 		}
 	},
 	"jobs" : [

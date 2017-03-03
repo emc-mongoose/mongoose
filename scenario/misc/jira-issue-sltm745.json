@@ -3,10 +3,11 @@
 	"value" : "iteration",
 	"in" : "1-10",
 	"config" : {
-		"load" : {
-			"concurrency" : 1000,
-			"limit" : {
-				"count" : 100000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000
+				}
 			}
 		},
 		"item" : {
@@ -17,9 +18,9 @@
 				"path" : "issue-745"
 			}
 		},
-		
 		"storage" : {
 			"driver" : {
+				"concurrency" : 1000,
 				"type" : "s3"
 			},
 			"net" : {
@@ -35,8 +36,8 @@
 			"value" : "i",
 			"in" : "1-5",
 			"config" : {
-				"load" : {
-					"job" : {
+				"test" : {
+					"step" : {
 						"name" : "LONGEVITY-${iteration}"
 					}
 				}

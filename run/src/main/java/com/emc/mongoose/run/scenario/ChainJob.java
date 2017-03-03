@@ -7,7 +7,6 @@ import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.BasicIoResultsItemInput;
 import com.emc.mongoose.model.item.IoResultsItemInput;
 import com.emc.mongoose.model.item.ItemFactory;
@@ -24,11 +23,14 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
+
+import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -75,12 +77,12 @@ extends JobBase {
 	public final void run() {
 		super.run();
 		
-		final LoadConfig localLoadConfig = localConfig.getLoadConfig();
-		final String jobName = localLoadConfig.getJobConfig().getName();
-		LOG.info(Markers.MSG, "Run the chain load job \"{}\"", jobName);
-		final LimitConfig limitConfig = localLoadConfig.getLimitConfig();
+		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
+		final String testStepName = stepConfig.getName();
+		LOG.info(Markers.MSG, "Run the chain load job \"{}\"", testStepName);
+		final LimitConfig commonLimitConfig = stepConfig.getLimitConfig();
 		
-		final long t = limitConfig.getTime();
+		final long t = commonLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
 		final boolean remoteDriversFlag = localConfig
 			.getStorageConfig().getDriverConfig().getRemote();
@@ -111,6 +113,8 @@ extends JobBase {
 				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
+				final MetricsConfig metricsConfig = config
+					.getTestConfig().getStepConfig().getMetricsConfig();
 				final QueueConfig queueConfig = loadConfig.getQueueConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
@@ -163,9 +167,10 @@ extends JobBase {
 						final String driverSvcName;
 						try {
 							driverSvcName = driverBuilderSvc
-							.setJobName(jobName)
+							.setJobName(testStepName)
 							.setItemConfig(itemConfig)
 							.setLoadConfig(loadConfig)
+							.setMetricsConfig(metricsConfig)
 							.setStorageConfig(storageConfig)
 							.buildRemotely();
 						} catch(final IOException | UserShootHisFootException e) {
@@ -212,9 +217,10 @@ extends JobBase {
 					try {
 						drivers.add(
 							new BasicStorageDriverBuilder<>()
-								.setJobName(jobName)
+								.setJobName(testStepName)
 								.setItemConfig(itemConfig)
 								.setLoadConfig(loadConfig)
+								.setMetricsConfig(metricsConfig)
 								.setStorageConfig(storageConfig)
 								.build()
 						);
@@ -230,6 +236,7 @@ extends JobBase {
 						.setItemFactory(itemFactory)
 						.setItemType(itemType)
 						.setLoadConfig(loadConfig)
+						.setLimitConfig(commonLimitConfig)
 						.setStorageDrivers(drivers)
 						.build();
 				} else {
@@ -238,13 +245,14 @@ extends JobBase {
 						.setItemFactory(itemFactory)
 						.setItemType(itemType)
 						.setLoadConfig(loadConfig)
+						.setLimitConfig(commonLimitConfig)
 						.setStorageDrivers(drivers)
 						.setItemInput(nextItemBuff)
 						.build();
 				}
 				
 				final LoadMonitor loadMonitor = new BasicLoadMonitor(
-					jobName, loadGenerator, drivers, loadConfig
+					testStepName, loadGenerator, drivers, loadConfig, stepConfig
 				);
 				loadChain.add(loadMonitor);
 				

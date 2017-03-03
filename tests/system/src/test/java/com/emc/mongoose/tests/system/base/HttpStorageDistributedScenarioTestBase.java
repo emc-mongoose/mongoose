@@ -2,15 +2,15 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.run.scenario.Scenario;
+import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
 
 /**
  Created by andrey on 19.01.17.
@@ -28,7 +28,7 @@ extends HttpStorageDistributedTestBase {
 	public static void setUpClass()
 	throws Exception {
 		HttpStorageDistributedTestBase.setUpClass();
-		final String scenarioValue = CONFIG.getScenarioConfig().getFile();
+		final String scenarioValue = CONFIG.getTestConfig().getScenarioConfig().getFile();
 		if(scenarioValue != null && !scenarioValue.isEmpty()) {
 			SCENARIO_PATH = Paths.get(scenarioValue);
 		} else {

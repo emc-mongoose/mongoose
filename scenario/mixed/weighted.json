@@ -6,8 +6,10 @@
 				"path" : "/weighted-load"
 			}
 		},
-		"load" : {
-			"concurrency" : 100
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
+			}
 		}
 	},
 	"jobs" : [
@@ -22,16 +24,19 @@
 						"file" : "weighted-load.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 10000
-					},
-					"metrics" : {
-						"period" : 0
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 10000
+						},
+						"metrics" : {
+							"period" : 0
+						}
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "mixed",
 			"weights" : [
 				20, 80
@@ -52,10 +57,14 @@
 					},
 					"load" : {
 						"circular" : true,
-						"limit" : {
-							"time" : "100s"
-						},
 						"type" : "read"
+					},
+					"test" : {
+						"step" : {
+							"limit" : {
+								"time" : "100s"
+							}
+						}
 					}
 				}
 			]

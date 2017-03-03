@@ -2,6 +2,9 @@
 	"type" : "load",
 	"config" : {
 		"load" : {
+			"limit" : {
+				"count" : 100
+			},
 			"threads" : 10
 		},
 		"run" : {

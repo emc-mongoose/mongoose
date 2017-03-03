@@ -1,8 +1,10 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"load" : {
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
 		}
 	},
 	"jobs": [
@@ -14,9 +16,11 @@
 						"file" : "circular-read-updated-0.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
 					}
 				}
 			}
@@ -38,9 +42,13 @@
 				},
 				"load" : {
 					"type" : "update",
-					"circular" : true,
-					"limit" : {
-						"time" : "1m"
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "1m"
+						}
 					}
 				}
 			}

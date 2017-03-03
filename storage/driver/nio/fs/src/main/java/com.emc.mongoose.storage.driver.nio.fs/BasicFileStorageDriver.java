@@ -79,7 +79,7 @@ implements FileStorageDriver<I, O> {
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) {
-		super(jobName, loadConfig, verifyFlag);
+		super(jobName, loadConfig, storageConfig, verifyFlag);
 		
 		openSrcFileFunc = ioTask -> {
 			final String srcPath = ioTask.getSrcPath();

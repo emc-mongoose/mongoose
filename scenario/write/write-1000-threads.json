@@ -1,8 +1,10 @@
 {
 	"type" : "load",
 	"config" : {
-		"load" : {
-			"concurrency" : 1000
+		"storage" : {
+			"driver" : {
+				"concurrency" : 1000
+			}
 		}
 	}
 }

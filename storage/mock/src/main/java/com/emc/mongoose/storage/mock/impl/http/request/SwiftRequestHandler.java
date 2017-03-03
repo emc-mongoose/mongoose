@@ -6,7 +6,7 @@ import com.emc.mongoose.storage.mock.api.StorageMockClient;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.exception.ContainerMockNotFoundException;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import com.fasterxml.jackson.core.JsonProcessingException;

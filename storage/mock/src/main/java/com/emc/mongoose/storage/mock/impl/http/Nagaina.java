@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http;
 
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
@@ -57,10 +58,11 @@ extends StorageMockBase<DataItemMock>{
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina(
 		final StorageConfig storageConfig, final LoadConfig loadConfig, final ItemConfig itemConfig,
-		final ContentSource contentSource, final List<ChannelInboundHandler> handlers
+		final StepConfig stepConfig, final ContentSource contentSource,
+		final List<ChannelInboundHandler> handlers
 	) {
 		super(
-			storageConfig.getMockConfig(), loadConfig.getMetricsConfig(), itemConfig, contentSource
+			storageConfig.getMockConfig(), stepConfig.getMetricsConfig(), itemConfig, contentSource
 		);
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		final int port = netConfig.getNodeConfig().getPort();

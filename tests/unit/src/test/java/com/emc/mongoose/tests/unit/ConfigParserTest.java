@@ -11,9 +11,9 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.GeneratorConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.MetricsConfig;
-import static com.emc.mongoose.ui.config.Config.ScenarioConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.ScenarioConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
@@ -41,7 +41,7 @@ public class ConfigParserTest {
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("3.2.0", "version"));
+		assertThat(config.getVersion(), equalTo("3.3.0", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertThat(netConfig, notNullValue());
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
@@ -86,8 +86,8 @@ public class ConfigParserTest {
 		assertThat(loadConfig, notNullValue());
 		assertThat(loadConfig.getCircular(), equalTo(false, "load.circular"));
 		assertThat(loadConfig.getType(), equalTo("create", "load.type"));
-		assertThat(loadConfig.getConcurrency(), equalTo(1, "load.concurrency"));
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
+		assertThat(config.getStorageConfig().getDriverConfig().getConcurrency(), equalTo(1, "load.concurrency"));
+		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
 		assertThat(limitConfig, notNullValue());
 		assertThat(limitConfig.getCount(), equalTo(0L, "load.limit.count"));
 		assertThat(limitConfig.getRate(), equalTo(0.0, "load.limit.rate"));
@@ -107,7 +107,7 @@ public class ConfigParserTest {
 		assertThat(
 			generatorConfig.getAddrs().get(0), equalTo("127.0.0.1", "load.generator.addrs")
 		);
-		final MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
+		final MetricsConfig metricsConfig = config.getTestConfig().getStepConfig().getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
 		assertThat(metricsConfig.getThreshold(), equalTo(0.0, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
@@ -120,8 +120,8 @@ public class ConfigParserTest {
 				"load.metrics.period"
 			)
 		);
-		assertThat(metricsConfig.getPrecondition(), equalTo(false, "load.metrics.precondition"));
-		final ScenarioConfig scenarioConfig = config.getScenarioConfig();
+		assertThat(config.getTestConfig().getStepConfig().getPrecondition(), equalTo(false, "load.metrics.precondition"));
+		final ScenarioConfig scenarioConfig = config.getTestConfig().getScenarioConfig();
 		assertThat(scenarioConfig, notNullValue());
 		assertThat(scenarioConfig.getFile(), nullValue("run.file"));
 		final StorageConfig storageConfig = config.getStorageConfig();
@@ -143,7 +143,7 @@ public class ConfigParserTest {
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_USER_AGENT),
 			equalTo(true, "storage.net.http.headers[User-Agent]"));
 		assertThat(headers.get(HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo("mongoose/3.2.0", "storage.net.http.headers[User-Agent]"));
+			equalTo("mongoose/3.3.0", "storage.net.http.headers[User-Agent]"));
 		assertThat(httpConfig.getNamespace(), nullValue("storage.net.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.net.http.versioning"));
 		assertThat(

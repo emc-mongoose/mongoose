@@ -23,6 +23,9 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentCon
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -71,12 +74,15 @@ extends JobBase {
 	@Override
 	public final void run() {
 		super.run();
-		
-		final LoadConfig loadConfig = localConfig.getLoadConfig();
-		final String jobName = loadConfig.getJobConfig().getName();
+
+		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
+		final String jobName = stepConfig.getName();
 		LOG.info(Markers.MSG, "Run the load job \"{}\"", jobName);
-		loadConfig.getMetricsConfig().setPrecondition(preconditionFlag);
-		
+		stepConfig.setPrecondition(preconditionFlag);
+
+		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
+		final LoadConfig loadConfig = localConfig.getLoadConfig();
+		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		final ItemConfig itemConfig = localConfig.getItemConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
@@ -144,6 +150,7 @@ extends JobBase {
 						.setJobName(jobName)
 						.setItemConfig(itemConfig)
 						.setLoadConfig(loadConfig)
+						.setMetricsConfig(metricsConfig)
 						.setStorageConfig(storageConfig)
 						.buildRemotely();
 				} catch(final IOException | UserShootHisFootException e) {
@@ -193,6 +200,7 @@ extends JobBase {
 						.setJobName(jobName)
 						.setItemConfig(itemConfig)
 						.setLoadConfig(loadConfig)
+						.setMetricsConfig(metricsConfig)
 						.setStorageConfig(storageConfig)
 						.build()
 				);
@@ -211,6 +219,7 @@ extends JobBase {
 			loadGenerator = new BasicLoadGeneratorBuilder<>()
 				.setItemConfig(itemConfig)
 				.setLoadConfig(loadConfig)
+				.setLimitConfig(limitConfig)
 				.setItemType(itemType)
 				.setItemFactory(itemFactory)
 				.setStorageDrivers(drivers)
@@ -221,7 +230,7 @@ extends JobBase {
 		LOG.info(Markers.MSG, "Load generators initialized");
 
 		final long timeLimitSec;
-		long t = loadConfig.getLimitConfig().getTime();
+		long t = limitConfig.getTime();
 		if(t > 0) {
 			timeLimitSec = t;
 		} else {
@@ -230,7 +239,7 @@ extends JobBase {
 
 		try(
 			final LoadMonitor monitor = new BasicLoadMonitor(
-				jobName, loadGenerator, drivers, loadConfig
+				jobName, loadGenerator, drivers, loadConfig, stepConfig
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();

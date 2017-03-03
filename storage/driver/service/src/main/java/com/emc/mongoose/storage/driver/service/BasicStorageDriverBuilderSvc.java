@@ -8,9 +8,10 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
-import com.emc.mongoose.ui.config.Config.ItemConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +55,13 @@ implements StorageDriverBuilderSvc<I, O, T> {
 		super.setLoadConfig(loadConfig);
 		return this;
 	}
+
+	@Override
+	public BasicStorageDriverBuilderSvc<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig) {
+		super.setMetricsConfig(metricsConfig);
+		return this;
+	}
+
 
 	@Override
 	public BasicStorageDriverBuilderSvc<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
@@ -141,7 +149,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getContentSource(), getLoadConfig().getMetricsConfig().getPeriod()
+			port, driver, getContentSource(), getMetricsConfig().getPeriod()
 		);
 		return wrapper.getName();
 	}

@@ -6,8 +6,9 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
-import static org.junit.Assert.assertEquals;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -37,13 +38,14 @@ extends ConfiguredTestBase {
 		final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
 		final LoadConfig loadConfig = CONFIG.getLoadConfig();
 		final ItemConfig itemConfig = CONFIG.getItemConfig();
+		final StepConfig stepConfig = CONFIG.getTestConfig().getStepConfig();
 		final int port = nodeConfig.getPort();
 		final List<String> nodeAddrs = new ArrayList<>();
 		String nextNodeAddr;
 		StorageMock storageMock;
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			nodeConfig.setPort(port + i);
-			storageMock = new StorageMockFactory(storageConfig, loadConfig, itemConfig)
+			storageMock = new StorageMockFactory(storageConfig, loadConfig, itemConfig, stepConfig)
 				.newStorageMock();
 			nextNodeAddr = "127.0.0.1:" + (port + i);
 			storageMock.start();

@@ -10,14 +10,20 @@
 				"file" : "weighted2-read-input.csv"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10000
-			},
-			"metrics" : {
-				"period" : 0
-			},
-			"concurrency" : 100
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10000
+				},
+				"metrics" : {
+					"period" : 0
+				}
+			}
 		}
 	},
 	"jobs" : [
@@ -44,13 +50,15 @@
 						"file" : "weighted2-delete-input.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 0,
-						"time" : "5m"
-					},
-					"metrics": {
-						"period" : 10
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 0,
+							"time" : "5m"
+						},
+						"metrics": {
+							"period" : 10
+						}
 					}
 				}
 			}

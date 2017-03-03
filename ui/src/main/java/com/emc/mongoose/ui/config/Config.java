@@ -73,14 +73,14 @@ implements Serializable {
 	public static final String KEY_VERSION = "version";
 	public static final String KEY_ITEM = "item";
 	public static final String KEY_LOAD = "load";
-	public static final String SCENARIO = "scenario";
 	public static final String KEY_STORAGE = "storage";
+	public static final String KEY_TEST = "test";
 	public static final String KEY_ALIASING = "aliasing";
 	
 	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
 	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
-	@JsonProperty(SCENARIO) private ScenarioConfig scenarioConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
+	@JsonProperty(KEY_TEST) private TestConfig testConfig;
 	@JsonProperty(KEY_VERSION) private String version;
 	@JsonProperty(KEY_ALIASING) private List<Map<String, Object>> aliasingConfig;
 
@@ -90,8 +90,8 @@ implements Serializable {
 		this.version = config.getVersion();
 		this.itemConfig = new ItemConfig(config.getItemConfig());
 		this.loadConfig = new LoadConfig(config.getLoadConfig());
-		this.scenarioConfig = new ScenarioConfig(config.getScenarioConfig());
 		this.storageConfig = new StorageConfig(config.getStorageConfig());
+		this.testConfig = new TestConfig(config.getTestConfig());
 		final List<Map<String, Object>> ac = config.getAliasingConfig();
 		this.aliasingConfig = ac == null ? null : new ArrayList<>(config.getAliasingConfig());
 	}
@@ -104,12 +104,12 @@ implements Serializable {
 		return storageConfig;
 	}
 
-	public final LoadConfig getLoadConfig() {
-		return loadConfig;
+	public final TestConfig getTestConfig() {
+		return testConfig;
 	}
 
-	public final ScenarioConfig getScenarioConfig() {
-		return scenarioConfig;
+	public final LoadConfig getLoadConfig() {
+		return loadConfig;
 	}
 
 	public final ItemConfig getItemConfig() {
@@ -127,13 +127,13 @@ implements Serializable {
 	public final void setStorageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 	}
+
+	public final void setTestConfig(final TestConfig testConfig) {
+		this.testConfig = testConfig;
+	}
 	
 	public final void setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
-	}
-	
-	public final void setScenarioConfig(final ScenarioConfig scenarioConfig) {
-		this.scenarioConfig = scenarioConfig;
 	}
 	
 	public final void setItemConfig(final ItemConfig itemConfig) {
@@ -532,11 +532,7 @@ implements Serializable {
 	implements Serializable {
 
 		public static final String KEY_CIRCULAR = "circular";
-		public static final String KEY_CONCURRENCY = "concurrency";
 		public static final String KEY_GENERATOR = "generator";
-		public static final String KEY_JOB = "job";
-		public static final String KEY_LIMIT = "limit";
-		public static final String KEY_METRICS = "metrics";
 		public static final String KEY_QUEUE = "queue";
 		public static final String KEY_TYPE = "type";
 		
@@ -544,28 +540,10 @@ implements Serializable {
 			this.circular = circular;
 		}
 		
-		public final void setConcurrency(final int concurrency) {
-			this.concurrency = concurrency;
-		}
-
 		public final void setGeneratorConfig(final GeneratorConfig generatorConfig) {
 			this.generatorConfig = generatorConfig;
 		}
 
-		public final void setJobConfig(final JobConfig jobConfig) {
-			this.jobConfig = jobConfig;
-		}
-
-		public final void setLimitConfig(final LimitConfig limitConfig) {
-			this.limitConfig = limitConfig;
-		}
-
-		public final void setMetricsConfig(
-			final MetricsConfig metricsConfig
-		) {
-			this.metricsConfig = metricsConfig;
-		}
-		
 		public final void setQueueConfig(final QueueConfig queueConfig) {
 			this.queueConfig = queueConfig;
 		}
@@ -575,11 +553,7 @@ implements Serializable {
 		}
 		
 		@JsonProperty(KEY_CIRCULAR) private boolean circular;
-		@JsonProperty(KEY_CONCURRENCY) private int concurrency;
 		@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
-		@JsonProperty(KEY_JOB) private JobConfig jobConfig;
-		@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
-		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
 		@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
 		@JsonProperty(KEY_TYPE) private String type;
 		
@@ -588,11 +562,7 @@ implements Serializable {
 
 		public LoadConfig(final LoadConfig other) {
 			this.circular = other.getCircular();
-			this.concurrency = other.getConcurrency();
 			this.generatorConfig = new GeneratorConfig(other.getGeneratorConfig());
-			this.jobConfig = new JobConfig(other.getJobConfig());
-			this.limitConfig = new LimitConfig(other.getLimitConfig());
-			this.metricsConfig = new MetricsConfig(other.getMetricsConfig());
 			this.queueConfig = new QueueConfig(other.getQueueConfig());
 			this.type = other.getType();
 		}
@@ -605,26 +575,10 @@ implements Serializable {
 			return circular;
 		}
 
-		public int getConcurrency() {
-			return concurrency;
-		}
-
 		public final GeneratorConfig getGeneratorConfig() {
 			return generatorConfig;
 		}
 
-		public final JobConfig getJobConfig() {
-			return jobConfig;
-		}
-
-		public final LimitConfig getLimitConfig() {
-			return limitConfig;
-		}
-
-		public final MetricsConfig getMetricsConfig() {
-			return metricsConfig;
-		}
-		
 		public final QueueConfig getQueueConfig() {
 			return queueConfig;
 		}
@@ -674,140 +628,6 @@ implements Serializable {
 			}
 		}
 
-		public static final class JobConfig
-		implements Serializable {
-
-			public JobConfig() {
-			}
-
-			public JobConfig(final JobConfig other) {
-				this.name = other.getName();
-			}
-
-			public static final String KEY_NAME = "name";
-
-			public final void setName(final String name) {
-				this.name = name;
-			}
-
-			@JsonProperty(KEY_NAME) private String name;
-
-			public final String getName() {
-				return name;
-			}
-		}
-
-		public static final class LimitConfig
-		implements Serializable {
-
-			public static final String KEY_COUNT = "count";
-			public static final String KEY_RATE = "rate";
-			public static final String KEY_SIZE = "size";
-			public static final String KEY_TIME = "time";
-			
-			public final void setCount(final long count) {
-				this.count = count;
-			}
-			
-			public final void setRate(final double rate) {
-				this.rate = rate;
-			}
-			
-			public final void setSize(final SizeInBytes size) {
-				this.size = size;
-			}
-			
-			public final void setTime(final long time) {
-				this.time = time;
-			}
-			
-			@JsonProperty(KEY_COUNT) private long count;
-
-			@JsonProperty(KEY_RATE) private double rate;
-			
-			@JsonDeserialize(using = SizeInBytesDeserializer.class)
-			@JsonSerialize(using = SizeInBytesSerializer.class)
-			@JsonProperty(KEY_SIZE)
-			private SizeInBytes size;
-
-			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_TIME)
-			private long time;
-
-			public LimitConfig() {
-			}
-
-			public LimitConfig(final LimitConfig other) {
-				this.count = other.getCount();
-				this.time = other.getTime();
-				this.rate = other.getRate();
-				this.size = new SizeInBytes(other.getSize());
-			}
-
-			public final long getCount() {
-				return count;
-			}
-
-			public final double getRate() {
-				return rate;
-			}
-
-			public final SizeInBytes getSize() {
-				return size;
-			}
-
-			public final long getTime() {
-				return time;
-			}
-		}
-
-		public static final class MetricsConfig
-		implements Serializable {
-
-			public static final String KEY_PERIOD = "period";
-			public static final String KEY_PRECONDITION= "precondition";
-			public static final String KEY_THRESHOLD = "threshold";
-
-			public final void setPeriod(final long period) {
-				this.period = period;
-			}
-			
-			public final void setPrecondition(final boolean precondition) {
-				this.precondition = precondition;
-			}
-
-			public final void setThreshold(final double threshold) {
-				this.threshold = threshold;
-			}
-
-			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
-			private long period;
-
-			@JsonProperty(KEY_PRECONDITION) private boolean precondition;
-
-			@JsonProperty(KEY_THRESHOLD) private double threshold;
-
-			public MetricsConfig() {
-			}
-
-			public MetricsConfig(final MetricsConfig other) {
-				this.threshold = other.getThreshold();
-				this.period = other.getPeriod();
-				this.precondition = other.getPrecondition();
-			}
-
-			public final long getPeriod() {
-				return period;
-			}
-
-			public final boolean getPrecondition() {
-				return precondition;
-			}
-
-			public final double getThreshold() {
-				return threshold;
-			}
-		}
-		
 		public static final class QueueConfig
 		implements Serializable {
 
@@ -830,29 +650,6 @@ implements Serializable {
 			public final int getSize() {
 				return size;
 			}
-		}
-	}
-
-	public static final class ScenarioConfig
-	implements Serializable {
-
-		public static final String KEY_FILE = "file";
-		
-		public final void setFile(final String file) {
-			this.file = file;
-		}
-		
-		@JsonProperty(KEY_FILE) private String file;
-
-		public ScenarioConfig() {
-		}
-
-		public ScenarioConfig(final ScenarioConfig other) {
-			this.file = other.getFile();
-		}
-
-		public final String getFile() {
-			return file;
 		}
 	}
 
@@ -1212,6 +1009,7 @@ implements Serializable {
 		implements Serializable {
 			
 			public static final String KEY_ADDRS = "addrs";
+			public static final String KEY_CONCURRENCY = "concurrency";
 			public static final String KEY_PORT = "port";
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_TYPE = "type";
@@ -1223,6 +1021,10 @@ implements Serializable {
 
 			public final void setAddrs(final List<String> addrs) {
 				this.addrs = addrs;
+			}
+
+			public final void setConcurrency(final int concurrency) {
+				this.concurrency = concurrency;
 			}
 
 			public final void setPort(final int port) {
@@ -1242,6 +1044,7 @@ implements Serializable {
 			}
 
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
+			@JsonProperty(KEY_CONCURRENCY) private int concurrency;
 			@JsonProperty(KEY_PORT) private int port;
 			@JsonProperty(KEY_REMOTE) private boolean remote;
 			@JsonProperty(KEY_TYPE) private String type;
@@ -1251,15 +1054,20 @@ implements Serializable {
 			}
 
 			public DriverConfig(final DriverConfig other) {
-				this.remote = other.getRemote();
 				this.addrs = new ArrayList<>(other.getAddrs());
+				this.concurrency = other.getConcurrency();
 				this.port = other.getPort();
+				this.remote = other.getRemote();
 				this.type = other.getType();
 				this.implConfig = other == null ? null : new ArrayList<>(other.getImplConfig());
 			}
 
 			public List<String> getAddrs() {
 				return addrs;
+			}
+
+			public final int getConcurrency() {
+				return concurrency;
 			}
 
 			public int getPort() {
@@ -1400,11 +1208,230 @@ implements Serializable {
 					this.responses = responses;
 				}
 			}
+		}
+	}
 
+	public static final class TestConfig
+	implements Serializable {
+
+		public static final String KEY_SCENARIO = "scenario";
+		public static final String KEY_STEP = "step";
+
+		@JsonProperty(KEY_SCENARIO)
+		private ScenarioConfig scenarioConfig;
+		@JsonProperty(KEY_STEP)
+		private StepConfig stepConfig;
+
+		public final ScenarioConfig getScenarioConfig() {
+			return this.scenarioConfig;
 		}
 
+		public final StepConfig getStepConfig() {
+			return this.stepConfig;
+		}
+
+		public final void setScenarioConfig(final ScenarioConfig scenarioConfig) {
+			this.scenarioConfig = scenarioConfig;
+		}
+
+		public final void setStepConfig(final StepConfig stepConfig) {
+			this.stepConfig = stepConfig;
+		}
+
+		public TestConfig() {
+		}
+
+		public TestConfig(final TestConfig other) {
+			this.scenarioConfig = new ScenarioConfig(other.getScenarioConfig());
+			this.stepConfig = new StepConfig(other.getStepConfig());
+		}
+
+		public static final class ScenarioConfig
+		implements Serializable {
+
+			public static final String KEY_FILE = "file";
+
+			public final void setFile(final String file) {
+				this.file = file;
+			}
+
+			@JsonProperty(KEY_FILE) private String file;
+
+			public ScenarioConfig() {
+			}
+
+			public ScenarioConfig(final ScenarioConfig other) {
+				this.file = other.getFile();
+			}
+
+			public final String getFile() {
+				return file;
+			}
+		}
+
+		public static final class StepConfig
+		implements Serializable {
+
+			public static final String KEY_LIMIT = "limit";
+			public static final String KEY_METRICS = "metrics";
+			public static final String KEY_NAME = "name";
+			public static final String KEY_PRECONDITION = "precondition";
+
+			@JsonProperty(KEY_LIMIT)
+			private LimitConfig limitConfig;
+
+			@JsonProperty(KEY_METRICS)
+			private MetricsConfig metricsConfig;
+
+			@JsonProperty(KEY_NAME)
+			private String name;
+
+			@JsonProperty(KEY_PRECONDITION)
+			private boolean precondition;
+
+			public StepConfig() {
+			}
+
+			public StepConfig(final StepConfig other) {
+				this.limitConfig = new LimitConfig(other.getLimitConfig());
+				this.metricsConfig = new MetricsConfig(other.getMetricsConfig());
+				this.name = other.getName();
+				this.precondition = other.getPrecondition();
+			}
+
+			public final LimitConfig getLimitConfig() {
+				return limitConfig;
+			}
+
+			public final MetricsConfig getMetricsConfig() {
+				return metricsConfig;
+			}
+
+			public final String getName() {
+				return name;
+			}
+
+			public final boolean getPrecondition() {
+				return precondition;
+			}
+
+			public final void setLimitConfig(final LimitConfig limitConfig) {
+				this.limitConfig = limitConfig;
+			}
+
+			public final void setMetricsConfig(final MetricsConfig metricsConfig) {
+				this.metricsConfig = metricsConfig;
+			}
+
+			public final void setName(final String name) {
+				this.name = name;
+			}
+
+			public final void setPrecondition(final boolean precondition) {
+				this.precondition = precondition;
+			}
+
+			public static final class LimitConfig
+			implements Serializable {
+
+				public static final String KEY_COUNT = "count";
+				public static final String KEY_RATE = "rate";
+				public static final String KEY_SIZE = "size";
+				public static final String KEY_TIME = "time";
+
+				public final void setCount(final long count) {
+					this.count = count;
+				}
+
+				public final void setRate(final double rate) {
+					this.rate = rate;
+				}
+
+				public final void setSize(final SizeInBytes size) {
+					this.size = size;
+				}
+
+				public final void setTime(final long time) {
+					this.time = time;
+				}
+
+				@JsonProperty(KEY_COUNT) private long count;
+
+				@JsonProperty(KEY_RATE) private double rate;
+
+				@JsonDeserialize(using = SizeInBytesDeserializer.class)
+				@JsonSerialize(using = SizeInBytesSerializer.class)
+				@JsonProperty(KEY_SIZE)
+				private SizeInBytes size;
+
+				@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_TIME)
+				private long time;
+
+				public LimitConfig() {
+				}
+
+				public LimitConfig(final LimitConfig other) {
+					this.count = other.getCount();
+					this.time = other.getTime();
+					this.rate = other.getRate();
+					this.size = new SizeInBytes(other.getSize());
+				}
+
+				public final long getCount() {
+					return count;
+				}
+
+				public final double getRate() {
+					return rate;
+				}
+
+				public final SizeInBytes getSize() {
+					return size;
+				}
+
+				public final long getTime() {
+					return time;
+				}
+			}
+
+			public static final class MetricsConfig
+			implements Serializable {
+
+				public static final String KEY_PERIOD = "period";
+				public static final String KEY_THRESHOLD = "threshold";
+
+				public final void setPeriod(final long period) {
+					this.period = period;
+				}
+
+				public final void setThreshold(final double threshold) {
+					this.threshold = threshold;
+				}
+
+				@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
+				private long period;
+
+				@JsonProperty(KEY_THRESHOLD) private double threshold;
+
+				public MetricsConfig() {
+				}
+
+				public MetricsConfig(final MetricsConfig other) {
+					this.threshold = other.getThreshold();
+					this.period = other.getPeriod();
+				}
+
+				public final long getPeriod() {
+					return period;
+				}
+
+				public final double getThreshold() {
+					return threshold;
+				}
+			}
+		}
 	}
-	
+
 	public void apply(final Map<String, Object> tree)
 	throws IllegalArgumentException {
 		applyAliasing(tree, getAliasingConfig());

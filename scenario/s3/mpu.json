@@ -9,10 +9,16 @@
 				"size" : "100MB"
 			}
 		},
-		"load" : {
-			"concurrency" : 10,
-			"limit" : {
-				"count" : 10000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10000
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
 			}
 		}
 	}

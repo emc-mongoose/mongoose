@@ -6,9 +6,11 @@
 				"path" : "circular-read-from-container"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1
+		"test" : {
+			"step" : {
+				"limit" : {
+					"time" : "1m"
+				}
 			}
 		}
 	},
@@ -25,11 +27,15 @@
 				},
 				"load" : {
 					"type" : "read",
-					"circular" : true,
-					"limit" : {
-						// count -> infinity instead of inherited value of 1, time -> 1 minute
-						"count" : 0,
-						"time" : "1m"
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							// count -> infinity instead of inherited value of 1, time -> 1 minute
+							"count" : 0,
+							"time" : "1m"
+						}
 					}
 				}
 			}

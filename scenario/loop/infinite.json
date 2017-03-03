@@ -1,9 +1,11 @@
 {
 	"type" : "for",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"time" : 5
+		"test" : {
+			"step" : {
+				"limit" : {
+					"time" : 5
+				}
 			}
 		}
 	},

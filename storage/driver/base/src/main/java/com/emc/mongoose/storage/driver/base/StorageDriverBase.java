@@ -10,6 +10,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -53,7 +54,7 @@ implements StorageDriver<I, O> {
 	private final LongAdder completedTaskCount = new LongAdder();
 
 	protected StorageDriverBase(
-		final String jobName, final AuthConfig authConfig, final LoadConfig loadConfig,
+		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) {
 		queueCapacity = loadConfig.getQueueConfig().getSize();
@@ -61,10 +62,11 @@ implements StorageDriver<I, O> {
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
-		this.userName = authConfig == null ? null : authConfig.getId();
-		secret = authConfig == null ? null : authConfig.getSecret();
-		authToken = authConfig == null ? null : authConfig.getToken();
-		concurrencyLevel = loadConfig.getConcurrency();
+		final AuthConfig authConfig = storageConfig.getAuthConfig();
+		this.userName = authConfig.getId();
+		secret = authConfig.getSecret();
+		authToken = authConfig.getToken();
+		concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
 
@@ -154,9 +156,14 @@ implements StorageDriver<I, O> {
 		scheduledTaskCount.add(n);
 		return n;
 	}
+
+	@Override
+	public final int getConcurrencyLevel() {
+		return concurrencyLevel;
+	}
 	
 	@Override
-	public int getActiveTaskCount() {
+	public final int getActiveTaskCount() {
 		return concurrencyLevel - concurrencyThrottle.availablePermits();
 	}
 	

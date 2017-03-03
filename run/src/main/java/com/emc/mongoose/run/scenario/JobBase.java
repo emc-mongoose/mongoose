@@ -1,11 +1,11 @@
 package com.emc.mongoose.run.scenario;
 
 import com.emc.mongoose.ui.config.Config;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.JobConfig;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
-
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,15 +32,15 @@ implements Job {
 	
 	@Override
 	public void run() {
-		final JobConfig jobConfig = localConfig.getLoadConfig().getJobConfig();
+		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		try {
-			String jobName = jobConfig.getName();
+			String jobName = stepConfig.getName();
 			if(jobName == null) {
 				jobName = ThreadContext.get(KEY_JOB_NAME);
 				if(jobName == null) {
 					LOG.fatal(Markers.ERR, "Job name is not set");
 				} else {
-					jobConfig.setName(jobName);
+					stepConfig.setName(jobName);
 				}
 			} else {
 				ThreadContext.put(KEY_JOB_NAME, jobName);

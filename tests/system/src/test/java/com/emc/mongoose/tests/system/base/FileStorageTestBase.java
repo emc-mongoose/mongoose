@@ -12,7 +12,7 @@ extends ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		CONFIG_ARGS.add("--storage-type=fs");
+		CONFIG_ARGS.add("--storage-driver-type=fs");
 		ConfiguredTestBase.setUpClass();
 	}
 

@@ -1,9 +1,11 @@
 {
 	"type" : "load",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 1000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
 			}
 		}
 	}

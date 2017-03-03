@@ -40,7 +40,8 @@ extends ParentJobBase {
 		);
 		parallelJobsExecutor.shutdown();
 		
-		final long limitTime = localConfig.getLoadConfig().getLimitConfig().getTime();
+		final long limitTime = localConfig
+			.getTestConfig().getStepConfig().getLimitConfig().getTime();
 		try {
 			if(limitTime > 0) {
 				parallelJobsExecutor.awaitTermination(limitTime, TimeUnit.SECONDS);

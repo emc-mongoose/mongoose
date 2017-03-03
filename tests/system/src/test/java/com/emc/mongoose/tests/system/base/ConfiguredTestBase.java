@@ -3,6 +3,7 @@ package com.emc.mongoose.tests.system.base;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -30,7 +31,7 @@ extends LoggingTestBase {
 				)
 			);
 		}
-		CONFIG.getLoadConfig().getJobConfig().setName(JOB_NAME);
+		CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
 	}
 
 	@AfterClass

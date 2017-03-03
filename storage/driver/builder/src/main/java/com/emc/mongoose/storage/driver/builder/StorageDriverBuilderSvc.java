@@ -5,9 +5,10 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
-import com.emc.mongoose.ui.config.Config.ItemConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -31,6 +32,10 @@ public interface StorageDriverBuilderSvc<
 
 	@Override
 	StorageDriverBuilderSvc<I, O, T> setLoadConfig(final LoadConfig loadConfig)
+	throws RemoteException;
+
+	@Override
+	StorageDriverBuilderSvc<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig)
 	throws RemoteException;
 
 	@Override

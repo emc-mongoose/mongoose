@@ -9,9 +9,11 @@
 						"file" : "circular-read.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1
+						}
 					}
 				}
 			}
@@ -25,9 +27,13 @@
 				},
 				"load" : {
 					"type" : "read",
-					"circular" : true,
-					"limit" : {
-						"time" : "1m"
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "1m"
+						}
 					}
 				}
 			}

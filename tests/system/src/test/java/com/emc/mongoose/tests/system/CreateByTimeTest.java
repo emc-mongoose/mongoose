@@ -106,7 +106,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0,
-			LOAD_LIMIT_TIME, CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+			LOAD_LIMIT_TIME, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
@@ -125,7 +125,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		testMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getLoadConfig().getMetricsConfig().getPeriod()
+			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 

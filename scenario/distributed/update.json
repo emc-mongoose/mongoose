@@ -1,14 +1,16 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 1000
-			},
-			"concurrency" : 10
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
 		},
 		"storage" : {
 			"driver" : {
+				"concurrency" : 10,
 				"remote" : true,
 				"addrs": [
 					"10.249.237.71",
