@@ -79,8 +79,8 @@ extends HttpStorageDistributedScenarioTestBase {
 			)
 		);
 		CONFIG.getItemConfig().getOutputConfig().setPath(null);
-		CONFIG.getLoadConfig().getLimitConfig().setTime(0);
-		CONFIG.getLoadConfig().getJobConfig().setName(JOB_NAME);
+		CONFIG.getTestConfig().getStepConfig().getLimitConfig().setTime(0);
+		CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
 		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
 		
 		final Thread runner = new Thread(
