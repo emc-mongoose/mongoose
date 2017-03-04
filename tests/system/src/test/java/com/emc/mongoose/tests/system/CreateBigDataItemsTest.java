@@ -60,7 +60,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_JOB_NAME, CreateBigDataItemsTest.class.getSimpleName());
+		JOB_NAME = CreateBigDataItemsTest.class.getSimpleName();
+		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));

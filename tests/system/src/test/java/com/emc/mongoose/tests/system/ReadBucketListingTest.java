@@ -54,7 +54,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_JOB_NAME, ReadBucketListingTest.class.getSimpleName());
+		JOB_NAME = ReadBucketListingTest.class.getSimpleName();
+		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);

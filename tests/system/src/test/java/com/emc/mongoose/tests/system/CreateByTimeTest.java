@@ -60,7 +60,8 @@ extends HttpStorageDistributedScenarioTestBase {
 
 	@BeforeClass public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_JOB_NAME, CreateByTimeTest.class.getSimpleName());
+		JOB_NAME = CreateByTimeTest.class.getSimpleName();
+		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.add("--test-step-limit-time=" + LOAD_LIMIT_TIME);

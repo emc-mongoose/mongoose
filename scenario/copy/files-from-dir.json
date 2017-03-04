@@ -1,21 +1,6 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "/tmp/src-dir"
-			},
-			"data" : {
-				"size" : "4KB"
-			}
-		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
-				}
-			}
-		},
 		"storage" : {
 			"driver" : {
 				"concurrency" : 10,
@@ -25,7 +10,24 @@
 	},
 	"jobs" : [
 		{
-			"type" : "precondition"
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"path" : "/tmp/src-dir"
+					},
+					"data" : {
+						"size" : "4KB"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
+				}
+			}
 		}, {
 			"type" : "load",
 			"config" : {

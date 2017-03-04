@@ -71,31 +71,47 @@ implements DataIoTask<T> {
 	@Override
 	public void reset() {
 		super.reset();
+
+		countBytesDone = 0;
+		respDataTimeStart = 0;
+		currRange = null;
+		currRangeIdx = 0;
+		markedRangesMaskPair[0].clear();
+		markedRangesMaskPair[1].clear();
+
 		switch(ioType) {
 			case CREATE:
-			case READ:
 				try {
 					contentSize = item.size();
 				} catch(IOException e) {
 					throw new AssertionError();
 				}
 				break;
+			case READ:
+				if(randomRangesCount == 0 && (fixedRanges == null || fixedRanges.isEmpty())) {
+					try {
+						contentSize = item.size();
+					} catch(IOException e) {
+						throw new AssertionError();
+					}
+				} else {
+					if(randomRangesCount > 0) {
+						markRandomRanges(randomRangesCount);
+					}
+					contentSize = getMarkedRangesSize();
+				}
+				break;
+			case UPDATE:
+				if(randomRangesCount > 0) {
+					markRandomRanges(randomRangesCount);
+				} else if(fixedRanges == null || fixedRanges.isEmpty()) {
+					throw new AssertionError("Range update is not configured correctly");
+				}
+				contentSize = getMarkedRangesSize();
 			default:
 				contentSize = 0;
 				break;
 		}
-		countBytesDone = 0;
-		respDataTimeStart = 0;
-		markedRangesMaskPair[0].clear();
-		markedRangesMaskPair[1].clear();
-		if(randomRangesCount > 0) {
-			markRandomRanges(randomRangesCount);
-		} else if(UPDATE.equals(ioType) && (fixedRanges == null || fixedRanges.isEmpty())) {
-			throw new AssertionError("Range update is not configured correctly");
-		}
-		contentSize = getMarkedRangesSize();
-		currRange = null;
-		currRangeIdx = 0;
 	}
 	
 	@Override

@@ -46,7 +46,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_JOB_NAME, CreateBigDataItemsMetricsThresholdTest.class.getSimpleName());
+		JOB_NAME = CreateBigDataItemsMetricsThresholdTest.class.getSimpleName();
+		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		CONFIG_ARGS.add("--test-step-limit-count=" + LOAD_LIMIT_COUNT);

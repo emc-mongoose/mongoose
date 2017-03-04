@@ -12,7 +12,7 @@
 		"test" : {
 			"step" : {
 				"limit" : {
-					"count" : 10000
+					"count" : 100
 				}
 			}
 		},
