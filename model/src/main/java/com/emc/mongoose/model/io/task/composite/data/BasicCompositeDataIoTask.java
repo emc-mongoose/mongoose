@@ -24,10 +24,10 @@ extends BasicDataIoTask<I>
 implements CompositeDataIoTask<I> {
 
 	private long sizeThreshold;
+	private AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
 
 	private transient final Map<String, String> contextData = new HashMap<>();
 	private transient final List<PartialDataIoTask> subTasks = new ArrayList<>();
-	private transient AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
 
 	public BasicCompositeDataIoTask() {
 		super();
@@ -73,6 +73,7 @@ implements CompositeDataIoTask<I> {
 			nextSubTask = new BasicPartialDataIoTask<>(
 				originCode, ioType, nextPart, srcPath, dstPath, i, this
 			);
+			nextSubTask.setSrcPath(srcPath);
 			subTasks.add(nextSubTask);
 		}
 		if(tailPartSize > 0) {
@@ -80,6 +81,7 @@ implements CompositeDataIoTask<I> {
 			nextSubTask = new BasicPartialDataIoTask<>(
 				originCode, ioType, nextPart, srcPath, dstPath, equalPartsCount, this
 			);
+			nextSubTask.setSrcPath(srcPath);
 			subTasks.add(nextSubTask);
 		}
 
@@ -109,6 +111,7 @@ implements CompositeDataIoTask<I> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(sizeThreshold);
+		out.writeInt(pendingSubTasksCount.get());
 	}
 
 	@Override
@@ -116,5 +119,6 @@ implements CompositeDataIoTask<I> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		sizeThreshold = in.readLong();
+		pendingSubTasksCount.set(in.readInt());
 	}
 }

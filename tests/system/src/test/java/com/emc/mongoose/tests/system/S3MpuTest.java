@@ -57,6 +57,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		STORAGE_DRIVERS_COUNT = 1;
 		JOB_NAME = S3MpuTest.class.getSimpleName();
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());

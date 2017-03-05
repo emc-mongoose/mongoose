@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
  * 10.4.5.4.3. Create Dynamic Large Objects
  */
 public class SwiftCreateDloTest
-extends HttpStorageScenarioTestBase {
+extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_SCENARIO, "s3", "mpu.json"
@@ -61,7 +61,7 @@ extends HttpStorageScenarioTestBase {
 		JOB_NAME = SwiftCreateDloTest.class.getSimpleName();
 		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
-		HttpStorageScenarioTestBase.setUpClass();
+		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
 				try {
@@ -83,7 +83,7 @@ extends HttpStorageScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		HttpStorageScenarioTestBase.tearDownClass();
+		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
 	@Test

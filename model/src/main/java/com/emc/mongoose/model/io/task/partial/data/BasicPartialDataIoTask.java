@@ -19,6 +19,10 @@ implements PartialDataIoTask<I> {
 	private int partNumber;
 	private CompositeDataIoTask<I> parent;
 
+	public BasicPartialDataIoTask() {
+		super();
+	}
+
 	public BasicPartialDataIoTask(
 		final int originCode, final IoType ioType, final I part, final String srcPath,
 		final String dstPath, final int partNumber,

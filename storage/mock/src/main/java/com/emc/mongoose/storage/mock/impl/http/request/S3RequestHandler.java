@@ -90,7 +90,9 @@ extends RequestHandlerBase<T> {
 				if(queryParams != null) {
 					if(queryParams.containsKey("uploads")) {
 						handleMpuInitRequest(containerName, objectId, ctx);
-					} else if(queryParams.containsKey("uploadId")) {
+					} else if(
+						queryParams.containsKey("uploadId") && queryParams.containsKey("partNumber")
+					) {
 						handlePartRequest(queryParams, containerName, objectId, size, ctx);
 					} else {
 						handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
