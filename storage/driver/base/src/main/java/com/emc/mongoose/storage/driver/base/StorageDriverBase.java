@@ -38,7 +38,7 @@ implements StorageDriver<I, O> {
 	private static final Logger LOG = LogManager.getLogger();
 	
 	private final int queueCapacity;
-	private final BlockingQueue<O> childTasksQueue;
+	protected final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
 	private final BlockingQueue<O> ioResultsQueue;
 	protected final String jobName;

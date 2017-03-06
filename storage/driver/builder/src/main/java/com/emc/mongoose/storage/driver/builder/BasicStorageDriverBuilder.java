@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.builder;
 
+import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
@@ -20,6 +21,7 @@ import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 
@@ -87,7 +89,9 @@ public class BasicStorageDriverBuilder<
 	@Override @SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
-		
+
+		ThreadContext.put(Constants.KEY_JOB_NAME, jobName);
+
 		T driver = null;
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
