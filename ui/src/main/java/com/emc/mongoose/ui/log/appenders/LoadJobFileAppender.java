@@ -16,6 +16,8 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.net.Advertiser;
 import org.apache.logging.log4j.core.util.Booleans;
+import org.apache.logging.log4j.util.ReadOnlyStringMap;
+
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
 
 import java.io.Serializable;
@@ -143,10 +145,9 @@ extends AbstractAppender {
 	@Override
 	public final void append(final LogEvent event) {
 		final String jobName;
-		final Map<String, String> evtCtxMap = event.getContextMap();
-		//
+		final ReadOnlyStringMap evtCtxMap = event.getContextData();
 		if(evtCtxMap.containsKey(KEY_JOB_NAME)) {
-			jobName = event.getContextMap().get(KEY_JOB_NAME);
+			jobName = event.getContextData().getValue(KEY_JOB_NAME);
 		} else if(ThreadContext.containsKey(KEY_JOB_NAME)) {
 			jobName = ThreadContext.get(KEY_JOB_NAME);
 		} else {

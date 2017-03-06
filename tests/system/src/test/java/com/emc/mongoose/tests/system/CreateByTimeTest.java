@@ -84,10 +84,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 		runner.start();
 		TimeUnit.SECONDS.timedJoin(runner, LOAD_LIMIT_TIME + 2);
-		if(runner.isAlive()) {
-			runner.interrupt();
-			FINISHED_IN_TIME = false;
-		}
+		FINISHED_IN_TIME = !runner.isAlive();
+		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}

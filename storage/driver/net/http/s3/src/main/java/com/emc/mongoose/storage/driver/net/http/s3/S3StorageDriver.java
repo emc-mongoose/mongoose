@@ -560,7 +560,7 @@ extends HttpStorageDriverBase<I, O> {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
 			if(compositeIoTask.allSubTasksDone()) {
 				LOG.info(
-					Markers.MPU, "{},{}", compositeIoTask.getItem().getName(),
+					Markers.PARTS, "{},{}", compositeIoTask.getItem().getName(),
 					compositeIoTask.get(KEY_UPLOAD_ID)
 				);
 			} else {

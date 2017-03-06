@@ -6,19 +6,19 @@
 				"ranges" : {
 					"threshold" : "16MB"
 				},
-				"size" : "100MB"
+				"size" : "200MB"
 			}
 		},
 		"test" : {
 			"step" : {
 				"limit" : {
-					"count" : 100
+					"count" : 1000
 				}
 			}
 		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10
+				"concurrency" : 100
 			}
 		}
 	}

@@ -294,8 +294,15 @@ extends HttpStorageDriverBase<I, O> {
 				} else {
 					final List<O> subTasks = compositeTask.getSubTasks();
 					final int n = subTasks.size();
-					for(int j = 0; j < n; j += super.submit(subTasks, j, n)) {
-						LockSupport.parkNanos(1);
+					if(n > 0) {
+						while(!super.submit(subTasks.get(0))) {
+							LockSupport.parkNanos(1);
+						}
+						for(int j = 1; j < n; j ++) {
+							childTasksQueue.put(subTasks.get(j));
+						}
+					} else {
+						throw new AssertionError("Composite I/O task yields 0 sub-tasks");
 					}
 				}
 			} else {

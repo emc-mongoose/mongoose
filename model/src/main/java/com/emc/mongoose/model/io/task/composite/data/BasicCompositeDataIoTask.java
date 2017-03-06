@@ -45,6 +45,7 @@ implements CompositeDataIoTask<I> {
 	protected BasicCompositeDataIoTask(final BasicCompositeDataIoTask<I> other) {
 		super(other);
 		this.sizeThreshold = other.sizeThreshold;
+		this.pendingSubTasksCount.set(other.pendingSubTasksCount.get());
 	}
 
 	@Override

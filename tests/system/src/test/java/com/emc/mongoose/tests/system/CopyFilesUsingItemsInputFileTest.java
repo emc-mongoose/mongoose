@@ -103,6 +103,7 @@ extends FileStorageDistributedScenarioTestBase {
 		runner.start();
 		TimeUnit.SECONDS.timedJoin(runner, 20);
 		FINISHED_IN_TIME = !runner.isAlive();
+		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}

@@ -90,6 +90,7 @@ extends HttpStorageDistributedScenarioTestBase {
 				.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
 		}
 		TimeUnit.MINUTES.timedJoin(runner, 5);
+		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}

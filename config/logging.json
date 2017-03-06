@@ -73,7 +73,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "mpu",
+								"marker": "parts",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
@@ -176,12 +176,12 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "mpu",
+								"marker": "parts",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
-								"level": "debug",
+								"level": "INFO",
 								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							}, {
@@ -365,7 +365,7 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "mpu",
+								"marker": "parts",
 								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							}, {
