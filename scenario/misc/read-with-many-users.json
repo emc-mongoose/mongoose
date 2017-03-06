@@ -28,7 +28,7 @@
 					"config" : {
 						"storage" : {
 							"auth" : {
-								"id" : "user1",
+								"uid" : "user1",
 								"secret" : "secret1"
 							}
 						},
@@ -47,7 +47,7 @@
 					"config" : {
 						"storage" : {
 							"auth" : {
-								"id" : "user2",
+								"uid" : "user2",
 								"secret" : "secret2"
 							}
 						},
@@ -65,7 +65,7 @@
 					"config" : {
 						"storage" : {
 							"auth" : {
-								"id" : "user3",
+								"uid" : "user3",
 								"secret" : "secret3"
 							}
 						},

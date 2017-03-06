@@ -96,11 +96,11 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	private void refreshUidHeader() {
-		if(userName != null && !userName.isEmpty()) {
+		if(uid != null && ! uid.isEmpty()) {
 			if(authToken != null && !authToken.isEmpty()) {
-				sharedHeaders.set(KEY_X_EMC_UID, authToken + "/" + userName);
+				sharedHeaders.set(KEY_X_EMC_UID, authToken + "/" + uid);
 			} else {
-				sharedHeaders.set(KEY_X_EMC_UID, userName);
+				sharedHeaders.set(KEY_X_EMC_UID, uid);
 			}
 		}
 	}

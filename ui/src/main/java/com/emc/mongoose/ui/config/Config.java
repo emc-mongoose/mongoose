@@ -24,7 +24,6 @@ import static org.apache.commons.lang.WordUtils.capitalize;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -717,12 +716,12 @@ implements Serializable {
 		public static final class AuthConfig
 		implements Serializable {
 
-			public static final String KEY_ID = "id";
+			public static final String KEY_UID = "uid";
 			public static final String KEY_SECRET = "secret";
 			public static final String KEY_TOKEN = "token";
 			
-			public final void setId(final String id) {
-				this.id = id;
+			public final void setUid(final String uid) {
+				this.uid = uid;
 			}
 			
 			public final void setSecret(final String secret) {
@@ -733,7 +732,7 @@ implements Serializable {
 				this.token = token;
 			}
 			
-			@JsonProperty(KEY_ID) private String id;
+			@JsonProperty(KEY_UID) private String uid;
 			@JsonProperty(KEY_SECRET) private String secret;
 			@JsonProperty(KEY_TOKEN) private String token;
 
@@ -741,13 +740,13 @@ implements Serializable {
 			}
 
 			public AuthConfig(final AuthConfig other) {
-				this.id = other.getId();
+				this.uid = other.getUid();
 				this.secret = other.getSecret();
 				this.token = other.getToken();
 			}
 
-			public String getId() {
-				return id;
+			public String getUid() {
+				return uid;
 			}
 
 			public String getSecret() {
@@ -784,14 +783,14 @@ implements Serializable {
 					this.versioning = versioning;
 				}
 				
-				public final void setHeaders(final Map<String, String> headers) {
-					this.headers = headers;
+				public final void setHeadersConfig(final Map<String, String> headers) {
+					this.headersConfig = headers;
 				}
 				
 				@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
 				@JsonProperty(KEY_NAMESPACE) private String namespace;
 				@JsonProperty(KEY_VERSIONING) private boolean versioning;
-				@JsonProperty(KEY_HEADERS) private Map<String, String> headers;
+				@JsonProperty(KEY_HEADERS) private Map<String, String> headersConfig;
 				
 				public HttpConfig() {
 				}
@@ -800,7 +799,7 @@ implements Serializable {
 					this.fsAccess = other.getFsAccess();
 					this.namespace = other.getNamespace();
 					this.versioning = other.getVersioning();
-					this.headers = new HashMap<>(other.getHeaders());
+					this.headersConfig = new HashMap<>(other.getHeadersConfig());
 				}
 				
 				public boolean getFsAccess() {
@@ -815,8 +814,8 @@ implements Serializable {
 					return versioning;
 				}
 				
-				public Map<String, String> getHeaders() {
-					return headers;
+				public Map<String, String> getHeadersConfig() {
+					return headersConfig;
 				}
 			}
 			
@@ -1580,6 +1579,8 @@ implements Serializable {
 				} catch(final NoSuchMethodException e) {
 					throw new IllegalArgumentNameException(key);
 				}
+			} else if(config instanceof Map) {
+				((Map<String, Object>) config).put(key, node);
 			} else {
 				applyField(config, key, node);
 			}

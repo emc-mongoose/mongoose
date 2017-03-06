@@ -607,7 +607,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		if(signature != null) {
 			httpHeaders.set(
-				HttpHeaderNames.AUTHORIZATION, AUTH_PREFIX + userName + ":" + signature
+				HttpHeaderNames.AUTHORIZATION, AUTH_PREFIX + uid + ":" + signature
 			);
 		}
 	}

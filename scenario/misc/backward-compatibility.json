@@ -11,6 +11,9 @@
 			"id" : "backward-compatibility-test"
 		},
 		"storage" : {
+			"auth" : {
+				"id" : "wuser1@sanity.local"
+			},
 			"node" : {
 				"addrs" : [
 					"127.0.0.1"

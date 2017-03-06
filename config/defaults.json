@@ -48,7 +48,7 @@
 	},
 	"storage" : {
 		"auth" : {
-			"id" : null,
+			"uid" : null,
 			"secret" : null,
 			"token" : null
 		},
@@ -338,6 +338,11 @@
 			"name" : "scenario-file",
 			"deprecated" : true,
 			"target" : "test-scenario-file"
+		},
+		{
+			"name" : "storage-auth-id",
+			"deprecated" : true,
+			"target" : "storage-auth-uid"
 		}
 	]
 }

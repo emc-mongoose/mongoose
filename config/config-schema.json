@@ -273,7 +273,7 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"id": {
+						"uid": {
 							"type": [
 								"null", "string"
 							]
@@ -290,7 +290,7 @@
 						}
 					},
 					"required": [
-						"id", "secret", "token"
+						"uid", "secret", "token"
 					]
 				},
 				"driver" : {

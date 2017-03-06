@@ -45,7 +45,7 @@ implements StorageDriver<I, O> {
 	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
-	protected final String userName;
+	protected final String uid;
 	protected final String secret;
 	protected volatile String authToken;
 	protected final boolean verifyFlag;
@@ -57,17 +57,17 @@ implements StorageDriver<I, O> {
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) {
-		queueCapacity = loadConfig.getQueueConfig().getSize();
+		this.queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
-		this.userName = authConfig.getId();
-		secret = authConfig.getSecret();
-		authToken = authConfig.getToken();
-		concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
-		concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		this.uid = authConfig.getUid();
+		this.secret = authConfig.getSecret();
+		this.authToken = authConfig.getToken();
+		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
+		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
 
 		SVC_TASKS.put(this, new IoTasksDispatch());

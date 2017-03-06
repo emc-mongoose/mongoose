@@ -93,7 +93,9 @@ implements PatternDefinedInput {
 	 * @param binarySymbols - symbols for specifying some parameter between two symbols
 	 * @return presence of the parameter. (e.g a range or a format)
 	 */
-	protected final boolean isParameterPresented(final StringBuilder expression, final char[] binarySymbols) {
+	protected final boolean isParameterPresented(
+		final StringBuilder expression, final char[] binarySymbols
+	) {
 		return expression.length() >= 2 && expression.charAt(1) == binarySymbols[0];
 	}
 
@@ -103,7 +105,9 @@ implements PatternDefinedInput {
 	 * @param binarySymbols - symbols for specifying some parameter between two symbols
 	 * @return a parameter that was extracted from the expression
 	 */
-	protected final String getParameter(final StringBuilder expression, final char[] binarySymbols) {
+	protected final String getParameter(
+		final StringBuilder expression, final char[] binarySymbols
+	) {
 		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
 		final String parameter = expression.substring(2, closingSymbolPos);
 		expression.delete(1, closingSymbolPos + 1);
@@ -116,7 +120,9 @@ implements PatternDefinedInput {
 	 * @param binarySymbols - symbols for specifying some parameter between two symbols
 	 * @return a parameter that was extracted from the expression or null if there is no parameters
 	 */
-	protected final String initParameter(final StringBuilder expression, final char[] binarySymbols) {
+	protected final String initParameter(
+		final StringBuilder expression, final char[] binarySymbols
+	) {
 		if(isParameterPresented(expression, binarySymbols)) {
 			return getParameter(expression, binarySymbols);
 		}

@@ -23,7 +23,7 @@ implements PatternDefinedInput {
 			new InitializedCallableBase<String>() {
 				private final StringBuilder result = new StringBuilder();
 				@Override
-				public String call()
+				public final String call()
 				throws Exception {
 					result.setLength(0);
 					return wrappedGenerator.format(result);

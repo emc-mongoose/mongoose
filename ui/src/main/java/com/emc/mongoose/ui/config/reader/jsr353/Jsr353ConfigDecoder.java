@@ -140,7 +140,7 @@ implements Decoder<Config> {
 		final JsonObject authJson = getJsonObject(storageConfigJson, Config.StorageConfig.KEY_AUTH);
 		final Config.StorageConfig.AuthConfig authConfig =
 			new Config.StorageConfig.AuthConfig(
-				getString(authJson, Config.StorageConfig.AuthConfig.KEY_ID, null),
+				getString(authJson, Config.StorageConfig.AuthConfig.KEY_UID, null),
 				getString(authJson, Config.StorageConfig.AuthConfig.KEY_SECRET, null),
 				getString(authJson, Config.StorageConfig.AuthConfig.KEY_TOKEN, null)
 			);

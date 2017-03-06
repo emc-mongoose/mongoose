@@ -11,7 +11,7 @@
 		},
 		"storage" : {
 			"auth" : {
-				"id" : "wuser1@sanity.local"
+				"uid" : "wuser1@sanity.local"
 			},
 			"driver" : {
 				"concurrency" : 10

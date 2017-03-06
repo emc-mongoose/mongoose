@@ -128,13 +128,13 @@ public class ConfigParserTest {
 		assertThat(storageConfig, notNullValue());
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
 		assertThat(authConfig, notNullValue());
-		assertThat(authConfig.getId(), nullValue("storage.auth.id"));
+		assertThat(authConfig.getUid(), nullValue("storage.auth.uid"));
 		assertThat(authConfig.getSecret(), nullValue("storage.auth.secret"));
 		assertThat(authConfig.getToken(), nullValue("storage.auth.token"));
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		assertThat(httpConfig, notNullValue());
 		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.net.http.fsAccess"));
-		final Map<String, String> headers = httpConfig.getHeaders();
+		final Map<String, String> headers = httpConfig.getHeadersConfig();
 		assertThat(headers, notNullValue());
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_CONNECTION),
 			equalTo(true, "storage.net.http.headers[Connection]"));

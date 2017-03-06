@@ -442,8 +442,8 @@ extends HttpStorageDriverBase<I, O> {
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-			if(userName != null && !userName.isEmpty()) {
-				reqHeaders.set(KEY_X_AUTH_USER, userName);
+			if(uid != null && ! uid.isEmpty()) {
+				reqHeaders.set(KEY_X_AUTH_USER, uid);
 			}
 			if(secret != null && !secret.isEmpty()) {
 				reqHeaders.set(KEY_X_AUTH_KEY, secret);
@@ -524,8 +524,8 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
 	) {
 		if(dstUriPath.equals(AUTH_URI)) {
-			if(userName != null && !userName.isEmpty()) {
-				httpHeaders.set(KEY_X_AUTH_USER, userName);
+			if(uid != null && ! uid.isEmpty()) {
+				httpHeaders.set(KEY_X_AUTH_USER, uid);
 			}
 			if(secret != null && !secret.isEmpty()) {
 				httpHeaders.set(KEY_X_AUTH_KEY, secret);

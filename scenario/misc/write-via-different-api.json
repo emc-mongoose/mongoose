@@ -3,7 +3,7 @@
 	"config" : {
 		"storage" : {
 			"auth" : {
-				"id" : "wuser1@sanity.local"
+				"uid" : "wuser1@sanity.local"
 			},
 			"net" : {
 				"http" : {
