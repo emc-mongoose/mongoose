@@ -13,10 +13,6 @@ import static org.apache.commons.lang.time.DateUtils.parseDate;
 public final class AsyncStringInputFactory<G extends Input<String>>
 implements ValueInputFactory<String, G> {
 
-	// pay attention to the matcher groups
-	public static final String DOUBLE_REG_EXP = "([-+]?\\d*\\.?\\d+)";
-	public static final String LONG_REG_EXP = "([-+]?\\d+)";
-	public static final String DATE_REG_EXP = "(((19|20)[0-9][0-9])/(1[012]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9]))";
 	private static final Pattern DOUBLE_PATTERN = Pattern.compile(rangeRegExp(DOUBLE_REG_EXP));
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
@@ -24,8 +20,7 @@ implements ValueInputFactory<String, G> {
 	private static final AsyncStringInputFactory<? extends Input<String>>
 			INSTANCE = new AsyncStringInputFactory<>();
 
-	private
-	AsyncStringInputFactory() {
+	private AsyncStringInputFactory() {
 	}
 
 	public static AsyncStringInputFactory<? extends Input<String>> getInstance() {
@@ -49,7 +44,7 @@ implements ValueInputFactory<String, G> {
 	 * @return a state that defines a choice of the generator by the factory
 	 */
 	@Override
-	public Enum defineState(final String... parameters) {
+	public final Enum defineState(final String... parameters) {
 		if(parameters[0] == null) {
 			if(parameters[1] == null) {
 				return State.EMPTY;
@@ -72,7 +67,7 @@ implements ValueInputFactory<String, G> {
 	 * @return a suitable generator
 	 */
 	@Override @SuppressWarnings("unchecked")
-	public G createInput(final char type, final String ... parameters)
+	public final G createInput(final char type, final String ... parameters)
 	throws DanShootHisFootException {
 		final State state =  (State) defineState(parameters);
 		final Matcher matcher;

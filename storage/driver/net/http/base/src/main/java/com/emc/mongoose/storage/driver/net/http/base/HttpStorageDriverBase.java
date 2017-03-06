@@ -71,9 +71,9 @@ implements HttpStorageDriver<I, O> {
 	
 	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
-	private static final Function<String, Input<String>> PATTERN_INPUT_FUNC = headerName -> {
+	private static final Function<String, Input<String>> ASYNC_PATTERN_INPUT_FUNC = pattern -> {
 		try {
-			return new AsyncPatternDefinedInput(headerName);
+			return new AsyncPatternDefinedInput(pattern);
 		} catch(final UserShootHisFootException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create the pattern defined input");
 			return null;
@@ -347,7 +347,7 @@ implements HttpStorageDriver<I, O> {
 
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
-			headerNameInput = headerNameInputs.computeIfAbsent(headerName, PATTERN_INPUT_FUNC);
+			headerNameInput = headerNameInputs.computeIfAbsent(headerName, ASYNC_PATTERN_INPUT_FUNC);
 			if(headerNameInput == null) {
 				continue;
 			}
@@ -363,7 +363,9 @@ implements HttpStorageDriver<I, O> {
 
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
-			headerValueInput = headerValueInputs.computeIfAbsent(headerValue, PATTERN_INPUT_FUNC);
+			headerValueInput = headerValueInputs.computeIfAbsent(headerValue,
+				ASYNC_PATTERN_INPUT_FUNC
+			);
 			if(headerValueInput == null) {
 				continue;
 			}
