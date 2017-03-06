@@ -9,9 +9,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -20,6 +24,7 @@ import static org.apache.commons.lang.WordUtils.capitalize;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -1685,6 +1690,26 @@ implements Serializable {
 			}
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalArgumentNameException(key);
+		}
+	}
+
+	/**
+	 @return The JSON pretty-printed representation of this configuration.
+	 */
+	@Override
+	public final String toString() {
+		final ObjectMapper mapper = new ObjectMapper()
+			.configure(SerializationFeature.INDENT_OUTPUT, true);
+		final DefaultPrettyPrinter.Indenter indenter = new DefaultIndenter(
+			"\t", DefaultIndenter.SYS_LF
+		);
+		final DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
+		printer.withObjectIndenter(indenter);
+		printer.withArrayIndenter(indenter);
+		try {
+			return mapper.writer(printer).writeValueAsString(this);
+		} catch(final JsonProcessingException e) {
+			throw new AssertionError(e);
 		}
 	}
 }

@@ -18,6 +18,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -134,7 +135,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+	@Test @Ignore
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();

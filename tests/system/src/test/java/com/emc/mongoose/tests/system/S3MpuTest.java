@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -101,7 +102,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+	@Test @Ignore
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -148,5 +149,17 @@ extends HttpStorageDistributedScenarioTestBase {
 				}
 			}
 		}
+	}
+
+	@Test
+	public void testUploadLogRecords()
+	throws Exception {
+		final List<CSVRecord> uploadRecs = getPartsUploadRecords();
+		assertEquals(
+			"There should be " + EXPECTED_COUNT +
+				" records in the uploads log file, but got: " + uploadRecs.size(),
+			EXPECTED_COUNT, uploadRecs.size()
+		);
+		testPartsUploadRecord(uploadRecs);
 	}
 }

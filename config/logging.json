@@ -335,9 +335,9 @@
 				}, {
 					"name": "cfgFile",
 					"type": "loadJobFile",
-					"fileName": "config.log",
+					"fileName": "effective-config.json",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} | %c{1} | %t | %m%n"
+						"pattern": "%m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -357,8 +357,9 @@
 				}, {
 					"name": "partsUploadFile",
 					"type": "loadJobFile",
-					"fileName": "parts.upload.log",
+					"fileName": "parts.upload.csv",
 					"PatternLayout": {
+						"header": "ItemPath,UploadId%n",
 						"pattern": "%m%n"
 					},
 					"Filters": {

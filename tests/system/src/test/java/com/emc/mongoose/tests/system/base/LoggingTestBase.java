@@ -27,6 +27,7 @@ import org.junit.BeforeClass;
 import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -99,7 +100,7 @@ public abstract class LoggingTestBase {
 
 	protected static List<String> getPartsUploadLogLines()
 	throws IOException {
-		return getLogFileLines("parts.upload.log");
+		return getLogFileLines("parts.upload.csv");
 	}
 
 	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
@@ -148,6 +149,11 @@ public abstract class LoggingTestBase {
 	protected static List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("io.trace.csv");
+	}
+
+	protected static List<CSVRecord> getPartsUploadRecords()
+	throws IOException {
+		return getLogFileCsvRecords("parts.upload.csv");
 	}
 
 	protected static void testMetricsLogRecords(
@@ -385,6 +391,19 @@ public abstract class LoggingTestBase {
 				sizeExpected.get(), size, sizeExpected.get() / 100
 			);
 		}
+	}
+
+	protected static void testPartsUploadRecord(final List<CSVRecord> recs)
+	throws Exception {
+		String itemPath, uploadId;
+		for(final CSVRecord rec : recs) {
+			assertEquals(rec.size(), 2);
+			itemPath = rec.get("ItemPath");
+			assertNotNull(itemPath);
+			uploadId = rec.get("UploadId");
+			assertNotNull(uploadId);
+		}
+
 	}
 	
 	protected static void testMetricsStdout(

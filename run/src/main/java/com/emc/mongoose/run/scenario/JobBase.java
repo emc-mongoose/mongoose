@@ -32,6 +32,7 @@ implements Job {
 	
 	@Override
 	public void run() {
+		LOG.info(Markers.CFG, localConfig.toString());
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		try {
 			String jobName = stepConfig.getName();
