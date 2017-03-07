@@ -1,11 +1,11 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.concurrent.InitCallable;
 import com.emc.mongoose.common.concurrent.InitRunnable;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.common.supply.BasicUpdatingValueSupplier;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.LockSupport;
@@ -13,8 +13,8 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 10.02.16.
  */
-public class AsyncValueInput<T>
-extends BasicValueInput<T> {
+public class AsyncUpdatingValueSupplier<T>
+extends BasicUpdatingValueSupplier<T> {
 	
 	private static final int MAX_UPDATE_TASKS = 1024;
 	private static final BlockingQueue<InitRunnable>
@@ -55,7 +55,7 @@ extends BasicValueInput<T> {
 	
 	private final InitRunnable updateTask;
 	
-	public AsyncValueInput(final T initialValue, final InitCallable<T> updateAction)
+	public AsyncUpdatingValueSupplier(final T initialValue, final InitCallable<T> updateAction)
 	throws OmgDoesNotPerformException {
 		super(initialValue, null);
 		if(updateAction == null) {
@@ -97,18 +97,17 @@ extends BasicValueInput<T> {
 		return lastValue;
 	}
 	
-	@Override
+	/*@Override
 	public final int get(final List<T> buffer, final int limit) {
 		int count = 0;
 		for(; count < limit; count ++) {
 			buffer.add(lastValue);
 		}
 		return count;
-	}
+	}*/
 	
 	@Override
-	public long skip(final long count)
-	throws IOException {
+	public long skip(final long count) {
 		return 0;
 	}
 	

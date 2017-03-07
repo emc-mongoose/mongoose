@@ -1,17 +1,17 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.supply.async.range;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.io.range.AsyncRangeInputBase;
+import com.emc.mongoose.common.supply.async.range.AsyncRangeDefinedSupplierBase;
 
-public final class AsyncLongInput
-extends AsyncRangeInputBase<Long> {
+public final class AsyncRangeDefinedLongSupplier
+extends AsyncRangeDefinedSupplierBase<Long> {
 
-	public AsyncLongInput(final Long minValue, final Long maxValue)
+	public AsyncRangeDefinedLongSupplier(final Long minValue, final Long maxValue)
 	throws OmgDoesNotPerformException {
 		super(minValue, maxValue);
 	}
 
-	public AsyncLongInput(final Long initialValue)
+	public AsyncRangeDefinedLongSupplier(final Long initialValue)
 	throws OmgDoesNotPerformException {
 		super(initialValue);
 	}

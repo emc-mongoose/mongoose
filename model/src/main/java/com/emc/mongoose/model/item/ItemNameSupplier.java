@@ -3,7 +3,7 @@ package com.emc.mongoose.model.item;
 import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.net.NetUtil;
-import com.emc.mongoose.common.io.BasicValueInput;
+import com.emc.mongoose.common.supply.BasicUpdatingValueSupplier;
 
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.nanoTime;
@@ -11,8 +11,8 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 18.12.15.
  */
-public class BasicItemNameInput
-extends BasicValueInput<String>
+public class ItemNameSupplier
+extends BasicUpdatingValueSupplier<String>
 implements IdStringInput {
 	//
 	protected final ItemNamingType namingType;
@@ -21,7 +21,7 @@ implements IdStringInput {
 	//
 	protected volatile long lastValue;
 	//
-	public BasicItemNameInput(
+	public ItemNameSupplier(
 		final ItemNamingType namingType, final String prefix, final int length, final int radix,
 		final long offset
 	) throws DanShootHisFootException {
@@ -110,8 +110,8 @@ implements IdStringInput {
 		return strb.toString();
 	}
 
-	// yes, this is very ugly bandage
-	public long getLastValue() {
+	@Override
+	public final long getAsLong() {
 		return lastValue;
 	}
 }

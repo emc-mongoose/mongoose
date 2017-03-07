@@ -2,10 +2,11 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
+import com.emc.mongoose.common.supply.BatchSupplier;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.ConstantStringInput;
+import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import com.emc.mongoose.model.io.IoType;
@@ -46,7 +47,7 @@ implements LoadGenerator<I, O> {
 
 	private final Input<I> itemInput;
 	private final SizeInBytes itemSizeEstimate;
-	private final Input<String> dstPathInput;
+	private final BatchSupplier<String> outputPathSupplier;
 	private final Thread worker;
 	private final long countLimit;
 	private final boolean shuffleFlag;
@@ -57,13 +58,13 @@ implements LoadGenerator<I, O> {
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final SizeInBytes itemSizeEstimate,
-		final Input<String> dstPathInput, final IoTaskBuilder<I, O> ioTaskBuilder,
+		final BatchSupplier<String> outputPathSupplier, final IoTaskBuilder<I, O> ioTaskBuilder,
 		final long countLimit, final SizeInBytes sizeLimit, final boolean shuffleFlag
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
 		this.itemSizeEstimate = itemSizeEstimate;
-		this.dstPathInput = dstPathInput;
+		this.outputPathSupplier = outputPathSupplier;
 		this.ioTaskBuilder = ioTaskBuilder;
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
@@ -238,15 +239,15 @@ implements LoadGenerator<I, O> {
 	private List<O> buildIoTasksFor(final List<I> items)
 	throws IOException {
 		final List<O> ioTasks;
-		if(dstPathInput == null) {
+		if(outputPathSupplier == null) {
 			ioTasks = ioTaskBuilder.getInstances(items);
-		} else if(dstPathInput instanceof ConstantStringInput) {
-			final String dstPath = dstPathInput.get();
+		} else if(outputPathSupplier instanceof ConstantStringSupplier) {
+			final String dstPath = outputPathSupplier.get();
 			ioTasks = ioTaskBuilder.getInstances(items, dstPath);
 		} else {
 			final int n = items.size();
 			final List<String> dstPaths = new ArrayList<>(n);
-			dstPathInput.get(dstPaths, n);
+			outputPathSupplier.get(dstPaths, n);
 			ioTasks = ioTaskBuilder.getInstances(items, dstPaths);
 		}
 		return ioTasks;
@@ -293,8 +294,8 @@ implements LoadGenerator<I, O> {
 		if(itemInput != null) {
 			itemInput.close();
 		}
-		if(dstPathInput != null) {
-			dstPathInput.close();
+		if(outputPathSupplier != null) {
+			outputPathSupplier.close();
 		}
 	}
 	

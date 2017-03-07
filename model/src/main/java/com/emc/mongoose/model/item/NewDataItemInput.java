@@ -27,14 +27,14 @@ implements Input<D> {
 	@Override
 	public final D get()
 	throws IOException {
-		return itemFactory.getItem(idInput.get(), idInput.getLastValue(), dataSize.get());
+		return itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get());
 	}
 	
 	@Override
 	public final int get(final List<D> buffer, final int maxCount)
 	throws IOException {
 		for(int i = 0; i < maxCount; i ++) {
-			buffer.add(itemFactory.getItem(idInput.get(), idInput.getLastValue(), dataSize.get()));
+			buffer.add(itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get()));
 		}
 		return maxCount;
 	}

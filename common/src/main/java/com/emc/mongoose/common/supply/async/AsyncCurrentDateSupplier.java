@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 
@@ -9,20 +9,20 @@ import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_RFC1123;
 /**
  Created by kurila on 16.04.15.
  */
-public final class AsyncCurrentDateInput
-extends AsyncValueInput<String> {
+public final class AsyncCurrentDateSupplier
+extends AsyncUpdatingValueSupplier<String> {
 
-	public static AsyncCurrentDateInput INSTANCE = null;
+	public static AsyncCurrentDateSupplier INSTANCE = null;
 
 	static {
 		try {
-			INSTANCE = new AsyncCurrentDateInput();
+			INSTANCE = new AsyncCurrentDateSupplier();
 		} catch(final OmgDoesNotPerformException e) {
 			e.printStackTrace(System.err);
 		}
 	}
 
-	private AsyncCurrentDateInput()
+	private AsyncCurrentDateSupplier()
 	throws OmgDoesNotPerformException {
 		super(
 			FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis())),

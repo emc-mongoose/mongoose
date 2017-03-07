@@ -1,7 +1,7 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
-import com.emc.mongoose.common.io.Input;
+import static com.emc.mongoose.common.io.Input.DELIMITER;
 
 import java.io.File;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 
 public class FilePathInput
-implements Input<String> {
+implements BatchSupplier<String> {
 
 	private static final int RADIX = Character.MAX_RADIX;
 	private static final Random RANDOM = new Random();
@@ -27,17 +27,7 @@ implements Input<String> {
 			(params.length > 1 ? parseInt(params[1].replaceAll(" ", "")) : 0)
 		);
 	}
-
-	private static boolean areParamsValid(final String paramsString) {
-		final int delPos;
-		if(paramsString == null) {
-			delPos = 0;
-		} else {
-			delPos = paramsString.indexOf(DELIMITER);
-		}
-		return delPos > 0 && delPos < paramsString.length() - 1;
-	}
-
+	
 	public FilePathInput(int width, int depth) {
 		this.width = width;
 		this.depth = depth;
@@ -45,11 +35,7 @@ implements Input<String> {
 			throw new IllegalArgumentException();
 		}
 	}
-
-	private String nextDirName(final int width) {
-		return Integer.toString(Math.abs(RANDOM.nextInt(width)), RADIX);
-	}
-
+	
 	private static final ThreadLocal<StringBuilder>
 		THREAD_LOCAL_PATH_BUILDER = new ThreadLocal<StringBuilder>() {
 			@Override
@@ -59,7 +45,7 @@ implements Input<String> {
 		};
 
 	@Override
-	public String get() {
+	public final String get() {
 		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		pathBuilder.setLength(0);
 		final int newDepth = RANDOM.nextInt(depth) + 1;
@@ -69,9 +55,9 @@ implements Input<String> {
 		}
 		return pathBuilder.toString();
 	}
-	//
+	
 	@Override
-	public int get(final List<String> buffer, final int limit) {
+	public final int get(final List<String> buffer, final int limit) {
 		int count = 0, newDepth;
 		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		for(; count < limit; count ++) {
@@ -85,21 +71,35 @@ implements Input<String> {
 		}
 		return count;
 	}
-	//
+	
 	@Override
-	public long skip(final long count) {
+	public final long skip(final long count) {
 		for(long i = 0; i < count; i ++) {
 			RANDOM.nextInt(depth);
 		}
 		return count;
 	}
-	//
+	
 	@Override
-	public void reset() {
+	public final void reset() {
 		RANDOM.reset();
 	}
-	//
+	
 	@Override
-	public void close() {
+	public final void close() {
+	}
+	
+	private static boolean areParamsValid(final String paramsString) {
+		final int delPos;
+		if(paramsString == null) {
+			delPos = 0;
+		} else {
+			delPos = paramsString.indexOf(DELIMITER);
+		}
+		return delPos > 0 && delPos < paramsString.length() - 1;
+	}
+	
+	private static String nextDirName(final int width) {
+		return Integer.toString(Math.abs(RANDOM.nextInt(width)), RADIX);
 	}
 }

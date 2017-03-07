@@ -1,8 +1,7 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.supply.async.range;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.io.range.AsyncFormatRangeInputBase;
-import com.emc.mongoose.common.io.range.RangeInput;
+import com.emc.mongoose.common.supply.range.RangeDefinedSupplier;
 import static org.apache.commons.lang.time.DateUtils.parseDate;
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -10,24 +9,24 @@ import java.text.Format;
 import java.text.ParseException;
 import java.util.Date;
 
-public final class AsyncDateInput
-extends AsyncFormatRangeInputBase<Date> {
+public final class AsyncRangeDefinedDateSupplier
+extends AsyncFormatRangeDefinedSupplierBase<Date> {
 
 	public static final String[] INPUT_DATE_FMT_STRINGS = new String[] { "yyyy/MM/dd" };
 
-	private final RangeInput<Long> longGenerator;
+	private final RangeDefinedSupplier<Long> longGenerator;
 
-	public AsyncDateInput(final Date minValue, final Date maxValue, final String formatString)
+	public AsyncRangeDefinedDateSupplier(final Date minValue, final Date maxValue, final String formatString)
 	throws OmgDoesNotPerformException{
 		super(minValue, maxValue, formatString);
-		longGenerator = new AsyncLongInput(minValue.getTime(), maxValue.getTime());
+		longGenerator = new AsyncRangeDefinedLongSupplier(minValue.getTime(), maxValue.getTime());
 	}
 
-	public AsyncDateInput(final Date initialValue, final String formatString)
+	public AsyncRangeDefinedDateSupplier(final Date initialValue, final String formatString)
 	throws OmgDoesNotPerformException {
 		super(initialValue, formatString);
 		try {
-			longGenerator = new AsyncLongInput(
+			longGenerator = new AsyncRangeDefinedLongSupplier(
 				parseDate("1970/01/01", INPUT_DATE_FMT_STRINGS).getTime(),
 				initialValue.getTime()
 			);

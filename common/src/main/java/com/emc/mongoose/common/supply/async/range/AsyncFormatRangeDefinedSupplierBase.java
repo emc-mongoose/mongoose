@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io.range;
+package com.emc.mongoose.common.supply.async.range;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 
@@ -11,8 +11,8 @@ import java.text.Format;
  * For details see AsyncRangeGeneratorBase class.
  * @param <T> - type of value that is produced by the generator
  */
-public abstract class AsyncFormatRangeInputBase<T>
-extends AsyncRangeInputBase<T> {
+public abstract class AsyncFormatRangeDefinedSupplierBase<T>
+extends AsyncRangeDefinedSupplierBase<T> {
 
 	private final Format outputFormat;
 
@@ -23,7 +23,7 @@ extends AsyncRangeInputBase<T> {
 	 * @param formatString - a format-containing string that is different for different implementations.
 	 *                     To get examples see finished implementations (e.g. AsyncDoubleGenerator)
 	 */
-	protected AsyncFormatRangeInputBase(
+	protected AsyncFormatRangeDefinedSupplierBase(
 		final T minValue, final T maxValue, final String formatString
 	) throws OmgDoesNotPerformException {
 		super(minValue, maxValue);
@@ -36,7 +36,7 @@ extends AsyncRangeInputBase<T> {
 	 * @param formatString - a format-containing string that is different for different implementations.
 	 *                     To get examples see finished implementations (e.g. AsyncDoubleGenerator)
 	 */
-	protected AsyncFormatRangeInputBase(final T initialValue, final String formatString)
+	protected AsyncFormatRangeDefinedSupplierBase(final T initialValue, final String formatString)
 	throws OmgDoesNotPerformException {
 		super(initialValue);
 		outputFormat = getFormatterInstance(formatString);

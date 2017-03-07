@@ -1,9 +1,9 @@
-package com.emc.mongoose.common.io.pattern;
+package com.emc.mongoose.common.supply.pattern;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.ValueInputFactory;
-import com.emc.mongoose.common.io.StringInputFactory;
+import com.emc.mongoose.common.supply.BatchSupplier;
+import com.emc.mongoose.common.supply.SupplierFactory;
+import com.emc.mongoose.common.supply.StringSupplierFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,8 +11,8 @@ import java.util.List;
 /**
  * This class is used ONLY for input pattern strings containing only one expression with the pattern symbol.
  */
-public class BasicPatternDefinedInput
-implements PatternDefinedInput {
+public class BasicPatternDefinedSupplier
+implements PatternDefinedSupplier {
 
 	private static final ThreadLocal<StringBuilder>
 		OUTPUT_BUILDER = new ThreadLocal<StringBuilder>() {
@@ -22,40 +22,36 @@ implements PatternDefinedInput {
 			}
 		};
 
-	/**
-	 * A factory for getting of value inputs (see below)
-	 */
-	private final ValueInputFactory<String, ? extends Input<String>> valueInputFactory;
+	// A factory for getting of value suppliers (see below)
+	private final SupplierFactory<String, ? extends BatchSupplier<String>> supplierFactory;
 
-	/**
-	 * An input string with pattern symbols and expressions that have to be replaced by suitable values
-	 */
+	// An input string with pattern symbols and expressions that have to be replaced by suitable values
 	private final String pattern;
 
 	/**
 	 * Generators of values that should be inserted instead of expressions with special characters (see above)
 	 */
-	private Input<String>[] inputs;
+	private BatchSupplier<String>[] suppliers;
 
-	public BasicPatternDefinedInput(final String pattern)
+	public BasicPatternDefinedSupplier(final String pattern)
 	throws UserShootHisFootException {
-		this(pattern, StringInputFactory.getInstance());
+		this(pattern, StringSupplierFactory.getInstance());
 	}
 
-	public BasicPatternDefinedInput(
+	public BasicPatternDefinedSupplier(
 		final String pattern,
-		final ValueInputFactory<String, ? extends Input<String>> valueInputFactory
+		final SupplierFactory<String, ? extends BatchSupplier<String>> supplierFactory
 	) throws UserShootHisFootException {
 		if(pattern == null) {
 			throw new UserShootHisFootException("Null pattern");
 		}
-		this.valueInputFactory = valueInputFactory;
+		this.supplierFactory = supplierFactory;
 		this.pattern = pattern;
 		initialize();
 	}
 
-	protected final ValueInputFactory<String, ? extends Input<String>> valueInputFactory() {
-		return valueInputFactory;
+	protected final SupplierFactory<String, ? extends BatchSupplier<String>> getSupplierFactory() {
+		return supplierFactory;
 	}
 
 	@Override
@@ -63,18 +59,18 @@ implements PatternDefinedInput {
 		return pattern;
 	}
 
-	protected final Input<String>[] getInputs() {
-		return inputs;
+	protected final BatchSupplier<String>[] getSuppliers() {
+		return suppliers;
 	}
 
-	protected final void setInputs(final Input<String>[] inputs) {
-		this.inputs = inputs;
+	protected final void setSuppliers(final BatchSupplier<String>[] suppliers) {
+		this.suppliers = suppliers;
 	}
 
 	/**
 	 * In this method the class fields are being filled
 	 */
-	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for getInputs[]
+	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for getSuppliers[]
 	protected void initialize()
 	throws UserShootHisFootException {
 		if(pattern.charAt(0) != PATTERN_CHAR) {
@@ -84,7 +80,7 @@ implements PatternDefinedInput {
 		patternBuilder.delete(0, 1);
 		final char type = patternBuilder.charAt(0);
 		final String format = initParameter(patternBuilder, FORMAT_CHARS);
-		setInputs(new Input[] { valueInputFactory.createInput(type, format, null) } );
+		setSuppliers(new BatchSupplier[] { supplierFactory.createSupplier(type, format, null) } );
 	}
 
 	/**
@@ -130,16 +126,12 @@ implements PatternDefinedInput {
 	}
 
 	/**
-	 * Assemble output string with 'inputs'
+	 * Assemble output string with 'suppliers'
 	 * @param result see below (format() method)
 	 * @return a string with PATTERN_SYMBOLs replaced by suitable values
 	 */
 	protected String assembleOutputString(final StringBuilder result) {
-		try {
-			result.append(inputs[0].get());
-		} catch(final IOException ignored) {
-		}
-		return result.toString();
+		return result.append(suppliers[0].get()).toString();
 	}
 
 	/**
@@ -150,7 +142,7 @@ implements PatternDefinedInput {
 	 */
 	@Override
 	public final String format(final StringBuilder result) {
-		if(inputs == null) {
+		if(suppliers == null) {
 			return getPattern();
 		} else {
 			return assembleOutputString(result);
@@ -167,13 +159,12 @@ implements PatternDefinedInput {
 		result.setLength(0);
 		return format(result);
 	}
-	//
+	
 	@Override
-	public final int get(final List<String> buffer, final int limit)
-	throws IOException {
+	public final int get(final List<String> buffer, final int limit) {
 		int count = 0;
 		final StringBuilder result = OUTPUT_BUILDER.get();
-		if(inputs == null) {
+		if(suppliers == null) {
 			for(; count < limit; count++) {
 				result.setLength(0);
 				buffer.add(pattern);
@@ -186,43 +177,35 @@ implements PatternDefinedInput {
 		}
 		return count;
 	}
-	//
+	
 	@Override
 	public final long skip(final long count) {
-		if(inputs != null) {
-			try {
-				for(int i = 0; i < inputs.length; i++) {
-					inputs[i].skip(count);
-				}
-			} catch(final IOException ignored) {
+		if(suppliers != null) {
+			for(int i = 0; i < suppliers.length; i++) {
+				suppliers[i].skip(count);
 			}
 		}
 		return count;
 	}
-	//
+	
 	@Override
 	public final void reset() {
-		if(inputs != null) {
-			try {
-				for(int i = 0; i < inputs.length; i ++) {
-					inputs[i].reset();
-				}
-			} catch(final IOException ignored) {
+		if(suppliers != null) {
+			for(int i = 0; i < suppliers.length; i ++) {
+				suppliers[i].reset();
 			}
 		}
 	}
-	//
+	
 	@Override
-	public final void close() {
-		if(inputs != null) {
-			try {
-				for(int i = 0; i < inputs.length; i ++) {
-					inputs[i].close();
-					inputs[i] = null;
-				}
-			} catch(final IOException ignored) {
+	public final void close()
+	throws IOException {
+		if(suppliers != null) {
+			for(int i = 0; i < suppliers.length; i ++) {
+				suppliers[i].close();
+				suppliers[i] = null;
 			}
-			inputs = null;
+			suppliers = null;
 		}
 	}
 }

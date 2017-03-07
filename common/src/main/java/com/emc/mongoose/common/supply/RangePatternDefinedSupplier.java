@@ -1,35 +1,27 @@
-package com.emc.mongoose.common.io.pattern;
+package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.ValueInputFactory;
+import com.emc.mongoose.common.supply.pattern.BasicPatternDefinedSupplier;
+import static com.emc.mongoose.common.supply.range.RangeDefinedSupplier.RANGE_SYMBOLS;
 
-import java.io.IOException;
-
-public final class RangePatternDefinedInput
-extends BasicPatternDefinedInput {
-
-	/**
-	 * Special characters
-	 */
-	public static final char[] RANGE_SYMBOLS = {'[',']'};
-	public static final char RANGE_DELIMITER = '-';
+public final class RangePatternDefinedSupplier
+extends BasicPatternDefinedSupplier {
 
 	/**
 	 * Segments (parts) of the input string that do not require changes
 	 */
 	private String[] segments;
 
-	public RangePatternDefinedInput(final String pattern)
+	public RangePatternDefinedSupplier(final String pattern)
 	throws UserShootHisFootException {
 		super(pattern);
 	}
 
-	public RangePatternDefinedInput(
+	public RangePatternDefinedSupplier(
 		final String pattern,
-		final ValueInputFactory<String, ? extends Input<String>> valueInputFactory
+		final SupplierFactory<String, ? extends BatchSupplier<String>> supplierFactory
 	) throws UserShootHisFootException {
-		super(pattern, valueInputFactory);
+		super(pattern, supplierFactory);
 	}
 
 	private void setSegments(String[] segments) {
@@ -40,12 +32,11 @@ extends BasicPatternDefinedInput {
 	 * see the description of the parent class (SimpleFormattingGenerator)
 	 */
 	@Override
-	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for inputs[]
 	protected final void initialize()
 	throws UserShootHisFootException {
 		final int patternSymbolsNum = countPatternSymbols(getPattern());
 		if(patternSymbolsNum > 0) {
-			setInputs(new Input[patternSymbolsNum]);
+			setSuppliers(new BatchSupplier[patternSymbolsNum]);
 			setSegments(new String[patternSymbolsNum + 1]);
 			final StringBuilder segmentsBuilder = new StringBuilder();
 			final StringBuilder patternBuilder = new StringBuilder(getPattern());
@@ -75,14 +66,14 @@ extends BasicPatternDefinedInput {
 		int counter = 0;
 		if(!pattern.isEmpty()) {
 			final int lastPatternIndex = pattern.length() - 1;
-			if(pattern.charAt(lastPatternIndex) == PatternDefinedInput.PATTERN_CHAR) {
+			if(pattern.charAt(lastPatternIndex) == PATTERN_CHAR) {
 				throw new IllegalArgumentException();
 			}
 			final char[] patternChars = pattern.toCharArray();
 			for(int i = 0; i < lastPatternIndex; i++) {
-				if(patternChars[i] == PatternDefinedInput.PATTERN_CHAR) {
+				if(patternChars[i] == PATTERN_CHAR) {
 					counter++;
-					if(patternChars[i + 1] == PatternDefinedInput.PATTERN_CHAR) {
+					if(patternChars[i + 1] == PATTERN_CHAR) {
 						throw new IllegalArgumentException();
 					}
 				}
@@ -100,10 +91,10 @@ extends BasicPatternDefinedInput {
 	private void addExpressionParams(final StringBuilder expression, final int index)
 	throws UserShootHisFootException {
 		final char type = expression.charAt(0);
-		final String format = initParameter(expression, PatternDefinedInput.FORMAT_CHARS);
+		final String format = initParameter(expression, FORMAT_CHARS);
 		final String range = initParameter(expression, RANGE_SYMBOLS);
 		expression.delete(0, 1);
-		getInputs()[index] = valueInputFactory().createInput(type, format, range);
+		getSuppliers()[index] = getSupplierFactory().createSupplier(type, format, range);
 	}
 
 	/**
@@ -114,8 +105,8 @@ extends BasicPatternDefinedInput {
 	public String toString() {
 		final StringBuilder result = new StringBuilder();
 		result.append("Generators: ");
-		if(getInputs() != null) {
-			for(final Input<String> input : getInputs()) {
+		if(getSuppliers() != null) {
+			for(final BatchSupplier<String> input : getSuppliers()) {
 				result.append(input.getClass().getName()).append(";");
 			}
 		}
@@ -136,15 +127,12 @@ extends BasicPatternDefinedInput {
 	 * @return a string with PATTERN_SYMBOLs replaced by suitable values
 	 */
 	@Override
-	protected final String assembleOutputString(StringBuilder result) {
-		try {
-			for(int i = 0; i < segments.length - 1; i++) {
-				result.append(segments[i]);
-				if(getInputs()[i] != null) {
-					result.append(getInputs()[i].get());
-				}
+	protected final String assembleOutputString(final StringBuilder result) {
+		for(int i = 0; i < segments.length - 1; i ++) {
+			result.append(segments[i]);
+			if(getSuppliers()[i] != null) {
+				result.append(getSuppliers()[i].get());
 			}
-		} catch(final IOException ignored) {
 		}
 		result.append(segments[segments.length - 1]);
 		return result.toString();

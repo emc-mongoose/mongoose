@@ -2,16 +2,16 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.supply.BatchSupplier;
+import com.emc.mongoose.common.supply.async.pattern.AsyncPatternDefinedSupplier;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.common.io.AsyncCurrentDateInput;
-import com.emc.mongoose.common.io.pattern.AsyncPatternDefinedInput;
+import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.common.io.pattern.PatternDefinedInput.PATTERN_CHAR;
+import static com.emc.mongoose.common.supply.pattern.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
@@ -69,11 +69,11 @@ implements HttpStorageDriver<I, O> {
 	
 	private static final Logger LOG = LogManager.getLogger();
 	
-	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
-	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
-	private static final Function<String, Input<String>> ASYNC_PATTERN_INPUT_FUNC = pattern -> {
+	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
+	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
+	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 		try {
-			return new AsyncPatternDefinedInput(pattern);
+			return new AsyncPatternDefinedSupplier(pattern);
 		} catch(final UserShootHisFootException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create the pattern defined input");
 			return null;
@@ -171,7 +171,7 @@ implements HttpStorageDriver<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);
@@ -340,43 +340,35 @@ implements HttpStorageDriver<I, O> {
 
 		String headerName;
 		String headerValue;
-		Input<String> headerNameInput;
-		Input<String> headerValueInput;
+		BatchSupplier<String> headerNameSupplier;
+		BatchSupplier<String> headerValueSupplier;
 
 		for(final Map.Entry<String, String> nextHeader : dynamicHeaders) {
 
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
-			headerNameInput = headerNameInputs.computeIfAbsent(headerName, ASYNC_PATTERN_INPUT_FUNC);
-			if(headerNameInput == null) {
+			headerNameSupplier = headerNameInputs.computeIfAbsent(
+				headerName, ASYNC_PATTERN_SUPPLIER_FUNC
+			);
+			if(headerNameSupplier == null) {
 				continue;
 			}
 			// spin while header name generator is not ready
-			try {
-				while(null == (headerName = headerNameInput.get())) {
-					LockSupport.parkNanos(1_000_000);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to calculate the header name");
-				continue;
+			while(null == (headerName = headerNameSupplier.get())) {
+				LockSupport.parkNanos(1_000_000);
 			}
 
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
-			headerValueInput = headerValueInputs.computeIfAbsent(headerValue,
-				ASYNC_PATTERN_INPUT_FUNC
+			headerValueSupplier = headerValueInputs.computeIfAbsent(headerValue,
+				ASYNC_PATTERN_SUPPLIER_FUNC
 			);
-			if(headerValueInput == null) {
+			if(headerValueSupplier == null) {
 				continue;
 			}
 			// spin while header value generator is not ready
-			try {
-				while(null == (headerValue = headerValueInput.get())) {
-					LockSupport.parkNanos(1_000_000);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to calculate the header value");
-				continue;
+			while(null == (headerValue = headerValueSupplier.get())) {
+				LockSupport.parkNanos(1_000_000);
 			}
 			// put the generated header value into the request
 			httpHeaders.set(headerName, headerValue);

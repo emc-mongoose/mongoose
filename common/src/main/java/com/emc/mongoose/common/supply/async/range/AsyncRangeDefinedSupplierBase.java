@@ -1,11 +1,12 @@
-package com.emc.mongoose.common.io.range;
+package com.emc.mongoose.common.supply.async.range;
 
 import com.emc.mongoose.common.concurrent.InitCallable;
 import com.emc.mongoose.common.concurrent.Initializable;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.math.Random;
-import com.emc.mongoose.common.io.AsyncValueInput;
-import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.supply.async.AsyncUpdatingValueSupplier;
+import com.emc.mongoose.common.supply.BatchSupplier;
+import com.emc.mongoose.common.supply.range.RangeDefinedSupplier;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,25 +16,25 @@ import java.util.List;
  * but their values are intended to be converted to String.
  * @param <T> - type of value that is produced by the input
  */
-public abstract class AsyncRangeInputBase<T>
-implements Initializable, RangeInput<T> {
+public abstract class AsyncRangeDefinedSupplierBase<T>
+implements Initializable, RangeDefinedSupplier<T> {
 
 	protected final Random random = new Random();
 	private final T minValue;
 	private final T range;
-	private final Input<T> input;
+	private final BatchSupplier<T> newValueSupplier;
 
-	protected AsyncRangeInputBase(final T minValue, final T maxValue)
+	protected AsyncRangeDefinedSupplierBase(final T minValue, final T maxValue)
 	throws OmgDoesNotPerformException {
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
-		this.input = new AsyncValueInput<>(
+		this.newValueSupplier = new AsyncUpdatingValueSupplier<>(
 			minValue,
 			new InitCallable<T>() {
 				//
 				@Override
 				public boolean isInitialized() {
-					return AsyncRangeInputBase.this.isInitialized();
+					return AsyncRangeDefinedSupplierBase.this.isInitialized();
 				}
 				//
 				@Override
@@ -45,17 +46,17 @@ implements Initializable, RangeInput<T> {
 		);
 	}
 
-	protected AsyncRangeInputBase(final T initialValue)
+	protected AsyncRangeDefinedSupplierBase(final T initialValue)
 	throws OmgDoesNotPerformException {
 		this.minValue = initialValue;
 		this.range = null;
-		this.input = new AsyncValueInput<>(
+		this.newValueSupplier = new AsyncUpdatingValueSupplier<>(
 			initialValue,
 			new InitCallable<T>() {
 				//
 				@Override
 				public boolean isInitialized() {
-					return AsyncRangeInputBase.this.isInitialized();
+					return AsyncRangeDefinedSupplierBase.this.isInitialized();
 				}
 				//
 				@Override
@@ -92,11 +93,7 @@ implements Initializable, RangeInput<T> {
 	 */
 	@Override
 	public final T value() {
-		try {
-			return input.get();
-		} catch(final IOException e) {
-			throw new RuntimeException(e);
-		}
+		return newValueSupplier.get();
 	}
 
 	@Override
@@ -114,15 +111,13 @@ implements Initializable, RangeInput<T> {
 	}
 
 	@Override
-	public final long skip(final long count)
-	throws IOException {
-		return input.skip(count);
+	public final long skip(final long count) {
+		return newValueSupplier.skip(count);
 	}
 
 	@Override
-	public final void reset()
-	throws IOException {
-		input.reset();
+	public final void reset() {
+		newValueSupplier.reset();
 	}
 
 	@Override
@@ -133,6 +128,6 @@ implements Initializable, RangeInput<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		input.close();
+		newValueSupplier.close();
 	}
 }

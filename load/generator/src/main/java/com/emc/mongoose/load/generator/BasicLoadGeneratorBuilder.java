@@ -3,16 +3,17 @@ package com.emc.mongoose.load.generator;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.ConstantStringInput;
+import com.emc.mongoose.common.supply.BatchSupplier;
+import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
+import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
 import com.emc.mongoose.model.io.task.token.BasicTokenIoTaskBuilder;
 import com.emc.mongoose.model.item.BasicDataItemFactory;
-import com.emc.mongoose.model.item.BasicItemNameInput;
+import com.emc.mongoose.model.item.ItemNameSupplier;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.IoResultsItemInput;
@@ -116,7 +117,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	throws UserShootHisFootException {
 
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
-		final Input<String> dstPathInput;
+		final BatchSupplier<String> outputPathSupplier;
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
@@ -205,13 +206,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
-			dstPathInput = getDstPathInput();
+			outputPathSupplier = getOutputPathSupplier();
 		} else {
-			dstPathInput = null;
+			outputPathSupplier = null;
 		}
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, itemSizeEstimate, dstPathInput, ioTaskBuilder, countLimit, sizeLimit,
+			itemInput, itemSizeEstimate, outputPathSupplier, ioTaskBuilder, countLimit, sizeLimit,
 			shuffleFlag
 		);
 	}
@@ -254,13 +255,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		return null;
 	}
 
-	private Input<String> getDstPathInput()
+	private BatchSupplier<String> getOutputPathSupplier()
 	throws UserShootHisFootException {
-		final Input<String> dstPathInput;
+		final BatchSupplier<String> dstPathInput;
 		final String t = itemConfig.getOutputConfig().getPath();
 		if(t == null || t.isEmpty()) {
 			final String dstPath = "/" + LogUtil.getDateTimeStamp();
-			dstPathInput = new ConstantStringInput(dstPath);
+			dstPathInput = new ConstantStringSupplier(dstPath);
 			try {
 				storageDrivers.get(0).createPath(dstPath);
 			} catch(final IOException e) {
@@ -270,7 +271,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				);
 			}
 		} else { // copy mode
-			dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
+			dstPathInput = new RangePatternDefinedSupplier(t.startsWith("/") ? t : "/" + t);
 			String dstPath = null;
 			try {
 				dstPath = dstPathInput.get();
@@ -311,7 +312,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
 				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
-					final BasicItemNameInput itemNameInput = new BasicItemNameInput(
+					final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 						namingType, namingPrefix, namingLength, namingRadix, namingOffset
 					);
 					if(itemFactory instanceof BasicDataItemFactory) {
