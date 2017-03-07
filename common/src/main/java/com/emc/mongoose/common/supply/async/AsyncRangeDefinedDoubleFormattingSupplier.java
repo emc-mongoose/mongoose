@@ -1,21 +1,20 @@
-package com.emc.mongoose.common.supply.async.range;
+package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.supply.async.range.AsyncFormatRangeDefinedSupplierBase;
 
 import java.text.DecimalFormat;
 import java.text.Format;
 
-public final class AsyncRangeDefinedDoubleSupplier
-extends AsyncFormatRangeDefinedSupplierBase<Double> {
+public final class AsyncRangeDefinedDoubleFormattingSupplier
+extends AsyncFormattingRangeDefinedSupplierBase<Double> {
 
-	public AsyncRangeDefinedDoubleSupplier(
+	public AsyncRangeDefinedDoubleFormattingSupplier(
 		final Double minValue, final Double maxValue, final String formatString
 	) throws OmgDoesNotPerformException {
 		super(minValue, maxValue, formatString);
 	}
 
-	public AsyncRangeDefinedDoubleSupplier(final Double initialValue, final String formatString)
+	public AsyncRangeDefinedDoubleFormattingSupplier(final Double initialValue, final String formatString)
 	throws OmgDoesNotPerformException {
 		super(initialValue, formatString);
 	}

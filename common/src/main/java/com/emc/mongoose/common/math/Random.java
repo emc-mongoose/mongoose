@@ -3,8 +3,8 @@ package com.emc.mongoose.common.math;
 import static com.emc.mongoose.common.math.MathUtil.xorShift;
 
 public final class Random {
-
-	private static final java.util.Random JAVA_RANDOM = new java.util.Random();
+	
+	private static final double DOUBLE_UNIT = 0x1.0p-53;
 
 	private long seed;
 
@@ -37,6 +37,6 @@ public final class Random {
 	}
 
 	public final double nextDouble() {
-		return JAVA_RANDOM.nextDouble();
+		return (((seed >>> 22) << 27) + (seed >>> 21)) * DOUBLE_UNIT;
 	}
 }

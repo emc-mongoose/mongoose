@@ -1,17 +1,16 @@
-package com.emc.mongoose.common.supply.async.range;
+package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.supply.async.range.AsyncRangeDefinedSupplierBase;
 
-public final class AsyncRangeDefinedLongSupplier
+public final class AsyncRangeDefinedLongFormattingSupplier
 extends AsyncRangeDefinedSupplierBase<Long> {
 
-	public AsyncRangeDefinedLongSupplier(final Long minValue, final Long maxValue)
+	public AsyncRangeDefinedLongFormattingSupplier(final Long minValue, final Long maxValue)
 	throws OmgDoesNotPerformException {
 		super(minValue, maxValue);
 	}
 
-	public AsyncRangeDefinedLongSupplier(final Long initialValue)
+	public AsyncRangeDefinedLongFormattingSupplier(final Long initialValue)
 	throws OmgDoesNotPerformException {
 		super(initialValue);
 	}

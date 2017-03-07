@@ -1,8 +1,8 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.pattern.BasicPatternDefinedSupplier;
-import static com.emc.mongoose.common.supply.range.RangeDefinedSupplier.RANGE_SYMBOLS;
+
+import static com.emc.mongoose.common.supply.RangeDefinedSupplier.RANGE_SYMBOLS;
 
 public final class RangePatternDefinedSupplier
 extends BasicPatternDefinedSupplier {

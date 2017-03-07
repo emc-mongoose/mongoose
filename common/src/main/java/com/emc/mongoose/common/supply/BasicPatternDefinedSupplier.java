@@ -1,9 +1,6 @@
-package com.emc.mongoose.common.supply.pattern;
+package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.BatchSupplier;
-import com.emc.mongoose.common.supply.SupplierFactory;
-import com.emc.mongoose.common.supply.StringSupplierFactory;
 
 import java.io.IOException;
 import java.util.List;

@@ -1,16 +1,19 @@
 package com.emc.mongoose.common.supply;
 
+import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.supply.async.AsyncRangeDefinedLongFormattingSupplier;
 
-import java.io.File;
+import java.text.ParseException;
+import java.util.regex.Matcher;
+
+import static org.apache.commons.lang.time.DateUtils.parseDate;
 
 public class StringSupplierFactory<G extends BatchSupplier<String>>
 implements SupplierFactory<String, G> {
 
-	public static final String PATH_REG_EXP = "([0-9a-z]+" + "\\" + File.separatorChar + ")+";
-
 	private static final StringSupplierFactory<? extends Input<String>>
-			INSTANCE = new StringSupplierFactory<>();
+		INSTANCE = new StringSupplierFactory<>();
 
 	private StringSupplierFactory() {
 	}
@@ -38,18 +41,75 @@ implements SupplierFactory<String, G> {
 
 	@Override @SuppressWarnings("unchecked")
 	public G createSupplier(final char type, final String... parameters)
-	throws IllegalArgumentException {
-		final State state =  (State) defineState(parameters);
+	throws DanShootHisFootException {
+		final State state =  defineState(parameters);
+		final Matcher matcher;
 		switch (state) {
+			case EMPTY:
+				switch (type) {
+					case 'd':
+						return (G) new RangeDefinedLongFormattingSupplier();
+					default:
+						throw new DanShootHisFootException();
+				}
 			case FORMAT:
 				switch (type) {
+					case 'f':
+						return (G) new RangeDefinedDoubleFormattingSupplier(parameters[0]);
+					case 'D':
+						return (G) new RangeDefinedDateFormattingSupplier(parameters[0]);
 					case 'p':
 						return (G) new FilePathInput(parameters[0]);
 					default:
-						throw new IllegalArgumentException();
+						throw new DanShootHisFootException();
+				}
+			case RANGE:
+				switch(type) {
+					case 'd':
+						matcher = LONG_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							return (G) new AsyncRangeDefinedLongFormattingSupplier(
+								Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2))
+							);
+						} else {
+							throw new DanShootHisFootException();
+						}
+					default:
+						throw new DanShootHisFootException();
+				}
+			case FORMAT_RANGE:
+				switch (type) {
+					case 'f':
+						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							return (G) new RangeDefinedDoubleFormattingSupplier(
+								Double.parseDouble(matcher.group(1)),
+								Double.parseDouble(matcher.group(2)),
+								parameters[0]
+							);
+						} else {
+							throw new DanShootHisFootException();
+						}
+					case 'D':
+						matcher = DATE_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							try {
+								return (G) new RangeDefinedDateFormattingSupplier(
+									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+									parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
+									parameters[0]
+								);
+							} catch(final ParseException e) {
+								throw new DanShootHisFootException("Failed to parse the pattern");
+							}
+						} else {
+							throw new DanShootHisFootException();
+						}
+					default:
+						throw new DanShootHisFootException();
 				}
 			default:
-				throw new IllegalArgumentException();
+				throw new DanShootHisFootException();
 		}
 	}
 }

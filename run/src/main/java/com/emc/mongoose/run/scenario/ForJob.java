@@ -4,7 +4,7 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.Markers;
-import static com.emc.mongoose.common.supply.pattern.PatternDefinedSupplier.FORMAT_CHARS;
+import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_CHARS;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

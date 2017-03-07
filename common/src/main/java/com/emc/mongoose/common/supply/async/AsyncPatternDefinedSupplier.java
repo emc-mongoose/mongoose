@@ -1,11 +1,9 @@
-package com.emc.mongoose.common.supply.async.pattern;
+package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.async.AsyncUpdatingValueSupplier;
-import com.emc.mongoose.common.supply.async.AsyncStringSupplierFactory;
 import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
-import com.emc.mongoose.common.supply.pattern.PatternDefinedSupplier;
+import com.emc.mongoose.common.supply.PatternDefinedSupplier;
 
 public final class AsyncPatternDefinedSupplier
 extends AsyncUpdatingValueSupplier<String>

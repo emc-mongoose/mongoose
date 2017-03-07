@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.supply.range;
+package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.supply.BatchSupplier;
 

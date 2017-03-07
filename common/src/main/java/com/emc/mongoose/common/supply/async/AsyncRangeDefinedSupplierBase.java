@@ -1,12 +1,11 @@
-package com.emc.mongoose.common.supply.async.range;
+package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.concurrent.InitCallable;
 import com.emc.mongoose.common.concurrent.Initializable;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.math.Random;
-import com.emc.mongoose.common.supply.async.AsyncUpdatingValueSupplier;
 import com.emc.mongoose.common.supply.BatchSupplier;
-import com.emc.mongoose.common.supply.range.RangeDefinedSupplier;
+import com.emc.mongoose.common.supply.RangeDefinedSupplier;
 
 import java.io.IOException;
 import java.util.List;
