@@ -273,8 +273,8 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"uid": {
-							"type": [
+						"file": {
+							"type" : [
 								"null", "string"
 							]
 						},
@@ -287,10 +287,15 @@
 							"type": [
 								"null", "string"
 							]
+						},
+						"uid": {
+							"type" : [
+								"null", "string"
+							]
 						}
 					},
 					"required": [
-						"uid", "secret", "token"
+						"file", "secret", "token", "uid"
 					]
 				},
 				"driver" : {

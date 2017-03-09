@@ -41,6 +41,7 @@ public class BasicStorageDriverBuilder<
 	private static final Logger LOG = LogManager.getLogger();
 
 	private String jobName;
+	private ContentSource contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private MetricsConfig metricsConfig;
@@ -48,10 +49,7 @@ public class BasicStorageDriverBuilder<
 	
 	protected final ContentSource getContentSource()
 	throws IOException {
-		final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
-		return ContentSourceUtil.getInstance(
-			contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
-		);
+		return contentSrc;
 	}
 
 	@Override
@@ -75,8 +73,14 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setJobName(final String jobName) {
+	public BasicStorageDriverBuilder<I, O, T> setTestStepName(final String jobName) {
 		this.jobName = jobName;
+		return this;
+	}
+	
+	@Override
+	public BasicStorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc) {
+		this.contentSrc = contentSrc;
 		return this;
 	}
 	

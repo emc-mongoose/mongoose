@@ -1,6 +1,8 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
+
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -47,7 +49,7 @@ implements StorageDriver<I, O> {
 	public NioStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
-	) {
+	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
 		ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
 		ioWorkerTasks = new Runnable[ioWorkerCount];

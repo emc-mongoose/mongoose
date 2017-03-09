@@ -117,12 +117,13 @@ public abstract class LoggingTestBase {
 			}
 		}
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
-			final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br);
-			final List<CSVRecord> csvRecords = new ArrayList<>();
-			for(final CSVRecord csvRecord : csvParser) {
-				csvRecords.add(csvRecord);
+			try(final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br)) {
+				final List<CSVRecord> csvRecords = new ArrayList<>();
+				for(final CSVRecord csvRecord : csvParser) {
+					csvRecords.add(csvRecord);
+				}
+				return csvRecords;
 			}
-			return csvRecords;
 		}
 	}
 

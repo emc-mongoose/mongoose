@@ -48,9 +48,10 @@
 	},
 	"storage" : {
 		"auth" : {
-			"uid" : null,
+			"file" : null,
 			"secret" : null,
-			"token" : null
+			"token" : null,
+			"uid" : null
 		},
 		"driver": {
 			"addrs" : [

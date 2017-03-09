@@ -35,7 +35,7 @@ extends AsyncRangeDefinedSupplierBase<Double> {
 	
 	@Override
 	protected final Double computeRange(final Double minValue, final Double maxValue) {
-		return maxValue - minValue + 1.0;
+		return maxValue - minValue;
 	}
 
 	@Override

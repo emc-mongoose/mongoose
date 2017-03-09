@@ -1,6 +1,7 @@
-package com.emc.mongoose.run.scenario;
+package com.emc.mongoose.run.scenario.job;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.Markers;

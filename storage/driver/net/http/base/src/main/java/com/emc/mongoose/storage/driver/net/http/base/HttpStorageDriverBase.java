@@ -89,7 +89,7 @@ implements HttpStorageDriver<I, O> {
 	protected HttpStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
-	) throws IllegalStateException {
+	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();

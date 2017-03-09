@@ -1,5 +1,7 @@
 package com.emc.mongoose.run.scenario;
 
+import com.emc.mongoose.run.scenario.job.Job;
+import com.emc.mongoose.run.scenario.job.SequentialJob;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Markers;
 

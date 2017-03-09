@@ -355,7 +355,7 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
-								"uid": {
+								"file": {
 									"type": [
 										"null", "string"
 									]
@@ -366,6 +366,11 @@
 									]
 								},
 								"token": {
+									"type": [
+										"null", "string"
+									]
+								},
+								"uid": {
 									"type": [
 										"null", "string"
 									]

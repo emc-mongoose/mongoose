@@ -35,10 +35,12 @@ implements CompositeDataIoTask<I> {
 
 	public BasicCompositeDataIoTask(
 		final int originCode, final IoType ioType, final I item, final String srcPath,
-		final String dstPath, final List<ByteRange> fixedRanges, final int randomRangesCount,
-		final long sizeThreshold
+		final String dstPath, final String uid, final String secret,
+		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
 	) {
-		super(originCode, ioType, item, srcPath, dstPath, fixedRanges, randomRangesCount);
+		super(
+			originCode, ioType, item, srcPath, dstPath, uid, secret, fixedRanges, randomRangesCount
+		);
 		this.sizeThreshold = sizeThreshold;
 	}
 
@@ -72,7 +74,7 @@ implements CompositeDataIoTask<I> {
 		for(int i = 0; i < equalPartsCount; i ++) {
 			nextPart = item.slice(i * sizeThreshold, sizeThreshold);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				originCode, ioType, nextPart, srcPath, dstPath, i, this
+				originCode, ioType, nextPart, srcPath, dstPath, uid, secret, i, this
 			);
 			nextSubTask.setSrcPath(srcPath);
 			subTasks.add(nextSubTask);
@@ -80,7 +82,7 @@ implements CompositeDataIoTask<I> {
 		if(tailPartSize > 0) {
 			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				originCode, ioType, nextPart, srcPath, dstPath, equalPartsCount, this
+				originCode, ioType, nextPart, srcPath, dstPath, uid, secret, equalPartsCount, this
 			);
 			nextSubTask.setSrcPath(srcPath);
 			subTasks.add(nextSubTask);

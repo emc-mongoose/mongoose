@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario;
+package com.emc.mongoose.run.scenario.job;
 
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;

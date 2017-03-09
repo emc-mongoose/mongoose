@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
@@ -83,7 +84,7 @@ extends HttpStorageDriverBase<I, O> {
 	public SwiftStorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
-	) throws IllegalStateException {
+	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
 		if(authToken != null && !authToken.isEmpty()) {
 			setAuthToken(authToken);

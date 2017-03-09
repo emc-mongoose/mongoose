@@ -54,6 +54,14 @@ extends Externalizable {
 	String getDstPath();
 	
 	void setDstPath(final String dstPath);
+	
+	String getUid();
+	
+	void setUid(final String uid);
+	
+	String getSecret();
+	
+	void setSecret(final String secret);
 
 	void startRequest()
 	throws IllegalStateException;

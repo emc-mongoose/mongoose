@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.Service;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
@@ -23,7 +24,11 @@ public interface StorageDriverBuilderSvc<
 	String SVC_NAME = "storage/driver/builder";
 
 	@Override
-	StorageDriverBuilderSvc<I, O, T> setJobName(final String jobName)
+	StorageDriverBuilderSvc<I, O, T> setTestStepName(final String jobName)
+	throws RemoteException;
+	
+	@Override
+	StorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc)
 	throws RemoteException;
 
 	@Override

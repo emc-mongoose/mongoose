@@ -716,12 +716,13 @@ implements Serializable {
 		public static final class AuthConfig
 		implements Serializable {
 
-			public static final String KEY_UID = "uid";
+			public static final String KEY_FILE = "file";
 			public static final String KEY_SECRET = "secret";
 			public static final String KEY_TOKEN = "token";
+			public static final String KEY_UID = "uid";
 			
-			public final void setUid(final String uid) {
-				this.uid = uid;
+			public final void setFile(final String file) {
+				this.file = file;
 			}
 			
 			public final void setSecret(final String secret) {
@@ -732,29 +733,39 @@ implements Serializable {
 				this.token = token;
 			}
 			
-			@JsonProperty(KEY_UID) private String uid;
+			public final void setUid(final String uid) {
+				this.uid = uid;
+			}
+			
+			@JsonProperty(KEY_FILE) private String file;
 			@JsonProperty(KEY_SECRET) private String secret;
 			@JsonProperty(KEY_TOKEN) private String token;
-
+			@JsonProperty(KEY_UID) private String uid;
+			
 			public AuthConfig() {
 			}
 
 			public AuthConfig(final AuthConfig other) {
-				this.uid = other.getUid();
+				this.file = other.getFile();
 				this.secret = other.getSecret();
 				this.token = other.getToken();
+				this.uid = other.getUid();
+			}
+			
+			public final String getFile() {
+				return file;
 			}
 
-			public String getUid() {
-				return uid;
-			}
-
-			public String getSecret() {
+			public final String getSecret() {
 				return secret;
 			}
 
-			public String getToken() {
+			public final String getToken() {
 				return token;
+			}
+			
+			public final String getUid() {
+				return uid;
 			}
 		}
 		

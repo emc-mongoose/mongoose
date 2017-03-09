@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario;
+package com.emc.mongoose.run.scenario.job;
 
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;

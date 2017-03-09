@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
-import com.emc.mongoose.common.supply.BatchLongSupplier;
 
 import java.io.IOException;
 
@@ -20,7 +19,7 @@ implements BatchLongSupplier {
 	 */
 	public RangeDefinedLongSupplier(final long min, final long max) {
 		this.min = min;
-		this.range = max - min;
+		this.range = max - min + 1;
 	}
 	
 	private static ThreadLocal<Random> RND = new ThreadLocal<Random>() {
@@ -32,7 +31,7 @@ implements BatchLongSupplier {
 	
 	@Override
 	public final long getAsLong() {
-		if(range < 0) {
+		if(range < 1) {
 			return RND.get().nextLong();
 		} else {
 			return min + RND.get().nextLong(range);

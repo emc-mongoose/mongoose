@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario;
+package com.emc.mongoose.run.scenario.job;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
@@ -14,6 +14,7 @@ import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
+import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.ui.config.Config;
@@ -80,12 +81,12 @@ extends JobBase {
 		LOG.info(Markers.MSG, "Run the load job \"{}\"", jobName);
 		stepConfig.setPrecondition(preconditionFlag);
 
-		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		final ItemConfig itemConfig = localConfig.getItemConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
+		final StorageConfig storageConfig = localConfig.getStorageConfig();
 		
 		final ContentSource contentSrc;
 		try {
@@ -95,120 +96,11 @@ extends JobBase {
 		} catch(final IOException e) {
 			throw new RuntimeException(e);
 		}
+		
 		final List<StorageDriver> drivers = new ArrayList<>();
-		final StorageConfig storageConfig = localConfig.getStorageConfig();
-		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final int driverPort = driverConfig.getPort();
-		final boolean remoteDriversFlag = driverConfig.getRemote();
-
-		if(remoteDriversFlag) {
-			final List<String> driverSvcAddrs = driverConfig.getAddrs();
-			for(final String driverSvcAddr : driverSvcAddrs) {
-				final StorageDriverBuilderSvc driverBuilderSvc;
-				if(driverSvcAddr.contains(":")) {
-					try {
-						driverBuilderSvc = ServiceUtil.resolve(
-							driverSvcAddr, StorageDriverBuilderSvc.SVC_NAME
-						);
-					} catch(final NotBoundException | IOException | URISyntaxException e) {
-						LogUtil.exception(
-							LOG, Level.FATAL, e,
-							"Failed to resolve the storage driver builder service @{}",
-							driverSvcAddr
-						);
-						return;
-					}
-				} else {
-					try {
-						driverBuilderSvc = ServiceUtil.resolve(
-							driverSvcAddr, driverPort, StorageDriverBuilderSvc.SVC_NAME
-						);
-					} catch(final NotBoundException | IOException | URISyntaxException e) {
-						LogUtil.exception(
-							LOG, Level.FATAL, e,
-							"Failed to resolve the storage driver builder service @{}:{}",
-							driverSvcAddr, driverPort
-						);
-						return;
-					}
-				}
-				LOG.info(
-					Markers.MSG, "Connected the service \"{}\" @ {}",
-					StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
-				);
-				if(driverBuilderSvc == null) {
-					LOG.warn(
-						Markers.ERR,
-						"Failed to resolve the storage driver builder service @ {}",
-						driverSvcAddr
-					);
-					continue;
-				}
-				final String driverSvcName;
-				try {
-					driverSvcName = driverBuilderSvc
-						.setJobName(jobName)
-						.setItemConfig(itemConfig)
-						.setLoadConfig(loadConfig)
-						.setMetricsConfig(metricsConfig)
-						.setStorageConfig(storageConfig)
-						.buildRemotely();
-				} catch(final IOException | UserShootHisFootException e) {
-					throw new RuntimeException(e);
-				}
-
-				final StorageDriverSvc driverSvc;
-				if(driverSvcAddr.contains(":")) {
-					try {
-						driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
-					} catch(final NotBoundException | IOException | URISyntaxException e) {
-						LogUtil.exception(
-							LOG, Level.FATAL, e, "Failed to resolve the storage driver service @{}",
-							driverSvcAddr
-						);
-						return;
-					}
-				} else {
-					try {
-						driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
-					} catch(final NotBoundException | IOException | URISyntaxException e) {
-						LogUtil.exception(
-							LOG, Level.FATAL, e,
-							"Failed to resolve the storage driver service @{}:{}", driverSvcAddr,
-							driverPort
-						);
-						return;
-					}
-				}
-				LOG.info(
-					Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
-					driverSvcAddr
-				);
-				if(driverSvc != null) {
-					drivers.add(driverSvc);
-				} else {
-					LOG.warn(
-						Markers.ERR, "Failed to resolve the storage driver service @ {}",
-						driverSvcAddr
-					);
-				}
-			}
-		} else {
-			try {
-				drivers.add(
-					new BasicStorageDriverBuilder<>()
-						.setJobName(jobName)
-						.setItemConfig(itemConfig)
-						.setLoadConfig(loadConfig)
-						.setMetricsConfig(metricsConfig)
-						.setStorageConfig(storageConfig)
-						.build()
-				);
-			} catch(final UserShootHisFootException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		LOG.info(Markers.MSG, "Load drivers initialized");
+		StorageDriverUtil.init(
+			drivers, itemConfig, loadConfig, storageConfig, stepConfig, contentSrc
+		);
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);

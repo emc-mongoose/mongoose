@@ -5,6 +5,7 @@ import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -78,7 +79,7 @@ implements FileStorageDriver<I, O> {
 	public BasicFileStorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
-	) {
+	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
 		
 		openSrcFileFunc = ioTask -> {

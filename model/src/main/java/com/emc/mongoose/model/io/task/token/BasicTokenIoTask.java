@@ -22,8 +22,11 @@ implements TokenIoTask<I> {
 	public BasicTokenIoTask() {
 	}
 
-	public BasicTokenIoTask(final int originCode, final IoType ioType, final I item) {
-		super(originCode, ioType, item, null, null);
+	public BasicTokenIoTask(
+		final int originCode, final IoType ioType, final I item, final String uid,
+		final String secret
+	) {
+		super(originCode, ioType, item, null, null, uid, secret);
 	}
 	
 	protected BasicTokenIoTask(final BasicTokenIoTask<I> other) {

@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
+import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -56,7 +57,7 @@ implements StorageDriver<I, O> {
 	protected StorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
-	) {
+	) throws UserShootHisFootException {
 		this.queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);

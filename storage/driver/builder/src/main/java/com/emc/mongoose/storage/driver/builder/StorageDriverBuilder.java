@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
@@ -32,7 +32,10 @@ public interface StorageDriverBuilder<
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setJobName(final String runId)
+	StorageDriverBuilder<I, O, T> setTestStepName(final String runId)
+	throws RemoteException;
+	
+	StorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig)

@@ -23,8 +23,11 @@ implements PathIoTask<I> {
 		super();
 	}
 	
-	public BasicPathIoTask(final int originCode, final IoType ioType, final I item) {
-		super(originCode, ioType, item, null, null);
+	public BasicPathIoTask(
+		final int originCode, final IoType ioType, final I item, final String uid,
+		final String secret
+	) {
+		super(originCode, ioType, item, null, null, uid, secret);
 		item.reset();
 	}
 	

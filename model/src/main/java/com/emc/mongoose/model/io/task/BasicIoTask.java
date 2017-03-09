@@ -19,6 +19,8 @@ implements IoTask<I> {
 	protected I item;
 	protected String srcPath;
 	protected String dstPath;
+	protected String uid;
+	protected String secret;
 	
 	protected volatile String nodeAddr;
 	protected volatile Status status;
@@ -32,7 +34,7 @@ implements IoTask<I> {
 	
 	public BasicIoTask(
 		final int originCode, final IoType ioType, final I item, final String srcPath,
-		final String dstPath
+		final String dstPath, final String uid, final String secret
 	) {
 		this.originCode = originCode;
 		this.ioType = ioType;
@@ -57,6 +59,9 @@ implements IoTask<I> {
 		} else {
 			this.dstPath = dstPath;
 		}
+		
+		this.uid = uid;
+		this.secret = secret;
 	}
 
 	protected BasicIoTask(final BasicIoTask<I> other) {
@@ -65,6 +70,8 @@ implements IoTask<I> {
 		this.item = other.item;
 		this.srcPath = other.srcPath;
 		this.dstPath = other.dstPath;
+		this.uid = other.uid;
+		this.secret = other.secret;
 		this.nodeAddr = other.nodeAddr;
 		this.status = other.status;
 		this.reqTimeStart = other.reqTimeStart;
@@ -141,7 +148,27 @@ implements IoTask<I> {
 	public final void setDstPath(final String dstPath) {
 		this.dstPath = dstPath;
 	}
-
+	
+	@Override
+	public final String getUid() {
+		return uid;
+	}
+	
+	@Override
+	public final void setUid(final String uid) {
+		this.uid = uid;
+	}
+	
+	@Override
+	public final String getSecret() {
+		return secret;
+	}
+	
+	@Override
+	public final void setSecret(final String secret) {
+		this.secret = secret;
+	}
+	
 	@Override
 	public final void startRequest() {
 		reqTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
@@ -228,6 +255,8 @@ implements IoTask<I> {
 		out.writeObject(item);
 		out.writeUTF(srcPath == null ? "" : srcPath);
 		out.writeUTF(dstPath == null ? "" : dstPath);
+		out.writeUTF(uid == null ? "" : uid);
+		out.writeUTF(secret == null ? "" : secret);
 		out.writeUTF(nodeAddr == null ? "" : nodeAddr);
 		out.writeInt(status == null ? Status.PENDING.ordinal() : status.ordinal());
 		out.writeLong(reqTimeStart);
@@ -244,6 +273,8 @@ implements IoTask<I> {
 		item = (I) in.readObject();
 		srcPath = in.readUTF();
 		dstPath = in.readUTF();
+		uid = in.readUTF();
+		secret = in.readUTF();
 		nodeAddr = in.readUTF();
 		status = Status.values()[in.readInt()];
 		reqTimeStart = in.readLong();
