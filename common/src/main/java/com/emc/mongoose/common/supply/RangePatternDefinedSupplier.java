@@ -27,7 +27,20 @@ extends BasicPatternDefinedSupplier {
 	private void setSegments(String[] segments) {
 		this.segments = segments;
 	}
-
+	
+	private static final ThreadLocal<StringBuilder>
+		THREAD_SB_0 = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		},
+		THREAD_SB_1 = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	/**
 	 * see the description of the parent class (SimpleFormattingGenerator)
 	 */
@@ -38,8 +51,11 @@ extends BasicPatternDefinedSupplier {
 		if(patternSymbolsNum > 0) {
 			setSuppliers(new BatchSupplier[patternSymbolsNum]);
 			setSegments(new String[patternSymbolsNum + 1]);
-			final StringBuilder segmentsBuilder = new StringBuilder();
-			final StringBuilder patternBuilder = new StringBuilder(getPattern());
+			final StringBuilder segmentsBuilder = THREAD_SB_0.get();
+			segmentsBuilder.setLength(0);
+			final StringBuilder patternBuilder = THREAD_SB_1.get();
+			patternBuilder.setLength(0);
+			patternBuilder.append(getPattern());
 			int segmentCounter = 0;
 			for(int j = 0; j < patternSymbolsNum; j ++) {
 				int i = 0;
@@ -97,13 +113,21 @@ extends BasicPatternDefinedSupplier {
 		getSuppliers()[index] = getSupplierFactory().createSupplier(type, format, range);
 	}
 
+	private static final ThreadLocal<StringBuilder>
+		STRING_BULDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	/**
 	 * This method can be used for debug
 	 * @return a string with fields' content
 	 */
 	@Override
 	public String toString() {
-		final StringBuilder result = new StringBuilder();
+		final StringBuilder result = STRING_BULDER.get();
+		result.setLength(0); // clean
 		result.append("Generators: ");
 		if(getSuppliers() != null) {
 			for(final BatchSupplier<String> input : getSuppliers()) {

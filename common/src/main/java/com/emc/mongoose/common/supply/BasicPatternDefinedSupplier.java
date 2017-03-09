@@ -63,7 +63,14 @@ implements PatternDefinedSupplier {
 	protected final void setSuppliers(final BatchSupplier<String>[] suppliers) {
 		this.suppliers = suppliers;
 	}
-
+	
+	private static final ThreadLocal<StringBuilder>
+		STRING_BULDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	/**
 	 * In this method the class fields are being filled
 	 */
@@ -73,7 +80,9 @@ implements PatternDefinedSupplier {
 		if(pattern.charAt(0) != PATTERN_CHAR) {
 			throw new UserShootHisFootException();
 		}
-		final StringBuilder patternBuilder = new StringBuilder(pattern);
+		final StringBuilder patternBuilder = STRING_BULDER.get();
+		patternBuilder.setLength(0);
+		patternBuilder.append(pattern);
 		patternBuilder.delete(0, 1);
 		final char type = patternBuilder.charAt(0);
 		final String format = initParameter(patternBuilder, FORMAT_CHARS);

@@ -62,7 +62,7 @@ extends AsyncFormattingRangeDefinedSupplierBase<Date> {
 	}
 
 	@Override
-	protected final String stringify(final Date value) {
+	protected final String toString(final Date value) {
 		return outputFormat().format(value);
 	}
 

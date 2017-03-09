@@ -48,7 +48,7 @@ extends AsyncFormattingRangeDefinedSupplierBase<Double> {
 	}
 
 	@Override
-	protected final String stringify(Double value) {
+	protected final String toString(Double value) {
 		return outputFormat().format(value);
 	}
 }

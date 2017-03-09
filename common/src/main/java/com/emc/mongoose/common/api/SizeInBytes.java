@@ -149,9 +149,18 @@ implements Serializable {
 		}
 	}
 	
+	private static final ThreadLocal<StringBuilder>
+		STRING_BULDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder(formatFixedSize(min));
+		final StringBuilder sb = STRING_BULDER.get();
+		sb.setLength(0);
+		sb.append(formatFixedSize(min));
 		if(range > 0) {
 			sb.append(SEP1).append(formatFixedSize(min + range));
 			if(bias != 1) {

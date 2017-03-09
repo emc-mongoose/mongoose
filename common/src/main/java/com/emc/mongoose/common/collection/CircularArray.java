@@ -147,13 +147,21 @@ implements Iterable<T> {
 			throw new UnsupportedOperationException();
 		}
 	}
-
+	
+	private static final ThreadLocal<StringBuilder>
+		STRING_BULDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	@Override
 	public String toString() {
-		final StringBuilder valuesBuilder = new StringBuilder();
+		final StringBuilder valuesBuilder = STRING_BULDER.get();
+		valuesBuilder.setLength(0);
 		valuesBuilder.append('[');
 		if(size > 0) {
-			for(int i = 0; i < size; i++) {
+			for(int i = 0; i < size; i ++) {
 				valuesBuilder.append(' ').append(this.array[i].toString()).append(", ");
 			}
 			valuesBuilder.delete(valuesBuilder.length() - 2, valuesBuilder.length() - 1);

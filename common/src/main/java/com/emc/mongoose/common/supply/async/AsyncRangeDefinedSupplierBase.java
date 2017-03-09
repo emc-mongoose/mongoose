@@ -76,7 +76,7 @@ implements Initializable, RangeDefinedSupplier<T> {
 	 * @param value - a clean input-produced value
 	 * @return a String presentation of the value
 	 */
-	protected abstract String stringify(final T value);
+	protected abstract String toString(final T value);
 
 	protected final T minValue() {
 		return minValue;
@@ -97,7 +97,7 @@ implements Initializable, RangeDefinedSupplier<T> {
 
 	@Override
 	public final String get() {
-		return stringify(value());
+		return toString(value());
 	}
 
 	@Override

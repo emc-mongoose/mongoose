@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class RangePatternDefinedSupplierTest {
 
-	private static final int TIME_LIMIT_SEC = 20;
+	private static final int TIME_LIMIT_SEC = 50;
 
 	@Test
 	public void testConstantStringSupplyRate()

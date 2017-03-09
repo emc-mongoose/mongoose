@@ -68,7 +68,7 @@ implements SupplierFactory<String, G> {
 					case 'd':
 						matcher = LONG_PATTERN.matcher(parameters[1]);
 						if(matcher.find()) {
-							return (G) new AsyncRangeDefinedLongFormattingSupplier(
+							return (G) new RangeDefinedLongFormattingSupplier(
 								Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2))
 							);
 						} else {

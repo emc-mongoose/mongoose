@@ -31,7 +31,7 @@ extends AsyncRangeDefinedSupplierBase<Long> {
 	}
 
 	@Override
-	protected String stringify(Long value) {
+	protected String toString(Long value) {
 		return value.toString();
 	}
 }
