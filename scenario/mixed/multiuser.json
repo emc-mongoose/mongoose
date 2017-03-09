@@ -1,6 +1,6 @@
 {
 	"type" : "sequential",
-	"configuration" : {
+	"config" : {
 		"test" : {
 			"step" : {
 				"limit" : {
@@ -30,7 +30,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "items.csv",
+						"file" : "objects.csv",
 						"path" : "bucket-%d{000}[0-999]"
 					}
 				},
