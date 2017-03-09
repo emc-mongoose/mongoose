@@ -1,0 +1,47 @@
+{
+	"type" : "sequential",
+	"configuration" : {
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"naming" : {
+						"length" : 10,
+						"offset" : 0,
+						"prefix" : "bucket-",
+						"radix" : 10,
+						"type" : "asc"
+					},
+					"type" : "path"
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "items.csv",
+						"path" : "bucket-%d{000}[0-999]"
+					}
+				},
+				"storage" : {
+					"auth" : {
+						//"file" : "external-credentials.csv",
+						"secret" : "secret",
+						"uid" : "user-%d{000}[0-999]"
+					}
+				}
+			}
+		}
+	]
+}

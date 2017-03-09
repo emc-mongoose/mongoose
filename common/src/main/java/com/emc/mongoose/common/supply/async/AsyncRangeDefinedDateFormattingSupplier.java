@@ -2,48 +2,42 @@ package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.supply.RangeDefinedSupplier;
-import static com.emc.mongoose.common.supply.SupplierFactory.INPUT_DATE_FMT_STRINGS;
-import static org.apache.commons.lang.time.DateUtils.parseDate;
+
 import org.apache.commons.lang.time.FastDateFormat;
 
 import java.text.Format;
-import java.text.ParseException;
 import java.util.Date;
 
 public final class AsyncRangeDefinedDateFormattingSupplier
-extends AsyncFormattingRangeDefinedSupplierBase<Date> {
+extends AsyncRangeDefinedSupplierBase<Date> {
 
+	private final Format format;
 	private final RangeDefinedSupplier<Long> longGenerator;
-
-	public AsyncRangeDefinedDateFormattingSupplier(final Date minValue, final Date maxValue, final String formatString)
+	
+	public AsyncRangeDefinedDateFormattingSupplier()
 	throws OmgDoesNotPerformException{
-		super(minValue, maxValue, formatString);
-		longGenerator = new AsyncRangeDefinedLongFormattingSupplier(minValue.getTime(), maxValue.getTime());
+		this(new Date(0), new Date(), null);
 	}
-
-	public AsyncRangeDefinedDateFormattingSupplier(final Date initialValue, final String formatString)
-	throws OmgDoesNotPerformException {
-		super(initialValue, formatString);
-		try {
-			longGenerator = new AsyncRangeDefinedLongFormattingSupplier(
-				parseDate("1970/01/01", INPUT_DATE_FMT_STRINGS).getTime(),
-				initialValue.getTime()
-			);
-		} catch(final ParseException e) {
-			throw new OmgDoesNotPerformException(e);
-		}
+	
+	public AsyncRangeDefinedDateFormattingSupplier(final Date minValue, final Date maxValue)
+	throws OmgDoesNotPerformException{
+		this(minValue, maxValue, null);
 	}
-
-	/**
-	 *
-	 * @param formatString - a pattern for SimpleDateFormat. It should match a date pattern in ISO 8601 format.
-	 *                        For details see
-	 *                        https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html
-	 * @return a suitable formatter for dates
-	 */
-	@Override
-	protected final Format getFormatterInstance(final String formatString) {
-		return FastDateFormat.getInstance(formatString);
+	
+	public AsyncRangeDefinedDateFormattingSupplier(final String formatString)
+	throws OmgDoesNotPerformException{
+		this(new Date(0), new Date(), formatString);
+	}
+	
+	public AsyncRangeDefinedDateFormattingSupplier(
+		final Date minValue, final Date maxValue, final String formatString
+	) throws OmgDoesNotPerformException{
+		super(minValue, maxValue);
+		this.format = formatString == null || formatString.isEmpty() ?
+			null : FastDateFormat.getInstance(formatString);
+		longGenerator = new AsyncRangeDefinedLongFormattingSupplier(
+			minValue.getTime(), maxValue.getTime()
+		);
 	}
 
 	@Override
@@ -63,7 +57,7 @@ extends AsyncFormattingRangeDefinedSupplierBase<Date> {
 
 	@Override
 	protected final String toString(final Date value) {
-		return outputFormat().format(value);
+		return format == null ? value.toString() : format.format(value);
 	}
 
 	@Override

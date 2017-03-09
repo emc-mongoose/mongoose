@@ -14,7 +14,7 @@ public final class AsyncStringSupplierFactory<G extends BatchSupplier<String>>
 implements SupplierFactory<String, G> {
 
 	private static final AsyncStringSupplierFactory<? extends BatchSupplier<String>>
-			INSTANCE = new AsyncStringSupplierFactory<>();
+		INSTANCE = new AsyncStringSupplierFactory<>();
 
 	private AsyncStringSupplierFactory() {
 	}
@@ -62,22 +62,22 @@ implements SupplierFactory<String, G> {
 			case EMPTY:
 				switch (type) {
 					case 'd':
-						return (G) new AsyncRangeDefinedLongFormattingSupplier(47L);
+						return (G) new AsyncRangeDefinedLongFormattingSupplier();
+					case 'f':
+						return (G) new AsyncRangeDefinedDoubleFormattingSupplier();
+					case 'D':
+						return (G) new AsyncRangeDefinedDateFormattingSupplier();
 					default:
 						throw new DanShootHisFootException();
 				}
 			case FORMAT:
 				switch (type) {
+					case 'd':
+						return (G) new AsyncRangeDefinedLongFormattingSupplier(parameters[0]);
 					case 'f':
-						return (G) new AsyncRangeDefinedDoubleFormattingSupplier(47.0, parameters[0]);
+						return (G) new AsyncRangeDefinedDoubleFormattingSupplier(parameters[0]);
 					case 'D':
-						try {
-							return (G) new AsyncRangeDefinedDateFormattingSupplier(
-								parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), parameters[0]
-							);
-						} catch(final ParseException e) {
-							throw new DanShootHisFootException("Failed to parse the pattern");
-						}
+						return (G) new AsyncRangeDefinedDateFormattingSupplier(parameters[0]);
 					default:
 						throw new IllegalArgumentException();
 				}
@@ -92,11 +92,45 @@ implements SupplierFactory<String, G> {
 						} else {
 							throw new IllegalArgumentException();
 						}
+					case 'f':
+						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							return (G) new AsyncRangeDefinedDoubleFormattingSupplier(
+								Double.parseDouble(matcher.group(1)),
+								Double.parseDouble(matcher.group(2))
+							);
+						} else {
+							throw new IllegalArgumentException();
+						}
+					case 'D':
+						matcher = DATE_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							try {
+								return (G) new AsyncRangeDefinedDateFormattingSupplier(
+									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+									parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS)
+								);
+							} catch(final ParseException e) {
+								throw new DanShootHisFootException("Failed to parse the pattern");
+							}
+						} else {
+							throw new IllegalArgumentException();
+						}
 					default:
 						throw new IllegalArgumentException();
 				}
 			case FORMAT_RANGE:
 				switch (type) {
+					case 'd':
+						matcher = LONG_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							return (G) new AsyncRangeDefinedLongFormattingSupplier(
+								Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2)),
+								parameters[0]
+							);
+						} else {
+							throw new IllegalArgumentException();
+						}
 					case 'f':
 						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
 						if(matcher.find()) {

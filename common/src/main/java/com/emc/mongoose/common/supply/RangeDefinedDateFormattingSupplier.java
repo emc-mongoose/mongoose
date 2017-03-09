@@ -1,7 +1,8 @@
 package com.emc.mongoose.common.supply;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import org.apache.commons.lang.time.FastDateFormat;
+
+import java.text.Format;
 import java.util.Date;
 import java.util.List;
 
@@ -12,7 +13,15 @@ public class RangeDefinedDateFormattingSupplier
 extends RangeDefinedLongSupplier
 implements RangeDefinedSupplier<Date> {
 	
-	private DateFormat dtFormat;
+	private Format format;
+	
+	public RangeDefinedDateFormattingSupplier() {
+		this(new Date(0), new Date(), null);
+	}
+	
+	public RangeDefinedDateFormattingSupplier(final Date startDate, final Date endDate) {
+		this(startDate, endDate, null);
+	}
 	
 	public RangeDefinedDateFormattingSupplier(final String formatStr) {
 		this(new Date(0), new Date(), formatStr);
@@ -22,7 +31,8 @@ implements RangeDefinedSupplier<Date> {
 		final Date startDate, final Date endDate, final String formatStr
 	) {
 		super(startDate.getTime(), endDate.getTime());
-		dtFormat = new SimpleDateFormat(formatStr);
+		format = formatStr == null || formatStr.isEmpty() ?
+			null : FastDateFormat.getInstance(formatStr);
 	}
 	
 	private static ThreadLocal<Date> DATE = new ThreadLocal<Date>() {
@@ -36,7 +46,7 @@ implements RangeDefinedSupplier<Date> {
 	public final String get() {
 		final Date date = DATE.get();
 		date.setTime(getAsLong());
-		return dtFormat.format(date);
+		return format == null ? date.toString() : format.format(date);
 	}
 	
 	@Override
@@ -44,9 +54,16 @@ implements RangeDefinedSupplier<Date> {
 		final long numbers[] = new long[limit];
 		final int n = super.get(numbers, limit);
 		final Date date = DATE.get();
-		for(int i = 0; i < n; i ++) {
-			date.setTime(numbers[i]);
-			buffer.add(dtFormat.format(date));
+		if(format == null) {
+			for(int i = 0; i < n; i ++) {
+				date.setTime(numbers[i]);
+				buffer.add(date.toString());
+			}
+		} else {
+			for(int i = 0; i < n; i ++) {
+				date.setTime(numbers[i]);
+				buffer.add(format.format(date));
+			}
 		}
 		return n;
 	}

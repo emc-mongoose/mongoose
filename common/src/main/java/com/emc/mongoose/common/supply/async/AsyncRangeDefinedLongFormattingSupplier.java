@@ -2,17 +2,35 @@ package com.emc.mongoose.common.supply.async;
 
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
 public final class AsyncRangeDefinedLongFormattingSupplier
 extends AsyncRangeDefinedSupplierBase<Long> {
-
-	public AsyncRangeDefinedLongFormattingSupplier(final Long minValue, final Long maxValue)
+	
+	private final NumberFormat format;
+	
+	public AsyncRangeDefinedLongFormattingSupplier()
 	throws OmgDoesNotPerformException {
-		super(minValue, maxValue);
+		this(Long.MIN_VALUE, Long.MAX_VALUE, null);
 	}
-
-	public AsyncRangeDefinedLongFormattingSupplier(final Long initialValue)
+	
+	public AsyncRangeDefinedLongFormattingSupplier(final long minValue, final long maxValue)
 	throws OmgDoesNotPerformException {
-		super(initialValue);
+		this(minValue, maxValue, null);
+	}
+	
+	public AsyncRangeDefinedLongFormattingSupplier(final String formatStr)
+	throws OmgDoesNotPerformException {
+		this(Long.MIN_VALUE, Long.MAX_VALUE, formatStr);
+	}
+	
+	public AsyncRangeDefinedLongFormattingSupplier(
+		final long minValue, final long maxValue, final String formatStr
+	) throws OmgDoesNotPerformException {
+		super(minValue, maxValue);
+		this.format = formatStr == null || formatStr.isEmpty() ?
+			null : new DecimalFormat(formatStr);
 	}
 
 	@Override
@@ -31,7 +49,7 @@ extends AsyncRangeDefinedSupplierBase<Long> {
 	}
 
 	@Override
-	protected String toString(Long value) {
-		return value.toString();
+	protected String toString(final Long value) {
+		return format == null ? value.toString() : format.format(value);
 	}
 }

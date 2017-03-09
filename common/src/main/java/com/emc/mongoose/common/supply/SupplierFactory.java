@@ -22,7 +22,9 @@ public interface SupplierFactory<T, G extends BatchSupplier<T>> {
 	Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
 	
-	String[] INPUT_DATE_FMT_STRINGS = new String[] { "yyyy/MM/dd" };
+	String[] INPUT_DATE_FMT_STRINGS = new String[] {
+		"yyyy/MM/dd", "yyyy/MM/dd'T'HH:mm:ss"
+	};
 	
 	enum State {
 		EMPTY, RANGE, FORMAT, FORMAT_RANGE

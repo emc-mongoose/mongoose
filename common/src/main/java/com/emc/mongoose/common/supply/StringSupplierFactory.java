@@ -2,7 +2,6 @@ package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.supply.async.AsyncRangeDefinedLongFormattingSupplier;
 
 import java.text.ParseException;
 import java.util.regex.Matcher;
@@ -49,6 +48,10 @@ implements SupplierFactory<String, G> {
 				switch (type) {
 					case 'd':
 						return (G) new RangeDefinedLongFormattingSupplier();
+					case 'f':
+						return (G) new RangeDefinedDoubleFormattingSupplier();
+					case 'D':
+						return (G) new RangeDefinedDateFormattingSupplier();
 					default:
 						throw new DanShootHisFootException();
 				}
@@ -74,11 +77,45 @@ implements SupplierFactory<String, G> {
 						} else {
 							throw new DanShootHisFootException();
 						}
+					case 'f':
+						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							return (G) new RangeDefinedDoubleFormattingSupplier(
+								Double.parseDouble(matcher.group(1)),
+								Double.parseDouble(matcher.group(2))
+							);
+						} else {
+							throw new DanShootHisFootException();
+						}
+					case 'D':
+						matcher = DATE_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							try {
+								return (G) new RangeDefinedDateFormattingSupplier(
+									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+									parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS)
+								);
+							} catch(final ParseException e) {
+								throw new DanShootHisFootException("Failed to parse the pattern");
+							}
+						} else {
+							throw new DanShootHisFootException();
+						}
 					default:
 						throw new DanShootHisFootException();
 				}
 			case FORMAT_RANGE:
 				switch (type) {
+					case 'd':
+						matcher = LONG_PATTERN.matcher(parameters[1]);
+						if(matcher.find()) {
+							return (G) new RangeDefinedLongFormattingSupplier(
+								Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2)),
+								parameters[0]
+							);
+						} else {
+							throw new DanShootHisFootException();
+						}
 					case 'f':
 						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
 						if(matcher.find()) {

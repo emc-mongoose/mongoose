@@ -3,35 +3,36 @@ package com.emc.mongoose.common.supply.async;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 
 import java.text.DecimalFormat;
-import java.text.Format;
+import java.text.NumberFormat;
 
 public final class AsyncRangeDefinedDoubleFormattingSupplier
-extends AsyncFormattingRangeDefinedSupplierBase<Double> {
-
-	public AsyncRangeDefinedDoubleFormattingSupplier(
-		final Double minValue, final Double maxValue, final String formatString
-	) throws OmgDoesNotPerformException {
-		super(minValue, maxValue, formatString);
-	}
-
-	public AsyncRangeDefinedDoubleFormattingSupplier(final Double initialValue, final String formatString)
+extends AsyncRangeDefinedSupplierBase<Double> {
+	
+	private final NumberFormat format;
+	
+	public AsyncRangeDefinedDoubleFormattingSupplier()
 	throws OmgDoesNotPerformException {
-		super(initialValue, formatString);
+		this(0, 1, null);
 	}
-
-	/**
-	 *
-	 * @param formatString - a pattern for DecimalFormat. It should match a pattern,
-	 *                        that described here
-	 *                        https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
-	 *                        (see Special Pattern Characters paragraph for examples)
-	 * @return a suitable formatter for numbers of a double type
-	 */
-	@Override
-	protected final Format getFormatterInstance(String formatString) {
-		return new DecimalFormat(formatString);
+	
+	public AsyncRangeDefinedDoubleFormattingSupplier(final double minValue, final double maxValue)
+	throws OmgDoesNotPerformException {
+		this(minValue, maxValue, null);
 	}
-
+	
+	public AsyncRangeDefinedDoubleFormattingSupplier(final String formatString)
+	throws OmgDoesNotPerformException {
+		this(0, 1, formatString);
+	}
+	
+	public AsyncRangeDefinedDoubleFormattingSupplier(
+		final double minValue, final double maxValue, final String formatString
+	) throws OmgDoesNotPerformException {
+		super(minValue, maxValue);
+		this.format = formatString == null || formatString.isEmpty() ?
+			null : new DecimalFormat(formatString);
+	}
+	
 	@Override
 	protected final Double computeRange(final Double minValue, final Double maxValue) {
 		return maxValue - minValue + 1.0;
@@ -49,6 +50,6 @@ extends AsyncFormattingRangeDefinedSupplierBase<Double> {
 
 	@Override
 	protected final String toString(Double value) {
-		return outputFormat().format(value);
+		return format == null ? value.toString() : format.format(value);
 	}
 }
