@@ -112,16 +112,8 @@ implements IoTaskBuilder<I, O> {
 	@Override
 	public BasicIoTaskBuilder<I, O> setCredentialsMap(final Map<String, String> credentials) {
 		if(credentials != null && credentials.size() > 0) {
-			if(credentials.size() == 1) {
-				final Map.Entry<String, String> soleEntry = credentials
-					.entrySet().iterator().next();
-				setUidSupplier(new ConstantStringSupplier(soleEntry.getKey()));
-				setSecretSupplier(new ConstantStringSupplier(soleEntry.getValue()));
-			} else {
-				this.credentialsMap = credentials;
-				setUidSupplier(new CircularSetSupplier<>(credentialsMap.keySet()));
-				setSecretSupplier(null);
-			}
+			this.credentialsMap = credentials;
+			setSecretSupplier(null);
 		}
 		return this;
 	}
@@ -161,10 +153,10 @@ implements IoTaskBuilder<I, O> {
 	}
 	
 	protected final String getNextSecret(final String uid) {
-		if(constantSecretFlag) {
-			return constantSecret;
-		} else if(credentialsMap != null) {
+		if(uid != null && credentialsMap != null) {
 			return credentialsMap.get(uid);
+		} else if(constantSecretFlag) {
+			return constantSecret;
 		} else {
 			return secretSupplier.get();
 		}

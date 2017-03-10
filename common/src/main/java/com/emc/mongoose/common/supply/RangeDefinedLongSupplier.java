@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
+import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SHARED_SEED;
 
 import java.io.IOException;
 
@@ -12,35 +13,28 @@ implements BatchLongSupplier {
 	
 	private final long min;
 	private final long range;
+	private final Random rnd = new Random(SHARED_SEED);
 	
 	/**
-	 @param min "unbounded" range will be used if Long.MAX_VALUE > max - min
+	 @param min "unbounded" range will be used if Long.MAX_VALUE &gt; max - min
 	 @param max "unbounded" range will be if less than min
 	 */
 	public RangeDefinedLongSupplier(final long min, final long max) {
 		this.min = min;
 		this.range = max - min + 1;
 	}
-	
-	private static ThreadLocal<Random> RND = new ThreadLocal<Random>() {
-		@Override
-		protected final Random initialValue() {
-			return new Random();
-		}
-	};
-	
+
 	@Override
 	public final long getAsLong() {
 		if(range < 1) {
-			return RND.get().nextLong();
+			return rnd.nextLong();
 		} else {
-			return min + RND.get().nextLong(range);
+			return min + rnd.nextLong(range);
 		}
 	}
 	
 	@Override
 	public final int get(final long[] buffer, final int limit) {
-		final Random rnd = RND.get();
 		final int _limit = Math.min(buffer.length, limit);
 		if(range < 0) {
 			for(int i = 0; i < _limit; i ++) {
@@ -56,7 +50,6 @@ implements BatchLongSupplier {
 	
 	@Override
 	public final long skip(final long count) {
-		final Random rnd = RND.get();
 		for(long i = 0; i < count; i ++) {
 			rnd.nextLong();
 		}
@@ -65,7 +58,7 @@ implements BatchLongSupplier {
 	
 	@Override
 	public final void reset() {
-		RND.get().reset();
+		rnd.reset();
 	}
 	
 	@Override

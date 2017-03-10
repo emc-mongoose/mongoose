@@ -62,7 +62,7 @@ implements SupplierFactory<String, G> {
 					case 'D':
 						return (G) new RangeDefinedDateFormattingSupplier(parameters[0]);
 					case 'p':
-						return (G) new FilePathInput(parameters[0]);
+						return (G) new FilePathSupplier(parameters[0]);
 					default:
 						throw new DanShootHisFootException();
 				}

@@ -21,7 +21,7 @@ public final class Random {
 	}
 
 	public final long nextLong() {
-		return seed = xorShift(seed) ^ System.nanoTime();
+		return seed = xorShift(seed);
 	}
 
 	public final long nextLong(final long range) {
@@ -37,6 +37,7 @@ public final class Random {
 	}
 
 	public final double nextDouble() {
+		seed = xorShift(seed);
 		return (((seed >>> 22) << 27) + (seed >>> 21)) * DOUBLE_UNIT;
 	}
 }

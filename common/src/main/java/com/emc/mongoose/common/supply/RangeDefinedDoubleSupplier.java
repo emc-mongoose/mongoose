@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
+import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SHARED_SEED;
 
 import java.io.IOException;
 
@@ -12,31 +13,24 @@ implements BatchDoubleSupplier {
 	
 	private final double min;
 	private final double range;
+	private final Random rnd = new Random(SHARED_SEED);
 	
 	public RangeDefinedDoubleSupplier(final double min, final double max) {
 		this.min = min;
 		this.range = max - min;
 	}
-	
-	private static ThreadLocal<Random> RND = new ThreadLocal<Random>() {
-		@Override
-		protected final Random initialValue() {
-			return new Random();
-		}
-	};
-	
+
 	@Override
 	public final double getAsDouble() {
 		if(range < 0) {
-			return RND.get().nextDouble();
+			return rnd.nextDouble();
 		} else {
-			return min + range * RND.get().nextDouble();
+			return min + range * rnd.nextDouble();
 		}
 	}
 	
 	@Override
 	public final int get(final double[] buffer, final int limit) {
-		final Random rnd = RND.get();
 		final int _limit = Math.min(buffer.length, limit);
 		if(range < 0) {
 			for(int i = 0; i < _limit; i ++) {
@@ -52,7 +46,6 @@ implements BatchDoubleSupplier {
 	
 	@Override
 	public final long skip(final long count) {
-		final Random rnd = RND.get();
 		for(long i = 0; i < count; i ++) {
 			rnd.nextDouble();
 		}
@@ -61,7 +54,7 @@ implements BatchDoubleSupplier {
 	
 	@Override
 	public final void reset() {
-		RND.get().reset();
+		rnd.reset();
 	}
 	
 	@Override

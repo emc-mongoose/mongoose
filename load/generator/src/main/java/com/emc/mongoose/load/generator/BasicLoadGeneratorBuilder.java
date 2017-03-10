@@ -169,22 +169,25 @@ implements LoadGeneratorBuilder<I, O, T> {
 			itemInputPath = "/" + itemInputPath;
 		}
 		
-		final BatchSupplier<String> uidSupplier, secretSupplier;
+		final BatchSupplier<String> uidSupplier;
+		final String uid = authConfig.getUid();
+		if(uid == null) {
+			uidSupplier = null;
+		} else if(-1 != uid.indexOf(PATTERN_CHAR)) {
+			uidSupplier = new RangePatternDefinedSupplier(uid);
+		} else {
+			uidSupplier = new ConstantStringSupplier(uid);
+		}
+
 		final String authFile = authConfig.getFile();
 		if(authFile != null && !authFile.isEmpty()) {
-			final Map<String, String> credentials = loadCredentials(authFile);
+			final Map<String, String> credentials = loadCredentials(
+				authFile, loadConfig.getQueueConfig().getSize()
+			);
 			ioTaskBuilder.setCredentialsMap(credentials);
 		} else {
-			
-			final String uid = authConfig.getUid();
-			if(uid == null) {
-				uidSupplier = null;
-			} else if(-1 != uid.indexOf(PATTERN_CHAR)) {
-				uidSupplier = new RangePatternDefinedSupplier(uid);
-			} else {
-				uidSupplier = new ConstantStringSupplier(uid);
-			}
-			
+
+			final BatchSupplier<String> secretSupplier;
 			final String secret = authConfig.getSecret();
 			if(secret == null) {
 				secretSupplier = null;
@@ -193,14 +196,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 			
 			ioTaskBuilder
-				.setUidSupplier(uidSupplier)
 				.setSecretSupplier(secretSupplier);
 		}
 		
 		ioTaskBuilder
 			.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()))
 			.setInputPath(itemInputPath)
-			.setOutputPathSupplier(outputPathSupplier);
+			.setOutputPathSupplier(outputPathSupplier)
+			.setUidSupplier(uidSupplier);
 
 		// prevent the storage connections if noop
 		// also don't create tocken if token load is configured
@@ -302,41 +305,43 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	private BatchSupplier<String> getOutputPathSupplier()
 	throws UserShootHisFootException {
-		final BatchSupplier<String> dstPathInput;
-		final String t = itemConfig.getOutputConfig().getPath();
-		if(t == null || t.isEmpty()) {
-			final String dstPath = "/" + LogUtil.getDateTimeStamp();
-			dstPathInput = new ConstantStringSupplier(dstPath);
+		final BatchSupplier<String> pathSupplier;
+		String path = itemConfig.getOutputConfig().getPath();
+		if(path == null || path.isEmpty()) {
+			path = LogUtil.getDateTimeStamp();
+		}
+		if(!path.startsWith("/")) {
+			path = "/" + path;
+		}
+		if(-1 == path.indexOf(PATTERN_CHAR)) {
+			pathSupplier = new ConstantStringSupplier(path);
 			try {
-				storageDrivers.get(0).createPath(dstPath);
+				storageDrivers.get(0).createPath(path);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
-					dstPath
+					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"", path
 				);
 			}
 		} else {
-			dstPathInput = new RangePatternDefinedSupplier(t.startsWith("/") ? t : "/" + t);
-			String dstPath = null;
-			try {
-				dstPath = dstPathInput.get();
-				dstPathInput.reset();
-				if(dstPath != null) {
-					final int sepPos = dstPath.indexOf('/', 1);
+			pathSupplier = new RangePatternDefinedSupplier(path);
+			String tmpPath = null;
+			try(final RangePatternDefinedSupplier tmp = new RangePatternDefinedSupplier(path)) {
+				tmpPath = tmp.get();
+				if(tmpPath != null) {
+					final int sepPos = tmpPath.indexOf('/', 1);
 					if(sepPos > 1) {
 						// create only 1st level path
-						dstPath = dstPath.substring(0, sepPos);
+						tmpPath = tmpPath.substring(0, sepPos);
 					}
-					storageDrivers.get(0).createPath(dstPath);
+					storageDrivers.get(0).createPath(tmpPath);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
-					dstPath
+					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"", tmpPath
 				);
 			}
 		}
-		return dstPathInput;
+		return pathSupplier;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -393,20 +398,22 @@ implements LoadGeneratorBuilder<I, O, T> {
 		return itemInput;
 	}
 	
-	private static Map<String, String> loadCredentials(final String file)
+	private static Map<String, String> loadCredentials(final String file, final long countLimit)
 	throws UserShootHisFootException {
 		final Map<String, String> credentials = new HashMap<>();
 		try(final BufferedReader br = Files.newBufferedReader(Paths.get(file))) {
 			String line;
 			String parts[];
 			int firstCommaPos;
-			while(null != (line = br.readLine())) {
+			long count = 0;
+			while(null != (line = br.readLine()) && count < countLimit) {
 				firstCommaPos = line.indexOf(',');
 				if(-1 == firstCommaPos) {
 					LOG.warn(Markers.ERR, "Invalid credentials line: \"{}\"", line);
 				} else {
 					parts = line.split(",", 2);
 					credentials.put(parts[0], parts[1]);
+					count ++;
 				}
 			}
 			LOG.info(

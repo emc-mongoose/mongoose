@@ -7,6 +7,8 @@ import com.emc.mongoose.common.supply.BatchSupplier;
  */
 public interface RangeDefinedSupplier<T>
 extends BatchSupplier<String> {
+
+	long SHARED_SEED = System.nanoTime() ^ System.currentTimeMillis();
 	
 	/**
 	 * Special characters
