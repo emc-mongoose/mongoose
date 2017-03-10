@@ -8,6 +8,7 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.storage.StorageDriver;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
@@ -31,7 +32,9 @@ public interface LoadGeneratorBuilder<
 	LoadGeneratorBuilder<I, O, T> setItemType(final ItemType itemType);
 
 	LoadGeneratorBuilder<I, O, T> setItemFactory(final ItemFactory<I> itemFactory);
-
+	
+	LoadGeneratorBuilder<I, O, T> setAuthConfig(final AuthConfig authConfig);
+	
 	LoadGeneratorBuilder<I, O, T> setStorageDrivers(
 		final List<StorageDriver<I, O>> storageDrivers
 	);

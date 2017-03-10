@@ -115,6 +115,7 @@ extends JobBase {
 				.setItemType(itemType)
 				.setItemFactory(itemFactory)
 				.setStorageDrivers(drivers)
+				.setAuthConfig(storageConfig.getAuthConfig())
 				.build();
 		} catch(final UserShootHisFootException e) {
 			throw new RuntimeException(e);

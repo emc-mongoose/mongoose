@@ -1,11 +1,15 @@
 package com.emc.mongoose.model.io.task;
 
+import com.emc.mongoose.common.supply.BatchSupplier;
+import com.emc.mongoose.common.supply.CircularSetSupplier;
+import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  Created by kurila on 14.07.16.
@@ -13,10 +17,25 @@ import java.util.List;
 public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I>>
 implements IoTaskBuilder<I, O> {
 	
-	protected volatile IoType ioType = IoType.CREATE; // by default
-	protected volatile String srcPath = null;
 	protected final int originCode = hashCode();
-
+	
+	protected IoType ioType = IoType.CREATE; // by default
+	protected String inputPath = null;
+	
+	protected BatchSupplier<String> outputPathSupplier;
+	protected boolean constantOutputPathFlag;
+	protected String constantOutputPath;
+	
+	protected BatchSupplier<String> uidSupplier;
+	protected boolean constantUidFlag;
+	protected String constantUid;
+	
+	protected BatchSupplier<String> secretSupplier;
+	protected boolean constantSecretFlag;
+	protected String constantSecret;
+	
+	protected Map<String, String> credentialsMap = null;
+	
 	@Override
 	public final int getOriginCode() {
 		return originCode;
@@ -33,56 +52,143 @@ implements IoTaskBuilder<I, O> {
 		return this;
 	}
 
-	@Override
-	public final String getSrcPath() {
-		return srcPath;
+	public final String getInputPath() {
+		return inputPath;
 	}
 
 	@Override
-	public final BasicIoTaskBuilder<I, O> setSrcPath(final String srcPath) {
-		this.srcPath = srcPath;
+	public final BasicIoTaskBuilder<I, O> setInputPath(final String inputPath) {
+		this.inputPath = inputPath;
 		return this;
 	}
-
+	
+	@Override
+	public final BasicIoTaskBuilder<I, O> setOutputPathSupplier(final BatchSupplier<String> ops) {
+		this.outputPathSupplier = ops;
+		if(outputPathSupplier == null) {
+			constantOutputPathFlag = true;
+			constantOutputPath = null;
+		} else if(outputPathSupplier instanceof ConstantStringSupplier) {
+			constantOutputPathFlag = true;
+			constantOutputPath = outputPathSupplier.get();
+		} else {
+			constantOutputPathFlag = false;
+		}
+		return this;
+	}
+	
+	@Override
+	public final BasicIoTaskBuilder<I, O> setUidSupplier(final BatchSupplier<String> uidSupplier) {
+		this.uidSupplier = uidSupplier;
+		if(uidSupplier == null) {
+			constantUidFlag = true;
+			constantUid = null;
+		} else if(uidSupplier instanceof ConstantStringSupplier) {
+			constantUidFlag = true;
+			constantUid = uidSupplier.get();
+		} else {
+			constantUidFlag = false;
+		}
+		return this;
+	}
+	
+	@Override
+	public final BasicIoTaskBuilder<I, O> setSecretSupplier(
+		final BatchSupplier<String> secretSupplier
+	) {
+		this.secretSupplier = secretSupplier;
+		if(secretSupplier == null) {
+			constantSecretFlag = true;
+			constantSecret = null;
+		} else if(secretSupplier instanceof ConstantStringSupplier) {
+			constantSecretFlag = true;
+			constantSecret = secretSupplier.get();
+		} else {
+			constantSecretFlag = false;
+		}
+		return this;
+	}
+	
+	@Override
+	public BasicIoTaskBuilder<I, O> setCredentialsMap(final Map<String, String> credentials) {
+		if(credentials != null && credentials.size() > 0) {
+			if(credentials.size() == 1) {
+				final Map.Entry<String, String> soleEntry = credentials
+					.entrySet().iterator().next();
+				setUidSupplier(new ConstantStringSupplier(soleEntry.getKey()));
+				setSecretSupplier(new ConstantStringSupplier(soleEntry.getValue()));
+			} else {
+				this.credentialsMap = credentials;
+				setUidSupplier(new CircularSetSupplier<>(credentialsMap.keySet()));
+				setSecretSupplier(null);
+			}
+		}
+		return this;
+	}
+	
 	@Override @SuppressWarnings("unchecked")
-	public O getInstance(final I item, final String dstPath)
+	public O getInstance(final I item)
 	throws IOException {
-		return (O) new BasicIoTask<>(originCode, ioType, item, srcPath, dstPath);
+		final String uid;
+		return (O) new BasicIoTask<>(
+			originCode, ioType, item, inputPath, getNextOutputPath(), uid = getNextUid(),
+			getNextSecret(uid)
+		);
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items)
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
+		String uid;
 		for(final I item : items) {
-			tasks.add((O) new BasicIoTask<>(originCode, ioType, item, srcPath, null));
-		}
-		return tasks;
-	}
-
-	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final String dstPath)
-	throws IOException {
-		final List<O> tasks = new ArrayList<>(items.size());
-		for(final I item : items) {
-			tasks.add((O) new BasicIoTask<>(originCode, ioType, item, srcPath, dstPath));
-		}
-		return tasks;
-	}
-
-	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final List<String> dstPaths)
-	throws IOException {
-		final int n = items.size();
-		if(dstPaths.size() != n) {
-			throw new IllegalArgumentException("Items count and paths count should be equal");
-		}
-		final List<O> tasks = new ArrayList<>(n);
-		for(int i = 0; i < n; i ++) {
 			tasks.add(
-				(O) new BasicIoTask<>(originCode, ioType, items.get(i), srcPath, dstPaths.get(i))
+				(O) new BasicIoTask<>(
+					originCode, ioType, item, inputPath, getNextOutputPath(), uid = getNextUid(),
+					getNextSecret(uid)
+				)
 			);
 		}
 		return tasks;
+	}
+	
+	protected final String getNextOutputPath() {
+		return constantOutputPathFlag ? constantOutputPath : outputPathSupplier.get();
+	}
+	
+	protected final String getNextUid() {
+		return constantUidFlag ? constantUid : uidSupplier.get();
+	}
+	
+	protected final String getNextSecret(final String uid) {
+		if(constantSecretFlag) {
+			return constantSecret;
+		} else if(credentialsMap != null) {
+			return credentialsMap.get(uid);
+		} else {
+			return secretSupplier.get();
+		}
+	}
+	
+	@Override
+	public void close()
+	throws IOException {
+		inputPath = null;
+		if(outputPathSupplier != null) {
+			outputPathSupplier.close();
+			outputPathSupplier = null;
+		}
+		if(uidSupplier != null) {
+			uidSupplier.close();
+			uidSupplier = null;
+		}
+		if(secretSupplier != null) {
+			secretSupplier.close();
+			secretSupplier = null;
+		}
+		if(credentialsMap != null) {
+			credentialsMap.clear();
+			credentialsMap = null;
+		}
 	}
 }

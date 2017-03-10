@@ -130,6 +130,7 @@ extends JobBase {
 						.setLoadConfig(loadConfig)
 						.setLimitConfig(commonLimitConfig)
 						.setStorageDrivers(drivers)
+						.setAuthConfig(storageConfig.getAuthConfig())
 						.build();
 				} else {
 					loadGenerator = new BasicLoadGeneratorBuilder<>()
@@ -139,6 +140,7 @@ extends JobBase {
 						.setLoadConfig(loadConfig)
 						.setLimitConfig(commonLimitConfig)
 						.setStorageDrivers(drivers)
+						.setAuthConfig(storageConfig.getAuthConfig())
 						.setItemInput(nextItemBuff)
 						.build();
 				}

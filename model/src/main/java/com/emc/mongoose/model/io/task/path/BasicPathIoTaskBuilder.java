@@ -15,43 +15,25 @@ extends BasicIoTaskBuilder<I, O>
 implements PathIoTaskBuilder<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
-	public O getInstance(final I dataItem, final String dstPath)
+	public O getInstance(final I pathItem)
 	throws IOException {
-		return (O) new BasicPathIoTask<>(originCode, ioType, dataItem);
+		final String uid;
+		return (O) new BasicPathIoTask<>(
+			originCode, ioType, pathItem, uid = getNextUid(), getNextSecret(uid)
+		);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
 	public List<O> getInstances(final List<I> items)
 	throws IOException {
 		final List<O> tasks = new ArrayList<>(items.size());
+		String uid;
 		for(final I nextItem : items) {
-			tasks.add((O) new BasicPathIoTask<>(originCode, ioType, nextItem));
-		}
-		return tasks;
-	}
-	
-	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final String dstPath)
-	throws IOException {
-		final List<O> tasks = new ArrayList<>(items.size());
-		for(final I nextItem : items) {
-			tasks.add((O) new BasicPathIoTask<>(originCode, ioType, nextItem));
-		}
-		return tasks;
-	}
-	
-	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items, final List<String> dstPaths)
-	throws IOException {
-		final int n = items.size();
-		if(dstPaths.size() != n) {
-			throw new IllegalArgumentException("Items count and paths count should be equal");
-		}
-		final List<O> tasks = new ArrayList<>(n);
-		I nextItem;
-		for(int i = 0; i < n; i ++) {
-			nextItem = items.get(i);
-			tasks.add((O) new BasicPathIoTask<>(originCode, ioType, nextItem));
+			tasks.add(
+				(O) new BasicPathIoTask<>(
+					originCode, ioType, nextItem, uid = getNextUid(), getNextSecret(uid)
+				)
+			);
 		}
 		return tasks;
 	}

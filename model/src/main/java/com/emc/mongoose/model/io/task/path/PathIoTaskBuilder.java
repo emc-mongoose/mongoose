@@ -13,18 +13,10 @@ public interface PathIoTaskBuilder<I extends PathItem, O extends PathIoTask<I>>
 extends IoTaskBuilder<I, O> {
 
 	@Override
-	O getInstance(final I item, final String dstPath)
+	O getInstance(final I item)
 	throws IOException;
 
 	@Override
 	List<O> getInstances(final List<I> items)
-	throws IOException;
-
-	@Override
-	List<O> getInstances(final List<I> items, String dstPath)
-	throws IOException;
-
-	@Override
-	List<O> getInstances(final List<I> items, final List<String> dstPaths)
 	throws IOException;
 }

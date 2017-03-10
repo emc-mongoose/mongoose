@@ -141,6 +141,7 @@ extends JobBase {
 					.setLoadConfig(loadConfig)
 					.setLimitConfig(limitConfig)
 					.setStorageDrivers(drivers)
+					.setAuthConfig(storageConfig.getAuthConfig())
 					.build();
 				
 				driverMap.put(loadGenerator, drivers);

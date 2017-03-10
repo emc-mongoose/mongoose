@@ -23,6 +23,8 @@ import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
+
+import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -32,18 +34,24 @@ import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfi
 import com.emc.mongoose.model.item.NewItemInput;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  Created by andrey on 12.11.16.
@@ -58,9 +66,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private LimitConfig limitConfig;
-
 	private ItemType itemType;
 	private ItemFactory<I> itemFactory;
+	private AuthConfig authConfig;
 	private List<StorageDriver<I, O>> storageDrivers;
 	private Input<I> itemInput = null;
 	private SizeInBytes itemSizeEstimate = null;
@@ -94,7 +102,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		this.itemFactory = itemFactory;
 		return this;
 	}
-
+	
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> setAuthConfig(final AuthConfig authConfig) {
+		this.authConfig = authConfig;
+		return this;
+	}
+	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setStorageDrivers(
 		final List<StorageDriver<I, O>> storageDrivers
@@ -117,14 +131,20 @@ implements LoadGeneratorBuilder<I, O, T> {
 	throws UserShootHisFootException {
 
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
-		final BatchSupplier<String> outputPathSupplier;
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
 		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
-
+		
+		final BatchSupplier<String> outputPathSupplier;
+		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
+			outputPathSupplier = getOutputPathSupplier();
+		} else {
+			outputPathSupplier = null;
+		}
+		
 		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
@@ -148,8 +168,39 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(itemInputPath != null && !itemInputPath.startsWith("/")) {
 			itemInputPath = "/" + itemInputPath;
 		}
-		ioTaskBuilder.setSrcPath(itemInputPath);
-		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
+		
+		final BatchSupplier<String> uidSupplier, secretSupplier;
+		final String authFile = authConfig.getFile();
+		if(authFile != null && !authFile.isEmpty()) {
+			final Map<String, String> credentials = loadCredentials(authFile);
+			ioTaskBuilder.setCredentialsMap(credentials);
+		} else {
+			
+			final String uid = authConfig.getUid();
+			if(uid == null) {
+				uidSupplier = null;
+			} else if(-1 != uid.indexOf(PATTERN_CHAR)) {
+				uidSupplier = new RangePatternDefinedSupplier(uid);
+			} else {
+				uidSupplier = new ConstantStringSupplier(uid);
+			}
+			
+			final String secret = authConfig.getSecret();
+			if(secret == null) {
+				secretSupplier = null;
+			} else {
+				secretSupplier = new ConstantStringSupplier(secret);
+			}
+			
+			ioTaskBuilder
+				.setUidSupplier(uidSupplier)
+				.setSecretSupplier(secretSupplier);
+		}
+		
+		ioTaskBuilder
+			.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()))
+			.setInputPath(itemInputPath)
+			.setOutputPathSupplier(outputPathSupplier);
 
 		// prevent the storage connections if noop
 		// also don't create tocken if token load is configured
@@ -205,19 +256,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
-		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
-			outputPathSupplier = getOutputPathSupplier();
-		} else {
-			outputPathSupplier = null;
-		}
-
 		return (T) new BasicLoadGenerator<>(
-			itemInput, itemSizeEstimate, outputPathSupplier, ioTaskBuilder, countLimit, sizeLimit,
+			itemInput, itemSizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
 			shuffleFlag
 		);
 	}
 	
-	private SizeInBytes estimateDataItemSize(final Input<DataItem> itemInput) {
+	private static SizeInBytes estimateDataItemSize(final Input<DataItem> itemInput) {
 		final int maxCount = 0x100;
 		final List<DataItem> items = new ArrayList<>(maxCount);
 		int n = 0;
@@ -270,7 +315,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 					dstPath
 				);
 			}
-		} else { // copy mode
+		} else {
 			dstPathInput = new RangePatternDefinedSupplier(t.startsWith("/") ? t : "/" + t);
 			String dstPath = null;
 			try {
@@ -346,5 +391,33 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		return itemInput;
+	}
+	
+	private static Map<String, String> loadCredentials(final String file)
+	throws UserShootHisFootException {
+		final Map<String, String> credentials = new HashMap<>();
+		try(final BufferedReader br = Files.newBufferedReader(Paths.get(file))) {
+			String line;
+			String parts[];
+			int firstCommaPos;
+			while(null != (line = br.readLine())) {
+				firstCommaPos = line.indexOf(',');
+				if(-1 == firstCommaPos) {
+					LOG.warn(Markers.ERR, "Invalid credentials line: \"{}\"", line);
+				} else {
+					parts = line.split(",", 2);
+					credentials.put(parts[0], parts[1]);
+				}
+			}
+			LOG.info(
+				Markers.MSG, "Loaded {} credential pairs from the file \"{}\"", credentials.size(),
+				file
+			);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to load the credenitals from the file \"{}\"", file
+			);
+		}
+		return credentials;
 	}
 }

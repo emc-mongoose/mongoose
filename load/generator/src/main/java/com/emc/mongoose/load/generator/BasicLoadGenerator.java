@@ -2,11 +2,9 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
-import com.emc.mongoose.common.supply.BatchSupplier;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import com.emc.mongoose.model.io.IoType;
@@ -47,7 +45,6 @@ implements LoadGenerator<I, O> {
 
 	private final Input<I> itemInput;
 	private final SizeInBytes itemSizeEstimate;
-	private final BatchSupplier<String> outputPathSupplier;
 	private final Thread worker;
 	private final long countLimit;
 	private final boolean shuffleFlag;
@@ -58,13 +55,12 @@ implements LoadGenerator<I, O> {
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final SizeInBytes itemSizeEstimate,
-		final BatchSupplier<String> outputPathSupplier, final IoTaskBuilder<I, O> ioTaskBuilder,
-		final long countLimit, final SizeInBytes sizeLimit, final boolean shuffleFlag
+		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
+		final boolean shuffleFlag
 	) throws UserShootHisFootException {
 
 		this.itemInput = itemInput;
 		this.itemSizeEstimate = itemSizeEstimate;
-		this.outputPathSupplier = outputPathSupplier;
 		this.ioTaskBuilder = ioTaskBuilder;
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
@@ -176,7 +172,7 @@ implements LoadGenerator<I, O> {
 					}
 					try {
 						// build the I/O tasks for the items got from the input
-						final List<O> ioTasks = buildIoTasksFor(items);
+						final List<O> ioTasks = ioTaskBuilder.getInstances(items);
 						i = j = 0;
 						while(i < n) {
 							// pass the throttles
@@ -236,23 +232,6 @@ implements LoadGenerator<I, O> {
 		}
 	}
 
-	private List<O> buildIoTasksFor(final List<I> items)
-	throws IOException {
-		final List<O> ioTasks;
-		if(outputPathSupplier == null) {
-			ioTasks = ioTaskBuilder.getInstances(items);
-		} else if(outputPathSupplier instanceof ConstantStringSupplier) {
-			final String dstPath = outputPathSupplier.get();
-			ioTasks = ioTaskBuilder.getInstances(items, dstPath);
-		} else {
-			final int n = items.size();
-			final List<String> dstPaths = new ArrayList<>(n);
-			outputPathSupplier.get(dstPaths, n);
-			ioTasks = ioTaskBuilder.getInstances(items, dstPaths);
-		}
-		return ioTasks;
-	}
-
 	private int acquireThrottlesPermit(final List<O> ioTasks, final int from, final int to) {
 		int n = to - from;
 		final int originCode = hashCode();
@@ -294,9 +273,7 @@ implements LoadGenerator<I, O> {
 		if(itemInput != null) {
 			itemInput.close();
 		}
-		if(outputPathSupplier != null) {
-			outputPathSupplier.close();
-		}
+		ioTaskBuilder.close();
 	}
 	
 	@Override
