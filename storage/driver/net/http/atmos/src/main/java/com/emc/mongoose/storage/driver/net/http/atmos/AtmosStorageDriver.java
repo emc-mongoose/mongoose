@@ -51,9 +51,12 @@ import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -72,24 +75,28 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		};
 	
-	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
-	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
+		final SecretKeySpec secretKey = new SecretKeySpec(
+			BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD
+		);
+		try {
+			final Mac mac = Mac.getInstance(SIGN_METHOD);
+			mac.init(secretKey);
+			return mac;
+		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
+			throw new AssertionError(e);
+		}
+	};
 	
-	private final SecretKeySpec secretKey;
+	private final Map<String, Mac> macBySecret = new HashMap<>(1);
 	
 	public AtmosStorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
-		if(secret != null) {
-			secretKey = new SecretKeySpec(
-				Base64.getDecoder().decode(secret.getBytes(UTF_8)), SIGN_METHOD
-			);
-		} else {
-			secretKey = null;
-		}
 		refreshUidHeader();
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
@@ -107,8 +114,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	public final boolean createPath(final String path)
-	throws RemoteException {
+	protected final boolean createPath(final String path) {
 		return true;
 	}
 
@@ -261,19 +267,23 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
 		final String uid, final String secret
 	) {
-		final String signature;
-		if(secretKey == null) {
-			signature = null;
+		final Mac mac;
+		if(secret == null) {
+			if(this.secret == null) {
+				return; // no secret key is used, do not sign the requests at all
+			}
+			mac = macBySecret.computeIfAbsent(this.secret, GET_MAC_BY_SECRET);
 		} else {
-			signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders), secretKey);
+			mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
 		}
-		if(signature != null) {
-			httpHeaders.set(KEY_X_EMC_SIGNATURE, signature);
-		}
+		
+		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+		httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
 	}
 
 	private String getCanonical(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
 	) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
@@ -323,27 +333,6 @@ extends HttpStorageDriverBase<I, O> {
 		return buffCanonical.toString();
 	}
 
-	private static String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
-
-		if(secretKey == null) {
-			return null;
-		}
-
-		final byte sigData[];
-		Mac mac = THREAD_LOCAL_MAC.get();
-		if(mac == null) {
-			try {
-				mac = Mac.getInstance(SIGN_METHOD);
-				mac.init(secretKey);
-			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				throw new AssertionError("Failed to init MAC cypher instance", e);
-			}
-			THREAD_LOCAL_MAC.set(mac);
-		}
-		sigData = mac.doFinal(canonicalForm.getBytes());
-		return BASE64_ENCODER.encodeToString(sigData);
-	}
-	
 	@Override
 	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {

@@ -37,9 +37,6 @@ extends Daemon, Output<O>, Remote {
 	int BUFF_SIZE_MIN = 0x1_000;
 	int BUFF_SIZE_MAX = 0x1_000_000;
 	
-	boolean createPath(final String path)
-	throws RemoteException;
-
 	List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count

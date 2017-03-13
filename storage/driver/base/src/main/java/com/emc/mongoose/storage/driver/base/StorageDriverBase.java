@@ -22,13 +22,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 
 /**
  Created by kurila on 11.07.16.
@@ -50,10 +54,20 @@ implements StorageDriver<I, O> {
 	protected final String secret;
 	protected volatile String authToken;
 	protected final boolean verifyFlag;
-
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
-
+	
+	private final ConcurrentMap<String, String> pathMap = new ConcurrentHashMap<>(1);
+	private final Function<String, String> createPathFunc = path -> {
+		if(createPath(path)) {
+			return path;
+		} else {
+			return null;
+		}
+	};
+	
+	protected abstract boolean createPath(final String path);
+	
 	protected StorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
@@ -109,11 +123,12 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean put(final O task)
-	throws EOFException {
+	throws EOFException, ServerException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
 		if(inTasksQueue.offer(task)) {
+			checkStateFor(task);
 			scheduledTaskCount.increment();
 			return true;
 		} else {
@@ -123,12 +138,15 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final int put(final List<O> tasks, final int from, final int to)
-	throws EOFException {
+	throws EOFException, ServerException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
 		int i = from;
+		O nextTask;
 		while(i < to && isStarted()) {
+			nextTask = tasks.get(i);
+			checkStateFor(nextTask);
 			if(inTasksQueue.offer(tasks.get(i))) {
 				i ++;
 			} else {
@@ -142,14 +160,19 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final int put(final List<O> tasks)
-	throws EOFException {
+	throws EOFException, ServerException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
 		int n = 0;
 		for(final O nextIoTask : tasks) {
-			if(isStarted() && inTasksQueue.offer(nextIoTask)) {
-				n ++;
+			if(isStarted()) {
+				checkStateFor(nextIoTask);
+				if(inTasksQueue.offer(nextIoTask)) {
+					n ++;
+				} else {
+					break;
+				}
 			} else {
 				break;
 			}
@@ -157,7 +180,12 @@ implements StorageDriver<I, O> {
 		scheduledTaskCount.add(n);
 		return n;
 	}
-
+	
+	private void checkStateFor(final O ioTask)
+	throws ServerException {
+		pathMap.computeIfAbsent(ioTask.getDstPath(), createPathFunc);
+	}
+	
 	@Override
 	public final int getConcurrencyLevel() {
 		return concurrencyLevel;
@@ -329,6 +357,7 @@ implements StorageDriver<I, O> {
 			);
 		}
 		ioResultsQueue.clear();
+		pathMap.clear();
 		LOG.debug(Markers.MSG, "{}: closed", toString());
 	}
 	

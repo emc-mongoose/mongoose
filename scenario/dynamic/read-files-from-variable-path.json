@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"data" : {
-				"size" : "4KB"
+				"size" : "10KB"
 			}
 		},
 		"test" : {
@@ -15,7 +15,7 @@
 		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 4,
+				"concurrency" : 10,
 				"type" : "fs"
 			}
 		}
@@ -26,15 +26,13 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"path" : "/tmp/read-files-from-variable-path/%p{16;2}",
+						"path" : "/var/tmp/read-files-from-variable-path/%p{16;2}",
 						"file" : "read-files-from-variable-path.csv"
-					},
-					"data" : {
-						"size" : "4KB"
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "load",
 			"config" : {
 				"item" : {

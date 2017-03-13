@@ -96,8 +96,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	public final boolean createPath(final String path)
-	throws RemoteException {
+	protected final boolean createPath(final String path) {
 
 		// check the destination container if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];

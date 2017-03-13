@@ -70,7 +70,6 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -105,9 +104,7 @@ extends HttpStorageDriverBase<I, O> {
 				return new StringBuilder();
 			}
 		};
-		
-	private final Map<String, Mac> macBySecret = new HashMap<>(1);
-	private final Function<String, Mac> getMacBySecret = secret -> {
+	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
 		try {
 			final Mac mac = Mac.getInstance(SIGN_METHOD);
@@ -118,6 +115,8 @@ extends HttpStorageDriverBase<I, O> {
 		}
 	};
 	
+	private final Map<String, Mac> macBySecret = new HashMap<>(1);
+	
 	public S3StorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
@@ -126,8 +125,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	public final boolean createPath(final String path)
-	throws RemoteException {
+	protected final boolean createPath(final String path) {
 
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
@@ -162,8 +160,6 @@ extends HttpStorageDriverBase<I, O> {
 					Markers.ERR, "The bucket checking response is: {}",
 					checkBucketResp.status().toString()
 				);
-			} else {
-				LOG.info(Markers.MSG, "Bucket \"{}\" already exists", path);
 			}
 			checkBucketResp.release();
 		}
@@ -197,8 +193,6 @@ extends HttpStorageDriverBase<I, O> {
 					putBucketResp.status().toString()
 				);
 				return false;
-			} else {
-				LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
 			}
 			putBucketResp.release();
 			if(fsAccess) {
@@ -611,9 +605,9 @@ extends HttpStorageDriverBase<I, O> {
 			if(this.secret == null) {
 				return; // no secret key is used, do not sign the requests at all
 			}
-			mac = macBySecret.computeIfAbsent(this.secret, getMacBySecret);
+			mac = macBySecret.computeIfAbsent(this.secret, GET_MAC_BY_SECRET);
 		} else {
-			mac = macBySecret.computeIfAbsent(secret, getMacBySecret);
+			mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
 		}
 		
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
@@ -695,9 +689,9 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	public final void close()
+	protected final void doClose()
 	throws IOException {
-		super.close();
+		super.doClose();
 		macBySecret.clear();
 	}
 }
