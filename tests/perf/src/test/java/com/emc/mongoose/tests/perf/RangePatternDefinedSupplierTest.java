@@ -176,7 +176,7 @@ public class RangePatternDefinedSupplierTest {
 	@Test
 	public void test10DateParamsSupplyRate()
 	throws Exception {
-		final BatchSupplier<String> input = new RangePatternDefinedSupplier("_%D{yyyy-MM-dd'T'HH:mm:ss.SSS}_%D{yyyy-MM-dd'T'HH:mm:ss.SSS}_%D{YYYY-'W'ww-u}_%D{yyMMddHHmmssZ}_%D{EEE, d MMM yyyy HH:mm:ss Z}_%D{yyyyy.MMMMM.dd GGG hh:mm aaa}_%D{K:mm a, z}_%D{h:mm a}_%D{EEE, MMM d, ''yy}_%D{yyyy.MM.dd G 'at' HH:mm:ss z}");
+		final BatchSupplier<String> input = new RangePatternDefinedSupplier("_%D{yyyy-MM-dd'T'HH:mm:ss.SSS}_%D{yyyy-MM-dd'T'HH:mm:ss.SSS}_%D{yyyy-'W'ww}_%D{yyMMddHHmmssZ}_%D{EEE, d MMM yyyy HH:mm:ss Z}_%D{yyyyy.MMMMM.dd GGG hh:mm aaa}_%D{K:mm a, z}_%D{h:mm a}_%D{EEE, MMM d, ''yy}_%D{yyyy.MM.dd G 'at' HH:mm:ss z}");
 		final LongAdder counter = new LongAdder();
 		final List<String> buff = new ArrayList<>(BATCH_SIZE);
 		final Thread t = new Thread(

@@ -31,9 +31,9 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_ENABL
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_DISABLE_CONTENT;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -58,7 +58,6 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.xml.sax.SAXException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -76,9 +75,12 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
+import org.xml.sax.SAXException;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -88,6 +90,8 @@ public final class S3StorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
 	private static final Logger LOG = LogManager.getLogger();
+	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
 			@Override
@@ -101,22 +105,24 @@ extends HttpStorageDriverBase<I, O> {
 				return new StringBuilder();
 			}
 		};
-	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
-	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
-	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
-
-	private final SecretKeySpec secretKey;
+		
+	private final Map<String, Mac> macBySecret = new HashMap<>(1);
+	private final Function<String, Mac> getMacBySecret = secret -> {
+		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
+		try {
+			final Mac mac = Mac.getInstance(SIGN_METHOD);
+			mac.init(secretKey);
+			return mac;
+		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
+			throw new AssertionError(e);
+		}
+	};
 	
 	public S3StorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
-		if(secret != null) {
-			secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
-		} else {
-			secretKey = null;
-		}
 	}
 	
 	@Override
@@ -131,7 +137,7 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		applyAuthHeaders(HttpMethod.HEAD, path, reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, uid, secret);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -170,7 +176,7 @@ extends HttpStorageDriverBase<I, O> {
 				);
 			}
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, uid, secret);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
@@ -202,7 +208,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		// check the bucket versioning state
 		final String bucketVersioningReqUri = path + "?" + URL_ARG_VERSIONING;
-		applyAuthHeaders(HttpMethod.GET, bucketVersioningReqUri, reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, uid, secret);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
 			reqHeaders, EmptyHttpHeaders.INSTANCE
@@ -240,7 +246,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(!versioning && versioningEnabled) {
 			// disable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_DISABLE_CONTENT.length);
-			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, uid, secret);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
@@ -267,7 +273,7 @@ extends HttpStorageDriverBase<I, O> {
 		} else if(versioning && !versioningEnabled) {
 			// enable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_ENABLE_CONTENT.length);
-			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, uid, secret);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
@@ -332,7 +338,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		final String query = queryBuilder.toString();
 
-		applyAuthHeaders(HttpMethod.GET, path, reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, uid, secret);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -466,7 +472,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getUid(), ioTask.getSecret());
 		return httpRequest;
 	}
 
@@ -496,7 +502,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getUid(), ioTask.getSecret());
 		return httpRequest;
 	}
 
@@ -549,7 +555,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.getUid(), mpuTask.getSecret());
 
 		return httpRequest;
 	}
@@ -597,23 +603,39 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+		final String uid, final String secret
 	) {
-		final String signature;
-		if(secretKey == null) {
-			signature = null;
+		final Mac mac;
+		if(secret == null) {
+			if(this.secret == null) {
+				return; // no secret key is used, do not sign the requests at all
+			}
+			mac = macBySecret.computeIfAbsent(this.secret, getMacBySecret);
 		} else {
-			signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders), secretKey);
+			mac = macBySecret.computeIfAbsent(secret, getMacBySecret);
 		}
-		if(signature != null) {
+		
+		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+		if(uid == null) {
+			if(this.uid == null) {
+				return; // no user id is used, do not sign the requests at all
+			}
 			httpHeaders.set(
-				HttpHeaderNames.AUTHORIZATION, AUTH_PREFIX + uid + ":" + signature
+				HttpHeaderNames.AUTHORIZATION,
+				AUTH_PREFIX + this.uid + ':' + BASE64_ENCODER.encodeToString(sigData)
+			);
+		} else {
+			httpHeaders.set(
+				HttpHeaderNames.AUTHORIZATION,
+				AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
 			);
 		}
 	}
 	
 	private String getCanonical(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
 	) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
@@ -651,8 +673,10 @@ extends HttpStorageDriverBase<I, O> {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final String k : sortedHeaders.keySet()) {
-			buffCanonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
+		for(final Map.Entry<String, String> sortedHeader : sortedHeaders.entrySet()) {
+			buffCanonical
+				.append('\n').append(sortedHeader.getKey())
+				.append(':').append(sortedHeader.getValue());
 		}
 		
 		buffCanonical.append('\n');
@@ -665,29 +689,15 @@ extends HttpStorageDriverBase<I, O> {
 		return buffCanonical.toString();
 	}
 	
-	private String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
-		
-		if(secretKey == null) {
-			return null;
-		}
-		
-		final byte sigData[];
-		Mac mac = THREAD_LOCAL_MAC.get();
-		if(mac == null) {
-			try {
-				mac = Mac.getInstance(SIGN_METHOD);
-				mac.init(secretKey);
-			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				throw new AssertionError("Failed to init MAC cypher instance", e);
-			}
-			THREAD_LOCAL_MAC.set(mac);
-		}
-		sigData = mac.doFinal(canonicalForm.getBytes());
-		return BASE64_ENCODER.encodeToString(sigData);
-	}
-	
 	@Override
 	public final String toString() {
 		return String.format(super.toString(), "s3");
+	}
+	
+	@Override
+	public final void close()
+	throws IOException {
+		super.close();
+		macBySecret.clear();
 	}
 }

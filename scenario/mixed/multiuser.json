@@ -14,7 +14,7 @@
 			"config" : {
 				"item" : {
 					"naming" : {
-						"length" : 9,
+						"length" : 10,
 						"offset" : 0,
 						"prefix" : "bucket-",
 						"radix" : 10,
@@ -25,7 +25,7 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 100
+							"count" : 1000
 						}
 					}
 				}
@@ -40,19 +40,31 @@
 					},
 					"output" : {
 						"file" : "objects.csv",
-						"path" : "bucket-%d{00}[0-99]"
+						"path" : "bucket-%d{000}[0-999]"
 					}
 				},
 				"storage" : {
 					"auth" : {
+						/** The file "credentials.csv" should be prepared manually. Contents:
+						user-00,secret-00
+						user-01,secret-01
+						user-02,secret-02
+						...
+						user-99,secret-99
+						
+						To make this file you may use the following 3 commands:
+						for i in $(seq 0 9); do echo "user-00$i,secret-00$i" >> credentials.csv; done
+						for i in $(seq 10 99); do echo "user-0$i,secret-0$i" >> credentials.csv; done
+						for i in $(seq 100 999); do echo "user-$i,secret-$i" >> credentials.csv; done
+						**/
 						"file" : "credentials.csv",
-						"uid" : "user-%d{00}[0-99]"
+						"uid" : "user-%d{000}[0-999]"
 					}
 				},
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 10000
+							"count" : 1000000
 						}
 					}
 				}

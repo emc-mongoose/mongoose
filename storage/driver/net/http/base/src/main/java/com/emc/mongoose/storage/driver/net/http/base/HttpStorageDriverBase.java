@@ -213,7 +213,7 @@ implements HttpStorageDriver<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getUid(), ioTask.getSecret());
 
 		return httpRequest;
 	}
@@ -378,7 +378,8 @@ implements HttpStorageDriver<I, O> {
 	protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
 
 	protected abstract void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+		final String uid, final String secret
 	);
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)

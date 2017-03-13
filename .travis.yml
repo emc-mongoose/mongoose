@@ -7,7 +7,7 @@ services:
 - docker
 jdk:
 - oraclejdk8
-script: "./gradlew clean test dist"
+script: "./gradlew clean :tests:system:test dist"
 deploy:
   skip_cleanup: true
   provider: releases

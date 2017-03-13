@@ -219,7 +219,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		final String query = queryBuilder.toString();
 
-		applyAuthHeaders(HttpMethod.GET, query, reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, uid, secret);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -402,7 +402,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, uid, secret);
 		return httpRequest;
 	}
 	
@@ -430,7 +430,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, uid, secret);
 		return httpRequest;
 	}
 
@@ -522,7 +522,8 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+		final String uid_, final String secret_
 	) {
 		if(dstUriPath.equals(AUTH_URI)) {
 			if(uid != null && ! uid.isEmpty()) {

@@ -39,7 +39,7 @@ public class ConfigTest {
 		argsMap.put("--storage-net-interestOpQueued", null);
 		argsMap.put("--storage-net-node-addrs", "10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70");
 		argsMap.put("--storage-net-http-fsAccess", "true");
-		argsMap.put("--storage-net-http-headers", "customHeaderName:customHeaderValue");
+		argsMap.put("--storage-net-http-headers-customHeaderName", "customHeaderValue");
 		
 		final List<String> args = new ArrayList<>();
 		String t;

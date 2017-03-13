@@ -165,8 +165,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 		
 		String itemInputPath = inputConfig.getPath();
-		if(itemInputPath != null && !itemInputPath.startsWith("/")) {
-			itemInputPath = "/" + itemInputPath;
+		if(itemInputPath != null && itemInputPath.indexOf('/') != 0) {
+			itemInputPath = '/' + itemInputPath;
 		}
 		
 		final BatchSupplier<String> uidSupplier;
@@ -422,7 +422,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to load the credenitals from the file \"{}\"", file
+				LOG, Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file
 			);
 		}
 		return credentials;

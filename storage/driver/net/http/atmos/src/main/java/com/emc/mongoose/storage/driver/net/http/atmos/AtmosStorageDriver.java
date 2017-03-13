@@ -37,6 +37,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,7 +99,7 @@ extends HttpStorageDriverBase<I, O> {
 	private void refreshUidHeader() {
 		if(uid != null && ! uid.isEmpty()) {
 			if(authToken != null && !authToken.isEmpty()) {
-				sharedHeaders.set(KEY_X_EMC_UID, authToken + "/" + uid);
+				sharedHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
 			} else {
 				sharedHeaders.set(KEY_X_EMC_UID, uid);
 			}
@@ -135,7 +136,7 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			applyDynamicHeaders(reqHeaders);
 			applySharedHeaders(reqHeaders);
-			applyAuthHeaders(HttpMethod.PUT, SUBTENANT_URI_BASE, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, uid, secret);
 			
 			final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
@@ -240,7 +241,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(CREATE.equals(ioType)) {
 			return SUBTENANT_URI_BASE;
 		} else {
-			return SUBTENANT_URI_BASE + "/" + item.getName();
+			return SUBTENANT_URI_BASE + '/' + item.getName();
 		}
 	}
 
@@ -257,7 +258,8 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+		final String uid, final String secret
 	) {
 		final String signature;
 		if(secretKey == null) {
@@ -308,8 +310,10 @@ extends HttpStorageDriverBase<I, O> {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final String k : sortedHeaders.keySet()) {
-			buffCanonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
+		for(final Map.Entry<String, String> sortedHeader : sortedHeaders.entrySet()) {
+			buffCanonical
+				.append('\n').append(sortedHeader.getKey())
+				.append(':').append(sortedHeader.getValue());
 		}
 
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -319,7 +323,7 @@ extends HttpStorageDriverBase<I, O> {
 		return buffCanonical.toString();
 	}
 
-	private String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
+	private static String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
 
 		if(secretKey == null) {
 			return null;

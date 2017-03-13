@@ -111,7 +111,7 @@ implements IoTaskBuilder<I, O> {
 	
 	@Override
 	public BasicIoTaskBuilder<I, O> setCredentialsMap(final Map<String, String> credentials) {
-		if(credentials != null && credentials.size() > 0) {
+		if(credentials != null) {
 			this.credentialsMap = credentials;
 			setSecretSupplier(null);
 		}
