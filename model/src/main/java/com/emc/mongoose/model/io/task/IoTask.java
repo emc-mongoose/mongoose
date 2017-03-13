@@ -2,6 +2,7 @@ package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.Externalizable;
 import static java.lang.System.currentTimeMillis;
@@ -55,13 +56,9 @@ extends Externalizable {
 	
 	void setDstPath(final String dstPath);
 	
-	String getUid();
-	
-	void setUid(final String uid);
-	
-	String getSecret();
-	
-	void setSecret(final String secret);
+	Credential getCredential();
+
+	void setCredential(final Credential credential);
 
 	void startRequest()
 	throws IllegalStateException;

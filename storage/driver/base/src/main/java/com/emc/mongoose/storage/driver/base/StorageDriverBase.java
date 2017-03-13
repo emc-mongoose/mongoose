@@ -10,6 +10,8 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.BasicCredential;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -50,8 +52,7 @@ implements StorageDriver<I, O> {
 	protected final String jobName;
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
-	protected final String uid;
-	protected final String secret;
+	protected final Credential credential;
 	protected volatile String authToken;
 	protected final boolean verifyFlag;
 	private final LongAdder scheduledTaskCount = new LongAdder();
@@ -78,8 +79,7 @@ implements StorageDriver<I, O> {
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
-		this.uid = authConfig.getUid();
-		this.secret = authConfig.getSecret();
+		this.credential = new BasicCredential(authConfig.getUid(), authConfig.getSecret());
 		this.authToken = authConfig.getToken();
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);

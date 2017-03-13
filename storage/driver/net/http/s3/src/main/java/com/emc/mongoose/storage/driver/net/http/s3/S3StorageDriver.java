@@ -10,6 +10,7 @@ import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
@@ -135,7 +136,7 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, uid, secret);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, credential);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -172,7 +173,7 @@ extends HttpStorageDriverBase<I, O> {
 				);
 			}
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, uid, secret);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
@@ -202,7 +203,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		// check the bucket versioning state
 		final String bucketVersioningReqUri = path + "?" + URL_ARG_VERSIONING;
-		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, uid, secret);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
 			reqHeaders, EmptyHttpHeaders.INSTANCE
@@ -240,7 +241,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(!versioning && versioningEnabled) {
 			// disable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_DISABLE_CONTENT.length);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, uid, secret);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
@@ -267,7 +268,7 @@ extends HttpStorageDriverBase<I, O> {
 		} else if(versioning && !versioningEnabled) {
 			// enable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_ENABLE_CONTENT.length);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, uid, secret);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
@@ -332,7 +333,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		final String query = queryBuilder.toString();
 
-		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, uid, secret);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, credential);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -466,7 +467,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getUid(), ioTask.getSecret());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
 		return httpRequest;
 	}
 
@@ -496,7 +497,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getUid(), ioTask.getSecret());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
 		return httpRequest;
 	}
 
@@ -549,7 +550,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.getUid(), mpuTask.getSecret());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.getCredential());
 
 		return httpRequest;
 	}
@@ -598,34 +599,32 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final void applyAuthHeaders(
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final String uid, final String secret
+		final Credential credential
 	) {
-		final Mac mac;
+		String secret = credential.getSecret();
 		if(secret == null) {
-			if(this.secret == null) {
-				return; // no secret key is used, do not sign the requests at all
-			}
-			mac = macBySecret.computeIfAbsent(this.secret, GET_MAC_BY_SECRET);
-		} else {
-			mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
+			secret = this.credential.getSecret();
 		}
+		if(secret == null) {
+			return; // no secret key is used, do not sign the requests at all
+		}
+
+		final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
 		
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+		String uid = credential.getUid();
 		if(uid == null) {
-			if(this.uid == null) {
-				return; // no user id is used, do not sign the requests at all
-			}
-			httpHeaders.set(
-				HttpHeaderNames.AUTHORIZATION,
-				AUTH_PREFIX + this.uid + ':' + BASE64_ENCODER.encodeToString(sigData)
-			);
-		} else {
-			httpHeaders.set(
-				HttpHeaderNames.AUTHORIZATION,
-				AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
-			);
+			uid = this.credential.getUid();
 		}
+		if(uid == null) {
+			return; // no user id is used, do not sign the requests at all
+		}
+
+		httpHeaders.set(
+			HttpHeaderNames.AUTHORIZATION,
+			AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
+		);
 	}
 	
 	private String getCanonical(

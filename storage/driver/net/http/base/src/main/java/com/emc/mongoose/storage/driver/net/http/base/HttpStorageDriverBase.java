@@ -20,6 +20,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.HttpConfig;
 import com.emc.mongoose.model.item.PathItem;
 import com.emc.mongoose.model.item.TokenItem;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -213,7 +214,7 @@ implements HttpStorageDriver<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getUid(), ioTask.getSecret());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
 
 		return httpRequest;
 	}
@@ -379,7 +380,7 @@ implements HttpStorageDriver<I, O> {
 
 	protected abstract void applyAuthHeaders(
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final String uid, final String secret
+		final Credential credential
 	);
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)

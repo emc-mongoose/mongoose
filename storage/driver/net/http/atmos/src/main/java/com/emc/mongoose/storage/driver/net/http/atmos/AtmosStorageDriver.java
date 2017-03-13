@@ -18,6 +18,7 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -97,22 +98,11 @@ extends HttpStorageDriverBase<I, O> {
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
-		refreshUidHeader();
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
 	}
 
-	private void refreshUidHeader() {
-		if(uid != null && ! uid.isEmpty()) {
-			if(authToken != null && !authToken.isEmpty()) {
-				sharedHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
-			} else {
-				sharedHeaders.set(KEY_X_EMC_UID, uid);
-			}
-		}
-	}
-	
 	@Override
 	protected final boolean createPath(final String path) {
 		return true;
@@ -142,7 +132,7 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			applyDynamicHeaders(reqHeaders);
 			applySharedHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, uid, secret);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
 			
 			final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
@@ -177,12 +167,6 @@ extends HttpStorageDriverBase<I, O> {
 		}
 
 		return authToken;
-	}
-
-	@Override
-	public final void setAuthToken(final String authToken) {
-		super.setAuthToken(authToken);
-		refreshUidHeader();
 	}
 
 	@Override
@@ -265,7 +249,7 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final void applyAuthHeaders(
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final String uid, final String secret
+		final Credential credential
 	) {
 		final Mac mac;
 		if(secret == null) {
@@ -280,6 +264,13 @@ extends HttpStorageDriverBase<I, O> {
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
 		httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
+		if(uid != null && ! uid.isEmpty()) {
+			if(authToken != null && !authToken.isEmpty()) {
+				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
+			} else {
+				httpHeaders.set(KEY_X_EMC_UID, uid);
+			}
+		}
 	}
 
 	private String getCanonical(
