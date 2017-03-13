@@ -7,7 +7,7 @@
 			},
 			"output" : {
 				"file" : "objects.csv",
-				"path" : "bucket-%d{00}[0-99]"
+				"path" : "bucket-%d(314159265){00}[0-99]"
 			}
 		},
 		"storage" : {
@@ -25,7 +25,7 @@
 				for i in $(seq 100 999); do echo "user-$i,secret-$i" >> credentials.csv; done
 				**/
 				"file" : "credentials.csv",
-				"uid" : "user-%d{00}[0-99]"
+				"uid" : "user-%d(314159265){00}[0-99]"
 			},
 			"driver" : {
 				"concurrency" : 10,

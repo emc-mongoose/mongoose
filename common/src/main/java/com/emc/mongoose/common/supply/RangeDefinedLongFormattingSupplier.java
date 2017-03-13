@@ -14,22 +14,10 @@ implements RangeDefinedSupplier<Long> {
 	
 	private final NumberFormat format;
 	
-	public RangeDefinedLongFormattingSupplier() {
-		this(Long.MIN_VALUE, Long.MAX_VALUE, null);
-	}
-	
-	public RangeDefinedLongFormattingSupplier(final long min, final long max) {
-		this(min, max, null);
-	}
-	
-	public RangeDefinedLongFormattingSupplier(final String formatStr) {
-		this(Long.MIN_VALUE, Long.MAX_VALUE, formatStr);
-	}
-	
 	public RangeDefinedLongFormattingSupplier(
-		final long min, final long max, final String formatStr
+		final long seed, final long min, final long max, final String formatStr
 	) {
-		super(min, max);
+		super(seed, min, max);
 		this.format = formatStr == null || formatStr.isEmpty() ?
 			null : new DecimalFormat(formatStr);
 	}

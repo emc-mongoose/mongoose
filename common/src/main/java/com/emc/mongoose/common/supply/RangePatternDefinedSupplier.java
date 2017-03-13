@@ -2,7 +2,8 @@ package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 
-import static com.emc.mongoose.common.supply.RangeDefinedSupplier.RANGE_SYMBOLS;
+import static com.emc.mongoose.common.supply.RangeDefinedSupplier.RANGE_BRACKETS;
+import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SEED_BRACKETS;
 
 public final class RangePatternDefinedSupplier
 extends BasicPatternDefinedSupplier {
@@ -107,10 +108,11 @@ extends BasicPatternDefinedSupplier {
 	private void addExpressionParams(final StringBuilder expression, final int index)
 	throws UserShootHisFootException {
 		final char type = expression.charAt(0);
-		final String format = initParameter(expression, FORMAT_CHARS);
-		final String range = initParameter(expression, RANGE_SYMBOLS);
+		final String seed = initParameter(expression, SEED_BRACKETS);
+		final String format = initParameter(expression, FORMAT_BRACKETS);
+		final String range = initParameter(expression, RANGE_BRACKETS);
 		expression.delete(0, 1);
-		getSuppliers()[index] = getSupplierFactory().createSupplier(type, format, range);
+		getSuppliers()[index] = getSupplierFactory().createSupplier(type, seed, format, range);
 	}
 
 	private static final ThreadLocal<StringBuilder>

@@ -9,26 +9,11 @@ public final class AsyncRangeDefinedDoubleFormattingSupplier
 extends AsyncRangeDefinedSupplierBase<Double> {
 	
 	private final NumberFormat format;
-	
-	public AsyncRangeDefinedDoubleFormattingSupplier()
-	throws OmgDoesNotPerformException {
-		this(0, 1, null);
-	}
-	
-	public AsyncRangeDefinedDoubleFormattingSupplier(final double minValue, final double maxValue)
-	throws OmgDoesNotPerformException {
-		this(minValue, maxValue, null);
-	}
-	
-	public AsyncRangeDefinedDoubleFormattingSupplier(final String formatString)
-	throws OmgDoesNotPerformException {
-		this(0, 1, formatString);
-	}
-	
+
 	public AsyncRangeDefinedDoubleFormattingSupplier(
-		final double minValue, final double maxValue, final String formatString
+		final long seed, final double minValue, final double maxValue, final String formatString
 	) throws OmgDoesNotPerformException {
-		super(minValue, maxValue);
+		super(seed, minValue, maxValue);
 		this.format = formatString == null || formatString.isEmpty() ?
 			null : new DecimalFormat(formatString);
 	}
@@ -40,12 +25,12 @@ extends AsyncRangeDefinedSupplierBase<Double> {
 
 	@Override
 	protected final Double rangeValue() {
-		return minValue() + (random.nextDouble() * range());
+		return minValue() + (rnd.nextDouble() * range());
 	}
 
 	@Override
 	protected final Double singleValue() {
-		return random.nextDouble();
+		return rnd.nextDouble();
 	}
 
 	@Override

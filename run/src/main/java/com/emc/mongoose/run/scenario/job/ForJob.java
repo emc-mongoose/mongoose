@@ -5,7 +5,7 @@ import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.Markers;
-import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_CHARS;
+import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -203,8 +203,8 @@ extends SequentialJob {
 		}*/
 
 		final Object jobTreeList = subTree.get(KEY_NODE_JOBS);
-		final String replacePattern = Character.toString(REPLACE_MARKER_CHAR) + FORMAT_CHARS[0] +
-			replaceMarkerName + FORMAT_CHARS[1];
+		final String replacePattern = Character.toString(REPLACE_MARKER_CHAR) + FORMAT_BRACKETS[0] +
+			replaceMarkerName + FORMAT_BRACKETS[1];
 		Map<String, Object> nextNodeConfig;
 		try {
 			if(jobTreeList != null) {

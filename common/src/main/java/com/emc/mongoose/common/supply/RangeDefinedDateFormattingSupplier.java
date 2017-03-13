@@ -15,22 +15,10 @@ implements RangeDefinedSupplier<Date> {
 	
 	private Format format;
 	
-	public RangeDefinedDateFormattingSupplier() {
-		this(new Date(0), new Date(), null);
-	}
-	
-	public RangeDefinedDateFormattingSupplier(final Date startDate, final Date endDate) {
-		this(startDate, endDate, null);
-	}
-	
-	public RangeDefinedDateFormattingSupplier(final String formatStr) {
-		this(new Date(0), new Date(), formatStr);
-	}
-	
 	public RangeDefinedDateFormattingSupplier(
-		final Date startDate, final Date endDate, final String formatStr
+		final long seed, final Date startDate, final Date endDate, final String formatStr
 	) {
-		super(startDate.getTime(), endDate.getTime());
+		super(seed, startDate.getTime(), endDate.getTime());
 		format = formatStr == null || formatStr.isEmpty() ?
 			null : FastDateFormat.getInstance(formatStr);
 	}

@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SEED_BRACKETS;
 
 import java.io.IOException;
 import java.util.List;
@@ -85,8 +86,13 @@ implements PatternDefinedSupplier {
 		patternBuilder.append(pattern);
 		patternBuilder.delete(0, 1);
 		final char type = patternBuilder.charAt(0);
-		final String format = initParameter(patternBuilder, FORMAT_CHARS);
-		setSuppliers(new BatchSupplier[] { supplierFactory.createSupplier(type, format, null) } );
+		final String formatStr = initParameter(patternBuilder, FORMAT_BRACKETS);
+		final String seedStr = initParameter(patternBuilder, SEED_BRACKETS);
+		setSuppliers(
+			new BatchSupplier[] {
+				supplierFactory.createSupplier(type, seedStr, formatStr, null)
+			}
+		);
 	}
 
 	/**

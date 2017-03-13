@@ -14,22 +14,10 @@ implements RangeDefinedSupplier<Double> {
 	
 	private final NumberFormat format;
 	
-	public RangeDefinedDoubleFormattingSupplier() {
-		this(0, 1, null);
-	}
-	
-	public RangeDefinedDoubleFormattingSupplier(final double min, final double max) {
-		this(min, max, null);
-	}
-	
-	public RangeDefinedDoubleFormattingSupplier(final String formatStr) {
-		this(0, 1, formatStr);
-	}
-	
 	public RangeDefinedDoubleFormattingSupplier(
-		final double min, final double max, final String formatStr
+		final long seed, final double min, final double max, final String formatStr
 	) {
-		super(min, max);
+		super(seed, min, max);
 		this.format = formatStr == null || formatStr.isEmpty() ?
 			null : new DecimalFormat(formatStr);
 	}

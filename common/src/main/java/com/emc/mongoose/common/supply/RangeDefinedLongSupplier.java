@@ -1,8 +1,6 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
-import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SHARED_SEED;
-
 import java.io.IOException;
 
 /**
@@ -13,13 +11,14 @@ implements BatchLongSupplier {
 	
 	private final long min;
 	private final long range;
-	private final Random rnd = new Random(SHARED_SEED);
+	private final Random rnd;
 	
 	/**
 	 @param min "unbounded" range will be used if Long.MAX_VALUE &gt; max - min
 	 @param max "unbounded" range will be if less than min
 	 */
-	public RangeDefinedLongSupplier(final long min, final long max) {
+	public RangeDefinedLongSupplier(final long seed, final long min, final long max) {
+		rnd = new Random(seed);
 		this.min = min;
 		this.range = max - min + 1;
 	}

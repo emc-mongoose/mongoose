@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
-import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SHARED_SEED;
 
 import java.io.IOException;
 
@@ -13,9 +12,10 @@ implements BatchDoubleSupplier {
 	
 	private final double min;
 	private final double range;
-	private final Random rnd = new Random(SHARED_SEED);
+	private final Random rnd;
 	
-	public RangeDefinedDoubleSupplier(final double min, final double max) {
+	public RangeDefinedDoubleSupplier(final long seed, final double min, final double max) {
+		rnd = new Random(seed);
 		this.min = min;
 		this.range = max - min;
 	}

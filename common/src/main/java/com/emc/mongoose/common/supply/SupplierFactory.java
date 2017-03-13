@@ -30,9 +30,8 @@ public interface SupplierFactory<T, G extends BatchSupplier<T>> {
 		EMPTY, RANGE, FORMAT, FORMAT_RANGE
 	}
 	
-	State defineState(final String... parameters);
-
-	G createSupplier(final char type, final String... parameters)
-	throws UserShootHisFootException;
+	G createSupplier(
+		final char type, final String seedStr, final String formatStr, final String rangeStr
+	) throws UserShootHisFootException;
 
 }

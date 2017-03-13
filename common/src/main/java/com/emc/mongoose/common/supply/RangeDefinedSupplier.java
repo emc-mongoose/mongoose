@@ -8,13 +8,13 @@ import com.emc.mongoose.common.supply.BatchSupplier;
 public interface RangeDefinedSupplier<T>
 extends BatchSupplier<String> {
 
-	long SHARED_SEED = System.nanoTime() ^ System.currentTimeMillis();
-	
 	/**
 	 * Special characters
 	 */
-	char[] RANGE_SYMBOLS = {'[',']'};
+	char[] RANGE_BRACKETS = {'[',']'};
 	char RANGE_DELIMITER = '-';
+
+	char[] SEED_BRACKETS = {'(', ')'};
 
 	T value();
 }

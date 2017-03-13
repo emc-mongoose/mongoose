@@ -14,29 +14,14 @@ extends AsyncRangeDefinedSupplierBase<Date> {
 	private final Format format;
 	private final RangeDefinedSupplier<Long> longGenerator;
 	
-	public AsyncRangeDefinedDateFormattingSupplier()
-	throws OmgDoesNotPerformException{
-		this(new Date(0), new Date(), null);
-	}
-	
-	public AsyncRangeDefinedDateFormattingSupplier(final Date minValue, final Date maxValue)
-	throws OmgDoesNotPerformException{
-		this(minValue, maxValue, null);
-	}
-	
-	public AsyncRangeDefinedDateFormattingSupplier(final String formatString)
-	throws OmgDoesNotPerformException{
-		this(new Date(0), new Date(), formatString);
-	}
-	
 	public AsyncRangeDefinedDateFormattingSupplier(
-		final Date minValue, final Date maxValue, final String formatString
+		final long seed, final Date minValue, final Date maxValue, final String formatString
 	) throws OmgDoesNotPerformException{
-		super(minValue, maxValue);
+		super(seed, minValue, maxValue);
 		this.format = formatString == null || formatString.isEmpty() ?
 			null : FastDateFormat.getInstance(formatString);
 		longGenerator = new AsyncRangeDefinedLongFormattingSupplier(
-			minValue.getTime(), maxValue.getTime()
+			seed, minValue.getTime(), maxValue.getTime(), null
 		);
 	}
 

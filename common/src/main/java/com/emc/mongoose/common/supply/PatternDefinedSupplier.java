@@ -12,7 +12,7 @@ extends BatchSupplier<String> {
 	 * Special characters
 	 */
 	char PATTERN_CHAR = '%';
-	char FORMAT_CHARS[] = {'{', '}'};
+	char FORMAT_BRACKETS[] = {'{', '}'};
 
 	String getPattern();
 

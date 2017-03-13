@@ -10,25 +10,10 @@ extends AsyncRangeDefinedSupplierBase<Long> {
 	
 	private final NumberFormat format;
 	
-	public AsyncRangeDefinedLongFormattingSupplier()
-	throws OmgDoesNotPerformException {
-		this(Long.MIN_VALUE, Long.MAX_VALUE, null);
-	}
-	
-	public AsyncRangeDefinedLongFormattingSupplier(final long minValue, final long maxValue)
-	throws OmgDoesNotPerformException {
-		this(minValue, maxValue, null);
-	}
-	
-	public AsyncRangeDefinedLongFormattingSupplier(final String formatStr)
-	throws OmgDoesNotPerformException {
-		this(Long.MIN_VALUE, Long.MAX_VALUE, formatStr);
-	}
-	
 	public AsyncRangeDefinedLongFormattingSupplier(
-		final long minValue, final long maxValue, final String formatStr
+		final long seed, final long minValue, final long maxValue, final String formatStr
 	) throws OmgDoesNotPerformException {
-		super(minValue, maxValue);
+		super(seed, minValue, maxValue);
 		this.format = formatStr == null || formatStr.isEmpty() ?
 			null : new DecimalFormat(formatStr);
 	}
@@ -40,12 +25,12 @@ extends AsyncRangeDefinedSupplierBase<Long> {
 
 	@Override
 	protected final Long rangeValue() {
-		return minValue() + random.nextLong(range());
+		return minValue() + rnd.nextLong(range());
 	}
 
 	@Override
 	protected final Long singleValue() {
-		return random.nextLong();
+		return rnd.nextLong();
 	}
 
 	@Override

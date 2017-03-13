@@ -18,13 +18,14 @@ import java.util.List;
 public abstract class AsyncRangeDefinedSupplierBase<T>
 implements Initializable, RangeDefinedSupplier<T> {
 
-	protected final Random random = new Random();
+	protected final Random rnd;
 	private final T minValue;
 	private final T range;
 	private final BatchSupplier<T> newValueSupplier;
 
-	protected AsyncRangeDefinedSupplierBase(final T minValue, final T maxValue)
+	protected AsyncRangeDefinedSupplierBase(final long seed, final T minValue, final T maxValue)
 	throws OmgDoesNotPerformException {
+		this.rnd = new Random(seed);
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
 		this.newValueSupplier = new AsyncUpdatingValueSupplier<>(
@@ -40,27 +41,6 @@ implements Initializable, RangeDefinedSupplier<T> {
 				public T call()
 				throws Exception {
 					return rangeValue();
-				}
-			}
-		);
-	}
-
-	protected AsyncRangeDefinedSupplierBase(final T initialValue)
-	throws OmgDoesNotPerformException {
-		this.minValue = initialValue;
-		this.range = null;
-		this.newValueSupplier = new AsyncUpdatingValueSupplier<>(
-			initialValue,
-			new InitCallable<T>() {
-				//
-				@Override
-				public boolean isInitialized() {
-					return AsyncRangeDefinedSupplierBase.this.isInitialized();
-				}
-				//
-				@Override
-				public T call() throws Exception {
-					return singleValue();
 				}
 			}
 		);

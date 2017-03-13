@@ -2,7 +2,6 @@ package com.emc.mongoose.common.supply;
 
 import com.emc.mongoose.common.math.Random;
 import static com.emc.mongoose.common.io.Input.DELIMITER;
-import static com.emc.mongoose.common.supply.RangeDefinedSupplier.SHARED_SEED;
 
 import java.io.File;
 import java.util.List;
@@ -13,22 +12,24 @@ implements BatchSupplier<String> {
 
 	private static final int RADIX = Character.MAX_RADIX;
 
-	private final Random rnd = new Random(SHARED_SEED);
+	private final Random rnd;
 	private final int width;
 	private final int depth;
 
-	public FilePathSupplier(final String paramsString) {
-		this(areParamsValid(paramsString) ? paramsString.split(DELIMITER) : new String[]{});
+	public FilePathSupplier(final long seed, final String paramsString) {
+		this(seed, areParamsValid(paramsString) ? paramsString.split(DELIMITER) : new String[]{});
 	}
 
-	private FilePathSupplier(final String[] params) {
+	private FilePathSupplier(final long seed, final String[] params) {
 		this(
+			seed,
 			(params.length > 0 ? parseInt(params[0].replaceAll(" ", "")) : 0),
 			(params.length > 1 ? parseInt(params[1].replaceAll(" ", "")) : 0)
 		);
 	}
 	
-	public FilePathSupplier(int width, int depth) {
+	public FilePathSupplier(final long seed, int width, int depth) {
+		this.rnd = new Random(seed);
 		this.width = width;
 		this.depth = depth;
 		if(width <= 0 || depth <= 0) {

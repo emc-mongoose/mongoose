@@ -206,7 +206,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			.setUidSupplier(uidSupplier);
 
 		// prevent the storage connections if noop
-		// also don't create tocken if token load is configured
+		// also don't create token if token load is configured
 		if(!IoType.NOOP.equals(ioType) && !ItemType.TOKEN.equals(itemType)) {
 			String authToken = null;
 			try {
@@ -315,31 +315,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 		if(-1 == path.indexOf(PATTERN_CHAR)) {
 			pathSupplier = new ConstantStringSupplier(path);
-			try {
-				storageDrivers.get(0).createPath(path);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"", path
-				);
-			}
 		} else {
 			pathSupplier = new RangePatternDefinedSupplier(path);
-			String tmpPath = null;
-			try(final RangePatternDefinedSupplier tmp = new RangePatternDefinedSupplier(path)) {
-				tmpPath = tmp.get();
-				if(tmpPath != null) {
-					final int sepPos = tmpPath.indexOf('/', 1);
-					if(sepPos > 1) {
-						// create only 1st level path
-						tmpPath = tmpPath.substring(0, sepPos);
-					}
-					storageDrivers.get(0).createPath(tmpPath);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"", tmpPath
-				);
-			}
 		}
 		return pathSupplier;
 	}
