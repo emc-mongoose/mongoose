@@ -4,7 +4,6 @@ import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.composite.data.BasicCompositeDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.storage.BasicCredential;
 import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;

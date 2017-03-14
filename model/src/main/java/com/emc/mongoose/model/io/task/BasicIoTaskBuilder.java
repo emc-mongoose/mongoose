@@ -4,7 +4,6 @@ import com.emc.mongoose.common.supply.BatchSupplier;
 import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.storage.BasicCredential;
 import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;

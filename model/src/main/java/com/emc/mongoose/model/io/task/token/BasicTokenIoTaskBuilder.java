@@ -2,7 +2,6 @@ package com.emc.mongoose.model.io.task.token;
 
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.item.TokenItem;
-import com.emc.mongoose.model.storage.BasicCredential;
 import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ implements TokenIoTaskBuilder<I, O> {
 			tasks.add(
 				(O) new BasicTokenIoTask<>(
 					originCode, ioType, item,
-					new BasicCredential(uid = getNextUid(), getNextSecret(uid))
+					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);
 		}

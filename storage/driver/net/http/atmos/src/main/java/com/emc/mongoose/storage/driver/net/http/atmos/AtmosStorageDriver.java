@@ -80,16 +80,21 @@ extends HttpStorageDriverBase<I, O> {
 	
 	private final Map<String, Mac> macBySecret = new HashMap<>(1);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
-		final SecretKeySpec secretKey = new SecretKeySpec(
-			BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD
-		);
 		try {
+			final SecretKeySpec secretKey = new SecretKeySpec(
+				BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD
+			);
 			final Mac mac = Mac.getInstance(SIGN_METHOD);
 			mac.init(secretKey);
 			return mac;
 		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-			throw new AssertionError(e);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to init MAC for the given secret key");
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to perform the secret key Base-64 decoding"
+			);
 		}
+		return null;
 	};
 	
 	public AtmosStorageDriver(
@@ -268,10 +273,12 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		}
 		
-		final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
-		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
-		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
-		httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
+		if(secret != null && !secret.isEmpty()) {
+			final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
+			final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+			final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+			httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
+		}
 	}
 
 	private String getCanonical(

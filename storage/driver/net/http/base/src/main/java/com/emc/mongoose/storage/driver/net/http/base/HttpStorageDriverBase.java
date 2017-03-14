@@ -239,7 +239,11 @@ implements HttpStorageDriver<I, O> {
 		final String itemName = item.getName();
 		if(dstPath == null) {
 			if(srcPath == null) {
-				return SLASH + itemName;
+				if(itemName.startsWith(SLASH)) {
+					return itemName;
+				} else {
+					return SLASH + itemName;
+				}
 			} else if(srcPath.endsWith(SLASH)) {
 				return srcPath + itemName;
 			} else {

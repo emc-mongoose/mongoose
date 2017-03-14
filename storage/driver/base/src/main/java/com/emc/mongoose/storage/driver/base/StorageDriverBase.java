@@ -181,10 +181,16 @@ implements StorageDriver<I, O> {
 	private void checkStateFor(final O ioTask)
 	throws ServerException {
 		if(requestPathFunc != null) {
-			pathMap.computeIfAbsent(ioTask.getDstPath(), requestPathFunc);
+			final String dstPath = ioTask.getDstPath();
+			if(dstPath != null) {
+				pathMap.computeIfAbsent(ioTask.getDstPath(), requestPathFunc);
+			}
 		}
 		if(requestAuthTokenFunc != null) {
-			authTokens.computeIfAbsent(ioTask.getCredential(), requestAuthTokenFunc);
+			final Credential credential = ioTask.getCredential();
+			if(credential != null) {
+				authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
+			}
 		}
 	}
 	

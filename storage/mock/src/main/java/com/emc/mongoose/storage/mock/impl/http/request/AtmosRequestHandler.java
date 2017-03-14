@@ -123,9 +123,8 @@ extends RequestHandlerBase<T> {
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(uriPath.startsWith(OBJ_PATH)) {
 			final String uriPathParts[] = uriPath.split("/");
-			String objectId = uriPathParts[2];
+			String objectId = uriPathParts.length > 3 ? uriPathParts[3] : null;
 			long offset = -1;
-			String subtenantName = getSubtenant(requestHeaders, uriPath);
 			if(objectId == null) {
 				if(method.equals(POST)) {
 					objectId = generateHexId(22);
@@ -140,23 +139,26 @@ extends RequestHandlerBase<T> {
 							processResult
 						);
 					}
-					handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
-					final Attribute<HttpResponseStatus> statusAttribute =
-						channel.attr(ATTR_KEY_RESPONSE_STATUS);
+					handleObjectRequest(
+						method, StorageMock.DEFAULT_CONTAINER_NAME, objectId, offset, size, ctx
+					);
+					final Attribute<HttpResponseStatus>
+						statusAttribute = channel.attr(ATTR_KEY_RESPONSE_STATUS);
 					response = newEmptyResponse(statusAttribute.get());
 					final int statusCode = response.status().code();
 					if(statusCode < 300 && 200 <= statusCode) {
 						response.headers().set(LOCATION, OBJ_PATH + "/" + objectId);
 					}
 				} else if(method.equals(GET)) {
-					subtenantName = processMetaDataList(metaDataList, "subtenant");
 					if(requestHeaders.contains(KEY_EMC_TOKEN)) {
 						objectId = requestHeaders.get(KEY_EMC_TOKEN);
 					}
-					handleContainerList(subtenantName, objectId, ctx);
+					handleContainerList(StorageMock.DEFAULT_CONTAINER_NAME, objectId, ctx);
 				}
 			} else {
-				handleObjectRequest(method, subtenantName, objectId, offset, size, ctx);
+				handleObjectRequest(
+					method, StorageMock.DEFAULT_CONTAINER_NAME, objectId, offset, size, ctx
+				);
 			}
 		} else if(uriPath.startsWith(NS_PATH) || (uriPath.startsWith(AT_PATH))) {
 			setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);

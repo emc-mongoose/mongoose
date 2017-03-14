@@ -209,7 +209,7 @@ implements LoadGenerator<I, O> {
 							e.printStackTrace(System.err);
 						}
 					} catch(final Exception e) {
-						if(!isStarted()) {
+						if(isStarted()) {
 							LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 							e.printStackTrace(System.err);
 						}
