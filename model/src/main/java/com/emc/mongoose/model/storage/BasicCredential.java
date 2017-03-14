@@ -9,7 +9,7 @@ implements Credential {
 	private final String uid;
 	private final String secret;
 
-	public BasicCredential(final String uid, final String secret) {
+	protected BasicCredential(final String uid, final String secret) {
 		this.uid = uid;
 		this.secret = secret;
 	}

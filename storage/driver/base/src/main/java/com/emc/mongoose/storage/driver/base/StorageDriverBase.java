@@ -76,7 +76,11 @@ implements StorageDriver<I, O> {
 		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
 		final String authToken = authConfig.getToken();
 		if(authToken != null) {
-			this.authTokens.put(this.credential, authToken);
+			if(this.credential == null) {
+				this.authTokens.put(Credential.NONE, authToken);
+			} else {
+				this.authTokens.put(null, authToken);
+			}
 		}
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
@@ -124,8 +128,8 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
+		checkStateFor(task);
 		if(inTasksQueue.offer(task)) {
-			checkStateFor(task);
 			scheduledTaskCount.increment();
 			return true;
 		} else {
@@ -183,7 +187,7 @@ implements StorageDriver<I, O> {
 		if(requestPathFunc != null) {
 			final String dstPath = ioTask.getDstPath();
 			if(dstPath != null) {
-				pathMap.computeIfAbsent(ioTask.getDstPath(), requestPathFunc);
+				pathMap.computeIfAbsent(dstPath, requestPathFunc);
 			}
 		}
 		if(requestAuthTokenFunc != null) {

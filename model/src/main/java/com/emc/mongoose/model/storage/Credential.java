@@ -18,4 +18,6 @@ extends Serializable {
 		}
 		return new BasicCredential(uid, secret);
 	}
+
+	Credential NONE = new BasicCredential(null, null);
 }

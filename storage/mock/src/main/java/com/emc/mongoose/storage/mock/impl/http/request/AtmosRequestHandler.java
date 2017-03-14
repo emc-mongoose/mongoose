@@ -115,32 +115,16 @@ extends RequestHandlerBase<T> {
 		final Channel channel = ctx.channel();
 		FullHttpResponse response = null;
 		final HttpRequest request = channel.attr(ATTR_KEY_REQUEST).get();
-		String[] metaDataList = null;
 		final HttpHeaders requestHeaders = request.headers();
-		if(requestHeaders.contains(KEY_EMC_TAGS)) {
-			metaDataList = requestHeaders.get(KEY_EMC_TAGS).split(",");
-		}
 		channel.attr(ATTR_KEY_CTX_WRITE_FLAG).set(true);
 		if(uriPath.startsWith(OBJ_PATH)) {
 			final String uriPathParts[] = uriPath.split("/");
 			String objectId = uriPathParts.length > 3 ? uriPathParts[3] : null;
-			long offset = -1;
 			if(objectId == null) {
 				if(method.equals(POST)) {
 					objectId = generateHexId(22);
-					final String processResult = processMetaDataList(metaDataList, "offset");
-					try {
-						if(processResult != null) {
-							offset = Long.parseLong(processResult);
-						}
-					} catch (final NumberFormatException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to parse offset meta tag value: \"{}\"",
-							processResult
-						);
-					}
 					handleObjectRequest(
-						method, StorageMock.DEFAULT_CONTAINER_NAME, objectId, offset, size, ctx
+						method, StorageMock.DEFAULT_CONTAINER_NAME, objectId, 0, size, ctx
 					);
 					final Attribute<HttpResponseStatus>
 						statusAttribute = channel.attr(ATTR_KEY_RESPONSE_STATUS);
@@ -157,10 +141,16 @@ extends RequestHandlerBase<T> {
 				}
 			} else {
 				handleObjectRequest(
-					method, StorageMock.DEFAULT_CONTAINER_NAME, objectId, offset, size, ctx
+					method, StorageMock.DEFAULT_CONTAINER_NAME, objectId, 0, size, ctx
 				);
 			}
-		} else if(uriPath.startsWith(NS_PATH) || (uriPath.startsWith(AT_PATH))) {
+		} else if(uriPath.startsWith(NS_PATH)) {
+			final String uriPathParts[] = uriPath.split("/");
+			final String containerName = uriPathParts.length > 3 ? uriPathParts[3] : null;
+			final String objectId = uriPathParts.length > 4 ?
+				uriPathParts[uriPathParts.length - 1] : null;
+			handleItemRequest(method, queryParams, containerName, objectId, size, ctx);
+		} else if(uriPath.startsWith(AT_PATH)) {
 			setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
 		} else if(uriPath.startsWith(ST_PATH)) {
 			final String subtenantName;

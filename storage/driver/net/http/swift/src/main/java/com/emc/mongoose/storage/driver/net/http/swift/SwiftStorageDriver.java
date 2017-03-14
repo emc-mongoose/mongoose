@@ -519,7 +519,9 @@ extends HttpStorageDriverBase<I, O> {
 			uid = this.credential.getUid();
 			secret = this.credential.getSecret();
 		} else {
-			return;
+			authToken = authTokens.get(Credential.NONE);
+			uid = null;
+			secret = null;
 		}
 		
 		if(dstUriPath.equals(AUTH_URI)) {
