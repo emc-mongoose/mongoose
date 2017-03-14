@@ -10,7 +10,6 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.BasicCredential;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -23,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,21 +51,17 @@ implements StorageDriver<I, O> {
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
 	protected final Credential credential;
-	protected volatile String authToken;
 	protected final boolean verifyFlag;
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
 	
 	private final ConcurrentMap<String, String> pathMap = new ConcurrentHashMap<>(1);
-	private final Function<String, String> createPathFunc = path -> {
-		if(createPath(path)) {
-			return path;
-		} else {
-			return null;
-		}
-	};
+	protected abstract String requestNewPath(final String path);
+	protected Function<String, String> requestPathFunc = this::requestNewPath;
 	
-	protected abstract boolean createPath(final String path);
+	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
+	protected abstract String requestNewAuthToken(final Credential credential);
+	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
 	
 	protected StorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
@@ -79,8 +73,11 @@ implements StorageDriver<I, O> {
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.jobName = jobName;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
-		this.credential = new BasicCredential(authConfig.getUid(), authConfig.getSecret());
-		this.authToken = authConfig.getToken();
+		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
+		final String authToken = authConfig.getToken();
+		if(authToken != null) {
+			this.authTokens.put(this.credential, authToken);
+		}
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
@@ -183,7 +180,12 @@ implements StorageDriver<I, O> {
 	
 	private void checkStateFor(final O ioTask)
 	throws ServerException {
-		pathMap.computeIfAbsent(ioTask.getDstPath(), createPathFunc);
+		if(requestPathFunc != null) {
+			pathMap.computeIfAbsent(ioTask.getDstPath(), requestPathFunc);
+		}
+		if(requestAuthTokenFunc != null) {
+			authTokens.computeIfAbsent(ioTask.getCredential(), requestAuthTokenFunc);
+		}
 	}
 	
 	@Override
@@ -314,17 +316,6 @@ implements StorageDriver<I, O> {
 		return null;
 	}
 	
-	@Override
-	public String getAuthToken()
-	throws RemoteException {
-		return authToken;
-	}
-	
-	@Override
-	public void setAuthToken(final String authToken) {
-		this.authToken = authToken;
-	}
-
 	@Override
 	protected void doShutdown() {
 		SVC_TASKS.remove(this);

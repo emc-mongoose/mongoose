@@ -11,6 +11,7 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
@@ -58,7 +59,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
@@ -86,9 +86,6 @@ extends HttpStorageDriverBase<I, O> {
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
-		if(authToken != null && !authToken.isEmpty()) {
-			setAuthToken(authToken);
-		}
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
 		}
@@ -96,7 +93,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final boolean createPath(final String path) {
+	protected final String requestNewPath(final String path) {
 
 		// check the destination container if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
@@ -114,10 +111,10 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkContainerResp = executeHttpRequest(checkContainerReq);
 		} catch(final InterruptedException e) {
-			return false;
+			return null;
 		} catch(final ConnectException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-			return false;
+			return null;
 		}
 
 		final boolean containerExists, versioningEnabled;
@@ -142,7 +139,7 @@ extends HttpStorageDriverBase<I, O> {
 				checkContainerRespStatus.toString()
 			);
 			checkContainerResp.release();
-			return false;
+			return null;
 		}
 		checkContainerResp.release();
 
@@ -165,10 +162,10 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putContainerResp = executeHttpRequest(putContainerReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				return null;
 			}
 
 			final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
@@ -180,14 +177,49 @@ extends HttpStorageDriverBase<I, O> {
 					putContainerRespStatus.toString()
 				);
 				putContainerResp.release();
-				return false;
+				return null;
 			}
 			putContainerResp.release();
 		}
 
-		return true;
+		return path;
 	}
-
+	
+	@Override
+	protected final String requestNewAuthToken(final Credential credential) {
+		final String nodeAddr = storageNodeAddrs[0];
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		
+		final String uid = credential == null ? this.credential.getUid() : credential.getUid();
+		if(uid != null && ! uid.isEmpty()) {
+			reqHeaders.set(KEY_X_AUTH_USER, uid);
+		}
+		final String secret = credential == null ?
+			this.credential.getSecret() : credential.getSecret();
+		if(secret != null && !secret.isEmpty()) {
+			reqHeaders.set(KEY_X_AUTH_KEY, secret);
+		}
+		reqHeaders.set(HttpHeaderNames.ACCEPT, "*/*");
+		final FullHttpRequest getAuthTokenReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.GET, AUTH_URI, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
+		);
+		final FullHttpResponse getAuthTokenResp;
+		try {
+			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
+		} catch(final InterruptedException e) {
+			return null;
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			return null;
+		}
+		
+		return getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
+	}
+	
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
@@ -218,7 +250,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		final String query = queryBuilder.toString();
 
-		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, uid, secret);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, credential);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -401,7 +433,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, uid, secret);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.getCredential());
 		return httpRequest;
 	}
 	
@@ -429,58 +461,8 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, uid, secret);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
 		return httpRequest;
-	}
-
-	@Override
-	public final String getAuthToken()
-	throws RemoteException {
-		if(authToken == null || authToken.isEmpty()) {
-			final String nodeAddr = storageNodeAddrs[0];
-			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
-			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
-			if(uid != null && ! uid.isEmpty()) {
-				reqHeaders.set(KEY_X_AUTH_USER, uid);
-			}
-			if(secret != null && !secret.isEmpty()) {
-				reqHeaders.set(KEY_X_AUTH_KEY, secret);
-			}
-			reqHeaders.set(HttpHeaderNames.ACCEPT, "*/*");
-			final FullHttpRequest getAuthTokenReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.GET, AUTH_URI, Unpooled.EMPTY_BUFFER, reqHeaders,
-				EmptyHttpHeaders.INSTANCE
-			);
-			final FullHttpResponse getAuthTokenResp;
-			try {
-				getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
-			} catch(final InterruptedException e) {
-				return null;
-			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return null;
-			}
-
-			authToken = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
-			if(authToken == null || authToken.isEmpty()) {
-				LOG.warn(
-					Markers.ERR, "Failed to get the auth token, response is: {}",
-					getAuthTokenResp.status().toString()
-				);
-			} else {
-				LOG.info(Markers.MSG, "Got the auth token \"{}\"", authToken);
-				setAuthToken(authToken);
-			}
-		}
-		return authToken;
-	}
-
-	@Override
-	public final void setAuthToken(final String authToken) {
-		super.setAuthToken(authToken);
-		sharedHeaders.set(KEY_X_AUTH_TOKEN, authToken);
 	}
 
 	@Override
@@ -518,14 +500,30 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
 	}
-
+	
 	@Override
 	protected final void applyAuthHeaders(
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final String uid_, final String secret_
+		final Credential credential
 	) {
+		final String authToken;
+		final String uid;
+		final String secret;
+		
+		if(credential != null) {
+			authToken = authTokens.get(credential);
+			uid = credential.getUid();
+			secret = credential.getSecret();
+		} else if(this.credential != null) {
+			authToken = authTokens.get(this.credential);
+			uid = this.credential.getUid();
+			secret = this.credential.getSecret();
+		} else {
+			return;
+		}
+		
 		if(dstUriPath.equals(AUTH_URI)) {
-			if(uid != null && ! uid.isEmpty()) {
+			if(uid != null && !uid.isEmpty()) {
 				httpHeaders.set(KEY_X_AUTH_USER, uid);
 			}
 			if(secret != null && !secret.isEmpty()) {

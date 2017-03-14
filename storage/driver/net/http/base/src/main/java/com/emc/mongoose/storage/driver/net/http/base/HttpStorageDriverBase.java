@@ -95,7 +95,6 @@ implements HttpStorageDriver<I, O> {
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
-		authToken = storageConfig.getAuthConfig().getToken();
 		namespace = httpConfig.getNamespace();
 		fsAccess = httpConfig.getFsAccess();
 		versioning = httpConfig.getVersioning();

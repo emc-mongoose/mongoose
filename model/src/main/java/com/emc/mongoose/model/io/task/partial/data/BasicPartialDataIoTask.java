@@ -4,6 +4,7 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,10 +26,10 @@ implements PartialDataIoTask<I> {
 
 	public BasicPartialDataIoTask(
 		final int originCode, final IoType ioType, final I part, final String srcPath,
-		final String dstPath, final String uid, final String secret, final int partNumber,
+		final String dstPath, final Credential credential, final int partNumber,
 		final CompositeDataIoTask<I> parent
 	) {
-		super(originCode, ioType, part, srcPath, dstPath, uid, secret, null, 0);
+		super(originCode, ioType, part, srcPath, dstPath, credential, null, 0);
 		this.partNumber = partNumber;
 		this.parent = parent;
 	}

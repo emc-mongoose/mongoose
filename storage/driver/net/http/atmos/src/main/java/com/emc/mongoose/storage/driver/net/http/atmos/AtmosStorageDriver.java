@@ -48,7 +48,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -78,6 +77,8 @@ extends HttpStorageDriverBase<I, O> {
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+	
+	private final Map<String, Mac> macBySecret = new HashMap<>(1);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		final SecretKeySpec secretKey = new SecretKeySpec(
 			BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD
@@ -91,8 +92,6 @@ extends HttpStorageDriverBase<I, O> {
 		}
 	};
 	
-	private final Map<String, Mac> macBySecret = new HashMap<>(1);
-	
 	public AtmosStorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
@@ -101,13 +100,59 @@ extends HttpStorageDriverBase<I, O> {
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
+		requestPathFunc = null; // do not use
 	}
 
 	@Override
-	protected final boolean createPath(final String path) {
-		return true;
+	protected final String requestNewPath(final String path) {
+		throw new AssertionError("Should not be invoked");
 	}
-
+	
+	@Override
+	protected final String requestNewAuthToken(final Credential credential) {
+		
+		final String nodeAddr = storageNodeAddrs[0];
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
+		if(fsAccess) {
+			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
+		}
+		applyDynamicHeaders(reqHeaders);
+		applySharedHeaders(reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
+		
+		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
+			reqHeaders, EmptyHttpHeaders.INSTANCE
+		);
+		
+		final FullHttpResponse getSubtenantResp;
+		try {
+			getSubtenantResp = executeHttpRequest(getSubtenantReq);
+		} catch(final InterruptedException e) {
+			return null;
+		} catch(final ConnectException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			return null;
+		}
+		
+		final String subtenantId;
+		if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
+			subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
+		} else {
+			LOG.warn(Markers.ERR, "Creating the subtenant: got response {}",
+				getSubtenantResp.status().toString()
+			);
+			return null;
+		}
+		getSubtenantResp.release();
+		
+		return subtenantId;
+	}
+	
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
@@ -115,60 +160,7 @@ extends HttpStorageDriverBase<I, O> {
 	) throws IOException {
 		return null;
 	}
-
-	@Override
-	public final String getAuthToken()
-	throws RemoteException {
-		
-		if(authToken == null || authToken.isEmpty()) {
-			final String nodeAddr = storageNodeAddrs[0];
-			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
-			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
-			//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
-			if(fsAccess) {
-				reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
-			}
-			applyDynamicHeaders(reqHeaders);
-			applySharedHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
-			
-			final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
-				reqHeaders, EmptyHttpHeaders.INSTANCE
-			);
-			
-			final FullHttpResponse getSubtenantResp;
-			try {
-				getSubtenantResp = executeHttpRequest(getSubtenantReq);
-			} catch(final InterruptedException e) {
-				return null;
-			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return null;
-			}
-			
-			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
-				final String subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
-				if(subtenantId != null && !subtenantId.isEmpty()) {
-					LOG.info(Markers.MSG, "Using the subtenant id: \"{}\"", subtenantId);
-					setAuthToken(subtenantId);
-				} else {
-					LOG.warn(Markers.ERR, "Creating the subtenant: got empty subtenantID");
-				}
-			} else {
-				LOG.warn(Markers.ERR, "Creating the subtenant: got response {}",
-					getSubtenantResp.status().toString()
-				);
-			}
-			
-			getSubtenantResp.release();
-		}
-
-		return authToken;
-	}
-
+	
 	@Override
 	protected final void appendHandlers(final ChannelPipeline pipeline) {
 		super.appendHandlers(pipeline);
@@ -251,26 +243,35 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
 		final Credential credential
 	) {
-		final Mac mac;
-		if(secret == null) {
-			if(this.secret == null) {
-				return; // no secret key is used, do not sign the requests at all
-			}
-			mac = macBySecret.computeIfAbsent(this.secret, GET_MAC_BY_SECRET);
+		final String authToken;
+		final String uid;
+		final String secret;
+		if(credential != null) {
+			authToken = authTokens.get(credential);
+			uid = credential.getUid();
+			secret = credential.getSecret();
+		} else if(this.credential != null) {
+			authToken = authTokens.get(this.credential);
+			uid = this.credential.getUid();
+			secret = this.credential.getSecret();
 		} else {
-			mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
+			authToken = null;
+			uid = null;
+			secret = null;
 		}
 		
-		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
-		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
-		httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
-		if(uid != null && ! uid.isEmpty()) {
+		if(uid != null && !uid.isEmpty()) {
 			if(authToken != null && !authToken.isEmpty()) {
 				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
 			} else {
 				httpHeaders.set(KEY_X_EMC_UID, uid);
 			}
 		}
+		
+		final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
+		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+		httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
 	}
 
 	private String getCanonical(

@@ -4,6 +4,8 @@ import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.composite.data.BasicCompositeDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.storage.BasicCredential;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,14 +46,14 @@ implements DataIoTaskBuilder<I, O> {
 		final String uid;
 		if(dataItem.size() > sizeThreshold) {
 			return (O) new BasicCompositeDataIoTask<>(
-				originCode, ioType, dataItem, inputPath,
-				getNextOutputPath(), uid = getNextUid(), getNextSecret(uid),
+				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount, sizeThreshold
 			);
 		} else {
 			return (O) new BasicDataIoTask<>(
-				originCode, ioType, dataItem, inputPath,
-				getNextOutputPath(), uid = getNextUid(), getNextSecret(uid),
+				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount
 			);
 		}
@@ -66,16 +68,16 @@ implements DataIoTaskBuilder<I, O> {
 			if(nextItem.size() > sizeThreshold) {
 				tasks.add(
 					(O) new BasicCompositeDataIoTask<>(
-						originCode, ioType, nextItem, inputPath,
-						getNextOutputPath(), uid = getNextUid(), getNextSecret(uid),
+						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 						fixedRanges, randomRangesCount, sizeThreshold
 					)
 				);
 			} else {
 				tasks.add(
 					(O) new BasicDataIoTask<>(
-						originCode, ioType, nextItem, inputPath,
-						getNextOutputPath(), uid = getNextUid(), getNextSecret(uid),
+						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 						fixedRanges, randomRangesCount
 					)
 				);

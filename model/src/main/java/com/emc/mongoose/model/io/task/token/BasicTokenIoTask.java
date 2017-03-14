@@ -3,6 +3,7 @@ package com.emc.mongoose.model.io.task.token;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.TokenItem;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,10 +24,9 @@ implements TokenIoTask<I> {
 	}
 
 	public BasicTokenIoTask(
-		final int originCode, final IoType ioType, final I item, final String uid,
-		final String secret
+		final int originCode, final IoType ioType, final I item, final Credential credential
 	) {
-		super(originCode, ioType, item, null, null, uid, secret);
+		super(originCode, ioType, item, null, null, credential);
 	}
 	
 	protected BasicTokenIoTask(final BasicTokenIoTask<I> other) {

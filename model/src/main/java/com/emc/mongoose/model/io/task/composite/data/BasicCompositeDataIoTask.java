@@ -6,6 +6,7 @@ import com.emc.mongoose.model.io.task.data.BasicDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.BasicPartialDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -35,11 +36,11 @@ implements CompositeDataIoTask<I> {
 
 	public BasicCompositeDataIoTask(
 		final int originCode, final IoType ioType, final I item, final String srcPath,
-		final String dstPath, final String uid, final String secret,
-		final List<ByteRange> fixedRanges, final int randomRangesCount, final long sizeThreshold
+		final String dstPath, final Credential credential, final List<ByteRange> fixedRanges,
+		final int randomRangesCount, final long sizeThreshold
 	) {
 		super(
-			originCode, ioType, item, srcPath, dstPath, uid, secret, fixedRanges, randomRangesCount
+			originCode, ioType, item, srcPath, dstPath, credential, fixedRanges, randomRangesCount
 		);
 		this.sizeThreshold = sizeThreshold;
 	}
@@ -74,7 +75,7 @@ implements CompositeDataIoTask<I> {
 		for(int i = 0; i < equalPartsCount; i ++) {
 			nextPart = item.slice(i * sizeThreshold, sizeThreshold);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				originCode, ioType, nextPart, srcPath, dstPath, uid, secret, i, this
+				originCode, ioType, nextPart, srcPath, dstPath, credential, i, this
 			);
 			nextSubTask.setSrcPath(srcPath);
 			subTasks.add(nextSubTask);
@@ -82,7 +83,7 @@ implements CompositeDataIoTask<I> {
 		if(tailPartSize > 0) {
 			nextPart = item.slice(equalPartsCount * sizeThreshold , tailPartSize);
 			nextSubTask = new BasicPartialDataIoTask<>(
-				originCode, ioType, nextPart, srcPath, dstPath, uid, secret, equalPartsCount, this
+				originCode, ioType, nextPart, srcPath, dstPath, credential, equalPartsCount, this
 			);
 			nextSubTask.setSrcPath(srcPath);
 			subTasks.add(nextSubTask);

@@ -1,10 +1,11 @@
 package com.emc.mongoose.model.io.task;
 
 import com.emc.mongoose.common.supply.BatchSupplier;
-import com.emc.mongoose.common.supply.CircularSetSupplier;
 import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.storage.BasicCredential;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,8 +124,8 @@ implements IoTaskBuilder<I, O> {
 	throws IOException {
 		final String uid;
 		return (O) new BasicIoTask<>(
-			originCode, ioType, item, inputPath, getNextOutputPath(), uid = getNextUid(),
-			getNextSecret(uid)
+			originCode, ioType, item, inputPath, getNextOutputPath(),
+			Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 		);
 	}
 
@@ -136,8 +137,8 @@ implements IoTaskBuilder<I, O> {
 		for(final I item : items) {
 			tasks.add(
 				(O) new BasicIoTask<>(
-					originCode, ioType, item, inputPath, getNextOutputPath(), uid = getNextUid(),
-					getNextSecret(uid)
+					originCode, ioType, item, inputPath, getNextOutputPath(),
+					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);
 		}

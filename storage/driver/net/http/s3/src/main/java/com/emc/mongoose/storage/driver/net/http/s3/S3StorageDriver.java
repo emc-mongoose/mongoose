@@ -105,6 +105,8 @@ extends HttpStorageDriverBase<I, O> {
 				return new StringBuilder();
 			}
 		};
+	
+	private final Map<String, Mac> macBySecret = new HashMap<>(1);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
 		try {
@@ -116,17 +118,16 @@ extends HttpStorageDriverBase<I, O> {
 		}
 	};
 	
-	private final Map<String, Mac> macBySecret = new HashMap<>(1);
-	
 	public S3StorageDriver(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
+		requestAuthTokenFunc = null; // do not use
 	}
 	
 	@Override
-	protected final boolean createPath(final String path) {
+	protected final String requestNewPath(final String path) {
 
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
@@ -146,10 +147,10 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch(final InterruptedException e) {
-			return false;
+			return null;
 		} catch(final ConnectException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-			return false;
+			return null;
 		}
 
 		boolean bucketExistedBefore = true;
@@ -182,10 +183,10 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketResp = executeHttpRequest(putBucketReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
@@ -193,7 +194,7 @@ extends HttpStorageDriverBase<I, O> {
 					Markers.ERR, "The bucket creating response is: {}",
 					putBucketResp.status().toString()
 				);
-				return false;
+				return null;
 			}
 			putBucketResp.release();
 			if(fsAccess) {
@@ -212,10 +213,10 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
 		} catch(final InterruptedException e) {
-			return false;
+			return null;
 		} catch(final ConnectException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-			return false;
+			return null;
 		}
 
 		final boolean versioningEnabled;
@@ -224,7 +225,7 @@ extends HttpStorageDriverBase<I, O> {
 				Markers.ERR, "The bucket versioning checking response is: {}",
 				getBucketVersioningResp.status().toString()
 			);
-			return false;
+			return null;
 		} else {
 			final String content = getBucketVersioningResp
 				.content()
@@ -251,10 +252,10 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
@@ -262,7 +263,7 @@ extends HttpStorageDriverBase<I, O> {
 					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
-				return false;
+				return null;
 			}
 			putBucketVersioningResp.release();
 		} else if(versioning && !versioningEnabled) {
@@ -278,10 +279,10 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
@@ -289,14 +290,19 @@ extends HttpStorageDriverBase<I, O> {
 					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
-				return false;
+				return null;
 			}
 			putBucketVersioningResp.release();
 		}
 
-		return true;
+		return path;
 	}
-
+	
+	@Override
+	protected final String requestNewAuthToken(final Credential credential) {
+		throw new AssertionError("Should not be invoked");
+	}
+	
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
@@ -601,26 +607,24 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
 		final Credential credential
 	) {
-		String secret = credential.getSecret();
-		if(secret == null) {
+		final String uid;
+		final String secret;
+		if(credential != null) {
+			uid = credential.getUid();
+			secret = credential.getSecret();
+		} else if(this.credential != null) {
+			uid = this.credential.getUid();
 			secret = this.credential.getSecret();
+		} else {
+			return;
 		}
-		if(secret == null) {
-			return; // no secret key is used, do not sign the requests at all
-		}
-
-		final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
 		
+		if(uid == null || secret == null) {
+			return;
+		}
+		final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
-		String uid = credential.getUid();
-		if(uid == null) {
-			uid = this.credential.getUid();
-		}
-		if(uid == null) {
-			return; // no user id is used, do not sign the requests at all
-		}
-
 		httpHeaders.set(
 			HttpHeaderNames.AUTHORIZATION,
 			AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)

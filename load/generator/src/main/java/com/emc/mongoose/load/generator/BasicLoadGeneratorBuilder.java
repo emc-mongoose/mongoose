@@ -23,7 +23,6 @@ import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
-
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
@@ -37,6 +36,7 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConf
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +44,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -195,8 +194,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				secretSupplier = new ConstantStringSupplier(secret);
 			}
 			
-			ioTaskBuilder
-				.setSecretSupplier(secretSupplier);
+			ioTaskBuilder.setSecretSupplier(secretSupplier);
 		}
 		
 		ioTaskBuilder
@@ -204,25 +202,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 			.setInputPath(itemInputPath)
 			.setOutputPathSupplier(outputPathSupplier)
 			.setUidSupplier(uidSupplier);
-
-		// prevent the storage connections if noop
-		// also don't create token if token load is configured
-		if(!IoType.NOOP.equals(ioType) && !ItemType.TOKEN.equals(itemType)) {
-			String authToken = null;
-			try {
-				for(final StorageDriver<I, O> nextDriver : storageDrivers) {
-					if(authToken == null) {
-						authToken = nextDriver.getAuthToken();
-					} else {
-						// distribute the auth token among the storage drivers
-						nextDriver.setAuthToken(authToken);
-					}
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to communicate with remote storage driver");
-			}
-		}
 
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {

@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.unit;
+package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.io.IoType;

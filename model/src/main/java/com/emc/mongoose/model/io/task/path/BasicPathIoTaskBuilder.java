@@ -2,6 +2,7 @@ package com.emc.mongoose.model.io.task.path;
 
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.item.PathItem;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +20,8 @@ implements PathIoTaskBuilder<I, O> {
 	throws IOException {
 		final String uid;
 		return (O) new BasicPathIoTask<>(
-			originCode, ioType, pathItem, uid = getNextUid(), getNextSecret(uid)
+			originCode, ioType, pathItem,
+			Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 		);
 	}
 	
@@ -31,7 +33,8 @@ implements PathIoTaskBuilder<I, O> {
 		for(final I nextItem : items) {
 			tasks.add(
 				(O) new BasicPathIoTask<>(
-					originCode, ioType, nextItem, uid = getNextUid(), getNextSecret(uid)
+					originCode, ioType, nextItem,
+					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);
 		}

@@ -12,6 +12,7 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.data.DataCorruptionException;
 import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -33,7 +34,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.rmi.RemoteException;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
@@ -139,16 +139,24 @@ implements FileStorageDriver<I, O> {
 				return null;
 			}
 		};
+		
+		requestAuthTokenFunc = null; // do not use
 	}
 	
 	@Override
-	protected final boolean createPath(final String path) {
+	protected final String requestNewPath(final String path) {
 		final File pathFile = FS.getPath(path).toFile();
 		if(!pathFile.exists()) {
-			return pathFile.mkdirs();
-		} else {
-			return true;
+			if(!pathFile.mkdirs()) {
+				return null;
+			}
 		}
+		return path;
+	}
+	
+	@Override
+	protected final String requestNewAuthToken(final Credential credential) {
+		throw new AssertionError("Should not be invoked");
 	}
 	
 	@Override

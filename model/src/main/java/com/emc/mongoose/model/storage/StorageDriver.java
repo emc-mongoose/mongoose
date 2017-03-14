@@ -42,12 +42,6 @@ extends Daemon, Output<O>, Remote {
 		final I lastPrevItem, final int count
 	) throws IOException;
 
-	String getAuthToken()
-	throws RemoteException;
-
-	void setAuthToken(final String authToken)
-	throws RemoteException;
-
 	List<O> getResults()
 	throws IOException;
 

@@ -3,6 +3,7 @@ package com.emc.mongoose.model.io.task.path;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.PathItem;
+import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,10 +25,9 @@ implements PathIoTask<I> {
 	}
 	
 	public BasicPathIoTask(
-		final int originCode, final IoType ioType, final I item, final String uid,
-		final String secret
+		final int originCode, final IoType ioType, final I item, final Credential credential
 	) {
-		super(originCode, ioType, item, null, null, uid, secret);
+		super(originCode, ioType, item, null, null, credential);
 		item.reset();
 	}
 	

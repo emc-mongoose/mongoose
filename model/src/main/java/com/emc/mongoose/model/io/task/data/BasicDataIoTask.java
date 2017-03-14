@@ -5,6 +5,8 @@ import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.storage.Credential;
+
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
@@ -43,10 +45,10 @@ implements DataIoTask<T> {
 	
 	public BasicDataIoTask(
 		final int originCode, final IoType ioType, final T item, final String srcPath,
-		final String dstPath, final String uid, final String secret,
+		final String dstPath, final Credential credential,
 		final List<ByteRange> fixedRanges, final int randomRangesCount
 	) {
-		super(originCode, ioType, item, srcPath, dstPath, uid, secret);
+		super(originCode, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		item.reset();
