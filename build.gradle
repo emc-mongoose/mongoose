@@ -44,7 +44,7 @@ ext {
 	mutualProjects = subprojects.findAll {
 		it != project("load") &&
 		it != project("storage") &&
-		it != project("storage:driver") &&
+		it != project("storage:driver")// &&
 		it != project("storage:driver:net") &&
 		it != project("storage:driver:net:http") &&
 		it != project("storage:driver:nio")
@@ -110,73 +110,6 @@ subprojects {
 		archives javadocJar
 	}
 
-	/*task pomFile {
-		doLast {
-			if(!(project in mutualProjects)) {
-				return
-			}
-
-			LinkedList nameParts = new LinkedList()
-			collectName(project, nameParts)
-
-			LinkedList externalDeps = new LinkedList()
-			configurations.compileOnly.dependencies.each {
-				if(it instanceof ProjectDependency) {
-					LinkedList depNameParts = new LinkedList()
-					collectName(it.dependencyProject, depNameParts)
-					def depName = depNameParts.join("-")
-					externalDeps.add(
-						project.dependencies.create("${it.group}:${depName}:${version}")
-					)
-				}
-			}
-
-			pom {
-
-				name = nameParts.join("-")
-				description = project.description
-				artifactId = name
-
-				project {
-					url "https://github.com/emc-mongoose/mongoose/wiki"
-
-					scm {
-						connection "https://github.com/emc-mongoose/mongoose.git"
-						developerConnection "https://github.com/emc-mongoose/mongoose.git"
-						url "https://github.com/emc-mongoose/mongoose.git"
-					}
-
-					licenses {
-						license {
-							name "The MIT License (MIT)"
-							url "https://github.com/emc-mongoose/mongoose/wiki/License"
-						}
-					}
-
-					developers {
-						developer {
-							id "akurilov"
-							name "Andrey Kurilov"
-							email "akurilov123@gmail.com"
-						}
-					}
-				}
-			}
-			.withXml {
-				def depsNode = asNode().dependencies
-				for(final String pomDep : pomDeps) {
-					def depNode = depsNode.appendNode("dependency")
-					depNode.appendNode("groupId", pomDep.split(":")[0])
-					depNode.appendNode("artifactId", pomDep.split(":")[1])
-					depNode.appendNode("version", pomDep.split(":")[2])
-					depNode.appendNode("scope", "compile")
-				}
-			}
-
-			//pom.writeTo("$buildDir/pom.xml")
-		}
-	}*/
-
 	test {
 		maxHeapSize "2g"
 		testLogging {
@@ -200,16 +133,6 @@ subprojects {
 
 		LinkedList nameParts = new LinkedList()
 		collectName(project, nameParts)
-
-		LinkedList pomDeps = new LinkedList()
-		configurations.compileOnly.dependencies.each {
-			if(it instanceof ProjectDependency) {
-				LinkedList depNameParts = new LinkedList()
-				collectName(it.dependencyProject, depNameParts)
-				def depName = depNameParts.join("-")
-				pomDeps.add("${it.group}:${depName}:${version}")
-			}
-		}
 
 		def ossrhUsername = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
 		def ossrhPassword = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
@@ -257,17 +180,6 @@ subprojects {
 								email "akurilov123@gmail.com"
 							}
 						}
-					}
-				}
-				.withXml {
-					def depsNode = asNode().getAt("dependencies")[]
-					pomDeps.each {
-						def depNode = depsNode.appendNode("dependency")
-						def pomDepParts = it.split(":")
-						depNode.appendNode("groupId", pomDepParts[0])
-						depNode.appendNode("artifactId", pomDepParts[1])
-						depNode.appendNode("version", pomDepParts[2])
-						depNode.appendNode("scope", "compile")
 					}
 				}
 			}

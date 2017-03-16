@@ -10,10 +10,6 @@ dependencies {
 	compileOnly(
 		project(":common"),
 	)
-
-	testCompile(
-		project(":common"),
-	)
 }
 
 configurations.compileOnly.dependencies.each { it.transitive = false }

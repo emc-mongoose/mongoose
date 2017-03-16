@@ -35,15 +35,6 @@ dependencies {
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		"org.javassist:javassist:${depVersion.javassist}",
 	)
-
-	testCompile(
-		project(":common"),
-		"org.jmdns:jmdns:3.5.1"
-	)
-
-	testRuntime(
-		"org.slf4j:slf4j-simple:1.7.16"
-	)
 }
 
 jar {
