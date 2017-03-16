@@ -1,6 +1,7 @@
 import groovy.json.JsonSlurper
 
 description = "Mongoose is a high-load storage performance testing tool"
+group = "com.github.emc-mongoose"
 
 buildscript {
 	dependencies {
@@ -13,11 +14,11 @@ buildscript {
 
 allprojects {
 	apply plugin: "java"
-	group = "com.github.emc-mongoose"
 	version = defineVersion()
 }
 
 ext {
+
 	depVersion = [
 		commonsCodec : "1.10",
 		commonsCollections : "4.1",
@@ -29,18 +30,7 @@ ext {
 		metrics : "3.1.2",
 		netty : "4.1.6.Final",
 	]
-	setClassPath = {
-		configurations -> [
-			configurations.runtime.collect {
-				file -> [
-					"lib", file.name
-				].join(File.separator)
-			}.join(" "),
-			(configurations.compileOnly - configurations.runtime).collect {
-				file -> file.name
-			}.join(" ")
-		].join(" ")
-	}
+
 	mutualProjects = subprojects.findAll {
 		it != project("load") &&
 		it != project("storage") &&
@@ -49,9 +39,24 @@ ext {
 		it != project("storage:driver:net:http") &&
 		it != project("storage:driver:nio")
 	}
+
+	setClassPath = {
+		configurations -> [
+
+			configurations.runtime
+				.collect { file -> [ "lib", file.name ].join(File.separator) }
+				.join(" "),
+
+			(configurations.compileComponent - configurations.runtime)
+				.collect { file -> file.name }
+				.join(" ")
+
+		].join(" ")
+	}
 }
 
 subprojects {
+
 	apply plugin: "maven"
 	apply plugin: "signing"
 	apply plugin: "com.google.osdetector"
@@ -67,6 +72,21 @@ subprojects {
 			sourceSets*.resources.srcDirs*.each { it.mkdirs() }
 		}
 	)
+
+	configurations {
+		compileComponent {
+			extendsFrom configurations.compile
+			/*resolutionStrategy {
+				dependencySubstitution.all {
+					DependencySubstitution depSubst ->
+						if(depSubst.requested instanceof ProjectComponentSelector) {
+							def depName = "${depSubst.requested.projectPath}".replace(':', '-');
+							depSubst.useTarget "${rootProject.group}:${rootProject.name}${depName}:${rootProject.version}"
+						}
+				}
+			}*/
+		}
+	}
 
 	repositories {
 		mavenCentral()
@@ -152,9 +172,10 @@ subprojects {
 
 				pom {
 
+					groupId = rootProject.group
 					name = nameParts.join("-")
-					description = project.description
 					artifactId = name
+					description = project.description
 
 					project {
 						url "https://github.com/emc-mongoose/mongoose/wiki"

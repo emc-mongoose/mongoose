@@ -2,7 +2,7 @@ description = "mongoose-storage-mock"
 
 dependencies {
 
-	compileOnly(
+	compileComponent(
 		project(":common"),
 		project(":model"),
 		project(":storage:driver:net:base"),

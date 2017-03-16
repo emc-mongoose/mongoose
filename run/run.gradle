@@ -8,7 +8,7 @@ dependencies {
 		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
 	)
 
-	compileOnly(
+	compileComponent(
 		project(":common"),
 		project(":model"),
 		project(":load:monitor"),

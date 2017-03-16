@@ -10,7 +10,7 @@ dependencies {
 		//"it.unimi.dsi:fastutil:7.0.13"
 	)
 
-	compileOnly(
+	compileComponent(
 		project(":common"),
 		project(":ui"),
 		project(":model"),

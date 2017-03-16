@@ -7,7 +7,7 @@ dependencies {
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
-	compileOnly(
+	compileComponent(
 		project(":common"),
 		project(":model"),
 		project(":ui")

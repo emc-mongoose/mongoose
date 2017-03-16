@@ -2,7 +2,7 @@ description = "mongoose-storage-driver-net-http-base"
 
 dependencies {
 
-	compileOnly(
+	compileComponent(
 		project(":common"),
 		project(":model"),
 		project(":ui"),

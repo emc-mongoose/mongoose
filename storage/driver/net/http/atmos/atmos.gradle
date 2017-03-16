@@ -1,7 +1,7 @@
 description = "mongoose-storage-driver-net-http-atmos"
 
 dependencies {
-	compileOnly(
+	compileComponent(
 		project(":common"),
 		project(":model"),
 		project(":ui"),
