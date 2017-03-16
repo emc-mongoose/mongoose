@@ -69,18 +69,20 @@ subprojects {
 		}
 	)
 
-	configurations {
+	/*configurations {
 		pomFile {
 			extendsFrom configurations.compileOnly
-			resolutionStrategy.dependencySubstitution.all {
-				DependencySubstitution depSubst ->
-					if(depSubst.requested instanceof ProjectComponentSelector) {
-						def depName = "${depSubst.requested.projectPath}".replace(':', '-');
-						depSubst.useTarget "${rootProject.group}:${rootProject.name}${depName}:${rootProject.version}"
-					}
+			resolutionStrategy {
+				dependencySubstitution.all {
+					DependencySubstitution depSubst ->
+						if(depSubst.requested instanceof ProjectComponentSelector) {
+							def depName = "${depSubst.requested.projectPath}".replace(':', '-');
+							depSubst.useTarget "${rootProject.group}:${rootProject.name}${depName}:${rootProject.version}"
+						}
+				}
 			}
 		}
-	}
+	}*/
 
 	repositories {
 		mavenCentral()
@@ -128,11 +130,16 @@ subprojects {
 			if(!(project in mutualProjects)) {
 				return
 			}
-			pom {
-				configurations.pomFile.each {
-					println it
+			LinkedList pomDeps = new LinkedList()
+			configurations.compileOnly.dependencies.each {
+				if(it instanceof ProjectDependency) {
+					LinkedList names = new LinkedList()
+					collectName(it.dependencyProject, names)
+					def depName = names.join("-")
+					pomDeps.add("${it.group}:${depName}:${it.version}")
 				}
-
+			}
+			pom {
 				LinkedList names = new LinkedList()
 				collectName(project, names)
 
@@ -162,6 +169,10 @@ subprojects {
 							email "akurilov123@gmail.com"
 						}
 					}
+				}
+
+				for(String pomDep : pomDeps) {
+					dependencies.
 				}
 
 			}
