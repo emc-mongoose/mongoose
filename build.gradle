@@ -201,7 +201,7 @@ subprojects {
 		LinkedList nameParts = new LinkedList()
 		collectName(project, nameParts)
 
-		/*LinkedList pomDeps = new LinkedList()
+		LinkedList pomDeps = new LinkedList()
 		configurations.compileOnly.dependencies.each {
 			if(it instanceof ProjectDependency) {
 				LinkedList depNameParts = new LinkedList()
@@ -209,7 +209,7 @@ subprojects {
 				def depName = depNameParts.join("-")
 				pomDeps.add("${it.group}:${depName}:${version}")
 			}
-		}*/
+		}
 
 		def ossrhUsername = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
 		def ossrhPassword = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
@@ -259,7 +259,7 @@ subprojects {
 						}
 					}
 				}
-				/*.withXml {
+				.withXml {
 					def depsNode = asNode().getAt("dependencies")[]
 					pomDeps.each {
 						def depNode = depsNode.appendNode("dependency")
@@ -269,7 +269,7 @@ subprojects {
 						depNode.appendNode("version", pomDepParts[2])
 						depNode.appendNode("scope", "compile")
 					}
-				}*/
+				}
 			}
 		}
 	}
