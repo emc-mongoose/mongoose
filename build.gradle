@@ -69,21 +69,6 @@ subprojects {
 		}
 	)
 
-	/*configurations {
-		pomFile {
-			extendsFrom configurations.compileOnly
-			resolutionStrategy {
-				dependencySubstitution.all {
-					DependencySubstitution depSubst ->
-						if(depSubst.requested instanceof ProjectComponentSelector) {
-							def depName = "${depSubst.requested.projectPath}".replace(':', '-');
-							depSubst.useTarget "${rootProject.group}:${rootProject.name}${depName}:${rootProject.version}"
-						}
-				}
-			}
-		}
-	}*/
-
 	repositories {
 		mavenCentral()
 	}
@@ -125,27 +110,33 @@ subprojects {
 		archives javadocJar
 	}
 
-	task pomFile {
+	/*task pomFile {
 		doLast {
 			if(!(project in mutualProjects)) {
 				return
 			}
-			LinkedList pomDeps = new LinkedList()
+
+			LinkedList nameParts = new LinkedList()
+			collectName(project, nameParts)
+
+			LinkedList externalDeps = new LinkedList()
 			configurations.compileOnly.dependencies.each {
 				if(it instanceof ProjectDependency) {
-					LinkedList names = new LinkedList()
-					collectName(it.dependencyProject, names)
-					def depName = names.join("-")
-					pomDeps.add("${it.group}:${depName}:${it.version}")
+					LinkedList depNameParts = new LinkedList()
+					collectName(it.dependencyProject, depNameParts)
+					def depName = depNameParts.join("-")
+					externalDeps.add(
+						project.dependencies.create("${it.group}:${depName}:${version}")
+					)
 				}
 			}
-			pom {
-				LinkedList names = new LinkedList()
-				collectName(project, names)
 
-				name = names.join("-")
+			pom {
+
+				name = nameParts.join("-")
 				description = project.description
 				artifactId = name
+
 				project {
 					url "https://github.com/emc-mongoose/mongoose/wiki"
 
@@ -170,15 +161,21 @@ subprojects {
 						}
 					}
 				}
-
-				for(String pomDep : pomDeps) {
-					dependencies.
-				}
-
 			}
-				.writeTo("$buildDir/pom.xml")
+			.withXml {
+				def depsNode = asNode().dependencies
+				for(final String pomDep : pomDeps) {
+					def depNode = depsNode.appendNode("dependency")
+					depNode.appendNode("groupId", pomDep.split(":")[0])
+					depNode.appendNode("artifactId", pomDep.split(":")[1])
+					depNode.appendNode("version", pomDep.split(":")[2])
+					depNode.appendNode("scope", "compile")
+				}
+			}
+
+			//pom.writeTo("$buildDir/pom.xml")
 		}
-	}
+	}*/
 
 	test {
 		maxHeapSize "2g"
@@ -201,6 +198,19 @@ subprojects {
 			return
 		}
 
+		LinkedList nameParts = new LinkedList()
+		collectName(project, nameParts)
+
+		/*LinkedList pomDeps = new LinkedList()
+		configurations.compileOnly.dependencies.each {
+			if(it instanceof ProjectDependency) {
+				LinkedList depNameParts = new LinkedList()
+				collectName(it.dependencyProject, depNameParts)
+				def depName = depNameParts.join("-")
+				pomDeps.add("${it.group}:${depName}:${version}")
+			}
+		}*/
+
 		def ossrhUsername = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
 		def ossrhPassword = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
 
@@ -220,13 +230,10 @@ subprojects {
 
 				pom {
 
-					LinkedList names = new LinkedList()
-					collectName(project, names)
-
-					name = names.join("-")
+					name = nameParts.join("-")
 					description = project.description
 					artifactId = name
-					groupId = "com.github.emc-mongoose"
+
 					project {
 						url "https://github.com/emc-mongoose/mongoose/wiki"
 
@@ -252,6 +259,17 @@ subprojects {
 						}
 					}
 				}
+				/*.withXml {
+					def depsNode = asNode().getAt("dependencies")[]
+					pomDeps.each {
+						def depNode = depsNode.appendNode("dependency")
+						def pomDepParts = it.split(":")
+						depNode.appendNode("groupId", pomDepParts[0])
+						depNode.appendNode("artifactId", pomDepParts[1])
+						depNode.appendNode("version", pomDepParts[2])
+						depNode.appendNode("scope", "compile")
+					}
+				}*/
 			}
 		}
 	}
