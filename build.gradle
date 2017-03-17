@@ -1,7 +1,6 @@
 import groovy.json.JsonSlurper
 
 description = "Mongoose is a high-load storage performance testing tool"
-group = "com.github.emc-mongoose"
 
 buildscript {
 	dependencies {
@@ -14,6 +13,7 @@ buildscript {
 
 allprojects {
 	apply plugin: "java"
+	group = "com.github.emc-mongoose"
 	version = defineVersion()
 }
 
@@ -42,16 +42,18 @@ ext {
 
 	setClassPath = {
 		configurations -> [
-
 			configurations.runtime
-				.collect { file -> [ "lib", file.name ].join(File.separator) }
+				.collect { file ->
+					// it's 3rd party if jar file name doesn't contain the root project name
+					if(-1 == file.name.indexOf(rootProject.name)) {
+						["lib", file.name].join(File.separator)
+					} else {
+						file.name
+					}
+				}
 				.join(" "),
-
-			(configurations.compileComponent - configurations.runtime)
-				.collect { file -> file.name }
-				.join(" ")
-
-		].join(" ")
+		]
+			.join(" ")
 	}
 }
 
@@ -72,21 +74,6 @@ subprojects {
 			sourceSets*.resources.srcDirs*.each { it.mkdirs() }
 		}
 	)
-
-	configurations {
-		compileComponent {
-			extendsFrom configurations.compile
-			/*resolutionStrategy {
-				dependencySubstitution.all {
-					DependencySubstitution depSubst ->
-						if(depSubst.requested instanceof ProjectComponentSelector) {
-							def depName = "${depSubst.requested.projectPath}".replace(':', '-');
-							depSubst.useTarget "${rootProject.group}:${rootProject.name}${depName}:${rootProject.version}"
-						}
-				}
-			}*/
-		}
-	}
 
 	repositories {
 		mavenCentral()
@@ -153,8 +140,10 @@ subprojects {
 		LinkedList nameParts = new LinkedList()
 		collectName(project, nameParts)
 
-		def ossrhUsername = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
-		def ossrhPassword = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
+		def ossrhUsername = project.hasProperty("ossrhUsername") ?
+			project.property("ossrhUsername") : null
+		def ossrhPassword = project.hasProperty("ossrhPassword") ?
+			project.property("ossrhPassword") : null
 
 		repositories {
 			mavenDeployer {

@@ -1,15 +1,12 @@
 description = "mongoose-storage-mock"
 
 dependencies {
-
-	compileComponent(
+	compile(
 		project(":common"),
 		project(":model"),
 		project(":storage:driver:net:base"),
-		project(":ui")
-	)
+		project(":ui"),
 
-	compile(
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"org.apache.commons:commons-collections4:${depVersion.commonsCollections}",
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",

@@ -3,18 +3,15 @@ description = "mongoose-run"
 dependencies {
 
 	compile(
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
-		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
-	)
-
-	compileComponent(
 		project(":common"),
 		project(":model"),
 		project(":load:monitor"),
 		project(":load:generator"),
 		project(":storage:driver:builder"),
 		project(":ui"),
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
 	)
 
 	runtime(

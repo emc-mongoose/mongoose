@@ -2,17 +2,12 @@ description = "mongoose-model"
 
 dependencies {
 	compile(
+		project(":common"),
 		"org.apache.commons:commons-collections4:${depVersion.commonsCollections}",
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
 		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
 	)
-
-	compileComponent(
-		project(":common"),
-	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {

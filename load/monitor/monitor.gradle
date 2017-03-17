@@ -3,6 +3,9 @@ description = "mongoose-load-monitor"
 dependencies {
 
 	compile(
+		project(":common"),
+		project(":ui"),
+		project(":model"),
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
@@ -10,18 +13,10 @@ dependencies {
 		//"it.unimi.dsi:fastutil:7.0.13"
 	)
 
-	compileComponent(
-		project(":common"),
-		project(":ui"),
-		project(":model"),
-	)
-
 	runtime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {

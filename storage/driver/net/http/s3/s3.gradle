@@ -1,19 +1,11 @@
 description = "mongoose-storage-driver-net-http-s3"
 
 dependencies {
-	compileComponent(
+	compile(
 		project(":common"),
 		project(":model"),
 		project(":ui"),
-		project(":storage:driver:base"),
-		project(":storage:driver:net:base"),
 		project(":storage:driver:net:http:base"),
-	)
-
-	compile(
-
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 
 		"io.netty:netty-common:${depVersion.netty}",
 		"io.netty:netty-buffer:${depVersion.netty}",
@@ -27,8 +19,6 @@ dependencies {
 		"org.javassist:javassist:${depVersion.javassist}",
 	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {
