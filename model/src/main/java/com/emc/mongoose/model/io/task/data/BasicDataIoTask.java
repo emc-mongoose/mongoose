@@ -51,7 +51,7 @@ implements DataIoTask<T> {
 		super(originCode, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
-		item.reset();
+		reset();
 		contentSrc = item.getContentSrc();
 	}
 
