@@ -24,11 +24,12 @@ ext {
 		commonsCollections : "4.1",
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
-		jackson : "2.8.4",
+		jackson : "2.8.7",
 		javassist : "3.21.0-GA",
-		log4j : "2.7",
-		metrics : "3.1.2",
-		netty : "4.1.6.Final",
+		log4j : "2.8.1",
+		metrics : "3.2.1",
+		nagaina: "[3.3,)",
+		netty : "4.1.9.Final",
 	]
 
 	mutualProjects = subprojects.findAll {
@@ -130,8 +131,7 @@ subprojects {
 	uploadArchives {
 
 		// prevent the execution for empty (not leaf) subprojects and tests packages
-		if(project.name.contains("tests") |
-			!(project in mutualProjects)) {
+		if(project.name.contains("tests") || !(project in mutualProjects)) {
 			return
 		}
 

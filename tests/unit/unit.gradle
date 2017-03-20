@@ -18,7 +18,6 @@ dependencies {
 		project(":storage:driver:nio"),
 		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
-		project(":storage:mock"),
 		project(":run"),
 		"junit:junit:4.12",
 		"com.github.fge:json-schema-validator:2.2.6",
