@@ -33,7 +33,8 @@ ext {
 
 	mutualProjects = subprojects.findAll {
 		it != project("load") &&
-		it != project("storage")
+		it != project("storage") &&
+		it != project("tests")
 	}
 
 	setClassPath = {
@@ -121,15 +122,16 @@ subprojects {
 		}
 	}
 
-	/*signing {
+	signing {
 		sign configurations.archives
-	}*/
+	}
 
 	// see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
 
-		// prevent the execution for empty (not leaf) subprojects
-		if(!(project in mutualProjects)) {
+		// prevent the execution for empty (not leaf) subprojects and tests packages
+		if(project.name.contains("tests") |
+			!(project in mutualProjects)) {
 			return
 		}
 
@@ -144,7 +146,7 @@ subprojects {
 		repositories {
 			mavenDeployer {
 				beforeDeployment {
-					//MavenDeployment deployment -> signing.signPom(deployment)
+					MavenDeployment deployment -> signing.signPom(deployment)
 				}
 
 				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
@@ -160,9 +162,10 @@ subprojects {
 					groupId = rootProject.group
 					name = nameParts.join("-")
 					artifactId = name
-					description = project.description
 
 					project {
+						description = rootProject.description
+
 						url "https://github.com/emc-mongoose/mongoose/wiki"
 
 						scm {
@@ -206,7 +209,9 @@ task dist(type: Tar) {
 		}
 		into("lib") {
 			for(Project p: mutualProjects) {
-				from p.configurations.runtime
+				from p.configurations.runtime {
+					exclude "${rootProject.name}*.jar"
+				}
 			}
 		}
 		for(Project p: mutualProjects) {
@@ -217,7 +222,6 @@ task dist(type: Tar) {
 		}
 	}
 }
-
 
 task printVersion {
 	group = "versioning"
