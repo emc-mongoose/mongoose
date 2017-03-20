@@ -5,7 +5,7 @@ dependencies {
 		project(":common"),
 		project(":model"),
 		project(":ui"),
-		project(":storage:driver:net:http:base"),
+		project(":storage:driver:net:http"),
 
 		"io.netty:netty-common:${depVersion.netty}",
 		"io.netty:netty-buffer:${depVersion.netty}",

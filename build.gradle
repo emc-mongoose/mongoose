@@ -33,11 +33,7 @@ ext {
 
 	mutualProjects = subprojects.findAll {
 		it != project("load") &&
-		it != project("storage") &&
-		it != project("storage:driver") &&
-		it != project("storage:driver:net") &&
-		it != project("storage:driver:net:http") &&
-		it != project("storage:driver:nio")
+		it != project("storage")
 	}
 
 	setClassPath = {

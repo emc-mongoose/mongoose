@@ -1,11 +1,11 @@
-description = "mongoose-storage-driver-nio-base"
+description = "mongoose-storage-driver-nio"
 
 dependencies {
 	compile(
 		project(":common"),
 		project(":model"),
 		project(":ui"),
-		project(":storage:driver:base"),
+		project(":storage:driver"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)

@@ -4,7 +4,7 @@ dependencies {
 	compile(
 		project(":common"),
 		project(":model"),
-		project(":storage:driver:net:base"),
+		project(":storage:driver:net"),
 		project(":ui"),
 
 		"commons-lang:commons-lang:${depVersion.commonsLang}",

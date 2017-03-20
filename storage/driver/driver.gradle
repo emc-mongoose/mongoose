@@ -1,4 +1,4 @@
-description = "mongoose-storage-driver-base"
+description = "mongoose-storage-driver"
 
 dependencies {
 	compile(
