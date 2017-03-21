@@ -23,8 +23,6 @@ dependencies {
 	)
 }
 
-configurations.compileOnly.dependencies.each { it.transitive = false }
-
 jar {
 	manifest {
 		attributes (

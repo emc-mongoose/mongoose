@@ -20,8 +20,6 @@ dependencies {
 	)
 }
 
-configurations.compileOnly.dependencies.each { it.transitive = false }
-
 jar {
 	archiveName = "mongoose.jar"
 	manifest {
