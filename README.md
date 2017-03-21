@@ -1,5 +1,7 @@
 # Mongoose
 
+![O'Reilly's Weasel Picture](https://vowe.net/images/weasel.jpg)
+
 ## Description
 Mongoose is a high-load storage performance testing automation tool.
 
