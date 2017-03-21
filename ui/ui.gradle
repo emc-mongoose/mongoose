@@ -14,6 +14,8 @@ dependencies {
 
 	runtime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+
 	)
 }
 
