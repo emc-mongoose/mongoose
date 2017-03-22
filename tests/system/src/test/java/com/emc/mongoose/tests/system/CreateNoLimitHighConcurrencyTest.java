@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class CreateNoLimitHighConcurrencyTest
 extends HttpStorageDistributedScenarioTestBase {
 	
-	private static final int LOAD_CONCURRENCY = 1000;
+	private static final int LOAD_CONCURRENCY = 500;
 	
 	private static Thread RUNNER;
 	
@@ -54,6 +54,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		int activeConnCount;
+		TimeUnit.SECONDS.sleep(50);
 		for(int i = 0; i < 10; i ++) {
 			TimeUnit.SECONDS.sleep(10);
 			activeConnCount = 0;
@@ -62,7 +63,6 @@ extends HttpStorageDistributedScenarioTestBase {
 					.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
 			}
 			assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, activeConnCount);
-			System.out.println("Active connection count: " + activeConnCount);
 		}
 	}
 	
