@@ -3,7 +3,6 @@ package com.emc.mongoose.tests.system.base;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
@@ -36,7 +35,6 @@ extends ConfiguredTestBase {
 		ConfiguredTestBase.setUpClass();
 		final StorageConfig storageConfig = CONFIG.getStorageConfig();
 		final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
-		final LoadConfig loadConfig = CONFIG.getLoadConfig();
 		final ItemConfig itemConfig = CONFIG.getItemConfig();
 		final StepConfig stepConfig = CONFIG.getTestConfig().getStepConfig();
 		final int port = nodeConfig.getPort();
@@ -45,7 +43,7 @@ extends ConfiguredTestBase {
 		StorageMock storageMock;
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			nodeConfig.setPort(port + i);
-			storageMock = new StorageMockFactory(storageConfig, loadConfig, itemConfig, stepConfig)
+			storageMock = new StorageMockFactory(storageConfig, itemConfig, stepConfig)
 				.newStorageMock();
 			nextNodeAddr = "127.0.0.1:" + (port + i);
 			storageMock.start();
