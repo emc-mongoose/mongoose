@@ -16,7 +16,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import org.apache.commons.io.FileUtils;
-
+import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -24,8 +24,12 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import static com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage.TABLE_BORDER;
+import static com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
+import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -43,13 +47,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  Created by andrey on 19.01.17.
  */
 public abstract class LoggingTestBase {
-
+	
 	protected static Logger LOG;
 	protected static String JOB_NAME;
 	protected static BufferingOutputStream STD_OUT_STREAM;
@@ -407,7 +412,7 @@ public abstract class LoggingTestBase {
 
 	}
 	
-	protected static void testMetricsStdout(
+	protected static void testSingleMetricsStdout(
 		final String stdOutContent,
 		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
 		final SizeInBytes expectedItemDataSize, final long metricsPeriodSec
@@ -505,6 +510,35 @@ public abstract class LoggingTestBase {
 			assertTrue(latAvg >= latMin);
 			latMax = Integer.parseInt(m.group("latMax"));
 			assertTrue(latMax >= latAvg);
+		}
+	}
+	
+	protected static void testMetricsTableStdout(final String stdOutContent)
+	throws Exception {
+		
+		final List<String[]> records = new ArrayList<>();
+		
+		int tableDataStartPos;
+		int tableDataEndPos;
+		String remainingStdOut = stdOutContent;
+		String tableData;
+		while(-1 != (tableDataStartPos = remainingStdOut.indexOf(TABLE_HEADER))) {
+			tableDataStartPos += TABLE_HEADER.length();
+			tableDataEndPos = remainingStdOut.indexOf(TABLE_BORDER, tableDataStartPos);
+			if(-1 == tableDataEndPos) {
+				break;
+			}
+			tableData = remainingStdOut.substring(tableDataStartPos, tableDataEndPos);
+			records.add(tableData.split(SystemUtils.LINE_SEPARATOR));
+			remainingStdOut = remainingStdOut.substring(tableDataEndPos + TABLE_BORDER.length());
+		}
+		
+		String cells[];
+		for(final String rec[] : records) {
+			for(final String row : rec) {
+				cells = CELL_BORDER.split(WHITESPACES.matcher(row).replaceAll(""));
+				System.out.println(cells.length);
+			}
 		}
 	}
 }

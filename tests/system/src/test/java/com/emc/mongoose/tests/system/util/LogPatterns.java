@@ -8,6 +8,9 @@ import java.util.regex.Pattern;
 public interface LogPatterns {
 	
 	// common
+	Pattern WHITESPACES = Pattern.compile("\\s+");
+	Pattern CELL_BORDER = Pattern.compile("\\|");
+	
 	Pattern DATE_TIME_ISO8601 = Pattern.compile(
 		"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
 	);

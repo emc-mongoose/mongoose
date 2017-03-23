@@ -2,17 +2,17 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogMessageBase;
-
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
-
 import com.emc.mongoose.ui.log.LogUtil;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import org.apache.commons.lang.text.StrBuilder;
+import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
 
 /**
  Created by kurila on 26.10.16.
@@ -20,13 +20,15 @@ import org.apache.commons.lang.text.StrBuilder;
 public final class MetricsStdoutLogMessage
 extends LogMessageBase {
 	
-	private static final String TABLE_HEADER_LINES[] = new String[] {
-		"______________________________________________________________________________________________________________________",
-		" Load | Concur| Driver|       Count       |  Job  |    TP [op/s]    |        |  BW [MB/s]  |Latency [us]|Duration [us]",
-		" Type | rency | Count |-------------------| Time  |-----------------|  Size  |-------------|------------|-------------",
-		"      |       |       |   Success  |Failed|  [s]  |  Mean  |  Last  |        | Mean | Last |    Mean    |    Mean     ",
-		"------|-------|-------|------------|------|-------|--------|--------|--------|------|------|------------|-------------"
-	};
+	public static final String TABLE_BORDER =
+		"______________________________________________________________________________________________________________________";
+	public static final String TABLE_HEADER =
+		TABLE_BORDER + LINE_SEPARATOR +
+		" Load | Concur| Driver|       Count       |  Job  |    TP [op/s]    |        |  BW [MB/s]  |Latency [us]|Duration [us]" + LINE_SEPARATOR +
+		" Type | rency | Count |-------------------| Time  |-----------------|  Size  |-------------|------------|-------------" + LINE_SEPARATOR +
+		"      |       |       |   Success  |Failed|  [s]  |  Mean  |  Last  |        | Mean | Last |    Mean    |    Mean     " + LINE_SEPARATOR +
+		"------|-------|-------|------------|------|-------|--------|--------|--------|------|------|------------|-------------" + LINE_SEPARATOR;
+	;
 	
 	private final String jobName;
 	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
@@ -103,10 +105,7 @@ extends LogMessageBase {
 	private void formatMultiSnapshot(final StringBuilder buffer) {
 		final StrBuilder strb = new StrBuilder("metrics:");
 		if(snapshots.size() > 0) {
-			strb.appendNewLine();
-			for(final String tableHeaderLine : TABLE_HEADER_LINES) {
-				strb.append(tableHeaderLine).appendNewLine();
-			}
+			strb.appendNewLine().append(TABLE_HEADER);
 			IoStats.Snapshot snapshot;
 			long nextSuccCount;
 			for(final int ioTypeCode : snapshots.keySet()) {
@@ -139,7 +138,7 @@ extends LogMessageBase {
 				strb.appendFixedWidthPadLeft((long) snapshot.getDurationAvg(), 12, ' ');
 				strb.appendNewLine();
 			}
-			strb.appendPadding(118, '-');
+			strb.append(TABLE_BORDER);
 		} else {
 			strb.append(" not available yet");
 		}

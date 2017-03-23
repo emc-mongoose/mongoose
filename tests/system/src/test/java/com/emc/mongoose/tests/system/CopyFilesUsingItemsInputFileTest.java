@@ -152,7 +152,7 @@ extends FileStorageDistributedScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		testMetricsStdout(
+		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()

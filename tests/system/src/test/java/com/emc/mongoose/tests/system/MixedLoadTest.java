@@ -1,5 +1,6 @@
 package com.emc.mongoose.tests.system;
 
+import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
@@ -9,12 +10,15 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage.TABLE_BORDER;
+import static com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertTrue;
 
@@ -34,6 +38,10 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		JOB_NAME = MixedLoadTest.class.getSimpleName();
+		try {
+			Files.delete(Paths.get("items2read.csv"));
+		} catch(final Exception ignored) {
+		}
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		HttpStorageDistributedScenarioTestBase.setUpClass();
@@ -65,5 +73,11 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test
 	public void testFinishedInTime() {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
+	}
+	
+	@Test
+	public void testMetricsStdout()
+	throws Exception {
+		testMetricsTableStdout(STD_OUTPUT);
 	}
 }
