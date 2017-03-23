@@ -13,7 +13,7 @@ public interface Constants {
 
 	String FNAME_LOG_CONFIG = "logging.json";
 
-	String KEY_JOB_NAME = "load.job.name";
+	String KEY_STEP_NAME = "step.name";
 
 	int MIB = 0x10_00_00;
 

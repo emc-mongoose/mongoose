@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.job;
 
 import com.emc.mongoose.ui.config.Config;
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -37,14 +37,14 @@ implements Job {
 		try {
 			String jobName = stepConfig.getName();
 			if(jobName == null) {
-				jobName = ThreadContext.get(KEY_JOB_NAME);
+				jobName = ThreadContext.get(KEY_STEP_NAME);
 				if(jobName == null) {
 					LOG.fatal(Markers.ERR, "Job name is not set");
 				} else {
 					stepConfig.setName(jobName);
 				}
 			} else {
-				ThreadContext.put(KEY_JOB_NAME, jobName);
+				ThreadContext.put(KEY_STEP_NAME, jobName);
 			}
 		} catch(final Throwable t) {
 			LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");

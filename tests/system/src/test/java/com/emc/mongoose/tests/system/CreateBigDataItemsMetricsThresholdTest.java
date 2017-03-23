@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,7 +47,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		JOB_NAME = CreateBigDataItemsMetricsThresholdTest.class.getSimpleName();
-		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		CONFIG_ARGS.add("--test-step-limit-count=" + LOAD_LIMIT_COUNT);

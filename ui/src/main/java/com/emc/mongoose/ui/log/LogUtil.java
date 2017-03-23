@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.emc.mongoose.common.Constants.DIR_CONFIG;
 import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 
@@ -121,9 +121,9 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "load.job.name" property with timestamp value if not set before
-				final String loadJobName = ThreadContext.get(KEY_JOB_NAME);
+				final String loadJobName = ThreadContext.get(KEY_STEP_NAME);
 				if(loadJobName == null || loadJobName.length() == 0) {
-					ThreadContext.put(KEY_JOB_NAME, getDateTimeStamp());
+					ThreadContext.put(KEY_STEP_NAME, getDateTimeStamp());
 				}
 				try {
 					String log4jConfigFile = System.getProperty("log4j.configurationFile");

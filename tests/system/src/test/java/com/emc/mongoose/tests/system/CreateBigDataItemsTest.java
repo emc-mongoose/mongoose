@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MAX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -61,7 +61,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		JOB_NAME = CreateBigDataItemsTest.class.getSimpleName();
-		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));

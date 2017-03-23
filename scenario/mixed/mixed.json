@@ -9,6 +9,13 @@
 						"file" : "items2read.csv",
 						"path" : "items2read"
 					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
 				}
 			}
 		},
@@ -29,16 +36,13 @@
 					"test" : {
 						"step" : {
 							"limit" : {
-								"count" : 0
+								"time" : 90
 							}
 						}
 					}
 				},
 				{
 					"item" : {
-						"data" : {
-							"verify" : true
-						},
 						"input" : {
 							"file" : "items2read.csv"
 						},
@@ -49,13 +53,6 @@
 					"storage" : {
 						"driver" : {
 							"concurrency" : 50
-						}
-					},
-					"test" : {
-						"step" : {
-							"limit" : {
-								"count" : 0
-							}
 						}
 					},
 					"load" : {

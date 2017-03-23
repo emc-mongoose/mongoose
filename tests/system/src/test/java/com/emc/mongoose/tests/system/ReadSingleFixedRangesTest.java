@@ -19,7 +19,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
@@ -67,7 +67,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-data-verify=true");
 		HttpStorageDistributedScenarioTestBase.setUpClass();

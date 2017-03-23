@@ -110,7 +110,7 @@ public class BasicStorageDriverBuilder<
 	public T build()
 	throws UserShootHisFootException {
 
-		ThreadContext.put(Constants.KEY_JOB_NAME, jobName);
+		ThreadContext.put(Constants.KEY_STEP_NAME, jobName);
 
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final List<Map<String, Object>> implConfig = driverConfig.getImplConfig();

@@ -26,7 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -61,7 +61,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass public static void setUpClass()
 	throws Exception {
 		JOB_NAME = CreateByTimeTest.class.getSimpleName();
-		ThreadContext.put(KEY_JOB_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.add("--test-step-limit-time=" + LOAD_LIMIT_TIME);

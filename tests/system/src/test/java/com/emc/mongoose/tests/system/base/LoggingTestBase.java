@@ -8,7 +8,7 @@ import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
-import static com.emc.mongoose.common.Constants.KEY_JOB_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 
 import org.apache.commons.csv.CSVFormat;
@@ -61,7 +61,7 @@ public abstract class LoggingTestBase {
 		final URL u = LoggingTestBase.class.getClassLoader().getResource("logging.json");
 		System.setProperty("log4j.configurationFile", u.toString());
 		LogUtil.init();
-		JOB_NAME = ThreadContext.get(KEY_JOB_NAME);
+		JOB_NAME = ThreadContext.get(KEY_STEP_NAME);
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		LOG = LogManager.getLogger();

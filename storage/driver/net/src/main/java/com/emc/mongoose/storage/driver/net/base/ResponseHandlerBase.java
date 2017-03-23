@@ -65,7 +65,7 @@ extends SimpleChannelInboundHandler<M> {
 				ioTask.setStatus(FAIL_UNKNOWN);
 			}
 		}
-		if(!driver.isClosed()) {
+		if(!driver.isInterrupted()) {
 			try {
 				driver.complete(channel, ioTask);
 			} catch(final RejectedExecutionException e) {
