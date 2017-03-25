@@ -9,6 +9,7 @@ import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 
 import org.apache.commons.csv.CSVFormat;
@@ -43,6 +44,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -513,8 +515,10 @@ public abstract class LoggingTestBase {
 		}
 	}
 	
-	protected static void testMetricsTableStdout(final String stdOutContent)
-	throws Exception {
+	protected static void testMetricsTableStdout(
+		final String stdOutContent, final int driverCount, final long countLimit,
+		final IoType... ioTypes
+	) throws Exception {
 		
 		final List<String[]> records = new ArrayList<>();
 		
@@ -534,11 +538,53 @@ public abstract class LoggingTestBase {
 		}
 		
 		String cells[];
+		boolean ioTypeFoundFlag;
+		long countSucc;
+		int lat, dur;
+		float nextJobTime = -1, prevJobTime = -1;
+		float tp, bw;
+		SizeInBytes size;
 		for(final String rec[] : records) {
 			for(final String row : rec) {
 				cells = CELL_BORDER.split(WHITESPACES.matcher(row).replaceAll(""));
-				System.out.println(cells.length);
+				final IoType actualIoType = IoType.valueOf(cells[0]);
+				ioTypeFoundFlag = false;
+				for(final IoType nextIoType : ioTypes) {
+					if(nextIoType.equals(actualIoType)) {
+						ioTypeFoundFlag = true;
+						break;
+					}
+				}
+				assertTrue(
+					"I/O type \"" + actualIoType + "\" not found, expected one of: " +
+					Arrays.toString(ioTypes), ioTypeFoundFlag
+				);
+				assertTrue(0 < Integer.parseInt(cells[1])); // concurrency
+				assertEquals(driverCount, Integer.parseInt(cells[2])); // driver count
+				countSucc = Long.parseLong(cells[3]);
+				if(countLimit > 0) {
+					assertTrue(countLimit > countSucc); // count succ
+				}
+				assertTrue(0 == Long.parseLong(cells[4])); // count fail
+				nextJobTime = Float.parseFloat(cells[5]); // job time
+				if(prevJobTime >= 0) {
+					assertEquals(10, nextJobTime - prevJobTime, 1);
+				}
+				tp = Float.parseFloat(cells[6]); // TP mean
+				if(nextJobTime > 0) {
+					assertEquals(countSucc / nextJobTime, tp, tp / 100);
+				}
+				size = new SizeInBytes(cells[8]);
+				bw = Float.parseFloat(cells[9]); // BW mean
+				if(tp > 0) {
+					assertEquals(MIB * bw / tp, size.getAvg() / countSucc, size.getAvg() / 1000);
+				}
+				lat = Integer.parseInt(cells[11]); // latency
+				assertTrue(lat >= 0);
+				dur = Integer.parseInt(cells[12]); // duration
+				assertTrue(dur >= lat);
 			}
+			prevJobTime = nextJobTime;
 		}
 	}
 }
