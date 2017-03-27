@@ -34,7 +34,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, CreateByTimeTest.class.getSimpleName());
+		ThreadContext.put(KEY_STEP_NAME, CreateNoLimitHighConcurrencyTest.class.getSimpleName());
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		RUNNER = new Thread(
@@ -54,7 +54,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		int activeConnCount;
-		TimeUnit.SECONDS.sleep(90);
+		TimeUnit.SECONDS.sleep(30);
 		activeConnCount = 0;
 		for(int j = 0; j < STORAGE_NODE_COUNT; j ++) {
 			activeConnCount += PortListener

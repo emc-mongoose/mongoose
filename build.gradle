@@ -26,8 +26,9 @@ ext {
 		disruptor : "3.3.4",
 		jackson : "2.8.7",
 		javassist : "3.21.0-GA",
+		slf4j : "1.7.24",
 		log4j : "2.8.1",
-		metrics : "3.2.1",
+		metrics : "3.2.2",
 		nagaina: "[3,)",
 		netty : "4.1.9.Final",
 	]

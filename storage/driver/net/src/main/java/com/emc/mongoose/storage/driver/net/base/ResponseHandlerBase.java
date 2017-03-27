@@ -68,7 +68,7 @@ extends SimpleChannelInboundHandler<M> {
 		if(!driver.isInterrupted()) {
 			try {
 				driver.complete(channel, ioTask);
-			} catch(final RejectedExecutionException e) {
+			} catch(final Exception e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to complete the I/O task");
 			}
 		}
