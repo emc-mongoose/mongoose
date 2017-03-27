@@ -54,16 +54,13 @@ extends HttpStorageDistributedScenarioTestBase {
 	throws Exception {
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		int activeConnCount;
-		TimeUnit.SECONDS.sleep(50);
-		for(int i = 0; i < 10; i ++) {
-			TimeUnit.SECONDS.sleep(10);
-			activeConnCount = 0;
-			for(int j = 0; j < STORAGE_NODE_COUNT; j ++) {
-				activeConnCount += PortListener
-					.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
-			}
-			assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, activeConnCount);
+		TimeUnit.SECONDS.sleep(90);
+		activeConnCount = 0;
+		for(int j = 0; j < STORAGE_NODE_COUNT; j ++) {
+			activeConnCount += PortListener
+				.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
 		}
+		assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, activeConnCount);
 	}
 	
 	@AfterClass
