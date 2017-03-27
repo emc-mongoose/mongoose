@@ -94,10 +94,10 @@ extends LogMessageBase {
 			.append(formatFixedWidth(snapshot.getSuccRateLast(), 7)).append("); BW[MB/s]=(")
 			.append(formatFixedWidth(snapshot.getByteRateMean() / MIB, 6)).append('/')
 			.append(formatFixedWidth(snapshot.getByteRateLast() / MIB, 6)).append("); dur[us]=(")
-			.append((long) snapshot.getDurationAvg()).append('/')
+			.append((long) snapshot.getDurationMean()).append('/')
 			.append(snapshot.getDurationMin()).append('/')
 			.append(snapshot.getDurationMax()).append("); lat[us]=(")
-			.append((long) snapshot.getLatencyAvg()).append('/')
+			.append((long) snapshot.getLatencyMean()).append('/')
 			.append(snapshot.getLatencyMin()).append('/')
 			.append(snapshot.getLatencyMax()).append(')');
 	}
@@ -134,8 +134,8 @@ extends LogMessageBase {
 					.append('|');
 				strb.appendFixedWidthPadRight(snapshot.getByteRateMean() / MIB, 6, ' ').append('|');
 				strb.appendFixedWidthPadRight(snapshot.getByteRateLast() / MIB, 6, ' ').append('|');
-				strb.appendFixedWidthPadLeft((long) snapshot.getLatencyAvg(), 12, ' ').append('|');
-				strb.appendFixedWidthPadLeft((long) snapshot.getDurationAvg(), 12, ' ');
+				strb.appendFixedWidthPadLeft((long) snapshot.getLatencyMean(), 12, ' ').append('|');
+				strb.appendFixedWidthPadLeft((long) snapshot.getDurationMean(), 12, ' ');
 				strb.appendNewLine();
 			}
 			strb.append(TABLE_BORDER);

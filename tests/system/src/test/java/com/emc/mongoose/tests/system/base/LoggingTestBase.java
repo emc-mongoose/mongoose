@@ -541,7 +541,7 @@ public abstract class LoggingTestBase {
 		boolean ioTypeFoundFlag;
 		long countSucc;
 		int lat, dur;
-		float nextJobTime = -1, prevJobTime = -1;
+		float currStepTime;
 		float tp, bw;
 		SizeInBytes size;
 		for(final String rec[] : records) {
@@ -566,13 +566,10 @@ public abstract class LoggingTestBase {
 					assertTrue(countLimit > countSucc); // count succ
 				}
 				assertTrue(0 == Long.parseLong(cells[4])); // count fail
-				nextJobTime = Float.parseFloat(cells[5]); // job time
-				if(prevJobTime >= 0) {
-					assertEquals(10, nextJobTime - prevJobTime, 1);
-				}
+				currStepTime = Float.parseFloat(cells[5]); // job time
 				tp = Float.parseFloat(cells[6]); // TP mean
-				if(nextJobTime > 0) {
-					assertEquals(countSucc / nextJobTime, tp, tp / 100);
+				if(currStepTime > 0) {
+					assertEquals(countSucc / currStepTime, tp, tp / 100);
 				}
 				size = new SizeInBytes(cells[8]);
 				bw = Float.parseFloat(cells[9]); // BW mean
@@ -582,9 +579,8 @@ public abstract class LoggingTestBase {
 				lat = Integer.parseInt(cells[11]); // latency
 				assertTrue(lat >= 0);
 				dur = Integer.parseInt(cells[12]); // duration
-				assertTrue(dur >= lat);
+				assertTrue("Mean duration " + dur + " is less than mean latency " + lat, dur >= lat);
 			}
-			prevJobTime = nextJobTime;
 		}
 	}
 }

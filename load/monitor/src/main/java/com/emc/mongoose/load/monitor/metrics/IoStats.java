@@ -74,7 +74,7 @@ extends Closeable {
 		long getDurationHiQ();
 		long getDurationMax();
 		long[] getDurationValues();
-		double getDurationAvg();
+		double getDurationMean();
 		//
 		long getLatencyMin();
 		long getLatencyLoQ();
@@ -82,7 +82,7 @@ extends Closeable {
 		long getLatencyHiQ();
 		long getLatencyMax();
 		long[] getLatencyValues();
-		double getLatencyAvg();
+		double getLatencyMean();
 	}
 	
 	static void refreshLastStats(

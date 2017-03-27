@@ -79,13 +79,13 @@ extends LogMessageBase {
 			buffer.append("filesize=\"").append(itemSize == null ? 0 : itemSize.toString()).append("\" ");
 			buffer.append("tps=\"").append(snapshot.getSuccRateMean()).append("\" tps_unit=\"Fileps\" ");
 			buffer.append("bw=\"").append(snapshot.getByteRateMean() / MIB).append("\" bw_unit=\"MBps\" ");
-			buffer.append("latency=\"").append(snapshot.getLatencyAvg()).append("\" latency_unit=\"us\" ");
+			buffer.append("latency=\"").append(snapshot.getLatencyMean()).append("\" latency_unit=\"us\" ");
 			buffer.append("latency_min=\"").append(snapshot.getLatencyMin()).append("\" ");
 			buffer.append("latency_loq=\"").append(snapshot.getLatencyLoQ()).append("\" ");
 			buffer.append("latency_med=\"").append(snapshot.getLatencyMed()).append("\" ");
 			buffer.append("latency_hiq=\"").append(snapshot.getLatencyHiQ()).append("\" ");
 			buffer.append("latency_max=\"").append(snapshot.getLatencyMax()).append("\" ");
-			buffer.append("duration=\"").append(snapshot.getDurationAvg()).append("\" duration_unit=\"us\" ");
+			buffer.append("duration=\"").append(snapshot.getDurationMean()).append("\" duration_unit=\"us\" ");
 			buffer.append("duration_min=\"").append(snapshot.getDurationMin()).append("\" ");
 			buffer.append("duration_loq=\"").append(snapshot.getDurationLoQ()).append("\" ");
 			buffer.append("duration_med=\"").append(snapshot.getDurationMed()).append("\" ");

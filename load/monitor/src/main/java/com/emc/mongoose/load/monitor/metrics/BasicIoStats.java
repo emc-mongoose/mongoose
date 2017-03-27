@@ -2,10 +2,10 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.model.metrics.CustomMeter;
 import com.emc.mongoose.model.metrics.ResumableUserTimeClock;
-import com.emc.mongoose.model.metrics.UnsafeButFasterUniformReservoir;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.LongAdder;
@@ -26,9 +26,9 @@ implements IoStats {
 	//
 	public BasicIoStats(final String name, final int updateIntervalSec) {
 		this.name = name;
-		respLatency = new Histogram(new UnsafeButFasterUniformReservoir());
+		respLatency = new Histogram(new SlidingWindowReservoir(0x10_00_00));
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new UnsafeButFasterUniformReservoir());
+		reqDuration = new Histogram(new SlidingWindowReservoir(0x10_00_00));
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -195,7 +195,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public final double getDurationAvg() {
+		public final double getDurationMean() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -252,7 +252,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public final double getLatencyAvg() {
+		public final double getLatencyMean() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -274,26 +274,22 @@ implements IoStats {
 	public final void markSucc(final long size, final long duration, final long latency) {
 		throughputSuccess.mark();
 		reqBytes.mark(size);
-		if(duration > 0) {
+		if(latency > 0 && duration > latency) {
 			reqDuration.update(duration);
-			reqDurationSum.add(duration);
-		}
-		if(latency > 0 && latency < duration) {
-			respLatencySum.add(latency);
 			respLatency.update(latency);
+			reqDurationSum.add(duration);
+			respLatencySum.add(latency);
 		}
 	}
 	//
 	@Override
 	public final void markPartSucc(final long size, final long duration, final long latency) {
 		reqBytes.mark(size);
-		if(duration > 0) {
+		if(latency > 0 && duration > latency) {
 			reqDuration.update(duration);
-			reqDurationSum.add(duration);
-		}
-		if(latency > 0 && latency < duration) {
-			respLatencySum.add(latency);
 			respLatency.update(latency);
+			reqDurationSum.add(duration);
+			respLatencySum.add(latency);
 		}
 	}
 	//
