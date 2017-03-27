@@ -47,6 +47,13 @@
 						"data" : {
 							"size" : "4KB-16KB"
 						}
+					},
+					"test" : {
+						"step" : {
+							"limit" : {
+								"time" : "90s"
+							}
+						}
 					}
 				},
 				{
@@ -58,13 +65,6 @@
 					"load" : {
 						"circular" : true,
 						"type" : "read"
-					},
-					"test" : {
-						"step" : {
-							"limit" : {
-								"time" : "100s"
-							}
-						}
 					}
 				}
 			]
