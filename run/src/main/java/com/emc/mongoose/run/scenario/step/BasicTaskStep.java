@@ -1,16 +1,16 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.ui.config.Config;
 
 /**
  Created by andrey on 07.06.16.
  */
-public final class BasicTaskJob
-implements Job {
+public final class BasicTaskStep
+implements Step {
 
 	private final Runnable task;
 
-	public BasicTaskJob(final Runnable task) {
+	public BasicTaskStep(final Runnable task) {
 		this.task = task;
 	}
 

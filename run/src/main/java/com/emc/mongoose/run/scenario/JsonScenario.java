@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario;
 
-import com.emc.mongoose.run.scenario.job.Job;
-import com.emc.mongoose.run.scenario.job.SequentialJob;
+import com.emc.mongoose.run.scenario.step.Step;
+import com.emc.mongoose.run.scenario.step.SequentialStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  Created by kurila on 02.02.16.
  */
 public class JsonScenario
-extends SequentialJob
+extends SequentialStep
 implements Scenario {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -180,9 +180,9 @@ implements Scenario {
 	}
 	//
 	@Override
-	protected final synchronized boolean append(final Job job) {
-		if(childJobs.size() == 0) {
-			return super.append(job);
+	protected final synchronized boolean append(final Step step) {
+		if(subSteps.size() == 0) {
+			return super.append(step);
 		} else {
 			return false;
 		}

@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
@@ -12,12 +12,12 @@ import java.util.Map;
 /**
  Created by kurila on 02.02.16.
  */
-public class SequentialJob
-extends ParentJobBase {
+public class SequentialStep
+extends ParentStepBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	public SequentialJob(final Config appConfig, final Map<String, Object> subTree)
+	public SequentialStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig, subTree);
 	}
@@ -31,12 +31,12 @@ extends ParentJobBase {
 	public synchronized void run() {
 		super.run();
 		LOG.info(
-			Markers.MSG, "{}: execute {} child jobs sequentially", toString(), childJobs.size()
+			Markers.MSG, "{}: execute {} child jobs sequentially", toString(), subSteps.size()
 		);
-		for(final Job subJob : childJobs) {
-			LOG.debug(Markers.MSG, "{}: child job \"{}\" start", toString(), subJob.toString());
-			subJob.run();
-			LOG.debug(Markers.MSG, "{}: child job \"{}\" is done", toString(), subJob.toString());
+		for(final Step subStep : subSteps) {
+			LOG.debug(Markers.MSG, "{}: child job \"{}\" start", toString(), subStep.toString());
+			subStep.run();
+			LOG.debug(Markers.MSG, "{}: child job \"{}\" is done", toString(), subStep.toString());
 		}
 		LOG.info(Markers.MSG, "{}: finished the sequential execution of {} child jobs", toString());
 	}

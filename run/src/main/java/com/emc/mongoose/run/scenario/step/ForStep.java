@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 04.06.16.
  */
-public final class ForJob
-extends SequentialJob {
+public final class ForStep
+extends SequentialStep {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
@@ -36,7 +36,7 @@ extends SequentialJob {
 	private final List valueSeq;
 	private final boolean infinite;
 
-	public ForJob(final Config appConfig, final Map<String, Object> subTree)
+	public ForStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig, subTree);
 		final Object value = subTree.get(KEY_NODE_VALUE);
@@ -202,13 +202,15 @@ extends SequentialJob {
 			}
 		}*/
 
-		final Object jobTreeList = subTree.get(KEY_NODE_JOBS);
+		final Object stepsTreeList = subTree.getOrDefault(
+			KEY_NODE_STEPS, subTree.get(KEY_NODE_JOBS)
+		);
 		final String replacePattern = Character.toString(REPLACE_MARKER_CHAR) + FORMAT_BRACKETS[0] +
 			replaceMarkerName + FORMAT_BRACKETS[1];
 		Map<String, Object> nextNodeConfig;
 		try {
-			if(jobTreeList != null) {
-				if(jobTreeList instanceof List) {
+			if(stepsTreeList != null) {
+				if(stepsTreeList instanceof List) {
 					Config childJobConfig;
 					Map<String, Object> newJobTree;
 					for(final Object nextValue : valueSeq) {
@@ -222,14 +224,14 @@ extends SequentialJob {
 							childJobConfig.apply(nextNodeConfig);
 						}
 						append(
-							new BasicTaskJob(
+							new BasicTaskStep(
 								() -> LOG.info(
 									Markers.MSG, "Use next value for \"{}\": {}", replaceMarkerName,
 									nextValue
 								)
 							)
 						);
-						for(final Object job : (List) jobTreeList) {
+						for(final Object job : (List) stepsTreeList) {
 							if(job != null) {
 								if(job instanceof Map) {
 									newJobTree = findAndSubstitute(
@@ -248,7 +250,7 @@ extends SequentialJob {
 					}
 				} else {
 					throw new ScenarioParseException(
-						"Invalid jobs node type: \"" + jobTreeList.getClass() + "\""
+						"Invalid jobs node type: \"" + stepsTreeList.getClass() + "\""
 					);
 				}
 			}

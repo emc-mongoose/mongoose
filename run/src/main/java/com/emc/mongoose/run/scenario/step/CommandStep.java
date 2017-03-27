@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.ui.log.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;
@@ -22,8 +22,8 @@ import java.util.concurrent.ThreadFactory;
 /**
  Created by andrey on 07.04.16.
  */
-public final class CommandJob
-extends JobBase {
+public final class CommandStep
+extends StepBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	private static final ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
@@ -34,7 +34,7 @@ extends JobBase {
 	private final boolean blockingFlag;
 	private final boolean consoleColorFlag;
 	//
-	public CommandJob(final Config appConfig, final Map<String, Object> subTree)
+	public CommandStep(final Config appConfig, final Map<String, Object> subTree)
 	throws IllegalArgumentException {
 		super(appConfig);
 		cmdLine = (String) subTree.get(KEY_NODE_VALUE);

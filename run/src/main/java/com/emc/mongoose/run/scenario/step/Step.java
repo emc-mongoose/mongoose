@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.ui.config.Config;
 
@@ -7,11 +7,12 @@ import java.io.Closeable;
 /**
  Created by kurila on 02.02.16.
  */
-public interface Job
+public interface Step
 extends Closeable, Runnable {
 
 	String KEY_NODE_CONFIG = "config";
 	String KEY_NODE_JOBS = "jobs";
+	String KEY_NODE_STEPS = "steps";
 	String KEY_NODE_VALUE = "value";
 	String KEY_NODE_TYPE = "type";
 	String KEY_NODE_WEIGHTS = "weights";

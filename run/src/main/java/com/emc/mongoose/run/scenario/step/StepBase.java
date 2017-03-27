@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -14,14 +14,14 @@ import org.apache.logging.log4j.ThreadContext;
 /**
  Created by kurila on 08.04.16.
  */
-public abstract class JobBase
-implements Job {
+public abstract class StepBase
+implements Step {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	protected final Config localConfig;
 
-	protected JobBase(final Config appConfig) {
+	protected StepBase(final Config appConfig) {
 		localConfig = new Config(appConfig);
 	}
 

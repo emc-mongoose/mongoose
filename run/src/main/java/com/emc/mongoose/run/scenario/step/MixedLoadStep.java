@@ -1,7 +1,6 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
@@ -12,23 +11,18 @@ import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
-import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
-import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 
 import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -52,8 +46,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 08.11.16.
  */
-public class MixedLoadJob
-extends JobBase {
+public class MixedLoadStep
+extends StepBase {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -61,7 +55,7 @@ extends JobBase {
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<Integer> weights;
 
-	public MixedLoadJob(final Config appConfig, final Map<String, Object> subTree)
+	public MixedLoadStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
 		this.appConfig = appConfig;

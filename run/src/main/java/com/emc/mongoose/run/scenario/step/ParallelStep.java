@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.log.NamingThreadFactory;
@@ -15,12 +15,12 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.02.16.
  */
-public class ParallelJob
-extends ParentJobBase {
+public class ParallelStep
+extends ParentStepBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	protected ParallelJob(final Config appConfig, final Map<String, Object> subTree)
+	protected ParallelStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig, subTree);
 	}
@@ -31,13 +31,13 @@ extends ParentJobBase {
 		super.run();
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			childJobs.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
+			subSteps.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
 		);
-		for(final Job subJob : childJobs) {
-			parallelJobsExecutor.submit(subJob);
+		for(final Step subStep : subSteps) {
+			parallelJobsExecutor.submit(subStep);
 		}
 		LOG.info(
-			Markers.MSG, "{}: execute {} child jobs in parallel", toString(), childJobs.size()
+			Markers.MSG, "{}: execute {} child jobs in parallel", toString(), subSteps.size()
 		);
 		parallelJobsExecutor.shutdown();
 		
@@ -56,7 +56,7 @@ extends ParentJobBase {
 		}
 		LOG.info(
 			Markers.MSG, "{}: finished parallel execution of {} child jobs", toString(),
-			childJobs.size()
+			subSteps.size()
 		);
 	}
 	//

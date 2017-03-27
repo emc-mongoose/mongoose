@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.job;
+package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
@@ -15,14 +15,14 @@ import java.util.Map;
 /**
  Created by andrey on 06.06.16.
  */
-public abstract class ParentJobBase
-extends JobBase {
+public abstract class ParentStepBase
+extends StepBase {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	protected final List<Job> childJobs = new LinkedList<>();
+	protected final List<Step> subSteps = new LinkedList<>();
 
-	protected ParentJobBase(final Config appConfig, final Map<String, Object> subTree)
+	protected ParentStepBase(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
 		loadSubTree(subTree);
@@ -73,28 +73,28 @@ extends JobBase {
 		} else {
 			switch(jobType) {
 				case NODE_TYPE_CHAIN:
-					append(new ChainJob(config, subTree));
+					append(new ChainStep(config, subTree));
 					break;
 				case NODE_TYPE_COMMAND:
-					append(new CommandJob(config, subTree));
+					append(new CommandStep(config, subTree));
 					break;
 				case NODE_TYPE_FOR:
-					append(new ForJob(config, subTree));
+					append(new ForStep(config, subTree));
 					break;
 				case NODE_TYPE_LOAD:
-					append(new LoadJob(config, subTree, false));
+					append(new LoadStep(config, subTree, false));
 					break;
 				case NODE_TYPE_PARALLEL:
-					append(new ParallelJob(config, subTree));
+					append(new ParallelStep(config, subTree));
 					break;
 				case NODE_TYPE_PRECONDITION:
-					append(new LoadJob(config, subTree, true));
+					append(new LoadStep(config, subTree, true));
 					break;
 				case NODE_TYPE_SEQUENTIAL:
-					append(new SequentialJob(config, subTree));
+					append(new SequentialStep(config, subTree));
 					break;
 				case NODE_TYPE_MIXED:
-					append(new MixedLoadJob(config, subTree));
+					append(new MixedLoadStep(config, subTree));
 					break;
 				default:
 					throw new ScenarioParseException(
@@ -104,19 +104,19 @@ extends JobBase {
 		}
 	}
 
-	protected synchronized boolean append(final Job subJob) {
-		return childJobs.add(subJob);
+	protected synchronized boolean append(final Step subStep) {
+		return subSteps.add(subStep);
 	}
 
 	@Override
 	public void close()
 	throws IOException {
 		try {
-			for(final Job subJob : childJobs) {
-				subJob.close();
+			for(final Step subStep : subSteps) {
+				subStep.close();
 			}
 		} finally {
-			childJobs.clear();
+			subSteps.clear();
 		}
 	}
 }
