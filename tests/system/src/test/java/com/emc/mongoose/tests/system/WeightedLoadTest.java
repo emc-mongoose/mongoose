@@ -14,6 +14,8 @@ import org.junit.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -91,9 +93,10 @@ extends HttpStorageDistributedScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		testMetricsTableStdout(
-			STD_OUTPUT, STORAGE_DRIVERS_COUNT, 0, IoType.CREATE, IoType.READ
-		);
+		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
+		concurrencyMap.put(IoType.CREATE, 100);
+		concurrencyMap.put(IoType.READ, 100);
+		testMetricsTableStdout(STD_OUTPUT, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
 
 }

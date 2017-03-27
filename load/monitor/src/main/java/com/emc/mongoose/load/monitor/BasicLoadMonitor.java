@@ -496,11 +496,17 @@ implements LoadMonitor<I, O> {
 						if(rateThrottle != null) {
 							while(!rateThrottle.tryAcquire(ioTaskResult)) {
 								LockSupport.parkNanos(1);
+								if(Thread.currentThread().isInterrupted()) {
+									break;
+								}
 							}
 						}
 						if(weightThrottle != null) {
 							while(!weightThrottle.tryAcquire(originCode)) {
 								LockSupport.parkNanos(1);
+								if(Thread.currentThread().isInterrupted()) {
+									break;
+								}
 							}
 						}
 						if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
@@ -512,6 +518,9 @@ implements LoadMonitor<I, O> {
 						try {
 							while(!ioResultsOutput.put(ioTaskResult)) {
 								LockSupport.parkNanos(1);
+								if(Thread.currentThread().isInterrupted()) {
+									break;
+								}
 							}
 						} catch(final EOFException e) {
 							LogUtil.exception(
@@ -847,11 +856,12 @@ implements LoadMonitor<I, O> {
 			);
 		}
 
-		svcTaskExecutor.shutdownNow();
+		final List<Runnable> svcTasks = svcTaskExecutor.shutdownNow();
 		try {
 			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 				LOG.warn(
-					Markers.ERR, "{}: failed to terminate the service tasks in 1 second", getName()
+					Markers.ERR, "{}: failed to terminate the service tasks in 1 second:",
+					getName(), svcTasks
 				);
 			}
 		} catch(final InterruptedException e) {

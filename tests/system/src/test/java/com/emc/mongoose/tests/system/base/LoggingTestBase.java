@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -517,7 +518,7 @@ public abstract class LoggingTestBase {
 	
 	protected static void testMetricsTableStdout(
 		final String stdOutContent, final int driverCount, final long countLimit,
-		final IoType... ioTypes
+		final Map<IoType, Integer> concurrencyMap
 	) throws Exception {
 		
 		final List<String[]> records = new ArrayList<>();
@@ -549,7 +550,7 @@ public abstract class LoggingTestBase {
 				cells = CELL_BORDER.split(WHITESPACES.matcher(row).replaceAll(""));
 				final IoType actualIoType = IoType.valueOf(cells[0]);
 				ioTypeFoundFlag = false;
-				for(final IoType nextIoType : ioTypes) {
+				for(final IoType nextIoType : concurrencyMap.keySet()) {
 					if(nextIoType.equals(actualIoType)) {
 						ioTypeFoundFlag = true;
 						break;
@@ -557,9 +558,9 @@ public abstract class LoggingTestBase {
 				}
 				assertTrue(
 					"I/O type \"" + actualIoType + "\" not found, expected one of: " +
-					Arrays.toString(ioTypes), ioTypeFoundFlag
+					Arrays.toString(concurrencyMap.keySet().toArray()), ioTypeFoundFlag
 				);
-				assertTrue(0 < Integer.parseInt(cells[1])); // concurrency
+				assertEquals((int) concurrencyMap.get(actualIoType), Integer.parseInt(cells[1])); // concurrency
 				assertEquals(driverCount, Integer.parseInt(cells[2])); // driver count
 				countSucc = Long.parseLong(cells[3]);
 				if(countLimit > 0) {

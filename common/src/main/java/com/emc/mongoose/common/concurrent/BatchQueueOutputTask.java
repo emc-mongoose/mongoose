@@ -28,7 +28,8 @@ implements Runnable {
 	@Override
 	public final void run() {
 		int n, m;
-		while(true) {
+		final Thread currThread = Thread.currentThread();
+		while(!currThread.isInterrupted()) {
 			n = size();
 			if(n == BATCH_SIZE) {
 				LockSupport.parkNanos(1);
