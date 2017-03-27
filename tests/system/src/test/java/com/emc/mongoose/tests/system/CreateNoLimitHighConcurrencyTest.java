@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class CreateNoLimitHighConcurrencyTest
 extends HttpStorageDistributedScenarioTestBase {
 	
-	private static final int LOAD_CONCURRENCY = 500;
+	private static final int LOAD_CONCURRENCY = 1000;
 	
 	private static Thread RUNNER;
 	

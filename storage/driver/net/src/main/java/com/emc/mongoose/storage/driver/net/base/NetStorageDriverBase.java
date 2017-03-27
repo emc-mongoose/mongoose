@@ -125,7 +125,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
 		connPool = new BasicMultiNodeConnPool(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
+			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
 		);
 		/*for(final String na : storageNodeAddrs) {
 			final InetSocketAddress nodeAddr;

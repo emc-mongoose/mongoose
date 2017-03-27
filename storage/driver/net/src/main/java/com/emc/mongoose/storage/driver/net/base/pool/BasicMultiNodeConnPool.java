@@ -44,8 +44,8 @@ implements NonBlockingConnPool {
 	private final Object2IntMap<String> connsCountMap;
 
 	public BasicMultiNodeConnPool(
-		final Semaphore concurrencyThrottle,  final String nodes[], final Bootstrap bootstrap,
-		final ChannelPoolHandler connPoolHandler, final int defaultPort
+		final int concurrencyLevel, final Semaphore concurrencyThrottle,  final String nodes[],
+		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort
 	) {
 		this.concurrencyThrottle = concurrencyThrottle;
 		if(nodes.length == 0) {
@@ -56,6 +56,7 @@ implements NonBlockingConnPool {
 		bootstrapMap = new HashMap<>(n);
 		connsMap = new HashMap<>(n);
 		connsCountMap = new Object2IntOpenHashMap<>(n);
+
 		for(final String node : nodes) {
 			final InetSocketAddress nodeAddr;
 			if(node.contains(":")) {
@@ -82,6 +83,23 @@ implements NonBlockingConnPool {
 			);
 			connsMap.put(node, new ConcurrentLinkedQueue<>());
 			connsCountMap.put(node, 0);
+		}
+
+		// pre-create the connections
+		for(int i = 0; i < concurrencyLevel; i ++) {
+			final Channel conn = connect();
+			final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
+			if(conn.isActive()) {
+				final Queue<Channel> connQueue = connsMap.get(nodeAddr);
+				if(connQueue != null) {
+					connQueue.add(conn);
+				}
+			} else {
+				synchronized(connsCountMap) {
+					connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+				}
+				conn.close();
+			}
 		}
 	}
 
