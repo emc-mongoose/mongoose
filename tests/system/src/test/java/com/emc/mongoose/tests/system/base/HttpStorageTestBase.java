@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.storage.mock.api.StorageMock;
+import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -26,8 +26,8 @@ import java.util.Map;
 public abstract class HttpStorageTestBase
 extends ConfiguredTestBase {
 
-	protected static Map<String, StorageMock> STORAGE_MOCKS = new HashMap();
-	protected static int STORAGE_NODE_COUNT = 1;
+	protected static Map<String, Daemon> STORAGE_MOCKS = new HashMap<>();
+	protected static final int STORAGE_NODE_COUNT = 1;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -40,11 +40,13 @@ extends ConfiguredTestBase {
 		final int port = nodeConfig.getPort();
 		final List<String> nodeAddrs = new ArrayList<>();
 		String nextNodeAddr;
-		StorageMock storageMock;
+		Daemon storageMock;
+		final StorageMockFactory storageMockFactory = new StorageMockFactory(
+			storageConfig, itemConfig, stepConfig
+		);
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			nodeConfig.setPort(port + i);
-			storageMock = new StorageMockFactory(storageConfig, itemConfig, stepConfig)
-				.newStorageMock();
+			storageMock = storageMockFactory.newStorageMock();
 			nextNodeAddr = "127.0.0.1:" + (port + i);
 			storageMock.start();
 			STORAGE_MOCKS.put(nextNodeAddr, storageMock);
@@ -57,7 +59,7 @@ extends ConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		for(final StorageMock storageMock : STORAGE_MOCKS.values()) {
+		for(final Daemon storageMock : STORAGE_MOCKS.values()) {
 			storageMock.close();
 		}
 		STORAGE_MOCKS.clear();
