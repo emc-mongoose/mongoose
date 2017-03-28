@@ -51,7 +51,12 @@ implements StorageDriver<I, O> {
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
-		ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
+		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
+		if(confWorkerCount < 1) {
+			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
+		} else {
+			ioWorkerCount = confWorkerCount;
+		}
 		ioWorkerTasks = new Runnable[ioWorkerCount];
 		ioTaskQueues = new BlockingQueue[ioWorkerCount];
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);

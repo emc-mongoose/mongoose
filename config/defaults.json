@@ -80,6 +80,9 @@
 					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
 				}
 			],
+			"io" : {
+				"workers" : 0
+			},
 			"port" : 1099,
 			"remote": false,
 			"type" : "s3"

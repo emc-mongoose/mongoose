@@ -91,15 +91,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			n = t[i];
 			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
 		}
+		
+		final int workerCount;
+		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
+		if(confWorkerCount < 1) {
+			workerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
+		} else {
+			workerCount = confWorkerCount;
+		}
 		if(SystemUtils.IS_OS_LINUX) {
 			workerGroup = new EpollEventLoopGroup(
-				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
-				new NamingThreadFactory(toString() + "/ioWorker", true)
+				workerCount, new NamingThreadFactory(toString() + "/ioWorker", true)
 			);
 		} else {
 			workerGroup = new NioEventLoopGroup(
-				Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel()),
-				new NamingThreadFactory(toString() + "/ioWorker", true)
+				workerCount, new NamingThreadFactory(toString() + "/ioWorker", true)
 			);
 		}
 		bootstrap = new Bootstrap()

@@ -301,7 +301,7 @@
 				"driver" : {
 					"type": "object",
 					"required" : [
-						"addrs", "concurrency", "impl", "port", "remote", "type"
+						"addrs", "concurrency", "impl", "io", "port", "remote", "type"
 					],
 					"additionalProperties" : false,
 					"properties" : {
@@ -337,6 +337,19 @@
 								"required" : [
 									"type", "file", "fqcn"
 								]
+							}
+						},
+						"io" : {
+							"type" : "object",
+							"required" : [
+								"workers"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"workers" : {
+									"type" : "integer",
+									"minimum" : 0
+								}
 							}
 						},
 						"port" : {

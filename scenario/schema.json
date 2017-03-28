@@ -431,6 +431,24 @@
 										]
 									}
 								},
+								"io" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"workers" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										}
+									}
+								},
 								"port" : {
 									"oneOf" : [
 										{

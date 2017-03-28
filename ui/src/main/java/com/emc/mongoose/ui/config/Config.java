@@ -1023,12 +1023,36 @@ implements Serializable {
 		public static final class DriverConfig
 		implements Serializable {
 			
+			public static final class IoConfig
+			implements Serializable {
+				
+				public static final String KEY_WORKERS = "workers";
+				
+				public final void setWorkers(final int workers) {
+					this.workers = workers;
+				}
+				
+				@JsonProperty(KEY_WORKERS) private int workers;
+				
+				public final int getWorkers() {
+					return workers;
+				}
+				
+				public IoConfig() {
+				}
+				
+				public IoConfig(final IoConfig other) {
+					this.workers = other.getWorkers();
+				}
+			}
+			
 			public static final String KEY_ADDRS = "addrs";
 			public static final String KEY_CONCURRENCY = "concurrency";
 			public static final String KEY_PORT = "port";
 			public static final String KEY_REMOTE = "remote";
 			public static final String KEY_TYPE = "type";
 			public static final String KEY_IMPL = "impl";
+			public static final String KEY_IO = "io";
 
 			public static final String KEY_IMPL_TYPE = "type";
 			public static final String KEY_IMPL_FILE = "file";
@@ -1057,6 +1081,10 @@ implements Serializable {
 			public final void setImplConfig(final List<Map<String, Object>> implConfig) {
 				this.implConfig = implConfig;
 			}
+			
+			public final void setIoConfig(final IoConfig ioConfig) {
+				this.ioConfig = ioConfig;
+			}
 
 			@JsonProperty(KEY_ADDRS) private List<String> addrs;
 			@JsonProperty(KEY_CONCURRENCY) private int concurrency;
@@ -1064,6 +1092,7 @@ implements Serializable {
 			@JsonProperty(KEY_REMOTE) private boolean remote;
 			@JsonProperty(KEY_TYPE) private String type;
 			@JsonProperty(KEY_IMPL) private List<Map<String, Object>> implConfig;
+			@JsonProperty(KEY_IO) private IoConfig ioConfig;
 
 			public DriverConfig() {
 			}
@@ -1075,6 +1104,7 @@ implements Serializable {
 				this.remote = other.getRemote();
 				this.type = other.getType();
 				this.implConfig = other == null ? null : new ArrayList<>(other.getImplConfig());
+				this.ioConfig = other.getIoConfig();
 			}
 
 			public List<String> getAddrs() {
@@ -1099,6 +1129,10 @@ implements Serializable {
 
 			public List<Map<String, Object>> getImplConfig() {
 				return implConfig;
+			}
+			
+			public IoConfig getIoConfig() {
+				return ioConfig;
 			}
 		}
 
