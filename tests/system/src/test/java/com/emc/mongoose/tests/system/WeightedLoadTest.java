@@ -26,6 +26,25 @@ import static org.junit.Assert.assertTrue;
 
 /**
  Created by andrey on 27.03.17.
+ Covered use cases:
+ * 2.1.1.1.2. Small Data Items (1B-100KB)
+ * 2.2.1. Items Input File
+ * 2.3.2. Items Output File
+ * 4.3. Medium Concurrency Level (11-100)
+ * 5. Circularity
+ * 6.2.2. Limit Step by Processed Item Count
+ * 6.2.5. Limit Step by Time
+ * 7.1. Metrics Periodic Reporting
+ * 7.2. Metrics Reporting is Suppressed for the Precondition Steps
+ * 8.2.1. Create New Items
+ * 8.3.1. Read With Disabled Validation
+ * 9.1. Scenarios Syntax
+ * 9.3. Custom Scenario File
+ * 9.4.1. Override Default Configuration in the Scenario
+ * 9.4.2. Step Configuration Inheritance
+ * 9.4.3. Reusing The Items in the Scenario
+ * 9.5.7.2. Weighted Load Step
+ * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
 public class WeightedLoadTest
 extends HttpStorageDistributedScenarioTestBase {
@@ -96,6 +115,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, 100);
 		concurrencyMap.put(IoType.READ, 100);
+		final Map<IoType, Integer> weightsMap = new HashMap<>();
 		testMetricsTableStdout(STD_OUTPUT, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
 

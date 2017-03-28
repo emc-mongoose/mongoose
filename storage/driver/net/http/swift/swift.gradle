@@ -13,6 +13,7 @@ dependencies {
 		"io.netty:netty-handler:${depVersion.netty}",
 		"io.netty:netty-codec-http:${depVersion.netty}",
 
+		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
 		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
 	)
 
