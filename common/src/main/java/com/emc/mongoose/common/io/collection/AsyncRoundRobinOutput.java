@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,19 +45,21 @@ implements Output<T> {
 		}
 	}
 
-	private final class SingleOutputTask
+	private final class SingleOutputTask<T>
 	extends FutureTaskBase<T> {
 		
+		private final AsyncRoundRobinOutput<T> rrcOutput;
 		private final T ioTask;
 		
-		public SingleOutputTask(final T ioTask) {
+		public SingleOutputTask(final AsyncRoundRobinOutput<T> rrcOutput, final T ioTask) {
+			this.rrcOutput = rrcOutput;
 			this.ioTask = ioTask;
 		}
 		
 		@Override
 		public final void run() {
 			try {
-				while(!getNextOutput().put(ioTask)) {
+				while(!rrcOutput.getNextOutput().put(ioTask)) {
 					LockSupport.parkNanos(1);
 				}
 				set(ioTask);
@@ -69,18 +72,27 @@ implements Output<T> {
 	@Override
 	public final boolean put(final T ioTask)
 	throws IOException {
-		outputExecutor.execute(new SingleOutputTask(ioTask));
-		return true;
+		try {
+			outputExecutor.execute(new SingleOutputTask<>(this, ioTask));
+			return true;
+		} catch(final RejectedExecutionException e) {
+			return false;
+		}
 	}
 	
-	private final class BatchOutputTask
+	private final static class BatchOutputTask<T>
 	extends FutureTaskBase<Integer> {
 		
+		private final AsyncRoundRobinOutput<T> rrcOutput;
 		private final List<T> buff;
 		private int from;
 		private final int to;
 		
-		public BatchOutputTask(final List<T> buff, final int from, final int to) {
+		public BatchOutputTask(
+			final AsyncRoundRobinOutput<T> rrcOutput, final List<T> buff, final int from,
+			final int to
+		) {
+			this.rrcOutput = rrcOutput;
 			this.buff = buff;
 			this.from = from;
 			this.to = to;
@@ -90,7 +102,7 @@ implements Output<T> {
 		public final void run() {
 			try {
 				while(from < to) {
-					from += getNextOutput().put(buff, from, to);
+					from += rrcOutput.getNextOutput().put(buff, from, to);
 				}
 				set(to - from);
 			} catch(final IOException e) {
@@ -106,53 +118,43 @@ implements Output<T> {
 		if(n > outputsCount) {
 			final int nPerOutput = n / outputsCount;
 			for(int i = 0; i < outputsCount; i ++) {
-				outputExecutor.execute(
-					new BatchOutputTask(
-						buffer, from + i * nPerOutput, from + nPerOutput + i * nPerOutput
-					)
-				);
+				try {
+					outputExecutor.execute(
+						new BatchOutputTask<>(
+							this, buffer, from + i * nPerOutput, from + nPerOutput + i * nPerOutput
+						)
+					);
+				} catch(final RejectedExecutionException e) {
+					return i * nPerOutput;
+				}
 			}
 			final int nTail = n - nPerOutput * outputsCount;
 			if(nTail > 0) {
-				outputExecutor.execute(
-					new BatchOutputTask(buffer, to - nTail, to)
-				);
+				try {
+					outputExecutor.execute(
+						new BatchOutputTask<>(this, buffer, to - nTail, to)
+					);
+				} catch(final RejectedExecutionException e) {
+					return n - nTail;
+				}
 			}
-			return to - from;
+			return n;
 		} else {
 			for(int i = from; i < to; i ++) {
-				outputExecutor.execute(new SingleOutputTask(buffer.get(i)));
+				try {
+					outputExecutor.execute(new SingleOutputTask<>(this, buffer.get(i)));
+				} catch(final RejectedExecutionException e) {
+					return to - i;
+				}
 			}
-			return to - from;
+			return n;
 		}
 	}
 
 	@Override
 	public final int put(final List<T> buffer)
 	throws IOException {
-		Output<T> nextOutput;
-		final int n = buffer.size();
-		if(n > outputsCount) {
-			final int nPerOutput = n / outputsCount;
-			int nextFrom = 0;
-			for(int i = 0; i < outputsCount; i ++) {
-				nextOutput = getNextOutput();
-				nextFrom += nextOutput.put(buffer, nextFrom, nextFrom + nPerOutput);
-			}
-			if(nextFrom < n) {
-				nextOutput = getNextOutput();
-				nextFrom += nextOutput.put(buffer, nextFrom, n);
-			}
-			return nextFrom;
-		} else {
-			for(int i = 0; i < n; i ++) {
-				nextOutput = getNextOutput();
-				if(!nextOutput.put(buffer.get(i))) {
-					return i;
-				}
-			}
-			return n;
-		}
+		return put(buffer, 0, buffer.size());
 	}
 
 	@Override

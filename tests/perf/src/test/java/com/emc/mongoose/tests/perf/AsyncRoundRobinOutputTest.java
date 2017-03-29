@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.LongAdder;
 @RunWith(Parameterized.class)
 public class AsyncRoundRobinOutputTest {
 	
-	private static final int QUEUE_SIZE_LIMIT = 1_000_000;
 	private static final int TEST_TIME_LIMIT_SEC = 30;
 	
 	private final static class CountingOutput<T>
@@ -75,7 +74,7 @@ public class AsyncRoundRobinOutputTest {
 		for(int i = 0; i < outputCount; i ++) {
 			outputs.add(new CountingOutput());
 		}
-		rrcOutput = new AsyncRoundRobinOutput(outputs, QUEUE_SIZE_LIMIT);
+		rrcOutput = new AsyncRoundRobinOutput(outputs, BATCH_SIZE);
 		final Thread t = new Thread(() -> {
 			final Thread currentThread = Thread.currentThread();
 			final List buff = new ArrayList(BATCH_SIZE);
@@ -83,9 +82,11 @@ public class AsyncRoundRobinOutputTest {
 				buff.add(new Object());
 			}
 			try {
+				int i;
 				while(!currentThread.isInterrupted()) {
-					if(BATCH_SIZE != rrcOutput.put(buff, 0, BATCH_SIZE)) {
-						fail();
+					i = 0;
+					while(i < BATCH_SIZE) {
+						i += rrcOutput.put(buff, i, BATCH_SIZE);
 					}
 				}
 			} catch(final Throwable e) {

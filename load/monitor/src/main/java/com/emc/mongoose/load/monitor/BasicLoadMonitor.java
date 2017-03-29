@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.BatchQueueOutputTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
+import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
@@ -20,7 +21,6 @@ import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
@@ -34,6 +34,7 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Markers;
+
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -172,10 +173,7 @@ implements LoadMonitor<I, O> {
 
 		Output<O> nextGeneratorOutput;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			nextGeneratorOutput = new AsyncRoundRobinOutput<>(
-				driversMap.get(nextGenerator),
-				loadConfigs.values().iterator().next().getQueueConfig().getSize()
-			);
+			nextGeneratorOutput = new RoundRobinOutput<>(driversMap.get(nextGenerator));
 			ioTaskOutputs.put(nextGenerator.hashCode(), nextGeneratorOutput);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
