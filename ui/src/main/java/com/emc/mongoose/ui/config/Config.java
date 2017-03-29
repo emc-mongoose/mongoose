@@ -1581,12 +1581,12 @@ implements Serializable {
 
 	private static void cleanEmptyPaths(final Map<String, Object> tree) {
 
-		boolean emptyBranchFound = !tree.isEmpty(); // assume
+		boolean emptyBranchFound = true; // assume
 		Object t;
 		Iterator<Map.Entry<String, Object>> i;
 		Map.Entry<String, Object> nextEntry;
 
-		while(emptyBranchFound) {
+		while(emptyBranchFound && !tree.isEmpty()) {
 			i = tree.entrySet().iterator();
 			while(i.hasNext()) {
 				nextEntry = i.next();
