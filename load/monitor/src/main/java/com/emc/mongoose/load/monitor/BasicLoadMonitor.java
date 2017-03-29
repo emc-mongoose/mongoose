@@ -20,7 +20,7 @@ import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.collection.RoundRobinOutput;
+import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
@@ -172,7 +172,10 @@ implements LoadMonitor<I, O> {
 
 		Output<O> nextGeneratorOutput;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			nextGeneratorOutput = new RoundRobinOutput<>(driversMap.get(nextGenerator));
+			nextGeneratorOutput = new AsyncRoundRobinOutput<>(
+				driversMap.get(nextGenerator),
+				loadConfigs.values().iterator().next().getQueueConfig().getSize()
+			);
 			ioTaskOutputs.put(nextGenerator.hashCode(), nextGeneratorOutput);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
