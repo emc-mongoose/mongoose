@@ -1,9 +1,16 @@
 package com.emc.mongoose.model;
 
 import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
@@ -11,12 +18,28 @@ import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.SHUTDOWN;
 import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
+import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurrencyLevel;
 
 /**
  Created on 12.07.16.
  */
 public abstract class DaemonBase
 implements Daemon {
+
+	private static final ConcurrentMap<Daemon, List<Runnable>>
+		MICRO_TASKS_REGISTRY = new ConcurrentHashMap<>();
+	private static final ExecutorService MICRO_TASKS_EXECUTOR = Executors.newFixedThreadPool(
+		getHardwareConcurrencyLevel(), new NamingThreadFactory()
+	);
+	static {
+		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
+
+		}
+	}
+
+	protected DaemonBase() {
+		MICRO_TASKS_REGISTRY.put(this, new ArrayList<>());
+	}
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
