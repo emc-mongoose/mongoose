@@ -540,7 +540,7 @@ implements LoadMonitor<I, O> {
 					}
 				}
 			} else if(!Status.CANCELLED.equals(status)) {
-				LOG.debug(Markers.ERR, ioTaskResult.toString());
+				LOG.debug(Markers.ERR, "{}: {}", ioTaskResult.toString(), status.toString());
 				ioTypeStats.markFail();
 				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 					ioTypeMedStats.markFail();
