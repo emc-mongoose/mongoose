@@ -54,7 +54,7 @@ implements LoadGenerator<I, O>, Runnable {
 	private final long countLimit;
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final BlockingQueue<O> remainingTasks = new ArrayBlockingQueue<>(BATCH_SIZE);
+	private final BlockingQueue<O> remainingTasks = new ArrayBlockingQueue<>(1_000_000);
 
 	private final LongAdder generatedTaskCounter = new LongAdder();
 	private final String name;
