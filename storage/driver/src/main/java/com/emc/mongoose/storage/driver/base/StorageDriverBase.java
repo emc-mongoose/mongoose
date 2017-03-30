@@ -32,6 +32,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
@@ -96,6 +98,7 @@ implements StorageDriver<I, O> {
 	extends ArrayList<O> // extends ArrayList in order to get the access to the "removeRange" method
 	implements Runnable {
 
+		private final Lock lock = new ReentrantLock();
 		private int n = 0;
 		private int m;
 
@@ -105,14 +108,14 @@ implements StorageDriver<I, O> {
 		
 		@Override
 		public final void run() {
-			synchronized(this) {
-				if(n < BATCH_SIZE) {
-					n += childTasksQueue.drainTo(this, BATCH_SIZE - n);
-				}
-				if(n < BATCH_SIZE) {
-					n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
-				}
+			if(lock.tryLock()) {
 				try {
+					if(n < BATCH_SIZE) {
+						n += childTasksQueue.drainTo(this, BATCH_SIZE - n);
+					}
+					if(n < BATCH_SIZE) {
+						n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
+					}
 					if(n > 0) {
 						m = submit(this, 0, n);
 						if(m > 0) {
@@ -121,6 +124,8 @@ implements StorageDriver<I, O> {
 						}
 					}
 				} catch(final InterruptedException ignored) {
+				} finally {
+					lock.unlock();
 				}
 			}
 		}
