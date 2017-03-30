@@ -44,12 +44,12 @@ implements StorageDriverSvc<I, O> {
 		this.driver = driver;
 		this.contentSrc = contentSrc;
 		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
-		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			SVC_TASKS.put(this, new StateReportingTask(this, metricsPeriodSec));
-		}
+		/*if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			svc.put(this, new StateReportingTask(this, metricsPeriodSec));
+		}*/
 	}
 	
-	private final static class StateReportingTask
+	/*private final static class StateReportingTask
 	implements Runnable {
 		
 		private final StorageDriverSvc storageDriver;
@@ -82,7 +82,7 @@ implements StorageDriverSvc<I, O> {
 				}
 			}
 		}
-	}
+	}*/
 
 	@Override
 	public final int getRegistryPort()
@@ -111,7 +111,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final void close()
 	throws IOException {
-		SVC_TASKS.remove(this);
+		//SVC_TASKS.remove(this);
 		driver.close();
 		contentSrc.close();
 		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
