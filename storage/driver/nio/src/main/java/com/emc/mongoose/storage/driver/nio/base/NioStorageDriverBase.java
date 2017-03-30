@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.nio.base;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.ui.log.NamingThreadFactory;
+import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -164,6 +164,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected final void doStart()
 	throws IllegalStateException {
+		super.doStart();
 		for(final Runnable ioWorkerTask : ioWorkerTasks) {
 			ioTaskExecutor.execute(ioWorkerTask);
 		}

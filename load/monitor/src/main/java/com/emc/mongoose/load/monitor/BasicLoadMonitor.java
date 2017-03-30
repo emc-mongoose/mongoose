@@ -14,7 +14,7 @@ import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import com.emc.mongoose.ui.log.NamingThreadFactory;
+import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
@@ -648,6 +648,7 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
+		super.doStart();
 
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
@@ -874,6 +875,8 @@ implements LoadMonitor<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
+		
+		super.doClose();
 
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareConcurrencyLevel(),

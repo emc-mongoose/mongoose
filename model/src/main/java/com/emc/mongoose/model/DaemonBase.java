@@ -1,18 +1,7 @@
 package com.emc.mongoose.model;
 
 import com.emc.mongoose.common.concurrent.Daemon;
-import com.emc.mongoose.common.concurrent.ThreadUtil;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
@@ -20,32 +9,71 @@ import static com.emc.mongoose.common.concurrent.Daemon.State.SHUTDOWN;
 import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
 import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurrencyLevel;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  Created on 12.07.16.
  */
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final ConcurrentMap<Daemon, List<Runnable>>
-		MICRO_TASKS_REGISTRY = new ConcurrentHashMap<>();
-	private static final ExecutorService MICRO_TASKS_EXECUTOR = Executors.newFixedThreadPool(
-		getHardwareConcurrencyLevel(), new NamingThreadFactory()
+	private static final Map<Daemon, Queue<Runnable>> SVC_TASKS_REGISTRY = new ConcurrentHashMap<>();
+	
+	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
+		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
 	);
+	
 	static {
 		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
-
+			SVC_TASKS_EXECUTOR.submit(
+				() -> {
+					while(true) {
+						Queue<Runnable> nextDaemonSvcTasks;
+						if(SVC_TASKS_REGISTRY.size() == 0) {
+							Thread.sleep(1);
+						}
+						for(final Daemon nextDaemon : SVC_TASKS_REGISTRY.keySet()) {
+							nextDaemonSvcTasks = SVC_TASKS_REGISTRY.get(nextDaemon);
+							if(nextDaemonSvcTasks.size() > 0) {
+								for(final Runnable nextSvcTask : nextDaemonSvcTasks) {
+									try {
+										nextSvcTask.run();
+									} catch(final Throwable t) {
+										System.err.println(
+											"Service yask \"" + nextSvcTask + "\" of \"" +
+												nextDaemon + "\" failed:"
+										);
+										t.printStackTrace(System.err);
+									}
+								}
+							}
+						}
+					}
+				}
+			);
 		}
 	}
-
-	protected DaemonBase() {
-		MICRO_TASKS_REGISTRY.put(this, new ArrayList<>());
-	}
 	
+	protected final Queue<Runnable> svcTasks = new ArrayBlockingQueue<>(
+		SVC_TASKS_COUNT_PER_INSTANCE_LIMIT
+	);
+
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
 	
-	protected abstract void doStart()
-	throws IllegalStateException;
+	protected void doStart()
+	throws IllegalStateException {
+		SVC_TASKS_REGISTRY.put(this, svcTasks);
+	}
 
 	protected abstract void doShutdown()
 	throws IllegalStateException;
@@ -53,8 +81,11 @@ implements Daemon {
 	protected abstract void doInterrupt()
 	throws IllegalStateException;
 	
-	protected abstract void doClose()
-	throws IOException, IllegalStateException;
+	protected void doClose()
+	throws IOException, IllegalStateException {
+		SVC_TASKS_REGISTRY.remove(this);
+		svcTasks.clear();
+	}
 
 	@Override
 	public final void start()

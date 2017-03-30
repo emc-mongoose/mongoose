@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -35,7 +36,7 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadGenerator<I, O> {
+implements LoadGenerator<I, O>, Runnable {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -45,12 +46,13 @@ implements LoadGenerator<I, O> {
 
 	private final Input<I> itemInput;
 	private final SizeInBytes itemSizeEstimate;
-	private final Thread worker;
+	private final Random rnd;
 	private final long countLimit;
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
 
-	private long generatedIoTaskCount = 0;
+	private final LongAdder generatedTaskCounter = new LongAdder();
+	private final String name;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
@@ -73,15 +75,15 @@ implements LoadGenerator<I, O> {
 			this.countLimit = Long.MAX_VALUE;
 		}
 		this.shuffleFlag = shuffleFlag;
+		this.rnd = shuffleFlag ? new Random() : null;
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
-		worker = new Thread(
-			new GeneratorTask(),
-			Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
-				(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
-				itemInput.toString()
-		);
-		worker.setDaemon(true);
+		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
+			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
+			itemInput.toString();
+		if(!svcTasks.offer(this)) {
+			LOG.error(Markers.ERR, "{}: failed to register new service task", toString());
+		}
 	}
 	
 	@Override
@@ -101,7 +103,7 @@ implements LoadGenerator<I, O> {
 
 	@Override
 	public final long getGeneratedIoTasksCount() {
-		return generatedIoTaskCount;
+		return generatedTaskCounter.sum();
 	}
 
 	@Override
@@ -113,125 +115,104 @@ implements LoadGenerator<I, O> {
 	public final IoType getIoType() {
 		return ioTaskBuilder.getIoType();
 	}
-
-	private final class GeneratorTask
-	implements Runnable {
-
-		private final Random rnd = new Random();
-
-		@Override
-		public final void run() {
-
-			if(ioTaskOutput == null) {
-				LOG.warn(
-					Markers.ERR, "{}: no load I/O task output set, exiting",
+	
+	@Override
+	public final void run() {
+		
+		// find the limits and prepare the items buffer
+		final long remaining = countLimit - generatedTaskCounter.sum();
+		if(remaining <= 0) {
+			finish();
+		}
+		int n = BATCH_SIZE > remaining ? (int) remaining : BATCH_SIZE;
+		final List<I> items = new ArrayList<>(n);
+		
+		// get the items from the input
+		try {
+			synchronized(itemInput) {
+				n = itemInput.get(items, n);
+			}
+		} catch(final EOFException e) {
+			LOG.debug(
+				Markers.MSG, "{}: end of items input @ the count {}",
+				BasicLoadGenerator.this.toString(), generatedTaskCounter
+			);
+			finish();
+		} catch(final Exception e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "{}: failed to get the items from the input",
+				BasicLoadGenerator.this.toString()
+			);
+			finish();
+		}
+		
+		if(n > 0) {
+			if(shuffleFlag) {
+				Collections.shuffle(items, rnd);
+			}
+			try {
+				// build the I/O tasks for the items got from the input
+				final List<O> ioTasks = ioTaskBuilder.getInstances(items);
+				int i, j, k;
+				i = j = 0;
+				while(i < n) {
+					// pass the throttles
+					j += acquireThrottlesPermit(ioTasks, i, n);
+					if(i == j) {
+						LockSupport.parkNanos(1);
+						continue;
+					}
+					k = i;
+					while(true) {
+						// feed the items to the I/O tasks consumer
+						k += ioTaskOutput.put(ioTasks, k, j);
+						if(k < j) {
+							LockSupport.parkNanos(1);
+						} else {
+							break;
+						}
+					}
+					i = j;
+				}
+				generatedTaskCounter.add(n);
+			} catch(final EOFException e) {
+				LOG.debug(
+					Markers.MSG, "{}: finish due to output's EOF",
 					BasicLoadGenerator.this.toString()
 				);
-			}
-
-			int n;
-			int i, j, k;
-			long remaining;
-			List<I> items;
-
-			while(!worker.isInterrupted()) {
-
-				// find the limits and prepare the items buffer
-				remaining = countLimit - generatedIoTaskCount;
-				if(remaining <= 0) {
-					break;
-				}
-				n = BATCH_SIZE > remaining ? (int) remaining : BATCH_SIZE;
-				items = new ArrayList<>(n);
-
-				// get the items from the input
-				try {
-					n = itemInput.get(items, n);
-				} catch(final EOFException e) {
+				finish();
+			} catch(final RemoteException e) {
+				final Throwable cause = e.getCause();
+				if(cause instanceof EOFException) {
 					LOG.debug(
-						Markers.MSG, "{}: end of items input @ the count {}",
-						BasicLoadGenerator.this.toString(),
-						generatedIoTaskCount
-					);
-					break;
-				} catch(final Exception e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "{}: failed to get the items from the input",
+						Markers.MSG, "{}: finish due to output's EOF",
 						BasicLoadGenerator.this.toString()
 					);
-					break;
+					finish();
+				} else if(!isStarted()){
+					LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+					e.printStackTrace(System.err);
 				}
-
-				if(worker.isInterrupted()) {
-					break;
+			} catch(final Exception e) {
+				if(isStarted()) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+					e.printStackTrace(System.err);
 				}
-
-				if(n > 0) {
-					if(shuffleFlag) {
-						Collections.shuffle(items, rnd);
-					}
-					try {
-						// build the I/O tasks for the items got from the input
-						final List<O> ioTasks = ioTaskBuilder.getInstances(items);
-						i = j = 0;
-						while(i < n) {
-							// pass the throttles
-							j += acquireThrottlesPermit(ioTasks, i, n);
-							if(i == j) {
-								LockSupport.parkNanos(1);
-								continue;
-							}
-							k = i;
-							while(k < j) {
-								// feed the items to the I/O tasks consumer
-								k += ioTaskOutput.put(ioTasks, k, j);
-								LockSupport.parkNanos(1);
-							}
-							i = j;
-						}
-						generatedIoTaskCount += n;
-					} catch(final EOFException e) {
-						LOG.debug(
-							Markers.MSG, "{}: finish due to output's EOF",
-							BasicLoadGenerator.this.toString()
-						);
-						break;
-					} catch(final RemoteException e) {
-						final Throwable cause = e.getCause();
-						if(cause instanceof EOFException) {
-							LOG.debug(
-								Markers.MSG, "{}: finish due to output's EOF",
-								BasicLoadGenerator.this.toString()
-							);
-							break;
-						} else if(!isStarted()){
-							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
-							e.printStackTrace(System.err);
-						}
-					} catch(final Exception e) {
-						if(isStarted()) {
-							LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
-							e.printStackTrace(System.err);
-						}
-					}
-				} else {
-					if(worker.isInterrupted()) {
-						break;
-					}
-				}
-			}
-
-			LOG.debug(
-				Markers.MSG, "{}: produced {} items", BasicLoadGenerator.this.toString(),
-				generatedIoTaskCount
-			);
-			try {
-				shutdown();
-			} catch(final IllegalStateException ignored) {
 			}
 		}
 	}
-
+	
+	private void finish() {
+		LOG.debug(
+			Markers.MSG, "{}: produced {} items", BasicLoadGenerator.this.toString(),
+			generatedTaskCounter
+		);
+		try {
+			shutdown();
+		} catch(final IllegalStateException ignored) {
+		}
+	}
+	
 	private int acquireThrottlesPermit(final List<O> ioTasks, final int from, final int to) {
 		int n = to - from;
 		final int originCode = hashCode();
@@ -245,31 +226,39 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
-	protected final void doStart()
-	throws IllegalStateException {
-		worker.start();
-	}
-
-	@Override
 	protected final void doShutdown() {
 		interrupt();
 	}
 
 	@Override
 	protected final void doInterrupt() {
-		worker.interrupt();
+		svcTasks.remove(this);
 	}
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
-		timeUnit.timedJoin(worker, timeout);
-		return true;
+		long remainingMillis = timeUnit.toMillis(timeout);
+		long t;
+		while(remainingMillis > 0) {
+			t = System.currentTimeMillis();
+			synchronized(state) {
+				state.wait(remainingMillis);
+			}
+			if(!isStarted()) {
+				return true;
+			} else {
+				t = System.currentTimeMillis() - t;
+				remainingMillis -= t;
+			}
+		}
+		return false;
 	}
 
 	@Override
 	protected final void doClose()
 	throws IOException {
+		super.doClose();
 		if(itemInput != null) {
 			itemInput.close();
 		}
@@ -278,7 +267,7 @@ implements LoadGenerator<I, O> {
 	
 	@Override
 	public final String toString() {
-		return worker.getName();
+		return name;
 	}
 	
 	@Override

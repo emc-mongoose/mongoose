@@ -62,6 +62,7 @@ implements StorageDriver<I, O> {
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewAuthToken(final Credential credential);
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
+	private final IoTasksDispatch ioTasksDispatchTask;
 	
 	protected StorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
@@ -85,8 +86,10 @@ implements StorageDriver<I, O> {
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
-
-		SVC_TASKS.put(this, new IoTasksDispatch());
+		this.ioTasksDispatchTask = new IoTasksDispatch();
+		if(!svcTasks.offer(ioTasksDispatchTask)) {
+			LOG.error(Markers.ERR, "{}: failed to add the I/O tasks dispatcher task", toString());
+		}
 	}
 
 	private final class IoTasksDispatch
@@ -116,8 +119,7 @@ implements StorageDriver<I, O> {
 						n -= m;
 					}
 				}
-			} catch(final InterruptedException e) {
-				SVC_TASKS.clear();
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -328,7 +330,7 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		SVC_TASKS.remove(this);
+		svcTasks.remove(ioTasksDispatchTask);
 		LOG.debug(Markers.MSG, "{}: shut down", toString());
 	}
 
@@ -348,6 +350,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
+		super.doClose();
 		childTasksQueue.clear();
 		inTasksQueue.clear();
 		final int ioResultsQueueSize = ioResultsQueue.size();

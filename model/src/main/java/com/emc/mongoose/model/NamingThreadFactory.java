@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.log;
+package com.emc.mongoose.model;
 
 import org.apache.logging.log4j.ThreadContext;
 
