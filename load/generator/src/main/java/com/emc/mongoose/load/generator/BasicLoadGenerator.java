@@ -2,7 +2,6 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
-import com.emc.mongoose.common.io.collection.BufferingInputBase;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
@@ -28,8 +27,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 11.07.16.
@@ -45,12 +48,13 @@ implements LoadGenerator<I, O>, Runnable {
 	private volatile Output<O> ioTaskOutput;
 
 	private final Input<I> itemInput;
+	private final Lock itemInputLock = new ReentrantLock();
 	private final SizeInBytes itemSizeEstimate;
 	private final Random rnd;
 	private final long countLimit;
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final List<O> remainingTasks = new ArrayList<>(BATCH_SIZE);
+	private final BlockingQueue<O> remainingTasks = new ArrayBlockingQueue<>(BATCH_SIZE);
 
 	private final LongAdder generatedTaskCounter = new LongAdder();
 	private final String name;
@@ -120,6 +124,87 @@ implements LoadGenerator<I, O>, Runnable {
 	@Override
 	public final void run() {
 		
+		final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
+		int n = remainingTasks.drainTo(ioTasks, BATCH_SIZE);
+		int m = BATCH_SIZE - n;
+		
+		try {
+			if(m > 0) {
+				// find the limits and prepare the items buffer
+				final long remainingTasksCount = countLimit - generatedTaskCounter.sum();
+				if(remainingTasksCount > 0) {
+					m = (int) Math.min(remainingTasksCount, m);
+					if(itemInputLock.tryLock()) {
+						final List<I> items = new ArrayList<>(m);
+						try {
+							// get the items from the input
+							itemInput.get(items, m);
+						} catch(final EOFException e) {
+							LOG.debug(
+								Markers.MSG, "{}: end of items input @ the count {}",
+								BasicLoadGenerator.this.toString(), generatedTaskCounter
+							);
+							finish();
+						} finally {
+							itemInputLock.unlock();
+						}
+						
+						m = items.size();
+						if(m > 0) {
+							if(shuffleFlag) {
+								Collections.shuffle(items, rnd);
+							}
+							ioTaskBuilder.getInstances(items, ioTasks);
+							generatedTaskCounter.add(m);
+							n += m;
+						}
+					}
+				}
+			}
+			
+			if(n > 0) {
+				m = acquireThrottlesPermit(ioTasks, 0, n);
+				if(m > 0) {
+					try {
+						m = ioTaskOutput.put(ioTasks, 0, m);
+						if(m < n) {
+							for(int i = m; i < n; i ++) {
+								remainingTasks.put(ioTasks.get(i));
+							}
+						}
+					} catch(final EOFException e) {
+						LOG.debug(
+							Markers.MSG, "{}: finish due to output's EOF",
+							BasicLoadGenerator.this.toString()
+						);
+						finish();
+					} catch(final RemoteException e) {
+						final Throwable cause = e.getCause();
+						if(cause instanceof EOFException) {
+							LOG.debug(
+								Markers.MSG, "{}: finish due to output's EOF",
+								BasicLoadGenerator.this.toString()
+							);
+							finish();
+						} else {
+							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+							e.printStackTrace(System.err);
+						}
+					} catch(final InterruptedException e) {
+						finish();
+					}
+				}
+			}
+		} catch(final Throwable t) {
+			LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
+			t.printStackTrace(System.err);
+			finish();
+		}
+	}
+	
+	/*@Override
+	public final void run() {
+		
 		// find the limits and prepare the items buffer
 		final long remaining = countLimit - generatedTaskCounter.sum();
 		if(remaining <= 0) {
@@ -128,23 +213,27 @@ implements LoadGenerator<I, O>, Runnable {
 		int n = BATCH_SIZE > remaining ? (int) remaining : BATCH_SIZE;
 		final List<I> items = new ArrayList<>(n);
 		
-		// get the items from the input
-		try {
-			synchronized(itemInput) {
+		if(!itemInputLock.tryLock()) {
+			return;
+		} else {
+			try {
+				// get the items from the input
 				n = itemInput.get(items, n);
+			} catch(final EOFException e) {
+				LOG.debug(
+					Markers.MSG, "{}: end of items input @ the count {}",
+					BasicLoadGenerator.this.toString(), generatedTaskCounter
+				);
+				finish();
+			} catch(final Exception e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "{}: failed to get the items from the input",
+					BasicLoadGenerator.this.toString()
+				);
+				finish();
+			} finally {
+				itemInputLock.unlock();
 			}
-		} catch(final EOFException e) {
-			LOG.debug(
-				Markers.MSG, "{}: end of items input @ the count {}",
-				BasicLoadGenerator.this.toString(), generatedTaskCounter
-			);
-			finish();
-		} catch(final Exception e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "{}: failed to get the items from the input",
-				BasicLoadGenerator.this.toString()
-			);
-			finish();
 		}
 		
 		if(n > 0) {
@@ -153,16 +242,7 @@ implements LoadGenerator<I, O>, Runnable {
 			}
 			try {
 				// build the I/O tasks for the items got from the input
-				final List<O> ioTasks;
-				synchronized(remainingTasks) {
-					if(remainingTasks.size() == 0) {
-						ioTasks = ioTaskBuilder.getInstances(items);
-					} else {
-						ioTasks = new ArrayList<>(remainingTasks);
-						n = remainingTasks.size();
-						remainingTasks.clear();
-					}
-				}
+				ioTaskBuilder.getInstances(items, ioTasks);
 				int k = acquireThrottlesPermit(ioTasks, 0, n);
 				if(k > 0) {
 					k = ioTaskOutput.put(ioTasks, 0, k);
@@ -198,7 +278,7 @@ implements LoadGenerator<I, O>, Runnable {
 				}
 			}
 		}
-	}
+	}*/
 	
 	private void finish() {
 		LOG.debug(

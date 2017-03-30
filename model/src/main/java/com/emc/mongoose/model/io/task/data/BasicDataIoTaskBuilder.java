@@ -7,7 +7,6 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,13 +58,12 @@ implements DataIoTaskBuilder<I, O> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items)
+	public void getInstances(final List<I> items, final List<O> buff)
 	throws IOException {
-		final List<O> tasks = new ArrayList<>(items.size());
 		String uid;
 		for(final I nextItem : items) {
 			if(nextItem.size() > sizeThreshold) {
-				tasks.add(
+				buff.add(
 					(O) new BasicCompositeDataIoTask<>(
 						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
 						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
@@ -73,7 +71,7 @@ implements DataIoTaskBuilder<I, O> {
 					)
 				);
 			} else {
-				tasks.add(
+				buff.add(
 					(O) new BasicDataIoTask<>(
 						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
 						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
@@ -82,6 +80,5 @@ implements DataIoTaskBuilder<I, O> {
 				);
 			}
 		}
-		return tasks;
 	}
 }

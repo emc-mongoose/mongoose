@@ -25,18 +25,16 @@ implements TokenIoTaskBuilder<I, O> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items)
+	public void getInstances(final List<I> items, final List<O> buff)
 	throws IOException {
-		final List<O> tasks = new ArrayList<>(items.size());
 		String uid;
 		for(final I item : items) {
-			tasks.add(
+			buff.add(
 				(O) new BasicTokenIoTask<>(
 					originCode, ioType, item,
 					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);
 		}
-		return tasks;
 	}
 }

@@ -36,6 +36,6 @@ extends Closeable {
 	O getInstance(final I item)
 	throws IOException;
 
-	List<O> getInstances(final List<I> items)
+	void getInstances(final List<I> items, final List<O> buff)
 	throws IOException;
 }
