@@ -26,9 +26,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -54,7 +54,7 @@ implements LoadGenerator<I, O>, Runnable {
 	private final long countLimit;
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final BlockingQueue<O> remainingTasks = new ArrayBlockingQueue<>(1_000_000);
+	private final Queue<O> remainingTasks = new ConcurrentLinkedQueue<>();
 
 	private final LongAdder generatedTaskCounter = new LongAdder();
 	private final String name;
@@ -125,7 +125,16 @@ implements LoadGenerator<I, O>, Runnable {
 	public final void run() {
 		
 		final List<O> ioTasks = new ArrayList<>(BATCH_SIZE);
-		int n = remainingTasks.drainTo(ioTasks, BATCH_SIZE);
+		int n;
+		O ioTask;
+		for(n = 0; n < BATCH_SIZE; n ++) {
+			ioTask = remainingTasks.poll();
+			if(ioTask == null) {
+				break;
+			} else {
+				ioTasks.add(ioTask);
+			}
+		}
 		int m = BATCH_SIZE - n;
 		
 		try {
@@ -168,9 +177,7 @@ implements LoadGenerator<I, O>, Runnable {
 					try {
 						m = ioTaskOutput.put(ioTasks, 0, m);
 						if(m < n) {
-							for(int i = m; i < n; i ++) {
-								remainingTasks.put(ioTasks.get(i));
-							}
+							remainingTasks.addAll(ioTasks.subList(m, n));
 						}
 					} catch(final EOFException e) {
 						LOG.debug(
@@ -190,8 +197,6 @@ implements LoadGenerator<I, O>, Runnable {
 							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
 							e.printStackTrace(System.err);
 						}
-					} catch(final InterruptedException e) {
-						finish();
 					}
 				}
 			}
