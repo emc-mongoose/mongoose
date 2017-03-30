@@ -2,6 +2,7 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
+import com.emc.mongoose.common.io.collection.BufferingInputBase;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
@@ -29,7 +30,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 11.07.16.
@@ -50,6 +50,7 @@ implements LoadGenerator<I, O>, Runnable {
 	private final long countLimit;
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
+	private final List<O> remainingTasks = new ArrayList<>(BATCH_SIZE);
 
 	private final LongAdder generatedTaskCounter = new LongAdder();
 	private final String name;
@@ -152,27 +153,24 @@ implements LoadGenerator<I, O>, Runnable {
 			}
 			try {
 				// build the I/O tasks for the items got from the input
-				final List<O> ioTasks = ioTaskBuilder.getInstances(items);
-				int i, j, k;
-				i = j = 0;
-				while(i < n) {
-					// pass the throttles
-					j += acquireThrottlesPermit(ioTasks, i, n);
-					if(i == j) {
-						LockSupport.parkNanos(1);
-						continue;
+				final List<O> ioTasks;
+				synchronized(remainingTasks) {
+					if(remainingTasks.size() == 0) {
+						ioTasks = ioTaskBuilder.getInstances(items);
+					} else {
+						ioTasks = new ArrayList<>(remainingTasks);
+						n = remainingTasks.size();
+						remainingTasks.clear();
 					}
-					k = i;
-					while(true) {
-						// feed the items to the I/O tasks consumer
-						k += ioTaskOutput.put(ioTasks, k, j);
-						if(k < j) {
-							LockSupport.parkNanos(1);
-						} else {
-							break;
-						}
+				}
+				int k = acquireThrottlesPermit(ioTasks, 0, n);
+				if(k > 0) {
+					k = ioTaskOutput.put(ioTasks, 0, k);
+				}
+				if(k < n) {
+					synchronized(remainingTasks) {
+						remainingTasks.addAll(ioTasks.subList(k, n));
 					}
-					i = j;
 				}
 				generatedTaskCounter.add(n);
 			} catch(final EOFException e) {
@@ -263,6 +261,7 @@ implements LoadGenerator<I, O>, Runnable {
 			itemInput.close();
 		}
 		ioTaskBuilder.close();
+		remainingTasks.clear();
 	}
 	
 	@Override

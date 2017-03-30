@@ -102,24 +102,26 @@ implements StorageDriver<I, O> {
 		public IoTasksDispatch() {
 			super(BATCH_SIZE);
 		}
-
+		
 		@Override
 		public final void run() {
-			if(n < BATCH_SIZE) {
-				n += childTasksQueue.drainTo(this, BATCH_SIZE - n);
-			}
-			if(n < BATCH_SIZE) {
-				n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
-			}
-			try {
-				if(n > 0) {
-					m = submit(this, 0, n);
-					if(m > 0) {
-						removeRange(0, m);
-						n -= m;
-					}
+			synchronized(this) {
+				if(n < BATCH_SIZE) {
+					n += childTasksQueue.drainTo(this, BATCH_SIZE - n);
 				}
-			} catch(final InterruptedException ignored) {
+				if(n < BATCH_SIZE) {
+					n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
+				}
+				try {
+					if(n > 0) {
+						m = submit(this, 0, n);
+						if(m > 0) {
+							removeRange(0, m);
+							n -= m;
+						}
+					}
+				} catch(final InterruptedException ignored) {
+				}
 			}
 		}
 	}
