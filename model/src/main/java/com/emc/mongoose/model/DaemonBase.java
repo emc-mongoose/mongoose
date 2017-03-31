@@ -10,6 +10,7 @@ import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurren
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ConcurrentModificationException;
 import java.util.Map;
 import static java.util.Map.Entry;
 import java.util.Set;
@@ -174,5 +175,28 @@ implements Daemon {
 	@Override
 	public final boolean isClosed() {
 		return stateRef.get().equals(CLOSED);
+	}
+
+	public static void closeAll() {
+		synchronized(SVC_TASKS) {
+			// close all unclosed daemons
+			for(final Daemon d : SVC_TASKS.keySet()) {
+				try {
+					d.close();
+				} catch(final IllegalStateException | ConcurrentModificationException ignored) {
+				} catch(final Throwable t) {
+					t.printStackTrace(System.err);
+				}
+			}
+
+			// wait until the list of the unclosed daemons is empty
+			while(!SVC_TASKS.isEmpty()) {
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch(final InterruptedException e) {
+					break;
+				}
+			}
+		}
 	}
 }

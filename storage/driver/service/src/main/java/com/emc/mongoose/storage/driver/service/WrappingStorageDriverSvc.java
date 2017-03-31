@@ -22,12 +22,15 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
 import static java.lang.System.nanoTime;
 
 /**
  Created by andrey on 05.10.16.
  */
 public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
+extends Thread
 implements StorageDriverSvc<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -40,49 +43,54 @@ implements StorageDriverSvc<I, O> {
 		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
 		final long metricsPeriodSec
 	) {
+		super(new StateReportingTask(driver, metricsPeriodSec));
+		setName(driver.toString());
 		this.port = port;
 		this.driver = driver;
 		this.contentSrc = contentSrc;
 		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
 		/*if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			svc.put(this, new StateReportingTask(this, metricsPeriodSec));
+			svc.put(this, ;
 		}*/
 	}
 	
-	/*private final static class StateReportingTask
+	private final static class StateReportingTask
 	implements Runnable {
-		
-		private final StorageDriverSvc storageDriver;
+
+		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
 		
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
 		
-		public StateReportingTask(
-			final StorageDriverSvc storageDriver, final long metricsPeriodSec
-		) {
-			this.storageDriver = storageDriver;
+		public StateReportingTask(final StorageDriver driver, final long metricsPeriodSec) {
+			this.driver = driver;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
 			this.prevNanoTimeStamp = 0;
 		}
 		
 		@Override
 		public final void run() {
-			nextNanoTimeStamp = nanoTime();
-			if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
-				prevNanoTimeStamp = nextNanoTimeStamp;
-				try {
-					LOG.info(
-						Markers.MSG,
-						"{} I/O tasks: scheduled={}, active={}, completed={}",
-						storageDriver.getName(), storageDriver.getScheduledTaskCount(),
-						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount()
-					);
-				} catch(final RemoteException ignored) {
+			final Thread currentThread = Thread.currentThread();
+			final String driverName = currentThread.getName();
+			while(!currentThread.isInterrupted()) {
+				nextNanoTimeStamp = nanoTime();
+				if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+					prevNanoTimeStamp = nextNanoTimeStamp;
+					try {
+						LOG.info(
+							Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}",
+							driverName, driver.getScheduledTaskCount(), driver.getActiveTaskCount(),
+							driver.getCompletedTaskCount()
+						);
+					} catch(final RemoteException ignored) {
+					}
+				} else {
+					LockSupport.parkNanos(nextNanoTimeStamp - prevNanoTimeStamp);
 				}
 			}
 		}
-	}*/
+	}
 
 	@Override
 	public final int getRegistryPort()
@@ -91,15 +99,14 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final String getName()
-	throws RemoteException {
-		return driver.toString();
-	}
-
-	@Override
 	public final void start()
-	throws IllegalStateException, RemoteException {
-		driver.start();
+	throws IllegalStateException {
+		try {
+			driver.start();
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
+		super.start();
 	}
 
 	@Override
@@ -182,14 +189,21 @@ implements StorageDriverSvc<I, O> {
 
 	@Override
 	public final void interrupt()
-	throws IllegalStateException, RemoteException {
-		driver.interrupt();
+	throws IllegalStateException {
+		try {
+			driver.interrupt();
+		} catch(final RemoteException ignored) {
+		}
+		super.interrupt();
 	}
 
 	@Override
-	public final boolean isInterrupted()
-	throws RemoteException {
-		return driver.isInterrupted();
+	public final boolean isInterrupted() {
+		try {
+			return driver.isInterrupted();
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override

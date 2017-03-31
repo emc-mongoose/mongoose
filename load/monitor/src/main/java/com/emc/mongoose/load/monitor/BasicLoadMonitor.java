@@ -6,7 +6,7 @@ import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
-import com.emc.mongoose.common.io.collection.RoundRobinOutput;
+import com.emc.mongoose.load.monitor.metrics.IntermediateMetricsSvcTask;
 import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
@@ -14,8 +14,6 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
-
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -63,11 +61,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
-import static java.lang.System.nanoTime;
 
 /**
  Created by kurila on 12.07.16.
@@ -88,7 +84,6 @@ implements LoadMonitor<I, O> {
 	private final long sizeLimit;
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
 	private final boolean isAnyCircular;
-	private final ThreadPoolExecutor svcTaskExecutor;
 	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
@@ -205,18 +200,15 @@ implements LoadMonitor<I, O> {
 		final LoadConfig anyLoadConfig = loadConfigs.values().iterator().next();
 		final int queueSizeLimit = anyLoadConfig.getQueueConfig().getSize();
 		int concurrencySum = 0;
-		int svcWorkerCount = 0;
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
-			svcWorkerCount += nextDrivers.size();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
 			final int nextOriginCode = nextGenerator.hashCode();
 			circularityMap.put(nextOriginCode, nextLoadConfig.getCircular());
 			if(circularityMap.get(nextOriginCode)) {
 				anyCircularFlag = true;
 				recycleQueuesMap.put(nextOriginCode, new ArrayBlockingQueue<O>(queueSizeLimit));
-				svcWorkerCount ++;
 			}
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
@@ -264,18 +256,6 @@ implements LoadMonitor<I, O> {
 		}
 		this.countLimit = countLimitSum;
 		this.sizeLimit = sizeLimitSum;
-
-		if(medIoStats == null) {
-			svcWorkerCount ++;
-		} else {
-			svcWorkerCount += 2;
-		}
-		this.svcTaskExecutor = new ThreadPoolExecutor(
-			svcWorkerCount, svcWorkerCount, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
-			new NamingThreadFactory("svcTasksExecutor", true)
-		);
-
-		UNCLOSED.add(this);
 	}
 
 	private boolean isDoneCountLimit() {
@@ -572,84 +552,6 @@ implements LoadMonitor<I, O> {
 		return totalActiveTaskCount;
 	}
 	
-	private final class IntermediateMetricsSvcTask
-	implements Runnable {
-		
-		@Override
-		public final void run() {
-			
-			if(medIoStats == null) {
-				return;
-			}
-			final Thread currThread = Thread.currentThread();
-			currThread.setName(name + "-intermediate-metrics");
-			final int activeTaskCountThreshold = (int) (fullLoadThreshold * totalConcurrency);
-			
-			try {
-				while(getActiveTaskCount() < activeTaskCountThreshold) {
-					Thread.sleep(1);
-				}
-				LOG.info(
-					Markers.MSG,
-					"The threshold of {} active tasks count is reached, starting the additional metrics accounting",
-					activeTaskCountThreshold
-				);
-				for(final IoStats nextMedIoStats : medIoStats.values()) {
-					nextMedIoStats.start();
-				}
-				
-				final long metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
-					metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
-				);
-				long prevNanoTimeStamp = -1, nextNanoTimeStamp;
-				while(getActiveTaskCount() >= activeTaskCountThreshold) {
-					IoStats.refreshLastStats(medIoStats, lastMedStats);
-					nextNanoTimeStamp = nanoTime();
-					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						IoStats.outputLastMedStats(
-							lastMedStats, driversCountMap, concurrencyMap, name, preconditionJobFlag
-						);
-						prevNanoTimeStamp = nextNanoTimeStamp;
-					}
-					Thread.sleep(1);
-				}
-				LOG.info(
-					Markers.MSG,
-					"The active tasks count is below the threshold of {}, stopping the additional metrics accounting",
-					activeTaskCountThreshold
-				);
-			} catch(final InterruptedException ignored) {
-			} finally {
-			
-				LOG.info(
-					Markers.METRICS_MED_STDOUT,
-					new MetricsStdoutLogMessage(name, lastMedStats, concurrencyMap, driversCountMap)
-				);
-				if(!preconditionJobFlag) {
-					LOG.info(
-						Markers.METRICS_MED_FILE_TOTAL,
-						new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
-					);
-					LOG.info(
-						Markers.METRICS_EXT_MED_RESULTS,
-						new ExtResultsXmlLogMessage(
-							name, lastStats, itemSizeMap, concurrencyMap, driversCountMap
-						)
-					);
-				}
-				
-				for(final IoStats nextMedIoStats : medIoStats.values()) {
-					try {
-						nextMedIoStats.close();
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
-					}
-				}
-				medIoStats.clear();
-			}
-		}
-	}
-	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
@@ -679,32 +581,35 @@ implements LoadMonitor<I, O> {
 			ioStats.get(ioTypeCode).start();
 		}
 
-		svcTaskExecutor.submit(
+		svcTasks.add(
 			new MetricsSvcTask(
 				name, metricsPeriodSec, preconditionJobFlag, ioStats, lastStats,
 				driversCountMap, concurrencyMap
 			)
 		);
 		if(medIoStats != null) {
-			svcTaskExecutor.submit(new IntermediateMetricsSvcTask());
+			svcTasks.add(
+				new IntermediateMetricsSvcTask(
+					name, metricsPeriodSec, preconditionJobFlag, medIoStats, lastMedStats,
+					driversCountMap, concurrencyMap,
+					this, svcTasks, (int) (fullLoadThreshold * totalConcurrency)
+				)
+			);
 		}
 		for(final int originCode : recycleQueuesMap.keySet()) {
 			if(circularityMap.get(originCode)) {
-				svcTaskExecutor.submit(
+				svcTasks.add(
 					new BatchQueueOutputTask<>(
-						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode)
+						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode), svcTasks
 					)
 				);
 			}
 		}
 		for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 			for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-				svcTaskExecutor.submit(
-					new GetAndProcessIoResultsSvcTask<>(this, driver)
-				);
+				svcTasks.add(new GetAndProcessIoResultsSvcTask<>(this, driver, svcTasks));
 			}
 		}
-		svcTaskExecutor.shutdown();
 	}
 
 	@Override
@@ -863,17 +768,7 @@ implements LoadMonitor<I, O> {
 			);
 		}
 
-		final List<Runnable> svcTasks = svcTaskExecutor.shutdownNow();
-		try {
-			if(!svcTaskExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.warn(
-					Markers.ERR, "{}: failed to terminate the service tasks in 1 second:",
-					getName(), svcTasks
-				);
-			}
-		} catch(final InterruptedException e) {
-			throw new AssertionError(e);
-		}
+		svcTasks.clear(); // stop all service tasks
 		LOG.debug(Markers.MSG, "{}: interrupted the load monitor", getName());
 	}
 
@@ -1026,7 +921,6 @@ implements LoadMonitor<I, O> {
 			LOG.debug(Markers.MSG, "{}: closed the items output", getName());
 		}
 
-		UNCLOSED.remove(this);
 		LOG.debug(Markers.MSG, "{}: closed the load monitor", getName());
 	}
 }

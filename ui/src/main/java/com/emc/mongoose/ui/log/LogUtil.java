@@ -1,7 +1,7 @@
 package com.emc.mongoose.ui.log;
 
-import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.env.PathUtil;
+import com.emc.mongoose.model.DaemonBase;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
@@ -17,17 +17,16 @@ import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
-
-import java.io.File;
-import java.util.Calendar;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import static com.emc.mongoose.common.Constants.DIR_CONFIG;
 import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
+
+import java.io.File;
+import java.util.Calendar;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 06.05.14.
@@ -165,7 +164,7 @@ implements ShutdownCallbackRegistry {
 	}
 	//
 	public static void shutdown() {
-		Daemon.closeAll();
+		DaemonBase.closeAll();
 		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {
