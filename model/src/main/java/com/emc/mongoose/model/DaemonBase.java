@@ -11,15 +11,13 @@ import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurren
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static java.util.Map.Entry;
 
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final Map<Daemon, BlockingQueue<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
+	private static final Map<Daemon, List<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
 		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
@@ -41,17 +39,15 @@ implements Daemon {
 		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
 			SVC_TASKS_EXECUTOR.submit(
 				() -> {
-					Set<Entry<Daemon, BlockingQueue<Runnable>>> svcTaskEntries;
-					BlockingQueue<Runnable> nextSvcTasksQueue;
-					final List<Runnable> nextSvcTasks = new ArrayList<>(MAX_DAEMON_SVC_TASKS);
+					Set<Entry<Daemon, List<Runnable>>> svcTaskEntries;
+					List<Runnable> nextSvcTasks;
 					while(true) {
 						svcTaskEntries = SVC_TASKS.entrySet();
 						if(svcTaskEntries.size() == 0) {
 							Thread.sleep(1);
 						} else {
-							for(final Entry<Daemon, BlockingQueue<Runnable>> entry : svcTaskEntries) {
-								nextSvcTasksQueue = entry.getValue();
-								nextSvcTasksQueue.drainTo(nextSvcTasks, MAX_DAEMON_SVC_TASKS);
+							for(final Entry<Daemon, List<Runnable>> entry : svcTaskEntries) {
+								nextSvcTasks = entry.getValue();
 								for(final Runnable nextSvcTask : nextSvcTasks) {
 									try {
 										nextSvcTask.run();
@@ -63,7 +59,6 @@ implements Daemon {
 										t.printStackTrace(System.err);
 									}
 								}
-								nextSvcTasks.clear();
 							}
 						}
 					}
@@ -72,9 +67,7 @@ implements Daemon {
 		}
 	}
 	
-	protected final BlockingQueue<Runnable> svcTasks = new ArrayBlockingQueue<>(
-		MAX_DAEMON_SVC_TASKS
-	);
+	protected final List<Runnable> svcTasks = new CopyOnWriteArrayList<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
