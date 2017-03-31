@@ -33,6 +33,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -114,6 +115,7 @@ implements StorageDriver<I, O> {
 					if(n < BATCH_SIZE) {
 						n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
 					}
+					LockSupport.parkNanos(1);
 					if(n > 0) {
 						m = submit(this, 0, n);
 						if(m > 0) {

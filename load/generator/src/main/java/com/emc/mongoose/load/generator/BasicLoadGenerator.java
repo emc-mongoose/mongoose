@@ -30,6 +30,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -151,6 +152,7 @@ implements LoadGenerator<I, O>, Runnable {
 						} finally {
 							itemInputLock.unlock();
 						}
+						LockSupport.parkNanos(1);
 						
 						m = items.size();
 						if(m > 0) {
@@ -161,6 +163,7 @@ implements LoadGenerator<I, O>, Runnable {
 							generatedTaskCounter.add(m);
 							n += m;
 						}
+						LockSupport.parkNanos(1);
 					}
 				}
 			}
@@ -171,6 +174,7 @@ implements LoadGenerator<I, O>, Runnable {
 					try {
 						m = ioTaskOutput.put(ioTasks, 0, m);
 						if(m < n) {
+							LockSupport.parkNanos(1);
 							remainingTasksLock.lock();
 							try {
 								remainingTasks.addAll(ioTasks.subList(m, n));

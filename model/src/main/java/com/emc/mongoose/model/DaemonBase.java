@@ -27,7 +27,7 @@ import java.util.concurrent.locks.LockSupport;
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final Map<Daemon, Set<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
+	protected static final Map<Daemon, Set<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
 		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)

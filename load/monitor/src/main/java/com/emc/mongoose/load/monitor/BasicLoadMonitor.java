@@ -5,6 +5,7 @@ import com.emc.mongoose.common.concurrent.BatchQueueOutputTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
+import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
 import com.emc.mongoose.common.io.collection.RoundRobinOutput;
 import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
@@ -13,6 +14,8 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
+
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -173,7 +176,9 @@ implements LoadMonitor<I, O> {
 
 		Output<O> nextGeneratorOutput;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			nextGeneratorOutput = new RoundRobinOutput<>(driversMap.get(nextGenerator));
+			nextGeneratorOutput = new AsyncRoundRobinOutput<>(
+				driversMap.get(nextGenerator), SVC_TASKS.get(nextGenerator)
+			);
 			ioTaskOutputs.put(nextGenerator.hashCode(), nextGeneratorOutput);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);

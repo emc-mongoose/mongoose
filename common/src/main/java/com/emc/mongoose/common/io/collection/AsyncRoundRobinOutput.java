@@ -1,153 +1,78 @@
 package com.emc.mongoose.common.io.collection;
 
-import com.emc.mongoose.common.concurrent.FutureTaskBase;
-import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.common.concurrent.OutputWrapperSvcTask;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by andrey on 06.11.16.
  */
-public final class AsyncRoundRobinOutput<T>
+public final class AsyncRoundRobinOutput<T, O extends Output<T>>
 implements Output<T> {
 
-	private final List<? extends Output<T>> outputs;
 	private final int outputsCount;
 	private final AtomicLong rrc = new AtomicLong(0);
-	private final ExecutorService outputExecutor;
+	private final Set<Runnable> svcTasks;
+	private final List<OutputWrapperSvcTask<T, O>> outputTasks;
 
-	public AsyncRoundRobinOutput(
-		final List<? extends Output<T>> outputs, final int queueSizeLimit
-	) {
-		this.outputs = outputs;
+	public AsyncRoundRobinOutput(final List<O> outputs, final Set<Runnable> svcTasks) {
 		this.outputsCount = outputs.size();
-		this.outputExecutor = new ThreadPoolExecutor(
-			ThreadUtil.getHardwareConcurrencyLevel(), ThreadUtil.getHardwareConcurrencyLevel(),
-			0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(queueSizeLimit)
-		);
+		this.svcTasks = svcTasks;
+		this.outputTasks = new ArrayList<>(outputsCount);
+		OutputWrapperSvcTask<T, O> nextOutputTask;
+		for(int i = 0; i < outputsCount; i++) {
+			nextOutputTask = new OutputWrapperSvcTask<>(outputs.get(i), BATCH_SIZE);
+			outputTasks.add(nextOutputTask);
+			svcTasks.add(nextOutputTask);
+		}
 	}
 
-	private Output<T> getNextOutput() {
+	private OutputWrapperSvcTask<T, O> getOutputTask() {
 		if(outputsCount > 1) {
-			return outputs.get((int) (rrc.incrementAndGet() % outputsCount));
+			return outputTasks.get((int) (rrc.incrementAndGet() % outputsCount));
 		} else {
-			return outputs.get(0);
+			return outputTasks.get(0);
 		}
 	}
 
-	private final class SingleOutputTask<T>
-	extends FutureTaskBase<T> {
-		
-		private final AsyncRoundRobinOutput<T> rrcOutput;
-		private final T ioTask;
-		
-		public SingleOutputTask(final AsyncRoundRobinOutput<T> rrcOutput, final T ioTask) {
-			this.rrcOutput = rrcOutput;
-			this.ioTask = ioTask;
-		}
-		
-		@Override
-		public final void run() {
-			try {
-				while(!rrcOutput.getNextOutput().put(ioTask)) {
-					LockSupport.parkNanos(1);
-				}
-				set(ioTask);
-			} catch(final IOException e) {
-				setException(e);
-			}
-		}
-	}
-	
 	@Override
 	public final boolean put(final T ioTask)
 	throws IOException {
-		try {
-			outputExecutor.execute(new SingleOutputTask<>(this, ioTask));
-			return true;
-		} catch(final RejectedExecutionException e) {
-			return false;
-		}
+		return getOutputTask().put(ioTask);
 	}
-	
-	private final static class BatchOutputTask<T>
-	extends FutureTaskBase<Integer> {
-		
-		private final AsyncRoundRobinOutput<T> rrcOutput;
-		private final List<T> buff;
-		private int from;
-		private final int to;
-		
-		public BatchOutputTask(
-			final AsyncRoundRobinOutput<T> rrcOutput, final List<T> buff, final int from,
-			final int to
-		) {
-			this.rrcOutput = rrcOutput;
-			this.buff = buff;
-			this.from = from;
-			this.to = to;
-		}
-		
-		@Override
-		public final void run() {
-			try {
-				while(from < to) {
-					from += rrcOutput.getNextOutput().put(buff, from, to);
-				}
-				set(to - from);
-			} catch(final IOException e) {
-				setException(e);
-			}
-		}
-	}
-	
+
 	@Override
 	public final int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
+		OutputWrapperSvcTask<T, O> outputTask;
 		final int n = to - from;
 		if(n > outputsCount) {
 			final int nPerOutput = n / outputsCount;
+			int nextFrom = from;
 			for(int i = 0; i < outputsCount; i ++) {
-				try {
-					outputExecutor.execute(
-						new BatchOutputTask<>(
-							this, buffer, from + i * nPerOutput, from + nPerOutput + i * nPerOutput
-						)
-					);
-				} catch(final RejectedExecutionException e) {
-					return i * nPerOutput;
-				}
+				outputTask = getOutputTask();
+				nextFrom += outputTask.put(buffer, nextFrom, nextFrom + nPerOutput);
 			}
-			final int nTail = n - nPerOutput * outputsCount;
-			if(nTail > 0) {
-				try {
-					outputExecutor.execute(
-						new BatchOutputTask<>(this, buffer, to - nTail, to)
-					);
-				} catch(final RejectedExecutionException e) {
-					return n - nTail;
-				}
+			if(nextFrom < to) {
+				outputTask = getOutputTask();
+				nextFrom += outputTask.put(buffer, nextFrom, to);
 			}
-			return n;
+			return nextFrom - from;
 		} else {
 			for(int i = from; i < to; i ++) {
-				try {
-					outputExecutor.execute(new SingleOutputTask<>(this, buffer.get(i)));
-				} catch(final RejectedExecutionException e) {
-					return to - i;
+				outputTask = getOutputTask();
+				if(! outputTask.put(buffer.get(i))) {
+					return i - from;
 				}
 			}
-			return n;
+			return to - from;
 		}
 	}
 
@@ -166,7 +91,10 @@ implements Output<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		outputExecutor.shutdownNow();
-		outputs.clear();
+		svcTasks.removeAll(outputTasks);
+		for(final OutputWrapperSvcTask<T, O> outputTask : outputTasks) {
+			outputTask.close();
+		}
+		outputTasks.clear();
 	}
 }

@@ -9,7 +9,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by andrey on 06.11.16.
+ @deprecated Use {@link com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput} instead
  */
+@Deprecated
 public final class RoundRobinOutput<T>
 implements Output<T> {
 	
