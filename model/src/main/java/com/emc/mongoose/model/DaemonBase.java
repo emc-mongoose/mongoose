@@ -11,15 +11,17 @@ import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurren
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import static java.util.Map.Entry;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created on 12.07.16.
@@ -27,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final Map<Daemon, Queue<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
+	private static final Map<DaemonBase, List<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
 		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
@@ -37,22 +39,28 @@ implements Daemon {
 		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
 			SVC_TASKS_EXECUTOR.submit(
 				() -> {
-					Queue<Runnable> nextDaemonSvcTasks;
+					DaemonBase nextDaemon;
+					List<Runnable> nextDaemonSvcTasks;
 					while(true) {
 						if(SVC_TASKS.size() == 0) {
 							Thread.sleep(1);
 						}
-						for(final Entry<Daemon, Queue<Runnable>> entry : SVC_TASKS.entrySet()) {
+						for(final Entry<DaemonBase, List<Runnable>> entry : SVC_TASKS.entrySet()) {
 							nextDaemonSvcTasks = entry.getValue();
-							for(final Runnable nextSvcTask : nextDaemonSvcTasks) {
+							nextDaemon = entry.getKey();
+							if(nextDaemon.svcTasksLock.tryLock()) {
 								try {
-									nextSvcTask.run();
+									for(final Runnable nextSvcTask : nextDaemonSvcTasks) {
+										nextSvcTask.run();
+									}
 								} catch(final Throwable t) {
 									System.err.println(
-										"Service yask \"" + nextSvcTask + "\" of \"" +
-											entry.getKey() + "\" failed:"
+										"One of the service tasks of of \"" + nextDaemon +
+											"\" failed:"
 									);
 									t.printStackTrace(System.err);
+								} finally {
+									nextDaemon.svcTasksLock.unlock();
 								}
 							}
 						}
@@ -62,7 +70,8 @@ implements Daemon {
 		}
 	}
 	
-	protected final Queue<Runnable> svcTasks = new ConcurrentLinkedQueue<>();
+	protected final List<Runnable> svcTasks = new ArrayList<>(1);
+	protected final Lock svcTasksLock = new ReentrantLock();
 
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -81,7 +90,12 @@ implements Daemon {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		SVC_TASKS.remove(this);
-		svcTasks.clear();
+		svcTasksLock.lock();
+		try {
+			svcTasks.clear();
+		} finally {
+			svcTasksLock.unlock();
+		}
 	}
 
 	@Override

@@ -85,8 +85,12 @@ implements LoadGenerator<I, O>, Runnable {
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-		if(!svcTasks.offer(this)) {
-			LOG.error(Markers.ERR, "{}: failed to register new service task", toString());
+		
+		svcTasksLock.lock();
+		try {
+			svcTasks.add(this);
+		} finally {
+			svcTasksLock.unlock();
 		}
 	}
 	

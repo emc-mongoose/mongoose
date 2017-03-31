@@ -89,8 +89,11 @@ implements StorageDriver<I, O> {
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
 		this.ioTasksDispatchTask = new IoTasksDispatch();
-		if(!svcTasks.offer(ioTasksDispatchTask)) {
-			LOG.error(Markers.ERR, "{}: failed to add the I/O tasks dispatcher task", toString());
+		svcTasksLock.lock();
+		try {
+			svcTasks.add(ioTasksDispatchTask);
+		} finally {
+			svcTasksLock.unlock();
 		}
 	}
 
@@ -337,7 +340,12 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		svcTasks.remove(ioTasksDispatchTask);
+		svcTasksLock.lock();
+		try {
+			svcTasks.remove(ioTasksDispatchTask);
+		} finally {
+			svcTasksLock.unlock();
+		}
 		LOG.debug(Markers.MSG, "{}: shut down", toString());
 	}
 
