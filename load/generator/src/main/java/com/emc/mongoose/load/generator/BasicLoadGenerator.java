@@ -85,13 +85,7 @@ implements LoadGenerator<I, O>, Runnable {
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-		
-		svcTasksLock.lock();
-		try {
-			svcTasks.add(this);
-		} finally {
-			svcTasksLock.unlock();
-		}
+		svcTasks.add(this);
 	}
 	
 	@Override

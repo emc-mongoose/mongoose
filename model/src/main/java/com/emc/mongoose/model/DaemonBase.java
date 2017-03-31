@@ -15,13 +15,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static java.util.Map.Entry;
+
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created on 12.07.16.
@@ -29,7 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final Map<DaemonBase, List<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
+	private static final Map<Daemon, BlockingQueue<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
 		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
@@ -39,29 +41,29 @@ implements Daemon {
 		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
 			SVC_TASKS_EXECUTOR.submit(
 				() -> {
-					DaemonBase nextDaemon;
-					List<Runnable> nextDaemonSvcTasks;
+					Set<Entry<Daemon, BlockingQueue<Runnable>>> svcTaskEntries;
+					BlockingQueue<Runnable> nextSvcTasksQueue;
+					final List<Runnable> nextSvcTasks = new ArrayList<>(MAX_DAEMON_SVC_TASKS);
 					while(true) {
-						if(SVC_TASKS.size() == 0) {
+						svcTaskEntries = SVC_TASKS.entrySet();
+						if(svcTaskEntries.size() == 0) {
 							Thread.sleep(1);
-						}
-						for(final Entry<DaemonBase, List<Runnable>> entry : SVC_TASKS.entrySet()) {
-							nextDaemonSvcTasks = entry.getValue();
-							nextDaemon = entry.getKey();
-							if(nextDaemon.svcTasksLock.tryLock()) {
-								try {
-									for(final Runnable nextSvcTask : nextDaemonSvcTasks) {
+						} else {
+							for(final Entry<Daemon, BlockingQueue<Runnable>> entry : svcTaskEntries) {
+								nextSvcTasksQueue = entry.getValue();
+								nextSvcTasksQueue.drainTo(nextSvcTasks, MAX_DAEMON_SVC_TASKS);
+								for(final Runnable nextSvcTask : nextSvcTasks) {
+									try {
 										nextSvcTask.run();
+									} catch(final Throwable t) {
+										System.err.println(
+											entry.getKey().toString() + ": service task \"" +
+												nextSvcTask + "\"  failed:"
+										);
+										t.printStackTrace(System.err);
 									}
-								} catch(final Throwable t) {
-									System.err.println(
-										"One of the service tasks of of \"" + nextDaemon +
-											"\" failed:"
-									);
-									t.printStackTrace(System.err);
-								} finally {
-									nextDaemon.svcTasksLock.unlock();
 								}
+								nextSvcTasks.clear();
 							}
 						}
 					}
@@ -70,9 +72,10 @@ implements Daemon {
 		}
 	}
 	
-	protected final List<Runnable> svcTasks = new ArrayList<>(1);
-	protected final Lock svcTasksLock = new ReentrantLock();
-
+	protected final BlockingQueue<Runnable> svcTasks = new ArrayBlockingQueue<>(
+		MAX_DAEMON_SVC_TASKS
+	);
+	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
 	
@@ -90,12 +93,7 @@ implements Daemon {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		SVC_TASKS.remove(this);
-		svcTasksLock.lock();
-		try {
-			svcTasks.clear();
-		} finally {
-			svcTasksLock.unlock();
-		}
+		svcTasks.clear();
 	}
 
 	@Override
