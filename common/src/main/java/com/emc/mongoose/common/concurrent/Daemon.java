@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit;
 public interface Daemon
 extends Closeable {
 	
-	int MAX_DAEMON_SVC_TASKS = 0x100;
-	
 	Queue<Daemon> UNCLOSED = new ConcurrentLinkedQueue<>();
 	
 	static void closeAll() {
