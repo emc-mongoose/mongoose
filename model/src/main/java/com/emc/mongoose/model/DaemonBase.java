@@ -11,11 +11,13 @@ import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurren
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.Map;
 import static java.util.Map.Entry;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +30,7 @@ import java.util.concurrent.locks.LockSupport;
 public abstract class DaemonBase
 implements Daemon {
 
-	protected static final Map<Daemon, Set<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
+	protected static final Map<Daemon, List<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
 		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
@@ -38,15 +40,15 @@ implements Daemon {
 		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
 			SVC_TASKS_EXECUTOR.submit(
 				() -> {
-					Set<Entry<Daemon, Set<Runnable>>> svcTaskEntries;
-					Set<Runnable> nextSvcTasks;
+					Set<Entry<Daemon, List<Runnable>>> svcTaskEntries;
+					List<Runnable> nextSvcTasks;
 					while(true) {
 						svcTaskEntries = SVC_TASKS.entrySet();
 						if(svcTaskEntries.size() == 0) {
 							Thread.sleep(1);
 						} else {
 							LockSupport.parkNanos(1);
-							for(final Entry<Daemon, Set<Runnable>> entry : svcTaskEntries) {
+							for(final Entry<Daemon, List<Runnable>> entry : svcTaskEntries) {
 								nextSvcTasks = entry.getValue();
 								for(final Runnable nextSvcTask : nextSvcTasks) {
 									try {
@@ -68,7 +70,7 @@ implements Daemon {
 		}
 	}
 	
-	protected final Set<Runnable> svcTasks = new CopyOnWriteArraySet<>();
+	protected final List<Runnable> svcTasks = new CopyOnWriteArrayList<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -88,6 +90,11 @@ implements Daemon {
 	throws IOException, IllegalStateException {
 		SVC_TASKS.remove(this);
 		svcTasks.clear();
+	}
+
+	@Override
+	public final List<Runnable> getSvcTasks() {
+		return svcTasks;
 	}
 
 	@Override

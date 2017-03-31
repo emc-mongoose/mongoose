@@ -1,75 +1,119 @@
 package com.emc.mongoose.common.io.collection;
 
-import com.emc.mongoose.common.concurrent.OutputWrapperSvcTask;
+import com.emc.mongoose.common.collection.LockingArrayBuffer;
+import com.emc.mongoose.common.collection.LockingBuffer;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
+import java.io.EOFException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by andrey on 06.11.16.
  */
 public final class AsyncRoundRobinOutput<T, O extends Output<T>>
-implements Output<T> {
+implements Output<T>, Runnable {
 
+	private final List<O> outputs;
 	private final int outputsCount;
-	private final AtomicLong rrc = new AtomicLong(0);
-	private final Set<Runnable> svcTasks;
-	private final List<OutputWrapperSvcTask<T, O>> outputTasks;
+	private final AtomicLong putCounter = new AtomicLong(0);
+	private final AtomicLong getCounter = new AtomicLong(0);
+	private final List<Runnable> svcTasks;
+	private final int buffCapacity;
+	private final Map<O, LockingBuffer<T>> buffs;
 
-	public AsyncRoundRobinOutput(final List<O> outputs, final Set<Runnable> svcTasks) {
+	public AsyncRoundRobinOutput(
+		final List<O> outputs, final List<Runnable> svcTasks, final int buffCapacity
+	) {
+		this.outputs = outputs;
 		this.outputsCount = outputs.size();
 		this.svcTasks = svcTasks;
-		this.outputTasks = new ArrayList<>(outputsCount);
-		OutputWrapperSvcTask<T, O> nextOutputTask;
-		for(int i = 0; i < outputsCount; i++) {
-			nextOutputTask = new OutputWrapperSvcTask<>(outputs.get(i), BATCH_SIZE);
-			outputTasks.add(nextOutputTask);
-			svcTasks.add(nextOutputTask);
+		this.buffCapacity = buffCapacity;
+		this.buffs = new HashMap<>(this.outputsCount);
+		for(int i = 0; i < this.outputsCount; i ++) {
+			this.buffs.put(outputs.get(i), new LockingArrayBuffer<>(buffCapacity));
 		}
+		svcTasks.add(this);
 	}
 
-	private OutputWrapperSvcTask<T, O> getOutputTask() {
+	private LockingBuffer<T> selectBuff() {
 		if(outputsCount > 1) {
-			return outputTasks.get((int) (rrc.incrementAndGet() % outputsCount));
+			return buffs.get(outputs.get((int) (putCounter.getAndIncrement() % outputsCount)));
 		} else {
-			return outputTasks.get(0);
+			return buffs.get(outputs.get(0));
 		}
 	}
 
 	@Override
 	public final boolean put(final T ioTask)
 	throws IOException {
-		return getOutputTask().put(ioTask);
+		final LockingBuffer<T> buff = selectBuff();
+		if(buff.tryLock()) {
+			try {
+				if(buff.size() < buffCapacity) {
+					return buff.add(ioTask);
+				} else {
+					return false;
+				}
+			} finally {
+				buff.unlock();
+			}
+		} else {
+			return false;
+		}
 	}
 
 	@Override
-	public final int put(final List<T> buffer, final int from, final int to)
+	public final int put(final List<T> srcBuff, final int from, final int to)
 	throws IOException {
-		OutputWrapperSvcTask<T, O> outputTask;
+		LockingBuffer<T> buff;
 		final int n = to - from;
 		if(n > outputsCount) {
 			final int nPerOutput = n / outputsCount;
 			int nextFrom = from;
 			for(int i = 0; i < outputsCount; i ++) {
-				outputTask = getOutputTask();
-				nextFrom += outputTask.put(buffer, nextFrom, nextFrom + nPerOutput);
+				buff = selectBuff();
+				if(buff.tryLock()) {
+					try {
+						final int m = Math.min(nPerOutput, buffCapacity - buff.size());
+						buff.addAll(srcBuff.subList(nextFrom, nextFrom + m));
+						nextFrom += m;
+					} finally {
+						buff.unlock();
+					}
+				}
 			}
 			if(nextFrom < to) {
-				outputTask = getOutputTask();
-				nextFrom += outputTask.put(buffer, nextFrom, to);
+				buff = selectBuff();
+				if(buff.tryLock()) {
+					try {
+						final int m = Math.min(to - from, buffCapacity - buff.size());
+						buff.addAll(srcBuff.subList(nextFrom, nextFrom + m));
+						nextFrom += m;
+					} finally {
+						buff.unlock();
+					}
+				}
 			}
 			return nextFrom - from;
 		} else {
 			for(int i = from; i < to; i ++) {
-				outputTask = getOutputTask();
-				if(! outputTask.put(buffer.get(i))) {
-					return i - from;
+				buff = selectBuff();
+				if(buff.tryLock()) {
+					try {
+						if(buff.size() < buffCapacity) {
+							buff.add(srcBuff.get(i));
+						} else {
+							return i - from;
+						}
+					} finally {
+						buff.unlock();
+					}
 				}
 			}
 			return to - from;
@@ -83,18 +127,51 @@ implements Output<T> {
 	}
 
 	@Override
-	public final Input<T> getInput()
-	throws IOException {
+	public final void run() {
+		final O output = outputs.get(
+			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
+		);
+		final LockingBuffer<T> buff = buffs.get(output);
+		if(buff.tryLock()) {
+			try {
+				int n = buff.size();
+				if(n > 0) {
+					n = output.put(buff);
+					buff.removeRange(0, n);
+				}
+			} catch(final EOFException ignored) {
+			} catch(final RemoteException e) {
+				final Throwable cause = e.getCause();
+				if(!(cause instanceof EOFException)) {
+					System.err.println(cause);
+				}
+			} catch(final Throwable t) {
+				System.err.println(t);
+			} finally {
+				buff.unlock();
+			}
+		}
+	}
+
+	@Override
+	public final Input<T> getInput() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 
 	@Override
 	public final void close()
 	throws IOException {
-		svcTasks.removeAll(outputTasks);
-		for(final OutputWrapperSvcTask<T, O> outputTask : outputTasks) {
-			outputTask.close();
+		svcTasks.remove(this);
+		for(final O output : outputs) {
+			final LockingBuffer<T> buff = buffs.get(output);
+			buff.lock();
+			try {
+				buff.clear();
+			} finally {
+				buff.unlock();
+			}
 		}
-		outputTasks.clear();
+		buffs.clear();
+		outputs.clear();
 	}
 }

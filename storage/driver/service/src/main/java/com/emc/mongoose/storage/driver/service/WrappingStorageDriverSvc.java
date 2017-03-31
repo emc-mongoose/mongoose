@@ -99,6 +99,11 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
+	public final List<Runnable> getSvcTasks() {
+		throw new AssertionError("Shouldn't be invoked");
+	}
+
+	@Override
 	public final void start()
 	throws IllegalStateException {
 		try {

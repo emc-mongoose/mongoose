@@ -4,11 +4,13 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.collection.ListInput;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -18,26 +20,41 @@ public final class OutputWrapperSvcTask<T, O extends Output<T>>
 extends ArrayList<T>
 implements Output<T>, Runnable {
 
-	private final O wrappedOutput;
-	private final Lock lock = new ReentrantLock();
-	private final int capaicity;
-	private int n;
+	private final transient O wrappedOutput;
+	private final transient Lock lock = new ReentrantLock();
+	private final transient int capacity;
+	private final transient Set<Runnable> svcTasks;
 
-	public OutputWrapperSvcTask(final O wrappedOutput, final int capacity) {
+	public OutputWrapperSvcTask(
+		final O wrappedOutput, final int capacity, final Set<Runnable> svcTasks
+	) {
 		super(capacity);
 		this.wrappedOutput = wrappedOutput;
-		this.capaicity = capacity;
+		this.capacity = capacity;
+		this.svcTasks = svcTasks;
 	}
 
 	@Override
 	public final void run() {
 		if(lock.tryLock()) {
 			try {
-				n = wrappedOutput.put(this, 0, size());
+				int n = size();
+				//System.out.println(hashCode() + ": " + n);
 				if(n > 0) {
-					removeRange(0, n);
+					n = wrappedOutput.put(this, 0, n);
+					System.out.println(hashCode() + ": sent " + n + " I/O tasks to " + wrappedOutput);
+					if(n > 0) {
+						removeRange(0, n);
+					}
+				}
+			} catch(final EOFException e) {
+				svcTasks.remove(this);
+			} catch(final RemoteException e) {
+				final Throwable cause = e.getCause();
+				if(cause instanceof EOFException) {
+					svcTasks.remove(this);
 				} else {
-					LockSupport.parkNanos(1);
+					e.printStackTrace(System.err);
 				}
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
@@ -45,7 +62,7 @@ implements Output<T>, Runnable {
 				lock.unlock();
 			}
 		} else {
-			LockSupport.parkNanos(1);
+
 		}
 	}
 
@@ -54,7 +71,7 @@ implements Output<T>, Runnable {
 	throws IOException {
 		if(lock.tryLock()) {
 			try {
-				if(size() < capaicity) {
+				if(size() < capacity) {
 					return add(item);
 				} else {
 					return false;
@@ -72,9 +89,10 @@ implements Output<T>, Runnable {
 	throws IOException {
 		if(lock.tryLock()) {
 			try {
-				final int n = Math.min(capaicity - size(), to - from);
+				final int n = Math.min(capacity - size(), to - from);
 				if(n > 0) {
 					addAll(buffer.subList(from, from + n));
+					System.out.println(hashCode() + ": put " + n + " I/O tasks to");
 				}
 				return n;
 			} finally {

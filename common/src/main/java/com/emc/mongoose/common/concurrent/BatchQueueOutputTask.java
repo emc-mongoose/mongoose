@@ -5,7 +5,7 @@ import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
 import java.io.EOFException;
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -19,13 +19,13 @@ implements Runnable {
 
 	private final BlockingQueue<T> queue;
 	private final Output<T> output;
-	private final Set<Runnable> svcTasks;
+	private final List<Runnable> svcTasks;
 	private final Lock lock = new ReentrantLock();
 
 	private int n, m;
 	
 	public BatchQueueOutputTask(
-		final BlockingQueue<T> queue, final Output<T> output, final Set<Runnable> svcTasks
+		final BlockingQueue<T> queue, final Output<T> output, final List<Runnable> svcTasks
 	) {
 		this.queue = queue;
 		this.output = output;

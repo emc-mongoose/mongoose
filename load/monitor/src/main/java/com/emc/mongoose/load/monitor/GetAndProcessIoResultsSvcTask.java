@@ -10,35 +10,39 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by andrey on 15.12.16.
  */
 public final class GetAndProcessIoResultsSvcTask<I extends Item, O extends IoTask<I>>
-implements Runnable {
+implements Closeable, Runnable {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	private final LoadMonitor<I, O> monitor;
-	private final StorageDriver<I, O> driver;
-	private final Set<Runnable> svcTasks;
+	private final List<StorageDriver<I, O>> drivers;
+	private final int driversCount;
+	private final AtomicLong rrc = new AtomicLong();
 
 	public GetAndProcessIoResultsSvcTask(
-		final LoadMonitor<I, O> monitor, final StorageDriver<I, O> driver,
-		final Set<Runnable> svcTasks
+		final LoadMonitor<I, O> monitor, final List<StorageDriver<I, O>> drivers
 	) {
 		this.monitor = monitor;
-		this.driver = driver;
-		this.svcTasks = svcTasks;
+		this.drivers = drivers;
+		this.driversCount = drivers.size();
 	}
 
 	@Override
 	public final void run() {
+		final StorageDriver<I, O> driver = drivers.get(
+			(int) (rrc.getAndIncrement() % driversCount)
+		);
 		try {
 			final List<O> results = driver.getResults();
 			LockSupport.parkNanos(1);
@@ -57,12 +61,22 @@ implements Runnable {
 					);
 					Thread.sleep(1);
 				} else {
-					svcTasks.remove(this);
+					close();
 				}
 			} catch(final RemoteException | InterruptedException ee) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failure");
-				svcTasks.remove(this);
+				close();
 			}
+		}
+	}
+
+	@Override
+	public final void close() {
+		try {
+			monitor.getSvcTasks().remove(this);
+		} catch(final RemoteException ignored) {
+		} finally {
+			drivers.clear();
 		}
 	}
 }

@@ -14,6 +14,8 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
+
+import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -51,6 +53,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -169,11 +172,14 @@ implements LoadMonitor<I, O> {
 			weightThrottle = new WeightThrottle(weightMap);
 		}
 
-		Output<O> nextGeneratorOutput;
+		Output<O> nextGeneratorOutput = null;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			nextGeneratorOutput = new AsyncRoundRobinOutput<>(
-				driversMap.get(nextGenerator), SVC_TASKS.get(nextGenerator)
-			);
+			try {
+				nextGeneratorOutput = new AsyncRoundRobinOutput<>(
+					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(), BATCH_SIZE
+				);
+			} catch(final RemoteException ignored) {
+			}
 			ioTaskOutputs.put(nextGenerator.hashCode(), nextGeneratorOutput);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
@@ -592,7 +598,7 @@ implements LoadMonitor<I, O> {
 				new IntermediateMetricsSvcTask(
 					name, metricsPeriodSec, preconditionJobFlag, medIoStats, lastMedStats,
 					driversCountMap, concurrencyMap,
-					this, svcTasks, (int) (fullLoadThreshold * totalConcurrency)
+					this, (int) (fullLoadThreshold * totalConcurrency)
 				)
 			);
 		}
@@ -605,11 +611,12 @@ implements LoadMonitor<I, O> {
 				);
 			}
 		}
-		for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
-			for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-				svcTasks.add(new GetAndProcessIoResultsSvcTask<>(this, driver, svcTasks));
-			}
+
+		final List<StorageDriver<I, O>> drivers = new ArrayList<>();
+		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
+			drivers.addAll(nextGeneratorDrivers);
 		}
+		svcTasks.add(new GetAndProcessIoResultsSvcTask<>(this, drivers));
 	}
 
 	@Override

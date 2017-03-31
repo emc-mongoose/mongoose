@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -74,6 +75,11 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	public BasicStorageDriverBuilderSvc<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
 		super.setStorageConfig(storageConfig);
 		return this;
+	}
+
+	@Override
+	public final List<Runnable> getSvcTasks() {
+		throw new AssertionError("Shouldn't be invoked");
 	}
 
 	@Override

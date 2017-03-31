@@ -5,7 +5,7 @@ import com.emc.mongoose.model.load.LoadMonitor;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
-import java.util.Set;
+import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -30,7 +30,6 @@ implements Runnable {
 	private volatile long nextNanoTimeStamp;
 
 	private final LoadMonitor loadMonitor;
-	private final Set<Runnable> svcTasks;
 	private final int activeTasksThreshold;
 
 	private volatile boolean inStateFlag;
@@ -39,7 +38,7 @@ implements Runnable {
 		final String jobName, final int metricsPeriodSec, final boolean fileOutputFlag,
 		final Int2ObjectMap<IoStats> ioStats, Int2ObjectMap<IoStats.Snapshot> lastStats,
 		final Int2IntMap driversCountMap, final Int2IntMap concurrencyMap,
-		final LoadMonitor loadMonitor, final Set<Runnable> svcTasks, final int activeTasksThreshold
+		final LoadMonitor loadMonitor, final int activeTasksThreshold
 	) {
 		this.jobName = jobName;
 		this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
@@ -53,7 +52,6 @@ implements Runnable {
 		this.driversCountMap = driversCountMap;
 
 		this.loadMonitor = loadMonitor;
-		this.svcTasks = svcTasks;
 		this.activeTasksThreshold = activeTasksThreshold;
 	}
 
@@ -66,7 +64,10 @@ implements Runnable {
 						inStateFlag = true;
 					}
 				} else if(inStateFlag) {
-					svcTasks.remove(this); // stop
+					try {
+						loadMonitor.getSvcTasks().remove(this); // stop
+					} catch(final RemoteException ignored) {
+					}
 				}
 
 				if(inStateFlag) {

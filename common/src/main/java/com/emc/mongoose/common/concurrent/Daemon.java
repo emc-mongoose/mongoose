@@ -2,9 +2,7 @@ package com.emc.mongoose.common.concurrent;
 
 import java.io.Closeable;
 import java.rmi.RemoteException;
-import java.util.ConcurrentModificationException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -13,13 +11,12 @@ import java.util.concurrent.TimeUnit;
 public interface Daemon
 extends Closeable {
 
-	static void closeAll() {
-
-	}
-	
 	enum State {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
 	}
+
+	List<Runnable> getSvcTasks()
+	throws RemoteException;
 
 	void start()
 	throws IllegalStateException, RemoteException;

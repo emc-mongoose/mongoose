@@ -32,10 +32,6 @@ public class AsyncRoundRobinOutputTest {
 	private final static class DaemonMock
 	extends DaemonBase {
 
-		public final Set<Runnable> getSvcTasks() {
-			return svcTasks;
-		}
-
 		@Override
 		public boolean await(final long timeout, final TimeUnit timeUnit)
 		throws InterruptedException, RemoteException {
@@ -103,7 +99,7 @@ public class AsyncRoundRobinOutputTest {
 			outputs.add(new CountingOutput());
 		}
 		try(final DaemonMock daemonMock = new DaemonMock()) {
-			rrcOutput = new AsyncRoundRobinOutput(outputs, daemonMock.getSvcTasks());
+			rrcOutput = new AsyncRoundRobinOutput(outputs, daemonMock.getSvcTasks(), BATCH_SIZE);
 			final Thread t = new Thread(() -> {
 				final Thread currentThread = Thread.currentThread();
 				final List buff = new ArrayList(BATCH_SIZE);
