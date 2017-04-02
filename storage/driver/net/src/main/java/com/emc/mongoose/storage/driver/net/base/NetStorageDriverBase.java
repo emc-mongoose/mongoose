@@ -310,7 +310,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public final void channelCreated(final Channel channel)
 	throws Exception {
-		appendHandlers(channel.pipeline());
+		final ChannelPipeline pipeline = channel.pipeline();
+		appendHandlers(pipeline);
+		LOG.debug(Markers.MSG, "{}: channel pipeline configured: {}", jobName, pipeline.toString());
 	}
 
 	protected void appendHandlers(final ChannelPipeline pipeline) {

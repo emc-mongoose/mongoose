@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.common.concurrent.FutureTaskBase;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 /**
  Created by kurila on 30.03.17.
  */
+@Ignore
 public class ThreadPoolExecutorTest {
 	
 	private static final int QUEUE_SIZE_LIMIT = 1_000_000;

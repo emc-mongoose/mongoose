@@ -55,11 +55,7 @@ implements Output<T>, Runnable {
 		final LockingBuffer<T> buff = selectBuff();
 		if(buff.tryLock()) {
 			try {
-				if(buff.size() < buffCapacity) {
-					return buff.add(ioTask);
-				} else {
-					return false;
-				}
+				return buff.size() < buffCapacity && buff.add(ioTask);
 			} finally {
 				buff.unlock();
 			}
@@ -143,10 +139,10 @@ implements Output<T>, Runnable {
 			} catch(final RemoteException e) {
 				final Throwable cause = e.getCause();
 				if(!(cause instanceof EOFException)) {
-					System.err.println(cause);
+					cause.printStackTrace(System.err);
 				}
 			} catch(final Throwable t) {
-				System.err.println(t);
+				t.printStackTrace(System.err);
 			} finally {
 				buff.unlock();
 			}
