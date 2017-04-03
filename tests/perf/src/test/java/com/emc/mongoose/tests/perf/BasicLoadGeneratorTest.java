@@ -38,7 +38,7 @@ public class BasicLoadGeneratorTest {
 	static {
 		try {
 			DEFAULT_CONTENT_SRC = ContentSourceUtil.getInstance(
-				null, "7a42d9c483244167", new SizeInBytes("4MB")
+				null, "7a42d9c483244167", new SizeInBytes("4MB"), 1
 			);
 		} catch(final IOException e) {
 			throw new AssertionError(e);

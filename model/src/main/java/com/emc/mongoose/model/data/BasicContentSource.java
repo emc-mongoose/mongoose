@@ -26,25 +26,22 @@ implements ContentSource {
 	public BasicContentSource() {
 	}
 	//
-	public BasicContentSource(final ByteBuffer zeroByteLayer) {
+	public BasicContentSource(final ByteBuffer zeroByteLayer, final int cacheLimit) {
 		this.zeroByteLayer = zeroByteLayer;
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
 		//
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
+		byteLayersMap = new LRUMap<>(cacheLimit);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
 	//
-	protected BasicContentSource(final ReadableByteChannel zeroLayerSrcChan, final int size)
-	throws IOException {
+	protected BasicContentSource(
+		final ReadableByteChannel zeroLayerSrcChan, final int size, final int cacheLimit
+	) throws IOException {
 		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
+		byteLayersMap = new LRUMap<>(cacheLimit);
 		byteLayersMap.put(0, zeroByteLayer);
 		int n = 0, m;
 		do {

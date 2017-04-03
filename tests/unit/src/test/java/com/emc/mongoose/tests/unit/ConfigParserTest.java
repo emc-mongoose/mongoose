@@ -61,7 +61,7 @@ public class ConfigParserTest {
 		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
 		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
 		assertThat(
-			contentConfig.getRingSize(),
+			contentConfig.getRingConfig().getSize(),
 			equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize")
 		);
 		assertThat(dataConfig.getRangesConfig().getRandom(), equalTo(0, "item.data.ranges.random"));

@@ -4,7 +4,10 @@
 			"content" : {
 				"file" : null,
 				"seed" : "7a42d9c483244167",
-				"ringSize" : "4MB"
+				"ring" : {
+					"cache" : 25,
+					"size" : "4MB"
+				}
 			},
 			"ranges" : {
 				"fixed" : null,
@@ -347,6 +350,11 @@
 			"name" : "storage-auth-id",
 			"deprecated" : true,
 			"target" : "storage-auth-uid"
+		},
+		{
+			"name" : "item-data-content-ringSize",
+			"deprecate" : true,
+			"target" : "item-data-content-ring-size"
 		}
 	]
 }

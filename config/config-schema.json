@@ -45,21 +45,34 @@
 									"type": "string",
 									"pattern" : "[A-Fa-f0-9]+"
 								},
-								"ringSize": {
-									"oneOf" : [
-										{
-											"type": "integer",
+								"ring" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"required" : [
+										"cache", "size"
+									],
+									"properties" : {
+										"cache" : {
+											"type" : "integer",
 											"minimum" : 1
 										},
-										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										"size" : {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
 										}
-									]
+									}
 								}
 							},
 							"required": [
-								"file", "seed", "ringSize"
+								"file", "seed", "ring"
 							]
 						},
 						"ranges": {
