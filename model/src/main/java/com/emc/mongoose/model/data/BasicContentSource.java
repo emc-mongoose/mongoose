@@ -21,7 +21,7 @@ implements ContentSource {
 	protected transient ByteBuffer zeroByteLayer = null;
 	protected long seed = 0;
 	//
-	protected transient Map<Integer, ByteBuffer> byteLayersMap = null;
+	private transient Map<Integer, ByteBuffer> byteLayersMap = null;
 	//
 	public BasicContentSource() {
 	}

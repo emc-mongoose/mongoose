@@ -34,7 +34,7 @@ implements DataItem {
 	//
 	private static final char LAYER_MASK_SEP = '/';
 	//
-	private ContentSource contentSrc;
+	private volatile ContentSource contentSrc;
 	private int ringBuffSize;
 	//
 	protected int layerNum = 0;

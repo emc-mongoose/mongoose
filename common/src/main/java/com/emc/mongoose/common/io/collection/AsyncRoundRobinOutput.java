@@ -88,7 +88,7 @@ implements Output<T>, Runnable {
 				buff = selectBuff();
 				if(buff.tryLock()) {
 					try {
-						final int m = Math.min(to - from, buffCapacity - buff.size());
+						final int m = Math.min(to - nextFrom, buffCapacity - buff.size());
 						buff.addAll(srcBuff.subList(nextFrom, nextFrom + m));
 						nextFrom += m;
 					} finally {

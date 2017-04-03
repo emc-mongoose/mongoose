@@ -152,7 +152,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final int put(final List<O> buffer)
 	throws IOException {
-		if(buffer.get(0) instanceof DataItem) {
+		if(buffer.get(0) instanceof DataIoTask) {
 			for(final O ioTask : buffer) {
 				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
 			}
