@@ -9,13 +9,13 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by andrey on 31.03.17.
  */
-public final class LockingArrayBuffer<T>
+public final class OptLockArrayBuffer<T>
 extends ArrayList<T>
-implements LockingBuffer<T> {
+implements OptLockBuffer<T> {
 
 	private final Lock lock = new ReentrantLock();
 
-	public LockingArrayBuffer(final int initialCapacity) {
+	public OptLockArrayBuffer(final int initialCapacity) {
 		super(initialCapacity);
 	}
 

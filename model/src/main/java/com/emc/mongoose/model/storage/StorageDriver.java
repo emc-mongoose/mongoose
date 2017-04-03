@@ -2,6 +2,7 @@ package com.emc.mongoose.model.storage;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.IoType;
@@ -18,7 +19,7 @@ import java.util.List;
  Created on 11.07.16.
  */
 public interface StorageDriver<I extends Item, O extends IoTask<I>>
-extends Daemon, Output<O>, Remote {
+extends Daemon, Input<O>, Output<O>, Remote {
 	
 	String HOST_ADDR = ServiceUtil.getHostAddr();
 	int BUFF_SIZE_MIN = 0x1_000;
@@ -29,8 +30,17 @@ extends Daemon, Output<O>, Remote {
 		final I lastPrevItem, final int count
 	) throws IOException;
 
-	List<O> getResults()
-	throws IOException;
+	@Override
+	default int get(final List<O> buff, final int limit)
+	throws RemoteException {
+		throw new AssertionError("Shouldn't be invoked");
+	}
+	
+	@Override
+	default void reset()
+	throws RemoteException {
+		throw new AssertionError("Shouldn't be invoked");
+	}
 
 	int getConcurrencyLevel()
 	throws RemoteException;

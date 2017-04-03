@@ -1,6 +1,8 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.collection.OptLockArrayBuffer;
+import com.emc.mongoose.common.collection.OptLockBuffer;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -53,8 +55,8 @@ implements LoadGenerator<I, O>, Runnable {
 	private final long countLimit;
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final List<O> remainingTasks = new ArrayList<>(BATCH_SIZE);
-	private final Lock remainingTasksLock = new ReentrantLock();
+	private final int originCode;
+	private final OptLockBuffer<O> remainingTasks = new OptLockArrayBuffer<>(BATCH_SIZE);
 
 	private final LongAdder generatedTaskCounter = new LongAdder();
 	private final String name;
@@ -69,6 +71,7 @@ implements LoadGenerator<I, O>, Runnable {
 		this.itemInput = itemInput;
 		this.itemSizeEstimate = itemSizeEstimate;
 		this.ioTaskBuilder = ioTaskBuilder;
+		this.originCode = ioTaskBuilder.hashCode();
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
 		} else if(
@@ -119,17 +122,27 @@ implements LoadGenerator<I, O>, Runnable {
 		return ioTaskBuilder.getIoType();
 	}
 	
+	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = new ThreadLocal<List>() {
+		@Override
+		protected final List initialValue() {
+			return new ArrayList(BATCH_SIZE);
+		}
+	};
+	
 	@Override
 	public final void run() {
 		
-		final List<O> ioTasks;
-		if(!remainingTasksLock.tryLock()) {
+		final List<O> thrLocBuff;
+		if(!remainingTasks.tryLock()) {
 			return;
 		} else {
-			ioTasks = new ArrayList<>(remainingTasks);
+			thrLocBuff = THREAD_LOCAL_BUFF.get();
+			thrLocBuff.clear();
+			thrLocBuff.addAll(remainingTasks);
 			remainingTasks.clear();
+			remainingTasks.unlock();
 		}
-		int n = ioTasks.size();
+		int n = thrLocBuff.size();
 		int m = BATCH_SIZE - n;
 		
 		try {
@@ -159,7 +172,7 @@ implements LoadGenerator<I, O>, Runnable {
 							if(shuffleFlag) {
 								Collections.shuffle(items, rnd);
 							}
-							ioTaskBuilder.getInstances(items, ioTasks);
+							ioTaskBuilder.getInstances(items, thrLocBuff);
 							generatedTaskCounter.add(m);
 							n += m;
 						}
@@ -169,17 +182,25 @@ implements LoadGenerator<I, O>, Runnable {
 			}
 			
 			if(n > 0) {
-				m = acquireThrottlesPermit(ioTasks, 0, n);
+				// acquire the throttles permit
+				m = n;
+				if(weightThrottle != null) {
+					m = weightThrottle.tryAcquire(originCode, m);
+				}
+				if(rateThrottle != null) {
+					m = rateThrottle.tryAcquire(originCode, m);
+				}
+				// try to output
 				if(m > 0) {
 					try {
-						m = ioTaskOutput.put(ioTasks, 0, m);
+						m = ioTaskOutput.put(thrLocBuff, 0, m);
 						if(m < n) {
 							LockSupport.parkNanos(1);
-							remainingTasksLock.lock();
+							remainingTasks.lock();
 							try {
-								remainingTasks.addAll(ioTasks.subList(m, n));
+								remainingTasks.addAll(thrLocBuff.subList(m, n));
 							} finally {
-								remainingTasksLock.unlock();
+								remainingTasks.unlock();
 							}
 						}
 					} catch(final EOFException e) {
@@ -219,18 +240,6 @@ implements LoadGenerator<I, O>, Runnable {
 			shutdown();
 		} catch(final IllegalStateException ignored) {
 		}
-	}
-	
-	private int acquireThrottlesPermit(final List<O> ioTasks, final int from, final int to) {
-		int n = to - from;
-		final int originCode = hashCode();
-		if(weightThrottle != null) {
-			n = weightThrottle.tryAcquire(originCode, n);
-		}
-		if(rateThrottle != null) {
-			n = rateThrottle.tryAcquire(originCode, n);
-		}
-		return n;
 	}
 
 	@Override
@@ -281,6 +290,6 @@ implements LoadGenerator<I, O>, Runnable {
 	
 	@Override
 	public final int hashCode() {
-		return ioTaskBuilder.hashCode();
+		return originCode;
 	}
 }

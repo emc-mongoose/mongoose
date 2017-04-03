@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
+import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
 import com.emc.mongoose.model.DaemonBase;
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -25,7 +24,7 @@ import java.util.concurrent.atomic.LongAdder;
  Created by kurila on 29.03.17.
  */
 @RunWith(Parameterized.class)
-public class AsyncRoundRobinOutputTest {
+public class RoundRobinOutputsTransferSvcTaskTest {
 	
 	private static final int TEST_TIME_LIMIT_SEC = 30;
 
@@ -91,7 +90,7 @@ public class AsyncRoundRobinOutputTest {
 	private final Output rrcOutput;
 	private final int outputCount;
 	
-	public AsyncRoundRobinOutputTest(final int outputCount)
+	public RoundRobinOutputsTransferSvcTaskTest(final int outputCount)
 	throws Exception {
 		this.outputCount = outputCount;
 		outputs = new ArrayList<>(outputCount);
@@ -99,7 +98,7 @@ public class AsyncRoundRobinOutputTest {
 			outputs.add(new CountingOutput());
 		}
 		try(final DaemonMock daemonMock = new DaemonMock()) {
-			rrcOutput = new AsyncRoundRobinOutput(outputs, daemonMock.getSvcTasks(), BATCH_SIZE);
+			rrcOutput = new RoundRobinOutputsTransferSvcTask(outputs, daemonMock.getSvcTasks(), BATCH_SIZE);
 			final Thread t = new Thread(() -> {
 				final Thread currentThread = Thread.currentThread();
 				final List buff = new ArrayList(BATCH_SIZE);

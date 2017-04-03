@@ -1,7 +1,7 @@
-package com.emc.mongoose.common.io.collection;
+package com.emc.mongoose.model.svc;
 
-import com.emc.mongoose.common.collection.LockingArrayBuffer;
-import com.emc.mongoose.common.collection.LockingBuffer;
+import com.emc.mongoose.common.collection.OptLockArrayBuffer;
+import com.emc.mongoose.common.collection.OptLockBuffer;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 
@@ -16,18 +16,18 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 06.11.16.
  */
-public final class AsyncRoundRobinOutput<T, O extends Output<T>>
+public final class RoundRobinOutputsTransferSvcTask<T, O extends Output<T>>
 implements Output<T>, Runnable {
-
+	
 	private final List<O> outputs;
 	private final int outputsCount;
 	private final AtomicLong putCounter = new AtomicLong(0);
 	private final AtomicLong getCounter = new AtomicLong(0);
 	private final List<Runnable> svcTasks;
 	private final int buffCapacity;
-	private final Map<O, LockingBuffer<T>> buffs;
+	private final Map<O, OptLockBuffer<T>> buffs;
 
-	public AsyncRoundRobinOutput(
+	public RoundRobinOutputsTransferSvcTask(
 		final List<O> outputs, final List<Runnable> svcTasks, final int buffCapacity
 	) {
 		this.outputs = outputs;
@@ -36,12 +36,12 @@ implements Output<T>, Runnable {
 		this.buffCapacity = buffCapacity;
 		this.buffs = new HashMap<>(this.outputsCount);
 		for(int i = 0; i < this.outputsCount; i ++) {
-			this.buffs.put(outputs.get(i), new LockingArrayBuffer<>(buffCapacity));
+			this.buffs.put(outputs.get(i), new OptLockArrayBuffer<>(buffCapacity));
 		}
 		svcTasks.add(this);
 	}
 
-	private LockingBuffer<T> selectBuff() {
+	private OptLockBuffer<T> selectBuff() {
 		if(outputsCount > 1) {
 			return buffs.get(outputs.get((int) (putCounter.getAndIncrement() % outputsCount)));
 		} else {
@@ -52,7 +52,7 @@ implements Output<T>, Runnable {
 	@Override
 	public final boolean put(final T ioTask)
 	throws IOException {
-		final LockingBuffer<T> buff = selectBuff();
+		final OptLockBuffer<T> buff = selectBuff();
 		if(buff.tryLock()) {
 			try {
 				return buff.size() < buffCapacity && buff.add(ioTask);
@@ -67,7 +67,7 @@ implements Output<T>, Runnable {
 	@Override
 	public final int put(final List<T> srcBuff, final int from, final int to)
 	throws IOException {
-		LockingBuffer<T> buff;
+		OptLockBuffer<T> buff;
 		final int n = to - from;
 		if(n > outputsCount) {
 			final int nPerOutput = n / outputsCount;
@@ -127,7 +127,7 @@ implements Output<T>, Runnable {
 		final O output = outputs.get(
 			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
 		);
-		final LockingBuffer<T> buff = buffs.get(output);
+		final OptLockBuffer<T> buff = buffs.get(output);
 		if(buff.tryLock()) {
 			try {
 				int n = buff.size();
@@ -139,7 +139,7 @@ implements Output<T>, Runnable {
 			} catch(final RemoteException e) {
 				final Throwable cause = e.getCause();
 				if(!(cause instanceof EOFException)) {
-					cause.printStackTrace(System.err);
+					e.printStackTrace(System.err);
 				}
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
@@ -159,7 +159,7 @@ implements Output<T>, Runnable {
 	throws IOException {
 		svcTasks.remove(this);
 		for(final O output : outputs) {
-			final LockingBuffer<T> buff = buffs.get(output);
+			final OptLockBuffer<T> buff = buffs.get(output);
 			buff.lock();
 			try {
 				buff.clear();

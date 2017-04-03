@@ -1,13 +1,13 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.BatchQueueOutputTask;
+import com.emc.mongoose.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
-import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
+import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
+import com.emc.mongoose.model.svc.RoundRobinInputsTransferSvcTask;
 import com.emc.mongoose.load.monitor.metrics.IntermediateMetricsSvcTask;
-import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
@@ -175,7 +175,7 @@ implements LoadMonitor<I, O> {
 		Output<O> nextGeneratorOutput = null;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			try {
-				nextGeneratorOutput = new AsyncRoundRobinOutput<>(
+				nextGeneratorOutput = new RoundRobinOutputsTransferSvcTask<>(
 					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(), BATCH_SIZE
 				);
 			} catch(final RemoteException ignored) {
@@ -415,15 +415,28 @@ implements LoadMonitor<I, O> {
 	public final void setIoResultsOutput(final Output<O> ioTaskResultsOutput) {
 		this.ioResultsOutput = ioTaskResultsOutput;
 	}
-
+	
 	@Override
-	public final void processIoResults(final List<O> ioTaskResults, final int n) {
+	public final int put(final List<O> buffer, final int from, final int to)
+	throws IOException {
+		processIoResults(buffer, from, to);
+		return to - from;
+	}
+	
+	@Override
+	public final int put(final List<O> buffer)
+	throws IOException {
+		final int n = buffer.size();
+		processIoResults(buffer, 0, n);
+		return n;
+	}
 
-		int m = n; // count of complete whole tasks
+	private void processIoResults(final List<O> ioTaskResults, final int from, final int to) {
+		int m = to - from; // count of complete whole tasks
 
 		// I/O trace logging
 		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
-			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, 0, n));
+			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
 		}
 
 		int originCode;
@@ -437,9 +450,9 @@ implements LoadMonitor<I, O> {
 		ioTaskResult = ioTaskResults.get(0);
 		IoStats ioTypeStats, ioTypeMedStats;
 
-		for(int i = 0; i < n; i ++) {
+		for(int i = from; i < to; i ++) {
 
-			if(i > 0) {
+			if(i > from) {
 				ioTaskResult = ioTaskResults.get(i);
 			}
 
@@ -588,24 +601,16 @@ implements LoadMonitor<I, O> {
 		}
 
 		svcTasks.add(
-			new MetricsSvcTask(
-				name, metricsPeriodSec, preconditionJobFlag, ioStats, lastStats,
-				driversCountMap, concurrencyMap
+			new IntermediateMetricsSvcTask(
+				this, name, metricsPeriodSec, preconditionJobFlag, driversCountMap, concurrencyMap,
+				ioStats, lastStats, medIoStats, lastMedStats,
+				(int) (fullLoadThreshold * totalConcurrency)
 			)
 		);
-		if(medIoStats != null) {
-			svcTasks.add(
-				new IntermediateMetricsSvcTask(
-					name, metricsPeriodSec, preconditionJobFlag, medIoStats, lastMedStats,
-					driversCountMap, concurrencyMap,
-					this, (int) (fullLoadThreshold * totalConcurrency)
-				)
-			);
-		}
 		for(final int originCode : recycleQueuesMap.keySet()) {
 			if(circularityMap.get(originCode)) {
 				svcTasks.add(
-					new BatchQueueOutputTask<>(
+					new BlockingQueueTransferTask<>(
 						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode), svcTasks
 					)
 				);
@@ -616,7 +621,7 @@ implements LoadMonitor<I, O> {
 		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
 			drivers.addAll(nextGeneratorDrivers);
 		}
-		svcTasks.add(new GetAndProcessIoResultsSvcTask<>(this, drivers));
+		svcTasks.add(new RoundRobinInputsTransferSvcTask<>(this, drivers, svcTasks));
 	}
 
 	@Override
@@ -797,7 +802,7 @@ implements LoadMonitor<I, O> {
 				ioResultsGetAndApplyExecutor.submit(
 					() -> {
 						try {
-							final List<O> finalResults = driver.getResults();
+							final List<O> finalResults = driver.getAll();
 							if(finalResults != null) {
 								final int finalResultsCount = finalResults.size();
 								if(finalResultsCount > 0) {
@@ -806,7 +811,7 @@ implements LoadMonitor<I, O> {
 										"{}: the driver \"{}\" returned {} final I/O results to process",
 										getName(), driver.toString(), finalResults.size()
 									);
-									processIoResults(finalResults, finalResultsCount);
+									processIoResults(finalResults, 0, finalResultsCount);
 								}
 							}
 						} catch(final Throwable cause) {

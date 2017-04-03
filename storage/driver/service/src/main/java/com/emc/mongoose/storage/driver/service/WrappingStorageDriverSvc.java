@@ -23,14 +23,12 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
-
 import static java.lang.System.nanoTime;
 
 /**
  Created by andrey on 05.10.16.
  */
 public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
-extends Thread
 implements StorageDriverSvc<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -38,13 +36,19 @@ implements StorageDriverSvc<I, O> {
 	private final int port;
 	private final StorageDriver<I, O> driver;
 	private final ContentSource contentSrc;
+	private final Thread stdOutThread;
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
 		final long metricsPeriodSec
 	) {
-		super(new StateReportingTask(driver, metricsPeriodSec));
-		setName(driver.toString());
+		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			stdOutThread = new Thread(new StateReportingTask(driver, metricsPeriodSec));
+			stdOutThread.setDaemon(true);
+			stdOutThread.setName(driver.toString());
+		} else {
+			stdOutThread = null;
+		}
 		this.port = port;
 		this.driver = driver;
 		this.contentSrc = contentSrc;
@@ -97,7 +101,13 @@ implements StorageDriverSvc<I, O> {
 	throws RemoteException {
 		return port;
 	}
-
+	
+	@Override
+	public final String getName()
+	throws RemoteException {
+		return driver.toString();
+	}
+	
 	@Override
 	public final List<Runnable> getSvcTasks() {
 		throw new AssertionError("Shouldn't be invoked");
@@ -111,15 +121,29 @@ implements StorageDriverSvc<I, O> {
 		} catch(final RemoteException e) {
 			throw new AssertionError(e);
 		}
-		super.start();
+		if(stdOutThread != null) {
+			stdOutThread.start();
+		}
+	}
+	
+	@Override
+	public final O get()
+	throws IOException {
+		return driver.get();
 	}
 
 	@Override
-	public final List<O> getResults()
+	public final List<O> getAll()
 	throws IOException {
-		return driver.getResults();
+		return driver.getAll();
 	}
-
+	
+	@Override
+	public final long skip(final long count)
+	throws IOException {
+		return driver.skip(count);
+	}
+	
 	@Override
 	public final void close()
 	throws IOException {
@@ -199,7 +223,9 @@ implements StorageDriverSvc<I, O> {
 			driver.interrupt();
 		} catch(final RemoteException ignored) {
 		}
-		super.interrupt();
+		if(stdOutThread != null) {
+			stdOutThread.interrupt();
+		}
 	}
 
 	@Override

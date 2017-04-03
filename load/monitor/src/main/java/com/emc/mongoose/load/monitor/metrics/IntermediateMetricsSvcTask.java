@@ -21,7 +21,9 @@ implements Runnable {
 	private final long metricsPeriodNanoSec;
 	private final Int2ObjectMap<IoStats> ioStats;
 	private final Int2ObjectMap<IoStats.Snapshot> lastStats;
-	private final String jobName;
+	private final Int2ObjectMap<IoStats> medIoStats;
+	private final Int2ObjectMap<IoStats.Snapshot> lastMedStats;
+	private final String stepName;
 	private final Int2IntMap driversCountMap;
 	private final Int2IntMap concurrencyMap;
 	private final boolean fileOutputFlag;
@@ -35,12 +37,13 @@ implements Runnable {
 	private volatile boolean inStateFlag;
 
 	public IntermediateMetricsSvcTask(
-		final String jobName, final int metricsPeriodSec, final boolean fileOutputFlag,
-		final Int2ObjectMap<IoStats> ioStats, Int2ObjectMap<IoStats.Snapshot> lastStats,
-		final Int2IntMap driversCountMap, final Int2IntMap concurrencyMap,
-		final LoadMonitor loadMonitor, final int activeTasksThreshold
+		final LoadMonitor loadMonitor, final String stepName, final int metricsPeriodSec,
+		final boolean fileOutputFlag, final Int2IntMap driversCountMap,
+		final Int2IntMap concurrencyMap, final Int2ObjectMap<IoStats> ioStats,
+		final Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2ObjectMap<IoStats> medIoStats,
+		final Int2ObjectMap<IoStats.Snapshot> lastMedStats, final int activeTasksThreshold
 	) {
-		this.jobName = jobName;
+		this.stepName = stepName;
 		this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
 			metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
 		);
@@ -48,6 +51,8 @@ implements Runnable {
 		this.fileOutputFlag = fileOutputFlag;
 		this.ioStats = ioStats;
 		this.lastStats = lastStats;
+		this.medIoStats = medIoStats;
+		this.lastMedStats = lastMedStats;
 		this.concurrencyMap = concurrencyMap;
 		this.driversCountMap = driversCountMap;
 
@@ -59,26 +64,40 @@ implements Runnable {
 	public final void run() {
 		if(tryLock()) {
 			try {
-				if(loadMonitor.getActiveTaskCount() >= activeTasksThreshold) {
-					if(!inStateFlag) {
-						inStateFlag = true;
-					}
-				} else if(inStateFlag) {
-					try {
-						loadMonitor.getSvcTasks().remove(this); // stop
-					} catch(final RemoteException ignored) {
-					}
+				nextNanoTimeStamp = nanoTime();
+				if(LoadMonitor.STATS_REFRESH_PERIOD_NANOS > nextNanoTimeStamp - prevNanoTimeStamp) {
+					return;
 				}
-
-				if(inStateFlag) {
-					IoStats.refreshLastStats(ioStats, lastStats);
+				IoStats.refreshLastStats(ioStats, lastStats);
+				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+					IoStats.outputLastStats(
+						lastStats, driversCountMap, concurrencyMap, stepName, fileOutputFlag
+					);
+					prevNanoTimeStamp = nextNanoTimeStamp;
 					LockSupport.parkNanos(1);
-					nextNanoTimeStamp = nanoTime();
-					if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-						IoStats.outputLastStats(
-							lastStats, driversCountMap, concurrencyMap, jobName, fileOutputFlag
-						);
-						prevNanoTimeStamp = nextNanoTimeStamp;
+				}
+				
+				if(medIoStats != null) {
+					if(loadMonitor.getActiveTaskCount() >= activeTasksThreshold) {
+						if(!inStateFlag) {
+							inStateFlag = true;
+						}
+					} else if(inStateFlag) {
+						try {
+							loadMonitor.getSvcTasks().remove(this); // stop
+						} catch(final RemoteException ignored) {
+						}
+					}
+					LockSupport.parkNanos(1);
+	
+					if(inStateFlag) {
+						IoStats.refreshLastStats(medIoStats, lastMedStats);
+						if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+							IoStats.outputLastStats(lastMedStats, driversCountMap, concurrencyMap,
+								stepName, fileOutputFlag
+							);
+							prevNanoTimeStamp = nextNanoTimeStamp;
+						}
 					}
 				}
 			} finally {
