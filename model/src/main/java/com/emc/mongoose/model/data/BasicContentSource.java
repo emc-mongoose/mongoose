@@ -1,16 +1,12 @@
 package com.emc.mongoose.model.data;
 
 import com.emc.mongoose.common.math.MathUtil;
-import com.emc.mongoose.common.api.SizeInBytes;
-
-import org.apache.commons.collections4.map.LRUMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.Map;
 
 /**
  Created by kurila on 16.10.15.
@@ -18,10 +14,10 @@ import java.util.Map;
 public class BasicContentSource
 implements ContentSource {
 	//
-	protected transient ByteBuffer zeroByteLayer = null;
-	protected long seed = 0;
-	//
-	private transient Map<Integer, ByteBuffer> byteLayersMap = null;
+	protected ByteBuffer zeroByteLayer;
+	private transient ByteBuffer byteLayers[];
+	protected long seed;
+	private int cacheLimit;
 	//
 	public BasicContentSource() {
 	}
@@ -30,9 +26,9 @@ implements ContentSource {
 		this.zeroByteLayer = zeroByteLayer;
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
-		//
-		byteLayersMap = new LRUMap<>(cacheLimit);
-		byteLayersMap.put(0, zeroByteLayer);
+		this.cacheLimit = cacheLimit;
+		byteLayers = new ByteBuffer[cacheLimit];
+		byteLayers[0] = zeroByteLayer;
 	}
 	//
 	protected BasicContentSource(
@@ -41,8 +37,9 @@ implements ContentSource {
 		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
-		byteLayersMap = new LRUMap<>(cacheLimit);
-		byteLayersMap.put(0, zeroByteLayer);
+		this.cacheLimit = cacheLimit;
+		byteLayers = new ByteBuffer[cacheLimit];
+		byteLayers[0] = zeroByteLayer;
 		int n = 0, m;
 		do {
 			m = zeroLayerSrcChan.read(zeroByteLayer);
@@ -57,10 +54,9 @@ implements ContentSource {
 	protected BasicContentSource(final BasicContentSource anotherContentSource) {
 		this.zeroByteLayer = anotherContentSource.zeroByteLayer;
 		this.seed = anotherContentSource.seed;
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
+		this.cacheLimit = anotherContentSource.cacheLimit;
+		byteLayers = new ByteBuffer[this.cacheLimit];
+		byteLayers[0] = zeroByteLayer;
 	}
 	//
 	@Override
@@ -76,21 +72,16 @@ implements ContentSource {
 			return zeroByteLayer;
 		}
 		// else fast check if layer exists
-		assert byteLayersMap != null;
-		ByteBuffer layer = byteLayersMap.get(layerIndex);
+		ByteBuffer layer = byteLayers[layerIndex];
 		if(layer == null) {
-			// else lock, recheck and (possibly) generate
-			synchronized(byteLayersMap) {
-				layer = byteLayersMap.get(layerIndex);
-				if(layer == null) {
-					long nextSeed;
-					final int size = zeroByteLayer.capacity();
-					layer = ByteBuffer.allocateDirect(size);
-					nextSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
-					generateData(layer, nextSeed);
-					byteLayersMap.put(layerIndex, layer);
-				}
-			}
+			// else generate
+			long nextSeed;
+			final int size = zeroByteLayer.capacity();
+			layer = ByteBuffer.allocateDirect(size);
+			nextSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
+			System.out.println("Generate the data for the layer #" + layerIndex);
+			generateData(layer, nextSeed);
+			byteLayers[layerIndex] = layer;
 		}
 		return layer;
 	}
@@ -121,6 +112,7 @@ implements ContentSource {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeLong(seed);
+		out.writeInt(cacheLimit);
 		// write buffer capacity and data
 		final byte buff[] = new byte[zeroByteLayer.capacity()];
 		zeroByteLayer.clear(); // reset
@@ -133,6 +125,7 @@ implements ContentSource {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		seed = in.readLong();
+		cacheLimit = in.readInt();
 		//read buffer data and wrap with ByteBuffer
 		final int size = in.readInt();
 		final byte buff[] = new byte[size];
@@ -145,20 +138,16 @@ implements ContentSource {
 			}
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
+		byteLayers = new ByteBuffer[cacheLimit];
+		byteLayers[0] = zeroByteLayer;
 	}
 
 	//
 	@Override
 	public final void close()
 	throws IOException {
-		if(byteLayersMap != null) {
-			byteLayersMap.clear();
-			byteLayersMap = null;
+		for(int i = 0; i < byteLayers.length; i ++) {
+			byteLayers[i] = null;
 		}
-		zeroByteLayer = null;
 	}
 }
