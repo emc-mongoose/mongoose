@@ -30,7 +30,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,6 +49,7 @@ implements LoadGenerator<I, O>, Runnable {
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
+	private volatile boolean finishAllowedFlag = true;
 
 	private final Input<I> itemInput;
 	private final Lock itemInputLock = new ReentrantLock();
@@ -122,12 +125,9 @@ implements LoadGenerator<I, O>, Runnable {
 		return ioTaskBuilder.getIoType();
 	}
 	
-	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = new ThreadLocal<List>() {
-		@Override
-		protected final List initialValue() {
-			return new ArrayList(BATCH_SIZE);
-		}
-	};
+	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = ThreadLocal.withInitial(
+		() -> new ArrayList(BATCH_SIZE)
+	);
 	
 	@Override
 	public final void run() {
@@ -144,7 +144,8 @@ implements LoadGenerator<I, O>, Runnable {
 		}
 		int n = thrLocBuff.size();
 		int m = BATCH_SIZE - n;
-		
+		boolean finishFlag = false;
+
 		try {
 			if(m > 0) {
 				// find the limits and prepare the items buffer
@@ -155,18 +156,19 @@ implements LoadGenerator<I, O>, Runnable {
 						final List<I> items = new ArrayList<>(m);
 						try {
 							// get the items from the input
+							finishAllowedFlag = false;
 							itemInput.get(items, m);
 						} catch(final EOFException e) {
 							LOG.debug(
 								Markers.MSG, "{}: end of items input @ the count {}",
 								BasicLoadGenerator.this.toString(), generatedTaskCounter
 							);
-							finish();
+							finishFlag = true;
 						} finally {
 							itemInputLock.unlock();
 						}
 						LockSupport.parkNanos(1);
-						
+
 						m = items.size();
 						if(m > 0) {
 							if(shuffleFlag) {
@@ -180,7 +182,7 @@ implements LoadGenerator<I, O>, Runnable {
 					}
 				}
 			}
-			
+
 			if(n > 0) {
 				// acquire the throttles permit
 				m = n;
@@ -203,12 +205,13 @@ implements LoadGenerator<I, O>, Runnable {
 								remainingTasks.unlock();
 							}
 						}
+						finishAllowedFlag = true;
 					} catch(final EOFException e) {
 						LOG.debug(
 							Markers.MSG, "{}: finish due to output's EOF",
 							BasicLoadGenerator.this.toString()
 						);
-						finish();
+						finishFlag = true;
 					} catch(final RemoteException e) {
 						final Throwable cause = e.getCause();
 						if(cause instanceof EOFException) {
@@ -216,29 +219,33 @@ implements LoadGenerator<I, O>, Runnable {
 								Markers.MSG, "{}: finish due to output's EOF",
 								BasicLoadGenerator.this.toString()
 							);
-							finish();
+							finishFlag = true;
 						} else {
 							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
 							e.printStackTrace(System.err);
 						}
 					}
 				}
+			} else {
+				finishAllowedFlag = true;
 			}
+
 		} catch(final Throwable t) {
-			LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
-			t.printStackTrace(System.err);
-			finish();
-		}
-	}
-	
-	private void finish() {
-		LOG.debug(
-			Markers.MSG, "{}: produced {} items", BasicLoadGenerator.this.toString(),
-			generatedTaskCounter
-		);
-		try {
-			shutdown();
-		} catch(final IllegalStateException ignored) {
+			if(!(t instanceof EOFException)) {
+				LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
+				t.printStackTrace(System.err);
+			}
+		} finally {
+			if(finishFlag && finishAllowedFlag) {
+				LOG.debug(
+					Markers.MSG, "{}: produced {} items", BasicLoadGenerator.this.toString(),
+					generatedTaskCounter
+				);
+				try {
+					shutdown();
+				} catch(final IllegalStateException ignored) {
+				}
+			}
 		}
 	}
 
