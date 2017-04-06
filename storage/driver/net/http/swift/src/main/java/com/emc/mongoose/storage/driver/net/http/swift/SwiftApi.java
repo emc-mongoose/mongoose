@@ -36,6 +36,8 @@ public interface SwiftApi {
 	String KEY_SIZE = "bytes";
 	String KEY_ID = "name";
 
+	int MAX_LIST_LIMIT = 10_000;
+
 	Logger LOG = LogManager.getLogger();
 
 	static <I extends Item> int parseContainerListing(

@@ -25,6 +25,7 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.HEADERS_CANONICA
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_ATTR_UPLOAD_ID;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_UPLOAD_ID;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_X_AMZ_COPY_SOURCE;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.MAX_KEYS_LIMIT;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.PREFIX_KEY_X_AMZ;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.URL_ARG_VERSIONING;
@@ -309,6 +310,7 @@ extends HttpStorageDriverBase<I, O> {
 		final I lastPrevItem, final int count
 	) throws IOException {
 
+		final int countLimit = count < 1 || count > MAX_KEYS_LIMIT ? MAX_KEYS_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 
@@ -331,12 +333,10 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			queryBuilder.append("marker=").append(lastPrevItem.getName());
 		}
-		if(count > 0) {
-			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
-				queryBuilder.append('&');
-			}
-			queryBuilder.append("max-keys=").append(count);
+		if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
+			queryBuilder.append('&');
 		}
+		queryBuilder.append("max-keys=").append(countLimit);
 		final String query = queryBuilder.toString();
 
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, credential);
@@ -345,7 +345,7 @@ extends HttpStorageDriverBase<I, O> {
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
-		final List<I> buff = new ArrayList<>(count > 0 ? count : BATCH_SIZE);
+		final List<I> buff = new ArrayList<>(countLimit);
 		final FullHttpResponse listResp;
 		try {
 			listResp = executeHttpRequest(checkBucketReq);

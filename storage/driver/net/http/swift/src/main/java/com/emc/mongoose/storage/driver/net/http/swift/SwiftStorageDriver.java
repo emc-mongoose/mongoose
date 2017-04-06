@@ -23,6 +23,7 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_AUTH
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_COPY_FROM;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_OBJECT_MANIFEST;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_VERSIONS_LOCATION;
+import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.MAX_LIST_LIMIT;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseContainerListing;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -226,6 +227,7 @@ extends HttpStorageDriverBase<I, O> {
 		final I lastPrevItem, final int count
 	) throws IOException {
 
+		final int countLimit = count < 1 || count > MAX_LIST_LIMIT ? MAX_LIST_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 
@@ -245,9 +247,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(lastPrevItem != null) {
 			queryBuilder.append("&marker=").append(lastPrevItem.getName());
 		}
-		if(count > 0) {
-			queryBuilder.append("&limit=").append(count);
-		}
+		queryBuilder.append("&limit=").append(countLimit);
 		final String query = queryBuilder.toString();
 
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, credential);
@@ -256,7 +256,7 @@ extends HttpStorageDriverBase<I, O> {
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
-		final List<I> buff = new ArrayList<>(count > 0 ? count : BATCH_SIZE);
+		final List<I> buff = new ArrayList<>(countLimit);
 		final FullHttpResponse listResp;
 		try {
 			listResp = executeHttpRequest(checkBucketReq);
