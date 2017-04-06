@@ -518,9 +518,10 @@ implements LoadMonitor<I, O> {
 					} else if(ioResultsOutput != null){
 						try {
 							while(!ioResultsOutput.put(ioTaskResult)) {
-								LockSupport.parkNanos(1);
 								if(Thread.currentThread().isInterrupted()) {
 									break;
+								} else {
+									LockSupport.parkNanos(1);
 								}
 							}
 						} catch(final EOFException e) {
