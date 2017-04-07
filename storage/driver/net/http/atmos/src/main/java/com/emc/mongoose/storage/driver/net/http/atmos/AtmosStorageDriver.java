@@ -68,17 +68,14 @@ extends HttpStorageDriverBase<I, O> {
 	private static final Logger LOG = LogManager.getLogger();
 	
 	private static final ThreadLocal<StringBuilder>
-		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 	
-	private final Map<String, Mac> macBySecret = new HashMap<>(1);
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
+		HashMap::new
+	);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		try {
 			final SecretKeySpec secretKey = new SecretKeySpec(
@@ -274,7 +271,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		
 		if(secret != null && !secret.isEmpty()) {
-			final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
+			final Mac mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
 			final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 			final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
 			httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));

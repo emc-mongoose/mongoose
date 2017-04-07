@@ -79,7 +79,7 @@ implements StorageDriver<I, O> {
 			if(this.credential == null) {
 				this.authTokens.put(Credential.NONE, authToken);
 			} else {
-				this.authTokens.put(null, authToken);
+				this.authTokens.put(credential, authToken);
 			}
 		}
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();

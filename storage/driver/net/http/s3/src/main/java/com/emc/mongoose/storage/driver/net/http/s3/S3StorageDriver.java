@@ -4,7 +4,6 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -94,20 +93,12 @@ extends HttpStorageDriverBase<I, O> {
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
 	private static final ThreadLocal<StringBuilder>
-		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		},
-		BUCKET_LIST_QUERY = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new),
+		BUCKET_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
 	
-	private final Map<String, Mac> macBySecret = new HashMap<>(1);
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
+		HashMap::new
+	);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
 		try {
@@ -622,7 +613,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(uid == null || secret == null) {
 			return;
 		}
-		final Mac mac = macBySecret.computeIfAbsent(secret, GET_MAC_BY_SECRET);
+		final Mac mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
 		httpHeaders.set(
@@ -695,6 +686,5 @@ extends HttpStorageDriverBase<I, O> {
 	protected final void doClose()
 	throws IOException {
 		super.doClose();
-		macBySecret.clear();
 	}
 }
