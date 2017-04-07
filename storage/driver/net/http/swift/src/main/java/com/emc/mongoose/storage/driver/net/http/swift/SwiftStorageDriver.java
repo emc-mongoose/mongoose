@@ -104,6 +104,7 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		applySharedHeaders(reqHeaders);
 		final String containerUri = namespacePath + path;
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
 		final FullHttpRequest checkContainerReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, containerUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
@@ -155,6 +156,7 @@ extends HttpStorageDriverBase<I, O> {
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, containerUri, credential);
 			final FullHttpRequest putContainerReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, containerUri, Unpooled.EMPTY_BUFFER,
 				reqHeaders, EmptyHttpHeaders.INSTANCE

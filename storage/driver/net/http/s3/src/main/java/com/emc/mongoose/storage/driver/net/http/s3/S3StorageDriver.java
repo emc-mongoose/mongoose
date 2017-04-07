@@ -130,7 +130,6 @@ extends HttpStorageDriverBase<I, O> {
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, credential);
-
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
