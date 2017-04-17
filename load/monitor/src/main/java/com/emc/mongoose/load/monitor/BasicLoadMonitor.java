@@ -269,7 +269,7 @@ implements LoadMonitor<I, O> {
 			if(counterResults.sum() >= countLimit) {
 				LOG.debug(
 					Markers.MSG, "{}: count limit reached, {} results >= {} limit",
-					counterResults.sum(), countLimit
+					name, counterResults.sum(), countLimit
 				);
 				return true;
 			}
@@ -282,7 +282,7 @@ implements LoadMonitor<I, O> {
 					LOG.debug(
 						Markers.MSG,
 						"{}: count limit reached, {} successful + {} failed >= {} limit",
-						succCountSum, failCountSum, countLimit
+						name, succCountSum, failCountSum, countLimit
 					);
 					return true;
 				}

@@ -30,12 +30,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  Created by kurila on 11.07.16.
@@ -52,7 +51,7 @@ implements LoadGenerator<I, O>, Runnable {
 	private volatile boolean finishAllowedFlag = true;
 
 	private final Input<I> itemInput;
-	private final Lock itemInputLock = new ReentrantLock();
+	private final Lock inputLock = new ReentrantLock();
 	private final SizeInBytes itemSizeEstimate;
 	private final Random rnd;
 	private final long countLimit;
@@ -126,7 +125,7 @@ implements LoadGenerator<I, O>, Runnable {
 	}
 	
 	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = ThreadLocal.withInitial(
-		() -> new ArrayList(BATCH_SIZE)
+		(Supplier<List>) () -> new ArrayList(BATCH_SIZE)
 	);
 	
 	@Override
@@ -148,39 +147,40 @@ implements LoadGenerator<I, O>, Runnable {
 
 		try {
 			if(m > 0) {
-				// find the limits and prepare the items buffer
-				final long remainingTasksCount = countLimit - generatedTaskCounter.sum();
-				if(remainingTasksCount > 0) {
-					m = (int) Math.min(remainingTasksCount, m);
-					if(itemInputLock.tryLock()) {
-						final List<I> items = new ArrayList<>(m);
-						try {
-							// get the items from the input
-							finishAllowedFlag = false;
-							itemInput.get(items, m);
-						} catch(final EOFException e) {
-							LOG.debug(
-								Markers.MSG, "{}: end of items input @ the count {}",
-								BasicLoadGenerator.this.toString(), generatedTaskCounter
-							);
-							finishFlag = true;
-						} finally {
-							itemInputLock.unlock();
-						}
-						LockSupport.parkNanos(1);
-
-						m = items.size();
-						if(m > 0) {
-							if(shuffleFlag) {
-								Collections.shuffle(items, rnd);
+				if(inputLock.tryLock()) {
+					try {
+						// find the limits and prepare the items buffer
+						final long remainingTasksCount = countLimit - generatedTaskCounter.sum();
+						if(remainingTasksCount > 0) {
+							m = (int) Math.min(remainingTasksCount, m);
+							final List<I> items = new ArrayList<>(m);
+							try {
+								// get the items from the input
+								finishAllowedFlag = false;
+								itemInput.get(items, m);
+							} catch(final EOFException e) {
+								LOG.debug(
+									Markers.MSG, "{}: end of items input @ the count {}",
+									BasicLoadGenerator.this.toString(), generatedTaskCounter.sum()
+								);
+								finishFlag = true;
 							}
-							ioTaskBuilder.getInstances(items, thrLocBuff);
-							generatedTaskCounter.add(m);
-							n += m;
+							
+							m = items.size();
+							if(m > 0) {
+								if(shuffleFlag) {
+									Collections.shuffle(items, rnd);
+								}
+								ioTaskBuilder.getInstances(items, thrLocBuff);
+								generatedTaskCounter.add(m);
+								n += m;
+							}
 						}
-						LockSupport.parkNanos(1);
+					} finally {
+						inputLock.unlock();
 					}
 				}
+				LockSupport.parkNanos(1);
 			}
 
 			if(n > 0) {
