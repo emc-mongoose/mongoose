@@ -75,11 +75,17 @@ extends HttpStorageDistributedScenarioTestBase {
 					SCENARIO.run();
 				} catch(final Throwable t) {
 					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
+				} finally {
+					try {
+						SCENARIO.close();
+					} catch(final Throwable tt) {
+						LogUtil.exception(LOG, Level.ERROR, tt, "Failed to close the scenario");
+					}
 				}
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 1);
+		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
