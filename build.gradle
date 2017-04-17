@@ -241,7 +241,7 @@ task printVersion {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "3.3"
+	gradleVersion = "3.5"
 }
 
 void collectName(Project p, LinkedList<String> names) {
