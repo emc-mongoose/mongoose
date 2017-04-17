@@ -34,21 +34,39 @@
 												}
 											]
 										},
-										"ringSize": {
-											"oneOf" : [
-												{
-													"type": "integer",
-													"minimum" : 1
+										"ring" :{
+											"type" : "object",
+											"additionalProperties" : false,
+											"properties" : {
+												"cache" : {
+													"oneOf" : [
+														{
+															"type": "integer",
+															"minimum" : 1
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
 												},
-												{
-													"type" : "string",
-													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+												"size": {
+													"oneOf" : [
+														{
+															"type": "integer",
+															"minimum" : 1
+														},
+														{
+															"type" : "string",
+															"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
 												}
-											]
+											}
 										}
 									}
 								},

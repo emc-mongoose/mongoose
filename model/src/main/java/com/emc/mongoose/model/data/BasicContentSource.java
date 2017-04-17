@@ -1,16 +1,14 @@
 package com.emc.mongoose.model.data;
 
 import com.emc.mongoose.common.math.MathUtil;
-import com.emc.mongoose.common.api.SizeInBytes;
 
-import org.apache.commons.collections4.map.LRUMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.Map;
 
 /**
  Created by kurila on 16.10.15.
@@ -18,34 +16,30 @@ import java.util.Map;
 public class BasicContentSource
 implements ContentSource {
 	//
-	protected transient ByteBuffer zeroByteLayer = null;
-	protected long seed = 0;
-	//
-	protected transient Map<Integer, ByteBuffer> byteLayersMap = null;
+	protected long seed;
+	private int cacheLimit;
+	protected ByteBuffer zeroByteLayer;
+	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>> threadLocalByteLayersCache;
 	//
 	public BasicContentSource() {
+		threadLocalByteLayersCache = new ThreadLocal<>();
 	}
 	//
-	public BasicContentSource(final ByteBuffer zeroByteLayer) {
+	public BasicContentSource(final ByteBuffer zeroByteLayer, final int cacheLimit) {
+		if(cacheLimit < 1) {
+			throw new IllegalArgumentException("Cache limit value should be more than 1");
+		}
 		this.zeroByteLayer = zeroByteLayer;
+		this.cacheLimit = cacheLimit;
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
-		//
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
+		threadLocalByteLayersCache = new ThreadLocal<>();
 	}
 	//
-	protected BasicContentSource(final ReadableByteChannel zeroLayerSrcChan, final int size)
-	throws IOException {
-		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
-		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
-		zeroByteLayer.clear();
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
+	protected BasicContentSource(
+		final ReadableByteChannel zeroLayerSrcChan, final int size, final int cacheLimit
+	) throws IOException {
+		zeroByteLayer = ByteBuffer.allocate(size);
 		int n = 0, m;
 		do {
 			m = zeroLayerSrcChan.read(zeroByteLayer);
@@ -55,15 +49,16 @@ implements ContentSource {
 				n += m;
 			}
 		} while(n < size);
+		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
+		this.cacheLimit = cacheLimit;
+		threadLocalByteLayersCache = new ThreadLocal<>();
 	}
 	//
-	protected BasicContentSource(final BasicContentSource anotherContentSource) {
-		this.zeroByteLayer = anotherContentSource.zeroByteLayer;
-		this.seed = anotherContentSource.seed;
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
+	protected BasicContentSource(final BasicContentSource other) {
+		this.seed = other.seed;
+		this.cacheLimit = other.cacheLimit;
+		this.zeroByteLayer = other.zeroByteLayer;
+		this.threadLocalByteLayersCache = new ThreadLocal<>();
 	}
 	//
 	@Override
@@ -74,25 +69,34 @@ implements ContentSource {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final ByteBuffer getLayer(final int layerIndex) {
-		// zero layer always exists so it may be useful to do it very simply and fast
+		//
 		if(layerIndex == 0) {
 			return zeroByteLayer;
 		}
-		// else fast check if layer exists
-		assert byteLayersMap != null;
-		ByteBuffer layer = byteLayersMap.get(layerIndex);
+		//
+		Int2ObjectOpenHashMap<ByteBuffer> byteLayersCache = threadLocalByteLayersCache.get();
+		if(byteLayersCache == null) {
+			byteLayersCache = new Int2ObjectOpenHashMap<>(cacheLimit);
+			threadLocalByteLayersCache.set(byteLayersCache);
+		}
+		// check if layer exists
+		ByteBuffer layer = byteLayersCache.get(layerIndex);
 		if(layer == null) {
-			// else lock, recheck and (possibly) generate
-			synchronized(byteLayersMap) {
-				layer = byteLayersMap.get(layerIndex);
-				if(layer == null) {
-					long nextSeed;
-					final int size = zeroByteLayer.capacity();
-					layer = ByteBuffer.allocateDirect(size);
-					nextSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
-					generateData(layer, nextSeed);
-					byteLayersMap.put(layerIndex, layer);
+			// else generate
+			final int size = zeroByteLayer.capacity();
+			layer = ByteBuffer.allocateDirect(size);
+			final long layerSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
+			generateData(layer, layerSeed);
+			byteLayersCache.put(layerIndex, layer);
+			if(byteLayersCache.size() > cacheLimit) {
+				// do not remove the zero byte layer, start from the layer #1
+				for(int i = 0; i < layerIndex; i ++) {
+					if(null != byteLayersCache.remove(i)) {
+						// stop if some lowest index layer was removed
+						break;
+					}
 				}
+				byteLayersCache.trim();
 			}
 		}
 		return layer;
@@ -124,9 +128,10 @@ implements ContentSource {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeLong(seed);
+		out.writeInt(cacheLimit);
 		// write buffer capacity and data
 		final byte buff[] = new byte[zeroByteLayer.capacity()];
-		zeroByteLayer.clear(); // reset
+		zeroByteLayer.clear(); // reset the position
 		zeroByteLayer.get(buff);
 		out.writeInt(buff.length);
 		out.write(buff);
@@ -136,6 +141,7 @@ implements ContentSource {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		seed = in.readLong();
+		cacheLimit = in.readInt();
 		//read buffer data and wrap with ByteBuffer
 		final int size = in.readInt();
 		final byte buff[] = new byte[size];
@@ -148,20 +154,12 @@ implements ContentSource {
 			}
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
-		byteLayersMap = new LRUMap<>(
-			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
-		);
-		byteLayersMap.put(0, zeroByteLayer);
 	}
 
 	//
 	@Override
 	public final void close()
 	throws IOException {
-		if(byteLayersMap != null) {
-			byteLayersMap.clear();
-			byteLayersMap = null;
-		}
 		zeroByteLayer = null;
 	}
 }

@@ -1,26 +1,21 @@
 package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.load.monitor.metrics.IoStats;
-import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
-import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
-import com.emc.mongoose.ui.log.Markers;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 import static java.lang.System.nanoTime;
 
 /**
  Created by andrey on 15.12.16.
  */
 public final class MetricsSvcTask
+extends ReentrantLock
 implements Runnable {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	private final long metricsPeriodNanoSec;
 	private final Int2ObjectMap<IoStats> ioStats;
@@ -30,7 +25,8 @@ implements Runnable {
 	private final Int2IntMap concurrencyMap;
 	private final boolean fileOutputFlag;
 
-	private long prevNanoTimeStamp;
+	private volatile long prevNanoTimeStamp;
+	private volatile long nextNanoTimeStamp;
 
 	public MetricsSvcTask(
 		final String jobName, final int metricsPeriodSec, final boolean fileOutputFlag,
@@ -51,22 +47,19 @@ implements Runnable {
 	
 	@Override
 	public final void run() {
-		final Thread currThread = Thread.currentThread();
-		currThread.setName(jobName);
-		long nextNanoTimeStamp;
-		while(!currThread.isInterrupted()) {
-			IoStats.refreshLastStats(ioStats, lastStats);
-			nextNanoTimeStamp = nanoTime();
-			if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
-				IoStats.outputLastStats(
-					lastStats, driversCountMap, concurrencyMap, jobName, fileOutputFlag
-				);
-				prevNanoTimeStamp = nextNanoTimeStamp;
-			}
+		if(tryLock()) {
 			try {
-				Thread.sleep(1);
-			} catch(final InterruptedException e) {
-				break;
+				IoStats.refreshLastStats(ioStats, lastStats);
+				LockSupport.parkNanos(1);
+				nextNanoTimeStamp = nanoTime();
+				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+					IoStats.outputLastStats(
+						lastStats, driversCountMap, concurrencyMap, jobName, fileOutputFlag
+					);
+					prevNanoTimeStamp = nextNanoTimeStamp;
+				}
+			} finally {
+				unlock();
 			}
 		}
 	}

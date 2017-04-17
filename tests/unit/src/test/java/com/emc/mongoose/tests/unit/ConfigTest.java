@@ -68,7 +68,7 @@ public class ConfigTest {
 		final Config.ItemConfig.DataConfig dataConfig = config.getItemConfig().getDataConfig();
 		assertEquals(
 			"16MB",
-			dataConfig.getContentConfig().getRingSize().toString()
+			dataConfig.getContentConfig().getRingConfig().getSize().toString()
 		);
 		assertEquals(1, dataConfig.getRangesConfig().getRandom());
 		final Config.TestConfig.StepConfig.LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();

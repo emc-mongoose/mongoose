@@ -88,6 +88,10 @@ implements NonBlockingConnPool {
 		// pre-create the connections
 		for(int i = 0; i < concurrencyLevel; i ++) {
 			final Channel conn = connect();
+			if(conn == null) {
+				LOG.error(Markers.ERR, "Failed to pre-create the connections to the target nodes");
+				break;
+			}
 			final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
 			if(conn.isActive()) {
 				final Queue<Channel> connQueue = connsMap.get(nodeAddr);

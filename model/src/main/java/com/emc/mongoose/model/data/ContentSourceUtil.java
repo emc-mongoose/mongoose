@@ -17,11 +17,14 @@ import static java.nio.file.StandardOpenOption.READ;
 public class ContentSourceUtil {
 
 	public static ContentSource getInstance(
-		final String contentFilePath, final String seed, final SizeInBytes ringSize
-	) throws IOException, IllegalStateException {
+		final String contentFilePath, final String seed, final SizeInBytes ringSize,
+		final int cacheLimit
+	) throws IOException, IllegalStateException, IllegalArgumentException {
 		final ContentSource instance;
-		final int ringSizeBytes = (int) ringSize.get() > Integer.MAX_VALUE ?
-			Integer.MAX_VALUE : (int) ringSize.get();
+		final long ringSizeBytes = ringSize.get();
+		if(ringSizeBytes > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException("Ring buffer size should be less than 2GB");
+		}
 		if(contentFilePath != null && !contentFilePath.isEmpty()) {
 			final Path p = Paths.get(contentFilePath);
 			if(Files.exists(p) && !Files.isDirectory(p) &&
@@ -31,7 +34,8 @@ public class ContentSourceUtil {
 				if(fileSize > 0) {
 					try(final ReadableByteChannel rbc = Files.newByteChannel(p, READ)) {
 						instance = new BasicContentSource(
-							rbc, fileSize > ringSizeBytes ? ringSizeBytes : (int) fileSize
+							rbc, (int) (fileSize > ringSizeBytes ? ringSizeBytes : fileSize),
+							cacheLimit
 						);
 					}
 				} else {
@@ -46,7 +50,7 @@ public class ContentSourceUtil {
 				);
 			}
 		} else {
-			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSizeBytes);
+			instance = new SeedContentSource(Long.parseLong(seed, 0x10), ringSizeBytes, cacheLimit);
 		}
 		return instance;
 	}

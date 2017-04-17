@@ -2,15 +2,17 @@ package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.collection.AsyncRoundRobinOutput;
+import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
+import com.emc.mongoose.model.DaemonBase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,9 +24,29 @@ import java.util.concurrent.atomic.LongAdder;
  Created by kurila on 29.03.17.
  */
 @RunWith(Parameterized.class)
-public class AsyncRoundRobinOutputTest {
+public class RoundRobinOutputsTransferSvcTaskTest {
 	
 	private static final int TEST_TIME_LIMIT_SEC = 30;
+
+	private final static class DaemonMock
+	extends DaemonBase {
+
+		@Override
+		public boolean await(final long timeout, final TimeUnit timeUnit)
+		throws InterruptedException, RemoteException {
+			return false;
+		}
+
+		@Override
+		protected void doShutdown()
+		throws IllegalStateException {
+		}
+
+		@Override
+		protected void doInterrupt()
+		throws IllegalStateException {
+		}
+	}
 	
 	private final static class CountingOutput<T>
 	implements Output<T> {
@@ -63,39 +85,43 @@ public class AsyncRoundRobinOutputTest {
 		throws IOException {
 		}
 	}
+
 	private final List<CountingOutput> outputs;
 	private final Output rrcOutput;
 	private final int outputCount;
 	
-	public AsyncRoundRobinOutputTest(final int outputCount)
+	public RoundRobinOutputsTransferSvcTaskTest(final int outputCount)
 	throws Exception {
 		this.outputCount = outputCount;
 		outputs = new ArrayList<>(outputCount);
 		for(int i = 0; i < outputCount; i ++) {
 			outputs.add(new CountingOutput());
 		}
-		rrcOutput = new AsyncRoundRobinOutput(outputs, BATCH_SIZE);
-		final Thread t = new Thread(() -> {
-			final Thread currentThread = Thread.currentThread();
-			final List buff = new ArrayList(BATCH_SIZE);
-			for(int i = 0; i < BATCH_SIZE; i ++) {
-				buff.add(new Object());
-			}
-			try {
-				int i;
-				while(!currentThread.isInterrupted()) {
-					i = 0;
-					while(i < BATCH_SIZE) {
-						i += rrcOutput.put(buff, i, BATCH_SIZE);
-					}
+		try(final DaemonMock daemonMock = new DaemonMock()) {
+			rrcOutput = new RoundRobinOutputsTransferSvcTask(outputs, daemonMock.getSvcTasks(), BATCH_SIZE);
+			final Thread t = new Thread(() -> {
+				final Thread currentThread = Thread.currentThread();
+				final List buff = new ArrayList(BATCH_SIZE);
+				for(int i = 0; i < BATCH_SIZE; i ++) {
+					buff.add(new Object());
 				}
-			} catch(final Throwable e) {
-				fail(e.toString());
-			}
-		});
-		t.start();
-		TimeUnit.SECONDS.timedJoin(t, TEST_TIME_LIMIT_SEC);
-		t.interrupt();
+				try {
+					int i;
+					while(!currentThread.isInterrupted()) {
+						i = 0;
+						while(i < BATCH_SIZE) {
+							i += rrcOutput.put(buff, i, BATCH_SIZE);
+						}
+					}
+				} catch(final Throwable e) {
+					fail(e.toString());
+				}
+			});
+			daemonMock.start();
+			t.start();
+			TimeUnit.SECONDS.timedJoin(t, TEST_TIME_LIMIT_SEC);
+			t.interrupt();
+		}
 	}
 	
 	@Parameterized.Parameters

@@ -1,5 +1,7 @@
 package com.emc.mongoose.storage.driver.base;
 
+import com.emc.mongoose.common.collection.OptLockArrayBuffer;
+import com.emc.mongoose.common.collection.OptLockBuffer;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
@@ -32,6 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 /**
@@ -62,6 +65,7 @@ implements StorageDriver<I, O> {
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewAuthToken(final Credential credential);
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
+	private final IoTasksDispatch ioTasksDispatchTask;
 	
 	protected StorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
@@ -85,39 +89,39 @@ implements StorageDriver<I, O> {
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
-
-		SVC_TASKS.put(this, new IoTasksDispatch());
+		this.ioTasksDispatchTask = new IoTasksDispatch();
+		svcTasks.add(ioTasksDispatchTask);
 	}
 
 	private final class IoTasksDispatch
-	extends ArrayList<O> // extends ArrayList in order to get the access to the "removeRange" method
 	implements Runnable {
 
+		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(BATCH_SIZE);
 		private int n = 0;
 		private int m;
 
-		public IoTasksDispatch() {
-			super(BATCH_SIZE);
-		}
-
 		@Override
 		public final void run() {
-			if(n < BATCH_SIZE) {
-				n += childTasksQueue.drainTo(this, BATCH_SIZE - n);
-			}
-			if(n < BATCH_SIZE) {
-				n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
-			}
-			try {
-				if(n > 0) {
-					m = submit(this, 0, n);
-					if(m > 0) {
-						removeRange(0, m);
-						n -= m;
+			if(buff.tryLock()) {
+				try {
+					if(n < BATCH_SIZE) {
+						n += childTasksQueue.drainTo(buff, BATCH_SIZE - n);
 					}
+					if(n < BATCH_SIZE) {
+						n += inTasksQueue.drainTo(buff, BATCH_SIZE - n);
+					}
+					LockSupport.parkNanos(1);
+					if(n > 0) {
+						m = submit(buff, 0, n);
+						if(m > 0) {
+							buff.removeRange(0, m);
+							n -= m;
+						}
+					}
+				} catch(final InterruptedException ignored) {
+				} finally {
+					buff.unlock();
 				}
-			} catch(final InterruptedException e) {
-				SVC_TASKS.clear();
 			}
 		}
 	}
@@ -223,13 +227,26 @@ implements StorageDriver<I, O> {
 		return !concurrencyThrottle.hasQueuedThreads() &&
 			concurrencyThrottle.availablePermits() >= concurrencyLevel;
 	}
-
+	
 	@Override
-	public List<O> getResults()
-	throws IOException {
+	public final O get() {
+		return ioResultsQueue.poll();
+	}
+	
+	@Override
+	public final List<O> getAll() {
 		final List<O> ioTaskResults = new ArrayList<>(BATCH_SIZE);
 		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
 		return ioTaskResults;
+	}
+	
+	@Override
+	public final long skip(final long count) {
+		int n = (int) Math.min(count, Integer.MAX_VALUE);
+		final List<O> tmpBuff = new ArrayList<>(n);
+		n = ioResultsQueue.drainTo(tmpBuff, n);
+		tmpBuff.clear();
+		return n;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -328,7 +345,7 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		SVC_TASKS.remove(this);
+		svcTasks.remove(ioTasksDispatchTask);
 		LOG.debug(Markers.MSG, "{}: shut down", toString());
 	}
 
@@ -348,6 +365,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
+		super.doClose();
 		childTasksQueue.clear();
 		inTasksQueue.clear();
 		final int ioResultsQueueSize = ioResultsQueue.size();

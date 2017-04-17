@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import static java.lang.System.nanoTime;
 
 /**
@@ -35,50 +36,61 @@ implements StorageDriverSvc<I, O> {
 	private final int port;
 	private final StorageDriver<I, O> driver;
 	private final ContentSource contentSrc;
+	private final Thread stdOutThread;
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
 		final long metricsPeriodSec
 	) {
+		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			stdOutThread = new Thread(new StateReportingTask(driver, metricsPeriodSec));
+			stdOutThread.setDaemon(true);
+			stdOutThread.setName(driver.toString());
+		} else {
+			stdOutThread = null;
+		}
 		this.port = port;
 		this.driver = driver;
 		this.contentSrc = contentSrc;
 		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
-		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			SVC_TASKS.put(this, new StateReportingTask(this, metricsPeriodSec));
-		}
+		/*if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			svc.put(this, ;
+		}*/
 	}
 	
 	private final static class StateReportingTask
 	implements Runnable {
-		
-		private final StorageDriverSvc storageDriver;
+
+		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
 		
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
 		
-		public StateReportingTask(
-			final StorageDriverSvc storageDriver, final long metricsPeriodSec
-		) {
-			this.storageDriver = storageDriver;
+		public StateReportingTask(final StorageDriver driver, final long metricsPeriodSec) {
+			this.driver = driver;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
 			this.prevNanoTimeStamp = 0;
 		}
 		
 		@Override
 		public final void run() {
-			nextNanoTimeStamp = nanoTime();
-			if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
-				prevNanoTimeStamp = nextNanoTimeStamp;
-				try {
-					LOG.info(
-						Markers.MSG,
-						"{} I/O tasks: scheduled={}, active={}, completed={}",
-						storageDriver.getName(), storageDriver.getScheduledTaskCount(),
-						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount()
-					);
-				} catch(final RemoteException ignored) {
+			final Thread currentThread = Thread.currentThread();
+			final String driverName = currentThread.getName();
+			while(!currentThread.isInterrupted()) {
+				nextNanoTimeStamp = nanoTime();
+				if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+					prevNanoTimeStamp = nextNanoTimeStamp;
+					try {
+						LOG.info(
+							Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}",
+							driverName, driver.getScheduledTaskCount(), driver.getActiveTaskCount(),
+							driver.getCompletedTaskCount()
+						);
+					} catch(final RemoteException ignored) {
+					}
+				} else {
+					LockSupport.parkNanos(nextNanoTimeStamp - prevNanoTimeStamp);
 				}
 			}
 		}
@@ -89,29 +101,53 @@ implements StorageDriverSvc<I, O> {
 	throws RemoteException {
 		return port;
 	}
-
+	
 	@Override
 	public final String getName()
 	throws RemoteException {
 		return driver.toString();
 	}
+	
+	@Override
+	public final List<Runnable> getSvcTasks() {
+		throw new AssertionError("Shouldn't be invoked");
+	}
 
 	@Override
 	public final void start()
-	throws IllegalStateException, RemoteException {
-		driver.start();
+	throws IllegalStateException {
+		try {
+			driver.start();
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
+		if(stdOutThread != null) {
+			stdOutThread.start();
+		}
+	}
+	
+	@Override
+	public final O get()
+	throws IOException {
+		return driver.get();
 	}
 
 	@Override
-	public final List<O> getResults()
+	public final List<O> getAll()
 	throws IOException {
-		return driver.getResults();
+		return driver.getAll();
 	}
-
+	
+	@Override
+	public final long skip(final long count)
+	throws IOException {
+		return driver.skip(count);
+	}
+	
 	@Override
 	public final void close()
 	throws IOException {
-		SVC_TASKS.remove(this);
+		//SVC_TASKS.remove(this);
 		driver.close();
 		contentSrc.close();
 		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
@@ -140,7 +176,7 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final int put(final List<O> buffer)
 	throws IOException {
-		if(buffer.get(0) instanceof DataItem) {
+		if(buffer.get(0) instanceof DataIoTask) {
 			for(final O ioTask : buffer) {
 				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
 			}
@@ -182,14 +218,23 @@ implements StorageDriverSvc<I, O> {
 
 	@Override
 	public final void interrupt()
-	throws IllegalStateException, RemoteException {
-		driver.interrupt();
+	throws IllegalStateException {
+		try {
+			driver.interrupt();
+		} catch(final RemoteException ignored) {
+		}
+		if(stdOutThread != null) {
+			stdOutThread.interrupt();
+		}
 	}
 
 	@Override
-	public final boolean isInterrupted()
-	throws RemoteException {
-		return driver.isInterrupted();
+	public final boolean isInterrupted() {
+		try {
+			return driver.isInterrupted();
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override

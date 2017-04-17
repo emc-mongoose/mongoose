@@ -9,9 +9,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by andrey on 06.11.16.
+ @deprecated Use RoundRobinOutputsTransferSvcTask instead
  */
+@Deprecated
 public final class RoundRobinOutput<T>
-	implements Output<T> {
+implements Output<T> {
 	
 	private final List<? extends Output<T>> outputs;
 	private final int outputsCount;
@@ -96,7 +98,7 @@ public final class RoundRobinOutput<T>
 	@Override
 	public final Input<T> getInput()
 	throws IOException {
-		return null;
+		throw new AssertionError("Shouldn't be invoked");
 	}
 	
 	@Override

@@ -20,11 +20,12 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
-import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
@@ -85,8 +86,6 @@ extends StepBase {
 		
 		final long t = localLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
-		final boolean remoteDriversFlag = localConfig
-			.getStorageConfig().getDriverConfig().getRemote();
 		
 		final int loadGeneratorCount = nodeConfigList.size();
 		final Map<LoadGenerator, List<StorageDriver>> driverMap = new HashMap<>(loadGeneratorCount);
@@ -109,8 +108,10 @@ extends StepBase {
 				final ContentConfig contentConfig = dataConfig.getContentConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+				final RingConfig ringConfig = contentConfig.getRingConfig();
 				final ContentSource contentSrc = ContentSourceUtil.getInstance(
-					contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
+					contentConfig.getFile(), contentConfig.getSeed(),
+					ringConfig.getSize(), ringConfig.getCache()
 				);
 				
 				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);

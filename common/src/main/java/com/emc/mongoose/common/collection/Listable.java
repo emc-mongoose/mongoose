@@ -8,5 +8,4 @@ import java.util.Collection;
 public interface Listable<T> {
 
 	T list(final String afterObjectId, final Collection<T> outputBuffer, final int limit);
-	
 }

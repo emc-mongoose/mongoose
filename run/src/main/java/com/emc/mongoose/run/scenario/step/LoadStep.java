@@ -21,7 +21,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
@@ -80,11 +80,13 @@ extends StepBase {
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
 		final StorageConfig storageConfig = localConfig.getStorageConfig();
+		final RingConfig ringConfig = contentConfig.getRingConfig();
 		
 		final ContentSource contentSrc;
 		try {
 			contentSrc = ContentSourceUtil.getInstance(
-				contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
+				contentConfig.getFile(), contentConfig.getSeed(), ringConfig.getSize(),
+				ringConfig.getCache()
 			);
 		} catch(final IOException e) {
 			throw new RuntimeException(e);

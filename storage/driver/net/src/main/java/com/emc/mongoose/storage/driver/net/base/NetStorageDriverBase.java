@@ -4,7 +4,7 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
-import com.emc.mongoose.ui.log.NamingThreadFactory;
+import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.model.io.IoType;
@@ -310,7 +310,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public final void channelCreated(final Channel channel)
 	throws Exception {
-		appendHandlers(channel.pipeline());
+		final ChannelPipeline pipeline = channel.pipeline();
+		appendHandlers(pipeline);
+		LOG.debug(Markers.MSG, "{}: channel pipeline configured: {}", jobName, pipeline.toString());
 	}
 
 	protected void appendHandlers(final ChannelPipeline pipeline) {
@@ -328,11 +330,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 	}
 
-	@Override
-	protected void doStart()
-	throws IllegalStateException {
-	}
-	
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
