@@ -188,6 +188,7 @@ implements StorageDriver<I, O> {
 	
 	private void checkStateFor(final O ioTask)
 	throws ServerException {
+		ioTask.reset();
 		if(requestAuthTokenFunc != null) {
 			final Credential credential = ioTask.getCredential();
 			if(credential != null) {

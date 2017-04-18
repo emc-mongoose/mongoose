@@ -162,7 +162,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 			try {
 				ioTask.startResponse();
 			} catch(final IllegalStateException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "{}", ioTask.toString());
+				LogUtil.exception(LOG, Level.TRACE, e, "{}", ioTask.toString());
 			}
 			final HttpResponse httpResponse = (HttpResponse) msg;
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();

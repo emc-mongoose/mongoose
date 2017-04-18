@@ -29,7 +29,7 @@ implements FutureListener<Void> {
 		try {
 			ioTask.finishRequest();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "{}", ioTask.toString());
+			LogUtil.exception(LOG, Level.TRACE, e, "{}", ioTask.toString());
 		}
 	}
 }

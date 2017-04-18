@@ -790,6 +790,10 @@ implements LoadMonitor<I, O> {
 	throws IOException {
 		
 		super.doClose();
+		try {
+			TimeUnit.MILLISECONDS.sleep(250);
+		} catch(final InterruptedException ignored) {
+		}
 
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareConcurrencyLevel(),
