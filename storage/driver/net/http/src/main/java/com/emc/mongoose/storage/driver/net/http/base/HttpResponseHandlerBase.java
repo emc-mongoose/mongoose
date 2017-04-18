@@ -112,7 +112,11 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				final long countBytesDone = dataIoTask.getCountBytesDone();
 				if(dataIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
-					dataIoTask.startDataResponse();
+					try {
+						dataIoTask.startDataResponse();
+					} catch(final IllegalStateException e) {
+						LogUtil.exception(LOG, Level.DEBUG, e, "{}", dataIoTask.toString());
+					}
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
@@ -162,7 +166,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 			try {
 				ioTask.startResponse();
 			} catch(final IllegalStateException e) {
-				LogUtil.exception(LOG, Level.TRACE, e, "{}", ioTask.toString());
+				LogUtil.exception(LOG, Level.DEBUG, e, "{}", ioTask.toString());
 			}
 			final HttpResponse httpResponse = (HttpResponse) msg;
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();

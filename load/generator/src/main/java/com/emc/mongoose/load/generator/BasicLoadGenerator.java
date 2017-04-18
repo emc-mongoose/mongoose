@@ -288,6 +288,7 @@ implements LoadGenerator<I, O>, Runnable {
 		}
 		ioTaskBuilder.close();
 		remainingTasks.clear();
+		ioTaskOutput.close();
 	}
 	
 	@Override

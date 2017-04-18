@@ -29,7 +29,7 @@ extends LogMessageBase {
 			final O anyIoResult = ioResults.get(0);
 			String nextItemInfo;
 			int commaPos;
-			long nextReqTimeStart, nextDuration, nextLatency;
+			long nextReqTimeStart, nextDuration, nextLatency, nextDataLatency;
 			if(anyIoResult instanceof DataIoTask) {
 				final List<DataIoTask> dataIoResults = (List) ioResults;
 				DataIoTask nextResult;
@@ -37,6 +37,7 @@ extends LogMessageBase {
 					nextResult = dataIoResults.get(i);
 					nextDuration = nextResult.getDuration();
 					nextLatency = nextResult.getLatency();
+					nextDataLatency = nextResult.getDataLatency();
 					nextItemInfo = nextResult.getItem().toString();
 					if(nextItemInfo != null) {
 						commaPos = nextItemInfo.indexOf(',', 0);
@@ -54,7 +55,7 @@ extends LogMessageBase {
 						nextReqTimeStart,
 						nextDuration,
 						nextLatency < nextDuration && nextLatency > 0 ? nextLatency : -1,
-						nextResult.getDataLatency(),
+						nextDataLatency < nextDuration && nextDataLatency > 0 ? nextDataLatency : -1,
 						nextResult.getCountBytesDone()
 					);
 					strb.append('\n');

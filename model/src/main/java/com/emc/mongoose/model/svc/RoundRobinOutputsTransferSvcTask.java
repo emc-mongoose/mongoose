@@ -124,6 +124,9 @@ implements Output<T>, Runnable {
 
 	@Override
 	public final void run() {
+		if(outputs.isEmpty()) { // closed already
+			return;
+		}
 		final O output = outputs.get(
 			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
 		);

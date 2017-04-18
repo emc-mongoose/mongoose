@@ -26,6 +26,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
@@ -214,7 +215,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
 				concurrencyThrottle.acquire();
 				ioTask.startRequest();
-				sendRequest(null, ioTask);
+				sendRequest(null, null, ioTask);
 				ioTask.finishRequest();
 				concurrencyThrottle.release();
 				ioTask.setStatus(SUCC);
@@ -228,7 +229,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				conn.attr(ATTR_KEY_IOTASK).set(ioTask);
 				ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
 				ioTask.startRequest();
-				sendRequest(conn, ioTask).addListener(new RequestSentCallback(ioTask));
+				sendRequest(
+					conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
+				);
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
@@ -249,7 +252,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				if(IoType.NOOP.equals(nextIoTask.getIoType())) {
 					concurrencyThrottle.acquire();
 					nextIoTask.startRequest();
-					sendRequest(null, nextIoTask);
+					sendRequest(null, null, nextIoTask);
 					nextIoTask.finishRequest();
 					concurrencyThrottle.release();
 					nextIoTask.setStatus(SUCC);
@@ -263,7 +266,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
 					nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
 					nextIoTask.startRequest();
-					sendRequest(conn, nextIoTask).addListener(new RequestSentCallback(nextIoTask));
+					sendRequest(
+						conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
+						nextIoTask
+					);
 				}
 			}
 		} catch(final IllegalStateException e) {
@@ -282,7 +288,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 
-	protected abstract ChannelFuture sendRequest(final Channel channel, final O ioTask);
+	protected abstract void sendRequest(
+		final Channel channel, final ChannelPromise channelPromise, final O ioTask
+	);
 
 	@Override
 	public void complete(final Channel channel, final O ioTask) {

@@ -640,7 +640,7 @@ implements LoadMonitor<I, O> {
 					try {
 						nextGenerator.interrupt();
 						LOG.debug(
-							Markers.MSG, "{}: load generator \"{}\" shut down", getName(),
+							Markers.MSG, "{}: load generator \"{}\" interrupted", getName(),
 							nextGenerator.toString()
 						);
 					} catch(final RemoteException e) {
@@ -790,10 +790,6 @@ implements LoadMonitor<I, O> {
 	throws IOException {
 		
 		super.doClose();
-		try {
-			TimeUnit.MILLISECONDS.sleep(250);
-		} catch(final InterruptedException ignored) {
-		}
 
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareConcurrencyLevel(),
@@ -801,9 +797,7 @@ implements LoadMonitor<I, O> {
 		);
 
 		for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
-
 			for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-				
 				ioResultsGetAndApplyExecutor.submit(
 					() -> {
 						try {

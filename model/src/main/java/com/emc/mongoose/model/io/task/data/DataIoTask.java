@@ -40,7 +40,8 @@ extends IoTask<I> {
 
 	long getRespDataTimeStart();
 
-	void startDataResponse();
+	void startDataResponse()
+	throws IllegalStateException;
 
 	long getDataLatency();
 }

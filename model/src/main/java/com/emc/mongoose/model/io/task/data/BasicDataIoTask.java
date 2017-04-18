@@ -284,6 +284,12 @@ implements DataIoTask<T> {
 	@Override
 	public final void startDataResponse() {
 		respDataTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
+		if(reqTimeDone == 0) {
+			throw new IllegalStateException(
+				"Response data is started (" + respDataTimeStart +
+				") before the request is finished (" + reqTimeDone + ")"
+			);
+		}
 	}
 
 	@Override

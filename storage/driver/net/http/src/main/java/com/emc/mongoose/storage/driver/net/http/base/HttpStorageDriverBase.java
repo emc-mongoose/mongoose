@@ -26,9 +26,9 @@ import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -390,7 +390,9 @@ implements HttpStorageDriver<I, O> {
 	throws URISyntaxException;
 
 	@Override
-	protected final ChannelFuture sendRequest(final Channel channel, final O ioTask) {
+	protected final void sendRequest(
+		final Channel channel, final ChannelPromise channelPromise, final O ioTask
+	) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
 		final IoType ioType = ioTask.getIoType();
@@ -400,7 +402,7 @@ implements HttpStorageDriver<I, O> {
 
 			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 			if(channel == null) {
-				return null;
+				return;
 			} else {
 				channel.write(httpRequest);
 			}
@@ -489,7 +491,8 @@ implements HttpStorageDriver<I, O> {
 			e.printStackTrace(System.err);
 		}
 
-		return channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		channel.write(LastHttpContent.EMPTY_LAST_CONTENT, channelPromise);
+		channel.flush();
 	}
 
 	@Override

@@ -6,7 +6,6 @@ import com.emc.mongoose.common.io.Output;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
