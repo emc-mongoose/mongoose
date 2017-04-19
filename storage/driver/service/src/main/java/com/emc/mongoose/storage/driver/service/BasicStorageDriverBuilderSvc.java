@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.service;
 
+import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
@@ -78,7 +79,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
-	public final List<Runnable> getSvcTasks() {
+	public final List<SvcTask> getSvcTasks() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 

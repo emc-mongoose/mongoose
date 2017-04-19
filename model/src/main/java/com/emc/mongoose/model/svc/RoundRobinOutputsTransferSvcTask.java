@@ -112,6 +112,8 @@ implements Output<T> {
 					} finally {
 						buff.unlock();
 					}
+				} else {
+					return i - from;
 				}
 			}
 			return to - from;
@@ -126,9 +128,6 @@ implements Output<T> {
 
 	@Override
 	protected final void invoke() {
-		if(outputs.isEmpty()) { // closed already
-			return;
-		}
 		final O output = outputs.get(
 			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
 		);

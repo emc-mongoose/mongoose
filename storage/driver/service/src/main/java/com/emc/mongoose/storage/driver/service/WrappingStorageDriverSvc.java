@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.common.io.Input;
@@ -53,9 +54,6 @@ implements StorageDriverSvc<I, O> {
 		this.driver = driver;
 		this.contentSrc = contentSrc;
 		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
-		/*if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			svc.put(this, ;
-		}*/
 	}
 	
 	private final static class StateReportingTask
@@ -109,7 +107,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final List<Runnable> getSvcTasks() {
+	public final List<SvcTask> getSvcTasks() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 

@@ -12,7 +12,6 @@ implements SvcTask {
 	private final List<SvcTask> svcTasks;
 
 	private volatile boolean isClosedFlag = false;
-	private volatile boolean isActiveFlag = false;
 
 	protected SvcTaskBase(final List<SvcTask> svcTasks) {
 		this.svcTasks = svcTasks;
@@ -29,23 +28,13 @@ implements SvcTask {
 	@Override
 	public void run() {
 		if(!isClosedFlag) {
-			isActiveFlag = true;
-			try {
-				invoke();
-			} finally {
-				isActiveFlag = false;
-			}
+			invoke();
 		}
 	}
 
 	@Override
 	public final boolean isClosed() {
 		return isClosedFlag;
-	}
-
-	@Override
-	public final boolean isActive() {
-		return isActiveFlag;
 	}
 
 	protected abstract void invoke();

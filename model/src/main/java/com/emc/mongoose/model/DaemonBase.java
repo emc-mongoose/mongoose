@@ -91,6 +91,9 @@ implements Daemon {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		SVC_TASKS.remove(this);
+		for(final SvcTask svcTask : svcTasks) {
+			svcTask.close();
+		}
 		svcTasks.clear();
 	}
 

@@ -358,6 +358,10 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doShutdown() {
 		svcTasks.remove(ioTasksDispatchTask);
+		try {
+			ioTasksDispatchTask.close();
+		} catch(final IOException ignored) {
+		}
 		LOG.debug(Markers.MSG, "{}: shut down", toString());
 	}
 

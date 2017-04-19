@@ -3,6 +3,7 @@ package com.emc.mongoose.load.generator;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
+import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -41,7 +42,7 @@ import java.util.function.Supplier;
  */
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadGenerator<I, O>, Runnable {
+implements LoadGenerator<I, O>, SvcTask {
 
 	private static final Logger LOG = LogManager.getLogger();
 

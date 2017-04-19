@@ -1,12 +1,14 @@
 package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
 import com.emc.mongoose.model.svc.RoundRobinInputsTransferSvcTask;
+import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
@@ -600,6 +602,16 @@ implements LoadMonitor<I, O> {
 			ioStats.get(ioTypeCode).start();
 		}
 
+		try {
+			svcTasks.add(
+				new MetricsSvcTask(
+					this, name, metricsPeriodSec, preconditionJobFlag, driversCountMap,
+					concurrencyMap, ioStats, lastStats, medIoStats, lastMedStats,
+					(int) (fullLoadThreshold * totalConcurrency)
+				)
+			);
+		} catch(final RemoteException ignore) {
+		}
 		for(final int originCode : recycleQueuesMap.keySet()) {
 			if(circularityMap.get(originCode)) {
 				svcTasks.add(
@@ -773,7 +785,18 @@ implements LoadMonitor<I, O> {
 			);
 		}
 
-		svcTasks.clear(); // stop all service tasks
+		// stop all service tasks
+		for(final SvcTask svcTask : svcTasks) {
+			try {
+				svcTask.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to stop the service task {}", svcTask
+				);
+			}
+		}
+		svcTasks.clear();
+
 		LOG.debug(Markers.MSG, "{}: interrupted the load monitor", getName());
 	}
 

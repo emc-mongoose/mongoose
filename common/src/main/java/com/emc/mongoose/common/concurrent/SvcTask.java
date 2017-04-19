@@ -9,6 +9,4 @@ public interface SvcTask
 extends Closeable, Runnable {
 
 	boolean isClosed();
-
-	boolean isActive();
 }
