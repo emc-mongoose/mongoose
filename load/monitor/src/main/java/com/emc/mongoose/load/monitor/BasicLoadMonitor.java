@@ -7,7 +7,6 @@ import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
 import com.emc.mongoose.model.svc.RoundRobinInputsTransferSvcTask;
-import com.emc.mongoose.load.monitor.metrics.IntermediateMetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
@@ -601,13 +600,6 @@ implements LoadMonitor<I, O> {
 			ioStats.get(ioTypeCode).start();
 		}
 
-		svcTasks.add(
-			new IntermediateMetricsSvcTask(
-				this, name, metricsPeriodSec, preconditionJobFlag, driversCountMap, concurrencyMap,
-				ioStats, lastStats, medIoStats, lastMedStats,
-				(int) (fullLoadThreshold * totalConcurrency)
-			)
-		);
 		for(final int originCode : recycleQueuesMap.keySet()) {
 			if(circularityMap.get(originCode)) {
 				svcTasks.add(
