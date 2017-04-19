@@ -2,6 +2,8 @@ package com.emc.mongoose.model.svc;
 
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
+import com.emc.mongoose.common.concurrent.SvcTask;
+import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 
@@ -17,22 +19,22 @@ import java.util.concurrent.atomic.AtomicLong;
  Created by andrey on 06.11.16.
  */
 public final class RoundRobinOutputsTransferSvcTask<T, O extends Output<T>>
-implements Output<T>, Runnable {
+extends SvcTaskBase
+implements Output<T> {
 	
 	private final List<O> outputs;
 	private final int outputsCount;
 	private final AtomicLong putCounter = new AtomicLong(0);
 	private final AtomicLong getCounter = new AtomicLong(0);
-	private final List<Runnable> svcTasks;
 	private final int buffCapacity;
 	private final Map<O, OptLockBuffer<T>> buffs;
 
 	public RoundRobinOutputsTransferSvcTask(
-		final List<O> outputs, final List<Runnable> svcTasks, final int buffCapacity
+		final List<O> outputs, final List<SvcTask> svcTasks, final int buffCapacity
 	) {
+		super(svcTasks);
 		this.outputs = outputs;
 		this.outputsCount = outputs.size();
-		this.svcTasks = svcTasks;
 		this.buffCapacity = buffCapacity;
 		this.buffs = new HashMap<>(this.outputsCount);
 		for(int i = 0; i < this.outputsCount; i ++) {
@@ -123,7 +125,7 @@ implements Output<T>, Runnable {
 	}
 
 	@Override
-	public final void run() {
+	protected final void invoke() {
 		if(outputs.isEmpty()) { // closed already
 			return;
 		}
@@ -158,9 +160,8 @@ implements Output<T>, Runnable {
 	}
 
 	@Override
-	public final void close()
+	protected final void doClose()
 	throws IOException {
-		svcTasks.remove(this);
 		for(final O output : outputs) {
 			final OptLockBuffer<T> buff = buffs.get(output);
 			buff.lock();

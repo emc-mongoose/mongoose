@@ -15,7 +15,7 @@ extends Closeable {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
 	}
 
-	List<Runnable> getSvcTasks()
+	List<SvcTask> getSvcTasks()
 	throws RemoteException;
 
 	void start()

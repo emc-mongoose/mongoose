@@ -1,6 +1,8 @@
 package com.emc.mongoose.model;
 
 import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.common.concurrent.SvcTask;
+
 import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
@@ -30,7 +32,7 @@ import java.util.concurrent.locks.LockSupport;
 public abstract class DaemonBase
 implements Daemon {
 
-	protected static final Map<Daemon, List<Runnable>> SVC_TASKS = new ConcurrentHashMap<>();
+	protected static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
 		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
@@ -40,15 +42,15 @@ implements Daemon {
 		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
 			SVC_TASKS_EXECUTOR.submit(
 				() -> {
-					Set<Entry<Daemon, List<Runnable>>> svcTaskEntries;
-					List<Runnable> nextSvcTasks;
+					Set<Entry<Daemon, List<SvcTask>>> svcTaskEntries;
+					List<SvcTask> nextSvcTasks;
 					while(true) {
 						svcTaskEntries = SVC_TASKS.entrySet();
 						if(svcTaskEntries.size() == 0) {
 							Thread.sleep(1);
 						} else {
 							LockSupport.parkNanos(1);
-							for(final Entry<Daemon, List<Runnable>> entry : svcTaskEntries) {
+							for(final Entry<Daemon, List<SvcTask>> entry : svcTaskEntries) {
 								nextSvcTasks = entry.getValue();
 								for(final Runnable nextSvcTask : nextSvcTasks) {
 									try {
@@ -70,7 +72,7 @@ implements Daemon {
 		}
 	}
 	
-	protected final List<Runnable> svcTasks = new CopyOnWriteArrayList<>();
+	protected final List<SvcTask> svcTasks = new CopyOnWriteArrayList<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -93,7 +95,7 @@ implements Daemon {
 	}
 
 	@Override
-	public final List<Runnable> getSvcTasks() {
+	public final List<SvcTask> getSvcTasks() {
 		return svcTasks;
 	}
 

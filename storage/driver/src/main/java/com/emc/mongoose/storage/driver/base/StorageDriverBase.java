@@ -2,6 +2,8 @@ package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
+import com.emc.mongoose.common.concurrent.SvcTask;
+import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
@@ -89,19 +91,23 @@ implements StorageDriver<I, O> {
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
-		this.ioTasksDispatchTask = new IoTasksDispatch();
+		this.ioTasksDispatchTask = new IoTasksDispatch(svcTasks);
 		svcTasks.add(ioTasksDispatchTask);
 	}
 
 	private final class IoTasksDispatch
-	implements Runnable {
+	extends SvcTaskBase {
 
 		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(BATCH_SIZE);
 		private int n = 0;
 		private int m;
 
+		public IoTasksDispatch(final List<SvcTask> svcTasks) {
+			super(svcTasks);
+		}
+
 		@Override
-		public final void run() {
+		protected final void invoke() {
 			if(buff.tryLock()) {
 				try {
 					if(n < BATCH_SIZE) {
@@ -123,6 +129,11 @@ implements StorageDriver<I, O> {
 					buff.unlock();
 				}
 			}
+		}
+
+		@Override
+		protected final void doClose() {
+			buff.clear();
 		}
 	}
 

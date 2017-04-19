@@ -1,9 +1,10 @@
 package com.emc.mongoose.model.svc;
 
+import com.emc.mongoose.common.concurrent.SvcTask;
+import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 
-import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -15,25 +16,24 @@ import java.util.concurrent.locks.LockSupport;
  Created by andrey on 15.12.16.
  */
 public final class RoundRobinInputsTransferSvcTask<T>
-implements Closeable, Runnable {
+extends SvcTaskBase {
 	
 	private final Output<T> output;
 	private final List<? extends Input<T>> inputs;
 	private final int inputsCount;
 	private final AtomicLong rrc = new AtomicLong();
-	private final List<Runnable> svcTasks;
 
 	public RoundRobinInputsTransferSvcTask(
-		final Output<T> output, final List<? extends Input<T>> inputs, final List<Runnable> svcTasks
+		final Output<T> output, final List<? extends Input<T>> inputs, final List<SvcTask> svcTasks
 	) {
+		super(svcTasks);
 		this.output = output;
 		this.inputs = inputs;
 		this.inputsCount = inputs.size();
-		this.svcTasks = svcTasks;
 	}
 
 	@Override
-	public final void run() {
+	protected final void invoke() {
 		final Input<T> nextInput = inputs.get((int) (rrc.getAndIncrement() % inputsCount));
 		try {
 			final List<T> results = nextInput.getAll();
@@ -45,11 +45,19 @@ implements Closeable, Runnable {
 				}
 			}
 		} catch(final EOFException e) {
-			close();
+			try {
+				close();
+			} catch(final IOException ee) {
+				ee.printStackTrace(System.err);
+			}
 		} catch(final RemoteException e) {
 			final Throwable cause = e.getCause();
 			if(cause instanceof EOFException) {
-				close();
+				try {
+					close();
+				} catch(final IOException ee) {
+					ee.printStackTrace(System.err);
+				}
 			} else {
 				e.printStackTrace(System.err);
 			}
@@ -59,8 +67,7 @@ implements Closeable, Runnable {
 	}
 
 	@Override
-	public final void close() {
-		svcTasks.remove(this);
+	protected final void doClose() {
 		inputs.clear();
 	}
 }
