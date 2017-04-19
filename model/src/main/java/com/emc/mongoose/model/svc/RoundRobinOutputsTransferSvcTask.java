@@ -9,6 +9,7 @@ import com.emc.mongoose.common.io.Output;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
@@ -139,7 +140,7 @@ implements Output<T> {
 					n = output.put(buff);
 					buff.removeRange(0, n);
 				}
-			} catch(final EOFException ignored) {
+			} catch(final EOFException | NoSuchObjectException ignored) {
 			} catch(final RemoteException e) {
 				final Throwable cause = e.getCause();
 				if(!(cause instanceof EOFException)) {

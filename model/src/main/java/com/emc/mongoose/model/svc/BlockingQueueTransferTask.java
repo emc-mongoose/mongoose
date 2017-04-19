@@ -11,6 +11,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 21.02.17.
@@ -62,7 +63,17 @@ extends SvcTaskBase {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		queue.clear();
-		buff.clear();
+		try {
+			if(buff.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				try {
+					queue.clear();
+					buff.clear();
+				} finally {
+					buff.unlock();
+				}
+			}
+		} catch(final InterruptedException e) {
+			e.printStackTrace(System.err);
+		}
 	}
 }

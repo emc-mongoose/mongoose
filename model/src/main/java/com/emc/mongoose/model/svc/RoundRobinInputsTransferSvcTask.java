@@ -7,6 +7,7 @@ import com.emc.mongoose.common.io.Output;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,9 +42,11 @@ extends SvcTaskBase {
 			if(results != null) {
 				final int resultsCount = results.size();
 				if(resultsCount > 0) {
-					for(int i = 0; i < resultsCount; i += output.put(results, i, resultsCount));
+					for(int i = 0; i < resultsCount; i += output.put(results, i, resultsCount))
+						;
 				}
 			}
+		} catch(final NoSuchObjectException ignored) {
 		} catch(final EOFException e) {
 			try {
 				close();

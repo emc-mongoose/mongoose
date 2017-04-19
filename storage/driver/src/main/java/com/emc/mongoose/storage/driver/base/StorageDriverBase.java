@@ -133,7 +133,25 @@ implements StorageDriver<I, O> {
 
 		@Override
 		protected final void doClose() {
-			buff.clear();
+			try {
+				if(buff.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+					try {
+						buff.clear();
+					} finally {
+						buff.unlock();
+					}
+				} else {
+					LOG.warn(
+						Markers.ERR, "{}: failed to obtain the I/O tasks buffer lock in time",
+						StorageDriverBase.this.toString()
+					);
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: interrupted on close",
+					StorageDriverBase.this.toString()
+				);
+			}
 		}
 	}
 

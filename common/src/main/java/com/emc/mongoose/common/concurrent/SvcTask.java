@@ -8,5 +8,7 @@ import java.io.Closeable;
 public interface SvcTask
 extends Closeable, Runnable {
 
+	int TIMEOUT_MILLIS = 250;
+
 	boolean isClosed();
 }

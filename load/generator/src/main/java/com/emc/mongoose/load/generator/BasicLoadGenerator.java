@@ -285,7 +285,19 @@ implements LoadGenerator<I, O>, SvcTask {
 	throws IOException {
 		super.doClose();
 		if(itemInput != null) {
-			itemInput.close();
+			try {
+				if(inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+					try {
+						itemInput.close();
+					} finally {
+						inputLock.unlock();
+					}
+				}
+			} catch(final Exception e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to close the item input", toString()
+				);
+			}
 		}
 		ioTaskBuilder.close();
 		remainingTasks.clear();
