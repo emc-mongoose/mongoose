@@ -7,6 +7,8 @@ import static com.emc.mongoose.ui.log.LogUtil.BLUE;
 import static com.emc.mongoose.ui.log.LogUtil.CYAN;
 import static com.emc.mongoose.ui.log.LogUtil.GREEN;
 import static com.emc.mongoose.ui.log.LogUtil.RED;
+import static com.emc.mongoose.ui.log.LogUtil.RESET;
+
 import com.emc.mongoose.ui.log.Markers;
 
 import org.apache.logging.log4j.Level;
@@ -52,7 +54,7 @@ extends StepBase {
 		try {
 			LOG.info(
 				Markers.MSG, "Invoking the shell command:\n{}{}{}",
-				consoleColorFlag ? CYAN : "", cmdLine, consoleColorFlag ? GREEN : ""
+				consoleColorFlag ? CYAN : "", cmdLine, consoleColorFlag ? RESET : ""
 			);
 			final Process process = new ProcessBuilder("bash", "-c", cmdLine).start();
 			final Thread processStdInReader = TF_STD_IN.newThread(
@@ -68,7 +70,7 @@ extends StepBase {
 							while(null != (nextLine = bufferedReader.readLine())) {
 								LOG.info(
 									Markers.MSG, "{}{}{}", consoleColorFlag ? BLUE : "", nextLine,
-									consoleColorFlag ? GREEN : ""
+									consoleColorFlag ? RESET : ""
 								);
 							}
 						} catch(final IOException e) {
@@ -92,7 +94,7 @@ extends StepBase {
 							while(null != (nextLine = bufferedReader.readLine())) {
 								LOG.info(
 									Markers.MSG, "{}{}{}", consoleColorFlag ? RED : "", nextLine,
-									consoleColorFlag ? GREEN : ""
+									consoleColorFlag ? RESET : ""
 								);
 							}
 						} catch(final IOException e) {

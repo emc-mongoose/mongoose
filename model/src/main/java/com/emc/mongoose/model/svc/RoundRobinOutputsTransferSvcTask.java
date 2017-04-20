@@ -133,7 +133,7 @@ implements Output<T> {
 			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
 		);
 		final OptLockBuffer<T> buff = buffs.get(output);
-		if(buff.tryLock()) {
+		if(buff != null && buff.tryLock()) {
 			try {
 				int n = buff.size();
 				if(n > 0) {

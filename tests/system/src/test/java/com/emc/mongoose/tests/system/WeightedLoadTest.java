@@ -60,7 +60,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME =WeightedLoadTest.class.getSimpleName();
+		JOB_NAME = WeightedLoadTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get("weighted-load.csv"));
 		} catch(final Exception ignored) {

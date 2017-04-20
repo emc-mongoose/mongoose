@@ -69,10 +69,8 @@ implements ShutdownCallbackRegistry {
 		BLACK = "\u001B[30m",
 		RED = "\u001B[31m",
 		GREEN = "\u001B[32m",
-		INT_RED_OVER_GREEN = RED + "%d" + GREEN,
 		YELLOW = "\u001B[33m",
 		//
-		INT_YELLOW_OVER_GREEN = YELLOW + "%d" + GREEN,
 		BLUE = "\u001B[34m",
 		PURPLE = "\u001B[35m",
 		CYAN = "\u001B[36m",

@@ -24,7 +24,7 @@ extends SvcTaskBase {
 	private final OptLockBuffer<T> buff;
 
 	private int n, m;
-
+	
 	public BlockingQueueTransferTask(
 		final BlockingQueue<T> queue, final Output<T> output, final List<SvcTask> svcTasks
 	) {

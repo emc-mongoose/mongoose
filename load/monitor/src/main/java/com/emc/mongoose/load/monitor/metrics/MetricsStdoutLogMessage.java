@@ -63,12 +63,12 @@ extends LogMessageBase {
 		if(LogUtil.isConsoleColoringEnabled()) {
 			if(failCount > 0) {
 				if(succCount / failCount > 100) {
-					failCountText = LogUtil.YELLOW + Long.toString(failCount) + LogUtil.GREEN;
+					failCountText = LogUtil.YELLOW + Long.toString(failCount) + LogUtil.RESET;
 				} else {
-					failCountText = LogUtil.RED + Long.toString(failCount) + LogUtil.GREEN;
+					failCountText = LogUtil.RED + Long.toString(failCount) + LogUtil.RESET;
 				}
 			} else {
-				failCountText = Long.toString(failCount);
+				failCountText = LogUtil.GREEN + Long.toString(failCount) + LogUtil.RESET;
 			}
 		} else {
 			failCountText = Long.toString(failCount);

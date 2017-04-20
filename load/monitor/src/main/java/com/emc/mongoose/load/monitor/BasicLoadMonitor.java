@@ -418,23 +418,8 @@ implements LoadMonitor<I, O> {
 	}
 	
 	@Override
-	public final int put(final List<O> buffer, final int from, final int to)
-	throws IOException {
-		processIoResults(buffer, from, to);
-		return to - from;
-	}
-	
-	@Override
-	public final int put(final List<O> buffer)
-	throws IOException {
-		final int n = buffer.size();
-		processIoResults(buffer, 0, n);
-		return n;
-	}
-
-	private void processIoResults(final List<O> ioTaskResults, final int from, final int to) {
-		int m = to - from; // count of complete whole tasks
-
+	public final int put(final List<O> ioTaskResults, final int from, final int to) {
+		
 		// I/O trace logging
 		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
 			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
@@ -448,20 +433,17 @@ implements LoadMonitor<I, O> {
 		long reqDuration;
 		long respLatency;
 		long countBytesDone = 0;
-		ioTaskResult = ioTaskResults.get(0);
 		IoStats ioTypeStats, ioTypeMedStats;
 
-		for(int i = from; i < to; i ++) {
+		int i;
+		for(i = from; i < to; i ++) {
 
-			if(i > from) {
-				ioTaskResult = ioTaskResults.get(i);
-			}
-
+			ioTaskResult = ioTaskResults.get(i);
+			
 			if( // account only completed composite I/O tasks
 				ioTaskResult instanceof CompositeIoTask &&
 				!((CompositeIoTask) ioTaskResult).allSubTasksDone()
 			) {
-				m --;
 				continue;
 			}
 
@@ -481,14 +463,10 @@ implements LoadMonitor<I, O> {
 
 			if(Status.SUCC.equals(status)) {
 				if(ioTaskResult instanceof PartialIoTask) {
-					
 					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 						ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 					}
-					
-					m --;
-					
 				} else {
 					
 					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
@@ -499,26 +477,14 @@ implements LoadMonitor<I, O> {
 					if(circularityMap.get(originCode)) {
 						item = ioTaskResult.getItem();
 						latestIoResultsPerItem.put(item, ioTaskResult);
-						if(rateThrottle != null) {
-							while(!rateThrottle.tryAcquire(ioTaskResult)) {
-								LockSupport.parkNanos(1);
-								if(Thread.currentThread().isInterrupted()) {
-									break;
-								}
-							}
+						if(rateThrottle != null && !rateThrottle.tryAcquire(ioTaskResult)) {
+							break;
 						}
-						if(weightThrottle != null) {
-							while(!weightThrottle.tryAcquire(originCode)) {
-								LockSupport.parkNanos(1);
-								if(Thread.currentThread().isInterrupted()) {
-									break;
-								}
-							}
+						if(weightThrottle != null && !weightThrottle.tryAcquire(originCode)) {
+							break;
 						}
 						if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
-							LOG.warn(
-								Markers.ERR, "Failed to put the I/O task into the recycle queue"
-							);
+							break;
 						}
 					} else if(ioResultsOutput != null){
 						try {
@@ -553,8 +519,15 @@ implements LoadMonitor<I, O> {
 				}
 			}
 		}
-
-		counterResults.add(m);
+		
+		i = i - from;
+		counterResults.add(i);
+		return i;
+	}
+	
+	@Override
+	public final int put(final List<O> ioTaskResults) {
+		return put(ioTaskResults, 0, ioTaskResults.size());
 	}
 	
 	@Override
@@ -825,7 +798,7 @@ implements LoadMonitor<I, O> {
 										"{}: the driver \"{}\" returned {} final I/O results to process",
 										getName(), driver.toString(), finalResults.size()
 									);
-									processIoResults(finalResults, 0, finalResultsCount);
+									put(finalResults, 0, finalResultsCount);
 								}
 							}
 						} catch(final Throwable cause) {

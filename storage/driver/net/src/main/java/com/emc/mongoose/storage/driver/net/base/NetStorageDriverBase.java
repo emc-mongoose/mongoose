@@ -320,7 +320,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws Exception {
 		final ChannelPipeline pipeline = channel.pipeline();
 		appendHandlers(pipeline);
-		LOG.debug(Markers.MSG, "{}: channel pipeline configured: {}", jobName, pipeline.toString());
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "{}: new channel pipeline configured: {}", jobName, pipeline.toString()
+			);
+		}
 	}
 
 	protected void appendHandlers(final ChannelPipeline pipeline) {

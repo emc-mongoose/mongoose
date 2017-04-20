@@ -49,7 +49,9 @@ implements LoadGenerator<I, O>, SvcTask {
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
-	private volatile boolean finishAllowedFlag = true;
+	private volatile boolean itemInputFinishFlag = false;
+	private volatile boolean deferredTasksFlag = false;
+	private volatile boolean outputFinishFlag = false;
 
 	private final Input<I> itemInput;
 	private final Lock inputLock = new ReentrantLock();
@@ -59,9 +61,10 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
 	private final int originCode;
-	private final OptLockBuffer<O> remainingTasks = new OptLockArrayBuffer<>(BATCH_SIZE);
+	private final OptLockBuffer<O> deferredTasks = new OptLockArrayBuffer<>(BATCH_SIZE);
 
-	private final LongAdder generatedTaskCounter = new LongAdder();
+	private final LongAdder builtTasksCounter = new LongAdder();
+	private final LongAdder outputTaskCounter = new LongAdder();
 	private final String name;
 
 	@SuppressWarnings("unchecked")
@@ -112,7 +115,7 @@ implements LoadGenerator<I, O>, SvcTask {
 
 	@Override
 	public final long getGeneratedIoTasksCount() {
-		return generatedTaskCounter.sum();
+		return builtTasksCounter.sum();
 	}
 
 	@Override
@@ -132,49 +135,47 @@ implements LoadGenerator<I, O>, SvcTask {
 	@Override
 	public final void run() {
 		
-		final List<O> thrLocBuff;
-		if(!remainingTasks.tryLock()) {
+		final List<O> thrLocTasksBuff;
+		if(!deferredTasks.tryLock()) {
 			return;
 		} else {
-			thrLocBuff = THREAD_LOCAL_BUFF.get();
-			thrLocBuff.clear();
-			thrLocBuff.addAll(remainingTasks);
-			remainingTasks.clear();
-			remainingTasks.unlock();
+			thrLocTasksBuff = THREAD_LOCAL_BUFF.get();
+			thrLocTasksBuff.clear();
+			thrLocTasksBuff.addAll(deferredTasks);
+			deferredTasks.clear();
+			deferredTasks.unlock();
 		}
-		int n = thrLocBuff.size();
-		int m = BATCH_SIZE - n;
-		boolean finishFlag = false;
+		int pendingTasksCount = thrLocTasksBuff.size();
+		int n = BATCH_SIZE - pendingTasksCount;
 
 		try {
-			if(m > 0) {
+			if(n > 0 && !itemInputFinishFlag) {
 				if(inputLock.tryLock()) {
 					try {
 						// find the limits and prepare the items buffer
-						final long remainingTasksCount = countLimit - generatedTaskCounter.sum();
+						final long remainingTasksCount = countLimit - builtTasksCounter.sum();
 						if(remainingTasksCount > 0) {
-							m = (int) Math.min(remainingTasksCount, m);
-							final List<I> items = new ArrayList<>(m);
+							n = (int) Math.min(remainingTasksCount, n);
+							final List<I> items = new ArrayList<>(n);
 							try {
 								// get the items from the input
-								finishAllowedFlag = false;
-								itemInput.get(items, m);
+								itemInput.get(items, n);
 							} catch(final EOFException e) {
 								LOG.debug(
 									Markers.MSG, "{}: end of items input @ the count {}",
-									BasicLoadGenerator.this.toString(), generatedTaskCounter.sum()
+									BasicLoadGenerator.this.toString(), builtTasksCounter.sum()
 								);
-								finishFlag = true;
+								itemInputFinishFlag = true;
 							}
 							
-							m = items.size();
-							if(m > 0) {
+							n = items.size();
+							if(n > 0) {
 								if(shuffleFlag) {
 									Collections.shuffle(items, rnd);
 								}
-								ioTaskBuilder.getInstances(items, thrLocBuff);
-								generatedTaskCounter.add(m);
-								n += m;
+								ioTaskBuilder.getInstances(items, thrLocTasksBuff);
+								pendingTasksCount += n;
+								builtTasksCounter.add(n);
 							}
 						}
 					} finally {
@@ -184,35 +185,38 @@ implements LoadGenerator<I, O>, SvcTask {
 				LockSupport.parkNanos(1);
 			}
 
-			if(n > 0) {
+			if(pendingTasksCount > 0) {
 				// acquire the throttles permit
-				m = n;
+				n = pendingTasksCount;
 				if(weightThrottle != null) {
-					m = weightThrottle.tryAcquire(originCode, m);
+					n = weightThrottle.tryAcquire(originCode, n);
 				}
 				if(rateThrottle != null) {
-					m = rateThrottle.tryAcquire(originCode, m);
+					n = rateThrottle.tryAcquire(originCode, n);
 				}
 				// try to output
-				if(m > 0) {
+				if(n > 0) {
 					try {
-						m = ioTaskOutput.put(thrLocBuff, 0, m);
-						if(m < n) {
+						n = ioTaskOutput.put(thrLocTasksBuff, 0, n);
+						outputTaskCounter.add(n);
+						if(n < pendingTasksCount) {
 							LockSupport.parkNanos(1);
-							remainingTasks.lock();
+							deferredTasks.lock();
 							try {
-								remainingTasks.addAll(thrLocBuff.subList(m, n));
+								deferredTasks.addAll(
+									thrLocTasksBuff.subList(n, pendingTasksCount)
+								);
+								deferredTasksFlag = true;
 							} finally {
-								remainingTasks.unlock();
+								deferredTasks.unlock();
 							}
 						}
-						finishAllowedFlag = true;
 					} catch(final EOFException e) {
 						LOG.debug(
 							Markers.MSG, "{}: finish due to output's EOF",
 							BasicLoadGenerator.this.toString()
 						);
-						finishFlag = true;
+						outputFinishFlag = true;
 					} catch(final RemoteException e) {
 						final Throwable cause = e.getCause();
 						if(cause instanceof EOFException) {
@@ -220,15 +224,13 @@ implements LoadGenerator<I, O>, SvcTask {
 								Markers.MSG, "{}: finish due to output's EOF",
 								BasicLoadGenerator.this.toString()
 							);
-							finishFlag = true;
+							outputFinishFlag = true;
 						} else {
 							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
 							e.printStackTrace(System.err);
 						}
 					}
 				}
-			} else {
-				finishAllowedFlag = true;
 			}
 
 		} catch(final Throwable t) {
@@ -237,10 +239,14 @@ implements LoadGenerator<I, O>, SvcTask {
 				t.printStackTrace(System.err);
 			}
 		} finally {
-			if(finishFlag && finishAllowedFlag) {
+			if(
+				outputFinishFlag |
+					(itemInputFinishFlag && pendingTasksCount == 0 && !deferredTasksFlag)
+			) {
 				LOG.debug(
-					Markers.MSG, "{}: produced {} items", BasicLoadGenerator.this.toString(),
-					generatedTaskCounter
+					Markers.MSG, "{}: generated {}, output {} I/O tasks",
+					BasicLoadGenerator.this.toString(), builtTasksCounter.sum(),
+					outputTaskCounter.sum()
 				);
 				try {
 					shutdown();
@@ -300,7 +306,7 @@ implements LoadGenerator<I, O>, SvcTask {
 			}
 		}
 		ioTaskBuilder.close();
-		remainingTasks.clear();
+		deferredTasks.clear();
 		ioTaskOutput.close();
 	}
 	
