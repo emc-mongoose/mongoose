@@ -37,7 +37,7 @@
 					"follow": "true",
 					"PatternLayout": {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
 					},
 					"Filters": {
 						"Filter" : [
