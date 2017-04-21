@@ -332,21 +332,23 @@ implements LoadGenerator<I, O>, SvcTask {
 		super.doClose();
 		if(itemInput != null) {
 			try {
-				if(inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-					try {
-						itemInput.close();
-					} finally {
-						inputLock.unlock();
-					}
-				}
+				inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				itemInput.close();
 			} catch(final Exception e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "{}: failed to close the item input", toString()
 				);
 			}
 		}
+		try {
+			deferredTasks.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			deferredTasks.clear();
+		} catch(final Exception e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "{}: failed to drop all deferred tasks buffer", toString()
+			);
+		}
 		ioTaskBuilder.close();
-		deferredTasks.clear();
 		ioTaskOutput.close();
 	}
 	

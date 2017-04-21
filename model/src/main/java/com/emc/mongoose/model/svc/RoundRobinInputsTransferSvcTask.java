@@ -108,9 +108,8 @@ extends SvcTaskBase {
 	protected final void doClose() {
 		inputs.clear();
 		try {
-			deferredItems.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			deferredItems.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			deferredItems.clear();
-			deferredItems.unlock();
 		} catch(final InterruptedException e) {
 			e.printStackTrace(System.err);
 		}

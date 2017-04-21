@@ -72,14 +72,9 @@ extends SvcTaskBase {
 	protected final void doClose()
 	throws IOException {
 		try {
-			if(buff.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-				try {
-					queue.clear();
-					buff.clear();
-				} finally {
-					buff.unlock();
-				}
-			}
+			buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			buff.clear();
+			queue.clear();
 		} catch(final InterruptedException e) {
 			e.printStackTrace(System.err);
 		}

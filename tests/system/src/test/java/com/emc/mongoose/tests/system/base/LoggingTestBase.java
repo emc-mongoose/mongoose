@@ -562,6 +562,8 @@ public abstract class LoggingTestBase {
 				);
 				assertEquals((int) concurrencyMap.get(actualIoType), Integer.parseInt(cells[1])); // concurrency
 				assertEquals(driverCount, Integer.parseInt(cells[2])); // driver count
+				cells[3] = cells[3].substring(LogUtil.WHITE.length());
+				cells[3] = cells[3].substring(0, cells[3].indexOf(LogUtil.RESET));
 				countSucc = Long.parseLong(cells[3]);
 				if(countLimit > 0) {
 					assertTrue(countLimit > countSucc); // count succ

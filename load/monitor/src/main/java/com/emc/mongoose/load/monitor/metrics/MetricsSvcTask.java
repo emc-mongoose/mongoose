@@ -2,11 +2,14 @@ package com.emc.mongoose.load.monitor.metrics;
 
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.model.load.LoadMonitor;
-
+import com.emc.mongoose.ui.log.LogUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
-import java.io.IOException;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -19,6 +22,8 @@ import static java.lang.System.nanoTime;
  */
 public class MetricsSvcTask
 extends SvcTaskBase {
+	
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final Lock exclusiveInvocationLock = new ReentrantLock();
 	private final long metricsPeriodNanoSec;
@@ -103,5 +108,14 @@ extends SvcTaskBase {
 
 	@Override
 	protected final void doClose() {
+		// just wait while invocation ends and forbid any further invocation
+		try {
+			exclusiveInvocationLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "{}: interrupted while closing the service task",
+				stepName
+			);
+		}
 	}
 }

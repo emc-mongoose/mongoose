@@ -142,12 +142,8 @@ implements StorageDriver<I, O> {
 		@Override
 		protected final void doClose() {
 			try {
-				if(buff.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-					try {
-						buff.clear();
-					} finally {
-						buff.unlock();
-					}
+				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+					buff.clear();
 				} else {
 					LOG.warn(
 						Markers.ERR, "{}: failed to obtain the I/O tasks buffer lock in time",
