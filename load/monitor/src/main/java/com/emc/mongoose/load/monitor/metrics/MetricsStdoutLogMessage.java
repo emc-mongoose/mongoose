@@ -81,12 +81,14 @@ extends LogMessageBase {
 		final IoStats.Snapshot snapshot, final int concurrency, final int driversCount
 	) {
 		final long succCount = snapshot.getSuccCount();
+		final long failCount = snapshot.getFailCount();
 		buffer
 			.append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
 			.append(concurrency).append('x').append(driversCount)
-			.append(": n=(").append(succCount).append('/')
-			.append(getColoredFailCountText(succCount, snapshot.getFailCount())).append("); t[s]=(")
+			.append(": n=(").append(LogUtil.WHITE).append(succCount).append(LogUtil.RESET).append('/')
+			.append(failCount > 0 ? (succCount / failCount > 100 ? LogUtil.YELLOW : LogUtil.RED) : LogUtil.GREEN)
+			.append(failCount).append(LogUtil.RESET).append("); t[s]=(")
 			.append(formatFixedWidth(snapshot.getElapsedTime() / K, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
 			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
@@ -107,20 +109,24 @@ extends LogMessageBase {
 		if(snapshots.size() > 0) {
 			strb.appendNewLine().append(TABLE_HEADER);
 			IoStats.Snapshot snapshot;
-			long nextSuccCount;
+			long succCount;
+			long failCount;
 			for(final int ioTypeCode : snapshots.keySet()) {
 				snapshot = snapshots.get(ioTypeCode);
-				nextSuccCount = snapshot.getSuccCount();
+				succCount = snapshot.getSuccCount();
+				failCount = snapshot.getFailCount();
 				strb
 					.appendFixedWidthPadLeft(IoType.values()[ioTypeCode].name(), 6, ' ')
 					.append('|');
 				strb.appendFixedWidthPadLeft(concurrencyMap.get(ioTypeCode), 7, ' ').append('|');
 				strb.appendFixedWidthPadLeft(driversCountMap.get(ioTypeCode), 7, ' ').append('|');
-				strb.appendFixedWidthPadLeft(nextSuccCount, 12, ' ').append(('|'));
 				strb
-					.appendFixedWidthPadLeft(
-						getColoredFailCountText(nextSuccCount, snapshot.getFailCount()), 6, ' '
-					)
+					.append(LogUtil.WHITE).appendFixedWidthPadLeft(succCount, 12, ' ')
+					.append(LogUtil.RESET).append(('|'));
+				strb
+					.append(failCount > 0 ? (succCount / failCount > 100 ? LogUtil.YELLOW : LogUtil.RED) : LogUtil.GREEN)
+					.appendFixedWidthPadLeft(failCount, 6, ' ')
+					.append(LogUtil.RESET)
 					.append('|');
 				strb
 					.appendFixedWidthPadLeft(

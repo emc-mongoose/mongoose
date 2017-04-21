@@ -74,7 +74,7 @@ implements ShutdownCallbackRegistry {
 		BLUE = "\u001B[34m",
 		PURPLE = "\u001B[35m",
 		CYAN = "\u001B[36m",
-		WHITE = "\u001B[37m";
+		WHITE = "\u001B[37;1m";
 	//
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
