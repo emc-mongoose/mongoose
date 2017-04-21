@@ -71,6 +71,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private List<StorageDriver<I, O>> storageDrivers;
 	private Input<I> itemInput = null;
 	private SizeInBytes itemSizeEstimate = null;
+	private int batchSize;
 	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
@@ -81,6 +82,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
+		this.batchSize = loadConfig.getBatchConfig().getSize();
 		return this;
 	}
 
@@ -128,7 +130,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
-
+		
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
@@ -239,7 +241,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, itemSizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
+			itemInput, batchSize, itemSizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
 			shuffleFlag
 		);
 	}
@@ -336,7 +338,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 				}
 			} else {
 				itemInput = new StorageItemInput<>(
-					storageDrivers.get(0), itemFactory, itemInputPath, namingPrefix, namingRadix
+					storageDrivers.get(0), batchSize, itemFactory, itemInputPath, namingPrefix,
+					namingRadix
 				);
 			}
 		} else {

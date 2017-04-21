@@ -137,8 +137,14 @@ implements Output<T> {
 			try {
 				int n = buff.size();
 				if(n > 0) {
-					n = output.put(buff);
-					buff.removeRange(0, n);
+					if(n == 1) {
+						if(output.put(buff.get(0))) {
+							buff.clear();
+						}
+					} else {
+						n = output.put(buff);
+						buff.removeRange(0, n);
+					}
 				}
 			} catch(final EOFException | NoSuchObjectException ignored) {
 			} catch(final RemoteException e) {

@@ -9,16 +9,21 @@
 				"size" : "200MB"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
-				}
+		"load" : {
+			"batch" : {
+				"size" : 1
 			}
 		},
 		"storage" : {
 			"driver" : {
 				"concurrency" : 100
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
 			}
 		}
 	}

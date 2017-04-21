@@ -48,10 +48,12 @@ extends LogMessageBase {
 		statusCode = ioResult.getStatus().ordinal();
 		reqTimeStart = ioResult.getReqTimeStart();
 		duration = ioResult.getRespTimeDone() - reqTimeStart;
-		respLatency = ioResult.getRespTimeStart() - ioResult.getReqTimeDone();
+		long t = ioResult.getRespTimeStart() - ioResult.getReqTimeDone();
+		respLatency = t < duration && t > 0 ? t : -1;
 		if(ioResult instanceof DataIoTask) {
 			final DataIoTask dataIoResult = (DataIoTask) ioResult;
-			dataLatency = ioResult.getReqTimeDone() - dataIoResult.getRespDataTimeStart();
+			t = ioResult.getReqTimeDone() - dataIoResult.getRespDataTimeStart();
+			dataLatency = t < duration && t > 0 ? t : -1;
 			transferSize = dataIoResult.getCountBytesDone();
 		} else {
 			dataLatency = -1;
@@ -107,5 +109,6 @@ extends LogMessageBase {
 		if(transferSize != -1) {
 			strb.append(transferSize);
 		}
+		strb.append('\n');
 	}
 }

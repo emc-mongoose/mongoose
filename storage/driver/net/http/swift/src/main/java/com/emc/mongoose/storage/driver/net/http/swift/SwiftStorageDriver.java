@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.IoType.CREATE;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;

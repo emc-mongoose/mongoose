@@ -570,10 +570,15 @@ implements Serializable {
 	public static final class LoadConfig
 	implements Serializable {
 
+		public static final String KEY_BATCH = "batch";
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_GENERATOR = "generator";
 		public static final String KEY_QUEUE = "queue";
 		public static final String KEY_TYPE = "type";
+		
+		public final void setBatchConfig(final BatchConfig batchConfig) {
+			this.batchConfig = batchConfig;
+		}
 		
 		public final void setCircular(final boolean circular) {
 			this.circular = circular;
@@ -591,6 +596,7 @@ implements Serializable {
 			this.type = type;
 		}
 		
+		@JsonProperty(KEY_BATCH) private BatchConfig batchConfig;
 		@JsonProperty(KEY_CIRCULAR) private boolean circular;
 		@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
 		@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
@@ -600,12 +606,40 @@ implements Serializable {
 		}
 
 		public LoadConfig(final LoadConfig other) {
-			this.circular = other.getCircular();
-			this.generatorConfig = new GeneratorConfig(other.getGeneratorConfig());
-			this.queueConfig = new QueueConfig(other.getQueueConfig());
-			this.type = other.getType();
+			this.batchConfig = new BatchConfig(other.batchConfig);
+			this.circular = other.circular;
+			this.generatorConfig = new GeneratorConfig(other.generatorConfig);
+			this.queueConfig = new QueueConfig(other.queueConfig);
+			this.type = other.type;
 		}
-
+		
+		public static final class BatchConfig
+		implements Serializable {
+			
+			public static final String KEY_SIZE = "size";
+			
+			@JsonProperty(KEY_SIZE) private int size;
+			
+			public BatchConfig() {
+			}
+			
+			public BatchConfig(final BatchConfig other) {
+				this.size = other.size;
+			}
+			
+			public final void setSize(final int size) {
+				this.size = size;
+			}
+			
+			public final int getSize() {
+				return size;
+			}
+		}
+		
+		public final BatchConfig getBatchConfig() {
+			return batchConfig;
+		}
+		
 		public final String getType() {
 			return type;
 		}
@@ -623,7 +657,7 @@ implements Serializable {
 		}
 
 		public static final class GeneratorConfig
-			implements Serializable {
+		implements Serializable {
 
 			public static final String KEY_ADDRS = "addrs";
 			public static final String KEY_REMOTE = "remote";
@@ -676,8 +710,7 @@ implements Serializable {
 				this.size = size;
 			}
 			
-			@JsonProperty(KEY_SIZE)
-			private int size;
+			@JsonProperty(KEY_SIZE) private int size;
 			
 			public QueueConfig() {
 			}

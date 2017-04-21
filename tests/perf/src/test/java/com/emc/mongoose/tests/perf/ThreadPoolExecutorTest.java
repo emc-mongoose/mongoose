@@ -19,14 +19,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-
 /**
  Created by kurila on 30.03.17.
  */
 @Ignore
 public class ThreadPoolExecutorTest {
 	
+	private static final int BATCH_SIZE = 0x1000;
 	private static final int QUEUE_SIZE_LIMIT = 1_000_000;
 	private static final int TIME_LIMIT_SEC = 50;
 	

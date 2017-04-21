@@ -8,5 +8,6 @@ import java.util.concurrent.locks.Lock;
  */
 public interface OptLockBuffer<T>
 extends List<T>, Lock {
+	
 	void removeRange(int fromIndex, int toIndex);
 }

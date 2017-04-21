@@ -36,6 +36,9 @@
 		"type" : "data"
 	},
 	"load" : {
+		"batch" : {
+			"size": 4096
+		},
 		"circular" : false,
 		"generator" : {
 			"addrs" : [

@@ -20,10 +20,6 @@ extends Daemon, Output<O> {
 
 	int getActiveTaskCount();
 	
-	default boolean put(final O ioTask) {
-		throw new AssertionError("Should invoke batch put method instead this");
-	}
-	
 	default Input<O> getInput() {
 		throw new AssertionError("Shouldn't be invoked");
 	}

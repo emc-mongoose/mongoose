@@ -9,7 +9,6 @@ import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
@@ -52,7 +51,8 @@ implements LoadGenerator<I, O>, SvcTask {
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean deferredTasksFlag = false;
 	private volatile boolean outputFinishFlag = false;
-
+	
+	private final int batchSize;
 	private final Input<I> itemInput;
 	private final Lock inputLock = new ReentrantLock();
 	private final SizeInBytes itemSizeEstimate;
@@ -61,7 +61,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
 	private final int originCode;
-	private final OptLockBuffer<O> deferredTasks = new OptLockArrayBuffer<>(BATCH_SIZE);
+	private final OptLockBuffer<O> deferredTasks;
 
 	private final LongAdder builtTasksCounter = new LongAdder();
 	private final LongAdder outputTaskCounter = new LongAdder();
@@ -69,11 +69,11 @@ implements LoadGenerator<I, O>, SvcTask {
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final Input<I> itemInput, final SizeInBytes itemSizeEstimate,
+		final Input<I> itemInput, final int batchSize, final SizeInBytes itemSizeEstimate,
 		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
 		final boolean shuffleFlag
 	) throws UserShootHisFootException {
-
+		this.batchSize = batchSize;
 		this.itemInput = itemInput;
 		this.itemSizeEstimate = itemSizeEstimate;
 		this.ioTaskBuilder = ioTaskBuilder;
@@ -90,6 +90,7 @@ implements LoadGenerator<I, O>, SvcTask {
 		}
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
+		this.deferredTasks = new OptLockArrayBuffer<>(batchSize);
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
@@ -128,25 +129,28 @@ implements LoadGenerator<I, O>, SvcTask {
 		return ioTaskBuilder.getIoType();
 	}
 	
-	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = ThreadLocal.withInitial(
-		(Supplier<List>) () -> new ArrayList(BATCH_SIZE)
-	);
+	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = new ThreadLocal<>();
 	
 	@Override
 	public final void run() {
 		
-		final List<O> thrLocTasksBuff;
+		List<O> thrLocTasksBuff;
 		if(!deferredTasks.tryLock()) {
 			return;
 		} else {
 			thrLocTasksBuff = THREAD_LOCAL_BUFF.get();
-			thrLocTasksBuff.clear();
+			if(thrLocTasksBuff == null) {
+				thrLocTasksBuff = new ArrayList<>(batchSize);
+				THREAD_LOCAL_BUFF.set(thrLocTasksBuff);
+			} else {
+				thrLocTasksBuff.clear();
+			}
 			thrLocTasksBuff.addAll(deferredTasks);
 			deferredTasks.clear();
 			deferredTasks.unlock();
 		}
 		int pendingTasksCount = thrLocTasksBuff.size();
-		int n = BATCH_SIZE - pendingTasksCount;
+		int n = batchSize - pendingTasksCount;
 
 		try {
 			if(n > 0 && !itemInputFinishFlag) {
@@ -196,38 +200,74 @@ implements LoadGenerator<I, O>, SvcTask {
 				}
 				// try to output
 				if(n > 0) {
-					try {
-						n = ioTaskOutput.put(thrLocTasksBuff, 0, n);
-						outputTaskCounter.add(n);
-						if(n < pendingTasksCount) {
-							LockSupport.parkNanos(1);
-							deferredTasks.lock();
-							try {
-								deferredTasks.addAll(
-									thrLocTasksBuff.subList(n, pendingTasksCount)
-								);
-								deferredTasksFlag = true;
-							} finally {
-								deferredTasks.unlock();
+					if(n == 1) {
+						try {
+							final O task = thrLocTasksBuff.get(0);
+							if(ioTaskOutput.put(task)) {
+								outputTaskCounter.increment();
+							} else {
+								LockSupport.parkNanos(1);
+								deferredTasks.lock();
+								try {
+									deferredTasks.add(task);
+									deferredTasksFlag = true;
+								} finally {
+									deferredTasks.unlock();
+								}
 							}
-						}
-					} catch(final EOFException e) {
-						LOG.debug(
-							Markers.MSG, "{}: finish due to output's EOF",
-							BasicLoadGenerator.this.toString()
-						);
-						outputFinishFlag = true;
-					} catch(final RemoteException e) {
-						final Throwable cause = e.getCause();
-						if(cause instanceof EOFException) {
+						} catch(final EOFException e) {
 							LOG.debug(
 								Markers.MSG, "{}: finish due to output's EOF",
 								BasicLoadGenerator.this.toString()
 							);
 							outputFinishFlag = true;
-						} else {
-							LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
-							e.printStackTrace(System.err);
+						} catch(final RemoteException e) {
+							final Throwable cause = e.getCause();
+							if(cause instanceof EOFException) {
+								LOG.debug(
+									Markers.MSG, "{}: finish due to output's EOF",
+									BasicLoadGenerator.this.toString()
+								);
+								outputFinishFlag = true;
+							} else {
+								LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+								e.printStackTrace(System.err);
+							}
+						}
+					} else {
+						try {
+							n = ioTaskOutput.put(thrLocTasksBuff, 0, n);
+							outputTaskCounter.add(n);
+							if(n < pendingTasksCount) {
+								LockSupport.parkNanos(1);
+								deferredTasks.lock();
+								try {
+									deferredTasks.addAll(
+										thrLocTasksBuff.subList(n, pendingTasksCount)
+									);
+									deferredTasksFlag = true;
+								} finally {
+									deferredTasks.unlock();
+								}
+							}
+						} catch(final EOFException e) {
+							LOG.debug(
+								Markers.MSG, "{}: finish due to output's EOF",
+								BasicLoadGenerator.this.toString()
+							);
+							outputFinishFlag = true;
+						} catch(final RemoteException e) {
+							final Throwable cause = e.getCause();
+							if(cause instanceof EOFException) {
+								LOG.debug(
+									Markers.MSG, "{}: finish due to output's EOF",
+									BasicLoadGenerator.this.toString()
+								);
+								outputFinishFlag = true;
+							} else {
+								LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+								e.printStackTrace(System.err);
+							}
 						}
 					}
 				}

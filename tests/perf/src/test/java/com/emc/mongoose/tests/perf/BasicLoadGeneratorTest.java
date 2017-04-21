@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-
 /**
  Created by kurila on 30.03.17.
  */
@@ -44,6 +42,8 @@ public class BasicLoadGeneratorTest {
 			throw new AssertionError(e);
 		}
 	}
+	
+	private static final int BATCH_SIZE = 0x1000;
 	
 	private static final int TIME_LIMIT = 30;
 	
@@ -110,7 +110,8 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0), shuffleFlag
+				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -141,7 +142,8 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0), shuffleFlag
+				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -172,7 +174,8 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0), shuffleFlag
+				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -203,7 +206,8 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0), shuffleFlag
+				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -236,7 +240,8 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0), shuffleFlag
+				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -269,7 +274,8 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0), shuffleFlag
+				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));

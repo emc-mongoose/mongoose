@@ -2,6 +2,7 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTask;
+import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
@@ -16,7 +17,6 @@ import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
 
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -77,7 +77,7 @@ extends DaemonBase
 implements LoadMonitor<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
-
+	
 	private final String name;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
 	private final boolean preconditionJobFlag;
@@ -87,6 +87,7 @@ implements LoadMonitor<I, O> {
 	private final long countLimit;
 	private final long sizeLimit;
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
+	private final int batchSize;
 	private final boolean isAnyCircular;
 	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
@@ -177,7 +178,8 @@ implements LoadMonitor<I, O> {
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			try {
 				nextGeneratorOutput = new RoundRobinOutputsTransferSvcTask<>(
-					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(), BATCH_SIZE
+					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(),
+					loadConfigs.get(nextGenerator).getBatchConfig().getSize()
 				);
 			} catch(final RemoteException ignored) {
 			}
@@ -205,6 +207,7 @@ implements LoadMonitor<I, O> {
 		circularityMap = new Int2BooleanArrayMap(driversMap.size());
 		recycleQueuesMap = new Int2ObjectOpenHashMap<>(driversMap.size());
 		final LoadConfig anyLoadConfig = loadConfigs.values().iterator().next();
+		this.batchSize = anyLoadConfig.getBatchConfig().getSize();
 		final int queueSizeLimit = anyLoadConfig.getQueueConfig().getSize();
 		int concurrencySum = 0;
 		boolean anyCircularFlag = false;
@@ -418,6 +421,98 @@ implements LoadMonitor<I, O> {
 	}
 	
 	@Override
+	public final boolean put(final O ioTaskResult) {
+		
+		// I/O trace logging
+		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
+			LOG.debug(Markers.IO_TRACE, new IoTraceCsvLogMessage<>(ioTaskResult));
+		}
+		
+		if( // account only completed composite I/O tasks
+			ioTaskResult instanceof CompositeIoTask &&
+				!((CompositeIoTask) ioTaskResult).allSubTasksDone()
+			) {
+			return true;
+		}
+		
+		final int ioTypeCode = ioTaskResult.getIoType().ordinal();
+		final IoStats ioTypeStats = ioStats.get(ioTypeCode);
+		final IoStats ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
+		final IoTask.Status status = ioTaskResult.getStatus();
+		
+		if(Status.SUCC.equals(status)) {
+			final long reqDuration = ioTaskResult.getDuration();
+			final long respLatency = ioTaskResult.getLatency();
+			final long countBytesDone;
+			if(ioTaskResult instanceof DataIoTask) {
+				countBytesDone = ((DataIoTask) ioTaskResult).getCountBytesDone();
+			} else if(ioTaskResult instanceof PathIoTask) {
+				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
+			} else {
+				countBytesDone = 0;
+			}
+			
+			if(ioTaskResult instanceof PartialIoTask) {
+				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+					ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
+				}
+			} else {
+				final int originCode = ioTaskResult.getOriginCode();
+				if(circularityMap.get(originCode)) {
+					final I item = ioTaskResult.getItem();
+					latestIoResultsPerItem.put(item, ioTaskResult);
+					if(rateThrottle != null) {
+						if(!rateThrottle.tryAcquire(ioTaskResult)) {
+							return false;
+						}
+					}
+					if(weightThrottle != null) {
+						if(!weightThrottle.tryAcquire(originCode)) {
+							return false;
+						}
+					}
+					if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
+						return false;
+					}
+				} else if(ioResultsOutput != null){
+					try {
+						if(!ioResultsOutput.put(ioTaskResult)) {
+							return false;
+						}
+					} catch(final EOFException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e, "I/O task destination end of input"
+						);
+					} catch(final NoSuchObjectException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e,
+							"Remote I/O task destination is not more available"
+						);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to put the I/O task to the destionation"
+						);
+					}
+				}
+				
+				ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+					ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+				}
+				counterResults.increment();
+			}
+		} else if(!Status.CANCELLED.equals(status)) {
+			LOG.debug(Markers.ERR, "{}: {}", ioTaskResult.toString(), status.toString());
+			ioTypeStats.markFail();
+			if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+				ioTypeMedStats.markFail();
+			}
+		}
+		return true;
+	}
+	
+	@Override
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
 		
 		// I/O trace logging
@@ -468,17 +563,13 @@ implements LoadMonitor<I, O> {
 						ioTypeMedStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 					}
 				} else {
-					
-					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
-						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
-					}
-
 					if(circularityMap.get(originCode)) {
 						item = ioTaskResult.getItem();
 						latestIoResultsPerItem.put(item, ioTaskResult);
-						if(rateThrottle != null && !rateThrottle.tryAcquire(ioTaskResult)) {
-							break;
+						if(rateThrottle != null) {
+							if(!rateThrottle.tryAcquire(ioTaskResult)) {
+								break;
+							}
 						}
 						if(weightThrottle != null && !weightThrottle.tryAcquire(originCode)) {
 							break;
@@ -488,12 +579,8 @@ implements LoadMonitor<I, O> {
 						}
 					} else if(ioResultsOutput != null){
 						try {
-							while(!ioResultsOutput.put(ioTaskResult)) {
-								if(Thread.currentThread().isInterrupted()) {
-									break;
-								} else {
-									LockSupport.parkNanos(1);
-								}
+							if(!ioResultsOutput.put(ioTaskResult)) {
+								break;
 							}
 						} catch(final EOFException e) {
 							LogUtil.exception(
@@ -510,6 +597,12 @@ implements LoadMonitor<I, O> {
 							);
 						}
 					}
+					
+					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
+						ioTypeMedStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
+					counterResults.increment();
 				}
 			} else if(!Status.CANCELLED.equals(status)) {
 				LOG.debug(Markers.ERR, "{}: {}", ioTaskResult.toString(), status.toString());
@@ -520,9 +613,7 @@ implements LoadMonitor<I, O> {
 			}
 		}
 		
-		i = i - from;
-		counterResults.add(i);
-		return i;
+		return i - from;
 	}
 	
 	@Override
@@ -589,7 +680,8 @@ implements LoadMonitor<I, O> {
 			if(circularityMap.get(originCode)) {
 				svcTasks.add(
 					new BlockingQueueTransferTask<>(
-						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode), svcTasks
+						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode), batchSize,
+						svcTasks
 					)
 				);
 			}
@@ -599,7 +691,7 @@ implements LoadMonitor<I, O> {
 		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
 			drivers.addAll(nextGeneratorDrivers);
 		}
-		svcTasks.add(new RoundRobinInputsTransferSvcTask<>(this, drivers, svcTasks));
+		svcTasks.add(new RoundRobinInputsTransferSvcTask<>(this, drivers, batchSize, svcTasks));
 	}
 
 	@Override

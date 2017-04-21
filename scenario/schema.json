@@ -278,6 +278,24 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
+						"batch" : {
+							"type" : "object",
+							"additionalProperties": false,
+							"properties" : {
+								"size": {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								}
+							}
+						},
 						"circular": {
 							"oneOf" : [
 								{

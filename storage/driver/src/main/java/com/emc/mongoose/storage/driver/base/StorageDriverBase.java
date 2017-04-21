@@ -6,7 +6,6 @@ import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.common.io.Input;
@@ -48,6 +47,7 @@ implements StorageDriver<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	
+	private final int batchSize;
 	private final int queueCapacity;
 	protected final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
@@ -73,6 +73,7 @@ implements StorageDriver<I, O> {
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
+		this.batchSize = loadConfig.getBatchConfig().getSize();
 		this.queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
@@ -98,7 +99,7 @@ implements StorageDriver<I, O> {
 	private final class IoTasksDispatch
 	extends SvcTaskBase {
 
-		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(BATCH_SIZE);
+		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
 		private int n = 0;
 		private int m;
 
@@ -110,18 +111,25 @@ implements StorageDriver<I, O> {
 		protected final void invoke() {
 			if(buff.tryLock()) {
 				try {
-					if(n < BATCH_SIZE) {
-						n += childTasksQueue.drainTo(buff, BATCH_SIZE - n);
+					if(n < batchSize) {
+						n += childTasksQueue.drainTo(buff, batchSize - n);
 					}
-					if(n < BATCH_SIZE) {
-						n += inTasksQueue.drainTo(buff, BATCH_SIZE - n);
+					if(n < batchSize) {
+						n += inTasksQueue.drainTo(buff, batchSize - n);
 					}
 					LockSupport.parkNanos(1);
 					if(n > 0) {
-						m = submit(buff, 0, n);
-						if(m > 0) {
-							buff.removeRange(0, m);
-							n -= m;
+						if(n == 1) {
+							if(submit(buff.get(0))) {
+								buff.clear();
+								n --;
+							}
+						} else {
+							m = submit(buff, 0, n);
+							if(m > 0) {
+								buff.removeRange(0, m);
+								n -= m;
+							}
 						}
 					}
 				} catch(final InterruptedException ignored) {
@@ -265,7 +273,7 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final List<O> getAll() {
-		final List<O> ioTaskResults = new ArrayList<>(BATCH_SIZE);
+		final List<O> ioTaskResults = new ArrayList<>(batchSize);
 		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
 		return ioTaskResults;
 	}

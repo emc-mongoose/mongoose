@@ -3,7 +3,6 @@ package com.emc.mongoose.tests.perf;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
 import com.emc.mongoose.model.DaemonBase;
 import org.junit.Test;
@@ -26,6 +25,7 @@ import java.util.concurrent.atomic.LongAdder;
 @RunWith(Parameterized.class)
 public class RoundRobinOutputsTransferSvcTaskTest {
 	
+	private static final int BATCH_SIZE = 0x1000;
 	private static final int TEST_TIME_LIMIT_SEC = 30;
 
 	private final static class DaemonMock
