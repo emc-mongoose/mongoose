@@ -54,22 +54,24 @@ extends SimpleChannelInboundHandler<M> {
 	throws IOException {
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		if(driver.isInterrupted() || driver.isClosed()) {
-			ioTask.setStatus(CANCELLED);
-		} else if(!driver.isInterrupted() && !driver.isClosed()) {
-			if(cause instanceof PrematureChannelClosureException) {
-				LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
-				ioTask.setStatus(FAIL_IO);
-			} else {
-				LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
-				ioTask.setStatus(FAIL_UNKNOWN);
+		if(ioTask != null) {
+			if(driver.isInterrupted() || driver.isClosed()) {
+				ioTask.setStatus(CANCELLED);
+			} else if(!driver.isInterrupted() && !driver.isClosed()) {
+				if(cause instanceof PrematureChannelClosureException) {
+					LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
+					ioTask.setStatus(FAIL_IO);
+				} else {
+					LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
+					ioTask.setStatus(FAIL_UNKNOWN);
+				}
 			}
-		}
-		if(!driver.isInterrupted()) {
-			try {
-				driver.complete(channel, ioTask);
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to complete the I/O task");
+			if(!driver.isInterrupted()) {
+				try {
+					driver.complete(channel, ioTask);
+				} catch(final Exception e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to complete the I/O task");
+				}
 			}
 		}
 	}

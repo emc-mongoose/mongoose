@@ -52,7 +52,7 @@ implements StorageDriver<I, O> {
 	protected final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
 	private final BlockingQueue<O> ioResultsQueue;
-	protected final String jobName;
+	protected final String stepName;
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
 	protected final Credential credential;
@@ -70,7 +70,7 @@ implements StorageDriver<I, O> {
 	private final IoTasksDispatch ioTasksDispatchTask;
 	
 	protected StorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
+		final String stepName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) throws UserShootHisFootException {
 		this.batchSize = loadConfig.getBatchConfig().getSize();
@@ -78,7 +78,7 @@ implements StorageDriver<I, O> {
 		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.jobName = jobName;
+		this.stepName = stepName;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
 		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
 		final String authToken = authConfig.getToken();

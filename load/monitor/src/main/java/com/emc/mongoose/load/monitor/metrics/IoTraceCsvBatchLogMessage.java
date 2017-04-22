@@ -58,7 +58,6 @@ extends LogMessageBase {
 						nextDataLatency < nextDuration && nextDataLatency > 0 ? nextDataLatency : -1,
 						nextResult.getCountBytesDone()
 					);
-					strb.append('\n');
 				}
 			} else {
 				O nextResult;
@@ -86,7 +85,6 @@ extends LogMessageBase {
 						-1,
 						-1
 					);
-					strb.append('\n');
 				}
 			}
 		}

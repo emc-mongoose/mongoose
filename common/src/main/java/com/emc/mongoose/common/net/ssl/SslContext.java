@@ -3,6 +3,7 @@ package com.emc.mongoose.common.net.ssl;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.Fireball;
 
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import java.security.KeyManagementException;
@@ -20,7 +21,9 @@ public final class SslContext {
 	throws OmgDoesNotPerformException {
 		try {
 			final SSLContext sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(null, new TrustManager[] {X509TrustAllManager.INSTANCE},
+			sslContext.init(
+				new KeyManager[] {},
+				new TrustManager[] { X509TrustAllManager.INSTANCE },
 				new SecureRandom()
 			);
 			return sslContext;

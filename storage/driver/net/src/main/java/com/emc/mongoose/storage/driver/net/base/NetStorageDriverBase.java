@@ -196,6 +196,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					protected final void initChannel(final SocketChannel channel)
 					throws Exception {
 						appendHandlers(channel.pipeline());
+						LOG.debug(
+							Markers.MSG, "{}: new unpooled channel {}, pipeline: {}",
+							stepName, channel.hashCode(), channel.pipeline()
+						);
 					}
 				}
 			);
@@ -321,7 +325,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		appendHandlers(pipeline);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}: new channel pipeline configured: {}", jobName, pipeline.toString()
+				Markers.MSG, "{}: new channel pipeline configured: {}", stepName,
+				pipeline.toString()
 			);
 		}
 	}
@@ -335,6 +340,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			);
 		}
 		if(sslFlag) {
+			LOG.debug(Markers.MSG, "{}: SSL/TLS is enabled for the channel", stepName);
 			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setUseClientMode(true);
 			pipeline.addLast(new SslHandler(sslEngine));

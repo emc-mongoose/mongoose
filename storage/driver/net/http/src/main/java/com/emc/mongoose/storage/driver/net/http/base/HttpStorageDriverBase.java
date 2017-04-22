@@ -24,7 +24,7 @@ import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -116,6 +116,10 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel = getUnpooledConnection();
 		try {
 			final ChannelPipeline pipeline = channel.pipeline();
+			LOG.debug(
+				Markers.MSG, "{}: execute the HTTP request using the channel {} w/ pipeline: {}",
+				stepName, channel.hashCode(), pipeline
+			);
 			pipeline.removeLast(); // remove the API specific handler
 			final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
 			pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
