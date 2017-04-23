@@ -47,3 +47,7 @@ jar {
 		)
 	}
 }
+
+test {
+	systemProperty "javax.net.debug", "all"
+}

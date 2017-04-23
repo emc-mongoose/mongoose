@@ -332,18 +332,24 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 
 	protected void appendHandlers(final ChannelPipeline pipeline) {
+		if(sslFlag) {
+			LOG.debug(Markers.MSG, "{}: SSL/TLS is enabled for the channel", stepName);
+			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
+			sslEngine.setEnabledProtocols(
+				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
+			);
+			sslEngine.setUseClientMode(true);
+			sslEngine.setEnabledCipherSuites(
+				SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
+			);
+			pipeline.addLast(new SslHandler(sslEngine));
+		}
 		if(socketTimeout > 0) {
 			pipeline.addLast(
 				new IdleStateHandler(
 					socketTimeout, socketTimeout, socketTimeout, TimeUnit.MILLISECONDS
 				)
 			);
-		}
-		if(sslFlag) {
-			LOG.debug(Markers.MSG, "{}: SSL/TLS is enabled for the channel", stepName);
-			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
-			sslEngine.setUseClientMode(true);
-			pipeline.addLast(new SslHandler(sslEngine));
 		}
 	}
 
