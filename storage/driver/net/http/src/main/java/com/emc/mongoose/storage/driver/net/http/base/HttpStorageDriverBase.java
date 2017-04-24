@@ -23,6 +23,7 @@ import com.emc.mongoose.model.item.TokenItem;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
+import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
@@ -418,7 +419,11 @@ implements HttpStorageDriver<I, O> {
 						final DataItem dataItem = (DataItem) item;
 						final String srcPath = dataIoTask.getSrcPath();
 						if(null == srcPath || srcPath.isEmpty()) {
-							channel.write(new DataItemFileRegion<>(dataItem));
+							if(sslFlag) {
+								channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
+							} else {
+								channel.write(new DataItemFileRegion(dataItem));
+							}
 						}
 						dataIoTask.setCountBytesDone(dataItem.size());
 					}
@@ -435,22 +440,47 @@ implements HttpStorageDriver<I, O> {
 						final BitSet updRangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
 						final int rangeCount = getRangeCount(dataItem.size());
 						DataItem updatedRange;
-						// current layer updates first
-						for(int i = 0; i < rangeCount; i ++) {
-							if(updRangesMaskPair[0].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
-								assert updatedRange != null;
-								channel.write(new DataItemFileRegion<>(updatedRange));
+						if(sslFlag) {
+							// current layer updates first
+							for(int i = 0; i < rangeCount; i ++) {
+								if(updRangesMaskPair[0].get(i)) {
+									dataIoTask.setCurrRangeIdx(i);
+									updatedRange = dataIoTask.getCurrRangeUpdate();
+									assert updatedRange != null;
+									channel.write(
+										new SeekableByteChannelChunkedNioStream(updatedRange)
+									);
+								}
 							}
-						}
-						// then next layer updates if any
-						for(int i = 0; i < rangeCount; i ++) {
-							if(updRangesMaskPair[1].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
-								assert updatedRange != null;
-								channel.write(new DataItemFileRegion<>(updatedRange));
+							// then next layer updates if any
+							for(int i = 0; i < rangeCount; i ++) {
+								if(updRangesMaskPair[1].get(i)) {
+									dataIoTask.setCurrRangeIdx(i);
+									updatedRange = dataIoTask.getCurrRangeUpdate();
+									assert updatedRange != null;
+									channel.write(
+										new SeekableByteChannelChunkedNioStream(updatedRange)
+									);
+								}
+							}
+						} else {
+							// current layer updates first
+							for(int i = 0; i < rangeCount; i ++) {
+								if(updRangesMaskPair[0].get(i)) {
+									dataIoTask.setCurrRangeIdx(i);
+									updatedRange = dataIoTask.getCurrRangeUpdate();
+									assert updatedRange != null;
+									channel.write(new DataItemFileRegion(updatedRange));
+								}
+							}
+							// then next layer updates if any
+							for(int i = 0; i < rangeCount; i ++) {
+								if(updRangesMaskPair[1].get(i)) {
+									dataIoTask.setCurrRangeIdx(i);
+									updatedRange = dataIoTask.getCurrRangeUpdate();
+									assert updatedRange != null;
+									channel.write(new DataItemFileRegion(updatedRange));
+								}
 							}
 						}
 						dataItem.commitUpdatedRanges(dataIoTask.getMarkedRangesMaskPair());
@@ -459,24 +489,50 @@ implements HttpStorageDriver<I, O> {
 						long beg;
 						long end;
 						long size;
-						for(final ByteRange fixedByteRange : fixedByteRanges) {
-							beg = fixedByteRange.getBeg();
-							end = fixedByteRange.getEnd();
-							size = fixedByteRange.getSize();
-							if(size == -1) {
-								if(beg == -1) {
-									beg = baseItemSize - end;
-									size = end;
-								} else if(end == -1) {
-									size = baseItemSize - beg;
+						if(sslFlag) {
+							for(final ByteRange fixedByteRange : fixedByteRanges) {
+								beg = fixedByteRange.getBeg();
+								end = fixedByteRange.getEnd();
+								size = fixedByteRange.getSize();
+								if(size == -1) {
+									if(beg == -1) {
+										beg = baseItemSize - end;
+										size = end;
+									} else if(end == -1) {
+										size = baseItemSize - beg;
+									} else {
+										size = end - beg + 1;
+									}
 								} else {
-									size = end - beg + 1;
+									// append
+									beg = baseItemSize;
 								}
-							} else {
-								// append
-								beg = baseItemSize;
+								channel.write(
+									new SeekableByteChannelChunkedNioStream(
+										dataItem.slice(beg, size)
+									)
+								);
 							}
-							channel.write(new DataItemFileRegion<>(dataItem.slice(beg, size)));
+						} else {
+							for(final ByteRange fixedByteRange : fixedByteRanges) {
+								beg = fixedByteRange.getBeg();
+								end = fixedByteRange.getEnd();
+								size = fixedByteRange.getSize();
+								if(size == -1) {
+									if(beg == -1) {
+										beg = baseItemSize - end;
+										size = end;
+									} else if(end == -1) {
+										size = baseItemSize - beg;
+									} else {
+										size = end - beg + 1;
+									}
+								} else {
+									// append
+									beg = baseItemSize;
+								}
+								channel.write(new DataItemFileRegion(dataItem.slice(beg, size)));
+							}
 						}
 						dataItem.size(dataItem.size() + dataIoTask.getMarkedRangesSize());
 					}

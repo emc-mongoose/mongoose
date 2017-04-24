@@ -64,7 +64,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	private final EventLoopGroup workerGroup;
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
-	private final boolean sslFlag;
+	protected final boolean sslFlag;
 
 	protected NetStorageDriverBase(
 		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,

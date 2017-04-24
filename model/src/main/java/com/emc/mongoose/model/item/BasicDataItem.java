@@ -21,6 +21,8 @@ import static java.lang.Math.min;
  Created by kurila on 09.05.14.
  A data item which may produce uniformly distributed non-compressible content.
  Uses UniformDataSource as a ring buffer. Not thread safe.
+ Note: the {@link java.nio.channels.ReadableByteChannel#read(java.nio.ByteBuffer)}
+ method implementation will not return 0 or -1 (endless)
  */
 public class BasicDataItem
 extends BasicItem
