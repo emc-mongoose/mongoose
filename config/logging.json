@@ -104,79 +104,81 @@
 							}
 						]
 					}
-				}, {
+				},
+				{
 					"name" : "metricsStdout",
 					"type" : "Console",
 					"follow" : "true",
-					"PatternLayout": {
+					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
 					},
-					"Filters": {
+					"Filters" : {
 						"Filter" : [
 							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "cfg",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "ioTrace",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "parts",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "parts",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "extResultsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "extResultsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "extMedResultsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "extMedResultsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsStdout",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "MarkerFilter",
+								"marker" : "metricsStdout",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedStdout",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedStdout",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}
-								
-							}, {
+						]
+					}
+				}, {
 					"name": "msgFile",
 					"type": "loadJobFile",
 					"fileName": "messages.log",
