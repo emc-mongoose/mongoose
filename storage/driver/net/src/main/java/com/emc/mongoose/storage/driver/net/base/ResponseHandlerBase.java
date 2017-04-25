@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
  Created by kurila on 04.10.16.

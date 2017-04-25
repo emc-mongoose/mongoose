@@ -13,7 +13,8 @@ public enum IoType {
 	CREATE, // 1
 	READ, // 2
 	UPDATE, // 3
-	DELETE; // 4
+	DELETE, // 4
+	LIST; // 5
 
 	public static Map<IoType, Integer> getMixedLoadWeights(final List<String> patterns)
 	throws IllegalArgumentException {

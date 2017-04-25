@@ -54,8 +54,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1KB");
 	private static final int EXPECTED_CONCURRENCY = 4;
 	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE_0 = "read-multiple-random-ranges-0.csv";
-	private static final String ITEM_OUTPUT_FILE_1 = "read-multiple-random-ranges-1.csv";
+	private static final String ITEM_OUTPUT_FILE_0 = "tls-read-multiple-random-ranges-0.csv";
+	private static final String ITEM_OUTPUT_FILE_1 = "tls-read-multiple-random-ranges-1.csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
