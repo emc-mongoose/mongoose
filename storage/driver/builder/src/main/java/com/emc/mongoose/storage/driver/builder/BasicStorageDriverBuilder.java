@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.common.Constants;
-import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
+import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
@@ -14,9 +14,9 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.Markers;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class BasicStorageDriverBuilder<
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private String jobName;
+	private String stepName;
 	private ContentSource contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
@@ -72,7 +72,7 @@ public class BasicStorageDriverBuilder<
 
 	@Override
 	public BasicStorageDriverBuilder<I, O, T> setTestStepName(final String jobName) {
-		this.jobName = jobName;
+		this.stepName = jobName;
 		return this;
 	}
 	
@@ -110,57 +110,64 @@ public class BasicStorageDriverBuilder<
 	public T build()
 	throws UserShootHisFootException {
 
-		ThreadContext.put(Constants.KEY_STEP_NAME, jobName);
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
+				Constants.KEY_STEP_NAME, stepName
+			)
+		) {
 
-		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final List<Map<String, Object>> implConfig = driverConfig.getImplConfig();
-		final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
-		final Map<String, Class<T>> availableImpls = new HashMap<>();
+			final DriverConfig driverConfig = storageConfig.getDriverConfig();
+			final List<Map<String, Object>> implConfig = driverConfig.getImplConfig();
+			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
+			final Map<String, Class<T>> availableImpls = new HashMap<>();
 
-		for(final Map<String, Object> nextImplInfo : implConfig) {
+			for(final Map<String, Object> nextImplInfo : implConfig) {
 
-			final String implType = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE);
-			final String implFile = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FILE);
-			final String implFqcn = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN);
+				final String implType = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE);
+				final String implFile = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FILE);
+				final String implFqcn = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN);
+
+				try {
+					final URL implUrl = new File(getBaseDir() + File.separatorChar + implFile)
+						.toURI().toURL();
+					final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
+					final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
+					LOG.info(
+						Markers.MSG,
+						"Loaded storage driver implementation \"{}\" from the class \"{}\"",
+						implType, implFqcn
+					);
+					availableImpls.put(implType, implCls);
+				} catch(final MalformedURLException e) {
+					LOG.warn(
+						Markers.ERR, "Invalid storage driver implementation file: {}", implFile
+					);
+				} catch(final ClassNotFoundException e) {
+					LOG.warn(
+						Markers.ERR, "Invalid FQCN \"{}\" for the implementation from file: {}",
+						implFqcn, implFile
+					);
+				}
+			}
+
+			final String driverType = driverConfig.getType();
+			final Class<T> matchingImplCls = availableImpls.get(driverType);
 
 			try {
-				final URL implUrl = new File(PathUtil.getBaseDir() + File.separatorChar + implFile)
-					.toURI().toURL();
-				final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
-				final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
-				LOG.info(
-					Markers.MSG,
-					"Loaded storage driver implementation \"{}\" from the class \"{}\"",
-					implType, implFqcn
+				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
+					String.class, LoadConfig.class, StorageConfig.class, Boolean.TYPE
 				);
-				availableImpls.put(implType, implCls);
-			} catch(final MalformedURLException e) {
-				LOG.warn(Markers.ERR, "Invalid storage driver implementation file: {}", implFile);
-			} catch(final ClassNotFoundException e) {
-				LOG.warn(
-					Markers.ERR, "Invalid FQCN \"{}\" for the implementation from file: {}",
-					implFqcn, implFile
+				return constructor.newInstance(stepName, loadConfig, storageConfig, verifyFlag);
+			} catch(final NoSuchMethodException e) {
+				throw new UserShootHisFootException(
+					"No valid constructor to make the \"" + driverType +
+						"\" storage driver instance"
 				);
+			} catch(
+				final InstantiationException | IllegalAccessException | InvocationTargetException e
+			) {
+				throw new UserShootHisFootException(e.getCause());
 			}
-		}
-
-		final String driverType = driverConfig.getType();
-		final Class<T> matchingImplCls = availableImpls.get(driverType);
-
-		try {
-			final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
-				String.class, LoadConfig.class, StorageConfig.class, Boolean.TYPE
-			);
-			return constructor.newInstance(jobName, loadConfig, storageConfig, verifyFlag);
-		} catch(final NoSuchMethodException e) {
-			throw new UserShootHisFootException(
-				"No valid constructor to make the \"" + driverType +
-					"\" storage driver instance"
-			);
-		} catch(
-			final InstantiationException | IllegalAccessException | InvocationTargetException e
-		) {
-			throw new UserShootHisFootException(e.getCause());
 		}
 	}
 }

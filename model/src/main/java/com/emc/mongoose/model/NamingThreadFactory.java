@@ -1,5 +1,6 @@
 package com.emc.mongoose.model;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -53,8 +54,11 @@ implements ThreadFactory {
 
 		@Override
 		public final void run() {
-			ThreadContext.putAll(context);
-			super.run();
+			try(
+				final CloseableThreadContext.Instance ctx = CloseableThreadContext.putAll(context)
+			) {
+				super.run();
+			}
 		}
 	}
 

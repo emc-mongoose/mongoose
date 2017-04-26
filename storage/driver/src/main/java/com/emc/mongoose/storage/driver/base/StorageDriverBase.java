@@ -6,6 +6,7 @@ import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.common.io.Input;
@@ -19,6 +20,8 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
+import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -110,7 +113,7 @@ implements StorageDriver<I, O> {
 		@Override
 		protected final void invoke() {
 			if(buff.tryLock()) {
-				try {
+				try(final Instance logCtx = CloseableThreadContext.put(KEY_STEP_NAME, stepName)) {
 					if(n < batchSize) {
 						n += childTasksQueue.drainTo(buff, batchSize - n);
 					}

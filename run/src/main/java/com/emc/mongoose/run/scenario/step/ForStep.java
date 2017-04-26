@@ -427,13 +427,13 @@ extends SequentialStep {
 	}
 
 	@Override
-	public final void run() {
+	protected final void invoke() {
 		if(replaceMarkerName == null && valueSeq == null) { // infinite loop
 			while(true) {
-				super.run();
+				super.invoke();
 			}
 		} else {
-			super.run();
+			super.invoke();
 		}
 	}
 

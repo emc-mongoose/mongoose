@@ -144,14 +144,9 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		final String jobName;
-		final ReadOnlyStringMap evtCtxMap = event.getContextData();
-		if(evtCtxMap.containsKey(KEY_STEP_NAME)) {
+		String jobName = ThreadContext.get(KEY_STEP_NAME);
+		if(jobName == null) {
 			jobName = event.getContextData().getValue(KEY_STEP_NAME);
-		} else if(ThreadContext.containsKey(KEY_STEP_NAME)) {
-			jobName = ThreadContext.get(KEY_STEP_NAME);
-		} else {
-			jobName = null;
 		}
 		final byte[] buff = getLayout().toByteArray(event);
 		if(buff.length > 0) {

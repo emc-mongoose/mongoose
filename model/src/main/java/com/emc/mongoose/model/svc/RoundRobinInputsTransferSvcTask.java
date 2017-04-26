@@ -6,6 +6,7 @@ import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
+import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -15,12 +16,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+
 /**
  Created by andrey on 15.12.16.
  */
 public final class RoundRobinInputsTransferSvcTask<T>
 extends SvcTaskBase {
-	
+
+	private final String stepName;
 	private final Output<T> output;
 	private final List<? extends Input<T>> inputs;
 	private final int inputsCount;
@@ -28,10 +32,11 @@ extends SvcTaskBase {
 	private final OptLockBuffer<T> deferredItems;
 
 	public RoundRobinInputsTransferSvcTask(
-		final Output<T> output, final List<? extends Input<T>> inputs, final int batchSize,
-		final List<SvcTask> svcTasks
+		final String stepName, final Output<T> output, final List<? extends Input<T>> inputs,
+		final int batchSize, final List<SvcTask> svcTasks
 	) {
 		super(svcTasks);
+		this.stepName = stepName;
 		this.output = output;
 		this.inputs = inputs;
 		this.inputsCount = inputs.size();
@@ -41,7 +46,11 @@ extends SvcTaskBase {
 	@Override
 	protected final void invoke() {
 		if(deferredItems.tryLock()) { // works like exclusive invocation lock
-			try {
+			try(
+				final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
+					KEY_STEP_NAME, stepName
+				)
+			) {
 				// 1st try to output all deferred items if any
 				int n = deferredItems.size();
 				if(n > 0) {

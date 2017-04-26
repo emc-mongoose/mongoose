@@ -145,8 +145,12 @@ implements LoadGenerator<I, O>, SvcTask {
 			} else {
 				thrLocTasksBuff.clear();
 			}
-			thrLocTasksBuff.addAll(deferredTasks);
-			deferredTasks.clear();
+			if(deferredTasks.size() == 0) {
+				deferredTasksFlag = false;
+			} else {
+				thrLocTasksBuff.addAll(deferredTasks);
+				deferredTasks.clear();
+			}
 			deferredTasks.unlock();
 		}
 		int pendingTasksCount = thrLocTasksBuff.size();

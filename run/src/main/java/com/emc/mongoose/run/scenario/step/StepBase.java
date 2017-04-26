@@ -6,6 +6,7 @@ import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,22 +33,25 @@ implements Step {
 	
 	@Override
 	public void run() {
-		LOG.info(Markers.CFG, localConfig.toString());
+
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
-		try {
-			String jobName = stepConfig.getName();
+		String jobName = stepConfig.getName();
+		if(jobName == null) {
+			jobName = ThreadContext.get(KEY_STEP_NAME);
 			if(jobName == null) {
-				jobName = ThreadContext.get(KEY_STEP_NAME);
-				if(jobName == null) {
-					LOG.fatal(Markers.ERR, "Job name is not set");
-				} else {
-					stepConfig.setName(jobName);
-				}
+				LOG.fatal(Markers.ERR, "Job name is not set");
 			} else {
-				ThreadContext.put(KEY_STEP_NAME, jobName);
+				stepConfig.setName(jobName);
 			}
-		} catch(final Throwable t) {
-			LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
+		}
+
+		try(final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(KEY_STEP_NAME, jobName)) {
+			LOG.info(Markers.CFG, localConfig.toString());
+			invoke();
+		} catch(final Throwable cause) {
+			LogUtil.exception(LOG, Level.ERROR, cause, "Test step failure");
 		}
 	}
+
+	protected abstract void invoke();
 }

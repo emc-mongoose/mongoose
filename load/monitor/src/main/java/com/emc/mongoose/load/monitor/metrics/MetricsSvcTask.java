@@ -5,7 +5,7 @@ import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.ui.log.LogUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static java.lang.System.nanoTime;
 
 /**
@@ -72,7 +74,11 @@ extends SvcTaskBase {
 	@Override
 	protected final void invoke() {
 		if(exclusiveInvocationLock.tryLock()) {
-			try {
+			try(
+				final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
+					KEY_STEP_NAME, stepName
+				)
+			) {
 				nextNanoTimeStamp = nanoTime();
 				if(LoadMonitor.STATS_REFRESH_PERIOD_NANOS > nextNanoTimeStamp - prevNanoTimeStamp) {
 					return;

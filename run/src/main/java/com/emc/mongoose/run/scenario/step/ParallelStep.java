@@ -26,9 +26,7 @@ extends ParentStepBase {
 	}
 	//
 	@Override
-	public final synchronized void run() {
-		
-		super.run();
+	protected final synchronized void invoke() {
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
 			subSteps.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)

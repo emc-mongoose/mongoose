@@ -57,7 +57,8 @@ implements ShutdownCallbackRegistry {
 		KEY_CONFIG_FACTORY = "log4j.configurationFactory",
 		VALUE_CONFIG_FACTORY = "org.apache.logging.log4j.core.config.json.JsonConfigurationFactory",
 		//
-		FNAME_LOG_CONF = "conf/logging.json",
+		KEY_THREAD_CTX_GC_FREE = "log4j2.garbagefree.threadContextMap",
+		VALUE_THREAD_CTXT_GC_FREE = Boolean.toString(true),
 		//
 		MONGOOSE = "mongoose";
 	//
@@ -117,6 +118,7 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
+				System.setProperty(KEY_THREAD_CTX_GC_FREE, VALUE_THREAD_CTXT_GC_FREE);
 				// set "load.job.name" property with timestamp value if not set before
 				final String loadJobName = ThreadContext.get(KEY_STEP_NAME);
 				if(loadJobName == null || loadJobName.length() == 0) {

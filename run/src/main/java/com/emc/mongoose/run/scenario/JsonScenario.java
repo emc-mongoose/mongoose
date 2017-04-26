@@ -189,9 +189,9 @@ implements Scenario {
 	}
 	//
 	@Override
-	public final void run() {
+	protected final void invoke() {
 		LOG.info(Markers.MSG, "Scenario start");
-		super.run();
+		super.invoke();
 		LOG.info(Markers.MSG, "Scenario end");
 	}
 	//

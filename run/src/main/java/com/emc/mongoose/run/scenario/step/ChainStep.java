@@ -68,9 +68,7 @@ extends StepBase {
 	}
 	
 	@Override
-	public final void run() {
-		super.run();
-		
+	protected final void invoke() {
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String testStepName = stepConfig.getName();
 		LOG.info(Markers.MSG, "Run the chain load job \"{}\"", testStepName);

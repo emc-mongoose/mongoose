@@ -76,8 +76,7 @@ extends StepBase {
 	}
 
 	@Override
-	public final void run() {
-		super.run();
+	protected final void invoke() {
 
 		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = localStepConfig.getName();

@@ -9,6 +9,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -51,11 +52,11 @@ extends HttpStorageDistributedScenarioTestBase {
 	private static final Path SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-random-ranges-updated.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1KB");
+	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1-1KB");
 	private static final int EXPECTED_CONCURRENCY = 4;
 	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE_0 = "tls-read-multiple-random-ranges-0.csv";
-	private static final String ITEM_OUTPUT_FILE_1 = "tls-read-multiple-random-ranges-1.csv";
+	private static final String ITEM_OUTPUT_FILE_0 = "read-multiple-random-ranges-0.csv";
+	private static final String ITEM_OUTPUT_FILE_1 = "read-multiple-random-ranges-1.csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
@@ -94,7 +95,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
@@ -122,7 +122,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test @Ignore
+	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -147,6 +147,7 @@ extends HttpStorageDistributedScenarioTestBase {
 
 	@Test public void testIoTraceLogFile()
 	throws Exception {
+		TimeUnit.SECONDS.sleep(15);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(
 			"There should be " + EXPECTED_COUNT + " records in the I/O trace log file",
@@ -155,5 +156,18 @@ extends HttpStorageDistributedScenarioTestBase {
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), EXPECTED_ITEM_DATA_SIZE);
 		}
+	}
+
+	@Test public void testTlsEnableLogged()
+	throws Exception {
+		final List<String> msgLogLines = getMessageLogLines();
+		int msgCount = 0;
+		for(final String msgLogLine : msgLogLines) {
+			if(msgLogLine.contains(JOB_NAME + ": SSL/TLS is enabled for the channel")) {
+				msgCount ++;
+			}
+		}
+		// 3 steps + additional bucket checking/creating connections
+		Assert.assertTrue(3 * STORAGE_DRIVERS_COUNT * EXPECTED_CONCURRENCY <= msgCount);
 	}
 }

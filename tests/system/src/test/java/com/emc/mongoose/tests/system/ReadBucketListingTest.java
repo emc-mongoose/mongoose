@@ -55,11 +55,12 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		JOB_NAME = ReadBucketListingTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		CONFIG_ARGS.add("--test-step-limit-time=" + LOAD_LIMIT_TIME);
+		CONFIG_ARGS.add("--test-step-name=" + JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		SCENARIO.run();
 		
@@ -74,6 +75,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		CONFIG_ARGS.add("--item-data-verify");
 		CONFIG_ARGS.add("--item-input-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-type=read");
+		CONFIG_ARGS.add("--test-step-name=" + JOB_NAME);
 		CONFIG.apply(
 			CliArgParser.parseArgs(
 				CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
@@ -96,7 +98,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.sleep(15); // warmup
+		TimeUnit.SECONDS.sleep(5); // warmup
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			ACTUAL_CONCURRENCY += PortListener

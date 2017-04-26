@@ -28,8 +28,7 @@ extends ParentStepBase {
 	}
 	//
 	@Override
-	public synchronized void run() {
-		super.run();
+	protected synchronized void invoke() {
 		LOG.info(
 			Markers.MSG, "{}: execute {} child jobs sequentially", toString(), subSteps.size()
 		);

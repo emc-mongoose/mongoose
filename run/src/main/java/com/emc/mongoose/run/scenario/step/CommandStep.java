@@ -49,7 +49,7 @@ extends StepBase {
 	}
 	//
 	@Override
-	public final void run() {
+	protected final void invoke() {
 		super.run();
 		try {
 			LOG.info(

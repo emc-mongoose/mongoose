@@ -60,8 +60,8 @@ extends SvcTaskBase {
 				} catch(final IOException ee) {
 					ee.printStackTrace(System.err);
 				}
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
+			} catch(final Throwable cause) {
+				cause.printStackTrace(System.err);
 			} finally {
 				buff.unlock();
 			}

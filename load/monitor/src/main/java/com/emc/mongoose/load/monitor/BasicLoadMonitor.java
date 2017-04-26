@@ -691,7 +691,9 @@ implements LoadMonitor<I, O> {
 		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
 			drivers.addAll(nextGeneratorDrivers);
 		}
-		svcTasks.add(new RoundRobinInputsTransferSvcTask<>(this, drivers, batchSize, svcTasks));
+		svcTasks.add(
+			new RoundRobinInputsTransferSvcTask<>(name, this, drivers, batchSize, svcTasks)
+		);
 	}
 
 	@Override
