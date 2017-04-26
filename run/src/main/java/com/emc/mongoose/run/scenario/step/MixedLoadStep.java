@@ -80,7 +80,7 @@ extends StepBase {
 
 		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = localStepConfig.getName();
-		LOG.info(Markers.MSG, "Run the mixed load job \"{}\"", jobName);
+		LOG.info(Markers.MSG, "Run the mixed load step \"{}\"", jobName);
 		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
 		
 		final long t = localLimitConfig.getTime();
@@ -168,16 +168,16 @@ extends StepBase {
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load monitor done");
+				LOG.info(Markers.MSG, "Load step done");
 			} else {
-				LOG.info(Markers.MSG, "Load monitor timeout");
+				LOG.info(Markers.MSG, "Load step timeout");
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load monitor interrupted");
+			LOG.debug(Markers.MSG, "Load step interrupted");
 		}
 	}
 

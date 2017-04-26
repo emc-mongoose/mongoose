@@ -24,19 +24,19 @@ extends ParentStepBase {
 	//
 	@Override
 	public String toString() {
-		return "sequentialJob#" + hashCode();
+		return "sequentialStep#" + hashCode();
 	}
 	//
 	@Override
 	protected synchronized void invoke() {
 		LOG.info(
-			Markers.MSG, "{}: execute {} child jobs sequentially", toString(), subSteps.size()
+			Markers.MSG, "{}: execute {} child steps sequentially", toString(), subSteps.size()
 		);
 		for(final Step subStep : subSteps) {
-			LOG.debug(Markers.MSG, "{}: child job \"{}\" start", toString(), subStep.toString());
+			LOG.debug(Markers.MSG, "{}: child step \"{}\" start", toString(), subStep.toString());
 			subStep.run();
-			LOG.debug(Markers.MSG, "{}: child job \"{}\" is done", toString(), subStep.toString());
+			LOG.debug(Markers.MSG, "{}: child step \"{}\" is done", toString(), subStep.toString());
 		}
-		LOG.info(Markers.MSG, "{}: finished the sequential execution of {} child jobs", toString());
+		LOG.info(Markers.MSG, "{}: finished the sequential execution of {} child steps", toString());
 	}
 }

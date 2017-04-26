@@ -29,13 +29,13 @@ extends ParentStepBase {
 	protected final synchronized void invoke() {
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			subSteps.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
+			subSteps.size(), new NamingThreadFactory("stepWorker" + hashCode(), true)
 		);
 		for(final Step subStep : subSteps) {
 			parallelJobsExecutor.submit(subStep);
 		}
 		LOG.info(
-			Markers.MSG, "{}: execute {} child jobs in parallel", toString(), subSteps.size()
+			Markers.MSG, "{}: execute {} child steps in parallel", toString(), subSteps.size()
 		);
 		parallelJobsExecutor.shutdown();
 		
@@ -48,18 +48,18 @@ extends ParentStepBase {
 				parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 			}
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "{}: interrupted the child jobs execution", toString());
+			LOG.debug(Markers.MSG, "{}: interrupted the child steps execution", toString());
 		} finally {
 			parallelJobsExecutor.shutdownNow();
 		}
 		LOG.info(
-			Markers.MSG, "{}: finished parallel execution of {} child jobs", toString(),
+			Markers.MSG, "{}: finished parallel execution of {} child steps", toString(),
 			subSteps.size()
 		);
 	}
 	//
 	@Override
 	public String toString() {
-		return "parallelJob#" + hashCode();
+		return "parallelStep#" + hashCode();
 	}
 }

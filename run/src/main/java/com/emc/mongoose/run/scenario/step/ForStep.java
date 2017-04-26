@@ -439,7 +439,7 @@ extends SequentialStep {
 
 	@Override
 	public final String toString() {
-		return "forJob" + (replaceMarkerName == null ? "Infinite" : valueSeq.size()) + "#" +
+		return "forStep" + (replaceMarkerName == null ? "Infinite" : valueSeq.size()) + "#" +
 			hashCode();
 	}
 

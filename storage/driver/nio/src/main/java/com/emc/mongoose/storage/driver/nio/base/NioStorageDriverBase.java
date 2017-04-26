@@ -180,8 +180,8 @@ implements StorageDriver<I, O> {
 	protected final void doInterrupt()
 	throws IllegalStateException {
 		try {
-			if(!ioTaskExecutor.awaitTermination(1, TimeUnit.MILLISECONDS)) {
-				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 1 second");
+			if(!ioTaskExecutor.awaitTermination(250, TimeUnit.MILLISECONDS)) {
+				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 0.25 second");
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");

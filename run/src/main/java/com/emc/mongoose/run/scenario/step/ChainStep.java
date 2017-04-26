@@ -71,7 +71,7 @@ extends StepBase {
 	protected final void invoke() {
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String testStepName = stepConfig.getName();
-		LOG.info(Markers.MSG, "Run the chain load job \"{}\"", testStepName);
+		LOG.info(Markers.MSG, "Run the chain load step \"{}\"", testStepName);
 		final LimitConfig commonLimitConfig = stepConfig.getLimitConfig();
 		
 		final long t = commonLimitConfig.getTime();
@@ -187,12 +187,12 @@ extends StepBase {
 				tsStart = System.currentTimeMillis();
 				try {
 					if(nextMonitor.await(timeRemainSec, TimeUnit.SECONDS)) {
-						LOG.info(Markers.MSG, "Load monitor \"{}\" done", nextMonitor.getName());
+						LOG.info(Markers.MSG, "Load step \"{}\" done", nextMonitor.getName());
 					} else {
-						LOG.info(Markers.MSG, "Load monitor \"{}\" timeout", nextMonitor.getName());
+						LOG.info(Markers.MSG, "Load step \"{}\" timeout", nextMonitor.getName());
 					}
 				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Load job interrupted");
+					LOG.debug(Markers.MSG, "Load step interrupted");
 					break;
 				} catch(final RemoteException e) {
 					throw new AssertionError(e);

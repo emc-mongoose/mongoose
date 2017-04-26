@@ -39,13 +39,17 @@ implements Step {
 		if(jobName == null) {
 			jobName = ThreadContext.get(KEY_STEP_NAME);
 			if(jobName == null) {
-				LOG.fatal(Markers.ERR, "Job name is not set");
+				LOG.fatal(Markers.ERR, "Step name is not set");
 			} else {
 				stepConfig.setName(jobName);
 			}
 		}
 
-		try(final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(KEY_STEP_NAME, jobName)) {
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
+				KEY_STEP_NAME, jobName
+			)
+		) {
 			LOG.info(Markers.CFG, localConfig.toString());
 			invoke();
 		} catch(final Throwable cause) {

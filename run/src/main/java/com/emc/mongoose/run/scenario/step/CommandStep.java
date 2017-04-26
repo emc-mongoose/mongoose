@@ -50,7 +50,6 @@ extends StepBase {
 	//
 	@Override
 	protected final void invoke() {
-		super.run();
 		try {
 			LOG.info(
 				Markers.MSG, "Invoking the shell command:\n{}{}{}",

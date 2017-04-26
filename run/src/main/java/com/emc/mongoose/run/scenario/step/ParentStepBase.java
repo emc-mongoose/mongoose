@@ -66,7 +66,7 @@ extends StepBase {
 
 	protected void appendNewJob(final Map<String, Object> subTree, final Config config)
 	throws ScenarioParseException {
-		LOG.debug(Markers.MSG, "Load the subtree to the job \"{}\"", this.toString());
+		LOG.debug(Markers.MSG, "Load the subtree to the step \"{}\"", this.toString());
 		final String jobType = (String) subTree.get(KEY_NODE_TYPE);
 		if(jobType == null) {
 			throw new ScenarioParseException("No \"" + KEY_NODE_TYPE + "\" element for the job");

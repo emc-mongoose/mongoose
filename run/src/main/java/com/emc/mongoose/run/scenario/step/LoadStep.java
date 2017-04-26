@@ -70,7 +70,7 @@ extends StepBase {
 
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = stepConfig.getName();
-		LOG.info(Markers.MSG, "Run the load job \"{}\"", jobName);
+		LOG.info(Markers.MSG, "Run the load step \"{}\"", jobName);
 		stepConfig.setPrecondition(preconditionFlag);
 
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
@@ -142,22 +142,22 @@ extends StepBase {
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load job \"{}\" done", jobName);
+				LOG.info(Markers.MSG, "Load step \"{}\" done", jobName);
 			} else {
-				LOG.info(Markers.MSG, "Load job \"{}\" timeout", jobName);
+				LOG.info(Markers.MSG, "Load step \"{}\" timeout", jobName);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load job \"{}\" interrupted", jobName);
+			LOG.debug(Markers.MSG, "Load step \"{}\" interrupted", jobName);
 		}
 	}
 	
 	@Override
 	public final String toString() {
-		return "singleLoadJobContainer#" + hashCode();
+		return "singleLoadStepContainer#" + hashCode();
 	}
 	
 	@Override
