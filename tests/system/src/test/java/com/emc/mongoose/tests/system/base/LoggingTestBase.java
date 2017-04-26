@@ -568,7 +568,13 @@ public abstract class LoggingTestBase {
 				if(countLimit > 0) {
 					assertTrue(countLimit > countSucc); // count succ
 				}
-				assertTrue(0 == Long.parseLong(cells[4])); // count fail
+				if(cells[4].startsWith(LogUtil.GREEN)) {
+					cells[4] = cells[4].substring(LogUtil.GREEN.length());
+					cells[4] = cells[4].substring(0, cells[4].indexOf(LogUtil.RESET));
+					assertTrue(0 == Long.parseLong(cells[4])); // count fail
+				} else {
+					fail("Failures count is not green");
+				}
 				currStepTime = Float.parseFloat(cells[5]); // job time
 				tp = Float.parseFloat(cells[6]); // TP mean
 				if(currStepTime > 0) {
