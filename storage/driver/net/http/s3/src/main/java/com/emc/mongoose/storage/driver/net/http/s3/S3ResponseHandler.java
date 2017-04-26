@@ -33,7 +33,9 @@ public final class S3ResponseHandler<I extends Item, O extends IoTask<I>>
 extends HttpResponseHandlerBase<I, O> {
 
 	private static final Logger LOG = LogManager.getLogger();
-	private static final AttributeKey<ByteBuf> contentAttrKey = AttributeKey.newInstance("content");
+	private static final AttributeKey<ByteBuf> CONTENT_ATTR_KEY = AttributeKey.newInstance(
+		"content"
+	);
 	private static final int MIN_CONTENT_SIZE = 0x100;
 	private static final int MAX_CONTENT_SIZE = 0x400;
 	private static final Pattern PATTERN_UPLOAD_ID = Pattern.compile(
@@ -69,7 +71,7 @@ extends HttpResponseHandlerBase<I, O> {
 		final Channel channel, final ByteBuf contentChunk
 	) {
 		// expect the XML data which is not large (up to 1KB)
-		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
+		final Attribute<ByteBuf> contentAttr = channel.attr(CONTENT_ATTR_KEY);
 		contentAttr.compareAndSet(null, Unpooled.buffer(MIN_CONTENT_SIZE));
 		final ByteBuf content = contentAttr.get();
 		try {
@@ -85,7 +87,7 @@ extends HttpResponseHandlerBase<I, O> {
 
 	@Override
 	protected final void handleResponseContentFinish(final Channel channel, final O ioTask) {
-		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
+		final Attribute<ByteBuf> contentAttr = channel.attr(CONTENT_ATTR_KEY);
 		final ByteBuf content = contentAttr.get();
 		if(content != null && content.readableBytes() > 0) {
 			if(ioTask instanceof CompositeDataIoTask) {
