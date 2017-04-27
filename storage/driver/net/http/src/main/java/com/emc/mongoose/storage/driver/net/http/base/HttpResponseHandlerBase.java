@@ -165,6 +165,11 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "{}", ioTask.toString());
 			}
 			final HttpResponse httpResponse = (HttpResponse) msg;
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, ioTask.hashCode() + " <<<< " + httpResponse.status()
+				);
+			}
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);
 			handleResponseHeaders(ioTask, httpResponse.headers());

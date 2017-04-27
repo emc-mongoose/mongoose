@@ -4,21 +4,21 @@
 		"item" : {
 			"data" : {
 				"ranges" : {
-					"threshold" : "16MB"
+					"threshold" : "1GB"
 				},
-				"size" : "200MB"
+				"size" : "10GB"
 			}
 		},
 		"test" : {
 			"step" : {
 				"limit" : {
-					"count" : 1000
+					"count" : 10
 				}
 			}
 		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 100
+				"concurrency" : 10
 			}
 		}
 	}

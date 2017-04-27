@@ -24,7 +24,7 @@ import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.emc.mongoose.ui.log.Markers;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -403,6 +403,9 @@ implements HttpStorageDriver<I, O> {
 				return null;
 			} else {
 				channel.write(httpRequest);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, ioTask.hashCode() + " >>>> " + httpRequest.uri());
+				}
 			}
 
 			if(IoType.CREATE.equals(ioType)) {

@@ -47,10 +47,10 @@ extends HttpStorageDistributedScenarioTestBase {
 	private static final Path SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_SCENARIO, "s3", "mpu.json"
 	);
-	private static final int EXPECTED_CONCURRENCY = 100;
-	private static final long EXPECTED_COUNT = 1000;
-	private static final SizeInBytes EXPECTED_SIZE = new SizeInBytes("200MB");
-	private static final SizeInBytes EXPECTED_PART_SIZE = new SizeInBytes("16MB");
+	private static final int EXPECTED_CONCURRENCY = 10;
+	private static final long EXPECTED_COUNT = 10;
+	private static final SizeInBytes EXPECTED_SIZE = new SizeInBytes("10GB");
+	private static final SizeInBytes EXPECTED_PART_SIZE = new SizeInBytes("1GB");
 
 	private static boolean FINISHED_IN_TIME;
 	private static String STD_OUTPUT;
