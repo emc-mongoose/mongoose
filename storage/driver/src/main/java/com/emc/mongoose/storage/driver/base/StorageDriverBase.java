@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
 import com.emc.mongoose.common.concurrent.SvcTask;

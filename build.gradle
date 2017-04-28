@@ -237,7 +237,7 @@ task dist(type: Tar) {
 task printVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
-	gradleVersion = "3.5"
+	doLast { logger.quiet "Mongoose version: $version" }
 }
 
 task wrapper(type: Wrapper) {
