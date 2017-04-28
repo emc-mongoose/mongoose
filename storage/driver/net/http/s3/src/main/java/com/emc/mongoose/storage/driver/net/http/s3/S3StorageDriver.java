@@ -557,8 +557,8 @@ extends HttpStorageDriverBase<I, O> {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
 			if(compositeIoTask.allSubTasksDone()) {
 				LOG.info(
-					Markers.PARTS, "{},{}", compositeIoTask.getItem().getName(),
-					compositeIoTask.get(KEY_UPLOAD_ID)
+					Markers.PARTS, "{},{},{}", compositeIoTask.getItem().getName(),
+					compositeIoTask.get(KEY_UPLOAD_ID), compositeIoTask.getLatency()
 				);
 			} else {
 				final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();

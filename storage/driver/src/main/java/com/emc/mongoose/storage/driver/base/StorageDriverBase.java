@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
+import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.BATCH_SIZE;
@@ -15,7 +16,7 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
-
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -108,7 +109,11 @@ implements StorageDriver<I, O> {
 			if(n < BATCH_SIZE) {
 				n += inTasksQueue.drainTo(this, BATCH_SIZE - n);
 			}
-			try {
+			try(
+				final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
+					Constants.KEY_STEP_NAME, jobName
+				)
+			) {
 				if(n > 0) {
 					m = submit(this, 0, n);
 					if(m > 0) {

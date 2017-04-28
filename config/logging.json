@@ -359,7 +359,7 @@
 					"type": "loadJobFile",
 					"fileName": "parts.upload.csv",
 					"PatternLayout": {
-						"header": "ItemPath,UploadId%n",
+						"header": "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern": "%m%n"
 					},
 					"Filters": {

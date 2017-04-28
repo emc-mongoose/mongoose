@@ -404,7 +404,10 @@ implements HttpStorageDriver<I, O> {
 			} else {
 				channel.write(httpRequest);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, ioTask.hashCode() + " >>>> " + httpRequest.uri());
+					LOG.trace(
+						Markers.MSG, "{} >>>> {} {}", ioTask.hashCode(), httpRequest.method(),
+						httpRequest.uri()
+					);
 				}
 			}
 

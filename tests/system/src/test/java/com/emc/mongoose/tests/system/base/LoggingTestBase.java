@@ -405,12 +405,15 @@ public abstract class LoggingTestBase {
 	protected static void testPartsUploadRecord(final List<CSVRecord> recs)
 	throws Exception {
 		String itemPath, uploadId;
+		long respLatency;
 		for(final CSVRecord rec : recs) {
-			assertEquals(rec.size(), 2);
+			assertEquals(rec.size(), 3);
 			itemPath = rec.get("ItemPath");
 			assertNotNull(itemPath);
 			uploadId = rec.get("UploadId");
 			assertNotNull(uploadId);
+			respLatency = Long.parseLong(rec.get("RespLatency[us]"));
+			assertTrue(respLatency > 0);
 		}
 
 	}
