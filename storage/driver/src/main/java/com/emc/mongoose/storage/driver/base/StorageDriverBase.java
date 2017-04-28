@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
+import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
 import com.emc.mongoose.common.concurrent.SvcTask;
@@ -20,8 +21,8 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Markers;
 
-import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

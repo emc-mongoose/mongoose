@@ -29,7 +29,7 @@ ext {
 		slf4j : "1.7.24",
 		log4j : "2.8.1",
 		metrics : "3.2.2",
-		nagaina: "[3.4,)",
+		nagaina : "[3.4,)",
 		netty : "4.1.9.Final",
 	]
 
@@ -237,7 +237,7 @@ task dist(type: Tar) {
 task printVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
-	doLast { logger.quiet "Mongoose version: $version" }
+	gradleVersion = "3.5"
 }
 
 task wrapper(type: Wrapper) {
