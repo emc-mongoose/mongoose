@@ -61,7 +61,7 @@ public abstract class LoggingTestBase {
 	protected static Logger LOG;
 	protected static String JOB_NAME;
 	protected static BufferingOutputStream STD_OUT_STREAM;
-	protected static int LOG_FILE_TIMEOUT_SEC = 60;
+	protected static int LOG_FILE_TIMEOUT_SEC = 50;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -114,9 +114,14 @@ public abstract class LoggingTestBase {
 	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
 		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME, fileName).toFile();
+		long prevSize = -1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
-			if(logFile.exists() && logFile.length() > 0) {
-				break;
+			if(logFile.exists()) {
+				nextSize = logFile.length();
+				if(prevSize == nextSize) {
+					break;
+				}
+				prevSize = nextSize;
 			}
 			try {
 				TimeUnit.SECONDS.sleep(1);
