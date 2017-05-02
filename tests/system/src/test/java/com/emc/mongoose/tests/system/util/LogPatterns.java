@@ -54,14 +54,14 @@ public interface LogPatterns {
 	
 	Pattern STD_OUT_LOAD_THRESHOLD_ENTRANCE = Pattern.compile(
 		DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() + "\\s+" +
-			STD_OUT_CLASS_NAME.pattern() + "\\s+" + STD_OUT_THREAD_NAME.pattern() + "\\s+" +
+			STD_OUT_CLASS_NAME.pattern() + "\\s+" + STD_OUT_THREAD_NAME.pattern() + "\\s+\\w+:\\s+" +
 			"The threshold of (?<threshold>[0-9]+) active tasks count is reached, " +
 			"starting the additional metrics accounting"
 	);
 	
 	Pattern STD_OUT_LOAD_THRESHOLD_EXIT = Pattern.compile(
 		DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() + "\\s+" +
-			STD_OUT_CLASS_NAME.pattern() + "\\s+" + STD_OUT_THREAD_NAME.pattern() + "\\s+" +
+			STD_OUT_CLASS_NAME.pattern() + "\\s+" + STD_OUT_THREAD_NAME.pattern() + "\\s+\\w+:\\s+" +
 			"The active tasks count is below the threshold of (?<threshold>[0-9]+), " +
 			"stopping the additional metrics accounting"
 	);

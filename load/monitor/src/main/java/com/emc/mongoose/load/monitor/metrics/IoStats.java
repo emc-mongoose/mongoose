@@ -101,13 +101,13 @@ extends Closeable {
 	
 	static void outputLastStats(
 		Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
-		final Int2IntMap concurrencyMap, final String jobName, final boolean fileOutputFlag
+		final Int2IntMap concurrencyMap, final String jobName, final boolean volatileOutputFlag
 	) {
 		LOG.info(
 			Markers.METRICS_STDOUT,
 			new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
 		);
-		if(!fileOutputFlag) {
+		if(!volatileOutputFlag) {
 			LOG.info(
 				Markers.METRICS_FILE,
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
@@ -117,9 +117,9 @@ extends Closeable {
 	
 	static void outputLastMedStats(
 		Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
-		final Int2IntMap concurrencyMap, final String jobName, final boolean fileOutputFlag
+		final Int2IntMap concurrencyMap, final String jobName, final boolean volatileOutputFlag
 	) {
-		if(!fileOutputFlag) {
+		if(!volatileOutputFlag) {
 			LOG.info(
 				Markers.METRICS_MED_FILE,
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)

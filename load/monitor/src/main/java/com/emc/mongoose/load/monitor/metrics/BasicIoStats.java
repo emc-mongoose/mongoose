@@ -56,6 +56,8 @@ implements IoStats {
 	@Override
 	public void close()
 	throws IOException {
+		prevElapsedTime = System.currentTimeMillis() - tsStart;
+		tsStart = -1;
 	}
 	//
 	protected static final class BasicSnapshot

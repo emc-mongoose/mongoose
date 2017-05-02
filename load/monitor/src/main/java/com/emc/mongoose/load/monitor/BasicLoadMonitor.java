@@ -67,7 +67,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 12.07.16.
@@ -670,7 +669,7 @@ implements LoadMonitor<I, O> {
 			svcTasks.add(
 				new MetricsSvcTask(
 					this, name, metricsPeriodSec, preconditionJobFlag, driversCountMap,
-					concurrencyMap, ioStats, lastStats, medIoStats, lastMedStats,
+					concurrencyMap, ioStats, lastStats, medIoStats, lastMedStats, itemSizeMap,
 					(int) (fullLoadThreshold * totalConcurrency)
 				)
 			);
@@ -982,9 +981,27 @@ implements LoadMonitor<I, O> {
 		}
 		ioStats.clear();
 		
-		if(medIoStats != null) {
+		if(medIoStats != null && !medIoStats.isEmpty()) {
+			LOG.info(
+				Markers.MSG,
+				"{}: The active tasks count is below the threshold of {}, " +
+					"stopping the additional metrics accounting",
+				name, (int) (fullLoadThreshold * totalConcurrency)
+			);
+			LOG.info(
+				Markers.METRICS_MED_FILE_TOTAL,
+				new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
+			);
+			LOG.info(
+				Markers.METRICS_EXT_MED_RESULTS,
+				new ExtResultsXmlLogMessage(
+					name, lastMedStats, itemSizeMap, concurrencyMap, driversCountMap
+				)
+			);
 			for(final IoStats nextMedStats : medIoStats.values()) {
-				nextMedStats.close();
+				if(nextMedStats.isStarted()) {
+					nextMedStats.close();
+				}
 			}
 			medIoStats.clear();
 		}
