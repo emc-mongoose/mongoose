@@ -114,7 +114,7 @@ public abstract class LoggingTestBase {
 	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
 		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME, fileName).toFile();
-		long prevSize = -1, nextSize;
+		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
 				nextSize = logFile.length();
