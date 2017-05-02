@@ -126,7 +126,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test @Ignore
+	@Test
 	public void testActiveConnectionsCount()
 	throws Exception {
 		assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, ACTUAL_CONCURRENCY);
@@ -141,7 +141,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test @Ignore
+	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
