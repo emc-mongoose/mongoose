@@ -118,7 +118,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test
+	@Test @Ignore
 	public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogRecords(

@@ -100,7 +100,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test
+	@Test @Ignore
 	public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogRecords(
