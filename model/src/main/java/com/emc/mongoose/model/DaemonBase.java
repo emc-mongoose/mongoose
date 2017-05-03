@@ -53,7 +53,6 @@ implements Daemon {
 								nextSvcTasks = entry.getValue();
 								for(final Runnable nextSvcTask : nextSvcTasks) {
 									try {
-										LockSupport.parkNanos(1);
 										nextSvcTask.run();
 									} catch(final Throwable t) {
 										System.err.println(

@@ -293,7 +293,7 @@ implements StorageDriver<I, O> {
 		try {
 
 			final O ioTaskResult = ioTask.getResult();
-			if(!ioResultsQueue.offer(ioTaskResult, 1, TimeUnit.MILLISECONDS)) {
+			if(!ioResultsQueue.offer(ioTaskResult, 1, TimeUnit.MICROSECONDS)) {
 				LOG.warn(
 					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
 					toString()
@@ -305,7 +305,7 @@ implements StorageDriver<I, O> {
 				if(!parentTask.allSubTasksDone()) {
 					final List<O> subTasks = parentTask.getSubTasks();
 					for(final O nextSubTask : subTasks) {
-						if(!childTasksQueue.offer(nextSubTask, 1, TimeUnit.MILLISECONDS)) {
+						if(!childTasksQueue.offer(nextSubTask, 1, TimeUnit.MICROSECONDS)) {
 							LOG.warn(
 								Markers.ERR,
 								"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
@@ -321,7 +321,7 @@ implements StorageDriver<I, O> {
 				if(parentTask.allSubTasksDone()) {
 					// execute once again to finalize the things if necessary:
 					// complete the multipart upload, for example
-					if(!childTasksQueue.offer((O) parentTask, 1, TimeUnit.MILLISECONDS)) {
+					if(!childTasksQueue.offer((O) parentTask, 1, TimeUnit.MICROSECONDS)) {
 						LOG.warn(
 							Markers.ERR,
 							"{}: I/O child tasks queue overflow, dropping the I/O task",
@@ -376,7 +376,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public Input<O> getInput() {
-		return null;
+		return this;
 	}
 	
 	@Override
