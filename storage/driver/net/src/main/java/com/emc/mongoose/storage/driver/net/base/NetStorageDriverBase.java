@@ -27,6 +27,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.WriteBufferWaterMark;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -130,21 +131,16 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
+		bootstrap.option(
+			ChannelOption.WRITE_BUFFER_WATER_MARK,
+			new WriteBufferWaterMark(
+				(int) netConfig.getWriteBufferLowWaterMark().get(),
+				(int) netConfig.getWriteBufferHighWaterMark().get()
+			)
+		);
 		connPool = new BasicMultiNodeConnPool(
 			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
 		);
-		/*for(final String na : storageNodeAddrs) {
-			final InetSocketAddress nodeAddr;
-			if(na.contains(":")) {
-				final String addrParts[] = na.split(":");
-				nodeAddr = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
-			} else {
-				nodeAddr = new InetSocketAddress(na, storageNodePort);
-			}
-			connPoolMap.put(
-				na, new FixedChannelPool(bootstrap.remoteAddress(nodeAddr), this, concurrencyLevel)
-			);
-		}*/
 	}
 	
 	@Override
@@ -233,7 +229,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
 				ioTask.startRequest();
 				sendRequest(
-					conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
+					conn, conn.voidPromise().addListener(new RequestSentCallback(ioTask)), ioTask
 				);
 			}
 		} catch(final IllegalStateException e) {
@@ -270,7 +266,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
 					nextIoTask.startRequest();
 					sendRequest(
-						conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
+						conn, conn.voidPromise().addListener(new RequestSentCallback(nextIoTask)),
 						nextIoTask
 					);
 				}

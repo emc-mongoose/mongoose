@@ -466,7 +466,7 @@
 								},
 								{
 									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+									"pattern" : "[\\d\\.]+[KMG]?B?"
 								}
 							]
 						},
@@ -481,7 +481,7 @@
 								},
 								{
 									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+									"pattern" : "[\\d\\.]+[KMG]?B?"
 								}
 							]
 						},
@@ -491,6 +491,32 @@
 						"timeoutMilliSec": {
 							"type": "integer",
 							"minimum" : 0
+						},
+						"writeBufferHighWaterMark" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0,
+									"maximum" : 2147483647,
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d\\.]+[KMG]?B?"
+								}
+							]
+						},
+						"writeBufferLowWaterMark" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0,
+									"maximum" : 2147483647,
+								},
+								{
+									"type" : "string",
+									"pattern" : "[\\d\\.]+[KMG]?B?"
+								}
+							]
 						},
 						"ssl" : {
 							"type" : "boolean"
@@ -543,8 +569,8 @@
 					},
 					"required" : [
 						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger",
-						"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl",
-						"http", "node"
+						"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "writeBufferHighWaterMark",
+						"writeBufferLowWaterMark", "timeoutMilliSec", "ssl", "http", "node"
 					]
 				}
 			},

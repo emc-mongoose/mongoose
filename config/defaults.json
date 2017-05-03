@@ -115,6 +115,8 @@
 			"sndBuf" : 0,
 			"tcpNoDelay" : false,
 			"timeoutMilliSec" : 0,
+			"writeBufferHighWaterMark" : "32KB",
+			"writeBufferLowWaterMark" : "8KB",
 			"ssl" : false,
 			"http" : {
 				"fsAccess" : false,
