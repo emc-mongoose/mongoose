@@ -113,7 +113,7 @@
 			"reuseAddr" : true,
 			"rcvBuf" : 0,
 			"sndBuf" : 0,
-			"tcpNoDelay" : true,
+			"tcpNoDelay" : false,
 			"timeoutMilliSec" : 0,
 			"ssl" : false,
 			"http" : {
