@@ -229,14 +229,9 @@ implements LoadMonitor<I, O> {
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to invoke the remote method");
 			}
-			ioStats.put(
-				ioTypeCode, new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
-			);
+			ioStats.put(ioTypeCode, new BasicIoStats(metricsPeriodSec));
 			if(medIoStats != null) {
-				medIoStats.put(
-					ioTypeCode,
-					new BasicIoStats(IoType.values()[ioTypeCode].name(), metricsPeriodSec)
-				);
+				medIoStats.put(ioTypeCode, new BasicIoStats(metricsPeriodSec));
 			}
 			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getItemSizeEstimate());
 		}

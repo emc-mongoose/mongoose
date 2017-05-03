@@ -29,6 +29,8 @@ extends Closeable {
 	void start();
 	boolean isStarted();
 
+	boolean isAltered();
+
 	void markSucc(final long size, final long duration, final long latency);
 	void markPartSucc(final long size, final long duration, final long latency);
 	void markSucc(
@@ -91,8 +93,8 @@ extends Closeable {
 		IoStats ioTypeStats;
 		for(final int nextIoTypeCode : ioStats.keySet()) {
 			ioTypeStats = ioStats.get(nextIoTypeCode);
-			if(ioTypeStats != null && ioTypeStats.isStarted()) {
-				lastStats.put(nextIoTypeCode, ioStats.get(nextIoTypeCode).getSnapshot());
+			if(ioTypeStats != null && ioTypeStats.isAltered()) {
+				lastStats.put(nextIoTypeCode, ioTypeStats.getSnapshot());
 			}
 		}
 	}

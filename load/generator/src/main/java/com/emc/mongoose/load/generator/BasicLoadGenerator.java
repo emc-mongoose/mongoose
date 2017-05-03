@@ -129,18 +129,18 @@ implements LoadGenerator<I, O>, SvcTask {
 		return ioTaskBuilder.getIoType();
 	}
 	
-	private static final ThreadLocal<List> THREAD_LOCAL_BUFF = new ThreadLocal<>();
+	private static final ThreadLocal<OptLockBuffer> THREAD_LOCAL_BUFF = new ThreadLocal<>();
 	
 	@Override
 	public final void run() {
 		
-		List<O> thrLocTasksBuff;
+		OptLockBuffer<O> thrLocTasksBuff;
 		if(!deferredTasks.tryLock()) {
 			return;
 		} else {
 			thrLocTasksBuff = THREAD_LOCAL_BUFF.get();
 			if(thrLocTasksBuff == null) {
-				thrLocTasksBuff = new ArrayList<>(batchSize);
+				thrLocTasksBuff = new OptLockArrayBuffer<>(batchSize);
 				THREAD_LOCAL_BUFF.set(thrLocTasksBuff);
 			} else {
 				thrLocTasksBuff.clear();
@@ -241,14 +241,15 @@ implements LoadGenerator<I, O>, SvcTask {
 					} else {
 						try {
 							n = ioTaskOutput.put(thrLocTasksBuff, 0, n);
+							thrLocTasksBuff.removeRange(0, n);
 							outputTaskCounter.add(n);
 							if(n < pendingTasksCount) {
 								LockSupport.parkNanos(1);
 								deferredTasks.lock();
 								try {
-									deferredTasks.addAll(
-										thrLocTasksBuff.subList(n, pendingTasksCount)
-									);
+									for(final O ioTask : thrLocTasksBuff) {
+										deferredTasks.add(ioTask);
+									}
 									deferredTasksFlag = true;
 								} finally {
 									deferredTasks.unlock();

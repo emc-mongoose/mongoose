@@ -17,18 +17,18 @@ import java.util.concurrent.atomic.LongAdder;
 public final class BasicIoStats
 implements IoStats {
 
-	protected final String name;
-	protected final Clock clock = new ResumableUserTimeClock();
-	protected final Histogram reqDuration, respLatency;
-	protected final CustomMeter throughputSuccess, throughputFail, reqBytes;
-	protected volatile long tsStart = -1, prevElapsedTime = 0;
-	protected final LongAdder reqDurationSum, respLatencySum;
+	private final Clock clock = new ResumableUserTimeClock();
+	private final Histogram reqDuration, respLatency;
+	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
+	private volatile long tsStart = -1, prevElapsedTime = 0;
+	private final LongAdder reqDurationSum, respLatencySum;
+	private volatile boolean alteredFlag = false;
+
 	//
-	public BasicIoStats(final String name, final int updateIntervalSec) {
-		this.name = name;
-		respLatency = new Histogram(new SlidingWindowReservoir(0x10_00_00));
+	public BasicIoStats(final int updateIntervalSec) {
+		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new SlidingWindowReservoir(0x10_00_00));
+		reqDuration = new Histogram(new SlidingWindowReservoir(0x1_00_00));
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -41,16 +41,24 @@ implements IoStats {
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
 		reqBytes.resetStartTime();
+		alteredFlag = true;
 	}
 	//
 	@Override
 	public final boolean isStarted() {
 		return tsStart > -1;
 	}
+
+	@Override
+	public final boolean isAltered() {
+		return alteredFlag;
+	}
+
 	//
 	@Override
 	public final void markElapsedTime(final long millis) {
 		prevElapsedTime = millis;
+		alteredFlag = true;
 	}
 	//
 	@Override
@@ -282,6 +290,7 @@ implements IoStats {
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
+		alteredFlag = true;
 	}
 	//
 	@Override
@@ -293,6 +302,7 @@ implements IoStats {
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
+		alteredFlag = true;
 	}
 	//
 	@Override
@@ -309,6 +319,7 @@ implements IoStats {
 			respLatency.update(latency);
 			respLatencySum.add(latency);
 		}
+		alteredFlag = true;
 	}
 	//
 	@Override
@@ -324,16 +335,19 @@ implements IoStats {
 			respLatency.update(latency);
 			respLatencySum.add(latency);
 		}
+		alteredFlag = true;
 	}
 	//
 	@Override
 	public final void markFail() {
 		throughputFail.mark();
+		alteredFlag = true;
 	}
 	//
 	@Override
 	public final void markFail(final long count) {
 		throughputFail.mark(count);
+		alteredFlag = true;
 	}
 	//
 	@Override
@@ -341,6 +355,7 @@ implements IoStats {
 		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
+		alteredFlag = false;
 		return new BasicSnapshot(
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
