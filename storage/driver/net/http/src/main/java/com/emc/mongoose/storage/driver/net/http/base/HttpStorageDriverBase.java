@@ -558,7 +558,7 @@ implements HttpStorageDriver<I, O> {
 		}
 
 		channel.write(LastHttpContent.EMPTY_LAST_CONTENT, channelPromise);
-		//channel.flush();
+		channel.flush();
 	}
 
 	@Override
