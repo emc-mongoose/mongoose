@@ -229,7 +229,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
 				ioTask.startRequest();
 				sendRequest(
-					conn, conn.voidPromise().addListener(new RequestSentCallback(ioTask)), ioTask
+					conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
 				);
 			}
 		} catch(final IllegalStateException e) {
@@ -266,7 +266,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
 					nextIoTask.startRequest();
 					sendRequest(
-						conn, conn.voidPromise().addListener(new RequestSentCallback(nextIoTask)),
+						conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
 						nextIoTask
 					);
 				}
