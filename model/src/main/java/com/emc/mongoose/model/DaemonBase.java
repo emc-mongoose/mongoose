@@ -49,7 +49,6 @@ implements Daemon {
 						if(svcTaskEntries.size() == 0) {
 							Thread.sleep(1);
 						} else {
-							LockSupport.parkNanos(1);
 							for(final Entry<Daemon, List<SvcTask>> entry : svcTaskEntries) {
 								nextSvcTasks = entry.getValue();
 								for(final Runnable nextSvcTask : nextSvcTasks) {

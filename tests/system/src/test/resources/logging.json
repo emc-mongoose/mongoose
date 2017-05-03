@@ -506,7 +506,10 @@
 				{
 					"name" : "io.netty.util.concurrent.DefaultPromise.rejectedExecution",
 					"level" : "FATAL",
-					"additivity" : "false"
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref" : "async"
+					}
 				},
 				{
 					"name" : "io.netty.channel.AbstractChannel",

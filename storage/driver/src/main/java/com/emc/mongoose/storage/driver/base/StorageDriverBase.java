@@ -120,7 +120,6 @@ implements StorageDriver<I, O> {
 					if(n < batchSize) {
 						n += inTasksQueue.drainTo(buff, batchSize - n);
 					}
-					LockSupport.parkNanos(1);
 					if(n > 0) {
 						if(n == 1) {
 							if(submit(buff.get(0))) {
