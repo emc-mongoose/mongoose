@@ -47,7 +47,7 @@ public class ConfigParserTest {
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
 		assertThat(netConfig.getReuseAddr(), equalTo(true, "storage.net.reuseAddr"));
 		assertThat(netConfig.getKeepAlive(), equalTo(true, "storage.net.keepAlive"));
-		assertThat(netConfig.getTcpNoDelay(), equalTo(true, "storage.net.tcpNoDelay"));
+		assertThat(netConfig.getTcpNoDelay(), equalTo(false, "storage.net.tcpNoDelay"));
 		assertThat(netConfig.getLinger(), equalTo(0, "storage.net.linger"));
 		assertThat(netConfig.getBindBackLogSize(), equalTo(0, "storage.net.bindBacklogSize"));
 		assertThat(netConfig.getInterestOpQueued(), equalTo(false, "storage.net.interestOpQueued"));

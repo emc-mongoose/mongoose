@@ -1023,7 +1023,7 @@ implements Serializable {
 				this.writeBufferHighWaterMark = writeBufferHighWaterMark;
 			}
 
-			public final void setKeyWriteBufferLowWaterMark(final SizeInBytes writeBufferLowWaterMark) {
+			public final void setWriteBufferLowWaterMark(final SizeInBytes writeBufferLowWaterMark) {
 				this.writeBufferLowWaterMark = writeBufferLowWaterMark;
 			}
 			
