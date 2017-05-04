@@ -48,8 +48,8 @@ public class ThreadPoolExecutorTest {
 	public final void testUnpooledTasksRate()
 	throws Exception {
 		final ExecutorService executor = new ThreadPoolExecutor(
-			ThreadUtil.getHardwareConcurrencyLevel(),
-			ThreadUtil.getHardwareConcurrencyLevel(),
+			ThreadUtil.getHardwareThreadCount(),
+			ThreadUtil.getHardwareThreadCount(),
 			0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(QUEUE_SIZE_LIMIT)
 		);
 		
@@ -110,8 +110,8 @@ public class ThreadPoolExecutorTest {
 	public final void testPooledTasksRate()
 	throws Exception {
 		final ExecutorService executor = new ThreadPoolExecutor(
-			ThreadUtil.getHardwareConcurrencyLevel(),
-			ThreadUtil.getHardwareConcurrencyLevel(),
+			ThreadUtil.getHardwareThreadCount(),
+			ThreadUtil.getHardwareThreadCount(),
 			0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(QUEUE_SIZE_LIMIT)
 		);
 		
@@ -146,11 +146,11 @@ public class ThreadPoolExecutorTest {
 	public final void testPooledTasksRate2()
 	throws Exception {
 		final ExecutorService executor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel()
+			ThreadUtil.getHardwareThreadCount()
 		);
 		
 		final BlockingQueue<RunnableFuture> tasksQueue = new ArrayBlockingQueue<>(QUEUE_SIZE_LIMIT);
-		for(int i = 0; i < ThreadUtil.getHardwareConcurrencyLevel(); i ++) {
+		for(int i = 0; i < ThreadUtil.getHardwareThreadCount(); i ++) {
 			executor.submit(
 				() -> {
 					final List<RunnableFuture> tasksBuff = new ArrayList<>(BATCH_SIZE);
@@ -190,11 +190,11 @@ public class ThreadPoolExecutorTest {
 	public final void testUnpooledTasksRate2()
 	throws Exception {
 		final ExecutorService executor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel()
+			ThreadUtil.getHardwareThreadCount()
 		);
 		
 		final BlockingQueue<RunnableFuture> tasksQueue = new ArrayBlockingQueue<>(QUEUE_SIZE_LIMIT);
-		for(int i = 0; i < ThreadUtil.getHardwareConcurrencyLevel(); i ++) {
+		for(int i = 0; i < ThreadUtil.getHardwareThreadCount(); i ++) {
 			executor.submit(
 				() -> {
 					final List<RunnableFuture> tasksBuff = new ArrayList<>(BATCH_SIZE);

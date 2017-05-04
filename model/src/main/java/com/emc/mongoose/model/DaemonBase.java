@@ -8,7 +8,7 @@ import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.SHUTDOWN;
 import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
-import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareConcurrencyLevel;
+import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareThreadCount;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created on 12.07.16.
@@ -35,11 +34,11 @@ implements Daemon {
 	protected static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
-		getHardwareConcurrencyLevel(), new NamingThreadFactory("svcTasksWorker", true)
+		getHardwareThreadCount(), new NamingThreadFactory("svcTasksWorker", true)
 	);
 	
 	static {
-		for(int i = 0; i < getHardwareConcurrencyLevel(); i ++) {
+		for(int i = 0; i < getHardwareThreadCount(); i ++) {
 			SVC_TASKS_EXECUTOR.submit(
 				() -> {
 					Set<Entry<Daemon, List<SvcTask>>> svcTaskEntries;

@@ -53,7 +53,7 @@ implements StorageDriver<I, O> {
 		super(jobName, loadConfig, storageConfig, verifyFlag);
 		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
 		if(confWorkerCount < 1) {
-			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareConcurrencyLevel());
+			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
 		} else {
 			ioWorkerCount = confWorkerCount;
 		}

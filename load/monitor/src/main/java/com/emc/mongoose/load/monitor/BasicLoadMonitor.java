@@ -695,7 +695,7 @@ implements LoadMonitor<I, O> {
 	throws IllegalStateException {
 		
 		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel(),
+			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("shutdownWorker", true)
 		);
 
@@ -810,7 +810,7 @@ implements LoadMonitor<I, O> {
 	throws IllegalStateException {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel(),
+			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("interruptWorker", true)
 		);
 
@@ -868,7 +868,7 @@ implements LoadMonitor<I, O> {
 		super.doClose();
 
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareConcurrencyLevel(),
+			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)
 		);
 

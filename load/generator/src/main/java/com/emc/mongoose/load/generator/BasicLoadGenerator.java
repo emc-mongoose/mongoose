@@ -32,9 +32,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 
 /**
  Created by kurila on 11.07.16.
@@ -190,7 +188,6 @@ implements LoadGenerator<I, O>, SvcTask {
 						inputLock.unlock();
 					}
 				}
-				LockSupport.parkNanos(1);
 			}
 
 			if(pendingTasksCount > 0) {
@@ -210,7 +207,6 @@ implements LoadGenerator<I, O>, SvcTask {
 							if(ioTaskOutput.put(task)) {
 								outputTaskCounter.increment();
 							} else {
-								LockSupport.parkNanos(1);
 								deferredTasks.lock();
 								try {
 									deferredTasks.add(task);
@@ -244,7 +240,6 @@ implements LoadGenerator<I, O>, SvcTask {
 							thrLocTasksBuff.removeRange(0, n);
 							outputTaskCounter.add(n);
 							if(n < pendingTasksCount) {
-								LockSupport.parkNanos(1);
 								deferredTasks.lock();
 								try {
 									for(final O ioTask : thrLocTasksBuff) {

@@ -290,80 +290,45 @@ implements StorageDriver<I, O> {
 
 		completedTaskCount.increment();
 
-		//try {
-
-			final O ioTaskResult = ioTask.getResult();
-			if(!ioResultsQueue.offer(ioTaskResult/*, 1, TimeUnit.MICROSECONDS*/)) {
-				LOG.warn(
-					Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
-					toString()
-				);
-			}
-
-			if(ioTask instanceof CompositeIoTask) {
-				final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
-				if(!parentTask.allSubTasksDone()) {
-					final List<O> subTasks = parentTask.getSubTasks();
-					for(final O nextSubTask : subTasks) {
-						if(!childTasksQueue.offer(nextSubTask/*, 1, TimeUnit.MICROSECONDS*/)) {
-							LOG.warn(
-								Markers.ERR,
-								"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
-								toString()
-							);
-							break;
-						}
-					}
-				}
-			} else if(ioTask instanceof PartialIoTask) {
-				final PartialIoTask subTask = (PartialIoTask) ioTask;
-				final CompositeIoTask parentTask = subTask.getParent();
-				if(parentTask.allSubTasksDone()) {
-					// execute once again to finalize the things if necessary:
-					// complete the multipart upload, for example
-					if(!childTasksQueue.offer((O) parentTask/*, 1, TimeUnit.MICROSECONDS*/)) {
-						LOG.warn(
-							Markers.ERR,
-							"{}: I/O child tasks queue overflow, dropping the I/O task",
-							toString()
-						);
-					}
-				}
-			}
-		/*} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted the completed I/O task processing");
-		}*/
-	}
-	
-	/*protected final int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
-
-		int i;
-
-		if(isCircular) {
-			try {
-				for(i = from; i < to; i += inTasksQueue.put(ioTasks, i, to)) {
-					LockSupport.parkNanos(1);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to enqueue {} I/O tasks for the next execution",
-					to - from
-				);
-			}
-		}
-
-		try {
-			for(i = from; i < to; i += outTasksQueue.put(ioTasks, i, to)) {
-				LockSupport.parkNanos(1);
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to put {} I/O tasks to the output buffer", to - from
+		final O ioTaskResult = ioTask.getResult();
+		if(!ioResultsQueue.offer(ioTaskResult/*, 1, TimeUnit.MICROSECONDS*/)) {
+			LOG.warn(
+				Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
+				toString()
 			);
 		}
 
-		return to - from;
-	}*/
+		if(ioTask instanceof CompositeIoTask) {
+			final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
+			if(!parentTask.allSubTasksDone()) {
+				final List<O> subTasks = parentTask.getSubTasks();
+				for(final O nextSubTask : subTasks) {
+					if(!childTasksQueue.offer(nextSubTask/*, 1, TimeUnit.MICROSECONDS*/)) {
+						LOG.warn(
+							Markers.ERR,
+							"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
+							toString()
+						);
+						break;
+					}
+				}
+			}
+		} else if(ioTask instanceof PartialIoTask) {
+			final PartialIoTask subTask = (PartialIoTask) ioTask;
+			final CompositeIoTask parentTask = subTask.getParent();
+			if(parentTask.allSubTasksDone()) {
+				// execute once again to finalize the things if necessary:
+				// complete the multipart upload, for example
+				if(!childTasksQueue.offer((O) parentTask/*, 1, TimeUnit.MICROSECONDS*/)) {
+					LOG.warn(
+						Markers.ERR,
+						"{}: I/O child tasks queue overflow, dropping the I/O task",
+						toString()
+					);
+				}
+			}
+		}
+	}
 
 	protected abstract boolean submit(final O ioTask)
 	throws InterruptedException;
