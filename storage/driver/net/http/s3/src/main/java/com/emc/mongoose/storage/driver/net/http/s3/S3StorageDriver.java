@@ -33,8 +33,7 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_DISAB
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -57,8 +56,6 @@ import io.netty.util.AsciiString;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -89,7 +86,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class S3StorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private static final Logger LOG = LogManager.getLogger();
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
 	private static final ThreadLocal<StringBuilder>
@@ -140,7 +136,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
 
@@ -149,9 +145,8 @@ extends HttpStorageDriverBase<I, O> {
 			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
 				bucketExistedBefore = false;
 			} else if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
-				LOG.warn(
-					Markers.ERR, "The bucket checking response is: {}",
-					checkBucketResp.status().toString()
+				Loggers.ERR.warn(
+					"The bucket checking response is: {}", checkBucketResp.status().toString()
 				);
 			}
 			checkBucketResp.release();
@@ -176,14 +171,13 @@ extends HttpStorageDriverBase<I, O> {
 			} catch(final InterruptedException e) {
 				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
-				LOG.warn(
-					Markers.ERR, "The bucket creating response is: {}",
-					putBucketResp.status().toString()
+				Loggers.ERR.warn(
+					"The bucket creating response is: {}", putBucketResp.status().toString()
 				);
 				return null;
 			}
@@ -206,14 +200,14 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
 
 		final boolean versioningEnabled;
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
-			LOG.warn(
-				Markers.ERR, "The bucket versioning checking response is: {}",
+			Loggers.ERR.warn(
+				"The bucket versioning checking response is: {}",
 				getBucketVersioningResp.status().toString()
 			);
 			return null;
@@ -245,12 +239,12 @@ extends HttpStorageDriverBase<I, O> {
 			} catch(final InterruptedException e) {
 				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
-				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
+				Loggers.ERR.warn("The bucket versioning setting response is: {}",
 					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
@@ -272,12 +266,12 @@ extends HttpStorageDriverBase<I, O> {
 			} catch(final InterruptedException e) {
 				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
-				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
+				Loggers.ERR.warn("The bucket versioning setting response is: {}",
 					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
@@ -359,9 +353,9 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		} catch(final InterruptedException ignored) {
 		} catch(final SAXException | ParserConfigurationException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the XML response parser");
+			LogUtil.exception(Level.WARN, e, "Failed to init the XML response parser");
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
 
 		return buff;
@@ -556,8 +550,8 @@ extends HttpStorageDriverBase<I, O> {
 		if(channel != null && ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
 			if(compositeIoTask.allSubTasksDone()) {
-				LOG.info(
-					Markers.PARTS, "{},{},{}", compositeIoTask.getItem().getName(),
+				Loggers.MULTIPART.info(
+					"{},{},{}", compositeIoTask.getItem().getName(),
 					compositeIoTask.get(KEY_UPLOAD_ID), compositeIoTask.getLatency()
 				);
 			} else {
@@ -669,8 +663,8 @@ extends HttpStorageDriverBase<I, O> {
 		buffCanonical.append('\n');
 		buffCanonical.append(dstUriPath);
 		
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffCanonical);
+		if(Loggers.MSG.isTraceEnabled()) {
+			Loggers.MSG.trace("Canonical representation:\n{}", buffCanonical);
 		}
 		
 		return buffCanonical.toString();

@@ -1,10 +1,9 @@
 package com.emc.mongoose.load.monitor.metrics;
 
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.Serializable;
@@ -99,19 +98,15 @@ extends Closeable {
 		}
 	}
 	
-	Logger LOG = LogManager.getLogger();
-	
 	static void outputLastStats(
 		Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
 		final Int2IntMap concurrencyMap, final String jobName, final boolean volatileOutputFlag
 	) {
-		LOG.info(
-			Markers.METRICS_STDOUT,
+		Loggers.METRICS_STD_OUT.info(
 			new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
 		);
 		if(!volatileOutputFlag) {
-			LOG.info(
-				Markers.METRICS_FILE,
+			Loggers.METRICS_FILE.info(
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
 			);
 		}
@@ -122,8 +117,7 @@ extends Closeable {
 		final Int2IntMap concurrencyMap, final String jobName, final boolean volatileOutputFlag
 	) {
 		if(!volatileOutputFlag) {
-			LOG.info(
-				Markers.METRICS_MED_FILE,
+			Loggers.METRICS_THRESHOLD_FILE.info(
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
 			);
 		}

@@ -6,8 +6,8 @@ import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.HttpResponseHandlerBase;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_ATTR_UPLOAD_ID;
+import com.emc.mongoose.ui.log.Loggers;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -18,8 +18,6 @@ import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -32,7 +30,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class S3ResponseHandler<I extends Item, O extends IoTask<I>>
 extends HttpResponseHandlerBase<I, O> {
 
-	private static final Logger LOG = LogManager.getLogger();
 	private static final AttributeKey<ByteBuf> CONTENT_ATTR_KEY = AttributeKey.newInstance(
 		"content"
 	);
@@ -78,7 +75,7 @@ extends HttpResponseHandlerBase<I, O> {
 			content.writeBytes(contentChunk);
 		} catch(final IndexOutOfBoundsException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e,
+				Level.WARN, e,
 				"HTTP content input buffer overflow, expected no more than {} bytes",
 				MAX_CONTENT_SIZE
 			);
@@ -99,8 +96,7 @@ extends HttpResponseHandlerBase<I, O> {
 					if(m.find()) {
 						channel.attr(KEY_ATTR_UPLOAD_ID).set(m.group(1));
 					} else {
-						LOG.warn(
-							Markers.ERR,
+						Loggers.ERR.warn(
 							"Upload id not found in the following response content:\n{}", contentStr
 						);
 					}

@@ -18,7 +18,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
-import org.apache.logging.log4j.LogManager;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -72,7 +71,6 @@ public abstract class LoggingTestBase {
 		JOB_NAME = ThreadContext.get(KEY_STEP_NAME);
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
-		LOG = LogManager.getLogger();
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	

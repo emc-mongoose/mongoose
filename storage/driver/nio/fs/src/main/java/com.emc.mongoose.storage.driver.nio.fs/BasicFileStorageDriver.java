@@ -17,11 +17,8 @@ import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,7 +46,6 @@ public final class BasicFileStorageDriver<I extends DataItem, O extends DataIoTa
 extends NioStorageDriverBase<I, O>
 implements FileStorageDriver<I, O> {
 
-	private static final Logger LOG = LogManager.getLogger();
 	private static final Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
 		{
 			add(StandardOpenOption.CREATE);
@@ -94,7 +90,7 @@ implements FileStorageDriver<I, O> {
 				return FS_PROVIDER.newFileChannel(srcFilePath, READ_OPEN_OPT);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to open the source channel for the path @ \"{}\"",
+					Level.WARN, e, "Failed to open the source channel for the path @ \"{}\"",
 					srcFilePath
 				);
 				return null;
@@ -133,8 +129,7 @@ implements FileStorageDriver<I, O> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to open the output channel for the path \"{}\"",
-					dstPath
+					Level.WARN, e, "Failed to open the output channel for the path \"{}\"", dstPath
 				);
 				return null;
 			}
@@ -217,8 +212,7 @@ implements FileStorageDriver<I, O> {
 							} catch(final DataSizeException e) {
 								final long
 									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-								LOG.warn(
-									Markers.MSG,
+								Loggers.MSG.warn(
 									"{}: content size mismatch, expected: {}, actual: {}",
 									item.getName(), item.size(), countBytesDone
 								);
@@ -264,19 +258,19 @@ implements FileStorageDriver<I, O> {
 				
 				default:
 					ioTask.setStatus(Status.FAIL_UNKNOWN);
-					LOG.fatal(Markers.ERR, "Unknown load type \"{}\"", ioType);
+					Loggers.ERR.fatal("Unknown load type \"{}\"", ioType);
 					break;
 			}
 		} catch(final FileNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, ioTask.toString());
+			LogUtil.exception(Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.RESP_FAIL_NOT_FOUND);
 		} catch(final AccessDeniedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, ioTask.toString());
+			LogUtil.exception(Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.RESP_FAIL_AUTH);
 		} catch(final ClosedChannelException e) {
 			ioTask.setStatus(Status.CANCELLED);
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, ioTask.toString());
+			LogUtil.exception(Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.FAIL_IO);
 		} catch(final NullPointerException e) {
 			if(!isClosed()) { // shared content source may be already closed from the load generator
@@ -297,7 +291,7 @@ implements FileStorageDriver<I, O> {
 				try {
 					srcChannel.close();
 				} catch(final IOException e) {
-					LOG.warn(Markers.ERR, "Failed to close the source I/O channel");
+					Loggers.ERR.warn("Failed to close the source I/O channel");
 				}
 			}
 
@@ -306,7 +300,7 @@ implements FileStorageDriver<I, O> {
 				try {
 					dstChannel.close();
 				} catch(final IOException e) {
-					LOG.warn(Markers.ERR, "Failed to close the destination I/O channel");
+					Loggers.ERR.warn("Failed to close the destination I/O channel");
 				}
 			}
 		}
@@ -319,7 +313,7 @@ implements FileStorageDriver<I, O> {
 			ioTask.setStatus(Status.SUCC);
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: finishing the I/O task which is in an invalid state",
+				Level.WARN, e, "{}: finishing the I/O task which is in an invalid state",
 				ioTask.toString()
 			);
 			ioTask.setStatus(Status.FAIL_UNKNOWN);
@@ -391,8 +385,8 @@ implements FileStorageDriver<I, O> {
 				ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
 				countBytesDone += e.getOffset();
 				ioTask.setCountBytesDone(countBytesDone);
-				LOG.warn(
-					Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+				Loggers.MSG.warn(
+					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 					fileItem.getName(), countBytesDone,
 					String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
 				);

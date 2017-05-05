@@ -8,30 +8,6 @@
 		"appenders": {
 			"appender" : [
 				{
-					"name" : "WebUI",
-					"type" : "WebUI",
-					"enabled" : "true",
-					"Filters" : {
-						"Filter" : [
-							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
 					"name": "stdout",
 					"type": "Console",
 					"follow": "true",
@@ -104,76 +80,77 @@
 							}
 						]
 					}
-				}, {
+				},
+				{
 					"name" : "metricsStdout",
 					"type" : "Console",
 					"follow" : "true",
-					"PatternLayout": {
+					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
 					},
-					"Filters": {
+					"Filters" : {
 						"Filter" : [
 							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "cfg",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "ioTrace",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "parts",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "parts",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "extResultsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "extResultsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "extMedResultsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
+								"type" : "MarkerFilter",
+								"marker" : "extMedResultsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsStdout",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "MarkerFilter",
+								"marker" : "metricsStdout",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedStdout",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedStdout",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}
 						]
 					}
@@ -260,7 +237,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
-								"level": "debug",
+								"level": "INFO",
 								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							}, {
@@ -405,7 +382,7 @@
 							},
 							{
 								"type": "ThresholdFilter",
-								"level": "DEBUG",
+								"level": "INFO",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}
@@ -456,41 +433,61 @@
 							}
 						]
 					}
+				},
+				{
+					"name" : "extResultsFile",
+					"type": "file",
+					"fileName": "result.xml",
+					"bufferedIO": false,
+					"PatternLayout": {
+						"header": "<result>\n",
+						"footer": "</result>\n",
+						"pattern": "%m",
+						"noConsoleNoAnsi": true
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "extResultsFile",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
 				}, {
-					"name": "async",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": 100000,
-					"shutdownTimeout": 10000,
-					"AppenderRef": [
-						{
-							"ref": "stdout"
-						}, {
-							"ref": "metricsStdout"
-						}, {
-							"ref": "msgFile"
-						}, {
-							"ref": "3rdPartyFile"
-						}, {
-							"ref": "errFile"
-						}, {
-							"ref": "metricsFile"
-						}, {
-							"ref": "metricsMedFile"
-						}, {
-							"ref": "metricsFileTotal"
-						}, {
-							"ref": "metricsMedFileTotal"
-						}, {
-							"ref": "ioTraceFile"
-						}, {
-							"ref": "WebUI"
-						}, {
-							"ref": "cfgFile"
-						}, {
-							"ref": "partsUploadFile"
-						}
-					]
+					"name" : "extMedResultsFile",
+					"type": "file",
+					"fileName": "intermediate-result.xml",
+					"bufferedIO": false,
+					"PatternLayout": {
+						"header": "<intermediate-result>\n",
+						"footer": "</intermediate-result>\n",
+						"pattern": "%m",
+						"noConsoleNoAnsi": true
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "extMedResultsFile",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
 				}
 			]
 		},
@@ -499,7 +496,7 @@
 				"level": "DEBUG",
 				"additivity": "false",
 				"AppenderRef": {
-					"ref": "async"
+					"ref": "3rdPartyFile"
 				}
 			},
 			"logger": [
@@ -508,7 +505,7 @@
 					"level" : "FATAL",
 					"additivity" : "false",
 					"AppenderRef" : {
-						"ref" : "async"
+						"ref" : "3rdPartyFile"
 					}
 				},
 				{
@@ -516,15 +513,113 @@
 					"level" : "ERROR",
 					"additivity" : "false",
 					"AppenderRef": {
-						"ref": "async"
+						"ref": "3rdPartyFile"
 					}
 				},
 				{
-					"name" : "com.emc.mongoose",
+					"name" : "com.emc.mongoose.ui.log.Config",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef": {
+						"ref": "cfgFile"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Errors",
+					"level" : "DEBUG",
+					"additivity" : "false",
+					"AppenderRef": [
+						{
+							"ref" : "stdout"
+						},
+						{
+							"ref" : "errFile"
+						}
+					]
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.IoTraces",
+					"level" : "DEBUG",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref" : "ioTraceFile"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.ExtResultsFile",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref" : "extResultsFile"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.File",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref" : "metricsFile"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.FileTotal",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref": "metricsFileTotal"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.StdOut",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref": "stdout"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.ExtResultsFile",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref": "extMedResultsFile"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.File",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref": "metricsMedFile"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.FileTotal",
+					"level" : "INFO",
+					"additivity" : "false",
+					"AppenderRef" : {
+						"ref": "metricsMedFileTotal"
+					}
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Messages",
+					"level" : "DEBUG",
+					"additivity" : "false",
+					"AppenderRef": [
+						{
+							"ref" : "stdout"
+						},
+						{
+							"ref" : "msgFile"
+						}
+					]
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Multipart",
 					"level" : "DEBUG",
 					"additivity" : "false",
 					"AppenderRef": {
-						"ref": "async"
+						"ref": "partsUploadFile"
 					}
 				}
 			]

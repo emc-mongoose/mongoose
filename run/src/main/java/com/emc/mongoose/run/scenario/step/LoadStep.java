@@ -23,11 +23,9 @@ import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,8 +43,6 @@ import java.util.concurrent.TimeUnit;
  */
 public final class LoadStep
 extends StepBase {
-	
-	private static final Logger LOG = LogManager.getLogger();
 	
 	private final boolean preconditionFlag;
 
@@ -70,7 +66,7 @@ extends StepBase {
 
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = stepConfig.getName();
-		LOG.info(Markers.MSG, "Run the load step \"{}\"", jobName);
+		Loggers.MSG.info("Run the load step \"{}\"", jobName);
 		stepConfig.setPrecondition(preconditionFlag);
 
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
@@ -98,7 +94,7 @@ extends StepBase {
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
-		LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
+		Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 		final LoadGenerator loadGenerator;
 		try {
@@ -114,7 +110,7 @@ extends StepBase {
 		} catch(final UserShootHisFootException e) {
 			throw new RuntimeException(e);
 		}
-		LOG.info(Markers.MSG, "Load generators initialized");
+		Loggers.MSG.info("Load generators initialized");
 
 		final long timeLimitSec;
 		long t = limitConfig.getTime();
@@ -133,25 +129,23 @@ extends StepBase {
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {
 				final Path itemOutputPath = Paths.get(itemOutputFile);
 				if(Files.exists(itemOutputPath)) {
-					LOG.warn(
-						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
-					);
+					Loggers.ERR.warn("Items output file \"{}\" already exists", itemOutputPath);
 				}
 				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
 				monitor.setIoResultsOutput(itemOutput);
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load step \"{}\" done", jobName);
+				Loggers.MSG.info("Load step \"{}\" done", jobName);
 			} else {
-				LOG.info(Markers.MSG, "Load step \"{}\" timeout", jobName);
+				Loggers.MSG.info("Load step \"{}\" timeout", jobName);
 			}
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
+			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load step \"{}\" interrupted", jobName);
+			Loggers.MSG.debug("Load step \"{}\" interrupted", jobName);
 		}
 	}
 	

@@ -2,10 +2,7 @@ package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -17,8 +14,6 @@ import java.util.Map;
  */
 public abstract class ParentStepBase
 extends StepBase {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	protected final List<Step> subSteps = new LinkedList<>();
 
@@ -66,7 +61,7 @@ extends StepBase {
 
 	protected void appendNewJob(final Map<String, Object> subTree, final Config config)
 	throws ScenarioParseException {
-		LOG.debug(Markers.MSG, "Load the subtree to the step \"{}\"", this.toString());
+		Loggers.MSG.debug("Load the subtree to the step \"{}\"", this.toString());
 		final String jobType = (String) subTree.get(KEY_NODE_TYPE);
 		if(jobType == null) {
 			throw new ScenarioParseException("No \"" + KEY_NODE_TYPE + "\" element for the job");

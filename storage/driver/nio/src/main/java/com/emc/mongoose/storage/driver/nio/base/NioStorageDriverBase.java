@@ -12,11 +12,8 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static java.lang.System.nanoTime;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,7 +33,6 @@ public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
-	private final static Logger LOG = LogManager.getLogger();
 	private final static int MIN_TASK_BUFF_CAPACITY = 0x4000;
 
 	private final ThreadPoolExecutor ioTaskExecutor;
@@ -140,7 +136,7 @@ implements StorageDriver<I, O> {
 			}
 
 			ioTaskBuffSize = ioTaskBuff.size();
-			LOG.debug(Markers.MSG, "Finish {} remaining active tasks finally", ioTaskBuffSize);
+			Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
 			for(int i = 0; i < ioTaskBuffSize; i ++) {
 				ioTask = ioTaskBuff.get(i);
 				while(IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
@@ -149,7 +145,7 @@ implements StorageDriver<I, O> {
 				concurrencyThrottle.release();
 				ioTaskCompleted(ioTask);
 			}
-			LOG.debug(Markers.MSG, "Finish the remaining active tasks done");
+			Loggers.MSG.debug("Finish the remaining active tasks done");
 		}
 	}
 
@@ -181,10 +177,10 @@ implements StorageDriver<I, O> {
 	throws IllegalStateException {
 		try {
 			if(!ioTaskExecutor.awaitTermination(250, TimeUnit.MILLISECONDS)) {
-				LOG.error(Markers.ERR, "Failed to stop the remaining I/O tasks in 0.25 second");
+				Loggers.ERR.error("Failed to stop the remaining I/O tasks in 0.25 second");
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Unexpected interruption");
+			LogUtil.exception(Level.WARN, e, "Unexpected interruption");
 		}
 		ioTaskExecutor.shutdownNow();
 		assert ioTaskExecutor.isTerminated();

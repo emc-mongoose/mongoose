@@ -24,14 +24,12 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentCon
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,8 +47,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MixedLoadStep
 extends StepBase {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
@@ -80,7 +76,7 @@ extends StepBase {
 
 		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = localStepConfig.getName();
-		LOG.info(Markers.MSG, "Run the mixed load step \"{}\"", jobName);
+		Loggers.MSG.info("Run the mixed load step \"{}\"", jobName);
 		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
 		
 		final long t = localLimitConfig.getTime();
@@ -114,7 +110,7 @@ extends StepBase {
 				);
 				
 				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
-				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
+				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
@@ -144,9 +140,9 @@ extends StepBase {
 				stepConfigMap.put(loadGenerator, stepConfig);
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the content source");
+			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
 		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the load generator");
+			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		}
 		
 		try(
@@ -158,9 +154,7 @@ extends StepBase {
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {
 				final Path itemOutputPath = Paths.get(itemOutputFile);
 				if(Files.exists(itemOutputPath)) {
-					LOG.warn(
-						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
-					);
+					Loggers.ERR.warn("Items output file \"{}\" already exists", itemOutputPath);
 				}
 				// NOTE: using null as an ItemFactory
 				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
@@ -168,16 +162,16 @@ extends StepBase {
 			}
 			monitor.start();
 			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load step done");
+				Loggers.MSG.info("Load step done");
 			} else {
-				LOG.info(Markers.MSG, "Load step timeout");
+				Loggers.MSG.info("Load step timeout");
 			}
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
+			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load step interrupted");
+			Loggers.MSG.debug("Load step interrupted");
 		}
 	}
 

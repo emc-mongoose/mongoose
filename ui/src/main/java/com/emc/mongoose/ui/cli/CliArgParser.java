@@ -1,10 +1,7 @@
 package com.emc.mongoose.ui.cli;
 
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.IllegalArgumentNameException;
-import com.emc.mongoose.ui.log.Markers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +12,6 @@ import java.util.Map;
  */
 public final class CliArgParser {
 	
-	private static final Logger LOG = LogManager.getLogger();
-
 	public static final String ARG_PREFIX = "--";
 
 	public static void main(final String... args)
@@ -50,12 +45,9 @@ public final class CliArgParser {
 						(boolean) aliasingNode.get(Config.KEY_DEPRECATED);
 					if(arg.startsWith(nextAliasName)) {
 						if(nextAliasTarget == null) {
-							LOG.fatal(
-								Markers.ERR, "The argument \"{}\" is deprecated", nextAliasName
-							);
+							Loggers.ERR.fatal("The argument \"{}\" is deprecated", nextAliasName);
 						} else if(nextDeprecatedFlag) {
-							LOG.warn(
-								Markers.ERR,
+							Loggers.ERR.warn(
 								"The argument \"{}\" is deprecated, use \"{}\" instead",
 								nextAliasName, nextAliasTarget
 							);

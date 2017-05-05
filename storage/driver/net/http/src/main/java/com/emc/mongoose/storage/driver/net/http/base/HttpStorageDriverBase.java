@@ -25,7 +25,7 @@ import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -47,8 +47,6 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -69,15 +67,13 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 	
-	private static final Logger LOG = LogManager.getLogger();
-	
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
 	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 		try {
 			return new AsyncPatternDefinedSupplier(pattern);
 		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create the pattern defined input");
+			LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
 			return null;
 		}
 	};
@@ -117,9 +113,9 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel = getUnpooledConnection();
 		try {
 			final ChannelPipeline pipeline = channel.pipeline();
-			LOG.debug(
-				Markers.MSG, "{}: execute the HTTP request using the channel {} w/ pipeline: {}",
-				stepName, channel.hashCode(), pipeline
+			Loggers.MSG.debug(
+				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepName,
+				channel.hashCode(), pipeline
 			);
 			pipeline.removeLast(); // remove the API specific handler
 			final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
@@ -410,10 +406,9 @@ implements HttpStorageDriver<I, O> {
 				return;
 			} else {
 				channel.write(httpRequest);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "{} >>>> {} {}", ioTask.hashCode(), httpRequest.method(),
-						httpRequest.uri()
+				if(Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace(
+						"{} >>>> {} {}", ioTask.hashCode(), httpRequest.method(), httpRequest.uri()
 					);
 				}
 			}
@@ -546,12 +541,12 @@ implements HttpStorageDriver<I, O> {
 				}
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
+			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
 		} catch(final Exception e) {
 			if(!isInterrupted() && !isClosed()) {
-				LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
+				LogUtil.exception(Level.WARN, e, "Send HTTP request failure");
 			}
 		} catch(final Throwable e) {
 			e.printStackTrace(System.err);

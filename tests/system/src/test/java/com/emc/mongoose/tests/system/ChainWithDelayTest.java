@@ -74,12 +74,12 @@ extends HttpStorageDistributedScenarioTestBase {
 				try {
 					SCENARIO.run();
 				} catch(final Throwable t) {
-					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
+					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				} finally {
 					try {
 						SCENARIO.close();
 					} catch(final Throwable tt) {
-						LogUtil.exception(LOG, Level.ERROR, tt, "Failed to close the scenario");
+						LogUtil.exception(Level.ERROR, tt, "Failed to close the scenario");
 					}
 				}
 			}

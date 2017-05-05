@@ -18,13 +18,11 @@ import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -46,8 +44,6 @@ import java.util.function.Function;
 public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
-
-	private static final Logger LOG = LogManager.getLogger();
 	
 	private final int batchSize;
 	private final int queueCapacity;
@@ -146,14 +142,14 @@ implements StorageDriver<I, O> {
 				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					buff.clear();
 				} else {
-					LOG.warn(
-						Markers.ERR, "{}: failed to obtain the I/O tasks buffer lock in time",
+					Loggers.ERR.warn(
+						"{}: failed to obtain the I/O tasks buffer lock in time",
 						StorageDriverBase.this.toString()
 					);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: interrupted on close",
+					Level.WARN, e, "{}: interrupted on close",
 					StorageDriverBase.this.toString()
 				);
 			}
@@ -291,10 +287,7 @@ implements StorageDriver<I, O> {
 
 		final O ioTaskResult = ioTask.getResult();
 		if(!ioResultsQueue.offer(ioTaskResult/*, 1, TimeUnit.MICROSECONDS*/)) {
-			LOG.warn(
-				Markers.ERR, "{}: I/O task results queue overflow, dropping the result",
-				toString()
-			);
+			Loggers.ERR.warn("{}: I/O task results queue overflow, dropping the result", toString());
 		}
 
 		if(ioTask instanceof CompositeIoTask) {
@@ -303,8 +296,7 @@ implements StorageDriver<I, O> {
 				final List<O> subTasks = parentTask.getSubTasks();
 				for(final O nextSubTask : subTasks) {
 					if(!childTasksQueue.offer(nextSubTask/*, 1, TimeUnit.MICROSECONDS*/)) {
-						LOG.warn(
-							Markers.ERR,
+						Loggers.ERR.warn(
 							"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
 							toString()
 						);
@@ -319,10 +311,8 @@ implements StorageDriver<I, O> {
 				// execute once again to finalize the things if necessary:
 				// complete the multipart upload, for example
 				if(!childTasksQueue.offer((O) parentTask/*, 1, TimeUnit.MICROSECONDS*/)) {
-					LOG.warn(
-						Markers.ERR,
-						"{}: I/O child tasks queue overflow, dropping the I/O task",
-						toString()
+					Loggers.ERR.warn(
+						"{}: I/O child tasks queue overflow, dropping the I/O task", toString()
 					);
 				}
 			}
@@ -350,19 +340,19 @@ implements StorageDriver<I, O> {
 			ioTasksDispatchTask.close();
 		} catch(final IOException ignored) {
 		}
-		LOG.debug(Markers.MSG, "{}: shut down", toString());
+		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
 	@Override
 	protected void doInterrupt() {
 		try {
 			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
-				LOG.debug(Markers.MSG, "{}: interrupting while not in the idle state", toString());
+				Loggers.MSG.debug("{}: interrupting while not in the idle state", toString());
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to await the idle state");
+			LogUtil.exception(Level.WARN, e, "Failed to await the idle state");
 		} finally {
-			LOG.debug(Markers.MSG, "{}: interrupted", toString());
+			Loggers.MSG.debug("{}: interrupted", toString());
 		}
 	}
 
@@ -374,14 +364,14 @@ implements StorageDriver<I, O> {
 		inTasksQueue.clear();
 		final int ioResultsQueueSize = ioResultsQueue.size();
 		if(ioResultsQueueSize > 0) {
-			LOG.warn(
-				Markers.ERR, "{}: I/O results queue contains {} unhandled elements", toString(),
+			Loggers.ERR.warn(
+				"{}: I/O results queue contains {} unhandled elements", toString(),
 				ioResultsQueueSize
 			);
 		}
 		ioResultsQueue.clear();
 		pathMap.clear();
-		LOG.debug(Markers.MSG, "{}: closed", toString());
+		Loggers.MSG.debug("{}: closed", toString());
 	}
 	
 	@Override

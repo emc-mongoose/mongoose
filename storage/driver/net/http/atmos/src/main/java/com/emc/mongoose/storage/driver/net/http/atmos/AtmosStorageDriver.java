@@ -23,8 +23,7 @@ import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -40,8 +39,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -65,8 +62,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class AtmosStorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private static final Logger LOG = LogManager.getLogger();
-	
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
 	
@@ -85,10 +80,10 @@ extends HttpStorageDriverBase<I, O> {
 			mac.init(secretKey);
 			return mac;
 		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to init MAC for the given secret key");
+			LogUtil.exception(Level.ERROR, e, "Failed to init MAC for the given secret key");
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to perform the secret key Base-64 decoding"
+				Level.ERROR, e, "Failed to perform the secret key Base-64 decoding"
 			);
 		}
 		return null;
@@ -137,7 +132,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
 		
@@ -145,7 +140,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 			subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 		} else {
-			LOG.warn(Markers.ERR, "Creating the subtenant: got response {}",
+			Loggers.ERR.warn("Creating the subtenant: got response {}",
 				getSubtenantResp.status().toString()
 			);
 			return null;
@@ -322,8 +317,8 @@ extends HttpStorageDriverBase<I, O> {
 				.append(':').append(sortedHeader.getValue());
 		}
 
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffCanonical);
+		if(Loggers.MSG.isTraceEnabled()) {
+			Loggers.MSG.trace("Canonical representation:\n{}", buffCanonical);
 		}
 
 		return buffCanonical.toString();

@@ -11,16 +11,14 @@ import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadGenerator;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -40,9 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadGenerator<I, O>, SvcTask {
-
-	private static final Logger LOG = LogManager.getLogger();
-
+	
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
@@ -167,8 +163,8 @@ implements LoadGenerator<I, O>, SvcTask {
 								// get the items from the input
 								itemInput.get(items, n);
 							} catch(final EOFException e) {
-								LOG.debug(
-									Markers.MSG, "{}: end of items input @ the count {}",
+								Loggers.MSG.debug(
+									"{}: end of items input @ the count {}",
 									BasicLoadGenerator.this.toString(), builtTasksCounter.sum()
 								);
 								itemInputFinishFlag = true;
@@ -216,21 +212,20 @@ implements LoadGenerator<I, O>, SvcTask {
 								}
 							}
 						} catch(final EOFException e) {
-							LOG.debug(
-								Markers.MSG, "{}: finish due to output's EOF",
-								BasicLoadGenerator.this.toString()
+							Loggers.MSG.debug(
+								"{}: finish due to output's EOF", BasicLoadGenerator.this.toString()
 							);
 							outputFinishFlag = true;
 						} catch(final RemoteException e) {
 							final Throwable cause = e.getCause();
 							if(cause instanceof EOFException) {
-								LOG.debug(
-									Markers.MSG, "{}: finish due to output's EOF",
+								Loggers.MSG.debug(
+									"{}: finish due to output's EOF",
 									BasicLoadGenerator.this.toString()
 								);
 								outputFinishFlag = true;
 							} else {
-								LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+								LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
 								e.printStackTrace(System.err);
 							}
 						}
@@ -251,21 +246,20 @@ implements LoadGenerator<I, O>, SvcTask {
 								}
 							}
 						} catch(final EOFException e) {
-							LOG.debug(
-								Markers.MSG, "{}: finish due to output's EOF",
-								BasicLoadGenerator.this.toString()
+							Loggers.MSG.debug(
+								"{}: finish due to output's EOF", BasicLoadGenerator.this.toString()
 							);
 							outputFinishFlag = true;
 						} catch(final RemoteException e) {
 							final Throwable cause = e.getCause();
 							if(cause instanceof EOFException) {
-								LOG.debug(
-									Markers.MSG, "{}: finish due to output's EOF",
+								Loggers.MSG.debug(
+									"{}: finish due to output's EOF",
 									BasicLoadGenerator.this.toString()
 								);
 								outputFinishFlag = true;
 							} else {
-								LogUtil.exception(LOG, Level.ERROR, cause, "Unexpected failure");
+								LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
 								e.printStackTrace(System.err);
 							}
 						}
@@ -275,7 +269,7 @@ implements LoadGenerator<I, O>, SvcTask {
 
 		} catch(final Throwable t) {
 			if(!(t instanceof EOFException)) {
-				LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
+				LogUtil.exception(Level.ERROR, t, "Unexpected failure");
 				t.printStackTrace(System.err);
 			}
 		} finally {
@@ -283,10 +277,9 @@ implements LoadGenerator<I, O>, SvcTask {
 				outputFinishFlag |
 					(itemInputFinishFlag && pendingTasksCount == 0 && !deferredTasksFlag)
 			) {
-				LOG.debug(
-					Markers.MSG, "{}: generated {}, output {} I/O tasks",
-					BasicLoadGenerator.this.toString(), builtTasksCounter.sum(),
-					outputTaskCounter.sum()
+				Loggers.MSG.debug(
+					"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
+					builtTasksCounter.sum(), outputTaskCounter.sum()
 				);
 				try {
 					shutdown();
@@ -335,9 +328,7 @@ implements LoadGenerator<I, O>, SvcTask {
 				inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 				itemInput.close();
 			} catch(final Exception e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: failed to close the item input", toString()
-				);
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}
 		}
 		try {
@@ -345,7 +336,7 @@ implements LoadGenerator<I, O>, SvcTask {
 			deferredTasks.clear();
 		} catch(final Exception e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: failed to drop all deferred tasks buffer", toString()
+				Level.WARN, e, "{}: failed to drop all deferred tasks buffer", toString()
 			);
 		}
 		ioTaskBuilder.close();

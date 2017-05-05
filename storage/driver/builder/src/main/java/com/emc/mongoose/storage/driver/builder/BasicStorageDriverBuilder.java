@@ -12,11 +12,9 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
-import com.emc.mongoose.ui.log.Markers;
 
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,9 +33,7 @@ import java.util.Map;
 public class BasicStorageDriverBuilder<
 	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
 > implements StorageDriverBuilder<I, O, T> {
-
-	private static final Logger LOG = LogManager.getLogger();
-
+	
 	private String stepName;
 	private ContentSource contentSrc;
 	private ItemConfig itemConfig;
@@ -132,20 +128,17 @@ public class BasicStorageDriverBuilder<
 						.toURI().toURL();
 					final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
 					final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
-					LOG.info(
-						Markers.MSG,
+					Loggers.MSG.info(
 						"Loaded storage driver implementation \"{}\" from the class \"{}\"",
 						implType, implFqcn
 					);
 					availableImpls.put(implType, implCls);
 				} catch(final MalformedURLException e) {
-					LOG.warn(
-						Markers.ERR, "Invalid storage driver implementation file: {}", implFile
-					);
+					Loggers.ERR.warn("Invalid storage driver implementation file: {}", implFile);
 				} catch(final ClassNotFoundException e) {
-					LOG.warn(
-						Markers.ERR, "Invalid FQCN \"{}\" for the implementation from file: {}",
-						implFqcn, implFile
+					Loggers.ERR.warn(
+						"Invalid FQCN \"{}\" for the implementation from file: {}", implFqcn,
+						implFile
 					);
 				}
 			}

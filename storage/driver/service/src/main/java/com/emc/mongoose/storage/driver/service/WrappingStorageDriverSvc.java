@@ -14,10 +14,7 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -31,9 +28,7 @@ import static java.lang.System.nanoTime;
  */
 public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
 implements StorageDriverSvc<I, O> {
-
-	private static final Logger LOG = LogManager.getLogger();
-
+	
 	private final int port;
 	private final StorageDriver<I, O> driver;
 	private final ContentSource contentSrc;
@@ -53,7 +48,7 @@ implements StorageDriverSvc<I, O> {
 		this.port = port;
 		this.driver = driver;
 		this.contentSrc = contentSrc;
-		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
+		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 	
 	private final static class StateReportingTask
@@ -80,8 +75,8 @@ implements StorageDriverSvc<I, O> {
 				if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
 					prevNanoTimeStamp = nextNanoTimeStamp;
 					try {
-						LOG.info(
-							Markers.MSG, "{} I/O tasks: scheduled={}, active={}, completed={}",
+						Loggers.MSG.info(
+							"{} I/O tasks: scheduled={}, active={}, completed={}",
 							driverName, driver.getScheduledTaskCount(), driver.getActiveTaskCount(),
 							driver.getCompletedTaskCount()
 						);
@@ -148,7 +143,7 @@ implements StorageDriverSvc<I, O> {
 		//SVC_TASKS.remove(this);
 		driver.close();
 		contentSrc.close();
-		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
+		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
 	}
 
 	@Override

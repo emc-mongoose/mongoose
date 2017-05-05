@@ -77,7 +77,7 @@ extends HttpStorageDistributedScenarioTestBase {
 				try {
 					SCENARIO.run();
 				} catch(final Throwable t) {
-					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
+					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);

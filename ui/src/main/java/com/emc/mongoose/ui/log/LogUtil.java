@@ -2,10 +2,14 @@ package com.emc.mongoose.ui.log;
 
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.DaemonBase;
+import static com.emc.mongoose.common.Constants.DIR_CONFIG;
+import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
+import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
@@ -17,11 +21,6 @@ import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
-import static com.emc.mongoose.common.Constants.DIR_CONFIG;
-import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
-import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 
 import java.io.File;
 import java.util.Calendar;
@@ -184,29 +183,24 @@ implements ShutdownCallbackRegistry {
 	}
 	//
 	public static void exception(
-		final Logger logger, final Level level, final Throwable e,
+		final Level level, final Throwable e,
 		final String msgPattern, final Object... args
 	) {
-		if(logger.isTraceEnabled(Markers.ERR)) {
-			logger.log(
-				level, Markers.ERR,
-				logger.getMessageFactory().newMessage(msgPattern + ": " + e, args), e
+		if(Loggers.ERR.isTraceEnabled()) {
+			Loggers.ERR.log(
+				level, Loggers.ERR.getMessageFactory().newMessage(msgPattern + ": " + e, args), e
 			);
 		} else {
-			logger.log(
-				level, Markers.ERR,
-				logger.getMessageFactory().newMessage(msgPattern + ": " + e, args)
+			Loggers.ERR.log(
+				level, Loggers.ERR.getMessageFactory().newMessage(msgPattern + ": " + e, args)
 			);
 		}
 	}
 	//
 	public static void trace(
-		final Logger logger, final Level level, final Marker marker,
-		final String msgPattern, final Object... args
+		final Logger logger, final Level level, final String msgPattern, final Object... args
 	) {
-		logger.log(
-			level, marker, logger.getMessageFactory().newMessage(msgPattern, args), new Throwable()
-		);
+		logger.log(level, logger.getMessageFactory().newMessage(msgPattern, args), new Throwable());
 	}
 
 	@Override

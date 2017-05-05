@@ -3,13 +3,10 @@ package com.emc.mongoose.run.scenario;
 import com.emc.mongoose.run.scenario.step.Step;
 import com.emc.mongoose.run.scenario.step.SequentialStep;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,8 +22,6 @@ import java.util.regex.Pattern;
 public class JsonScenario
 extends SequentialStep
 implements Scenario {
-	//
-	private static final Logger LOG = LogManager.getLogger();
 	//
 	public JsonScenario(final Config config, final File scenarioSrcFile)
 	throws IOException, ScenarioParseException {
@@ -82,7 +77,7 @@ implements Scenario {
 			final JsonNode jacksonTree = new ObjectMapper().valueToTree(tree);
 			scenarioSchema.validate(jacksonTree, true);
 		} catch(final ProcessingException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to load the scenario schema");
+			LogUtil.exception(Level.WARN, e, "Failed to load the scenario schema");
 		}*/
 		return tree;
 	}
@@ -116,8 +111,8 @@ implements Scenario {
 						if(newValue != null) {
 							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
 							alteredFlag = true;
-							LOG.info(
-								Markers.MSG, "Key \"{}\": replaced \"{}\" with new value \"{}\"",
+							Loggers.MSG.info(
+								"Key \"{}\": replaced \"{}\" with new value \"{}\"",
 								key, propertyName, newValue
 							);
 						}
@@ -158,8 +153,8 @@ implements Scenario {
 						if(newValue != null) {
 							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
 							alteredFlag = true;
-							LOG.info(
-								Markers.MSG, "Value #{}: replaced \"{}\" with new value \"{}\"",
+							Loggers.MSG.info(
+								"Value #{}: replaced \"{}\" with new value \"{}\"",
 								i, propertyName, newValue
 							);
 						}
@@ -190,9 +185,9 @@ implements Scenario {
 	//
 	@Override
 	protected final void invoke() {
-		LOG.info(Markers.MSG, "Scenario start");
+		Loggers.MSG.info("Scenario start");
 		super.invoke();
-		LOG.info(Markers.MSG, "Scenario end");
+		Loggers.MSG.info("Scenario end");
 	}
 	//
 	@Override

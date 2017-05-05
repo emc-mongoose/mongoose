@@ -16,7 +16,6 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
-
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -37,8 +36,7 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -47,8 +45,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -74,8 +70,6 @@ import java.util.concurrent.atomic.LongAdder;
 public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadMonitor<I, O> {
-
-	private static final Logger LOG = LogManager.getLogger();
 	
 	private final String name;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
@@ -227,7 +221,7 @@ implements LoadMonitor<I, O> {
 				concurrencySum += ioTypeSpecificConcurrency;
 				concurrencyMap.put(ioTypeCode, ioTypeSpecificConcurrency);
 			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to invoke the remote method");
+				LogUtil.exception(Level.ERROR, e, "Failed to invoke the remote method");
 			}
 			ioStats.put(ioTypeCode, new BasicIoStats(metricsPeriodSec));
 			if(medIoStats != null) {
@@ -265,9 +259,9 @@ implements LoadMonitor<I, O> {
 	private boolean isDoneCountLimit() {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
-				LOG.debug(
-					Markers.MSG, "{}: count limit reached, {} results >= {} limit",
-					name, counterResults.sum(), countLimit
+				Loggers.MSG.debug(
+					"{}: count limit reached, {} results >= {} limit", name, counterResults.sum(),
+					countLimit
 				);
 				return true;
 			}
@@ -277,8 +271,7 @@ implements LoadMonitor<I, O> {
 				succCountSum += lastStats.get(ioTypeCode).getSuccCount();
 				failCountSum += lastStats.get(ioTypeCode).getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
-					LOG.debug(
-						Markers.MSG,
+					Loggers.MSG.debug(
 						"{}: count limit reached, {} successful + {} failed >= {} limit",
 						name, succCountSum, failCountSum, countLimit
 					);
@@ -295,8 +288,8 @@ implements LoadMonitor<I, O> {
 			for(final int ioTypeCode : lastStats.keySet()) {
 				sizeSum += lastStats.get(ioTypeCode).getByteCount();
 				if(sizeSum >= sizeLimit) {
-					LOG.debug(
-						Markers.MSG, "{}: size limit reached, done {} >= {} limit",
+					Loggers.MSG.debug(
+						"{}: size limit reached, done {} >= {} limit",
 						SizeInBytes.formatFixedSize(sizeSum), sizeLimit
 					);
 					return true;
@@ -317,7 +310,7 @@ implements LoadMonitor<I, O> {
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					Level.WARN, e, "Failed to communicate with load generator \"{}\"",
 					nextLoadGenerator
 				);
 			}
@@ -334,7 +327,7 @@ implements LoadMonitor<I, O> {
 					return false;
 				}
 			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to check the load generator state");
+				LogUtil.exception(Level.WARN, e, "Failed to check the load generator state");
 			}
 			// load generator has done its work
 			final long generatedIoTasks = soleLoadGenerator.getGeneratedIoTasksCount();
@@ -351,11 +344,11 @@ implements LoadMonitor<I, O> {
 
 	private boolean isDone() {
 		if(isDoneCountLimit()) {
-			LOG.debug(Markers.MSG, "{}: done due to max count done state", getName());
+			Loggers.MSG.debug("{}: done due to max count done state", getName());
 			return true;
 		}
 		if(isDoneSizeLimit()) {
-			LOG.debug(Markers.MSG, "{}: done due to max size done state", getName());
+			Loggers.MSG.debug("{}: done due to max size done state", getName());
 			return true;
 		}
 		return false;
@@ -372,7 +365,7 @@ implements LoadMonitor<I, O> {
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to communicate with load generator \"{}\"",
+					Level.WARN, e, "Failed to communicate with load generator \"{}\"",
 					nextLoadGenerator
 				);
 			}
@@ -388,13 +381,13 @@ implements LoadMonitor<I, O> {
 				} catch(final NoSuchObjectException e) {
 					if(!isClosed() && !isInterrupted()) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
+							Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
 							nextStorageDriver
 						);
 					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
+						Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
 						nextStorageDriver
 					);
 				}
@@ -418,8 +411,8 @@ implements LoadMonitor<I, O> {
 	public final boolean put(final O ioTaskResult) {
 		
 		// I/O trace logging
-		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
-			LOG.debug(Markers.IO_TRACE, new IoTraceCsvLogMessage<>(ioTaskResult));
+		if(!preconditionJobFlag && Loggers.IO_TRACE.isDebugEnabled()) {
+			Loggers.IO_TRACE.debug(new IoTraceCsvLogMessage<>(ioTaskResult));
 		}
 		
 		if( // account only completed composite I/O tasks
@@ -476,16 +469,16 @@ implements LoadMonitor<I, O> {
 						}
 					} catch(final EOFException e) {
 						LogUtil.exception(
-							LOG, Level.DEBUG, e, "I/O task destination end of input"
+							Level.DEBUG, e, "I/O task destination end of input"
 						);
 					} catch(final NoSuchObjectException e) {
 						LogUtil.exception(
-							LOG, Level.DEBUG, e,
+							Level.DEBUG, e,
 							"Remote I/O task destination is not more available"
 						);
 					} catch(final IOException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to put the I/O task to the destionation"
+							Level.WARN, e, "Failed to put the I/O task to the destionation"
 						);
 					}
 				}
@@ -497,7 +490,7 @@ implements LoadMonitor<I, O> {
 				counterResults.increment();
 			}
 		} else if(!Status.CANCELLED.equals(status)) {
-			LOG.debug(Markers.ERR, "{}: {}", ioTaskResult.toString(), status.toString());
+			Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
 			ioTypeStats.markFail();
 			if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 				ioTypeMedStats.markFail();
@@ -510,8 +503,8 @@ implements LoadMonitor<I, O> {
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
 		
 		// I/O trace logging
-		if(!preconditionJobFlag && LOG.isDebugEnabled(Markers.IO_TRACE)) {
-			LOG.debug(Markers.IO_TRACE, new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
+		if(!preconditionJobFlag && Loggers.IO_TRACE.isDebugEnabled()) {
+			Loggers.IO_TRACE.debug(new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
 		}
 
 		int originCode;
@@ -578,16 +571,16 @@ implements LoadMonitor<I, O> {
 							}
 						} catch(final EOFException e) {
 							LogUtil.exception(
-								LOG, Level.DEBUG, e, "I/O task destination end of input"
+								Level.DEBUG, e, "I/O task destination end of input"
 							);
 						} catch(final NoSuchObjectException e) {
 							LogUtil.exception(
-								LOG, Level.DEBUG, e,
+								Level.DEBUG, e,
 								"Remote I/O task destination is not more available"
 							);
 						} catch(final IOException e) {
 							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to put the I/O task to the destionation"
+								Level.WARN, e, "Failed to put the I/O task to the destionation"
 							);
 						}
 					}
@@ -599,7 +592,7 @@ implements LoadMonitor<I, O> {
 					counterResults.increment();
 				}
 			} else if(!Status.CANCELLED.equals(status)) {
-				LOG.debug(Markers.ERR, "{}: {}", ioTaskResult.toString(), status.toString());
+				Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
 				ioTypeStats.markFail();
 				if(ioTypeMedStats != null && ioTypeMedStats.isStarted()) {
 					ioTypeMedStats.markFail();
@@ -624,7 +617,7 @@ implements LoadMonitor<I, O> {
 				try {
 					totalActiveTaskCount += nextDriver.getActiveTaskCount();
 				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote method");
+					LogUtil.exception(Level.WARN, e, "Failed to invoke the remote method");
 				}
 			}
 		}
@@ -643,7 +636,7 @@ implements LoadMonitor<I, O> {
 					nextDriver.start();
 				} catch(final IllegalStateException | RemoteException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
+						Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
 					);
 				}
 			}
@@ -651,7 +644,7 @@ implements LoadMonitor<I, O> {
 				nextGenerator.start();
 			} catch(final IllegalStateException | RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
+					Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
 				);
 			}
 		}
@@ -704,13 +697,13 @@ implements LoadMonitor<I, O> {
 				() -> {
 					try {
 						nextGenerator.interrupt();
-						LOG.debug(
-							Markers.MSG, "{}: load generator \"{}\" interrupted", getName(),
+						Loggers.MSG.debug(
+							"{}: load generator \"{}\" interrupted", getName(),
 							nextGenerator.toString()
 						);
 					} catch(final RemoteException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "{}: failed to interrupt the generator {}",
+							Level.WARN, e, "{}: failed to interrupt the generator {}",
 							getName(), nextGenerator.toString()
 						);
 					}
@@ -721,13 +714,13 @@ implements LoadMonitor<I, O> {
 					() -> {
 						try {
 							nextDriver.shutdown();
-							LOG.debug(
-								Markers.MSG, "{}: storage driver \"{}\" shut down", getName(),
+							Loggers.MSG.debug(
+								"{}: storage driver \"{}\" shut down", getName(),
 								nextDriver.toString()
 							);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
-								LOG, Level.WARN, e, "failed to shutdown the driver {}", getName(),
+								Level.WARN, e, "failed to shutdown the driver {}", getName(),
 								nextDriver.toString()
 							);
 						}
@@ -739,14 +732,12 @@ implements LoadMonitor<I, O> {
 		shutdownExecutor.shutdown();
 		try {
 			if(shutdownExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.debug(Markers.MSG, "{}: load monitor was shut down properly", getName());
+				Loggers.MSG.debug("{}: load monitor was shut down properly", getName());
 			} else {
-				LOG.warn(Markers.ERR, "{}: load monitor shutdown timeout", getName());
+				Loggers.ERR.warn("{}: load monitor shutdown timeout", getName());
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: load monitor shutdown interrupted", getName()
-			);
+			LogUtil.exception(Level.WARN, e, "{}: load monitor shutdown interrupted", getName());
 		}
 	}
 
@@ -764,9 +755,9 @@ implements LoadMonitor<I, O> {
 			timeOutMilliSec -= t;
 		}*/
 		//
-		LOG.debug(
-			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
+		Loggers.MSG.debug(
+			"{}: await for the done condition at most for {}[s]", getName(),
+			TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
@@ -774,34 +765,32 @@ implements LoadMonitor<I, O> {
 				state.wait(250);
 			}
 			if(isInterrupted()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to \"interrupted\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", getName());
 				return true;
 			}
 			if(isClosed()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to \"closed\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"closed\" state", getName());
 				return true;
 			}
 			if(isDone()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"done\" state", getName());
 				return true;
 			}
 			if(!isAnyCircular && allIoTasksCompleted()) {
-				LOG.debug(
-					Markers.MSG, "{}: await exit because all I/O tasks have been completed",
-					getName()
+				Loggers.MSG.debug(
+					"{}: await exit because all I/O tasks have been completed", getName()
 				);
 				return true;
 			}
 			// issue SLTM-938 fix
 			if(nothingToRecycle()) {
-				LOG.debug(
-					Markers.ERR, "{}: exit because there's no I/O task to recycle (all failed)",
-					getName()
+				Loggers.ERR.debug(
+					"{}: exit because there's no I/O task to recycle (all failed)", getName()
 				);
 				return true;
 			}
 		}
-		LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
+		Loggers.MSG.debug("{}: await exit due to timeout", getName());
 		return false;
 	}
 
@@ -822,7 +811,7 @@ implements LoadMonitor<I, O> {
 							nextDriver.interrupt();
 						} catch(final RemoteException e) {
 							LogUtil.exception(
-								LOG, Level.DEBUG, e, "{}: failed to interrupt the driver {}",
+								Level.DEBUG, e, "{}: failed to interrupt the driver {}",
 								getName(), nextDriver.toString()
 							);
 						}
@@ -834,15 +823,13 @@ implements LoadMonitor<I, O> {
 		interruptExecutor.shutdown();
 		try {
 			if(interruptExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
-				LOG.debug(
-					Markers.MSG, "{}: storage drivers have been interrupted properly", getName()
-				);
+				Loggers.MSG.debug("{}: storage drivers have been interrupted properly", getName());
 			} else {
-				LOG.warn(Markers.ERR, "{}: storage drivers interrupting timeout", getName());
+				Loggers.ERR.warn("{}: storage drivers interrupting timeout", getName());
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
+				Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
 			);
 		}
 
@@ -852,13 +839,13 @@ implements LoadMonitor<I, O> {
 				svcTask.close();
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: failed to stop the service task {}", svcTask
+					Level.WARN, e, "{}: failed to stop the service task {}", svcTask
 				);
 			}
 		}
 		svcTasks.clear();
 
-		LOG.debug(Markers.MSG, "{}: interrupted the load monitor", getName());
+		Loggers.MSG.debug("{}: interrupted the load monitor", getName());
 	}
 
 	@Override
@@ -881,8 +868,7 @@ implements LoadMonitor<I, O> {
 							if(finalResults != null) {
 								final int finalResultsCount = finalResults.size();
 								if(finalResultsCount > 0) {
-									LOG.debug(
-										Markers.MSG,
+									Loggers.MSG.debug(
 										"{}: the driver \"{}\" returned {} final I/O results to process",
 										getName(), driver.toString(), finalResults.size()
 									);
@@ -891,7 +877,7 @@ implements LoadMonitor<I, O> {
 							}
 						} catch(final Throwable cause) {
 							LogUtil.exception(
-								LOG, Level.WARN, cause,
+								Level.WARN, cause,
 								"{}: failed to process the final results for the driver {}",
 								getName(), driver.toString()
 							);
@@ -899,13 +885,13 @@ implements LoadMonitor<I, O> {
 		
 						try {
 							driver.close();
-							LOG.debug(
-								Markers.MSG, "{}: the storage driver \"{}\" has been closed",
-								getName(), driver.toString()
+							Loggers.MSG.debug(
+								"{}: the storage driver \"{}\" has been closed", getName(),
+								driver.toString()
 							);
 						} catch(final IOException e) {
 							LogUtil.exception(
-								LOG, Level.WARN, e, "{}: failed to close the driver {}", getName(),
+								Level.WARN, e, "{}: failed to close the driver {}", getName(),
 								driver.toString()
 							);
 						}
@@ -915,13 +901,12 @@ implements LoadMonitor<I, O> {
 
 			try {
 				generator.close();
-				LOG.debug(
-					Markers.MSG, "{}: the load generator \"{}\" has been closed", getName(),
-					generator
+				Loggers.MSG.debug(
+					"{}: the load generator \"{}\" has been closed", getName(), generator
 				);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
+					Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
 				);
 			}
 		}
@@ -929,19 +914,17 @@ implements LoadMonitor<I, O> {
 		ioResultsGetAndApplyExecutor.shutdown();
 		try {
 			if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				LOG.debug(
-					Markers.MSG, "{}: final I/O result have been got and processed properly",
-					getName()
+				Loggers.MSG.debug(
+					"{}: final I/O result have been got and processed properly", getName()
 				);
 			} else {
-				LOG.warn(
-					Markers.ERR, "{}: timeout while getting and processing the final I/O results",
-					getName()
+				Loggers.ERR.warn(
+					"{}: timeout while getting and processing the final I/O results", getName()
 				);
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e,
+				Level.WARN, e,
 				"{}: interrupted  while getting and processing the final I/O results", getName()
 			);
 		}
@@ -954,17 +937,14 @@ implements LoadMonitor<I, O> {
 		}
 		recycleQueuesMap.clear();
 
-		LOG.info(
-			Markers.METRICS_STDOUT,
+		Loggers.METRICS_STD_OUT.info(
 			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
 		);
 		if(!preconditionJobFlag) {
-			LOG.info(
-				Markers.METRICS_FILE_TOTAL,
+			Loggers.METRICS_FILE_TOTAL.info(
 				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
 			);
-			LOG.info(
-				Markers.METRICS_EXT_RESULTS,
+			Loggers.METRICS_EXT_RESULTS_FILE.info(
 				new ExtResultsXmlLogMessage(
 					name, lastStats, itemSizeMap, concurrencyMap, driversCountMap
 				)
@@ -977,18 +957,15 @@ implements LoadMonitor<I, O> {
 		ioStats.clear();
 		
 		if(medIoStats != null && !medIoStats.isEmpty()) {
-			LOG.info(
-				Markers.MSG,
+			Loggers.MSG.info(
 				"{}: The active tasks count is below the threshold of {}, " +
 					"stopping the additional metrics accounting",
 				name, (int) (fullLoadThreshold * totalConcurrency)
 			);
-			LOG.info(
-				Markers.METRICS_MED_FILE_TOTAL,
+			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
 				new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
 			);
-			LOG.info(
-				Markers.METRICS_EXT_MED_RESULTS,
+			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
 				new ExtResultsXmlLogMessage(
 					name, lastMedStats, itemSizeMap, concurrencyMap, driversCountMap
 				)
@@ -1005,15 +982,14 @@ implements LoadMonitor<I, O> {
 			try {
 				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {
 					if(!ioResultsOutput.put(latestItemIoResult)) {
-						LOG.debug(
-							Markers.ERR,
+						Loggers.ERR.debug(
 							"{}: item info output fails to ingest, blocking the closing method",
 							getName()
 						);
 						while(!ioResultsOutput.put(latestItemIoResult)) {
 							Thread.sleep(1);
 						}
-						LOG.debug(Markers.MSG, "{}: closing method unblocked", getName());
+						Loggers.MSG.debug("{}: closing method unblocked", getName());
 					}
 				}
 			} catch(final InterruptedException ignored) {
@@ -1023,9 +999,9 @@ implements LoadMonitor<I, O> {
 
 		if(ioResultsOutput != null) {
 			ioResultsOutput.close();
-			LOG.debug(Markers.MSG, "{}: closed the items output", getName());
+			Loggers.MSG.debug("{}: closed the items output", getName());
 		}
 
-		LOG.debug(Markers.MSG, "{}: closed the load monitor", getName());
+		Loggers.MSG.debug("{}: closed the load monitor", getName());
 	}
 }

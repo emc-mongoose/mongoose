@@ -4,15 +4,14 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.ui.log.Loggers;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -27,8 +26,6 @@ import static java.lang.System.nanoTime;
 public class MetricsSvcTask
 extends SvcTaskBase {
 	
-	private static final Logger LOG = LogManager.getLogger();
-
 	private final Lock exclusiveInvocationLock = new ReentrantLock();
 	private final long metricsPeriodNanoSec;
 	private final Int2ObjectMap<IoStats> ioStats;
@@ -99,8 +96,7 @@ extends SvcTaskBase {
 					if(medIoStats != null && !exitStateFlag) {
 						if(loadMonitor.getActiveTaskCount() >= activeTasksThreshold) {
 							if(!enterStateFlag) {
-								LOG.info(
-									Markers.MSG,
+								Loggers.MSG.info(
 									"{}: The threshold of {} active tasks count is reached, " +
 										"starting the additional metrics accounting",
 									stepName, activeTasksThreshold
@@ -117,18 +113,15 @@ extends SvcTaskBase {
 							);
 						}
 					} else if(enterStateFlag) {
-						LOG.info(
-							Markers.MSG,
+						Loggers.MSG.info(
 							"{}: The active tasks count is below the threshold of {}, " +
 								"stopping the additional metrics accounting",
 							stepName, activeTasksThreshold
 						);
-						LOG.info(
-							Markers.METRICS_MED_FILE_TOTAL,
+						Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
 							new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
 						);
-						LOG.info(
-							Markers.METRICS_EXT_MED_RESULTS,
+						Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
 							new ExtResultsXmlLogMessage(
 								stepName, lastMedStats, itemSizeMap, concurrencyMap, driversCountMap
 							)
@@ -159,7 +152,7 @@ extends SvcTaskBase {
 			exclusiveInvocationLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: interrupted while closing the service task",
+				Level.WARN, e, "{}: interrupted while closing the service task",
 				stepName
 			);
 		}

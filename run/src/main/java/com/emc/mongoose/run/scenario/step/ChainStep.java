@@ -28,11 +28,9 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,8 +47,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ChainStep
 extends StepBase {
-	
-	private static final Logger LOG = LogManager.getLogger();
 	
 	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
@@ -71,7 +67,7 @@ extends StepBase {
 	protected final void invoke() {
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String testStepName = stepConfig.getName();
-		LOG.info(Markers.MSG, "Run the chain load step \"{}\"", testStepName);
+		Loggers.MSG.info("Run the chain load step \"{}\"", testStepName);
 		final LimitConfig commonLimitConfig = stepConfig.getLimitConfig();
 		
 		final long t = commonLimitConfig.getTime();
@@ -102,7 +98,7 @@ extends StepBase {
 				);
 				
 				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
-				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
+				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
@@ -153,9 +149,8 @@ extends StepBase {
 					if(itemOutputFile != null && itemOutputFile.length() > 0) {
 						final Path itemOutputPath = Paths.get(itemOutputFile);
 						if(Files.exists(itemOutputPath)) {
-							LOG.warn(
-								Markers.ERR, "Items output file \"{}\" already exists",
-								itemOutputPath
+							Loggers.ERR.warn(
+								"Items output file \"{}\" already exists", itemOutputPath
 							);
 						}
 						// NOTE: using null as an ItemFactory
@@ -167,9 +162,9 @@ extends StepBase {
 				}
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the content source");
+			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
 		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the load generator");
+			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		}
 		
 		try {
@@ -177,7 +172,7 @@ extends StepBase {
 				nextMonitor.start();
 			}
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+			LogUtil.exception(Level.WARN, e, "Unexpected failure");
 		}
 		
 		long timeRemainSec = timeLimitSec;
@@ -187,12 +182,12 @@ extends StepBase {
 				tsStart = System.currentTimeMillis();
 				try {
 					if(nextMonitor.await(timeRemainSec, TimeUnit.SECONDS)) {
-						LOG.info(Markers.MSG, "Load step \"{}\" done", nextMonitor.getName());
+						Loggers.MSG.info("Load step \"{}\" done", nextMonitor.getName());
 					} else {
-						LOG.info(Markers.MSG, "Load step \"{}\" timeout", nextMonitor.getName());
+						Loggers.MSG.info("Load step \"{}\" timeout", nextMonitor.getName());
 					}
 				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Load step interrupted");
+					Loggers.MSG.debug("Load step interrupted");
 					break;
 				} catch(final RemoteException e) {
 					throw new AssertionError(e);

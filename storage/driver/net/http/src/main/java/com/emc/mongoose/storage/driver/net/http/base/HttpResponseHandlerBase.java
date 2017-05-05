@@ -18,8 +18,7 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SPACE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.RESP_FAIL_SVC;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -32,8 +31,6 @@ import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.LastHttpContent;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
@@ -42,8 +39,6 @@ import java.io.IOException;
  */
 public abstract class HttpResponseHandlerBase<I extends Item, O extends IoTask<I>>
 extends ResponseHandlerBase<HttpObject, I, O> {
-
-	private static final Logger LOG = LogManager.getLogger();
 	
 	protected HttpResponseHandlerBase(
 		final HttpStorageDriverBase<I, O> driver,
@@ -57,18 +52,18 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	) {
 		switch(statusClass) {
 			case INFORMATIONAL:
-				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				ioTask.setStatus(RESP_FAIL_CLIENT);
 				break;
 			case SUCCESS:
 				ioTask.setStatus(SUCC);
 				return true;
 			case REDIRECTION:
-				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				ioTask.setStatus(RESP_FAIL_CLIENT);
 				break;
 			case CLIENT_ERROR:
-				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				if(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.equals(responseStatus)) {
 					ioTask.setStatus(RESP_FAIL_SVC);
 				} else if(HttpResponseStatus.REQUEST_URI_TOO_LONG.equals(responseStatus)) {
@@ -84,7 +79,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 				}
 				break;
 			case SERVER_ERROR:
-				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				if(HttpResponseStatus.GATEWAY_TIMEOUT.equals(responseStatus)) {
 					ioTask.setStatus(FAIL_TIMEOUT);
 				} else if(HttpResponseStatus.INSUFFICIENT_STORAGE.equals(responseStatus)) {
@@ -94,7 +89,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 				}
 				break;
 			case UNKNOWN:
-				LOG.warn(Markers.ERR, "{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				ioTask.setStatus(FAIL_UNKNOWN);
 				break;
 		}
@@ -115,7 +110,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 					try {
 						dataIoTask.startDataResponse();
 					} catch(final IllegalStateException e) {
-						LogUtil.exception(LOG, Level.DEBUG, e, "{}", dataIoTask.toString());
+						LogUtil.exception(Level.DEBUG, e, "{}", dataIoTask.toString());
 					}
 				}
 				final int chunkSize = contentChunk.readableBytes();
@@ -166,11 +161,11 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 			try {
 				ioTask.startResponse();
 			} catch(final IllegalStateException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "{}", ioTask.toString());
+				LogUtil.exception(Level.DEBUG, e, "{}", ioTask.toString());
 			}
 			final HttpResponse httpResponse = (HttpResponse) msg;
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "{} <<<< {}", ioTask.hashCode(), httpResponse.status());
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace("{} <<<< {}", ioTask.hashCode(), httpResponse.status());
 			}
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);

@@ -7,10 +7,7 @@ import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -30,7 +27,6 @@ public class Main {
 	throws Exception {
 		
 		LogUtil.init();
-		final Logger log = LogManager.getLogger();
 
 		final Config config = ConfigParser.loadDefaultConfig();
 		if(config == null) {
@@ -49,11 +45,11 @@ public class Main {
 		try(final Scenario scenario = new JsonScenario(config, scenarioPath.toFile())) {
 			scenario.run();
 		} catch(final ScenarioParseException e) {
-			log.fatal(
-				Markers.ERR, "Failed to parse the scenario \"{}\": {}", scenarioPath, e.getMessage()
+			Loggers.ERR.fatal(
+				"Failed to parse the scenario \"{}\": {}", scenarioPath, e.getMessage()
 			);
 		} catch(final FileNotFoundException e) {
-			log.fatal(Markers.ERR, "Scenario file \"{}\" not found", scenarioPath);
+			Loggers.ERR.fatal("Scenario file \"{}\" not found", scenarioPath);
 		} catch(final Throwable t) {
 			t.printStackTrace(System.err);
 		}

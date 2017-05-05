@@ -12,7 +12,6 @@ import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -71,7 +70,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		LogUtil.init();
-		LOG = LogManager.getLogger();
 		CONFIG_ARGS.add("--item-data-verify");
 		CONFIG_ARGS.add("--item-input-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-type=read");
@@ -93,7 +91,7 @@ extends HttpStorageDistributedScenarioTestBase {
 					SCENARIO.run();
 					STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 				} catch(final Throwable t) {
-					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
+					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);

@@ -4,12 +4,9 @@ import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 /**
@@ -17,8 +14,6 @@ import org.apache.logging.log4j.ThreadContext;
  */
 public abstract class StepBase
 implements Step {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	protected final Config localConfig;
 
@@ -39,7 +34,7 @@ implements Step {
 		if(jobName == null) {
 			jobName = ThreadContext.get(KEY_STEP_NAME);
 			if(jobName == null) {
-				LOG.fatal(Markers.ERR, "Step name is not set");
+				Loggers.ERR.fatal("Step name is not set");
 			} else {
 				stepConfig.setName(jobName);
 			}
@@ -50,10 +45,10 @@ implements Step {
 				KEY_STEP_NAME, jobName
 			)
 		) {
-			LOG.info(Markers.CFG, localConfig.toString());
+			Loggers.CONFIG.info(localConfig.toString());
 			invoke();
 		} catch(final Throwable cause) {
-			LogUtil.exception(LOG, Level.ERROR, cause, "Test step failure");
+			LogUtil.exception(Level.ERROR, cause, "Test step failure");
 		}
 	}
 

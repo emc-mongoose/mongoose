@@ -14,8 +14,6 @@ import io.netty.handler.codec.PrematureChannelClosureException;
 import io.netty.handler.timeout.IdleStateEvent;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -27,8 +25,6 @@ import java.net.SocketTimeoutException;
 public abstract class ResponseHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
 	
-	private static final Logger LOG = LogManager.getLogger();
-
 	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
 	
@@ -58,10 +54,10 @@ extends SimpleChannelInboundHandler<M> {
 				ioTask.setStatus(CANCELLED);
 			} else if(!driver.isInterrupted() && !driver.isClosed()) {
 				if(cause instanceof PrematureChannelClosureException) {
-					LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
+					LogUtil.exception(Level.WARN, cause, "Premature channel closure");
 					ioTask.setStatus(FAIL_IO);
 				} else {
-					LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
+					LogUtil.exception(Level.WARN, cause, "Client handler failure");
 					ioTask.setStatus(FAIL_UNKNOWN);
 				}
 			}
@@ -69,7 +65,7 @@ extends SimpleChannelInboundHandler<M> {
 				try {
 					driver.complete(channel, ioTask);
 				} catch(final Exception e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to complete the I/O task");
+					LogUtil.exception(Level.DEBUG, e, "Failed to complete the I/O task");
 				}
 			}
 		}

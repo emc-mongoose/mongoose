@@ -2,10 +2,7 @@ package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.util.Map;
 
@@ -14,8 +11,6 @@ import java.util.Map;
  */
 public class SequentialStep
 extends ParentStepBase {
-	//
-	private static final Logger LOG = LogManager.getLogger();
 	//
 	public SequentialStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
@@ -26,17 +21,19 @@ extends ParentStepBase {
 	public String toString() {
 		return "sequentialStep#" + hashCode();
 	}
+	
 	//
 	@Override
-	protected synchronized void invoke() {
-		LOG.info(
-			Markers.MSG, "{}: execute {} child steps sequentially", toString(), subSteps.size()
-		);
-		for(final Step subStep : subSteps) {
-			LOG.debug(Markers.MSG, "{}: child step \"{}\" start", toString(), subStep.toString());
-			subStep.run();
-			LOG.debug(Markers.MSG, "{}: child step \"{}\" is done", toString(), subStep.toString());
+	protected void invoke() {
+		synchronized(this) {
+			Loggers.MSG.info(
+				"{}: execute {} child steps sequentially", toString(), subSteps.size());
+			for(final Step subStep : subSteps) {
+				Loggers.MSG.debug("{}: child step \"{}\" start", toString(), subStep.toString());
+				subStep.run();
+				Loggers.MSG.debug("{}: child step \"{}\" is done", toString(), subStep.toString());
+			}
+			Loggers.MSG.info("{}: finished the sequential execution of {} child steps", toString());
 		}
-		LOG.info(Markers.MSG, "{}: finished the sequential execution of {} child steps", toString());
 	}
 }

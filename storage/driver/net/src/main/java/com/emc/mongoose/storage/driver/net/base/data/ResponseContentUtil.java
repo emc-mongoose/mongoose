@@ -8,15 +8,12 @@ import com.emc.mongoose.model.data.DataVerificationException;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,8 +24,6 @@ import java.util.List;
  Created by andrey on 10.02.17.
  */
 public abstract class ResponseContentUtil {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	public static void verifyChunk(
 		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf contentChunk,
@@ -65,16 +60,16 @@ public abstract class ResponseContentUtil {
 			dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
 			if(e instanceof DataSizeException) {
 				try {
-					LOG.warn(
-						Markers.MSG, "{}: invalid size, expected: {}, actual: {} ",
+					Loggers.MSG.warn(
+						"{}: invalid size, expected: {}, actual: {} ",
 						dataItem.getName(), dataItem.size(), e.getOffset()
 					);
 				} catch(final IOException ignored) {
 				}
 			} else if(e instanceof DataCorruptionException) {
 				final DataCorruptionException ee = (DataCorruptionException) e;
-				LOG.warn(
-					Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+				Loggers.MSG.warn(
+					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 					dataItem.getName(), ee.getOffset(), String.format("\"0x%X\"", ee.expected),
 					String.format("\"0x%X\"", ee.actual)
 				);

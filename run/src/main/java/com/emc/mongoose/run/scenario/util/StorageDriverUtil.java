@@ -14,11 +14,9 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,7 +34,6 @@ public interface StorageDriverUtil {
 		final ContentSource contentSrc
 	) {
 		
-		final Logger log = LogManager.getLogger();
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
 		final String testStepName = stepConfig.getName();
@@ -54,7 +51,7 @@ public interface StorageDriverUtil {
 						);
 					} catch(final NotBoundException | IOException | URISyntaxException e) {
 						LogUtil.exception(
-							log, Level.FATAL, e,
+							Level.FATAL, e,
 							"Failed to resolve the storage driver builder service @{}",
 							driverSvcAddr
 						);
@@ -67,22 +64,20 @@ public interface StorageDriverUtil {
 						);
 					} catch(final NotBoundException | IOException | URISyntaxException e) {
 						LogUtil.exception(
-							log, Level.FATAL, e,
+							Level.FATAL, e,
 							"Failed to resolve the storage driver builder service @{}:{}",
 							driverSvcAddr, driverPort
 						);
 						return;
 					}
 				}
-				log.info(
-					Markers.MSG, "Connected the service \"{}\" @ {}",
-					StorageDriverBuilderSvc.SVC_NAME, driverSvcAddr
+				Loggers.MSG.info(
+					"Connected the service \"{}\" @ {}", StorageDriverBuilderSvc.SVC_NAME,
+					driverSvcAddr
 				);
 				if(driverBuilderSvc == null) {
-					log.warn(
-						Markers.ERR,
-						"Failed to resolve the storage driver builder service @ {}",
-						driverSvcAddr
+					Loggers.ERR.warn(
+						"Failed to resolve the storage driver builder service @ {}", driverSvcAddr
 					);
 					continue;
 				}
@@ -106,7 +101,7 @@ public interface StorageDriverUtil {
 						driverSvc = ServiceUtil.resolve(driverSvcAddr, driverSvcName);
 					} catch(final NotBoundException | IOException | URISyntaxException e) {
 						LogUtil.exception(
-							log, Level.FATAL, e, "Failed to resolve the storage driver service @{}",
+							Level.FATAL, e, "Failed to resolve the storage driver service @{}",
 							driverSvcAddr
 						);
 						return;
@@ -116,23 +111,19 @@ public interface StorageDriverUtil {
 						driverSvc = ServiceUtil.resolve(driverSvcAddr, driverPort, driverSvcName);
 					} catch(final NotBoundException | IOException | URISyntaxException e) {
 						LogUtil.exception(
-							log, Level.FATAL, e,
+							Level.FATAL, e,
 							"Failed to resolve the storage driver service @{}:{}", driverSvcAddr,
 							driverPort
 						);
 						return;
 					}
 				}
-				log.info(
-					Markers.MSG, "Connected the service \"{}\" @ {}", driverSvcName,
-					driverSvcAddr
-				);
+				Loggers.MSG.info("Connected the service \"{}\" @ {}", driverSvcName, driverSvcAddr);
 				if(driverSvc != null) {
 					drivers.add(driverSvc);
 				} else {
-					log.warn(
-						Markers.ERR, "Failed to resolve the storage driver service @ {}",
-						driverSvcAddr
+					Loggers.ERR.warn(
+						"Failed to resolve the storage driver service @ {}", driverSvcAddr
 					);
 				}
 			}
@@ -151,6 +142,6 @@ public interface StorageDriverUtil {
 				throw new RuntimeException(e);
 			}
 		}
-		log.info(Markers.MSG, "Storage drivers initialized");
+		Loggers.MSG.info("Storage drivers initialized");
 	}
 }

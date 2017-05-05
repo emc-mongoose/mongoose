@@ -35,11 +35,9 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -59,9 +57,7 @@ public class BasicLoadGeneratorBuilder<
 	I extends Item, O extends IoTask<I>, T extends BasicLoadGenerator<I, O>
 >
 implements LoadGeneratorBuilder<I, O, T> {
-
-	private final static Logger LOG = LogManager.getLogger();
-
+	
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private LimitConfig limitConfig;
@@ -222,20 +218,17 @@ implements LoadGeneratorBuilder<I, O, T> {
 						storageDriver.adjustIoBuffers(itemSizeEstimate, ioType);
 					} catch(final RemoteException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to adjust the storage driver buffer sizes"
+							Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
 						);
 					}
 				}
 			} catch(final Exception e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to estimate the average data item size"
-				);
+				LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
 			} finally {
 				try {
 					itemInput.reset();
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to reset the item input");
+					LogUtil.exception(Level.WARN, e, "Failed to reset the item input");
 				}
 			}
 		}
@@ -256,7 +249,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		} catch(final EOFException ignored) {
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to estimate the average data item size");
+			LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
 		}
 		
 		long sumSize = 0;
@@ -349,7 +342,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				throw new RuntimeException(e);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
+					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
 				);
 			}
 		}
@@ -368,20 +361,19 @@ implements LoadGeneratorBuilder<I, O, T> {
 			while(null != (line = br.readLine()) && count < countLimit) {
 				firstCommaPos = line.indexOf(',');
 				if(-1 == firstCommaPos) {
-					LOG.warn(Markers.ERR, "Invalid credentials line: \"{}\"", line);
+					Loggers.ERR.warn("Invalid credentials line: \"{}\"", line);
 				} else {
 					parts = line.split(",", 2);
 					credentials.put(parts[0], parts[1]);
 					count ++;
 				}
 			}
-			LOG.info(
-				Markers.MSG, "Loaded {} credential pairs from the file \"{}\"", credentials.size(),
-				file
+			Loggers.MSG.info(
+				"Loaded {} credential pairs from the file \"{}\"", credentials.size(), file
 			);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file
+				Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file
 			);
 		}
 		return credentials;

@@ -5,15 +5,11 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.ui.log.LogUtil.BLUE;
 import static com.emc.mongoose.ui.log.LogUtil.CYAN;
-import static com.emc.mongoose.ui.log.LogUtil.GREEN;
 import static com.emc.mongoose.ui.log.LogUtil.RED;
 import static com.emc.mongoose.ui.log.LogUtil.RESET;
-
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,7 +23,6 @@ import java.util.concurrent.ThreadFactory;
 public final class CommandStep
 extends StepBase {
 	//
-	private static final Logger LOG = LogManager.getLogger();
 	private static final ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
 	private static final ThreadFactory TF_STD_ERR = new NamingThreadFactory("stdErrReader", true);
 	private static final String KEY_NODE_BLOCKING = "blocking";
@@ -51,56 +46,50 @@ extends StepBase {
 	@Override
 	protected final void invoke() {
 		try {
-			LOG.info(
-				Markers.MSG, "Invoking the shell command:\n{}{}{}",
+			Loggers.MSG.info(
+				"Invoking the shell command:\n{}{}{}",
 				consoleColorFlag ? CYAN : "", cmdLine, consoleColorFlag ? RESET : ""
 			);
 			final Process process = new ProcessBuilder("bash", "-c", cmdLine).start();
 			final Thread processStdInReader = TF_STD_IN.newThread(
-				new Runnable() {
-					@Override
-					public final void run() {
-						try(
-							final BufferedReader bufferedReader = new BufferedReader(
-								new InputStreamReader(process.getInputStream())
-							)
-						) {
-							String nextLine;
-							while(null != (nextLine = bufferedReader.readLine())) {
-								LOG.info(
-									Markers.MSG, "{}{}{}", consoleColorFlag ? BLUE : "", nextLine,
-									consoleColorFlag ? RESET : ""
-								);
-							}
-						} catch(final IOException e) {
-							LogUtil.exception(
-								LOG, Level.DEBUG, e, "Failed to read the process stdin"
+				() -> {
+					try(
+						final BufferedReader bufferedReader = new BufferedReader(
+							new InputStreamReader(process.getInputStream())
+						)
+					) {
+						String nextLine;
+						while(null != (nextLine = bufferedReader.readLine())) {
+							Loggers.MSG.info(
+								"{}{}{}", consoleColorFlag ? BLUE : "", nextLine,
+								consoleColorFlag ? RESET : ""
 							);
 						}
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.DEBUG, e, "Failed to read the process stdin"
+						);
 					}
 				}
 			);
 			final Thread processStdErrReader = TF_STD_ERR.newThread(
-				new Runnable() {
-					@Override
-					public final void run() {
-						try(
-							final BufferedReader bufferedReader = new BufferedReader(
-								new InputStreamReader(process.getErrorStream())
-							)
-						) {
-							String nextLine;
-							while(null != (nextLine = bufferedReader.readLine())) {
-								LOG.info(
-									Markers.MSG, "{}{}{}", consoleColorFlag ? RED : "", nextLine,
-									consoleColorFlag ? RESET : ""
-								);
-							}
-						} catch(final IOException e) {
-							LogUtil.exception(
-								LOG, Level.DEBUG, e, "Failed to read the process error input"
+				() -> {
+					try(
+						final BufferedReader bufferedReader = new BufferedReader(
+							new InputStreamReader(process.getErrorStream())
+						)
+					) {
+						String nextLine;
+						while(null != (nextLine = bufferedReader.readLine())) {
+							Loggers.MSG.info(
+								"{}{}{}", consoleColorFlag ? RED : "", nextLine,
+								consoleColorFlag ? RESET : ""
 							);
 						}
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.DEBUG, e, "Failed to read the process error input"
+						);
 					}
 				}
 			);
@@ -110,15 +99,14 @@ extends StepBase {
 				try {
 					final int exitCode = process.waitFor();
 					if(exitCode == 0) {
-						LOG.info(Markers.MSG, "Shell command \"{}\" finished", cmdLine);
+						Loggers.MSG.info("Shell command \"{}\" finished", cmdLine);
 					} else {
-						LOG.warn(
-							Markers.ERR, "Shell command \"{}\" finished with exit code {}", cmdLine,
-							exitCode
+						Loggers.ERR.warn(
+							"Shell command \"{}\" finished with exit code {}", cmdLine, exitCode
 						);
 					}
 				} catch(final InterruptedException e) {
-					LOG.info(Markers.MSG, "Shell command \"{}\" interrupted", cmdLine);
+					Loggers.MSG.info("Shell command \"{}\" interrupted", cmdLine);
 				} finally {
 					processStdInReader.interrupt();
 					processStdErrReader.interrupt();
@@ -126,7 +114,7 @@ extends StepBase {
 				}
 			}
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Shell command \"{}\" failed", cmdLine);
+			LogUtil.exception(Level.WARN, e, "Shell command \"{}\" failed", cmdLine);
 		}
 	}
 

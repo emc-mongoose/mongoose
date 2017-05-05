@@ -29,7 +29,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import io.netty.buffer.ByteBuf;
@@ -51,8 +51,6 @@ import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -69,7 +67,6 @@ import java.util.concurrent.locks.LockSupport;
 public class SwiftStorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 
-	private static final Logger LOG = LogManager.getLogger();
 	private static final String PART_NUM_MASK = "0000000";
 	private static final ThreadLocal<StringBuilder>
 		CONTAINER_LIST_QUERY = new ThreadLocal<StringBuilder>() {
@@ -114,7 +111,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
 
@@ -124,7 +121,7 @@ extends HttpStorageDriverBase<I, O> {
 			containerExists = false;
 			versioningEnabled = false;
 		} else if(HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
-			LOG.info(Markers.MSG, "Container \"{}\" already exists", path);
+			Loggers.MSG.info("Container \"{}\" already exists", path);
 			containerExists = true;
 			final String versionsLocation = checkContainerResp
 				.headers()
@@ -135,9 +132,8 @@ extends HttpStorageDriverBase<I, O> {
 				versioningEnabled = true;
 			}
 		} else {
-			LOG.warn(
-				Markers.ERR, "Unexpected container checking response: {}",
-				checkContainerRespStatus.toString()
+			Loggers.ERR.warn(
+				"Unexpected container checking response: {}", checkContainerRespStatus.toString()
 			);
 			checkContainerResp.release();
 			return null;
@@ -166,17 +162,16 @@ extends HttpStorageDriverBase<I, O> {
 			} catch(final InterruptedException e) {
 				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
 
 			final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
 			if(HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
-				LOG.info(Markers.MSG, "Container \"{}\" created", path);
+				Loggers.MSG.info("Container \"{}\" created", path);
 			} else {
-				LOG.warn(
-					Markers.ERR, "Create/update container response: {}",
-					putContainerRespStatus.toString()
+				Loggers.ERR.warn(
+					"Create/update container response: {}", putContainerRespStatus.toString()
 				);
 				putContainerResp.release();
 				return null;
@@ -215,7 +210,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
 		
@@ -272,13 +267,11 @@ extends HttpStorageDriverBase<I, O> {
 					}
 				}
 			} else {
-				LOG.warn(
-					Markers.ERR, "Failed to get the container listing, response: \"{}\"", respStatus
-				);
+				Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
 			}
 		} catch(final InterruptedException ignored) {
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
 
 		return buff;

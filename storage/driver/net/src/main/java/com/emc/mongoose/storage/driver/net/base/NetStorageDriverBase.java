@@ -18,8 +18,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -38,9 +37,8 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.commons.lang.SystemUtils;
+
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
@@ -56,8 +54,6 @@ import java.util.concurrent.TimeUnit;
 public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
-	
-	private static final Logger LOG = LogManager.getLogger();
 	
 	protected final String storageNodeAddrs[];
 	private final int storageNodePort;
@@ -154,14 +150,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			size = (int) avgDataItemSize.get();
 		}
 		if(IoType.CREATE.equals(ioType)) {
-			LOG.info(
-				Markers.MSG, "Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
+			Loggers.MSG.info(
+				"Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
 			);
 			bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
 			bootstrap.option(ChannelOption.SO_SNDBUF, size);
 		} else if(IoType.READ.equals(ioType)) {
-			LOG.info(
-				Markers.MSG, "Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size)
+			Loggers.MSG.info(
+				"Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size)
 			);
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
 			bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
@@ -192,9 +188,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					protected final void initChannel(final SocketChannel channel)
 					throws Exception {
 						appendHandlers(channel.pipeline());
-						LOG.debug(
-							Markers.MSG, "{}: new unpooled channel {}, pipeline: {}",
-							stepName, channel.hashCode(), channel.pipeline()
+						Loggers.MSG.debug(
+							"{}: new unpooled channel {}, pipeline: {}", stepName,
+							channel.hashCode(), channel.pipeline()
 						);
 					}
 				}
@@ -233,7 +229,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				);
 			}
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
+			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
 		}
 		return true;
 
@@ -272,10 +268,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				}
 			}
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Submit the I/O task in the invalid state");
+			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
 		} catch(final RejectedExecutionException e) {
 			if(!isInterrupted()) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the I/O task");
+				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
 			}
 		}
 		return to - from;
@@ -296,7 +292,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try {
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
+			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
 		}
 		if(!IoType.NOOP.equals(ioTask.getIoType())) {
 			connPool.release(channel);
@@ -319,17 +315,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws Exception {
 		final ChannelPipeline pipeline = channel.pipeline();
 		appendHandlers(pipeline);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "{}: new channel pipeline configured: {}", stepName,
-				pipeline.toString()
-			);
+		if(Loggers.MSG.isTraceEnabled()) {
+			Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepName, pipeline.toString());
 		}
 	}
 
 	protected void appendHandlers(final ChannelPipeline pipeline) {
 		if(sslFlag) {
-			LOG.debug(Markers.MSG, "{}: SSL/TLS is enabled for the channel", stepName);
+			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepName);
 			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setEnabledProtocols(
 				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
@@ -363,17 +356,17 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			connPool.close();
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: failed to close the connection pool", toString()
+				Level.WARN, e, "{}: failed to close the connection pool", toString()
 			);
 		}
 		try {
 			if(workerGroup.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
-				LOG.debug(Markers.MSG, "{}: I/O workers stopped in time", toString());
+				Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
 			} else {
-				LOG.debug(Markers.ERR, "{}: I/O workers stopping timeout", toString());
+				Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
+			LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
 		}
 	}
 }
