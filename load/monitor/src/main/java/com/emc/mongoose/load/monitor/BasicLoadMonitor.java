@@ -8,7 +8,6 @@ import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
-import com.emc.mongoose.model.svc.RoundRobinInputsTransferSvcTask;
 import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
