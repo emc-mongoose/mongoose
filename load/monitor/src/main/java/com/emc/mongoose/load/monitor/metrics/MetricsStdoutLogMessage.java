@@ -58,24 +58,6 @@ extends LogMessageBase {
 		}
 	}
 
-	private static String getColoredFailCountText(final long succCount, final long failCount) {
-		final String failCountText;
-		if(LogUtil.isConsoleColoringEnabled()) {
-			if(failCount > 0) {
-				if(succCount / failCount > 100) {
-					failCountText = LogUtil.YELLOW + Long.toString(failCount) + LogUtil.RESET;
-				} else {
-					failCountText = LogUtil.RED + Long.toString(failCount) + LogUtil.RESET;
-				}
-			} else {
-				failCountText = LogUtil.GREEN + Long.toString(failCount) + LogUtil.RESET;
-			}
-		} else {
-			failCountText = Long.toString(failCount);
-		}
-		return failCountText;
-	}
-
 	private static void formatSingleSnapshot(
 		final StringBuilder buffer, final String runId, final int ioTypeCode,
 		final IoStats.Snapshot snapshot, final int concurrency, final int driversCount
@@ -83,7 +65,6 @@ extends LogMessageBase {
 		final long succCount = snapshot.getSuccCount();
 		final long failCount = snapshot.getFailCount();
 		buffer
-			.append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
 			.append(concurrency).append('x').append(driversCount)
 			.append(": n=(").append(LogUtil.WHITE).append(succCount).append(LogUtil.RESET).append('/')
