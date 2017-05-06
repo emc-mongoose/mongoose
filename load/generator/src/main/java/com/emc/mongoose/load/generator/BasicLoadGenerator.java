@@ -38,14 +38,14 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadGenerator<I, O>, SvcTask {
-	
+
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean deferredTasksFlag = false;
 	private volatile boolean outputFinishFlag = false;
-	
+
 	private final int batchSize;
 	private final Input<I> itemInput;
 	private final Lock inputLock = new ReentrantLock();
@@ -55,7 +55,6 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final boolean shuffleFlag;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
 	private final int originCode;
-	private final OptLockBuffer<O> deferredTasks;
 
 	private final LongAdder builtTasksCounter = new LongAdder();
 	private final LongAdder outputTaskCounter = new LongAdder();
@@ -84,7 +83,6 @@ implements LoadGenerator<I, O>, SvcTask {
 		}
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
-		this.deferredTasks = new OptLockArrayBuffer<>(batchSize);
 
 		final String ioStr = ioTaskBuilder.getIoType().toString();
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
@@ -92,7 +90,7 @@ implements LoadGenerator<I, O>, SvcTask {
 			itemInput.toString();
 		svcTasks.add(this);
 	}
-	
+
 	@Override
 	public final void setWeightThrottle(final WeightThrottle weightThrottle) {
 		this.weightThrottle = weightThrottle;
@@ -122,32 +120,21 @@ implements LoadGenerator<I, O>, SvcTask {
 	public final IoType getIoType() {
 		return ioTaskBuilder.getIoType();
 	}
-	
+
 	private static final ThreadLocal<OptLockBuffer> THREAD_LOCAL_BUFF = new ThreadLocal<>();
-	
+
 	@Override
 	public final void run() {
-		
-		OptLockBuffer<O> thrLocTasksBuff;
-		if(!deferredTasks.tryLock()) {
-			return;
-		} else {
-			thrLocTasksBuff = THREAD_LOCAL_BUFF.get();
-			if(thrLocTasksBuff == null) {
-				thrLocTasksBuff = new OptLockArrayBuffer<>(batchSize);
-				THREAD_LOCAL_BUFF.set(thrLocTasksBuff);
-			} else {
-				thrLocTasksBuff.clear();
-			}
-			if(deferredTasks.size() == 0) {
-				deferredTasksFlag = false;
-			} else {
-				thrLocTasksBuff.addAll(deferredTasks);
-				deferredTasks.clear();
-			}
-			deferredTasks.unlock();
+
+		OptLockBuffer<O> thrLocTasksBuff = THREAD_LOCAL_BUFF.get();
+		if(thrLocTasksBuff == null) {
+			thrLocTasksBuff = new OptLockArrayBuffer<>(batchSize);
+			THREAD_LOCAL_BUFF.set(thrLocTasksBuff);
 		}
 		int pendingTasksCount = thrLocTasksBuff.size();
+		if(pendingTasksCount == 0) {
+			deferredTasksFlag = false;
+		}
 		int n = batchSize - pendingTasksCount;
 
 		try {
@@ -202,13 +189,11 @@ implements LoadGenerator<I, O>, SvcTask {
 							final O task = thrLocTasksBuff.get(0);
 							if(ioTaskOutput.put(task)) {
 								outputTaskCounter.increment();
-							} else {
-								deferredTasks.lock();
-								try {
-									deferredTasks.add(task);
+								if(pendingTasksCount == 1) {
+									thrLocTasksBuff.clear();
+								} else {
+									thrLocTasksBuff.remove(0);
 									deferredTasksFlag = true;
-								} finally {
-									deferredTasks.unlock();
 								}
 							}
 						} catch(final EOFException e) {
@@ -232,18 +217,12 @@ implements LoadGenerator<I, O>, SvcTask {
 					} else {
 						try {
 							n = ioTaskOutput.put(thrLocTasksBuff, 0, n);
-							thrLocTasksBuff.removeRange(0, n);
 							outputTaskCounter.add(n);
 							if(n < pendingTasksCount) {
-								deferredTasks.lock();
-								try {
-									for(final O ioTask : thrLocTasksBuff) {
-										deferredTasks.add(ioTask);
-									}
-									deferredTasksFlag = true;
-								} finally {
-									deferredTasks.unlock();
-								}
+								thrLocTasksBuff.removeRange(0, n);
+								deferredTasksFlag = true;
+							} else {
+								thrLocTasksBuff.clear();
 							}
 						} catch(final EOFException e) {
 							Loggers.MSG.debug(
@@ -330,14 +309,6 @@ implements LoadGenerator<I, O>, SvcTask {
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}
-		}
-		try {
-			deferredTasks.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-			deferredTasks.clear();
-		} catch(final Exception e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: failed to drop all deferred tasks buffer", toString()
-			);
 		}
 		ioTaskBuilder.close();
 		ioTaskOutput.close();
