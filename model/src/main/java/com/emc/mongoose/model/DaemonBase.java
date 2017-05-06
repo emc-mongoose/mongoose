@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created on 12.07.16.
@@ -60,6 +61,7 @@ implements Daemon {
 										);
 										t.printStackTrace(System.err);
 									}
+									LockSupport.parkNanos(1);
 								}
 							}
 						}
