@@ -9,6 +9,7 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  Created by andrey on 02.12.16.
@@ -37,7 +38,11 @@ extends BufferingInputBase<I> {
 	@Override
 	protected final int loadMoreItems(final I lastItem)
 	throws IOException {
-		items.addAll(storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, capacity));
+		final List<I>
+			newItems = storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, capacity);
+		for(final I item : newItems) {
+			items.add(item);
+		}
 		return items.size();
 	}
 

@@ -55,11 +55,15 @@ implements Input<T> {
 		if(srcBuff != null) { // there are a buffered items in the source
 			final int srcCountLimit = srcBuff.size() - srcFrom;
 			if(dstCountLimit < srcCountLimit) { // destination buffer has less free space than avail
-				dstBuff.addAll(srcBuff.subList(srcFrom, srcFrom + dstCountLimit));
+				for(final T item : srcBuff.subList(srcFrom, srcFrom + dstCountLimit)) {
+					dstBuff.add(item);
+				}
 				srcFrom += dstCountLimit; // move cursor to the next position in the source buffer
 				return dstCountLimit;
 			} else { // destination buffer has enough free space to put all available items
-				dstBuff.addAll(srcBuff.subList(srcFrom, srcFrom + srcCountLimit));
+				for(final T item : srcBuff.subList(srcFrom, srcFrom + srcCountLimit)) {
+					dstBuff.add(item);
+				}
 				srcBuff = null; // the buffer is sent to destination completely, dispose
 				return srcCountLimit;
 			}

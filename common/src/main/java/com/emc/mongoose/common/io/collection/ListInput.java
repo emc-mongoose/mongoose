@@ -50,7 +50,9 @@ implements Input<T> {
 		int n = size - i;
 		if(n > 0) {
 			n = Math.min(n, maxCount);
-			buffer.addAll(items.subList(i, i + n));
+			for(final T item : items.subList(i, i + n)) {
+				buffer.add(item);
+			}
 		} else {
 			throw new EOFException();
 		}

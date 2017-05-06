@@ -82,7 +82,9 @@ extends SvcTaskBase {
 							if(m < n) {
 								// not all items was transferred w/o blocking
 								// defer the remaining items for a future try
-								deferredItems.addAll(items.subList(m, n));
+								for(final T item : items.subList(m, n)) {
+									deferredItems.add(item);
+								}
 							}
 						}
 					}

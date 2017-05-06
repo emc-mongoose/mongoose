@@ -80,7 +80,9 @@ implements Output<T> {
 				if(buff.tryLock()) {
 					try {
 						final int m = Math.min(nPerOutput, buffCapacity - buff.size());
-						buff.addAll(srcBuff.subList(nextFrom, nextFrom + m));
+						for(final T item : srcBuff.subList(nextFrom, nextFrom + m)) {
+							buff.add(item);
+						}
 						nextFrom += m;
 					} finally {
 						buff.unlock();
@@ -92,7 +94,9 @@ implements Output<T> {
 				if(buff.tryLock()) {
 					try {
 						final int m = Math.min(to - nextFrom, buffCapacity - buff.size());
-						buff.addAll(srcBuff.subList(nextFrom, nextFrom + m));
+						for(final T item : srcBuff.subList(nextFrom, nextFrom + m)) {
+							buff.add(item);
+						}
 						nextFrom += m;
 					} finally {
 						buff.unlock();

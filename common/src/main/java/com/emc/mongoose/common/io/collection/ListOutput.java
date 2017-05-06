@@ -38,7 +38,9 @@ implements Output<T> {
 	@Override
 	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		items.addAll(buffer.subList(from, to));
+		for(final T item : buffer.subList(from, to)) {
+			items.add(item);
+		}
 		return to - from;
 	}
 

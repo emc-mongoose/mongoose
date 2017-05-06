@@ -48,7 +48,9 @@ implements IoResultsItemInput<I, O> {
 	public final synchronized int put(final List<O> ioResults, final int from, final int to)
 	throws IOException {
 		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, to - from);
-		ioResultsBuff.addAll(ioResults.subList(from, from + n));
+		for(final O ioResult : ioResults.subList(from, from + n)) {
+			ioResultsBuff.add(ioResult);
+		}
 		ioResultsBuffSize += n;
 		return n;
 	}
@@ -57,7 +59,9 @@ implements IoResultsItemInput<I, O> {
 	public final synchronized int put(final List<O> ioResults)
 	throws IOException {
 		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, ioResults.size());
-		ioResultsBuff.addAll(ioResults.subList(0, n));
+		for(final O ioResult : ioResults.subList(0, n)) {
+			ioResultsBuff.add(ioResult);
+		}
 		ioResultsBuffSize += n;
 		return n;
 	}
