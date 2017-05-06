@@ -13,7 +13,7 @@
 					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-8.-8c{1} %-16.-16t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-8.-8c{1} %-32.-32t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
 					},
 					"Filters" : {
 						"Filter" : [
@@ -32,7 +32,7 @@
 					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-8.-8c{1} %-16.-16t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-8.-8c{1} %-32.-32t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
 					}
 				},
 				{

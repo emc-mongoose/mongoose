@@ -266,7 +266,7 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final List<O> getAll() {
-		final List<O> ioTaskResults = new ArrayList<>(batchSize);
+		final List<O> ioTaskResults = new ArrayList<>(queueCapacity);
 		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
 		return ioTaskResults;
 	}

@@ -29,6 +29,7 @@ import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsCon
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.svc.TransferSvcTask;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -676,11 +677,16 @@ implements LoadMonitor<I, O> {
 
 		final List<StorageDriver<I, O>> drivers = new ArrayList<>();
 		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
-			drivers.addAll(nextGeneratorDrivers);
+			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
+				svcTasks.add(
+					new TransferSvcTask<>(svcTasks, name, nextDriver, this, batchSize)
+				);
+			}
+			//drivers.addAll(nextGeneratorDrivers);
 		}
-		svcTasks.add(
-			new RoundRobinInputsTransferSvcTask<>(name, this, drivers, batchSize, svcTasks)
-		);
+		//svcTasks.add(
+		//	new RoundRobinInputsTransferSvcTask<>(name, this, drivers, batchSize, svcTasks)
+		//);
 	}
 
 	@Override
