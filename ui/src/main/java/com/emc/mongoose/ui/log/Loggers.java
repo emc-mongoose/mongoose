@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
  */
 public interface Loggers {
 	
-	String BASE = Loggers.class.getPackage().getClass().getCanonicalName() + '.';
+	String BASE = Loggers.class.getPackage().getName() + '.';
 	String BASE_METRICS = BASE + "metrics.";
 	String BASE_METRICS_THRESHOLD = BASE_METRICS + "threshold.";
 	
@@ -22,6 +22,6 @@ public interface Loggers {
 	Logger METRICS_THRESHOLD_EXT_RESULTS_FILE = LogManager.getLogger(BASE_METRICS_THRESHOLD + "ExtResultsFile");
 	Logger METRICS_THRESHOLD_FILE = LogManager.getLogger(BASE_METRICS_THRESHOLD + "File");
 	Logger METRICS_THRESHOLD_FILE_TOTAL = LogManager.getLogger(BASE_METRICS_THRESHOLD + "FileTotal");
-	Logger MSG = LogManager.getLogger("Messages");
-	Logger MULTIPART = LogManager.getLogger("Multipart");
+	Logger MSG = LogManager.getLogger(BASE + "Messages");
+	Logger MULTIPART = LogManager.getLogger(BASE + "Multipart");
 }
