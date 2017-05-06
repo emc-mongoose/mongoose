@@ -1,6 +1,6 @@
 {
 	"configuration" : {
-		"status" : "info",
+		"status" : "off",
 		"name" : "mongoose",
 		"monitorInterval" : 1000,
 		"packages" : "com.emc.mongoose.ui.log.appenders",
