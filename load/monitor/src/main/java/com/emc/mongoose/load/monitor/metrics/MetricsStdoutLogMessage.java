@@ -65,6 +65,7 @@ extends LogMessageBase {
 		final long succCount = snapshot.getSuccCount();
 		final long failCount = snapshot.getFailCount();
 		buffer
+			.append("\n\t")
 			.append(IoType.values()[ioTypeCode]).append('-')
 			.append(concurrency).append('x').append(driversCount)
 			.append(": n=(").append(LogUtil.WHITE).append(succCount).append(LogUtil.RESET).append('/')

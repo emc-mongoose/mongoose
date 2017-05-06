@@ -238,7 +238,7 @@
 					"name" : "com.emc.mongoose.ui.log.metrics.StdOut",
 					"level" : "INFO",
 					"AppenderRef" : {
-						"ref" : "stdout"
+						"ref" : "metricsStdout"
 					}
 				},
 				{
