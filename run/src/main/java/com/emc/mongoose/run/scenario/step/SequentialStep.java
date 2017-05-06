@@ -27,13 +27,17 @@ extends ParentStepBase {
 	protected void invoke() {
 		synchronized(this) {
 			Loggers.MSG.info(
-				"{}: execute {} child steps sequentially", toString(), subSteps.size());
+				"{}: execute {} child steps sequentially", toString(), subSteps.size()
+			);
 			for(final Step subStep : subSteps) {
 				Loggers.MSG.debug("{}: child step \"{}\" start", toString(), subStep.toString());
 				subStep.run();
 				Loggers.MSG.debug("{}: child step \"{}\" is done", toString(), subStep.toString());
 			}
-			Loggers.MSG.info("{}: finished the sequential execution of {} child steps", toString());
+			Loggers.MSG.info(
+				"{}: finished the sequential execution of {} child steps", toString(),
+				subSteps.size()
+			);
 		}
 	}
 }
