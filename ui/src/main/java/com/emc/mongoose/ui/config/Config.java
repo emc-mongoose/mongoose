@@ -936,8 +936,6 @@ implements Serializable {
 			public static final String KEY_REUSE_ADDR = "reuseAddr";
 			public static final String KEY_KEEP_ALIVE = "keepAlive";
 			public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
-			public static final String KEY_WRITE_BUFFER_HIGH_WATER_MARK = "writeBufferHighWaterMark";
-			public static final String KEY_WRITE_BUFFER_LOW_WATER_MARK = "writeBufferLowWaterMark";
 			public static final String KEY_LINGER = "linger";
 			public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
 			public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
@@ -961,14 +959,6 @@ implements Serializable {
 			
 			public final boolean getTcpNoDelay() {
 				return tcpNoDelay;
-			}
-
-			public final SizeInBytes getWriteBufferHighWaterMark() {
-				return writeBufferHighWaterMark;
-			}
-
-			public final SizeInBytes getWriteBufferLowWaterMark() {
-				return writeBufferLowWaterMark;
 			}
 			
 			public final int getLinger() {
@@ -1019,14 +1009,6 @@ implements Serializable {
 				this.tcpNoDelay = tcpNoDelay;
 			}
 
-			public final void setWriteBufferHighWaterMark(final SizeInBytes writeBufferHighWaterMark) {
-				this.writeBufferHighWaterMark = writeBufferHighWaterMark;
-			}
-
-			public final void setWriteBufferLowWaterMark(final SizeInBytes writeBufferLowWaterMark) {
-				this.writeBufferLowWaterMark = writeBufferLowWaterMark;
-			}
-			
 			public final void setLinger(final int linger) {
 				this.linger = linger;
 			}
@@ -1067,16 +1049,6 @@ implements Serializable {
 			
 			@JsonProperty(KEY_TCP_NO_DELAY) private boolean tcpNoDelay;
 
-			@JsonProperty(KEY_WRITE_BUFFER_HIGH_WATER_MARK)
-			@JsonDeserialize(using = SizeInBytesDeserializer.class)
-			@JsonSerialize(using = SizeInBytesSerializer.class)
-			private SizeInBytes writeBufferHighWaterMark;
-
-			@JsonProperty(KEY_WRITE_BUFFER_LOW_WATER_MARK)
-			@JsonDeserialize(using = SizeInBytesDeserializer.class)
-			@JsonSerialize(using = SizeInBytesSerializer.class)
-			private SizeInBytes writeBufferLowWaterMark;
-			
 			@JsonProperty(KEY_LINGER) private int linger;
 			
 			@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
@@ -1105,8 +1077,6 @@ implements Serializable {
 				this.reuseAddr = other.getReuseAddr();
 				this.keepAlive = other.getKeepAlive();
 				this.tcpNoDelay = other.getTcpNoDelay();
-				this.writeBufferHighWaterMark = other.getWriteBufferHighWaterMark();
-				this.writeBufferLowWaterMark = other.getWriteBufferLowWaterMark();
 				this.linger = other.getLinger();
 				this.bindBackLogSize = other.getBindBackLogSize();
 				this.interestOpQueued = other.getInterestOpQueued();

@@ -113,10 +113,8 @@
 			"reuseAddr" : true,
 			"rcvBuf" : 0,
 			"sndBuf" : 0,
-			"tcpNoDelay" : false,
+			"tcpNoDelay" : true,
 			"timeoutMilliSec" : 0,
-			"writeBufferHighWaterMark" : "64KB",
-			"writeBufferLowWaterMark" : "8KB",
 			"ssl" : false,
 			"http" : {
 				"fsAccess" : false,

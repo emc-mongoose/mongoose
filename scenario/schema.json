@@ -618,30 +618,6 @@
 										}
 									]
 								},
-								"writeBufferLowWaterMark" : {
-									"oneOf" : [
-										{
-											"type" : "integer",
-											"minimum" : 0,
-											"maximum" : 2147483647
-										},
-										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMG]?B?"
-										}
-									]
-								},
-								"ssl" : {
-									"oneOf" : [
-										{
-											"type" : "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
 								"http": {
 									"type": "object",
 									"additionalProperties": false,

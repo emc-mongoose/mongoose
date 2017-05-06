@@ -26,7 +26,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.WriteBufferWaterMark;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -127,13 +126,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
-		bootstrap.option(
-			ChannelOption.WRITE_BUFFER_WATER_MARK,
-			new WriteBufferWaterMark(
-				(int) netConfig.getWriteBufferLowWaterMark().get(),
-				(int) netConfig.getWriteBufferHighWaterMark().get()
-			)
-		);
 		connPool = new BasicMultiNodeConnPool(
 			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
 		);
