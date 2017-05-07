@@ -37,6 +37,7 @@ import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.ui.log.Loggers;
+
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -708,8 +709,8 @@ implements LoadMonitor<I, O> {
 						);
 					} catch(final RemoteException e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to interrupt the generator {}",
-							getName(), nextGenerator.toString()
+							Level.WARN, e, "{}: failed to interrupt the generator {}", getName(),
+							nextGenerator.toString()
 						);
 					}
 				}

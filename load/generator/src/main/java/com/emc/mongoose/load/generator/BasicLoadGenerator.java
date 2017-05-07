@@ -60,6 +60,8 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final LongAdder outputTaskCounter = new LongAdder();
 	private final String name;
 
+	private final ThreadLocal<OptLockBuffer<O>> threadLocalBuff = new ThreadLocal<>();
+
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final int batchSize, final SizeInBytes itemSizeEstimate,
@@ -70,7 +72,7 @@ implements LoadGenerator<I, O>, SvcTask {
 		this.itemInput = itemInput;
 		this.itemSizeEstimate = itemSizeEstimate;
 		this.ioTaskBuilder = ioTaskBuilder;
-		this.originCode = ioTaskBuilder.hashCode();
+		this.originCode = ioTaskBuilder.getOriginCode();
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
 		} else if(
@@ -121,15 +123,13 @@ implements LoadGenerator<I, O>, SvcTask {
 		return ioTaskBuilder.getIoType();
 	}
 
-	private static final ThreadLocal<OptLockBuffer> THREAD_LOCAL_BUFF = new ThreadLocal<>();
-
 	@Override
 	public final void run() {
 
-		OptLockBuffer<O> thrLocTasksBuff = THREAD_LOCAL_BUFF.get();
+		OptLockBuffer<O> thrLocTasksBuff = threadLocalBuff.get();
 		if(thrLocTasksBuff == null) {
 			thrLocTasksBuff = new OptLockArrayBuffer<>(batchSize);
-			THREAD_LOCAL_BUFF.set(thrLocTasksBuff);
+			threadLocalBuff.set(thrLocTasksBuff);
 		}
 		int pendingTasksCount = thrLocTasksBuff.size();
 		if(pendingTasksCount == 0) {
@@ -256,10 +256,6 @@ implements LoadGenerator<I, O>, SvcTask {
 				outputFinishFlag |
 					(itemInputFinishFlag && pendingTasksCount == 0 && !deferredTasksFlag)
 			) {
-				Loggers.MSG.debug(
-					"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
-					builtTasksCounter.sum(), outputTaskCounter.sum()
-				);
 				try {
 					shutdown();
 				} catch(final IllegalStateException ignored) {
@@ -276,6 +272,10 @@ implements LoadGenerator<I, O>, SvcTask {
 	@Override
 	protected final void doInterrupt() {
 		svcTasks.remove(this);
+		Loggers.MSG.debug(
+			"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
+			builtTasksCounter.sum(), outputTaskCounter.sum()
+		);
 	}
 
 	@Override
