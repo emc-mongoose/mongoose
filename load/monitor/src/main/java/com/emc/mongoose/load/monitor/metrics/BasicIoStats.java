@@ -19,16 +19,19 @@ implements IoStats {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency;
+	private volatile com.codahale.metrics.Snapshot reqDurSnapshot, respLatSnapshot;
+	private final LongAdder reqDurationSum, respLatencySum;
+	private volatile long lastDurationSum = 0, lastLatencySum = 0;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	private volatile long tsStart = -1, prevElapsedTime = 0;
-	private final LongAdder reqDurationSum, respLatencySum;
-	private volatile boolean alteredFlag = false;
 
 	//
 	public BasicIoStats(final int updateIntervalSec) {
 		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
+		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
 		reqDuration = new Histogram(new SlidingWindowReservoir(0x1_00_00));
+		reqDurSnapshot = reqDuration.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -41,7 +44,6 @@ implements IoStats {
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
 		reqBytes.resetStartTime();
-		alteredFlag = true;
 	}
 	//
 	@Override
@@ -49,16 +51,10 @@ implements IoStats {
 		return tsStart > -1;
 	}
 
-	@Override
-	public final boolean isAltered() {
-		return alteredFlag;
-	}
-
 	//
 	@Override
 	public final void markElapsedTime(final long millis) {
 		prevElapsedTime = millis;
-		alteredFlag = true;
 	}
 	//
 	@Override
@@ -290,7 +286,6 @@ implements IoStats {
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
-		alteredFlag = true;
 	}
 	//
 	@Override
@@ -302,7 +297,6 @@ implements IoStats {
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
-		alteredFlag = true;
 	}
 	//
 	@Override
@@ -319,7 +313,6 @@ implements IoStats {
 			respLatency.update(latency);
 			respLatencySum.add(latency);
 		}
-		alteredFlag = true;
 	}
 	//
 	@Override
@@ -335,27 +328,29 @@ implements IoStats {
 			respLatency.update(latency);
 			respLatencySum.add(latency);
 		}
-		alteredFlag = true;
 	}
 	//
 	@Override
 	public final void markFail() {
 		throughputFail.mark();
-		alteredFlag = true;
 	}
 	//
 	@Override
 	public final void markFail(final long count) {
 		throughputFail.mark(count);
-		alteredFlag = true;
 	}
 	//
 	@Override
 	public final Snapshot getSnapshot() {
 		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
-		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
-		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
-		alteredFlag = false;
+		if(lastDurationSum != reqDurationSum.sum()) {
+			lastDurationSum = reqDurationSum.sum();
+			reqDurSnapshot = reqDuration.getSnapshot();
+		}
+		if(lastLatencySum != respLatencySum.sum()) {
+			lastLatencySum = respLatencySum.sum();
+			respLatSnapshot = respLatency.getSnapshot();
+		}
 		return new BasicSnapshot(
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
