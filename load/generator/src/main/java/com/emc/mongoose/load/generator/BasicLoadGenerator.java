@@ -272,7 +272,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	@Override
 	protected final void doInterrupt() {
 		svcTasks.remove(this);
-		Loggers.MSG.debug(
+		Loggers.MSG.info(
 			"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
 			builtTasksCounter.sum(), outputTaskCounter.sum()
 		);
