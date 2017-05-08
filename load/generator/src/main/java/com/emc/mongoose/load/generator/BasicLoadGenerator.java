@@ -256,6 +256,10 @@ implements LoadGenerator<I, O>, SvcTask {
 				outputFinishFlag |
 					(itemInputFinishFlag && pendingTasksCount == 0 && !deferredTasksFlag)
 			) {
+				Loggers.ERR.fatal(
+					"output finish flag: {}, item input finish flag: {}, pending tasks count: {}, deferred tasks: {}",
+					outputFinishFlag, itemInputFinishFlag, pendingTasksCount, deferredTasksFlag
+				);
 				try {
 					shutdown();
 				} catch(final IllegalStateException ignored) {
@@ -272,7 +276,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	@Override
 	protected final void doInterrupt() {
 		svcTasks.remove(this);
-		Loggers.MSG.info(
+		Loggers.MSG.debug(
 			"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
 			builtTasksCounter.sum(), outputTaskCounter.sum()
 		);
