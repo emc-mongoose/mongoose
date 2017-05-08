@@ -768,7 +768,7 @@ implements LoadMonitor<I, O> {
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
 			synchronized(state) {
-				state.wait(250);
+				state.wait(100);
 			}
 			if(isInterrupted()) {
 				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", getName());
