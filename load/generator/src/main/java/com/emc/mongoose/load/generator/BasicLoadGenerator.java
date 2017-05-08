@@ -258,6 +258,10 @@ implements LoadGenerator<I, O>, SvcTask {
 							builtTasksCounter.sum() == outputTaskCounter.sum()
 					)
 			) {
+				Loggers.ERR.fatal(
+					"output finish flag: {}, item input finish flag: {}, built tasks: {}, output tasks: {}",
+					outputFinishFlag, itemInputFinishFlag, builtTasksCounter.sum(), outputTaskCounter.sum()
+				);
 				try {
 					shutdown();
 				} catch(final IllegalStateException ignored) {
