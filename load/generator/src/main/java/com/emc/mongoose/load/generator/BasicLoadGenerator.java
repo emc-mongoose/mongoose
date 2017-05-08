@@ -43,7 +43,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
 	private volatile boolean itemInputFinishFlag = false;
-	private volatile boolean deferredTasksFlag = false;
+	private volatile boolean taskInputFinishFlag = false;
 	private volatile boolean outputFinishFlag = false;
 
 	private final int batchSize;
@@ -60,7 +60,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final LongAdder outputTaskCounter = new LongAdder();
 	private final String name;
 
-	private final ThreadLocal<OptLockBuffer<O>> threadLocalBuff = new ThreadLocal<>();
+	private final ThreadLocal<OptLockBuffer<O>> threadLocalTasksBuff = new ThreadLocal<>();
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
@@ -126,15 +126,12 @@ implements LoadGenerator<I, O>, SvcTask {
 	@Override
 	public final void run() {
 
-		OptLockBuffer<O> thrLocTasksBuff = threadLocalBuff.get();
-		if(thrLocTasksBuff == null) {
-			thrLocTasksBuff = new OptLockArrayBuffer<>(batchSize);
-			threadLocalBuff.set(thrLocTasksBuff);
+		OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
+		if(tasksBuff == null) {
+			tasksBuff = new OptLockArrayBuffer<>(batchSize);
+			threadLocalTasksBuff.set(tasksBuff);
 		}
-		int pendingTasksCount = thrLocTasksBuff.size();
-		if(pendingTasksCount == 0) {
-			deferredTasksFlag = false;
-		}
+		int pendingTasksCount = tasksBuff.size();
 		int n = batchSize - pendingTasksCount;
 
 		try {
@@ -162,9 +159,12 @@ implements LoadGenerator<I, O>, SvcTask {
 								if(shuffleFlag) {
 									Collections.shuffle(items, rnd);
 								}
-								ioTaskBuilder.getInstances(items, thrLocTasksBuff);
+								ioTaskBuilder.getInstances(items, tasksBuff);
 								pendingTasksCount += n;
 								builtTasksCounter.add(n);
+								if(itemInputFinishFlag) {
+									taskInputFinishFlag = true;
+								}
 							}
 						}
 					} finally {
@@ -186,14 +186,13 @@ implements LoadGenerator<I, O>, SvcTask {
 				if(n > 0) {
 					if(n == 1) {
 						try {
-							final O task = thrLocTasksBuff.get(0);
+							final O task = tasksBuff.get(0);
 							if(ioTaskOutput.put(task)) {
 								outputTaskCounter.increment();
 								if(pendingTasksCount == 1) {
-									thrLocTasksBuff.clear();
+									tasksBuff.clear();
 								} else {
-									thrLocTasksBuff.remove(0);
-									deferredTasksFlag = true;
+									tasksBuff.remove(0);
 								}
 							}
 						} catch(final EOFException e) {
@@ -216,13 +215,12 @@ implements LoadGenerator<I, O>, SvcTask {
 						}
 					} else {
 						try {
-							n = ioTaskOutput.put(thrLocTasksBuff, 0, n);
+							n = ioTaskOutput.put(tasksBuff, 0, n);
 							outputTaskCounter.add(n);
 							if(n < pendingTasksCount) {
-								thrLocTasksBuff.removeRange(0, n);
-								deferredTasksFlag = true;
+								tasksBuff.removeRange(0, n);
 							} else {
-								thrLocTasksBuff.clear();
+								tasksBuff.clear();
 							}
 						} catch(final EOFException e) {
 							Loggers.MSG.debug(
@@ -253,13 +251,13 @@ implements LoadGenerator<I, O>, SvcTask {
 			}
 		} finally {
 			if(
-				outputFinishFlag |
-					(itemInputFinishFlag && pendingTasksCount == 0 && !deferredTasksFlag)
+				outputFinishFlag ||
+					(
+						itemInputFinishFlag &&
+							taskInputFinishFlag &&
+							builtTasksCounter.sum() == outputTaskCounter.sum()
+					)
 			) {
-				Loggers.ERR.fatal(
-					"output finish flag: {}, item input finish flag: {}, pending tasks count: {}, deferred tasks: {}",
-					outputFinishFlag, itemInputFinishFlag, pendingTasksCount, deferredTasksFlag
-				);
 				try {
 					shutdown();
 				} catch(final IllegalStateException ignored) {
