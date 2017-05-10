@@ -2,6 +2,8 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTask;
+import com.emc.mongoose.common.net.Service;
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
 import com.emc.mongoose.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
@@ -731,7 +733,15 @@ implements LoadMonitor<I, O> {
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							nextDriver.shutdown();
-							Loggers.MSG.info("{}: next storage driver \"{}\" shut down", getName());
+							final String nextDriverStr;
+							if(nextDriver instanceof Service) {
+								nextDriverStr = ServiceUtil.getAddress((Service) nextDriver);
+							} else {
+								nextDriverStr = nextDriver.toString();
+							}
+							Loggers.MSG.info(
+								"{}: next storage driver \"{}\" shut down", getName(), nextDriverStr
+							);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								Level.WARN, e, "failed to shutdown the driver {}", getName(),
@@ -828,8 +838,15 @@ implements LoadMonitor<I, O> {
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							nextDriver.interrupt();
+							final String nextDriverStr;
+							if(nextDriver instanceof Service) {
+								nextDriverStr = ServiceUtil.getAddress((Service) nextDriver);
+							} else {
+								nextDriverStr = nextDriver.toString();
+							}
 							Loggers.MSG.info(
-								"{}: next storage driver \"{}\" interrupted", getName()
+								"{}: next storage driver \"{}\" interrupted", getName(),
+								nextDriverStr
 							);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
