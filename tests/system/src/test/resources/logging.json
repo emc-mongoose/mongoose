@@ -5,7 +5,7 @@
 		"monitorInterval" : 1000,
 		"packages" : "com.emc.mongoose.ui.log.appenders",
 		"shutdownHook" : "enable",
-		"shutdownTimeout" : 1000,
+		"shutdownTimeout" : 100000,
 		"appenders" : {
 			"appender" : [
 				{
