@@ -1,11 +1,12 @@
 {
-	"configuration": {
-		"status": "off",
-		"name": "mongoose",
-		"monitorInterval": 1000,
-		"packages": "com.emc.mongoose.ui.log.appenders",
-		"shutdownHook": "enable",
-		"appenders": {
+	"configuration" : {
+		"status" : "off",
+		"name" : "mongoose",
+		"monitorInterval" : 1000,
+		"packages" : "com.emc.mongoose.ui.log.appenders",
+		"shutdownHook" : "enable",
+		"shutdownTimeout" : 250,
+		"appenders" : {
 			"appender" : [
 				{
 					"name" : "WebUI",
@@ -14,473 +15,522 @@
 					"Filters" : {
 						"Filter" : [
 							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "stdout",
-					"type": "Console",
-					"follow": "true",
-					"PatternLayout": {
-						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}"
-					},
-					"Filters": {
-						"Filter" : [
-							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "parts",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "extResultsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "extMedResultsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}, {
-								"type": "BurstFilter",
-								"rate": 100,
-								"maxBurst": 1000
-							}
-						]
-					}
-				}, {
-					"name": "msgFile",
-					"type": "loadJobFile",
-					"fileName": "messages.log",
-					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "3rdPartyFile",
-					"type": "loadJobFile",
-					"fileName": "3rdparty.log",
-					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsStdout",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedStdout",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFile",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "metricsMedFileTotal",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "parts",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							}, {
-								"type": "BurstFilter",
-								"rate": 10,
-								"maxBurst": 100
-							}
-						]
-					}
-				}, {
-					"name": "errFile",
-					"type": "loadJobFile",
-					"fileName": "errors.log",
-					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}, {
-								"type": "BurstFilter",
-								"rate": 10,
-								"maxBurst": 100
-							}
-						]
-					}
-				}, {
-					"name": "metricsMedFile",
-					"type": "loadJobFile",
-					"fileName": "metrics.med.csv",
-					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "%m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "metricsMedFile",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
+								"type" : "MarkerFilter",
+								"marker" : "cfg",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							},
 							{
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "metricsMedFileTotal",
-					"type": "loadJobFile",
-					"fileName": "metrics.med.total.csv",
-					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "%m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "metricsMedFileTotal",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
+								"type" : "MarkerFilter",
+								"marker" : "ioTrace",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
 							},
 							{
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "metricsFile",
-					"type": "loadJobFile",
-					"fileName": "metrics.csv",
-					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "%m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "metricsFile",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							},
-							{
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "metricsFileTotal",
-					"type": "loadJobFile",
-					"fileName": "metrics.total.csv",
-					"PatternLayout": {
-						"header": "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern": "%m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "metricsFileTotal",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							},
-							{
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "ioTraceFile",
-					"type": "loadJobFile",
-					"fileName": "io.trace.csv",
-					"PatternLayout": {
-						"header": "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
-						"pattern": "%m"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "ioTrace",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							},
-							{
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "cfgFile",
-					"type": "loadJobFile",
-					"fileName": "effective-config.json",
-					"PatternLayout": {
-						"pattern": "%m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "cfg",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "partsUploadFile",
-					"type": "loadJobFile",
-					"fileName": "parts.upload.csv",
-					"PatternLayout": {
-						"header": "ItemPath,UploadId,RespLatency[us]%n",
-						"pattern": "%m%n"
-					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "parts",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
 							}
 						]
 					}
 				},
-//				{
-//					"name" : "extResultsFile",
-//					"type": "file",
-//					"fileName": "result.xml",
-//					"bufferedIO": false,
-//					"PatternLayout": {
-//						"header": "<result>\n",
-//						"footer": "</result>\n",
-//						"pattern": "%m",
-//						"noConsoleNoAnsi": true
-//					},
-//					"Filters": {
-//						"Filter": [
-//							{
-//								"type": "MarkerFilter",
-//								"marker": "extResultsFile",
-//								"onMatch": "ACCEPT",
-//								"onMismatch": "DENY"
-//							},
-//							{
-//								"type": "ThresholdFilter",
-//								"level": "INFO",
-//								"onMatch": "ACCEPT",
-//								"onMismatch": "DENY"
-//							}
-//						]
-//					}
-//				},
-//				{
-//					"name" : "extMedResultsFile",
-//					"type": "file",
-//					"fileName": "intermediate-result.xml",
-//					"bufferedIO": false,
-//					"PatternLayout": {
-//						"header": "<intermediate-result>\n",
-//						"footer": "</intermediate-result>\n",
-//						"pattern": "%m",
-//						"noConsoleNoAnsi": true
-//					},
-//					"Filters": {
-//						"Filter": [
-//							{
-//								"type": "MarkerFilter",
-//								"marker": "extMedResultsFile",
-//								"onMatch": "ACCEPT",
-//								"onMismatch": "DENY"
-//							},
-//							{
-//								"type": "ThresholdFilter",
-//								"level": "INFO",
-//								"onMatch": "ACCEPT",
-//								"onMismatch": "DENY"
-//							}
-//						]
-//					}
-//				},
 				{
-					"name": "async",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": 100000,
-					"shutdownTimeout": 10000,
-					"AppenderRef": [
+					"name" : "stdout",
+					"type" : "Console",
+					"follow" : "true",
+					"PatternLayout" : {
+						"alwaysWriteExceptions" : false,
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "cfg",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "ioTrace",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "parts",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "extResultsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "extMedResultsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "BurstFilter",
+								"rate" : 100,
+								"maxBurst" : 1000
+							}
+						]
+					}
+				},
+				{
+					"name" : "msgFile",
+					"type" : "loadJobFile",
+					"fileName" : "messages.log",
+					"PatternLayout" : {
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "msg",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "3rdPartyFile",
+					"type" : "loadJobFile",
+					"fileName" : "3rdparty.log",
+					"PatternLayout" : {
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "cfg",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "msg",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "err",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsStdout",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedStdout",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFile",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFileTotal",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "ioTrace",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "MarkerFilter",
+								"marker" : "parts",
+								"onMatch" : "DENY",
+								"onMismatch" : "NEUTRAL"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "BurstFilter",
+								"rate" : 10,
+								"maxBurst" : 100
+							}
+						]
+					}
+				},
+				{
+					"name" : "errFile",
+					"type" : "loadJobFile",
+					"fileName" : "errors.log",
+					"PatternLayout" : {
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "err",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "BurstFilter",
+								"rate" : 10,
+								"maxBurst" : 100
+							}
+						]
+					}
+				},
+				{
+					"name" : "metricsMedFile",
+					"type" : "loadJobFile",
+					"fileName" : "metrics.med.csv",
+					"PatternLayout" : {
+						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"pattern" : "%m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFile",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "metricsMedFileTotal",
+					"type" : "loadJobFile",
+					"fileName" : "metrics.med.total.csv",
+					"PatternLayout" : {
+						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"pattern" : "%m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsMedFileTotal",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "metricsFile",
+					"type" : "loadJobFile",
+					"fileName" : "metrics.csv",
+					"PatternLayout" : {
+						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"pattern" : "%m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsFile",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "metricsFileTotal",
+					"type" : "loadJobFile",
+					"fileName" : "metrics.total.csv",
+					"PatternLayout" : {
+						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"pattern" : "%m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "metricsFileTotal",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "ioTraceFile",
+					"type" : "loadJobFile",
+					"fileName" : "io.trace.csv",
+					"PatternLayout" : {
+						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
+						"pattern" : "%m"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "ioTrace",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "cfgFile",
+					"type" : "loadJobFile",
+					"fileName" : "effective-config.json",
+					"PatternLayout" : {
+						"pattern" : "%m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "cfg",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				{
+					"name" : "partsUploadFile",
+					"type" : "loadJobFile",
+					"fileName" : "parts.upload.csv",
+					"PatternLayout" : {
+						"header" : "ItemPath,UploadId,RespLatency[us]%n",
+						"pattern" : "%m%n"
+					},
+					"Filters" : {
+						"Filter" : [
+							{
+								"type" : "MarkerFilter",
+								"marker" : "parts",
+								"onMatch" : "NEUTRAL",
+								"onMismatch" : "DENY"
+							},
+							{
+								"type" : "ThresholdFilter",
+								"level" : "INFO",
+								"onMatch" : "ACCEPT",
+								"onMismatch" : "DENY"
+							}
+						]
+					}
+				},
+				//				{
+				//					"name" : "extResultsFile",
+				//					"type": "file",
+				//					"fileName": "result.xml",
+				//					"bufferedIO": false,
+				//					"PatternLayout": {
+				//						"header": "<result>\n",
+				//						"footer": "</result>\n",
+				//						"pattern": "%m",
+				//						"noConsoleNoAnsi": true
+				//					},
+				//					"Filters": {
+				//						"Filter": [
+				//							{
+				//								"type": "MarkerFilter",
+				//								"marker": "extResultsFile",
+				//								"onMatch": "ACCEPT",
+				//								"onMismatch": "DENY"
+				//							},
+				//							{
+				//								"type": "ThresholdFilter",
+				//								"level": "INFO",
+				//								"onMatch": "ACCEPT",
+				//								"onMismatch": "DENY"
+				//							}
+				//						]
+				//					}
+				//				},
+				//				{
+				//					"name" : "extMedResultsFile",
+				//					"type": "file",
+				//					"fileName": "intermediate-result.xml",
+				//					"bufferedIO": false,
+				//					"PatternLayout": {
+				//						"header": "<intermediate-result>\n",
+				//						"footer": "</intermediate-result>\n",
+				//						"pattern": "%m",
+				//						"noConsoleNoAnsi": true
+				//					},
+				//					"Filters": {
+				//						"Filter": [
+				//							{
+				//								"type": "MarkerFilter",
+				//								"marker": "extMedResultsFile",
+				//								"onMatch": "ACCEPT",
+				//								"onMismatch": "DENY"
+				//							},
+				//							{
+				//								"type": "ThresholdFilter",
+				//								"level": "INFO",
+				//								"onMatch": "ACCEPT",
+				//								"onMismatch": "DENY"
+				//							}
+				//						]
+				//					}
+				//				},
+				{
+					"name" : "async",
+					"type" : "Async",
+					"blocking" : "false",
+					"bufferSize" : 100000,
+					"shutdownTimeout" : 10000,
+					"AppenderRef" : [
 						{
-							"ref": "stdout"
-						}, {
-							"ref": "msgFile"
-						}, {
-							"ref": "3rdPartyFile"
-						}, {
-							"ref": "errFile"
-						}, {
-							"ref": "metricsFile"
-						}, {
-							"ref": "metricsMedFile"
-						}, {
-							"ref": "metricsFileTotal"
-						}, {
-							"ref": "metricsMedFileTotal"
-						}, {
-							"ref": "ioTraceFile"
-						}, {
-							"ref": "WebUI"
-						}, {
-							"ref": "cfgFile"
-						}, {
-							"ref": "partsUploadFile"
-//						}, {
-//							"ref": "extResultsFile"
+							"ref" : "stdout"
+						},
+						{
+							"ref" : "msgFile"
+						},
+						{
+							"ref" : "3rdPartyFile"
+						},
+						{
+							"ref" : "errFile"
+						},
+						{
+							"ref" : "metricsFile"
+						},
+						{
+							"ref" : "metricsMedFile"
+						},
+						{
+							"ref" : "metricsFileTotal"
+						},
+						{
+							"ref" : "metricsMedFileTotal"
+						},
+						{
+							"ref" : "ioTraceFile"
+						},
+						{
+							"ref" : "WebUI"
+						},
+						{
+							"ref" : "cfgFile"
+						},
+						{
+							"ref" : "partsUploadFile"
+							//						}, {
+							//							"ref": "extResultsFile"
 						}
 					]
 				}
 			]
 		},
-		"loggers": {
-			"root": {
-				"level": "DEBUG",
-				"additivity": "false",
-				"AppenderRef": {
-					"ref": "async"
+		"loggers" : {
+			"root" : {
+				"level" : "DEBUG",
+				"additivity" : "false",
+				"AppenderRef" : {
+					"ref" : "async"
 				}
 			},
-			"logger": [
+			"logger" : [
 				{
 					"name" : "io.netty.util.concurrent.DefaultPromise.rejectedExecution",
 					"level" : "FATAL",
@@ -490,16 +540,16 @@
 					"name" : "io.netty.channel.AbstractChannel",
 					"level" : "ERROR",
 					"additivity" : "false",
-					"AppenderRef": {
-						"ref": "async"
+					"AppenderRef" : {
+						"ref" : "async"
 					}
 				},
 				{
 					"name" : "com.emc.mongoose",
 					"level" : "DEBUG",
 					"additivity" : "false",
-					"AppenderRef": {
-						"ref": "async"
+					"AppenderRef" : {
+						"ref" : "async"
 					}
 				}
 			]
