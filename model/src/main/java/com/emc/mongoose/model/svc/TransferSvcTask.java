@@ -6,9 +6,11 @@ import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -16,8 +18,6 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 
 /**
  Created by andrey on 06.05.17.
@@ -49,7 +49,11 @@ extends SvcTaskBase {
 	@Override
 	protected final void invoke() {
 		if(deferredItems.tryLock()) { // works like exclusive invocation lock
-			try(final Instance ctx = CloseableThreadContext.put(KEY_STEP_NAME, stepName)) {
+			try(
+				final Instance ctx = CloseableThreadContext
+					.put(KEY_STEP_NAME, stepName)
+					.put(KEY_CLASS_NAME, getClass().getSimpleName())
+			) {
 
 				// 1st try to output all deferred items if any
 				n = deferredItems.size();

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.model.load.LoadMonitor;
 import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -79,9 +80,9 @@ extends SvcTaskBase {
 	protected final void invoke() {
 		if(exclusiveInvocationLock.tryLock()) {
 			try(
-				final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
-					KEY_STEP_NAME, stepName
-				)
+				final CloseableThreadContext.Instance ctx = CloseableThreadContext
+					.put(KEY_STEP_NAME, stepName)
+					.put(KEY_CLASS_NAME, getClass().getSimpleName())
 			) {
 				nextNanoTimeStamp = nanoTime();
 				if(LoadMonitor.STATS_REFRESH_PERIOD_NANOS > nextNanoTimeStamp - prevNanoTimeStamp) {

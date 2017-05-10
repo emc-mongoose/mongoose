@@ -15,6 +15,11 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+
+import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -36,10 +41,10 @@ implements StorageDriverSvc<I, O> {
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
-		final long metricsPeriodSec
+		final long metricsPeriodSec, final String stepName
 	) {
 		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			stdOutThread = new Thread(new StateReportingTask(driver, metricsPeriodSec));
+			stdOutThread = new Thread(new StateReportingTask(driver, metricsPeriodSec, stepName));
 			stdOutThread.setDaemon(true);
 			stdOutThread.setName(driver.toString());
 		} else {
@@ -56,34 +61,44 @@ implements StorageDriverSvc<I, O> {
 
 		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
+		private final String stepName;
 		
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
 		
-		public StateReportingTask(final StorageDriver driver, final long metricsPeriodSec) {
+		public StateReportingTask(
+			final StorageDriver driver, final long metricsPeriodSec, final String stepName
+		) {
 			this.driver = driver;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
+			this.stepName = stepName;
 			this.prevNanoTimeStamp = 0;
 		}
 		
 		@Override
 		public final void run() {
-			final Thread currentThread = Thread.currentThread();
-			final String driverName = currentThread.getName();
-			while(!currentThread.isInterrupted()) {
-				nextNanoTimeStamp = nanoTime();
-				if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
-					prevNanoTimeStamp = nextNanoTimeStamp;
-					try {
-						Loggers.MSG.info(
-							"{} I/O tasks: scheduled={}, active={}, completed={}",
-							driverName, driver.getScheduledTaskCount(), driver.getActiveTaskCount(),
-							driver.getCompletedTaskCount()
-						);
-					} catch(final RemoteException ignored) {
+			try(
+				final Instance ctx = CloseableThreadContext
+					.put(KEY_STEP_NAME, stepName)
+					.put(KEY_CLASS_NAME, getClass().getSimpleName())
+			) {
+				final Thread currentThread = Thread.currentThread();
+				final String driverName = currentThread.getName();
+				while(!currentThread.isInterrupted()) {
+					nextNanoTimeStamp = nanoTime();
+					if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+						prevNanoTimeStamp = nextNanoTimeStamp;
+						try {
+							Loggers.MSG.info(
+								"{} I/O tasks: scheduled={}, active={}, completed={}",
+								driverName, driver.getScheduledTaskCount(),
+								driver.getActiveTaskCount(), driver.getCompletedTaskCount()
+							);
+						} catch(final RemoteException ignored) {
+						}
+					} else {
+						LockSupport.parkNanos(nextNanoTimeStamp - prevNanoTimeStamp);
 					}
-				} else {
-					LockSupport.parkNanos(nextNanoTimeStamp - prevNanoTimeStamp);
 				}
 			}
 		}

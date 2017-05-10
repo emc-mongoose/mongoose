@@ -118,9 +118,9 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
 				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				System.setProperty(KEY_THREAD_CTX_GC_FREE, VALUE_THREAD_CTXT_GC_FREE);
-				// set "load.job.name" property with timestamp value if not set before
-				final String loadJobName = ThreadContext.get(KEY_STEP_NAME);
-				if(loadJobName == null || loadJobName.length() == 0) {
+				// set step name property with timestamp value if not set before
+				final String testStepName = ThreadContext.get(KEY_STEP_NAME);
+				if(testStepName == null || testStepName.length() == 0) {
 					ThreadContext.put(KEY_STEP_NAME, getDateTimeStamp());
 				}
 				try {
@@ -141,6 +141,9 @@ implements ShutdownCallbackRegistry {
 									shutdown();
 								}
 							}
+						);
+						Loggers.MSG.info(
+							"Logging initialized using the configuration file: {}", log4jConfigFile
 						);
 					}
 					/*final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);

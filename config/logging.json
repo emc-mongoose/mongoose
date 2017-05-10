@@ -14,7 +14,7 @@
 					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-8.-8c{1} %-32.-32t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class.name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
 					},
 					"Filters" : {
 						"Filter" : [
@@ -33,7 +33,7 @@
 					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-8.-8c{1} %-32.-32t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class.name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
 					}
 				},
 				{
@@ -41,7 +41,7 @@
 					"type" : "loadJobFile",
 					"fileName" : "messages.log",
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					}
 				},
 				{
@@ -49,7 +49,7 @@
 					"type" : "loadJobFile",
 					"fileName" : "3rdparty.log",
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
 					},
 					"Filters" : {
 						"Filter" : [
@@ -66,7 +66,7 @@
 					"type" : "loadJobFile",
 					"fileName" : "errors.log",
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					},
 					"Filters" : {
 						"Filter" : [
@@ -171,7 +171,8 @@
 				"level" : "DEBUG",
 				"AppenderRef" : {
 					"ref" : "3rdPartyFile"
-				}
+				},
+				"additivity" : false
 			},
 			"logger" : [
 				{
@@ -179,21 +180,24 @@
 					"level" : "FATAL",
 					"AppenderRef" : {
 						"ref" : "3rdPartyFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "io.netty.channel.AbstractChannel",
 					"level" : "ERROR",
 					"AppenderRef" : {
 						"ref" : "3rdPartyFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.Config",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "cfgFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.Errors",
@@ -205,63 +209,72 @@
 						{
 							"ref" : "errFile"
 						}
-					]
+					],
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.IoTraces",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "ioTraceFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.ExtResultsFile",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "extResultsFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.File",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.FileTotal",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsFileTotal"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.StdOut",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsStdout"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.threshold.ExtResultsFile",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "extThresholdResultsFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.threshold.File",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsMedFile"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.metrics.threshold.FileTotal",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsMedFileTotal"
-					}
+					},
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.Messages",
@@ -273,14 +286,16 @@
 						{
 							"ref" : "msgFile"
 						}
-					]
+					],
+					"additivity" : false
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.Multipart",
 					"level" : "DEBUG",
 					"AppenderRef" : {
 						"ref" : "partsUploadFile"
-					}
+					},
+					"additivity" : false
 				}
 			]
 		}

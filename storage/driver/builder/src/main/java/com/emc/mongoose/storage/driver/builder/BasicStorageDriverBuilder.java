@@ -1,20 +1,22 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.common.Constants;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
-
 import com.emc.mongoose.ui.log.Loggers;
+
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +42,10 @@ public class BasicStorageDriverBuilder<
 	private LoadConfig loadConfig;
 	private MetricsConfig metricsConfig;
 	private StorageConfig storageConfig;
+
+	protected final String getStepName() {
+		return stepName;
+	}
 	
 	protected final ContentSource getContentSource()
 	throws IOException {
@@ -107,9 +113,9 @@ public class BasicStorageDriverBuilder<
 	throws UserShootHisFootException {
 
 		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext.put(
-				Constants.KEY_STEP_NAME, stepName
-			)
+			final Instance ctx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();

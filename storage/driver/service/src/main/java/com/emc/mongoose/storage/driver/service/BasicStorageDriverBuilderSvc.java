@@ -159,7 +159,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getContentSource(), getMetricsConfig().getPeriod()
+			port, driver, getContentSource(), getMetricsConfig().getPeriod(), getStepName()
 		);
 		return wrapper.getName();
 	}

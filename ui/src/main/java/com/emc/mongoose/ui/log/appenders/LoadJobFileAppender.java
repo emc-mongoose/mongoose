@@ -16,7 +16,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.net.Advertiser;
 import org.apache.logging.log4j.core.util.Booleans;
-import org.apache.logging.log4j.util.ReadOnlyStringMap;
 
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 
