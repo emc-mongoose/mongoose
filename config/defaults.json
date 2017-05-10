@@ -84,6 +84,11 @@
 					"type" : "swift",
 					"file" : "mongoose-storage-driver-net-http-swift.jar",
 					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
+				},
+				{
+					"type" : "mock",
+					"file" : "mongoose-storage-driver.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.base.BasicStorageDriverMock"
 				}
 			],
 			"io" : {
