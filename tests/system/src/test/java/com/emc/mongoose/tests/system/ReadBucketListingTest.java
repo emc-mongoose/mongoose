@@ -65,7 +65,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		
 		// reinit
 		SCENARIO.close();
-		LoadJobLogFileManager.closeAll(JOB_NAME);
 		JOB_NAME = ReadBucketListingTest.class.getSimpleName() + "_";
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
@@ -104,7 +103,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 		TimeUnit.MINUTES.timedJoin(runner, 5);
 		runner.interrupt();
-		LoadJobLogFileManager.closeAll(JOB_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

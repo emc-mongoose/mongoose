@@ -213,16 +213,7 @@ extends AbstractManager {
 		}
 		outStreamsMap.clear();
 		INSTANCES.remove(this);
-	}
-	//
-	public static void closeAll(final String runId) {
-		final LoadJobLogFileManager[] managers = new LoadJobLogFileManager[INSTANCES.size()];
-		INSTANCES.toArray(managers);
-		for(final LoadJobLogFileManager manager : managers) {
-			if(manager.outStreamsMap.containsKey(runId)) {
-				manager.close();
-			}
-		}
+		super.close();
 	}
 	/** Flushes all available output streams */
 	public final void flush() {

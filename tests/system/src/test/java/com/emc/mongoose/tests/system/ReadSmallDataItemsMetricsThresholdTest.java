@@ -71,7 +71,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		
 		// reinit for read
 		SCENARIO.close();
-		LoadJobLogFileManager.closeAll(JOB_NAME);
 		JOB_NAME = ReadSmallDataItemsMetricsThresholdTest.class.getSimpleName() + "_";
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
