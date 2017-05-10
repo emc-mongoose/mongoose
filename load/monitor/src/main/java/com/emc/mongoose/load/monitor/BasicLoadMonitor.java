@@ -731,10 +731,7 @@ implements LoadMonitor<I, O> {
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							nextDriver.shutdown();
-							Loggers.MSG.debug(
-								"{}: storage driver \"{}\" shut down", getName(),
-								nextDriver.toString()
-							);
+							Loggers.MSG.info("{}: next storage driver \"{}\" shut down", getName());
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								Level.WARN, e, "failed to shutdown the driver {}", getName(),
@@ -746,9 +743,10 @@ implements LoadMonitor<I, O> {
 			}
 		}
 		
+		Loggers.MSG.info("{}: shutting down the storage drivers...", getName());
 		shutdownExecutor.shutdown();
 		try {
-			if(shutdownExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+			if(shutdownExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
 				Loggers.MSG.debug("{}: load monitor was shut down properly", getName());
 			} else {
 				Loggers.ERR.warn("{}: load monitor shutdown timeout", getName());
@@ -830,6 +828,9 @@ implements LoadMonitor<I, O> {
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							nextDriver.interrupt();
+							Loggers.MSG.info(
+								"{}: next storage driver \"{}\" interrupted", getName()
+							);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								Level.DEBUG, e, "{}: failed to interrupt the driver {}",
@@ -841,9 +842,10 @@ implements LoadMonitor<I, O> {
 			}
 		}
 		
+		Loggers.MSG.info("{}: interrupting the storage drivers...", getName());
 		interruptExecutor.shutdown();
 		try {
-			if(interruptExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+			if(interruptExecutor.awaitTermination(100, TimeUnit.SECONDS)) {
 				Loggers.MSG.debug("{}: storage drivers have been interrupted properly", getName());
 			} else {
 				Loggers.ERR.warn("{}: storage drivers interrupting timeout", getName());

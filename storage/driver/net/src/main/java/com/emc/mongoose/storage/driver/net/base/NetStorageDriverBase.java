@@ -11,6 +11,8 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -19,6 +21,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -36,7 +39,8 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.commons.lang.SystemUtils;
-
+import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import javax.net.ssl.SSLEngine;
@@ -343,22 +347,28 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
-		super.doInterrupt();
-		try {
-			connPool.close();
-		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: failed to close the connection pool", toString()
-			);
-		}
-		try {
-			if(workerGroup.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
-				Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
-			} else {
-				Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
+		try(
+			final Instance ctx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			super.doInterrupt();
+			try {
+				connPool.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to close the connection pool", toString()
+				);
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
+			try {
+				if(workerGroup.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
+					Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
+				} else {
+					Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
+			}
 		}
 	}
 }
