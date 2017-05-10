@@ -143,9 +143,9 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		String jobName = ThreadContext.get(KEY_STEP_NAME);
+		String jobName = event.getContextData().getValue(KEY_STEP_NAME);
 		if(jobName == null) {
-			jobName = event.getContextData().getValue(KEY_STEP_NAME);
+			jobName = ThreadContext.get(KEY_STEP_NAME);
 		}
 		final byte[] buff = getLayout().toByteArray(event);
 		if(buff.length > 0) {
