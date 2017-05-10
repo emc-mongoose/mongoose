@@ -16,14 +16,18 @@ import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
+import org.apache.logging.log4j.jul.LogManager;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,34 +36,23 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class LogUtil
 implements ShutdownCallbackRegistry {
+	
+	private static final Map<String, String> LOGGING_PROPS = new HashMap<String, String>() {
+		{
+			put("Log4jContextSelector", AsyncLoggerContextSelector.class.getCanonicalName());
+			put("java.util.logging.manager", LogManager.class.getCanonicalName());
+			put("isThreadContextMapInheritable", Boolean.toString(true));
+			put("AsyncLogger.WaitStrategy", "Block");
+			put("log4j.Clock", "CoarseCachedClock");
+			put("log4j.shutdownCallbackRegistry", LogUtil.class.getCanonicalName());
+			put("log4j.configurationFactory", JsonConfigurationFactory.class.getCanonicalName());
+			put("log4j2.garbagefree.threadContextMap", Boolean.toString(true));
+			put("log4j2.enable.threadlocals", Boolean.toString(true));
+			put("log4j2.enable.direct.encoders", Boolean.toString(true));
+		}
+	};
 	//
-	private static final String
-		//
-		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
-		VALUE_LOG4J_CTX_ASYNC_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
-		//
-		KEY_JUL_MANAGER = "java.util.logging.manager",
-		VALUE_JUL_MANAGER = "org.apache.logging.log4j.jul.LogManager",
-		//
-		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
-		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
-		//
-		KEY_WAIT_STRATEGY = "AsyncLogger.WaitStrategy",
-		VALUE_WAIT_STRATEGY = "Block",
-		//
-		KEY_CLOCK = "log4j.Clock",
-		VALUE_CLOCK = "CoarseCachedClock",
-		//
-		KEY_SHUTDOWN_CALLBACK_REGISTRY = "log4j.shutdownCallbackRegistry",
-		VALUE_SHUTDOWN_CALLBACK_REGISTRY = "com.djdch.log4j.StaticShutdownCallbackRegistry",
-		//
-		KEY_CONFIG_FACTORY = "log4j.configurationFactory",
-		VALUE_CONFIG_FACTORY = "org.apache.logging.log4j.core.config.json.JsonConfigurationFactory",
-		//
-		KEY_THREAD_CTX_GC_FREE = "log4j2.garbagefree.threadContextMap",
-		VALUE_THREAD_CTXT_GC_FREE = Boolean.toString(true),
-		//
-		MONGOOSE = "mongoose";
+	private static final String NAME = "mongoose";
 	//
 	public static final DatePrinter
 		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
@@ -108,16 +101,7 @@ implements ShutdownCallbackRegistry {
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX == null) {
-				System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
-				// make all used loggers asynchronous
-				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
-				// connect JUL to Log4J2
-				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
-				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
-				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
-				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, LogUtil.class.getCanonicalName());
-				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
-				System.setProperty(KEY_THREAD_CTX_GC_FREE, VALUE_THREAD_CTXT_GC_FREE);
+				System.getProperties().putAll(LOGGING_PROPS);
 				// set step name property with timestamp value if not set before
 				final String testStepName = ThreadContext.get(KEY_STEP_NAME);
 				if(testStepName == null || testStepName.length() == 0) {
@@ -129,7 +113,7 @@ implements ShutdownCallbackRegistry {
 						log4jConfigFile = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
 							File.separator + FNAME_LOG_CONFIG;
 					}
-					LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigFile);
+					LOG_CTX = Configurator.initialize(NAME, log4jConfigFile);
 					//
 					if(LOG_CTX == null) {
 						System.err.println("Logging configuration failed");

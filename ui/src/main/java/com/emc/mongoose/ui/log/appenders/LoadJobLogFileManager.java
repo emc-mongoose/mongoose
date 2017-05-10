@@ -143,7 +143,7 @@ extends AbstractManager {
 		final OutputStream outStream = getOutputStream(jobName);
 		try {
 			outStream.write(buff, offset, len);
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			throw new AppenderLoggingException(
 				"Failed to write to the stream \"" + getName() + "\" for job name \""+jobName+"\"",
 				e
