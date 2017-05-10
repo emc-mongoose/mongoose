@@ -5,6 +5,7 @@
 		"monitorInterval" : 1000,
 		"packages" : "com.emc.mongoose.ui.log.appenders",
 		"shutdownHook" : "enable",
+		"shutdownTimeout" : 10000,
 		"appenders" : {
 			"appender" : [
 				{
@@ -138,30 +139,30 @@
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern" : "%m%n"
 					}
-					//				},
-					//				{
-					//					"name" : "extResultsFile",
-					//					"type" : "file",
-					//					"fileName" : "result.xml",
-					//					"bufferedIO" : false,
-					//					"PatternLayout" : {
-					//						"header" : "<result>\n",
-					//						"footer" : "</result>\n",
-					//						"pattern" : "%m",
-					//						"noConsoleNoAnsi" : true
-					//					}
-					//				},
-					//				{
-					//					"name" : "extThresholdResultsFile",
-					//					"type" : "file",
-					//					"fileName" : "result-with-threshold.xml",
-					//					"bufferedIO" : false,
-					//					"PatternLayout" : {
-					//						"header" : "<result-with-threshold>\n",
-					//						"footer" : "</result-with-threshold>\n",
-					//						"pattern" : "%m",
-					//						"noConsoleNoAnsi" : true
-					//					}
+//				},
+//				{
+//					"name" : "extResultsFile",
+//					"type" : "file",
+//					"fileName" : "result.xml",
+//					"bufferedIO" : false,
+//					"PatternLayout" : {
+//						"header" : "<result>\n",
+//						"footer" : "</result>\n",
+//						"pattern" : "%m",
+//						"noConsoleNoAnsi" : true
+//					}
+//				},
+//				{
+//					"name" : "extThresholdResultsFile",
+//					"type" : "file",
+//					"fileName" : "result-with-threshold.xml",
+//					"bufferedIO" : false,
+//					"PatternLayout" : {
+//						"header" : "<result-with-threshold>\n",
+//						"footer" : "</result-with-threshold>\n",
+//						"pattern" : "%m",
+//						"noConsoleNoAnsi" : true
+//					}
 				}
 			]
 		},
