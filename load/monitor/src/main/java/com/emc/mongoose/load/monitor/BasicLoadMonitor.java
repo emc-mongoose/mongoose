@@ -15,6 +15,8 @@ import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -44,7 +46,8 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
+import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
@@ -701,7 +704,11 @@ implements LoadMonitor<I, O> {
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			shutdownExecutor.submit(
 				() -> {
-					try {
+					try(
+						final Instance ctx = CloseableThreadContext
+							.put(KEY_STEP_NAME, name)
+							.put(KEY_CLASS_NAME, getClass().getSimpleName())
+					) {
 						nextGenerator.interrupt();
 						Loggers.MSG.debug(
 							"{}: load generator \"{}\" interrupted", getName(),
@@ -718,7 +725,11 @@ implements LoadMonitor<I, O> {
 			for(final StorageDriver<I, O> nextDriver : driversMap.get(nextGenerator)) {
 				shutdownExecutor.submit(
 					() -> {
-						try {
+						try(
+							final Instance ctx = CloseableThreadContext
+								.put(KEY_STEP_NAME, name)
+								.put(KEY_CLASS_NAME, getClass().getSimpleName())
+						) {
 							nextDriver.shutdown();
 							Loggers.MSG.debug(
 								"{}: storage driver \"{}\" shut down", getName(),
@@ -813,7 +824,11 @@ implements LoadMonitor<I, O> {
 			for(final StorageDriver<I, O> nextDriver : driversMap.get(nextGenerator)) {
 				interruptExecutor.submit(
 					() -> {
-						try {
+						try(
+							final Instance ctx = CloseableThreadContext
+								.put(KEY_STEP_NAME, name)
+								.put(KEY_CLASS_NAME, getClass().getSimpleName())
+						) {
 							nextDriver.interrupt();
 						} catch(final RemoteException e) {
 							LogUtil.exception(
@@ -869,7 +884,11 @@ implements LoadMonitor<I, O> {
 			for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
 				ioResultsGetAndApplyExecutor.submit(
 					() -> {
-						try {
+						try(
+							final Instance ctx = CloseableThreadContext
+								.put(KEY_STEP_NAME, name)
+								.put(KEY_CLASS_NAME, getClass().getSimpleName())
+						) {
 							final List<O> finalResults = driver.getAll();
 							if(finalResults != null) {
 								final int finalResultsCount = finalResults.size();

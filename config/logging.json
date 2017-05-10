@@ -126,9 +126,9 @@
 				{
 					"name" : "cfgFile",
 					"type" : "loadJobFile",
-					"fileName" : "effective-config.json",
+					"fileName" : "effective-config.log",
 					"PatternLayout" : {
-						"pattern" : "%m%n"
+						"pattern" : "%d{ISO8601}{GMT+0}:%n%m%n%n"
 					}
 				},
 				{
@@ -168,7 +168,7 @@
 		},
 		"loggers" : {
 			"root" : {
-				"level" : "DEBUG",
+				"level" : "INFO",
 				"AppenderRef" : {
 					"ref" : "3rdPartyFile"
 				},

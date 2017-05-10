@@ -17,7 +17,7 @@ import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.ui.log.Loggers;
-
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 
 /**
  Created by kurila on 11.07.16.
@@ -134,7 +136,10 @@ implements LoadGenerator<I, O>, SvcTask {
 		int pendingTasksCount = tasksBuff.size();
 		int n = batchSize - pendingTasksCount;
 
-		try {
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
 			if(n > 0 && !itemInputFinishFlag) {
 				if(inputLock.tryLock()) {
 					try {
