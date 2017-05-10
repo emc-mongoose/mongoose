@@ -108,7 +108,7 @@ extends FileStorageDistributedScenarioTestBase {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test @Ignore
+	@Test //@Ignore
 	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
@@ -123,7 +123,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test @Ignore
+	@Test //@Ignore
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
