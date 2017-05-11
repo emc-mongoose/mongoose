@@ -21,7 +21,9 @@ public class ValidateConfigTest {
 	@Test
 	public final void testDefaultConfig()
 	throws Exception {
-		final ObjectMapper m = new ObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+		final ObjectMapper m = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		final JsonNode jsonInput = m.readTree(
 			Paths.get(PathUtil.getBaseDir(), "config", "defaults.json").toFile()
 		);

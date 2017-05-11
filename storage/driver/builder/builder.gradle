@@ -6,10 +6,6 @@ dependencies {
 		project(":common"),
 		project(":model"),
 		project(":ui"),
-		project(":storage:driver"),
-		project(":storage:driver:net"),
-		project(":storage:driver:net:http"),
-		project(":storage:driver:nio"),
 
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",

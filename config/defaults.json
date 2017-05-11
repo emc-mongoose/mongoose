@@ -89,16 +89,6 @@
 					"type" : "mock-dummy",
 					"file" : "mongoose-tests-perf.jar",
 					"fqcn" : "com.emc.mongoose.tests.perf.util.DummyStorageDriverMock"
-				},
-				{
-					"type" : "mock-basic",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.BasicStorageDriverMock"
-				},
-				{
-					"type" : "mock-nio",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.NioStorageDriverMock"
 				}
 			],
 			"io" : {

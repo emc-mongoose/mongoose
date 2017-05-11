@@ -141,7 +141,7 @@ public class BasicStorageDriverBuilder<
 					availableImpls.put(implType, implCls);
 				} catch(final MalformedURLException e) {
 					Loggers.ERR.warn("Invalid storage driver implementation file: {}", implFile);
-				} catch(final ClassNotFoundException e) {
+				} catch(final ClassNotFoundException | NoClassDefFoundError e) {
 					Loggers.ERR.warn(
 						"Invalid FQCN \"{}\" for the implementation from file: {}", implFqcn,
 						implFile
