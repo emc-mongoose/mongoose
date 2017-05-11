@@ -86,9 +86,19 @@
 					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
 				},
 				{
-					"type" : "mock",
-					"file" : "mongoose-storage-driver.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.base.BasicStorageDriverMock"
+					"type" : "mock-dummy",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.DummyStorageDriverMock"
+				},
+				{
+					"type" : "mock-basic",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.BasicStorageDriverMock"
+				},
+				{
+					"type" : "mock-nio",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.NioStorageDriverMock"
 				}
 			],
 			"io" : {

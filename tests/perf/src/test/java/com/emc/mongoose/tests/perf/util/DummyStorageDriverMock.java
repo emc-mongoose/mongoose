@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.base;
+package com.emc.mongoose.tests.perf.util;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by andrey on 11.05.17.
  */
-public class BasicStorageDriverMock<I extends Item, O extends IoTask<I>>
+public final class DummyStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
 
@@ -38,7 +39,7 @@ implements StorageDriver<I, O> {
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
 
-	public BasicStorageDriverMock(
+	public DummyStorageDriverMock(
 		final String stepName, final LoadConfig loadConfig, final StorageConfig storageConfig,
 		final boolean verifyFlag
 	) {
@@ -48,7 +49,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public boolean put(final O task)
+	public final boolean put(final O task)
 	throws IOException {
 		if(!isStarted()) {
 			throw new EOFException();
@@ -64,7 +65,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public int put(final List<O> tasks, final int from, final int to)
+	public final int put(final List<O> tasks, final int from, final int to)
 	throws IOException {
 		if(!isStarted()) {
 			throw new EOFException();
@@ -87,7 +88,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public int put(final List<O> tasks)
+	public final int put(final List<O> tasks)
 	throws IOException {
 		if(!isStarted()) {
 			throw new EOFException();
@@ -147,13 +148,13 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public Input<O> getInput()
+	public final Input<O> getInput()
 	throws IOException {
 		return this;
 	}
 
 	@Override
-	public O get()
+	public final O get()
 	throws EOFException, IOException {
 		return ioResultsQueue.poll();
 	}
@@ -166,7 +167,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public long skip(final long count)
+	public final long skip(final long count)
 	throws IOException {
 		int n = (int) Math.min(count, Integer.MAX_VALUE);
 		final List<O> tmpBuff = new ArrayList<>(n);
@@ -176,72 +177,77 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public List<I> list(
+	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-	)
-	throws IOException {
-		return null;
+	) throws IOException {
+		return Collections.emptyList();
 	}
 
 	@Override
-	public int getConcurrencyLevel()
+	public final int getConcurrencyLevel()
 	throws RemoteException {
 		return 0;
 	}
 
 	@Override
-	public int getActiveTaskCount()
+	public final int getActiveTaskCount()
 	throws RemoteException {
-		return 0;
+		return (int) (getScheduledTaskCount() - getCompletedTaskCount());
 	}
 
 	@Override
-	public long getScheduledTaskCount()
+	public final long getScheduledTaskCount()
 	throws RemoteException {
 		return scheduledTaskCount.sum();
 	}
 
 	@Override
-	public long getCompletedTaskCount()
+	public final long getCompletedTaskCount()
 	throws RemoteException {
 		return completedTaskCount.sum();
 	}
 
 	@Override
-	public boolean isIdle()
+	public final boolean isIdle()
 	throws RemoteException {
-		return true;
+		return ioResultsQueue.isEmpty();
 	}
 
 	@Override
-	public void adjustIoBuffers(
+	public final void adjustIoBuffers(
 		final SizeInBytes avgDataItemSize, final IoType ioType
 	) throws RemoteException {
 	}
 
 	@Override
-	protected void doShutdown()
+	protected final void doShutdown()
 	throws IllegalStateException {
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
 	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		return true;
 	}
 
 	@Override
-	protected void doInterrupt()
+	protected final void doInterrupt()
 	throws IllegalStateException {
 		Loggers.MSG.debug("{}: interrupted", toString());
 	}
 
 	@Override
-	protected void doClose()
-	throws IllegalStateException {
+	protected final void doClose()
+	throws IOException {
+		super.doClose();
 		ioResultsQueue.clear();
 		Loggers.MSG.debug("{}: closed", toString());
+	}
+
+	@Override
+	public final String toString() {
+		return String.format(super.toString(), "mock-dummy");
 	}
 }

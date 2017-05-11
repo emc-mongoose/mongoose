@@ -31,5 +31,6 @@ jar {
 			"Class-Path": setClassPath(configurations),
 		)
 	}
+	from sourceSets.test.output
 }
 
