@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.perf.util;
+package com.emc.mongoose.tests.perf.util.mock;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;

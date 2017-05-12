@@ -102,7 +102,7 @@ implements NonBlockingConnPool {
 		}
 	}
 
-	protected Channel connect() {
+	private Channel connect() {
 		Channel conn = null;
 		String selectedNodeAddr = null, nextNodeAddr;
 		int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
@@ -120,7 +120,7 @@ implements NonBlockingConnPool {
 			}
 			Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
 			try {
-				conn = bootstrapMap.get(selectedNodeAddr).connect().sync().channel();
+				conn = connect(selectedNodeAddr);
 				conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
 				connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
 			} catch(final Exception e) {
@@ -130,6 +130,11 @@ implements NonBlockingConnPool {
 			}
 		}
 		return conn;
+	}
+
+	protected Channel connect(final String addr)
+	throws Exception {
+		return bootstrapMap.get(addr).connect().sync().channel();
 	}
 	
 	protected Channel poll() {

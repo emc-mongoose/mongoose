@@ -59,8 +59,8 @@ extends StorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	protected final String storageNodeAddrs[];
-	private final int storageNodePort;
-	private final Bootstrap bootstrap;
+	protected final Bootstrap bootstrap;
+	protected final int storageNodePort;
 	private final EventLoopGroup workerGroup;
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
@@ -110,7 +110,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		bootstrap = new Bootstrap()
 			.group(workerGroup)
-			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class );
+			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
@@ -130,8 +130,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
-		connPool = new BasicMultiNodeConnPool(
-			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort
+		connPool = createConnectionPool();
+	}
+
+	protected NonBlockingConnPool createConnectionPool() {
+		return new BasicMultiNodeConnPool(
+			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this,
+			storageNodePort
 		);
 	}
 	
@@ -152,9 +157,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
 			bootstrap.option(ChannelOption.SO_SNDBUF, size);
 		} else if(IoType.READ.equals(ioType)) {
-			Loggers.MSG.info(
-				"Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size)
-			);
+			Loggers.MSG.info("Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size));
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
 			bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
 		} else {

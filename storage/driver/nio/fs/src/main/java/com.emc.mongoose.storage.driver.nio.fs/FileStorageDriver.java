@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.storage.driver.nio.base.NioStorageDriver;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import java.util.List;
  Created by andrey on 01.12.16.
  */
 public interface FileStorageDriver<I extends Item, O extends IoTask<I>>
-extends StorageDriver<I, O> {
+extends NioStorageDriver<I, O> {
 
 	FileSystem FS = FileSystems.getDefault();
 	FileSystemProvider FS_PROVIDER = FS.provider();
