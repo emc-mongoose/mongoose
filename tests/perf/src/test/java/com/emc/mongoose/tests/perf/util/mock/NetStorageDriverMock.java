@@ -108,4 +108,9 @@ extends NetStorageDriverBase<I, O> {
 		ioTask.setStatus(IoTask.Status.SUCC);
 		complete(channel, ioTask);
 	}
+
+	@Override
+	public final String toString() {
+		return String.format(super.toString(), "mock-net");
+	}
 }
