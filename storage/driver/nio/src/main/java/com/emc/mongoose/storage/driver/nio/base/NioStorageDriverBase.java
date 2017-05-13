@@ -266,7 +266,9 @@ implements NioStorageDriver<I, O> {
 				if(ioTaskBuffs[i].tryLock(250, TimeUnit.MILLISECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else {
-					Loggers.ERR.warn("Failed to obtain the lock, I/O tasks buff remains uncleared");
+					Loggers.ERR.debug(
+						"Failed to obtain the lock, I/O tasks buff remains uncleared"
+					);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(

@@ -152,6 +152,13 @@ public class BasicStorageDriverBuilder<
 			final String driverType = driverConfig.getType();
 			final Class<T> matchingImplCls = availableImpls.get(driverType);
 
+			if(matchingImplCls == null) {
+				throw new UserShootHisFootException(
+					"No matching implementation class for the storage driver type \"" +
+						driverType + "\""
+				);
+			}
+
 			try {
 				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
 					String.class, LoadConfig.class, StorageConfig.class, Boolean.TYPE

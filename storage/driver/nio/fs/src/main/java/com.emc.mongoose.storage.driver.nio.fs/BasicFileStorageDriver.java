@@ -502,8 +502,12 @@ implements FileStorageDriver<I, O> {
 				finishIoTask(ioTask);
 				ioTask.setCountBytesDone(countBytesDone);
 				fileItem.size(countBytesDone);
+			} else {
+				countBytesDone += n;
+				ioTask.setCountBytesDone(countBytesDone);
 			}
-		} else {
+		}
+		if(countBytesDone == contentSize) {
 			finishIoTask(ioTask);
 		}
 	}
