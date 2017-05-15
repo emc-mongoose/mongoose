@@ -45,7 +45,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
 	private static final String ITEM_OUTPUT_PATH = ReadBucketListingTest.class.getSimpleName();
 	private static final int LOAD_CONCURRENCY = 1;
-	private static final int LOAD_LIMIT_TIME = 40;
+	private static final int LOAD_LIMIT_TIME = 60;
 	
 	private static String STD_OUTPUT = null;
 	private static int ACTUAL_CONCURRENCY = 0;

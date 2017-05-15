@@ -14,6 +14,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -55,6 +56,9 @@ implements Output<T> {
 	@Override
 	public final boolean put(final T ioTask)
 	throws IOException {
+		if(isClosed()) {
+			throw new EOFException();
+		}
 		final OptLockBuffer<T> buff = selectBuff();
 		if(buff.tryLock()) {
 			try {
@@ -70,6 +74,9 @@ implements Output<T> {
 	@Override
 	public final int put(final List<T> srcBuff, final int from, final int to)
 	throws IOException {
+		if(isClosed()) {
+			throw new EOFException();
+		}
 		OptLockBuffer<T> buff;
 		final int n = to - from;
 		if(n > outputsCount) {
@@ -174,11 +181,15 @@ implements Output<T> {
 	throws IOException {
 		for(final O output : outputs) {
 			final OptLockBuffer<T> buff = buffs.get(output);
-			buff.lock();
 			try {
-				buff.clear();
-			} finally {
-				buff.unlock();
+				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+					try {
+						buff.clear();
+					} finally {
+						buff.unlock();
+					}
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 		buffs.clear();
