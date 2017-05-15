@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -163,7 +164,7 @@ implements ShutdownCallbackRegistry {
 		try {
 			if(LOG_CTX != null) {
 				if(LOG_CTX.isStarted()) {
-					LOG_CTX.stop();
+					LOG_CTX.stop(250, TimeUnit.MILLISECONDS);
 				}
 				LOG_CTX = null;
 			}
