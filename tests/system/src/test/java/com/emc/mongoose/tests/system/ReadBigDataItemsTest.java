@@ -105,7 +105,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.sleep(15); // warmup
+		TimeUnit.SECONDS.sleep(10); // warmup
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			ACTUAL_CONCURRENCY += PortListener
