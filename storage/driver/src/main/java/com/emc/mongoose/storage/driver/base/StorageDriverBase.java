@@ -289,6 +289,9 @@ implements StorageDriver<I, O> {
 	protected final void ioTaskCompleted(final O ioTask) {
 
 		completedTaskCount.increment();
+		if(Loggers.MSG.isTraceEnabled()) {
+			Loggers.MSG.trace("{}: I/O task completed", ioTask);
+		}
 
 		final O ioTaskResult = ioTask.getResult();
 		if(!ioResultsQueue.offer(ioTaskResult/*, 1, TimeUnit.MICROSECONDS*/)) {

@@ -102,7 +102,8 @@ implements NioStorageDriver<I, O> {
 									}
 									// respect the configured concurrency level
 									if(!concurrencyThrottle.tryAcquire()) {
-										break;
+										ioTaskLocalBuff.add(ioTask);
+										continue;
 									}
 									// mark the task as active
 									ioTask.startRequest();

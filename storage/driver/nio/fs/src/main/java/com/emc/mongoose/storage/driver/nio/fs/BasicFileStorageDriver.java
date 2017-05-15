@@ -394,8 +394,7 @@ implements FileStorageDriver<I, O> {
 				);
 			}
 			ioTask.setCountBytesDone(countBytesDone);
-		}
-		if(countBytesDone == contentSize) {
+		} else {
 			finishIoTask(ioTask);
 		}
 	}
@@ -436,9 +435,7 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
 			}
-		}
-		
-		if(countBytesDone == rangesSizeSum) {
+		} else {
 			finishIoTask(ioTask);
 		}
 	}
@@ -491,9 +488,7 @@ implements FileStorageDriver<I, O> {
 			} else {
 				ioTask.setCountBytesDone(rangesSizeSum);
 			}
-		}
-		
-		if(countBytesDone == rangesSizeSum) {
+		} else {
 			finishIoTask(ioTask);
 		}
 	}
@@ -563,9 +558,7 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
 			}
-		}
-		
-		if(countBytesDone == rangesSizeSum) {
+		} else {
 			finishIoTask(ioTask);
 		}
 	}
@@ -621,9 +614,7 @@ implements FileStorageDriver<I, O> {
 			} else {
 				ioTask.setCountBytesDone(rangesSizeSum);
 			}
-		}
-		
-		if(countBytesDone == rangesSizeSum) {
+		} else {
 			finishIoTask(ioTask);
 		}
 	}
@@ -661,9 +652,7 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
 			}
-		}
-		
-		if(countBytesDone == updatingRangesSize) {
+		} else {
 			finishIoTask(ioTask);
 			fileItem.commitUpdatedRanges(ioTask.getMarkedRangesMaskPair());
 		}
@@ -722,9 +711,7 @@ implements FileStorageDriver<I, O> {
 			} else {
 				ioTask.setCountBytesDone(updatingRangesSize);
 			}
-		}
-		
-		if(countBytesDone == updatingRangesSize) {
+		} else {
 			finishIoTask(ioTask);
 			fileItem.size(baseItemSize + updatingRangesSize);
 		}
