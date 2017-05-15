@@ -327,7 +327,8 @@ implements FileStorageDriver<I, O> {
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
 			countBytesDone += fileItem.write(dstChannel, contentSize - countBytesDone);
 			ioTask.setCountBytesDone(countBytesDone);
-		} else {
+		}
+		if(countBytesDone == contentSize) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -342,7 +343,8 @@ implements FileStorageDriver<I, O> {
 				countBytesDone, contentSize - countBytesDone, dstChannel
 			);
 			ioTask.setCountBytesDone(countBytesDone);
-		} else {
+		}
+		if(countBytesDone == contentSize) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -392,7 +394,8 @@ implements FileStorageDriver<I, O> {
 				);
 			}
 			ioTask.setCountBytesDone(countBytesDone);
-		} else {
+		}
+		if(countBytesDone == contentSize) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -433,7 +436,9 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
 			}
-		} else {
+		}
+		
+		if(countBytesDone == rangesSizeSum) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -486,7 +491,9 @@ implements FileStorageDriver<I, O> {
 			} else {
 				ioTask.setCountBytesDone(rangesSizeSum);
 			}
-		} else {
+		}
+		
+		if(countBytesDone == rangesSizeSum) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -556,7 +563,9 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
 			}
-		} else {
+		}
+		
+		if(countBytesDone == rangesSizeSum) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -612,7 +621,9 @@ implements FileStorageDriver<I, O> {
 			} else {
 				ioTask.setCountBytesDone(rangesSizeSum);
 			}
-		} else {
+		}
+		
+		if(countBytesDone == rangesSizeSum) {
 			finishIoTask(ioTask);
 		}
 	}
@@ -650,7 +661,9 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
 			}
-		} else {
+		}
+		
+		if(countBytesDone == updatingRangesSize) {
 			finishIoTask(ioTask);
 			fileItem.commitUpdatedRanges(ioTask.getMarkedRangesMaskPair());
 		}
@@ -709,7 +722,9 @@ implements FileStorageDriver<I, O> {
 			} else {
 				ioTask.setCountBytesDone(updatingRangesSize);
 			}
-		} else {
+		}
+		
+		if(countBytesDone == updatingRangesSize) {
 			finishIoTask(ioTask);
 			fileItem.size(baseItemSize + updatingRangesSize);
 		}
