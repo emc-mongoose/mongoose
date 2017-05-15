@@ -46,7 +46,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("1KB");
 	private static final String ITEM_OUTPUT_FILE = ReadSmallDataItemsMetricsThresholdTest.class.getSimpleName() + ".csv";
-	private static final int LOAD_LIMIT_COUNT = 500_000;
+	private static final int LOAD_LIMIT_COUNT = 1_000_000;
 	private static final int LOAD_CONCURRENCY = 500;
 	private static final double LOAD_THRESHOLD = 0.8;
 	
@@ -106,7 +106,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 10);
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(10);
+		TimeUnit.SECONDS.sleep(20);
 	}
 	
 	@AfterClass
@@ -129,7 +129,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
-			getMetricsMedTotalLogRecords().get(0),
+			getMetricsTotalLogRecords().get(0),
 			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			LOAD_LIMIT_COUNT, 0
 		);
