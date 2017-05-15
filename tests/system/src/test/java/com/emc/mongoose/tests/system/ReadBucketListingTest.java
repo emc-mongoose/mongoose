@@ -44,8 +44,8 @@ public class ReadBucketListingTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
 	private static final String ITEM_OUTPUT_PATH = ReadBucketListingTest.class.getSimpleName();
-	private static final int LOAD_CONCURRENCY = 1;
-	private static final int LOAD_LIMIT_TIME = 60;
+	private static final int LOAD_CONCURRENCY = 10;
+	private static final int LOAD_LIMIT_TIME = 50;
 	
 	private static String STD_OUTPUT = null;
 	private static int ACTUAL_CONCURRENCY = 0;
@@ -56,7 +56,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		JOB_NAME = ReadBucketListingTest.class.getSimpleName();
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
-		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
+		CONFIG_ARGS.add("--storage-driver-concurrency=100");
 		CONFIG_ARGS.add("--test-step-limit-time=" + LOAD_LIMIT_TIME);
 		CONFIG_ARGS.add("--test-step-name=" + JOB_NAME);
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
@@ -72,6 +72,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		CONFIG_ARGS.add("--item-data-verify");
 		CONFIG_ARGS.add("--item-input-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-type=read");
+		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		CONFIG_ARGS.add("--test-step-name=" + JOB_NAME);
 		CONFIG.apply(
 			CliArgParser.parseArgs(
