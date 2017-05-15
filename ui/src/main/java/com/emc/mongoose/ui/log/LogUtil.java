@@ -164,7 +164,7 @@ implements ShutdownCallbackRegistry {
 		try {
 			if(LOG_CTX != null) {
 				if(LOG_CTX.isStarted()) {
-					LOG_CTX.stop(250, TimeUnit.MILLISECONDS);
+					LOG_CTX.stop();
 				}
 				LOG_CTX = null;
 			}
