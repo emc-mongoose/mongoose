@@ -190,7 +190,7 @@ implements Daemon {
 
 	public static void closeAll() {
 		synchronized(SVC_TASKS) {
-			// close all unclosed daemons
+			//System.out.println("Try to close all unclosed daemon instances");
 			for(final Daemon d : SVC_TASKS.keySet()) {
 				try {
 					d.close();
@@ -198,8 +198,8 @@ implements Daemon {
 					t.printStackTrace(System.err);
 				}
 			}
-
-			// wait until the list of the unclosed daemons is empty
+			
+			//System.out.println("Wait until the list of the unclosed daemons is empty...");
 			while(!SVC_TASKS.isEmpty()) {
 				try {
 					TimeUnit.SECONDS.sleep(1);
@@ -208,6 +208,7 @@ implements Daemon {
 					break;
 				}
 			}
+			//System.out.println("Closed all daemon instances");
 		}
 	}
 }

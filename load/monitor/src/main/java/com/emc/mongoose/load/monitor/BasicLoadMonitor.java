@@ -902,84 +902,86 @@ implements LoadMonitor<I, O> {
 			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)
 		);
-
-		for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
-			for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-				ioResultsGetAndApplyExecutor.submit(
-					() -> {
-						try(
-							final Instance ctx = CloseableThreadContext
-								.put(KEY_STEP_NAME, name)
-								.put(KEY_CLASS_NAME, getClass().getSimpleName())
-						) {
-							final List<O> finalResults = driver.getAll();
-							if(finalResults != null) {
-								final int finalResultsCount = finalResults.size();
-								if(finalResultsCount > 0) {
-									Loggers.MSG.debug(
-										"{}: the driver \"{}\" returned {} final I/O results to process",
-										getName(), driver.toString(), finalResults.size()
-									);
-									put(finalResults, 0, finalResultsCount);
-								}
-							}
-						} catch(final Throwable cause) {
-							LogUtil.exception(
-								Level.WARN, cause,
-								"{}: failed to process the final results for the driver {}",
-								getName(), driver.toString()
-							);
-						}
-		
-						try {
-							driver.close();
-							Loggers.MSG.debug(
-								"{}: the storage driver \"{}\" has been closed", getName(),
-								driver.toString()
-							);
-						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.WARN, e, "{}: failed to close the driver {}", getName(),
-								driver.toString()
-							);
-						}
-					}
-				);
-			}
-			
-			try {
-				generator.close();
-				Loggers.MSG.debug(
-					"{}: the load generator \"{}\" has been closed", getName(), generator
-				);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
-				);
-			}
-		}
-		
-		ioResultsGetAndApplyExecutor.shutdown();
-		try {
-			if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				Loggers.MSG.debug(
-					"{}: final I/O result have been got and processed properly", getName()
-				);
-			} else {
-				Loggers.ERR.warn(
-					"{}: timeout while getting and processing the final I/O results", getName()
-				);
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				Level.WARN, e,
-				"{}: interrupted  while getting and processing the final I/O results", getName()
-			);
-		}
 		
 		synchronized(driversMap) {
+
+			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
+				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
+					ioResultsGetAndApplyExecutor.submit(
+						() -> {
+							try(
+								final Instance ctx = CloseableThreadContext
+									.put(KEY_STEP_NAME, name)
+									.put(KEY_CLASS_NAME, getClass().getSimpleName())
+							) {
+								final List<O> finalResults = driver.getAll();
+								if(finalResults != null) {
+									final int finalResultsCount = finalResults.size();
+									if(finalResultsCount > 0) {
+										Loggers.MSG.debug(
+											"{}: the driver \"{}\" returned {} final I/O results to process",
+											getName(), driver.toString(), finalResults.size()
+										);
+										put(finalResults, 0, finalResultsCount);
+									}
+								}
+							} catch(final Throwable cause) {
+								LogUtil.exception(
+									Level.WARN, cause,
+									"{}: failed to process the final results for the driver {}",
+									getName(), driver.toString()
+								);
+							}
+			
+							try {
+								driver.close();
+								Loggers.MSG.debug(
+									"{}: the storage driver \"{}\" has been closed", getName(),
+									driver.toString()
+								);
+							} catch(final IOException e) {
+								LogUtil.exception(
+									Level.WARN, e, "{}: failed to close the driver {}", getName(),
+									driver.toString()
+								);
+							}
+						}
+					);
+				}
+				
+				try {
+					generator.close();
+					Loggers.MSG.debug(
+						"{}: the load generator \"{}\" has been closed", getName(), generator
+					);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
+					);
+				}
+			}
+			
+			ioResultsGetAndApplyExecutor.shutdown();
+			try {
+				if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+					Loggers.MSG.debug(
+						"{}: final I/O result have been got and processed properly", getName()
+					);
+				} else {
+					Loggers.ERR.warn(
+						"{}: timeout while getting and processing the final I/O results", getName()
+					);
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(
+					Level.WARN, e,
+					"{}: interrupted  while getting and processing the final I/O results", getName()
+				);
+			}
+		
 			driversMap.clear();
 		}
+		
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {

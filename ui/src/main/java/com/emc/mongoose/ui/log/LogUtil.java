@@ -8,6 +8,7 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 
+import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -25,6 +26,7 @@ import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.jul.LogManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -151,6 +153,11 @@ implements ShutdownCallbackRegistry {
 	//
 	public static void shutdown() {
 		DaemonBase.closeAll();
+		try {
+			LoadJobLogFileManager.flushAll();
+		} catch(final IOException e) {
+			e.printStackTrace(System.err);
+		}
 		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {
@@ -199,6 +206,7 @@ implements ShutdownCallbackRegistry {
 			@Override
 			public final void run() {
 				if(callback != null) {
+					System.out.println("Shutdown callback + \"" + callback + "\" run...");
 					callback.run();
 				}
 			}
