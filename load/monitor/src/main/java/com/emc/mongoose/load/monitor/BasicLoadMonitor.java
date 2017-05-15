@@ -820,7 +820,7 @@ implements LoadMonitor<I, O> {
 	}
 
 	@Override
-	protected void doInterrupt()
+	protected final void doInterrupt()
 	throws IllegalStateException {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
@@ -828,34 +828,36 @@ implements LoadMonitor<I, O> {
 			new NamingThreadFactory("interruptWorker", true)
 		);
 
-		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			for(final StorageDriver<I, O> nextDriver : driversMap.get(nextGenerator)) {
-				interruptExecutor.submit(
-					() -> {
-						try(
-							final Instance ctx = CloseableThreadContext
-								.put(KEY_STEP_NAME, name)
-								.put(KEY_CLASS_NAME, getClass().getSimpleName())
-						) {
-							nextDriver.interrupt();
-							final String nextDriverStr;
-							if(nextDriver instanceof Service) {
-								nextDriverStr = ServiceUtil.getAddress((Service) nextDriver);
-							} else {
-								nextDriverStr = nextDriver.toString();
+		synchronized(driversMap) {
+			for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+				for(final StorageDriver<I, O> nextDriver : driversMap.get(nextGenerator)) {
+					interruptExecutor.submit(
+						() -> {
+							try(
+								final Instance ctx = CloseableThreadContext
+									.put(KEY_STEP_NAME, name)
+									.put(KEY_CLASS_NAME, getClass().getSimpleName())
+							) {
+								nextDriver.interrupt();
+								final String nextDriverStr;
+								if(nextDriver instanceof Service) {
+									nextDriverStr = ServiceUtil.getAddress((Service) nextDriver);
+								} else {
+									nextDriverStr = nextDriver.toString();
+								}
+								Loggers.MSG.info(
+									"{}: next storage driver \"{}\" interrupted", getName(),
+									nextDriverStr
+								);
+							} catch(final RemoteException e) {
+								LogUtil.exception(
+									Level.DEBUG, e, "{}: failed to interrupt the driver {}",
+									getName(), nextDriver.toString()
+								);
 							}
-							Loggers.MSG.info(
-								"{}: next storage driver \"{}\" interrupted", getName(),
-								nextDriverStr
-							);
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.DEBUG, e, "{}: failed to interrupt the driver {}",
-								getName(), nextDriver.toString()
-							);
 						}
-					}
-				);
+					);
+				}
 			}
 		}
 		
@@ -872,18 +874,20 @@ implements LoadMonitor<I, O> {
 				Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
 			);
 		}
-
-		// stop all service tasks
-		for(final SvcTask svcTask : svcTasks) {
-			try {
-				svcTask.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to stop the service task {}", svcTask
-				);
+		
+		synchronized(svcTasks) {
+			// stop all service tasks
+			for(final SvcTask svcTask : svcTasks) {
+				try {
+					svcTask.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to stop the service task {}", svcTask
+					);
+				}
 			}
+			svcTasks.clear();
 		}
-		svcTasks.clear();
 
 		Loggers.MSG.debug("{}: interrupted the load monitor", getName());
 	}
@@ -942,7 +946,7 @@ implements LoadMonitor<I, O> {
 					}
 				);
 			}
-
+			
 			try {
 				generator.close();
 				Loggers.MSG.debug(
@@ -973,7 +977,9 @@ implements LoadMonitor<I, O> {
 			);
 		}
 		
-		driversMap.clear();
+		synchronized(driversMap) {
+			driversMap.clear();
+		}
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {

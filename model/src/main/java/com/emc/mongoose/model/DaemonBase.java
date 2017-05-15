@@ -194,7 +194,6 @@ implements Daemon {
 			for(final Daemon d : SVC_TASKS.keySet()) {
 				try {
 					d.close();
-				} catch(final IllegalStateException | ConcurrentModificationException ignored) {
 				} catch(final Throwable t) {
 					t.printStackTrace(System.err);
 				}
@@ -205,6 +204,7 @@ implements Daemon {
 				try {
 					TimeUnit.SECONDS.sleep(1);
 				} catch(final InterruptedException e) {
+					e.printStackTrace(System.err);
 					break;
 				}
 			}

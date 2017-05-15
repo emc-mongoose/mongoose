@@ -204,7 +204,7 @@ public abstract class LoggingTestBase {
 				assertEquals(
 					"Next metrics record is expected to be in " + metricsPeriodSec,
 					metricsPeriodSec, (nextDateTimeStamp.getTime() - lastTimeStamp.getTime()) / K,
-					((double) metricsPeriodSec) / 10
+					((double) metricsPeriodSec) / 2
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
