@@ -724,7 +724,7 @@ implements LoadMonitor<I, O> {
 					}
 				}
 			);
-			for(final StorageDriver<I, O> nextDriver : driversMap.get(nextGenerator)) {
+			for(final StorageDriver<I, O> driver : driversMap.get(nextGenerator)) {
 				shutdownExecutor.submit(
 					() -> {
 						try(
@@ -732,20 +732,23 @@ implements LoadMonitor<I, O> {
 								.put(KEY_STEP_NAME, name)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
-							nextDriver.shutdown();
-							final String nextDriverStr;
-							if(nextDriver instanceof Service) {
-								nextDriverStr = ServiceUtil.getAddress((Service) nextDriver);
+							driver.shutdown();
+							if(driver instanceof Service) {
+								Loggers.MSG.info(
+									"{}: next storage driver \"{}\" shut down @ {}", getName(),
+									ServiceUtil.getAddress((Service) driver),
+									((Service) driver).getName()
+								);
 							} else {
-								nextDriverStr = nextDriver.toString();
+								Loggers.MSG.info(
+									"{}: next storage driver \"{}\" shutdown", getName(),
+									driver.toString()
+								);
 							}
-							Loggers.MSG.info(
-								"{}: next storage driver \"{}\" shut down", getName(), nextDriverStr
-							);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								Level.WARN, e, "failed to shutdown the driver {}", getName(),
-								nextDriver.toString()
+								driver.toString()
 							);
 						}
 					}
@@ -830,7 +833,7 @@ implements LoadMonitor<I, O> {
 
 		synchronized(driversMap) {
 			for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-				for(final StorageDriver<I, O> nextDriver : driversMap.get(nextGenerator)) {
+				for(final StorageDriver<I, O> driver : driversMap.get(nextGenerator)) {
 					interruptExecutor.submit(
 						() -> {
 							try(
@@ -838,21 +841,24 @@ implements LoadMonitor<I, O> {
 									.put(KEY_STEP_NAME, name)
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
-								nextDriver.interrupt();
-								final String nextDriverStr;
-								if(nextDriver instanceof Service) {
-									nextDriverStr = ServiceUtil.getAddress((Service) nextDriver);
+								driver.interrupt();
+								System.out.println("Interrupted: " + driver);
+								if(driver instanceof Service) {
+									Loggers.MSG.info(
+										"{}: next storage driver \"{}\" interrupted @ {}",
+										getName(), ServiceUtil.getAddress((Service) driver),
+										((Service) driver).getName()
+									);
 								} else {
-									nextDriverStr = nextDriver.toString();
+									Loggers.MSG.info(
+										"{}: next storage driver \"{}\" interrupted", getName(),
+										driver.toString()
+									);
 								}
-								Loggers.MSG.info(
-									"{}: next storage driver \"{}\" interrupted", getName(),
-									nextDriverStr
-								);
 							} catch(final RemoteException e) {
 								LogUtil.exception(
 									Level.DEBUG, e, "{}: failed to interrupt the driver {}",
-									getName(), nextDriver.toString()
+									getName(), driver.toString()
 								);
 							}
 						}
@@ -935,10 +941,19 @@ implements LoadMonitor<I, O> {
 			
 							try {
 								driver.close();
-								Loggers.MSG.debug(
-									"{}: the storage driver \"{}\" has been closed", getName(),
-									driver.toString()
-								);
+								System.out.println("Interrupted: " + driver);
+								if(driver instanceof Service) {
+									Loggers.MSG.info(
+										"{}: next storage driver \"{}\" closed @ {}",
+										getName(), ServiceUtil.getAddress((Service) driver),
+										((Service) driver).getName()
+									);
+								} else {
+									Loggers.MSG.info(
+										"{}: next storage driver \"{}\" closed", getName(),
+										driver.toString()
+									);
+								}
 							} catch(final IOException e) {
 								LogUtil.exception(
 									Level.WARN, e, "{}: failed to close the driver {}", getName(),
