@@ -898,13 +898,13 @@ implements LoadMonitor<I, O> {
 		System.out.println(1);
 		super.doClose();
 		
-		System.out.println(2);
+		System.out.println("hardware thread count: " + ThreadUtil.getHardwareThreadCount());
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", false)
 		);
 		
-		System.out.println(ioResultsGetAndApplyExecutor.toString());
+		System.out.println(3);
 		synchronized(driversMap) {
 			System.out.println(4);
 
