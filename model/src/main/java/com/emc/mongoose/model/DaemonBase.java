@@ -2,7 +2,6 @@ package com.emc.mongoose.model;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.SvcTask;
-
 import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
@@ -12,11 +11,9 @@ import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareThreadCou
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import static java.util.Map.Entry;
-
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;

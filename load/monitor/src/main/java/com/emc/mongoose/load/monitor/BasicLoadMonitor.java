@@ -736,8 +736,8 @@ implements LoadMonitor<I, O> {
 							if(driver instanceof Service) {
 								Loggers.MSG.info(
 									"{}: next storage driver \"{}\" shut down @ {}", getName(),
-									ServiceUtil.getAddress((Service) driver),
-									((Service) driver).getName()
+									((Service) driver).getName(),
+									ServiceUtil.getAddress((Service) driver)
 								);
 							} else {
 								Loggers.MSG.info(
@@ -846,8 +846,8 @@ implements LoadMonitor<I, O> {
 								if(driver instanceof Service) {
 									Loggers.MSG.info(
 										"{}: next storage driver \"{}\" interrupted @ {}",
-										getName(), ServiceUtil.getAddress((Service) driver),
-										((Service) driver).getName()
+										getName(), ((Service) driver).getName(),
+										ServiceUtil.getAddress((Service) driver)
 									);
 								} else {
 									Loggers.MSG.info(
@@ -941,12 +941,11 @@ implements LoadMonitor<I, O> {
 			
 							try {
 								driver.close();
-								System.out.println("Interrupted: " + driver);
 								if(driver instanceof Service) {
 									Loggers.MSG.info(
 										"{}: next storage driver \"{}\" closed @ {}",
-										getName(), ServiceUtil.getAddress((Service) driver),
-										((Service) driver).getName()
+										getName(), ((Service) driver).getName(),
+										ServiceUtil.getAddress((Service) driver)
 									);
 								} else {
 									Loggers.MSG.info(
