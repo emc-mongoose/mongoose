@@ -700,7 +700,7 @@ implements LoadMonitor<I, O> {
 		
 		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("shutdownWorker", true)
+			new NamingThreadFactory("shutdownWorker", false)
 		);
 
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
@@ -825,7 +825,7 @@ implements LoadMonitor<I, O> {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("interruptWorker", true)
+			new NamingThreadFactory("interruptWorker", false)
 		);
 
 		synchronized(driversMap) {
@@ -901,7 +901,7 @@ implements LoadMonitor<I, O> {
 		System.out.println(2);
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)
+			new NamingThreadFactory("ioResultsGetAndApplyWorker", false)
 		);
 		
 		System.out.println(3);
