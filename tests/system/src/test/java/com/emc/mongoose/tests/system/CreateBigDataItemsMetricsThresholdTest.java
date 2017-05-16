@@ -38,7 +38,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("1GB");
 	private static final int LOAD_CONCURRENCY = 100;
-	private static final double LOAD_THRESHOLD = 0.99;
+	private static final double LOAD_THRESHOLD = 0.95;
 	private static final int LOAD_LIMIT_COUNT = LOAD_CONCURRENCY * STORAGE_DRIVERS_COUNT;
 	
 	private static String STD_OUTPUT = null;

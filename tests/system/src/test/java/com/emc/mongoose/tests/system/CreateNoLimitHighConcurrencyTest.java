@@ -60,7 +60,10 @@ extends HttpStorageDistributedScenarioTestBase {
 			activeConnCount += PortListener
 				.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
 		}
-		assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, activeConnCount);
+		assertEquals(
+			STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, activeConnCount,
+			STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY / 1000
+		);
 	}
 	
 	@AfterClass
