@@ -67,6 +67,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -899,9 +901,17 @@ implements LoadMonitor<I, O> {
 		super.doClose();
 		
 		System.out.println("hardware thread count: " + ThreadUtil.getHardwareThreadCount());
-		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
+		/*final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", false)
+		);*/
+		final ExecutorService ioResultsGetAndApplyExecutor = new ThreadPoolExecutor(
+			ThreadUtil.getHardwareThreadCount(), ThreadUtil.getHardwareThreadCount(), 0,
+			TimeUnit.DAYS, new ArrayBlockingQueue<>(batchSize),
+			new NamingThreadFactory("ioResultsGetAndApplyWorker", false),
+			(r, executor) -> {
+				System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			}
 		);
 		
 		System.out.println(3);
