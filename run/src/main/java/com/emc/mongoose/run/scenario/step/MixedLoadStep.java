@@ -2,6 +2,7 @@ package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
+import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
@@ -23,11 +24,14 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import org.apache.logging.log4j.Level;
 
@@ -78,6 +82,7 @@ extends StepBase {
 		final String jobName = localStepConfig.getName();
 		Loggers.MSG.info("Run the mixed load step \"{}\"", jobName);
 		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
+		final MetricsConfig metricsConfig = localStepConfig.getMetricsConfig();
 		
 		final long t = localLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
@@ -144,10 +149,23 @@ extends StepBase {
 		} catch(final UserShootHisFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		}
-		
+
+		final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
+		final Int2ObjectMap<IoStats.Snapshot> lastIoStats = new Int2ObjectOpenHashMap<>();
+		final Int2ObjectMap<IoStats> thresholdIoStats;
+		final Int2ObjectMap<IoStats.Snapshot> lastThresholdIoStats;
+		if(metricsConfig.getThreshold() > 0) {
+			thresholdIoStats = new Int2ObjectOpenHashMap<>();
+			lastThresholdIoStats = new Int2ObjectOpenHashMap<>();
+		} else {
+			thresholdIoStats = null;
+			lastThresholdIoStats = null;
+		}
+
 		try(
 			final LoadMonitor monitor = new BasicLoadMonitor(
-				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap
+				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap, ioStats, lastIoStats,
+				thresholdIoStats, lastThresholdIoStats
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();

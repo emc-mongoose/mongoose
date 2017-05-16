@@ -4,6 +4,7 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
+import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.item.BasicIoResultsItemInput;
@@ -27,9 +28,11 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -70,10 +73,21 @@ extends StepBase {
 		final String testStepName = stepConfig.getName();
 		Loggers.MSG.info("Run the chain load step \"{}\"", testStepName);
 		final LimitConfig commonLimitConfig = stepConfig.getLimitConfig();
-		
 		final long t = commonLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
-		
+		final MetricsConfig commonMetricsConfig = stepConfig.getMetricsConfig();
+		final Int2ObjectMap<IoStats> commonIoStats = new Int2ObjectOpenHashMap<>();
+		final Int2ObjectMap<IoStats.Snapshot> commonLastIoStats = new Int2ObjectOpenHashMap<>();
+		final Int2ObjectMap<IoStats> commonThresholdIoStats;
+		final Int2ObjectMap<IoStats.Snapshot> commonLastThresholdIoStats;
+		if(commonMetricsConfig.getThreshold() > 0) {
+			commonThresholdIoStats = new Int2ObjectOpenHashMap<>();
+			commonLastThresholdIoStats = new Int2ObjectOpenHashMap<>();
+		} else {
+			commonThresholdIoStats = null;
+			commonLastThresholdIoStats = null;
+		}
+
 		try {
 			
 			IoResultsItemInput nextItemBuff = null;
@@ -141,7 +155,8 @@ extends StepBase {
 				final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 				stepConfigMap.put(loadGenerator, stepConfig);
 				final LoadMonitor loadMonitor = new BasicLoadMonitor(
-					testStepName, driversMap, null, loadConfigMap, stepConfigMap
+					testStepName, driversMap, null, loadConfigMap, stepConfigMap, commonIoStats,
+					commonLastIoStats, commonThresholdIoStats, commonLastThresholdIoStats
 				);
 				loadChain.add(loadMonitor);
 				

@@ -89,9 +89,9 @@ implements LoadMonitor<I, O> {
 	private final boolean isAnyCircular;
 	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
-	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<IoStats> ioStats;
 	private final Int2ObjectMap<IoStats> medIoStats;
-	private final Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<IoStats.Snapshot> lastStats;
 	private final Int2ObjectMap<IoStats.Snapshot> lastMedStats;
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
@@ -102,7 +102,7 @@ implements LoadMonitor<I, O> {
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
-	
+
 	/**
 	 @param name test step name
 	 @param driversMap generator to drivers list map
@@ -112,7 +112,10 @@ implements LoadMonitor<I, O> {
 	public BasicLoadMonitor(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
+		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs,
+		final Int2ObjectMap<IoStats> ioStats, final Int2ObjectMap<IoStats.Snapshot> lastStats,
+		final Int2ObjectMap<IoStats> medIoStats, final Int2ObjectMap<IoStats.Snapshot> lastMedStats
+
 	) {
 		this.name = name;
 		final StepConfig anyStepConfig = stepConfigs.values().iterator().next();
@@ -144,16 +147,18 @@ implements LoadMonitor<I, O> {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
+		this.ioStats = ioStats;
+		this.lastStats = lastStats;
 		final MetricsConfig metricsConfig = anyStepConfig.getMetricsConfig();
 		preconditionJobFlag = anyStepConfig.getPrecondition();
 		metricsPeriodSec = (int) metricsConfig.getPeriod();
 		fullLoadThreshold = metricsConfig.getThreshold();
 		if(fullLoadThreshold > 0) {
-			medIoStats = new Int2ObjectOpenHashMap<>();
-			lastMedStats = new Int2ObjectOpenHashMap<>();
+			this.medIoStats = medIoStats;
+			this.lastMedStats = lastMedStats;
 		} else {
-			medIoStats = null;
-			lastMedStats = null;
+			this.medIoStats = null;
+			this.lastMedStats = null;
 		}
 
 		this.driversMap = driversMap;

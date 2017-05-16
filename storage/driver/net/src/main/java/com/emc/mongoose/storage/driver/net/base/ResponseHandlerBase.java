@@ -52,14 +52,12 @@ extends SimpleChannelInboundHandler<M> {
 		if(ioTask != null) {
 			if(driver.isInterrupted() || driver.isClosed()) {
 				ioTask.setStatus(CANCELLED);
-			} else if(!driver.isInterrupted() && !driver.isClosed()) {
-				if(cause instanceof PrematureChannelClosureException) {
-					LogUtil.exception(Level.WARN, cause, "Premature channel closure");
-					ioTask.setStatus(FAIL_IO);
-				} else {
-					LogUtil.exception(Level.WARN, cause, "Client handler failure");
-					ioTask.setStatus(FAIL_UNKNOWN);
-				}
+			} else if(cause instanceof PrematureChannelClosureException) {
+				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
+				ioTask.setStatus(FAIL_IO);
+			} else {
+				LogUtil.exception(Level.WARN, cause, "Client handler failure");
+				ioTask.setStatus(FAIL_UNKNOWN);
 			}
 			if(!driver.isInterrupted()) {
 				try {
