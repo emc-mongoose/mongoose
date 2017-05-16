@@ -910,7 +910,7 @@ implements LoadMonitor<I, O> {
 
 			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-					ioResultsGetAndApplyExecutor.submit(
+					ioResultsGetAndApplyExecutor.execute(
 						() -> {
 							System.out.println(5);
 							try(
