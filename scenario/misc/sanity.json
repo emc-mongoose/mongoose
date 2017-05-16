@@ -50,7 +50,7 @@
 						{
 							"item" : {
 								"data" : {
-									"verify" : true,
+									"verify" : true
 								}
 							},
 							"load" : {
