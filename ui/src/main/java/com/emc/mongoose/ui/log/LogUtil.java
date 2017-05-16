@@ -153,17 +153,20 @@ implements ShutdownCallbackRegistry {
 	}
 	//
 	public static void shutdown() {
-		DaemonBase.closeAll();
 		try {
+			System.out.println("close all daemons...");
+			DaemonBase.closeAll();
+			System.out.println("flush all loggers...");
 			LoadJobLogFileManager.flushAll();
-		} catch(final IOException e) {
-			e.printStackTrace(System.err);
+		} catch(final Throwable cause) {
+			cause.printStackTrace(System.err);
 		}
 		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX != null) {
 				if(LOG_CTX.isStarted()) {
+					System.out.println("stop the loggers...");
 					LOG_CTX.stop();
 				}
 				LOG_CTX = null;
