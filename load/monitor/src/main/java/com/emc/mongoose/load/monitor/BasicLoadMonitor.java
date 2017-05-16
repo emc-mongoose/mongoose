@@ -904,7 +904,7 @@ implements LoadMonitor<I, O> {
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", false)
 		);
 		
-		System.out.println(3);
+		System.out.println(ioResultsGetAndApplyExecutor.toString());
 		synchronized(driversMap) {
 			System.out.println(4);
 
