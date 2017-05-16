@@ -49,3 +49,17 @@ java -jar mongoose.jar
 
 ## Further Reading
 See <https://github.com/emc-mongoose/mongoose/wiki> for details
+
+ReadPreviousItems: service task "com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask@75884a63"  failed:
+java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+        at java.util.ArrayList.rangeCheck(ArrayList.java:653)
+        at java.util.ArrayList.get(ArrayList.java:429)
+        at com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask.invoke(RoundRobinOutputsTransferSvcTask.java:143)
+        at com.emc.mongoose.common.concurrent.SvcTaskBase.run(SvcTaskBase.java:31)
+        at com.emc.mongoose.model.DaemonBase.lambda$static$1(DaemonBase.java:56)
+        at com.emc.mongoose.model.DaemonBase$$Lambda$3/2045036434.call(Unknown Source)
+        at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+        at java.lang.Thread.run(Thread.java:745)
+        at com.emc.mongoose.model.NamingThreadFactory$ContextAwareThread.run(NamingThreadFactory.java:59)
