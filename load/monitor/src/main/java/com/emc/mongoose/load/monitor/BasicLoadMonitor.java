@@ -975,7 +975,7 @@ implements LoadMonitor<I, O> {
 					);
 				}
 			}
-			System.out.println("!");
+			System.out.println(ioResultsGetAndApplyExecutor.toString());
 			ioResultsGetAndApplyExecutor.shutdown();
 			System.out.println("@");
 			try {
