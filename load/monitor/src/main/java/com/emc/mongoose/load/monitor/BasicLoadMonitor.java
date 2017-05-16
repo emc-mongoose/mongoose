@@ -912,46 +912,53 @@ implements LoadMonitor<I, O> {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
 					ioResultsGetAndApplyExecutor.submit(
 						() -> {
+							System.out.println("~");
 							try(
 								final Instance ctx = CloseableThreadContext
 									.put(KEY_STEP_NAME, name)
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
-								final List<O> finalResults = driver.getAll();
-								if(finalResults != null) {
-									final int finalResultsCount = finalResults.size();
-									if(finalResultsCount > 0) {
-										Loggers.MSG.debug(
-											"{}: the driver \"{}\" returned {} final I/O results to process",
-											getName(), driver.toString(), finalResults.size()
-										);
-										put(finalResults, 0, finalResultsCount);
+								System.out.println("!");
+								try {
+									final List<O> finalResults = driver.getAll();
+									if(finalResults != null) {
+										final int finalResultsCount = finalResults.size();
+										if(finalResultsCount > 0) {
+											Loggers.MSG.debug(
+												"{}: the driver \"{}\" returned {} final I/O " +
+													"results to process",
+												getName(), driver.toString(), finalResults.size()
+											);
+											put(finalResults, 0, finalResultsCount);
+										}
 									}
+								} catch(final Throwable cause) {
+									LogUtil.exception(
+										Level.WARN, cause,
+										"{}: failed to process the final results for the driver {}",
+										getName(), driver.toString()
+									);
 								}
-							} catch(final Throwable cause) {
-								LogUtil.exception(
-									Level.WARN, cause,
-									"{}: failed to process the final results for the driver {}",
-									getName(), driver.toString()
-								);
-							}
-			
-							try {
-								driver.close();
-								Loggers.MSG.info(
-									"{}: next storage driver {} closed", getName(),
-									(
-										(driver instanceof Service)?
-											((Service) driver).getName() + " @ " +
-												ServiceUtil.getAddress((Service) driver) :
-											driver.toString()
-									)
-								);
-							} catch(final IOException e) {
-								LogUtil.exception(
-									Level.WARN, e, "{}: failed to close the driver {}", getName(),
-									driver.toString()
-								);
+								System.out.println("@");
+								try {
+									driver.close();
+									System.out.println("$");
+									Loggers.MSG.info(
+										"{}: next storage driver {} closed", getName(),
+										(
+											(driver instanceof Service)?
+												((Service) driver).getName() + " @ " +
+													ServiceUtil.getAddress((Service) driver) :
+												driver.toString()
+										)
+									);
+								} catch(final IOException e) {
+									LogUtil.exception(
+										Level.WARN, e, "{}: failed to close the driver {}",
+										getName(), driver.toString()
+									);
+								}
+								System.out.println("%");
 							}
 						}
 					);
