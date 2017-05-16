@@ -161,7 +161,6 @@ implements ShutdownCallbackRegistry {
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
 		}
-		// stop the logging
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX != null) {
