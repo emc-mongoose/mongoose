@@ -2,7 +2,6 @@ package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.monitor.BasicLoadMonitor;
-import com.emc.mongoose.load.monitor.metrics.IoStats;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
@@ -23,12 +22,8 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import org.apache.logging.log4j.Level;
 
@@ -77,7 +72,6 @@ extends StepBase {
 
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
-		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
 		final ItemConfig itemConfig = localConfig.getItemConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
@@ -133,23 +127,9 @@ extends StepBase {
 		loadConfigMap.put(loadGenerator, loadConfig);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 		stepConfigMap.put(loadGenerator, stepConfig);
-
-		final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
-		final Int2ObjectMap<IoStats.Snapshot> lastIoStats = new Int2ObjectOpenHashMap<>();
-		final Int2ObjectMap<IoStats> thresholdIoStats;
-		final Int2ObjectMap<IoStats.Snapshot> lastThresholdIoStats;
-		if(metricsConfig.getThreshold() > 0) {
-			thresholdIoStats = new Int2ObjectOpenHashMap<>();
-			lastThresholdIoStats = new Int2ObjectOpenHashMap<>();
-		} else {
-			thresholdIoStats = null;
-			lastThresholdIoStats = null;
-		}
-
 		try(
 			final LoadMonitor monitor = new BasicLoadMonitor(
-				jobName, driversMap, null, loadConfigMap, stepConfigMap, ioStats, lastIoStats,
-				thresholdIoStats, lastThresholdIoStats
+				jobName, driversMap, null, loadConfigMap, stepConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();

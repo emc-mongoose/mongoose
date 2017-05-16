@@ -14,7 +14,8 @@
 		"test" : {
 			"step" : {
 				"limit" : {
-					"time" : "5m"
+					"count" : 1000000,
+					"time" : "10m"
 				}
 			}
 		}
