@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -119,10 +120,16 @@ extends StepBase {
 		} else {
 			timeLimitSec = Long.MAX_VALUE;
 		}
-
+		
+		final Map<LoadGenerator, List<StorageDriver>> driversMap = new HashMap<>();
+		driversMap.put(loadGenerator, drivers);
+		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
+		loadConfigMap.put(loadGenerator, loadConfig);
+		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
+		stepConfigMap.put(loadGenerator, stepConfig);
 		try(
 			final LoadMonitor monitor = new BasicLoadMonitor(
-				jobName, loadGenerator, drivers, loadConfig, stepConfig
+				jobName, driversMap, null, loadConfigMap, stepConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();

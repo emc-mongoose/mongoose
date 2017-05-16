@@ -189,23 +189,11 @@ implements Daemon {
 		synchronized(SVC_TASKS) {
 			for(final Daemon d : SVC_TASKS.keySet()) {
 				try {
-					//System.out.println("Try to close " + d + "...");
 					d.close();
 				} catch(final Throwable t) {
 					t.printStackTrace(System.err);
 				}
 			}
-			
-			//System.out.println("Wait until the list of the unclosed daemons is empty...");
-			while(!SVC_TASKS.isEmpty()) {
-				try {
-					TimeUnit.SECONDS.sleep(1);
-				} catch(final InterruptedException e) {
-					e.printStackTrace(System.err);
-					break;
-				}
-			}
-			//System.out.println("Closed all daemon instances");
 		}
 	}
 }

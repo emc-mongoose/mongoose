@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -133,8 +134,14 @@ extends StepBase {
 						.build();
 				}
 				
+				final Map<LoadGenerator, List<StorageDriver>> driversMap = new HashMap<>();
+				driversMap.put(loadGenerator, drivers);
+				final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
+				loadConfigMap.put(loadGenerator, loadConfig);
+				final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
+				stepConfigMap.put(loadGenerator, stepConfig);
 				final LoadMonitor loadMonitor = new BasicLoadMonitor(
-					testStepName, loadGenerator, drivers, loadConfig, stepConfig
+					testStepName, driversMap, null, loadConfigMap, stepConfigMap
 				);
 				loadChain.add(loadMonitor);
 				

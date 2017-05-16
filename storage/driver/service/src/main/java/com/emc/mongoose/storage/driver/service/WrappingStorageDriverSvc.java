@@ -155,7 +155,6 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final void close()
 	throws IOException {
-		System.out.println("\n" + getName() + " close invoked\n");
 		driver.close();
 		contentSrc.close();
 		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
@@ -228,7 +227,6 @@ implements StorageDriverSvc<I, O> {
 	public final void interrupt()
 	throws IllegalStateException {
 		try {
-			System.out.println("\n" + getName() + " interrupt invoked\n");
 			driver.interrupt();
 			if(stateReportSvcTask != null) {
 				stateReportSvcTask.close();

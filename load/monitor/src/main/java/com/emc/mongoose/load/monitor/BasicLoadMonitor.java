@@ -58,7 +58,6 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -67,8 +66,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -105,53 +102,10 @@ implements LoadMonitor<I, O> {
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
-
+	
 	/**
-	 Single load job constructor
-	 @param name
-	 @param loadGenerator
-	 @param driversMap
-	 @param loadConfig
-	 */
-	public BasicLoadMonitor(
-		final String name, final LoadGenerator<I, O> loadGenerator,
-		final List<StorageDriver<I, O>> driversMap, final LoadConfig loadConfig,
-		final StepConfig stepConfig
-	) {
-		this(
-			name,
-			new HashMap<LoadGenerator<I, O>, List<StorageDriver<I, O>>>() {{
-				put(loadGenerator, driversMap);
-			}},
-			null,
-			new HashMap<LoadGenerator<I, O>, LoadConfig>() {{
-				put(loadGenerator, loadConfig);
-			}},
-			new HashMap<LoadGenerator<I, O>, StepConfig>() {{
-				put(loadGenerator, stepConfig);
-			}}
-		);
-	}
-
-	/**
-	 Mixed load job constructor
-	 @param name
-	 @param driversMap
-	 @param loadConfigs
-	 */
-	public BasicLoadMonitor(
-		final String name,
-		final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
-	) {
-		this(name, driversMap, null, loadConfigs, stepConfigs);
-	}
-
-	/**
-	 Weighted mixed load job constructor
-	 @param name
-	 @param driversMap
+	 @param name test step name
+	 @param driversMap generator to drivers list map
 	 @param loadConfigs
 	 @param weightMap
 	 */
@@ -702,7 +656,7 @@ implements LoadMonitor<I, O> {
 		
 		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("shutdownWorker", false)
+			new NamingThreadFactory("shutdownWorker", true)
 		);
 
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
@@ -827,7 +781,7 @@ implements LoadMonitor<I, O> {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("interruptWorker", false)
+			new NamingThreadFactory("interruptWorker", true)
 		);
 
 		synchronized(driversMap) {
@@ -897,38 +851,23 @@ implements LoadMonitor<I, O> {
 	protected final void doClose()
 	throws IOException {
 		
-		System.out.println(1);
 		super.doClose();
 		
-		System.out.println("hardware thread count: " + ThreadUtil.getHardwareThreadCount());
-		/*final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("ioResultsGetAndApplyWorker", false)
-		);*/
-		final ExecutorService ioResultsGetAndApplyExecutor = new ThreadPoolExecutor(
-			ThreadUtil.getHardwareThreadCount(), ThreadUtil.getHardwareThreadCount(), 0,
-			TimeUnit.DAYS, new ArrayBlockingQueue<>(batchSize),
-			new NamingThreadFactory("ioResultsGetAndApplyWorker", false),
-			(r, executor) -> {
-				System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			}
+		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
+			ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("ioResultsWorker", true)
 		);
 		
-		System.out.println(3);
 		synchronized(driversMap) {
-			System.out.println(4);
 
 			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-					ioResultsGetAndApplyExecutor.execute(
+					ioResultsExecutor.submit(
 						() -> {
-							System.out.println(5);
 							try(
 								final Instance ctx = CloseableThreadContext
 									.put(KEY_STEP_NAME, name)
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
-								System.out.println(6);
 								try {
 									final List<O> finalResults = driver.getAll();
 									if(finalResults != null) {
@@ -949,31 +888,27 @@ implements LoadMonitor<I, O> {
 										getName(), driver.toString()
 									);
 								}
-								System.out.println(7);
 								try {
 									driver.close();
-									System.out.println(8);
-									Loggers.MSG.info(
-										"{}: next storage driver {} closed", getName(),
-										(
-											(driver instanceof Service)?
-												((Service) driver).getName() + " @ " +
-													ServiceUtil.getAddress((Service) driver) :
-												driver.toString()
-										)
+									Loggers.MSG.info("{}: next storage driver {} closed", getName(),
+										((driver instanceof Service) ?
+											((Service) driver).getName() + " @ " +
+												ServiceUtil.getAddress((Service) driver) :
+											driver.toString())
 									);
+								} catch(final NoSuchObjectException ignored) {
+									// closing causes this normally
 								} catch(final IOException e) {
 									LogUtil.exception(
 										Level.WARN, e, "{}: failed to close the driver {}",
 										getName(), driver.toString()
 									);
 								}
-								System.out.println(9);
 							}
 						}
 					);
 				}
-				System.out.println("~");
+				
 				try {
 					generator.close();
 					Loggers.MSG.debug(
@@ -985,11 +920,11 @@ implements LoadMonitor<I, O> {
 					);
 				}
 			}
-			System.out.println(ioResultsGetAndApplyExecutor.toString());
-			ioResultsGetAndApplyExecutor.shutdown();
-			System.out.println("@");
+
+			ioResultsExecutor.shutdown();
+
 			try {
-				if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				if(ioResultsExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
 					Loggers.MSG.debug(
 						"{}: final I/O result have been got and processed properly", getName()
 					);
@@ -1007,7 +942,6 @@ implements LoadMonitor<I, O> {
 		
 			driversMap.clear();
 		}
-		System.out.println("#");
 		
 		ioTaskOutputs.clear();
 		circularityMap.clear();

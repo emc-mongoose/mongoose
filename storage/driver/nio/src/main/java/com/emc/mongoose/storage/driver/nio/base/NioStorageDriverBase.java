@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.nio.base;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
+import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.NamingThreadFactory;
@@ -183,7 +184,7 @@ implements NioStorageDriver<I, O> {
 	protected final void doInterrupt()
 	throws IllegalStateException {
 		try {
-			if(!ioTaskExecutor.awaitTermination(250, TimeUnit.MILLISECONDS)) {
+			if(!ioTaskExecutor.awaitTermination(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 				Loggers.ERR.error("Failed to stop the remaining I/O tasks in 0.25 second");
 			}
 		} catch(final InterruptedException e) {
@@ -263,7 +264,7 @@ implements NioStorageDriver<I, O> {
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioWorkerTasks[i] = null;
 			try {
-				if(ioTaskBuffs[i].tryLock(250, TimeUnit.MILLISECONDS)) {
+				if(ioTaskBuffs[i].tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else {
 					Loggers.ERR.debug(
