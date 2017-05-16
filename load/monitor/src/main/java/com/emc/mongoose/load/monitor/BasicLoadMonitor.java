@@ -895,14 +895,18 @@ implements LoadMonitor<I, O> {
 	protected final void doClose()
 	throws IOException {
 		
+		System.out.println(1);
 		super.doClose();
-
+		
+		System.out.println(2);
 		final ExecutorService ioResultsGetAndApplyExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
 			new NamingThreadFactory("ioResultsGetAndApplyWorker", true)
 		);
 		
+		System.out.println(3);
 		synchronized(driversMap) {
+			System.out.println(4);
 
 			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
@@ -965,6 +969,7 @@ implements LoadMonitor<I, O> {
 				}
 			}
 			
+			System.out.println(5);
 			ioResultsGetAndApplyExecutor.shutdown();
 			try {
 				if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
@@ -986,13 +991,15 @@ implements LoadMonitor<I, O> {
 			driversMap.clear();
 		}
 		
+		System.out.println(6);
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
 			recycleQueue.clear();
 		}
 		recycleQueuesMap.clear();
-
+		
+		System.out.println(7);
 		Loggers.METRICS_STD_OUT.info(
 			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
 		);

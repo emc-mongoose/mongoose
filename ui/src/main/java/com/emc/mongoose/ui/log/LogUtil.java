@@ -154,9 +154,9 @@ implements ShutdownCallbackRegistry {
 	//
 	public static void shutdown() {
 		try {
-			System.out.println("close all daemons...");
+			//System.out.println("close all daemons...");
 			DaemonBase.closeAll();
-			System.out.println("flush all loggers...");
+			//System.out.println("flush all loggers...");
 			LoadJobLogFileManager.flushAll();
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
@@ -165,7 +165,7 @@ implements ShutdownCallbackRegistry {
 		try {
 			if(LOG_CTX != null) {
 				if(LOG_CTX.isStarted()) {
-					System.out.println("stop the loggers...");
+					//System.out.println("stop the loggers...");
 					LOG_CTX.stop();
 				}
 				LOG_CTX = null;
