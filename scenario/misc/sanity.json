@@ -12,7 +12,7 @@
 			}
 		},
 		"test" : {
-			"steps" : {
+			"step" : {
 				"limit" : {
 					"time" : "5m"
 				}
