@@ -204,14 +204,22 @@ extends StepBase {
 				break;
 			}
 		}
+		
+		for(final LoadMonitor nextLoadMonitor : loadChain) {
+			try {
+				nextLoadMonitor.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed o close the load monitor \"{}\"",
+					nextLoadMonitor.getName()
+				);
+			}
+		}
 	}
 	
 	@Override
 	public void close()
 	throws IOException {
 		nodeConfigList.clear();
-		for(final LoadMonitor nextLoadMonitor : loadChain) {
-			nextLoadMonitor.close();
-		}
 	}
 }
