@@ -1,99 +1,68 @@
 {
-	"type" : "parallel",
+	"type" : "for",
 	"config" : {
 		"item" : {
 			"output" : {
 				"path" : "/default"
 			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
+			}
+		},
+		"test" : {
+			"steps" : {
+				"limit" : {
+					"time" : "5m"
+				}
+			}
 		}
 	},
 	"steps" : [
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "10KB"
-					}
-				},
-				"storage" : {
-					"driver" : {
-						"concurrency" : 100
-					}
-				}
-			}
-		},
-		{
 			"type" : "for",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "1KB"
-					}
-				},
-				"storage" : {
-					"driver" : {
-						"concurrency" : 10
-					}
-				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"time" : 10
-						}
-					}
-				}
-			},
+			"value" : "itemSize",
+			"in" : [
+				"10KB", "100KB", "1MB", "10MB", "100MB", "1GB"
+			],
 			"steps" : [
 				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"output" : {
-								"file" : "items.csv"
-							}
-						}
-					}
-				},
-				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"data" : {
-								"verify" : true
-							},
-							"input" : {
-								"file" : "items.csv"
+					"type" : "chain",
+					"config" : [
+						{
+							"load" : {
+								"type" : "create"
 							}
 						},
-						"load" : {
-							"circular" : true,
-							"type" : "read"
-						}
-					}
-				},
-				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"data" : {
-								"ranges" : {
-									"random" : 1
+						{
+							"item" : {
+								"data" : {
+									"ranges" : {
+										"random" : 4
+									}
 								}
 							},
-							"input" : {
-								"file" : "items.csv"
+							"load" : {
+								"type" : "update"
 							}
 						},
-						"load" : {
-							"circular" : true,
-							"type" : "update"
+						{
+							"item" : {
+								"data" : {
+									"verify" : true,
+								}
+							},
+							"load" : {
+								"type" : "read"
+							}
+						},
+						{
+							"load" : {
+								"type" : "delete"
+							}
 						}
-					}
-				},
-				{
-					"type" : "command",
-					"value" : "rm -f items.csv"
+					]
 				}
 			]
 		}
