@@ -35,7 +35,7 @@ extends StepBase {
 				);
 			}
 		}
-		final Object jobList = subTree.get(KEY_NODE_JOBS);
+		final Object jobList = subTree.getOrDefault(KEY_NODE_STEPS, subTree.get(KEY_NODE_JOBS));
 		if(jobList != null) {
 			if(jobList instanceof List) {
 				for(final Object job : (List) jobList) {

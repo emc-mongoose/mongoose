@@ -7,7 +7,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "load",
 			"config" : {
@@ -44,7 +44,7 @@
 					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load",
 					"config" : {

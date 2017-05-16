@@ -598,6 +598,17 @@
 										}
 									]
 								},
+								"ssl" : {
+									"oneOf" : [
+										{
+											"type": "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
 								"tcpNoDelay": {
 									"type": "boolean"
 								},
@@ -853,7 +864,7 @@
 				}
 			]
 		},
-		"jobs" : {
+		"steps" : {
 			"type" : "array",
 			"items" : {
 				"$ref" : "#"

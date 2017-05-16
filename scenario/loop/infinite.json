@@ -9,7 +9,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "command",
 			"value" : "echo \"Hi there!\""

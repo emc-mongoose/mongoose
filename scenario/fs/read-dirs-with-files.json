@@ -18,7 +18,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			// create 10 directories
 			"type" : "precondition",
@@ -55,7 +55,7 @@
 					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "precondition",
 					"config" : {

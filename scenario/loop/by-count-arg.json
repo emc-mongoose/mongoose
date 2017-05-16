@@ -1,7 +1,7 @@
 {
 	"type" : "for",
 	"value" : "${N}",
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "command",
 			"value" : "echo \"Hi there\""

@@ -28,7 +28,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition"
 		}, {
