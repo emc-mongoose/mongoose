@@ -733,18 +733,15 @@ implements LoadMonitor<I, O> {
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							driver.shutdown();
-							if(driver instanceof Service) {
-								Loggers.MSG.info(
-									"{}: next storage driver \"{}\" shut down @ {}", getName(),
-									((Service) driver).getName(),
-									ServiceUtil.getAddress((Service) driver)
-								);
-							} else {
-								Loggers.MSG.info(
-									"{}: next storage driver \"{}\" shutdown", getName(),
-									driver.toString()
-								);
-							}
+							Loggers.MSG.info(
+								"{}: next storage driver {} shutdown", getName(),
+								(
+									(driver instanceof Service)?
+										((Service) driver).getName() + " @ " +
+											ServiceUtil.getAddress((Service) driver) :
+										driver.toString()
+								)
+							);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								Level.WARN, e, "failed to shutdown the driver {}", getName(),
@@ -842,19 +839,15 @@ implements LoadMonitor<I, O> {
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
 								driver.interrupt();
-								System.out.println("Interrupted: " + driver);
-								if(driver instanceof Service) {
-									Loggers.MSG.info(
-										"{}: next storage driver \"{}\" interrupted @ {}",
-										getName(), ((Service) driver).getName(),
-										ServiceUtil.getAddress((Service) driver)
-									);
-								} else {
-									Loggers.MSG.info(
-										"{}: next storage driver \"{}\" interrupted", getName(),
-										driver.toString()
-									);
-								}
+								Loggers.MSG.info(
+									"{}: next storage driver {} interrupted", getName(),
+									(
+										(driver instanceof Service)?
+											((Service) driver).getName() + " @ " +
+												ServiceUtil.getAddress((Service) driver) :
+											driver.toString()
+									)
+								);
 							} catch(final RemoteException e) {
 								LogUtil.exception(
 									Level.DEBUG, e, "{}: failed to interrupt the driver {}",
@@ -941,18 +934,15 @@ implements LoadMonitor<I, O> {
 			
 							try {
 								driver.close();
-								if(driver instanceof Service) {
-									Loggers.MSG.info(
-										"{}: next storage driver \"{}\" closed @ {}",
-										getName(), ((Service) driver).getName(),
-										ServiceUtil.getAddress((Service) driver)
-									);
-								} else {
-									Loggers.MSG.info(
-										"{}: next storage driver \"{}\" closed", getName(),
-										driver.toString()
-									);
-								}
+								Loggers.MSG.info(
+									"{}: next storage driver {} closed", getName(),
+									(
+										(driver instanceof Service)?
+											((Service) driver).getName() + " @ " +
+												ServiceUtil.getAddress((Service) driver) :
+											driver.toString()
+									)
+								);
 							} catch(final IOException e) {
 								LogUtil.exception(
 									Level.WARN, e, "{}: failed to close the driver {}", getName(),
