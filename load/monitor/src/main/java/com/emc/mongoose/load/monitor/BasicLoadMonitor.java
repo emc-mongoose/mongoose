@@ -912,13 +912,13 @@ implements LoadMonitor<I, O> {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
 					ioResultsGetAndApplyExecutor.submit(
 						() -> {
-							System.out.println("~");
+							System.out.println(5);
 							try(
 								final Instance ctx = CloseableThreadContext
 									.put(KEY_STEP_NAME, name)
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
-								System.out.println("!");
+								System.out.println(6);
 								try {
 									final List<O> finalResults = driver.getAll();
 									if(finalResults != null) {
@@ -939,10 +939,10 @@ implements LoadMonitor<I, O> {
 										getName(), driver.toString()
 									);
 								}
-								System.out.println("@");
+								System.out.println(7);
 								try {
 									driver.close();
-									System.out.println("$");
+									System.out.println(8);
 									Loggers.MSG.info(
 										"{}: next storage driver {} closed", getName(),
 										(
@@ -958,12 +958,12 @@ implements LoadMonitor<I, O> {
 										getName(), driver.toString()
 									);
 								}
-								System.out.println("%");
+								System.out.println(9);
 							}
 						}
 					);
 				}
-				
+				System.out.println("~");
 				try {
 					generator.close();
 					Loggers.MSG.debug(
@@ -975,9 +975,9 @@ implements LoadMonitor<I, O> {
 					);
 				}
 			}
-			
-			System.out.println(5);
+			System.out.println("!");
 			ioResultsGetAndApplyExecutor.shutdown();
+			System.out.println("@");
 			try {
 				if(ioResultsGetAndApplyExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
 					Loggers.MSG.debug(
@@ -997,8 +997,8 @@ implements LoadMonitor<I, O> {
 		
 			driversMap.clear();
 		}
+		System.out.println("#");
 		
-		System.out.println(6);
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
@@ -1006,7 +1006,6 @@ implements LoadMonitor<I, O> {
 		}
 		recycleQueuesMap.clear();
 		
-		System.out.println(7);
 		Loggers.METRICS_STD_OUT.info(
 			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
 		);
