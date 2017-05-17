@@ -51,6 +51,7 @@ implements Step {
 			invoke();
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.ERROR, cause, "Test step failure");
+			cause.printStackTrace(System.err);
 		}
 	}
 
