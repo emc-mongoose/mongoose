@@ -1,16 +1,17 @@
-package com.emc.mongoose.load.monitor;
+package com.emc.mongoose.load.controller;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.load.monitor.metrics.IoTraceCsvLogMessage;
+import com.emc.mongoose.load.controller.metrics.IoTraceCsvLogMessage;
+import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
-import com.emc.mongoose.load.monitor.metrics.MetricsSvcTask;
+import com.emc.mongoose.load.controller.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
@@ -22,12 +23,12 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.load.monitor.metrics.ExtResultsXmlLogMessage;
-import com.emc.mongoose.load.monitor.metrics.IoTraceCsvBatchLogMessage;
-import com.emc.mongoose.load.monitor.metrics.MetricsCsvLogMessage;
-import com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage;
+import com.emc.mongoose.load.controller.metrics.ExtResultsXmlLogMessage;
+import com.emc.mongoose.load.controller.metrics.IoTraceCsvBatchLogMessage;
+import com.emc.mongoose.load.controller.metrics.MetricsCsvLogMessage;
+import com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.load.monitor.metrics.BasicIoStats;
+import com.emc.mongoose.load.controller.metrics.BasicIoStats;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -38,8 +39,8 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadMonitor;
-import com.emc.mongoose.load.monitor.metrics.IoStats;
+import com.emc.mongoose.model.load.LoadController;
+import com.emc.mongoose.load.controller.metrics.IoStats;
 import com.emc.mongoose.ui.log.Loggers;
 
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
@@ -72,9 +73,9 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 12.07.16.
  */
-public class BasicLoadMonitor<I extends Item, O extends IoTask<I>>
+public class BasicLoadController<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadMonitor<I, O> {
+implements LoadController<I, O> {
 	
 	private final String name;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
@@ -109,7 +110,7 @@ implements LoadMonitor<I, O> {
 	 @param loadConfigs
 	 @param weightMap
 	 */
-	public BasicLoadMonitor(
+	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
 		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
@@ -713,12 +714,12 @@ implements LoadMonitor<I, O> {
 		shutdownExecutor.shutdown();
 		try {
 			if(shutdownExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				Loggers.MSG.debug("{}: load monitor was shut down properly", getName());
+				Loggers.MSG.debug("{}: load controller was shut down properly", getName());
 			} else {
-				Loggers.ERR.warn("{}: load monitor shutdown timeout", getName());
+				Loggers.ERR.warn("{}: load controller shutdown timeout", getName());
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "{}: load monitor shutdown interrupted", getName());
+			LogUtil.exception(Level.WARN, e, "{}: load controller shutdown interrupted", getName());
 		}
 	}
 
@@ -844,7 +845,7 @@ implements LoadMonitor<I, O> {
 			svcTasks.clear();
 		}
 
-		Loggers.MSG.debug("{}: interrupted the load monitor", getName());
+		Loggers.MSG.debug("{}: interrupted the load controller", getName());
 	}
 
 	@Override
@@ -1015,6 +1016,6 @@ implements LoadMonitor<I, O> {
 			Loggers.MSG.debug("{}: closed the items output", getName());
 		}
 
-		Loggers.MSG.debug("{}: closed the load monitor", getName());
+		Loggers.MSG.debug("{}: closed the load controller", getName());
 	}
 }

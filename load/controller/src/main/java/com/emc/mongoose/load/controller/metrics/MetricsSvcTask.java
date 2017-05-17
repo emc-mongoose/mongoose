@@ -1,8 +1,8 @@
-package com.emc.mongoose.load.monitor.metrics;
+package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
-import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -42,14 +42,14 @@ extends SvcTaskBase {
 	private volatile long prevNanoTimeStamp;
 	private volatile long nextNanoTimeStamp;
 
-	private final LoadMonitor loadMonitor;
+	private final LoadController loadController;
 	private final int activeTasksThreshold;
 
 	private volatile boolean enterStateFlag = false;
 	private volatile boolean exitStateFlag = false;
 
 	public MetricsSvcTask(
-		final LoadMonitor loadMonitor, final String stepName, final int metricsPeriodSec,
+		final LoadController loadController, final String stepName, final int metricsPeriodSec,
 		final boolean volatileOutputFlag, final Int2IntMap driversCountMap,
 		final Int2IntMap concurrencyMap, final Int2ObjectMap<IoStats> ioStats,
 		final Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2ObjectMap<IoStats> medIoStats,
@@ -57,7 +57,7 @@ extends SvcTaskBase {
 		final Int2ObjectMap<SizeInBytes> itemSizeMap,
 		final int activeTasksThreshold
 	) throws RemoteException {
-		super(loadMonitor.getSvcTasks());
+		super(loadController.getSvcTasks());
 		this.stepName = stepName;
 		this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(
 			metricsPeriodSec > 0 ? metricsPeriodSec : Long.MAX_VALUE
@@ -72,7 +72,7 @@ extends SvcTaskBase {
 		this.driversCountMap = driversCountMap;
 		this.itemSizeMap = itemSizeMap;
 
-		this.loadMonitor = loadMonitor;
+		this.loadController = loadController;
 		this.activeTasksThreshold = activeTasksThreshold;
 	}
 
@@ -85,7 +85,7 @@ extends SvcTaskBase {
 					.put(KEY_CLASS_NAME, getClass().getSimpleName())
 			) {
 				nextNanoTimeStamp = nanoTime();
-				if(LoadMonitor.STATS_REFRESH_PERIOD_NANOS > nextNanoTimeStamp - prevNanoTimeStamp) {
+				if(LoadController.STATS_REFRESH_PERIOD_NANOS > nextNanoTimeStamp - prevNanoTimeStamp) {
 					return;
 				}
 				IoStats.refreshLastStats(ioStats, lastStats);
@@ -95,7 +95,7 @@ extends SvcTaskBase {
 					);
 					
 					if(medIoStats != null && !exitStateFlag) {
-						if(loadMonitor.getActiveTaskCount() >= activeTasksThreshold) {
+						if(loadController.getActiveTaskCount() >= activeTasksThreshold) {
 							if(!enterStateFlag) {
 								Loggers.MSG.info(
 									"{}: The threshold of {} active tasks count is reached, " +

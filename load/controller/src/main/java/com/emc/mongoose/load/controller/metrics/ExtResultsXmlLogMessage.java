@@ -1,7 +1,7 @@
-package com.emc.mongoose.load.monitor.metrics;
+package com.emc.mongoose.load.controller.metrics;
 
 import static com.emc.mongoose.common.Constants.MIB;
-import static com.emc.mongoose.load.monitor.metrics.IoStats.Snapshot;
+import static com.emc.mongoose.load.controller.metrics.IoStats.Snapshot;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;

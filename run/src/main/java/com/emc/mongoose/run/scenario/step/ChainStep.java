@@ -3,7 +3,7 @@ package com.emc.mongoose.run.scenario.step;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
-import com.emc.mongoose.load.monitor.BasicLoadMonitor;
+import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.item.BasicIoResultsItemInput;
@@ -12,7 +12,7 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
@@ -51,7 +51,7 @@ extends StepBase {
 	
 	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
-	private final List<LoadMonitor> loadChain;
+	private final List<LoadController> loadChain;
 	
 	public ChainStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
@@ -140,16 +140,16 @@ extends StepBase {
 				loadConfigMap.put(loadGenerator, loadConfig);
 				final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 				stepConfigMap.put(loadGenerator, stepConfig);
-				final LoadMonitor loadMonitor = new BasicLoadMonitor(
+				final LoadController loadController = new BasicLoadController(
 					testStepName, driversMap, null, loadConfigMap, stepConfigMap
 				);
-				loadChain.add(loadMonitor);
+				loadChain.add(loadController);
 				
 				if(i < nodeConfigList.size() - 1) {
 					nextItemBuff = new BasicIoResultsItemInput<>(
 						queueConfig.getSize(), TimeUnit.SECONDS, outputConfig.getDelay()
 					);
-					loadMonitor.setIoResultsOutput(nextItemBuff);
+					loadController.setIoResultsOutput(nextItemBuff);
 				} else {
 					final String itemOutputFile = localConfig
 						.getItemConfig().getOutputConfig().getFile();
@@ -164,7 +164,7 @@ extends StepBase {
 						final Output itemOutput = new ItemInfoFileOutput<>(
 							itemOutputPath
 						);
-						loadMonitor.setIoResultsOutput(itemOutput);
+						loadController.setIoResultsOutput(itemOutput);
 					}
 				}
 			}
@@ -175,8 +175,8 @@ extends StepBase {
 		}
 		
 		try {
-			for(final LoadMonitor nextMonitor : loadChain) {
-				nextMonitor.start();
+			for(final LoadController nextController : loadChain) {
+				nextController.start();
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.WARN, e, "Unexpected failure");
@@ -184,14 +184,14 @@ extends StepBase {
 		
 		long timeRemainSec = timeLimitSec;
 		long tsStart;
-		for(final LoadMonitor nextMonitor : loadChain) {
+		for(final LoadController nextController : loadChain) {
 			if(timeRemainSec > 0) {
 				tsStart = System.currentTimeMillis();
 				try {
-					if(nextMonitor.await(timeRemainSec, TimeUnit.SECONDS)) {
-						Loggers.MSG.info("Load step \"{}\" done", nextMonitor.getName());
+					if(nextController.await(timeRemainSec, TimeUnit.SECONDS)) {
+						Loggers.MSG.info("Load step \"{}\" done", nextController.getName());
 					} else {
-						Loggers.MSG.info("Load step \"{}\" timeout", nextMonitor.getName());
+						Loggers.MSG.info("Load step \"{}\" timeout", nextController.getName());
 					}
 				} catch(final InterruptedException e) {
 					Loggers.MSG.debug("Load step interrupted");
@@ -205,13 +205,13 @@ extends StepBase {
 			}
 		}
 		
-		for(final LoadMonitor nextLoadMonitor : loadChain) {
+		for(final LoadController nextLoadController : loadChain) {
 			try {
-				nextLoadMonitor.close();
+				nextLoadController.close();
 			} catch(final IOException e) {
 				LogUtil.exception(
-					Level.WARN, e, "Failed o close the load monitor \"{}\"",
-					nextLoadMonitor.getName()
+					Level.WARN, e, "Failed o close the load controller \"{}\"",
+					nextLoadController.getName()
 				);
 			}
 		}

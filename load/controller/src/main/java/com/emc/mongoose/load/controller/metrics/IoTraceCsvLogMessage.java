@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.monitor.metrics;
+package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;

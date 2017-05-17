@@ -9,7 +9,7 @@ import com.emc.mongoose.model.item.Item;
 /**
  Created on 11.07.16.
  */
-public interface LoadMonitor<I extends Item, O extends IoTask<I>>
+public interface LoadController<I extends Item, O extends IoTask<I>>
 extends Daemon, Output<O> {
 	
 	long STATS_REFRESH_PERIOD_NANOS = 100_000;

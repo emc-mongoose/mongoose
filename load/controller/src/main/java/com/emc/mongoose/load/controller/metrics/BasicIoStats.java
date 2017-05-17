@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.monitor.metrics;
+package com.emc.mongoose.load.controller.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;

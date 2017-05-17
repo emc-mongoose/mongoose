@@ -25,8 +25,8 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import static com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage.TABLE_BORDER;
-import static com.emc.mongoose.load.monitor.metrics.MetricsStdoutLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage.TABLE_BORDER;
+import static com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;

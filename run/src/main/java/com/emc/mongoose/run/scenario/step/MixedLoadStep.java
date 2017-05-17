@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.load.monitor.BasicLoadMonitor;
+import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
@@ -9,7 +9,7 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
@@ -146,7 +146,7 @@ extends StepBase {
 		}
 		
 		try(
-			final LoadMonitor monitor = new BasicLoadMonitor(
+			final LoadController controller = new BasicLoadController(
 				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap
 			)
 		) {
@@ -158,10 +158,10 @@ extends StepBase {
 				}
 				// NOTE: using null as an ItemFactory
 				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-				monitor.setIoResultsOutput(itemOutput);
+				controller.setIoResultsOutput(itemOutput);
 			}
-			monitor.start();
-			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
+			controller.start();
+			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
 				Loggers.MSG.info("Load step done");
 			} else {
 				Loggers.MSG.info("Load step timeout");
