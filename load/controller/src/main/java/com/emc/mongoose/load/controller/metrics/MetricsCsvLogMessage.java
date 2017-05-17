@@ -1,8 +1,8 @@
 package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.metrics.IoStats;
 import com.emc.mongoose.ui.log.LogMessageBase;
-
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
@@ -45,29 +45,28 @@ import java.util.Map;
 public final class MetricsCsvLogMessage
 extends LogMessageBase {
 	
-	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
+	private final Int2ObjectMap<IoStats> ioStats;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 	
 	public MetricsCsvLogMessage(
-		final Int2ObjectMap<IoStats.Snapshot> snapshots, final Int2IntMap concurrencyMap,
+		final Int2ObjectMap<IoStats> ioStats, final Int2IntMap concurrencyMap,
 		final Int2IntMap driversCountMap
 	) {
-		this.snapshots = snapshots;
+		this.ioStats = ioStats;
 		this.concurrencyMap = concurrencyMap;
 		this.driversCountMap = driversCountMap;
 	}
 	
 	@Override
 	public final void formatTo(final StringBuilder strb) {
-		final Iterator<Map.Entry<Integer, IoStats.Snapshot>>
-			entryIter = snapshots.entrySet().iterator();
-		Map.Entry<Integer, IoStats.Snapshot> nextEntry;
+		final Iterator<Map.Entry<Integer, IoStats>> entryIter = ioStats.entrySet().iterator();
+		Map.Entry<Integer, IoStats> nextEntry;
 		IoStats.Snapshot nextSnapshot;
 		final Date current = new Date();
 		while(entryIter.hasNext()) {
 			nextEntry = entryIter.next();
-			nextSnapshot = nextEntry.getValue();
+			nextSnapshot = nextEntry.getValue().getLastSnapshot();
 			strb
 				.append('"').append(FMT_DATE_ISO8601.format(current)).append('"').append(',')
 				.append(IoType.values()[nextEntry.getKey()].name()).append(',')

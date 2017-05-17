@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.metrics.IoStats;
 import com.emc.mongoose.ui.log.LogMessageBase;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;

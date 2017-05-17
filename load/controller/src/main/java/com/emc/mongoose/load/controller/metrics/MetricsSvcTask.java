@@ -3,6 +3,7 @@ package com.emc.mongoose.load.controller.metrics;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.model.load.LoadController;
+import com.emc.mongoose.model.metrics.IoStats;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -30,9 +31,7 @@ extends SvcTaskBase {
 	private final Lock exclusiveInvocationLock = new ReentrantLock();
 	private final long metricsPeriodNanoSec;
 	private final Int2ObjectMap<IoStats> ioStats;
-	private final Int2ObjectMap<IoStats.Snapshot> lastStats;
-	private final Int2ObjectMap<IoStats> medIoStats;
-	private final Int2ObjectMap<IoStats.Snapshot> lastMedStats;
+	private final Int2ObjectMap<IoStats> thresholdIoStats;
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap;
 	private final String stepName;
 	private final Int2IntMap driversCountMap;
@@ -52,9 +51,7 @@ extends SvcTaskBase {
 		final LoadController loadController, final String stepName, final int metricsPeriodSec,
 		final boolean volatileOutputFlag, final Int2IntMap driversCountMap,
 		final Int2IntMap concurrencyMap, final Int2ObjectMap<IoStats> ioStats,
-		final Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2ObjectMap<IoStats> medIoStats,
-		final Int2ObjectMap<IoStats.Snapshot> lastMedStats,
-		final Int2ObjectMap<SizeInBytes> itemSizeMap,
+		final Int2ObjectMap<IoStats> thresholdIoStats, final Int2ObjectMap<SizeInBytes> itemSizeMap,
 		final int activeTasksThreshold
 	) throws RemoteException {
 		super(loadController.getSvcTasks());
@@ -65,9 +62,7 @@ extends SvcTaskBase {
 		this.prevNanoTimeStamp = -1;
 		this.volatileOutputFlag = volatileOutputFlag;
 		this.ioStats = ioStats;
-		this.lastStats = lastStats;
-		this.medIoStats = medIoStats;
-		this.lastMedStats = lastMedStats;
+		this.thresholdIoStats = thresholdIoStats;
 		this.concurrencyMap = concurrencyMap;
 		this.driversCountMap = driversCountMap;
 		this.itemSizeMap = itemSizeMap;
@@ -85,16 +80,28 @@ extends SvcTaskBase {
 					.put(KEY_CLASS_NAME, getClass().getSimpleName())
 			) {
 				nextNanoTimeStamp = nanoTime();
-				if(LoadController.STATS_REFRESH_PERIOD_NANOS > nextNanoTimeStamp - prevNanoTimeStamp) {
-					return;
+				IoStats ioTypeStats;
+				for(final int nextIoTypeCode : ioStats.keySet()) {
+					ioTypeStats = ioStats.get(nextIoTypeCode);
+					if(ioTypeStats != null) {
+						ioTypeStats.refreshLastSnapshot();
+					}
 				}
-				IoStats.refreshLastStats(ioStats, lastStats);
 				if(nextNanoTimeStamp - prevNanoTimeStamp > metricsPeriodNanoSec) {
+					if(IoStats.OUTPUT_BUFF.tryLock()) {
+						try {
+							for(int nextIoTypeCode : ioStats.keySet()) {
+								IoStats.OUTPUT_BUFF.add(ioStats.get(nextIoTypeCode));
+							}
+						} finally {
+							IoStats.OUTPUT_BUFF.unlock();
+						}
+					}
 					IoStats.outputLastStats(
 						lastStats, driversCountMap, concurrencyMap, stepName, volatileOutputFlag
 					);
 					
-					if(medIoStats != null && !exitStateFlag) {
+					if(thresholdIoStats != null && !exitStateFlag) {
 						if(loadController.getActiveTaskCount() >= activeTasksThreshold) {
 							if(!enterStateFlag) {
 								Loggers.MSG.info(
@@ -102,12 +109,15 @@ extends SvcTaskBase {
 										"starting the additional metrics accounting",
 									stepName, activeTasksThreshold
 								);
-								for(final int originCode : medIoStats.keySet()) {
-									medIoStats.get(originCode).start();
+								for(final int originCode : thresholdIoStats.keySet()) {
+									thresholdIoStats.get(originCode).start();
 								}
 								enterStateFlag = true;
 							}
-							IoStats.refreshLastStats(medIoStats, lastMedStats);
+							for(final int nextIoTypeCode : thresholdIoStats.keySet()) {
+								ioTypeStats = thresholdIoStats.get(nextIoTypeCode);
+								ioTypeStats.refreshLastSnapshot();
+							}
 							IoStats.outputLastMedStats(
 								lastMedStats, driversCountMap, concurrencyMap, stepName,
 								volatileOutputFlag
@@ -120,21 +130,23 @@ extends SvcTaskBase {
 							stepName, activeTasksThreshold
 						);
 						Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
-							new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
+							new MetricsCsvLogMessage(
+								thresholdIoStats, concurrencyMap, driversCountMap
+							)
 						);
 						Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
 							new ExtResultsXmlLogMessage(
-								stepName, lastMedStats, itemSizeMap, concurrencyMap, driversCountMap
+								stepName, thresholdIoStats, itemSizeMap, concurrencyMap,
+								driversCountMap
 							)
 						);
-						for(final int originCode : medIoStats.keySet()) {
+						for(final int originCode : thresholdIoStats.keySet()) {
 							try {
-								medIoStats.get(originCode).close();
+								thresholdIoStats.get(originCode).close();
 							} catch(final IOException ignore) {
 							}
 						}
-						medIoStats.clear();
-						lastMedStats.clear();
+						thresholdIoStats.clear();
 						exitStateFlag = true;
 					}
 					

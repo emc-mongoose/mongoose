@@ -28,7 +28,7 @@ import com.emc.mongoose.load.controller.metrics.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.controller.metrics.MetricsCsvLogMessage;
 import com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.load.controller.metrics.BasicIoStats;
+import com.emc.mongoose.model.metrics.BasicIoStats;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -39,8 +39,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadController;
-import com.emc.mongoose.load.controller.metrics.IoStats;
+import com.emc.mongoose.model.metrics.IoStats;
 import com.emc.mongoose.ui.log.Loggers;
 
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
@@ -49,6 +48,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -91,18 +91,17 @@ implements LoadController<I, O> {
 	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
 	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
-	private final Int2ObjectMap<IoStats> medIoStats;
-	private final Int2ObjectMap<IoStats.Snapshot> lastStats = new Int2ObjectOpenHashMap<>();
-	private final Int2ObjectMap<IoStats.Snapshot> lastMedStats;
+	private final Int2ObjectMap<IoStats> thresholdIoStats;
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
-	private volatile Output<O> ioResultsOutput;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 	private final Int2BooleanMap circularityMap;
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
+	
+	private volatile Output<O> ioResultsOutput;
 	
 	/**
 	 @param name test step name
@@ -150,11 +149,9 @@ implements LoadController<I, O> {
 		metricsPeriodSec = (int) metricsConfig.getPeriod();
 		fullLoadThreshold = metricsConfig.getThreshold();
 		if(fullLoadThreshold > 0) {
-			medIoStats = new Int2ObjectOpenHashMap<>();
-			lastMedStats = new Int2ObjectOpenHashMap<>();
+			thresholdIoStats = new Int2ObjectOpenHashMap<>();
 		} else {
-			medIoStats = null;
-			lastMedStats = null;
+			thresholdIoStats = null;
 		}
 
 		this.driversMap = driversMap;
@@ -177,20 +174,36 @@ implements LoadController<I, O> {
 				recycleQueuesMap.put(nextOriginCode, new ArrayBlockingQueue<O>(queueSizeLimit));
 			}
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
-			final int ioTypeCode = IoType.valueOf(ioTypeName).ordinal();
+			final IoType ioType = IoType.valueOf(ioTypeName);
+			final int ioTypeCode = ioType.ordinal();
 			driversCountMap.put(ioTypeCode, nextDrivers.size());
+			int ioTypeSpecificConcurrency = 0;
 			try {
-				final int ioTypeSpecificConcurrency = nextDrivers.get(0).getConcurrencyLevel();
+				ioTypeSpecificConcurrency = nextDrivers.get(0).getConcurrencyLevel();
 				concurrencySum += ioTypeSpecificConcurrency;
 				concurrencyMap.put(ioTypeCode, ioTypeSpecificConcurrency);
 			} catch(final RemoteException e) {
 				LogUtil.exception(Level.ERROR, e, "Failed to invoke the remote method");
 			}
-			ioStats.put(ioTypeCode, new BasicIoStats(metricsPeriodSec));
-			if(medIoStats != null) {
-				medIoStats.put(ioTypeCode, new BasicIoStats(metricsPeriodSec));
+			ioStats.put(
+				ioTypeCode,
+				new BasicIoStats(
+					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
+					preconditionJobFlag, metricsPeriodSec
+				)
+			);
+			if(thresholdIoStats != null) {
+				thresholdIoStats.put(
+					ioTypeCode,
+					new BasicIoStats(
+						name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
+						preconditionJobFlag, metricsPeriodSec
+					)
+				);
 			}
-			itemSizeMap.put(nextGenerator.getIoType().ordinal(), nextGenerator.getItemSizeEstimate());
+			itemSizeMap.put(
+				nextGenerator.getIoType().ordinal(), nextGenerator.getItemSizeEstimate()
+			);
 		}
 		this.totalConcurrency = concurrencySum;
 		this.isAnyCircular = anyCircularFlag;
@@ -230,9 +243,11 @@ implements LoadController<I, O> {
 			}
 			long succCountSum = 0;
 			long failCountSum = 0;
-			for(final int ioTypeCode : lastStats.keySet()) {
-				succCountSum += lastStats.get(ioTypeCode).getSuccCount();
-				failCountSum += lastStats.get(ioTypeCode).getFailCount();
+			IoStats.Snapshot lastStats;
+			for(final int ioTypeCode : ioStats.keySet()) {
+				lastStats = ioStats.get(ioTypeCode).getLastSnapshot();
+				succCountSum += lastStats.getSuccCount();
+				failCountSum += lastStats.getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					Loggers.MSG.debug(
 						"{}: count limit reached, {} successful + {} failed >= {} limit",
@@ -248,8 +263,8 @@ implements LoadController<I, O> {
 	private boolean isDoneSizeLimit() {
 		if(sizeLimit > 0) {
 			long sizeSum = 0;
-			for(final int ioTypeCode : lastStats.keySet()) {
-				sizeSum += lastStats.get(ioTypeCode).getByteCount();
+			for(final int ioTypeCode : ioStats.keySet()) {
+				sizeSum += ioStats.get(ioTypeCode).getLastSnapshot().getByteCount();
 				if(sizeSum >= sizeLimit) {
 					Loggers.MSG.debug(
 						"{}: size limit reached, done {} >= {} limit",
@@ -387,7 +402,7 @@ implements LoadController<I, O> {
 		
 		final int ioTypeCode = ioTaskResult.getIoType().ordinal();
 		final IoStats ioTypeStats = ioStats.get(ioTypeCode);
-		final IoStats ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
+		final IoStats ioTypeMedStats = thresholdIoStats == null ? null : thresholdIoStats.get(ioTypeCode);
 		final IoTask.Status status = ioTaskResult.getStatus();
 		
 		if(Status.SUCC.equals(status)) {
@@ -504,7 +519,7 @@ implements LoadController<I, O> {
 			}
 
 			ioTypeStats = ioStats.get(ioTypeCode);
-			ioTypeMedStats = medIoStats == null ? null : medIoStats.get(ioTypeCode);
+			ioTypeMedStats = thresholdIoStats == null ? null : thresholdIoStats.get(ioTypeCode);
 
 			if(Status.SUCC.equals(status)) {
 				if(ioTaskResult instanceof PartialIoTask) {
@@ -620,7 +635,7 @@ implements LoadController<I, O> {
 			svcTasks.add(
 				new MetricsSvcTask(
 					this, name, metricsPeriodSec, preconditionJobFlag, driversCountMap,
-					concurrencyMap, ioStats, lastStats, medIoStats, lastMedStats, itemSizeMap,
+					concurrencyMap, ioStats, thresholdIoStats, itemSizeMap,
 					(int) (fullLoadThreshold * totalConcurrency)
 				)
 			);
@@ -952,15 +967,15 @@ implements LoadController<I, O> {
 		recycleQueuesMap.clear();
 		
 		Loggers.METRICS_STD_OUT.info(
-			new MetricsStdoutLogMessage(name, lastStats, concurrencyMap, driversCountMap)
+			new MetricsStdoutLogMessage(name, concurrencyMap, driversCountMap)
 		);
 		if(!preconditionJobFlag) {
 			Loggers.METRICS_FILE_TOTAL.info(
-				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
+				new MetricsCsvLogMessage(ioStats, concurrencyMap, driversCountMap)
 			);
 			Loggers.METRICS_EXT_RESULTS_FILE.info(
 				new ExtResultsXmlLogMessage(
-					name, lastStats, itemSizeMap, concurrencyMap, driversCountMap
+					name, ioStats, itemSizeMap, concurrencyMap, driversCountMap
 				)
 			);
 		}
@@ -970,26 +985,26 @@ implements LoadController<I, O> {
 		}
 		ioStats.clear();
 		
-		if(medIoStats != null && !medIoStats.isEmpty()) {
+		if(thresholdIoStats != null && !thresholdIoStats.isEmpty()) {
 			Loggers.MSG.info(
 				"{}: The active tasks count is below the threshold of {}, " +
 					"stopping the additional metrics accounting",
 				name, (int) (fullLoadThreshold * totalConcurrency)
 			);
 			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
-				new MetricsCsvLogMessage(lastMedStats, concurrencyMap, driversCountMap)
+				new MetricsCsvLogMessage(thresholdIoStats, concurrencyMap, driversCountMap)
 			);
 			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
 				new ExtResultsXmlLogMessage(
-					name, lastMedStats, itemSizeMap, concurrencyMap, driversCountMap
+					name, thresholdIoStats, itemSizeMap, concurrencyMap, driversCountMap
 				)
 			);
-			for(final IoStats nextMedStats : medIoStats.values()) {
+			for(final IoStats nextMedStats : thresholdIoStats.values()) {
 				if(nextMedStats.isStarted()) {
 					nextMedStats.close();
 				}
 			}
-			medIoStats.clear();
+			thresholdIoStats.clear();
 		}
 
 		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
