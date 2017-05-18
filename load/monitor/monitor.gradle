@@ -1,4 +1,4 @@
-description = "mongoose-load-controller"
+description = "mongoose-load-monitor"
 
 dependencies {
 
@@ -6,7 +6,6 @@ dependencies {
 		project(":common"),
 		project(":ui"),
 		project(":model"),
-		project(":load:monitor"),
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",

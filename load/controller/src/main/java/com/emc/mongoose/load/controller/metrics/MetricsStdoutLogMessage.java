@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.metrics.IoStats;
+import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;
@@ -32,12 +32,12 @@ extends LogMessageBase {
 	;
 	
 	private final String jobName;
-	private final Int2ObjectMap<IoStats.Snapshot> snapshots;
+	private final Int2ObjectMap<MetricsContext.Snapshot> snapshots;
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
 	
 	public MetricsStdoutLogMessage(
-		final String jobName, final Int2ObjectMap<IoStats.Snapshot> snapshots,
+		final String jobName, final Int2ObjectMap<MetricsContext.Snapshot> snapshots,
 		final Int2IntMap concurrencyMap, final Int2IntMap driversCountMap
 	) {
 		this.jobName = jobName;
@@ -61,7 +61,7 @@ extends LogMessageBase {
 
 	private static void formatSingleSnapshot(
 		final StringBuilder buffer, final String runId, final int ioTypeCode,
-		final IoStats.Snapshot snapshot, final int concurrency, final int driversCount
+		final MetricsContext.Snapshot snapshot, final int concurrency, final int driversCount
 	) {
 		final long succCount = snapshot.getSuccCount();
 		final long failCount = snapshot.getFailCount();
@@ -91,7 +91,7 @@ extends LogMessageBase {
 		final StrBuilder strb = new StrBuilder("metrics:");
 		if(snapshots.size() > 0) {
 			strb.appendNewLine().append(TABLE_HEADER);
-			IoStats.Snapshot snapshot;
+			MetricsContext.Snapshot snapshot;
 			long succCount;
 			long failCount;
 			for(final int ioTypeCode : snapshots.keySet()) {
@@ -132,14 +132,5 @@ extends LogMessageBase {
 			strb.append(" not available yet");
 		}
 		buffer.append(strb.toString());
-	}
-
-	private static String formatFixedWidth(final double value, final int count) {
-		final String valueStr = Double.toString(value);
-		if(valueStr.length() > count) {
-			return valueStr.substring(0, count);
-		} else {
-			return valueStr;
-		}
 	}
 }

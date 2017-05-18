@@ -7,14 +7,15 @@ import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by kurila on 15.09.15.
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
-public final class BasicIoStats
-implements IoStats {
+public final class BasicMetricsContext
+implements MetricsContext {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency;
@@ -29,10 +30,12 @@ implements IoStats {
 	private final int driverCount;
 	private final int concurrency;
 	private final boolean volatileOutputFlag;
+	private final long outputPeriodMillis;
+	private volatile long lastOutputTs = System.currentTimeMillis();
 	private volatile Snapshot lastSnapshot = null;
 
 	//
-	public BasicIoStats(
+	public BasicMetricsContext(
 		final String stepName, final IoType ioType, final int driverCount, final int concurrency,
 		final boolean volatileOutputFlag, final int updateIntervalSec
 	) {
@@ -41,6 +44,7 @@ implements IoStats {
 		this.driverCount = driverCount;
 		this.concurrency = concurrency;
 		this.volatileOutputFlag = volatileOutputFlag;
+		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
@@ -143,6 +147,40 @@ implements IoStats {
 	}
 	//
 	@Override
+	public final String getStepName() {
+		return stepName;
+	}
+	//
+	@Override
+	public final IoType getIoType() {
+		return ioType;
+	}
+	//
+	@Override
+	public final int getDriverCount() {
+		return driverCount;
+	}
+	//
+	@Override
+	public final int getConcurrency() {
+		return concurrency;
+	}
+	//
+	@Override
+	public final boolean getVolatileOutputFlag() {
+		return volatileOutputFlag;
+	}
+	//
+	@Override
+	public final long getOutputPeriodMillis() {
+		return outputPeriodMillis;
+	}
+	//
+	public final long getLastOutputTs() {
+		return lastOutputTs;
+	}
+	//
+	@Override
 	public final void refreshLastSnapshot() {
 		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
 		if(lastDurationSum != reqDurationSum.sum()) {
@@ -154,7 +192,6 @@ implements IoStats {
 			respLatSnapshot = respLatency.getSnapshot();
 		}
 		lastSnapshot =  new BasicSnapshot(
-			stepName, ioType, driverCount, concurrency, volatileOutputFlag,
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
@@ -169,15 +206,15 @@ implements IoStats {
 		}
 		return lastSnapshot;
 	}
+	
+	@Override
+	public final int compareTo(final MetricsContext other) {
+		return stepName.compareTo(other.getStepName()) ^ ioType.compareTo(other.getIoType());
+	}
+	
 	//
 	protected static final class BasicSnapshot
 	implements Snapshot {
-		//
-		private final String stepName;
-		private final IoType ioType;
-		private final int driverCount;
-		private final int concurrency;
-		private final boolean volatileOutputFlag;
 		//
 		private final long countSucc;
 		private final double succRateLast;
@@ -195,19 +232,12 @@ implements IoStats {
 		private final long elapsedTime;
 		//
 		public BasicSnapshot(
-			final String stepName, final IoType ioType, final int driverCount,
-			final int concurrency, final boolean volatileOutputFlag,
 			final long countSucc, final double succRateLast, final long countFail,
 			final double failRateLast, final long countByte, final double byteRateLast,
 			final long startTime, final long elapsedTime, final long sumDur,
 			final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
 		) {
-			this.stepName = stepName;
-			this.ioType = ioType;
-			this.driverCount = driverCount;
-			this.concurrency = concurrency;
-			this.volatileOutputFlag = volatileOutputFlag;
 			this.countSucc = countSucc;
 			this.succRateLast = succRateLast;
 			this.countFail = countFail;
@@ -383,32 +413,6 @@ implements IoStats {
 			}
 			return latSnapshot.getMean();
 		}
-		
-		@Override
-		public final String getStepName() {
-			return stepName;
-		}
-		
-		@Override
-		public final IoType getIoType() {
-			return ioType;
-		}
-		
-		@Override
-		public final int getDriverCount() {
-			return driverCount;
-		}
-		
-		@Override
-		public final int getConcurrency() {
-			return concurrency;
-		}
-		
-		@Override
-		public final boolean getVolatileOutputFlag() {
-			return volatileOutputFlag;
-		}
-		
 		//
 		@Override
 		public final long getStartTime() {

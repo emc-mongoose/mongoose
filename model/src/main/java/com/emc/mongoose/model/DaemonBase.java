@@ -48,7 +48,7 @@ implements Daemon {
 						} else {
 							for(final Entry<Daemon, List<SvcTask>> entry : svcTaskEntries) {
 								nextSvcTasks = entry.getValue();
-								for(final Runnable nextSvcTask : nextSvcTasks) {
+								for(final SvcTask nextSvcTask : nextSvcTasks) {
 									try {
 										nextSvcTask.run();
 									} catch(final Throwable t) {

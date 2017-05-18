@@ -1,13 +1,12 @@
 package com.emc.mongoose.load.controller.metrics;
 
 import static com.emc.mongoose.common.Constants.MIB;
-import static com.emc.mongoose.model.metrics.IoStats.Snapshot;
+import static com.emc.mongoose.model.metrics.MetricsContext.Snapshot;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.metrics.IoStats;
+import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.text.DateFormat;
@@ -27,27 +26,20 @@ extends LogMessageBase {
 		}
 	};
 
-	private final String jobName;
-	private final Int2ObjectMap<IoStats> ioStats;
+	private final Int2ObjectMap<MetricsContext> ioStats;
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap;
-	private final Int2IntMap concurrencyMap;
-	private final Int2IntMap driversCountMap;
 
 	public ExtResultsXmlLogMessage(
-		final String jobName, final Int2ObjectMap<IoStats> ioStats,
-		final Int2ObjectMap<SizeInBytes> itemSizeMap, final Int2IntMap concurrencyMap,
-		final Int2IntMap driversCountMap
+		final Int2ObjectMap<MetricsContext> ioStats, final Int2ObjectMap<SizeInBytes> itemSizeMap
 	) {
-		this.jobName = jobName;
 		this.ioStats = ioStats;
 		this.itemSizeMap = itemSizeMap;
-		this.concurrencyMap = concurrencyMap;
-		this.driversCountMap = driversCountMap;
 	}
 
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
 
+		MetricsContext metricsCtx;
 		Snapshot snapshot;
 		SizeInBytes itemSize;
 		int concurrency;
@@ -55,12 +47,13 @@ extends LogMessageBase {
 
 		for(final int ioTypeCode : ioStats.keySet()) {
 
-			snapshot = ioStats.get(ioTypeCode).getLastSnapshot();
+			metricsCtx = ioStats.get(ioTypeCode);
+			concurrency = metricsCtx.getConcurrency();
+			driversCount = metricsCtx.getDriverCount();
+			snapshot = metricsCtx.getLastSnapshot();
 			itemSize = itemSizeMap.get(ioTypeCode);
-			concurrency = concurrencyMap.get(ioTypeCode);
-			driversCount = driversCountMap.get(ioTypeCode);
 
-			buffer.append("<result id=\"").append(jobName).append("\" ");
+			buffer.append("<result id=\"").append(metricsCtx.getStepName()).append("\" ");
 			final long startTimeMillis = snapshot.getStartTime();
 			final Date startDate = new Date(startTimeMillis);
 			buffer.append("StartDate=\"").append(FMT_DATE_RESULTS.format(startDate)).append("\" ");

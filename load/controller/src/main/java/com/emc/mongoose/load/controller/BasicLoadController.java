@@ -11,7 +11,6 @@ import com.emc.mongoose.common.concurrent.RateThrottle;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
 import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
-import com.emc.mongoose.load.controller.metrics.MetricsSvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.io.task.IoTask.Status;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
@@ -23,12 +22,10 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.load.controller.metrics.ExtResultsXmlLogMessage;
 import com.emc.mongoose.load.controller.metrics.IoTraceCsvBatchLogMessage;
-import com.emc.mongoose.load.controller.metrics.MetricsCsvLogMessage;
-import com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage;
+import com.emc.mongoose.load.monitor.MetricsManager;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.metrics.BasicIoStats;
+import com.emc.mongoose.model.metrics.BasicMetricsContext;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -39,7 +36,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.metrics.IoStats;
+import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
 
 import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
@@ -90,8 +87,8 @@ implements LoadController<I, O> {
 	private final boolean isAnyCircular;
 	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
-	private final Int2ObjectMap<IoStats> ioStats = new Int2ObjectOpenHashMap<>();
-	private final Int2ObjectMap<IoStats> thresholdIoStats;
+	private final Int2ObjectMap<MetricsContext> ioStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<MetricsContext> thresholdIoStats;
 	private final Int2ObjectMap<SizeInBytes> itemSizeMap = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
 	private final Int2IntMap concurrencyMap;
@@ -187,7 +184,7 @@ implements LoadController<I, O> {
 			}
 			ioStats.put(
 				ioTypeCode,
-				new BasicIoStats(
+				new BasicMetricsContext(
 					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
 					preconditionJobFlag, metricsPeriodSec
 				)
@@ -195,7 +192,7 @@ implements LoadController<I, O> {
 			if(thresholdIoStats != null) {
 				thresholdIoStats.put(
 					ioTypeCode,
-					new BasicIoStats(
+					new BasicMetricsContext(
 						name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
 						preconditionJobFlag, metricsPeriodSec
 					)
@@ -243,7 +240,7 @@ implements LoadController<I, O> {
 			}
 			long succCountSum = 0;
 			long failCountSum = 0;
-			IoStats.Snapshot lastStats;
+			MetricsContext.Snapshot lastStats;
 			for(final int ioTypeCode : ioStats.keySet()) {
 				lastStats = ioStats.get(ioTypeCode).getLastSnapshot();
 				succCountSum += lastStats.getSuccCount();
@@ -401,8 +398,8 @@ implements LoadController<I, O> {
 		}
 		
 		final int ioTypeCode = ioTaskResult.getIoType().ordinal();
-		final IoStats ioTypeStats = ioStats.get(ioTypeCode);
-		final IoStats ioTypeMedStats = thresholdIoStats == null ? null : thresholdIoStats.get(ioTypeCode);
+		final MetricsContext ioTypeStats = ioStats.get(ioTypeCode);
+		final MetricsContext ioTypeMedStats = thresholdIoStats == null ? null : thresholdIoStats.get(ioTypeCode);
 		final IoTask.Status status = ioTaskResult.getStatus();
 		
 		if(Status.SUCC.equals(status)) {
@@ -493,7 +490,7 @@ implements LoadController<I, O> {
 		long reqDuration;
 		long respLatency;
 		long countBytesDone = 0;
-		IoStats ioTypeStats, ioTypeMedStats;
+		MetricsContext ioTypeStats, ioTypeMedStats;
 
 		int i;
 		for(i = from; i < to; i ++) {
@@ -628,19 +625,19 @@ implements LoadController<I, O> {
 		}
 
 		for(final int ioTypeCode : concurrencyMap.keySet()) {
-			ioStats.get(ioTypeCode).start();
+			// ioStats.get(ioTypeCode).start();
+			MetricsManager.register(ioStats.get(ioTypeCode));
 		}
 
-		try {
+		/*try {
 			svcTasks.add(
-				new MetricsSvcTask(
-					this, name, metricsPeriodSec, preconditionJobFlag, driversCountMap,
-					concurrencyMap, ioStats, thresholdIoStats, itemSizeMap,
+				new MetricsRefreshTask(
+					this, ioStats, thresholdIoStats, itemSizeMap,
 					(int) (fullLoadThreshold * totalConcurrency)
 				)
 			);
 		} catch(final RemoteException ignore) {
-		}
+		}*/
 		for(final int originCode : recycleQueuesMap.keySet()) {
 			if(circularityMap.get(originCode)) {
 				svcTasks.add(
@@ -966,7 +963,7 @@ implements LoadController<I, O> {
 		}
 		recycleQueuesMap.clear();
 		
-		Loggers.METRICS_STD_OUT.info(
+		/*Loggers.METRICS_STD_OUT.info(
 			new MetricsStdoutLogMessage(name, concurrencyMap, driversCountMap)
 		);
 		if(!preconditionJobFlag) {
@@ -974,18 +971,17 @@ implements LoadController<I, O> {
 				new MetricsCsvLogMessage(ioStats, concurrencyMap, driversCountMap)
 			);
 			Loggers.METRICS_EXT_RESULTS_FILE.info(
-				new ExtResultsXmlLogMessage(
-					name, ioStats, itemSizeMap, concurrencyMap, driversCountMap
-				)
+				new ExtResultsXmlLogMessage(ioStats, itemSizeMap)
 			);
-		}
+		}*/
 		
-		for(final IoStats nextStats : ioStats.values()) {
+		for(final MetricsContext nextStats : ioStats.values()) {
+			MetricsManager.unregister(nextStats);
 			nextStats.close();
 		}
 		ioStats.clear();
 		
-		if(thresholdIoStats != null && !thresholdIoStats.isEmpty()) {
+		/*if(thresholdIoStats != null && !thresholdIoStats.isEmpty()) {
 			Loggers.MSG.info(
 				"{}: The active tasks count is below the threshold of {}, " +
 					"stopping the additional metrics accounting",
@@ -995,17 +991,15 @@ implements LoadController<I, O> {
 				new MetricsCsvLogMessage(thresholdIoStats, concurrencyMap, driversCountMap)
 			);
 			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
-				new ExtResultsXmlLogMessage(
-					name, thresholdIoStats, itemSizeMap, concurrencyMap, driversCountMap
-				)
+				new ExtResultsXmlLogMessage(thresholdIoStats, itemSizeMap)
 			);
-			for(final IoStats nextMedStats : thresholdIoStats.values()) {
+			for(final MetricsContext nextMedStats : thresholdIoStats.values()) {
 				if(nextMedStats.isStarted()) {
 					nextMedStats.close();
 				}
 			}
 			thresholdIoStats.clear();
-		}
+		}*/
 
 		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
 			try {

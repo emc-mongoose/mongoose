@@ -1,18 +1,15 @@
 package com.emc.mongoose.model.metrics;
 
-import com.emc.mongoose.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.common.collection.OptLockBuffer;
 import com.emc.mongoose.model.io.IoType;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.io.Closeable;
 import java.io.Serializable;
+
 /**
  Created by andrey on 14.07.16.
  */
-public interface IoStats
-extends Closeable {
+public interface MetricsContext
+extends Closeable, Comparable<MetricsContext> {
 	
 	void start();
 	boolean isStarted();
@@ -29,18 +26,19 @@ extends Closeable {
 
 	void markElapsedTime(final long millis);
 	
+	String getStepName();
+	IoType getIoType();
+	int getDriverCount();
+	int getConcurrency();
+	boolean getVolatileOutputFlag();
+	long getOutputPeriodMillis();
+	long getLastOutputTs();
+	
 	void refreshLastSnapshot();
-
 	Snapshot getLastSnapshot();
 	
 	interface Snapshot
 	extends Serializable {
-		
-		String getStepName();
-		IoType getIoType();
-		int getDriverCount();
-		int getConcurrency();
-		boolean getVolatileOutputFlag();
 
 		/** @return value in milliseconds */
 		long getStartTime();
@@ -92,32 +90,5 @@ extends Closeable {
 		long[] getLatencyValues();
 		/** @return value in microseconds */
 		double getLatencyMean();
-	}
-	
-	OptLockBuffer<IoStats> OUTPUT_BUFF = new OptLockArrayBuffer<>(1);
-	
-	static void outputLastStats(
-		final Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
-		final Int2IntMap concurrencyMap, final String jobName, final boolean volatileOutputFlag
-	) {
-		Loggers.METRICS_STD_OUT.info(
-			new MetricsStdoutLogMessage(jobName, lastStats, concurrencyMap, driversCountMap)
-		);
-		if(!volatileOutputFlag) {
-			Loggers.METRICS_FILE.info(
-				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
-			);
-		}
-	}
-	
-	static void outputLastMedStats(
-		final Int2ObjectMap<IoStats.Snapshot> lastStats, final Int2IntMap driversCountMap,
-		final Int2IntMap concurrencyMap, final String jobName, final boolean volatileOutputFlag
-	) {
-		if(!volatileOutputFlag) {
-			Loggers.METRICS_THRESHOLD_FILE.info(
-				new MetricsCsvLogMessage(lastStats, concurrencyMap, driversCountMap)
-			);
-		}
 	}
 }

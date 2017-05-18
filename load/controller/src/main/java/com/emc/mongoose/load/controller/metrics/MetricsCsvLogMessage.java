@@ -1,13 +1,12 @@
 package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.metrics.IoStats;
+import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.util.Date;
@@ -45,24 +44,17 @@ import java.util.Map;
 public final class MetricsCsvLogMessage
 extends LogMessageBase {
 	
-	private final Int2ObjectMap<IoStats> ioStats;
-	private final Int2IntMap concurrencyMap;
-	private final Int2IntMap driversCountMap;
+	private final Int2ObjectMap<MetricsContext> ioStats;
 	
-	public MetricsCsvLogMessage(
-		final Int2ObjectMap<IoStats> ioStats, final Int2IntMap concurrencyMap,
-		final Int2IntMap driversCountMap
-	) {
+	public MetricsCsvLogMessage(final Int2ObjectMap<MetricsContext> ioStats) {
 		this.ioStats = ioStats;
-		this.concurrencyMap = concurrencyMap;
-		this.driversCountMap = driversCountMap;
 	}
 	
 	@Override
 	public final void formatTo(final StringBuilder strb) {
-		final Iterator<Map.Entry<Integer, IoStats>> entryIter = ioStats.entrySet().iterator();
-		Map.Entry<Integer, IoStats> nextEntry;
-		IoStats.Snapshot nextSnapshot;
+		final Iterator<Map.Entry<Integer, MetricsContext>> entryIter = ioStats.entrySet().iterator();
+		Map.Entry<Integer, MetricsContext> nextEntry;
+		MetricsContext.Snapshot nextSnapshot;
 		final Date current = new Date();
 		while(entryIter.hasNext()) {
 			nextEntry = entryIter.next();
@@ -70,8 +62,8 @@ extends LogMessageBase {
 			strb
 				.append('"').append(FMT_DATE_ISO8601.format(current)).append('"').append(',')
 				.append(IoType.values()[nextEntry.getKey()].name()).append(',')
-				.append(concurrencyMap.get(nextEntry.getKey())).append(',')
-				.append(driversCountMap.get(nextEntry.getKey())).append(',')
+				.append(nextEntry.getValue().getConcurrency()).append(',')
+				.append(nextEntry.getValue().getDriverCount()).append(',')
 				.append(nextSnapshot.getSuccCount()).append(',')
 				.append(nextSnapshot.getFailCount()).append(',')
 				.append(nextSnapshot.getByteCount()).append(',')
