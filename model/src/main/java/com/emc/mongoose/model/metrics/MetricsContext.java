@@ -1,5 +1,6 @@
 package com.emc.mongoose.model.metrics;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.Closeable;
@@ -9,7 +10,7 @@ import java.io.Serializable;
  Created by andrey on 14.07.16.
  */
 public interface MetricsContext
-extends Closeable, Comparable<MetricsContext> {
+extends Closeable {
 	
 	void start();
 	boolean isStarted();
@@ -30,12 +31,24 @@ extends Closeable, Comparable<MetricsContext> {
 	IoType getIoType();
 	int getDriverCount();
 	int getConcurrency();
+	int getThresholdConcurrency();
+	SizeInBytes getItemSize();
 	boolean getVolatileOutputFlag();
 	long getOutputPeriodMillis();
 	long getLastOutputTs();
 	
 	void refreshLastSnapshot();
 	Snapshot getLastSnapshot();
+	
+	boolean isThresholdStateEntered();
+	
+	void startThresholdMetrics()
+	throws IllegalStateException;
+	
+	void stopThresholdMetrics()
+	throws IllegalStateException;
+	
+	MetricsContext getThresholdMetrics();
 	
 	interface Snapshot
 	extends Serializable {

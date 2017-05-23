@@ -4,6 +4,7 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.LongAdder;
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
 public final class BasicMetricsContext
-implements MetricsContext {
+implements Comparable<BasicMetricsContext>, MetricsContext {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency;
@@ -23,26 +24,34 @@ implements MetricsContext {
 	private final LongAdder reqDurationSum, respLatencySum;
 	private volatile long lastDurationSum = 0, lastLatencySum = 0;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
+	private final long ts;
 	private volatile long tsStart = -1, prevElapsedTime = 0;
 	
 	private final String stepName;
 	private final IoType ioType;
 	private final int driverCount;
 	private final int concurrency;
+	private final int thresholdConcurrency;
+	private final SizeInBytes itemSize;
 	private final boolean volatileOutputFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = System.currentTimeMillis();
 	private volatile Snapshot lastSnapshot = null;
+	private volatile MetricsContext thresholdMetricsCtx = null;
 
 	//
 	public BasicMetricsContext(
 		final String stepName, final IoType ioType, final int driverCount, final int concurrency,
+		final int thresholdConcurrency, final SizeInBytes itemSize,
 		final boolean volatileOutputFlag, final int updateIntervalSec
 	) {
 		this.stepName = stepName;
 		this.ioType = ioType;
 		this.driverCount = driverCount;
 		this.concurrency = concurrency;
+		this.thresholdConcurrency = thresholdConcurrency > 0 ?
+			thresholdConcurrency : Integer.MAX_VALUE;
+		this.itemSize = itemSize;
 		this.volatileOutputFlag = volatileOutputFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
@@ -54,6 +63,7 @@ implements MetricsContext {
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
 		reqBytes = new CustomMeter(clock, updateIntervalSec);
+		ts = System.nanoTime();
 	}
 	//
 	@Override
@@ -80,6 +90,10 @@ implements MetricsContext {
 		prevElapsedTime = System.currentTimeMillis() - tsStart;
 		tsStart = -1;
 		lastSnapshot = null;
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.close();
+			thresholdMetricsCtx = null;
+		}
 	}
 	//
 	@Override
@@ -92,6 +106,9 @@ implements MetricsContext {
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.markSucc(size, duration, latency);
+		}
 	}
 	//
 	@Override
@@ -102,6 +119,9 @@ implements MetricsContext {
 			respLatency.update(latency);
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
+		}
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.markPartSucc(size, duration, latency);
 		}
 	}
 	//
@@ -119,6 +139,9 @@ implements MetricsContext {
 			respLatency.update(latency);
 			respLatencySum.add(latency);
 		}
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.markSucc(count, bytes, durationValues, latencyValues);
+		}
 	}
 	//
 	@Override
@@ -134,16 +157,25 @@ implements MetricsContext {
 			respLatency.update(latency);
 			respLatencySum.add(latency);
 		}
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.markPartSucc(bytes, durationValues, latencyValues);
+		}
 	}
 	//
 	@Override
 	public final void markFail() {
 		throughputFail.mark();
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.markFail();
+		}
 	}
 	//
 	@Override
 	public final void markFail(final long count) {
 		throughputFail.mark(count);
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.markFail(count);
+		}
 	}
 	//
 	@Override
@@ -164,6 +196,16 @@ implements MetricsContext {
 	@Override
 	public final int getConcurrency() {
 		return concurrency;
+	}
+	//
+	@Override
+	public final int getThresholdConcurrency() {
+		return thresholdConcurrency;
+	}
+	//
+	@Override
+	public final SizeInBytes getItemSize() {
+		return itemSize;
 	}
 	//
 	@Override
@@ -197,6 +239,9 @@ implements MetricsContext {
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
 			reqDurationSum.sum(), respLatencySum.sum(), reqDurSnapshot, respLatSnapshot
 		);
+		if(thresholdMetricsCtx != null) {
+			thresholdMetricsCtx.refreshLastSnapshot();
+		}
 	}
 	//
 	@Override
@@ -206,12 +251,38 @@ implements MetricsContext {
 		}
 		return lastSnapshot;
 	}
-	
+	//
 	@Override
-	public final int compareTo(final MetricsContext other) {
-		return stepName.compareTo(other.getStepName()) ^ ioType.compareTo(other.getIoType());
+	public final boolean isThresholdStateEntered() {
+		return thresholdMetricsCtx != null && thresholdMetricsCtx.isStarted();
 	}
-	
+	//
+	@Override
+	public final void startThresholdMetrics()
+	throws IllegalStateException {
+		if(thresholdMetricsCtx != null) {
+			throw new IllegalStateException("Nested metrics context already exists");
+		}
+		thresholdMetricsCtx = new BasicMetricsContext(
+			stepName, ioType, driverCount, concurrency, 0, itemSize, volatileOutputFlag,
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis)
+		);
+		thresholdMetricsCtx.start();
+	}
+	//
+	@Override
+	public final MetricsContext getThresholdMetrics()
+	throws IllegalStateException {
+		if(thresholdMetricsCtx == null) {
+			throw new IllegalStateException("Nested metrics context is not exist");
+		}
+		return thresholdMetricsCtx;
+	}
+	//
+	@Override
+	public final int compareTo(final BasicMetricsContext other) {
+		return Long.compare(ts, other.ts);
+	}
 	//
 	protected static final class BasicSnapshot
 	implements Snapshot {

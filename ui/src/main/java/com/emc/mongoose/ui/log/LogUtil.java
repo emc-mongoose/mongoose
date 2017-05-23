@@ -26,11 +26,9 @@ import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.jul.LogManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -61,16 +59,20 @@ implements ShutdownCallbackRegistry {
 		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
 	// console colors
 	public static final String
-		RESET = "\u001B[0m",
-		BLACK = "\u001B[30m",
 		RED = "\u001B[31m",
 		GREEN = "\u001B[32m",
-		YELLOW = "\u001B[33m",
-		//
+		YELLOW = "\u001B[33",
 		BLUE = "\u001B[34m",
-		PURPLE = "\u001B[35m",
 		CYAN = "\u001B[36m",
-		WHITE = "\u001B[37;1m";
+		WHITE = "\u001B[37;1m",
+		RESET = "\u001B[0m",
+		//
+		NOOP_COLOR = "\u001B[38;5;101m",
+		CREATE_COLOR = "\u001B[38;5;67m",
+		READ_COLOR = "\u001B[38;5;65m",
+		UPDATE_COLOR = "\u001B[38;5;104m",
+		DELETE_COLOR = "\u001B[38;5;137m",
+		LIST_COLOR = "\u001B[38;5;138m";
 	//
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
@@ -177,6 +179,19 @@ implements ShutdownCallbackRegistry {
 	//
 	public static boolean isConsoleColoringEnabled() {
 		return STDOUT_COLORING_ENABLED;
+	}
+	//
+	public static String getFailureRatioAnsiColorCode(final long succ, final long fail) {
+		if(fail == 0) {
+			return "\u001B[38;2;0;200;0m";
+		}
+		if(fail >= succ) {
+			return "\u001B[38;2;" + ((int) (200 + ((double) 55 * fail) / (succ + fail))) + ";0;0m";
+		}
+		return "\u001B[38;2;" +
+			/* R */ ((int) (400 * Math.sqrt(((double) fail) / (succ + fail)))) + ";" +
+			/* G */ ((int) (((double) 200 * succ / (succ + fail)))) + ";" +
+			/* B */ "0m";
 	}
 	//
 	public static void exception(

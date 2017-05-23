@@ -2,6 +2,7 @@ package com.emc.mongoose.load.controller.metrics;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.load.monitor.ExtResultsXmlLogMessage;
 import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -96,9 +97,9 @@ extends SvcTaskBase {
 					Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
 						new MetricsCsvLogMessage(thresholdIoStats)
 					);
-					Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
+					/*Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
 						new ExtResultsXmlLogMessage(thresholdIoStats, itemSizeMap)
-					);
+					);*/
 					for(final int originCode : thresholdIoStats.keySet()) {
 						try {
 							thresholdIoStats.get(originCode).close();
