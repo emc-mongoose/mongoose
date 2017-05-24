@@ -65,6 +65,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 12.07.16.
@@ -582,15 +583,6 @@ implements LoadController<I, O> {
 			MetricsManager.register(this, ioStats.get(ioTypeCode));
 		}
 
-		/*try {
-			svcTasks.add(
-				new MetricsRefreshTask(
-					this, ioStats, thresholdIoStats, itemSizeMap,
-					(int) (loadThresholdRatio * totalConcurrency)
-				)
-			);
-		} catch(final RemoteException ignore) {
-		}*/
 		for(final int originCode : recycleQueuesMap.keySet()) {
 			if(circularityMap.get(originCode)) {
 				svcTasks.add(
@@ -687,15 +679,6 @@ implements LoadController<I, O> {
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
-		/*if(loadedPrevState != null) {
-			if(isLimitReached) {
-				return true;
-			}
-			t = TimeUnit.MICROSECONDS.toMillis(
-				loadedPrevState.getStatsSnapshot().getElapsedTime()
-			);
-			timeOutMilliSec -= t;
-		}*/
 		//
 		Loggers.MSG.debug(
 			"{}: await for the done condition at most for {}[s]", getName(),
@@ -811,15 +794,15 @@ implements LoadController<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		
+		System.out.println(0);
 		super.doClose();
-		
+		System.out.println(1);
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("ioResultsWorker", true)
 		);
-		
+		System.out.println(2);
 		synchronized(driversMap) {
-
+			System.out.println(3);
 			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
 					ioResultsExecutor.submit(
@@ -869,7 +852,7 @@ implements LoadController<I, O> {
 						}
 					);
 				}
-				
+				System.out.println(4);
 				try {
 					generator.close();
 					Loggers.MSG.debug(
@@ -881,74 +864,50 @@ implements LoadController<I, O> {
 					);
 				}
 			}
-
+			System.out.println(5);
 			ioResultsExecutor.shutdown();
-
+			System.out.println(6);
 			try {
+				System.out.println(7);
 				if(ioResultsExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+					System.out.println(8);
 					Loggers.MSG.debug(
 						"{}: final I/O result have been got and processed properly", getName()
 					);
 				} else {
+					System.out.println(9);
 					Loggers.ERR.warn(
 						"{}: timeout while getting and processing the final I/O results", getName()
 					);
 				}
 			} catch(final InterruptedException e) {
+				System.out.println('~');
 				LogUtil.exception(
 					Level.WARN, e,
 					"{}: interrupted  while getting and processing the final I/O results", getName()
 				);
 			}
-		
+			System.out.println('!');
 			driversMap.clear();
 		}
-		
+		System.out.println('@');
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
 			recycleQueue.clear();
 		}
 		recycleQueuesMap.clear();
-		
-		/*Loggers.METRICS_STD_OUT.info(
-			new MetricsStdoutLogMessage(name, concurrencyMap, driversCountMap)
-		);
-		if(!preconditionJobFlag) {
-			Loggers.METRICS_FILE_TOTAL.info(
-				new MetricsCsvLogMessage(ioStats, concurrencyMap, driversCountMap)
-			);
-			Loggers.METRICS_EXT_RESULTS_FILE.info(
-				new ExtResultsXmlLogMessage(ioStats, itemSizeMap)
-			);
-		}*/
-		
+		System.out.println('#');
 		for(final MetricsContext nextStats : ioStats.values()) {
+			System.out.println('$');
 			MetricsManager.unregister(this, nextStats);
+			System.out.println('%');
 			nextStats.close();
+			System.out.println('^');
 		}
+		System.out.println('&');
 		ioStats.clear();
-		
-		/*if(thresholdIoStats != null && !thresholdIoStats.isEmpty()) {
-			Loggers.MSG.info(
-				"{}: The active tasks count is below the threshold of {}, " +
-					"stopping the additional metrics accounting",
-				name, (int) (loadThresholdRatio * totalConcurrency)
-			);
-			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
-				new MetricsCsvLogMessage(thresholdIoStats, concurrencyMap, driversCountMap)
-			);
-			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
-				new ExtResultsXmlLogMessage(thresholdIoStats, itemSizeMap)
-			);
-			for(final MetricsContext nextMedStats : thresholdIoStats.values()) {
-				if(nextMedStats.isStarted()) {
-					nextMedStats.close();
-				}
-			}
-			thresholdIoStats.clear();
-		}*/
-
+		System.out.println('*');
 		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
 			try {
 				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {

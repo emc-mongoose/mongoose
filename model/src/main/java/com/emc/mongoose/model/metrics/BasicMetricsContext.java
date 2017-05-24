@@ -38,6 +38,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private volatile long lastOutputTs = System.currentTimeMillis();
 	private volatile Snapshot lastSnapshot = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
+	private volatile boolean thresholdStateExitedFlag = false;
 
 	//
 	public BasicMetricsContext(
@@ -258,7 +259,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final void startThresholdMetrics()
+	public final void enterThresholdState()
 	throws IllegalStateException {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
@@ -277,6 +278,25 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throw new IllegalStateException("Nested metrics context is not exist");
 		}
 		return thresholdMetricsCtx;
+	}
+	//
+	@Override
+	public final boolean isThresholdStateExited() {
+		return thresholdStateExitedFlag;
+	}
+	//
+	@Override
+	public final void exitThresholdState()
+	throws IllegalStateException {
+		if(thresholdMetricsCtx == null) {
+			throw new IllegalStateException("Threshold state was not entered");
+		}
+		try {
+			thresholdMetricsCtx.close();
+		} catch(final IOException e) {
+			e.printStackTrace(System.err);
+		}
+		thresholdStateExitedFlag = true;
 	}
 	//
 	@Override

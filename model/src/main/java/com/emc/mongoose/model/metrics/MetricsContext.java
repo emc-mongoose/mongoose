@@ -42,10 +42,12 @@ extends Closeable {
 	
 	boolean isThresholdStateEntered();
 	
-	void startThresholdMetrics()
+	void enterThresholdState()
 	throws IllegalStateException;
-	
-	void stopThresholdMetrics()
+
+	boolean isThresholdStateExited();
+
+	void exitThresholdState()
 	throws IllegalStateException;
 	
 	MetricsContext getThresholdMetrics();

@@ -117,7 +117,7 @@ implements Daemon {
 	}
 
 	@Override
-	public final void shutdown()
+	public final synchronized void shutdown()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(INITIAL, SHUTDOWN) || stateRef.compareAndSet(STARTED, SHUTDOWN)) {
 			synchronized(state) {
@@ -141,7 +141,7 @@ implements Daemon {
 	}
 	
 	@Override
-	public final void interrupt()
+	public final synchronized void interrupt()
 	throws IllegalStateException {
 		try {
 			shutdown();
@@ -163,7 +163,7 @@ implements Daemon {
 	}
 	
 	@Override
-	public void close()
+	public final synchronized void close()
 	throws IOException, IllegalStateException {
 		try {
 			interrupt();

@@ -94,6 +94,14 @@ implements SvcTask {
 					final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 						.get(controller);
 					if(controllerMetrics != null && controllerMetrics.remove(metricsCtx)) {
+						// check for the metrics threshold state if entered
+						if(
+							metricsCtx.isThresholdStateEntered() &&
+								!metricsCtx.isThresholdStateExited()
+						) {
+							exitMetricsThresholdState(metricsCtx);
+						}
+						// output
 						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
 						Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
 						Loggers.METRICS_EXT_RESULTS_FILE.info(
@@ -130,29 +138,22 @@ implements SvcTask {
 						metricsCtx.refreshLastSnapshot();
 						// threshold load state checks
 						if(controllerActiveTaskCount >= metricsCtx.getThresholdConcurrency()) {
-							if(!metricsCtx.isThresholdStateEntered()) {
+							if(
+								!metricsCtx.isThresholdStateEntered() &&
+									!metricsCtx.isThresholdStateExited()
+							) {
 								Loggers.MSG.info(
 									"The threshold of {} active tasks count is reached, " +
 										"starting the additional metrics accounting",
 									metricsCtx.getThresholdConcurrency()
 								);
-								metricsCtx.startThresholdMetrics();
+								metricsCtx.enterThresholdState();
 							}
-						} else if(metricsCtx.isThresholdStateEntered()) {
-							Loggers.MSG.info(
-								"The active tasks count is below the threshold of {}, " +
-									"stopping the additional metrics accounting",
-								metricsCtx.getThresholdConcurrency()
-							);
-							final MetricsContext lastThresholdMetrics = metricsCtx
-								.getThresholdMetrics();
-							Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
-								new MetricsCsvLogMessage(lastThresholdMetrics)
-							);
-							Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
-								new ExtResultsXmlLogMessage(lastThresholdMetrics)
-							);
-							metricsCtx.stopThresholdMetrics();
+						} else if(
+							metricsCtx.isThresholdStateEntered() &&
+								!metricsCtx.isThresholdStateExited()
+						) {
+							exitMetricsThresholdState(metricsCtx);
 						}
 						// periodic file output
 						if(
@@ -178,6 +179,23 @@ implements SvcTask {
 				allMetricsLock.unlock();
 			}
 		}
+	}
+
+	private static void exitMetricsThresholdState(final MetricsContext metricsCtx) {
+		Loggers.MSG.info(
+			"The active tasks count is below the threshold of {}, " +
+				"stopping the additional metrics accounting",
+			metricsCtx.getThresholdConcurrency()
+		);
+		final MetricsContext lastThresholdMetrics = metricsCtx
+			.getThresholdMetrics();
+		Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
+			new MetricsCsvLogMessage(lastThresholdMetrics)
+		);
+		Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
+			new ExtResultsXmlLogMessage(lastThresholdMetrics)
+		);
+		metricsCtx.exitThresholdState();
 	}
 	
 	@Override
