@@ -68,7 +68,7 @@ implements SvcTask {
 					final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 						.computeIfAbsent(controller, c -> new TreeSet<>());
 					if(controllerMetrics.add(metricsCtx)) {
-						Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
+						Loggers.MSG.info("Metrics context \"{}\" registered", metricsCtx);
 					} else {
 						Loggers.ERR.warn(
 							"Metrics context \"{}\" has been registered already", metricsCtx
@@ -108,7 +108,7 @@ implements SvcTask {
 							new ExtResultsXmlLogMessage(metricsCtx)
 						);
 					} else {
-						Loggers.ERR.warn(
+						Loggers.ERR.debug(
 							"Metrics context \"{}\" has not been registered", metricsCtx
 						);
 					}

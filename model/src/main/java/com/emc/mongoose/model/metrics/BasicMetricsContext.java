@@ -304,6 +304,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		return Long.compare(ts, other.ts);
 	}
 	//
+	@Override
+	public final String toString() {
+		return "MetricsContext(" + ioType.name() + '-' + concurrency + 'x' + driverCount  + '@' +
+			stepName + ")";
+	}
+	//
 	protected static final class BasicSnapshot
 	implements Snapshot {
 		//

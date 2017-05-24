@@ -52,7 +52,7 @@ extends LogMessageBase {
 				break;
 		}
 		buffer
-			.append("\n\t")
+			.append("Step \"").append(metricsCtx.getStepName()).append("\" results:\n\t")
 			.append(ioTypeColorCode).append(metricsCtx.getIoType().name()).append(RESET)
 			.append('-').append(metricsCtx.getConcurrency())
 			.append('x').append(metricsCtx.getDriverCount())

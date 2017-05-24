@@ -794,15 +794,13 @@ implements LoadController<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		System.out.println(0);
+
 		super.doClose();
-		System.out.println(1);
+
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("ioResultsWorker", true)
 		);
-		System.out.println(2);
 		synchronized(driversMap) {
-			System.out.println(3);
 			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
 					ioResultsExecutor.submit(
@@ -852,7 +850,7 @@ implements LoadController<I, O> {
 						}
 					);
 				}
-				System.out.println(4);
+
 				try {
 					generator.close();
 					Loggers.MSG.debug(
@@ -864,50 +862,40 @@ implements LoadController<I, O> {
 					);
 				}
 			}
-			System.out.println(5);
+
 			ioResultsExecutor.shutdown();
-			System.out.println(6);
 			try {
-				System.out.println(7);
 				if(ioResultsExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-					System.out.println(8);
 					Loggers.MSG.debug(
 						"{}: final I/O result have been got and processed properly", getName()
 					);
 				} else {
-					System.out.println(9);
 					Loggers.ERR.warn(
 						"{}: timeout while getting and processing the final I/O results", getName()
 					);
 				}
 			} catch(final InterruptedException e) {
-				System.out.println('~');
 				LogUtil.exception(
 					Level.WARN, e,
 					"{}: interrupted  while getting and processing the final I/O results", getName()
 				);
 			}
-			System.out.println('!');
 			driversMap.clear();
 		}
-		System.out.println('@');
+
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
 			recycleQueue.clear();
 		}
 		recycleQueuesMap.clear();
-		System.out.println('#');
+
 		for(final MetricsContext nextStats : ioStats.values()) {
-			System.out.println('$');
 			MetricsManager.unregister(this, nextStats);
-			System.out.println('%');
 			nextStats.close();
-			System.out.println('^');
 		}
-		System.out.println('&');
 		ioStats.clear();
-		System.out.println('*');
+
 		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
 			try {
 				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {

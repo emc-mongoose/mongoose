@@ -134,7 +134,7 @@ public class BasicStorageDriverBuilder<
 						.toURI().toURL();
 					final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
 					final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
-					Loggers.MSG.info(
+					Loggers.MSG.debug(
 						"Loaded storage driver implementation \"{}\" from the class \"{}\"",
 						implType, implFqcn
 					);
