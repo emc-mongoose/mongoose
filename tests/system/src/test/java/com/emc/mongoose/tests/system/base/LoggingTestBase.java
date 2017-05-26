@@ -65,12 +65,12 @@ public abstract class LoggingTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		// remove previous logs if exist
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		final URL u = LoggingTestBase.class.getClassLoader().getResource("logging.json");
 		System.setProperty("log4j.configurationFile", u.toString());
 		LogUtil.init();
 		JOB_NAME = ThreadContext.get(KEY_STEP_NAME);
-		// remove previous logs if exist
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	
