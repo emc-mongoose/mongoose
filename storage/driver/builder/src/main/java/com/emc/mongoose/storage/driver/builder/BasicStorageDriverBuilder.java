@@ -115,7 +115,7 @@ public class BasicStorageDriverBuilder<
 		try(
 			final Instance ctx = CloseableThreadContext
 				.put(KEY_STEP_NAME, stepName)
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();

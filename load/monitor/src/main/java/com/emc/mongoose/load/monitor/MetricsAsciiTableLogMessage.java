@@ -23,15 +23,15 @@ public class MetricsAsciiTableLogMessage
 extends LogMessageBase {
 	
 	public static final String TABLE_HEADER =
-		"────────────┬──────┬───────┬─────┬───────────────────┬──────┬────────────────┬──────────┬───────────" + LINE_SEPARATOR +
-		"    Step    │Operat│ Concur│Drive│       Count       │ Step │   Last Rate    │  Mean    │   Mean    " + LINE_SEPARATOR +
-		"    Name    │ ion  │ rency │ rs  ├────────────┬──────┤ Time ├────────┬───────┤ Latency  │ Duration  " + LINE_SEPARATOR +
-		"            │ Type │       │Count│   Success  │Failed│ [s]  │ [op/s] │[MB/s] │  [us]    │   [us]    " + LINE_SEPARATOR;
+		"----------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +
+		"    Step    |Operat| Concur|Drive|       Count       | Step |   Last Rate    |  Mean    |   Mean    " + LINE_SEPARATOR +
+		"    Name    | ion  | rency | rs  |-------------------| Time |----------------| Latency  | Duration  " + LINE_SEPARATOR +
+		"            | Type |       |Count|   Success  |Failed| [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR;
 	public static final String TABLE_BORDER_ROW =
-		"────────────┼──────┼───────┼─────┼────────────┼──────┼──────┼────────┼───────┼──────────┼───────────" + LINE_SEPARATOR;
+		"------------|------|-------|-----|------------|------|------|--------|-------|----------|-----------" + LINE_SEPARATOR;
 	public static final String TABLE_BORDER_BOTTOM =
-		"────────────┴──────┴───────┴─────┴────────────┴──────┴──────┴────────┴───────┴──────────┴───────────";
-	public static final String TABLE_BORDER_VERTICAL = "│";
+		"----------------------------------------------------------------------------------------------------";
+	public static final String TABLE_BORDER_VERTICAL = "|";
 	
 	private final Map<LoadController, SortedSet<MetricsContext>> metrics;
 	

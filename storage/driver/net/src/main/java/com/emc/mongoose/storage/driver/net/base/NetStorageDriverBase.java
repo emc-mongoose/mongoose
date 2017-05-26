@@ -143,26 +143,32 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType) {
 		int size;
-		if(avgDataItemSize.get() < BUFF_SIZE_MIN) {
-			size = BUFF_SIZE_MIN;
-		} else if(BUFF_SIZE_MAX < avgDataItemSize.get()) {
-			size = BUFF_SIZE_MAX;
-		} else {
-			size = (int) avgDataItemSize.get();
-		}
-		if(IoType.CREATE.equals(ioType)) {
-			Loggers.MSG.info(
-				"Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
-			);
-			bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
-			bootstrap.option(ChannelOption.SO_SNDBUF, size);
-		} else if(IoType.READ.equals(ioType)) {
-			Loggers.MSG.info("Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size));
-			bootstrap.option(ChannelOption.SO_RCVBUF, size);
-			bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
-		} else {
-			bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
-			bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
+		) {
+			if(avgDataItemSize.get() < BUFF_SIZE_MIN) {
+				size = BUFF_SIZE_MIN;
+			} else if(BUFF_SIZE_MAX < avgDataItemSize.get()) {
+				size = BUFF_SIZE_MAX;
+			} else {
+				size = (int) avgDataItemSize.get();
+			}
+			if(IoType.CREATE.equals(ioType)) {
+				Loggers.MSG.info(
+					"Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
+				);
+				bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
+				bootstrap.option(ChannelOption.SO_SNDBUF, size);
+			} else if(IoType.READ.equals(ioType)) {
+				Loggers.MSG.info("Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size));
+				bootstrap.option(ChannelOption.SO_RCVBUF, size);
+				bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
+			} else {
+				bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
+				bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
+			}
 		}
 	}
 
@@ -186,11 +192,17 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					@Override
 					protected final void initChannel(final SocketChannel channel)
 					throws Exception {
-						appendHandlers(channel.pipeline());
-						Loggers.MSG.debug(
-							"{}: new unpooled channel {}, pipeline: {}", stepName,
-							channel.hashCode(), channel.pipeline()
-						);
+						try(
+							final Instance logCtx = CloseableThreadContext
+								.put(KEY_STEP_NAME, stepName)
+								.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+						) {
+							appendHandlers(channel.pipeline());
+							Loggers.MSG.debug(
+								"{}: new unpooled channel {}, pipeline: {}", stepName,
+								channel.hashCode(), channel.pipeline()
+							);
+						}
 					}
 				}
 			);
@@ -205,7 +217,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			throw new InterruptedException();
 		}
 		ioTask.reset();
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+		) {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
 				concurrencyThrottle.acquire();
 				ioTask.startRequest();
@@ -239,7 +255,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws InterruptedException {
 		Channel conn;
 		O nextIoTask;
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+		) {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
 				nextIoTask.reset();
@@ -288,7 +308,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+		) {
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());

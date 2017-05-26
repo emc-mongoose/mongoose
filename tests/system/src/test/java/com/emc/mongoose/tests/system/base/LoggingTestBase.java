@@ -25,8 +25,8 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import static com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage.TABLE_BORDER;
-import static com.emc.mongoose.load.controller.metrics.MetricsStdoutLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
+import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
@@ -535,13 +535,13 @@ public abstract class LoggingTestBase {
 		String tableData;
 		while(-1 != (tableDataStartPos = remainingStdOut.indexOf(TABLE_HEADER))) {
 			tableDataStartPos += TABLE_HEADER.length();
-			tableDataEndPos = remainingStdOut.indexOf(TABLE_BORDER, tableDataStartPos);
+			tableDataEndPos = remainingStdOut.indexOf(TABLE_BORDER_BOTTOM, tableDataStartPos);
 			if(-1 == tableDataEndPos) {
 				break;
 			}
 			tableData = remainingStdOut.substring(tableDataStartPos, tableDataEndPos);
 			records.add(tableData.split(SystemUtils.LINE_SEPARATOR));
-			remainingStdOut = remainingStdOut.substring(tableDataEndPos + TABLE_BORDER.length());
+			remainingStdOut = remainingStdOut.substring(tableDataEndPos + TABLE_BORDER_BOTTOM.length());
 		}
 		
 		String cells[];

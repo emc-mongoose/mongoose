@@ -140,7 +140,7 @@ extends AbstractManager {
 	protected final void write(
 		final String jobName, final byte[] buff, final int offset, final int len
 	) {
-		final OutputStream outStream = getOutputStream(jobName);
+		final OutputStream outStream = outStreamsMap.computeIfAbsent(jobName, this::prepareNewFile);
 		try {
 			outStream.write(buff, offset, len);
 		} catch (final Throwable e) {
@@ -185,14 +185,6 @@ extends AbstractManager {
 		}
 		//
 		return newOutPutStream;
-	}
-	//
-	protected final OutputStream getOutputStream(final String currRunId) {
-		OutputStream currentOutPutStream = outStreamsMap.get(currRunId);
-		if(currentOutPutStream == null) {
-			currentOutPutStream = prepareNewFile(currRunId);
-		}
-		return currentOutPutStream;
 	}
 	//
 	@Override

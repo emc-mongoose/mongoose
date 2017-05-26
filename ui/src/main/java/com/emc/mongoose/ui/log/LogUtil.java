@@ -7,28 +7,23 @@ import static com.emc.mongoose.common.Constants.FNAME_LOG_CONFIG;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
-
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
-import org.apache.logging.log4j.jul.LogManager;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -37,21 +32,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class LogUtil
 implements ShutdownCallbackRegistry {
-	
-	private static final Map<String, String> LOGGING_PROPS = new HashMap<String, String>() {
-		{
-			put("Log4jContextSelector", AsyncLoggerContextSelector.class.getCanonicalName());
-			put("java.util.logging.manager", LogManager.class.getCanonicalName());
-			put("isThreadContextMapInheritable", Boolean.toString(true));
-			put("AsyncLogger.WaitStrategy", "Block");
-			put("log4j.Clock", "CoarseCachedClock");
-			put("log4j.shutdownCallbackRegistry", LogUtil.class.getCanonicalName());
-			put("log4j.configurationFactory", JsonConfigurationFactory.class.getCanonicalName());
-			put("log4j2.garbagefree.threadContextMap", Boolean.toString(true));
-			put("log4j2.enable.threadlocals", Boolean.toString(true));
-			put("log4j2.enable.direct.encoders", Boolean.toString(true));
-		}
-	};
 	//
 	private static final String NAME = "mongoose";
 	//
@@ -106,7 +86,6 @@ implements ShutdownCallbackRegistry {
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX == null) {
-				System.getProperties().putAll(LOGGING_PROPS);
 				// set step name property with timestamp value if not set before
 				final String testStepName = ThreadContext.get(KEY_STEP_NAME);
 				if(testStepName == null || testStepName.length() == 0) {

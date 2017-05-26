@@ -175,6 +175,8 @@ implements SvcTask {
 					lastOutputTs = nextOutputTs;
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(allMetrics));
 				}
+			} catch(final Throwable cause) {
+				LogUtil.exception(Level.WARN, cause, "Metrics manager failure");
 			} finally {
 				allMetricsLock.unlock();
 			}

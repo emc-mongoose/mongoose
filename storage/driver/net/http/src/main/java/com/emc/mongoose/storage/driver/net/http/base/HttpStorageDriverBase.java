@@ -11,6 +11,8 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.IoType;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
@@ -26,6 +28,7 @@ import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -46,6 +49,7 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -111,7 +115,11 @@ implements HttpStorageDriver<I, O> {
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
 		final Channel channel = getUnpooledConnection();
-		try {
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, HttpStorageDriverBase.class.getSimpleName())
+		) {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
 				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepName,

@@ -143,7 +143,11 @@ implements StorageDriver<I, O> {
 
 		@Override
 		protected final void doClose() {
-			try {
+			try(
+				final Instance logCtx = CloseableThreadContext
+					.put(KEY_STEP_NAME, stepName)
+					.put(KEY_CLASS_NAME, IoTasksDispatch.class.getSimpleName())
+			) {
 				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					buff.clear();
 				} else {
@@ -353,7 +357,11 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doInterrupt() {
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+		) {
 			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
 				Loggers.MSG.debug("{}: interrupting while not in the idle state", toString());
 			}
@@ -368,18 +376,24 @@ implements StorageDriver<I, O> {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		super.doClose();
-		childTasksQueue.clear();
-		inTasksQueue.clear();
-		final int ioResultsQueueSize = ioResultsQueue.size();
-		if(ioResultsQueueSize > 0) {
-			Loggers.ERR.warn(
-				"{}: I/O results queue contains {} unhandled elements", toString(),
-				ioResultsQueueSize
-			);
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+		) {
+			childTasksQueue.clear();
+			inTasksQueue.clear();
+			final int ioResultsQueueSize = ioResultsQueue.size();
+			if(ioResultsQueueSize > 0) {
+				Loggers.ERR.warn(
+					"{}: I/O results queue contains {} unhandled elements", toString(),
+					ioResultsQueueSize
+				);
+			}
+			ioResultsQueue.clear();
+			pathMap.clear();
+			Loggers.MSG.debug("{}: closed", toString());
 		}
-		ioResultsQueue.clear();
-		pathMap.clear();
-		Loggers.MSG.debug("{}: closed", toString());
 	}
 	
 	@Override

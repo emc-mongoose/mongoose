@@ -4,7 +4,7 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.load.controller.metrics.IoTraceCsvLogMessage;
+import com.emc.mongoose.load.monitor.IoTraceCsvLogMessage;
 import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.common.concurrent.RateThrottle;
@@ -22,7 +22,7 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.load.controller.metrics.IoTraceCsvBatchLogMessage;
+import com.emc.mongoose.load.monitor.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.MetricsManager;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.metrics.BasicMetricsContext;
@@ -65,7 +65,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 12.07.16.
@@ -540,13 +539,15 @@ implements LoadController<I, O> {
 	@Override
 	public final int getActiveTaskCount() {
 		int totalActiveTaskCount = 0;
-		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-			final List<StorageDriver<I, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
-			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
-				try {
-					totalActiveTaskCount += nextDriver.getActiveTaskCount();
-				} catch(final RemoteException e) {
-					LogUtil.exception(Level.WARN, e, "Failed to invoke the remote method");
+		synchronized(driversMap) {
+			for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+				final List<StorageDriver<I, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
+				for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
+					try {
+						totalActiveTaskCount += nextDriver.getActiveTaskCount();
+					} catch(final RemoteException e) {
+						LogUtil.exception(Level.WARN, e, "Failed to invoke the remote method");
+					}
 				}
 			}
 		}
@@ -701,18 +702,20 @@ implements LoadController<I, O> {
 				Loggers.MSG.debug("{}: await exit due to \"done\" state", getName());
 				return true;
 			}
-			if(!isAnyCircular && allIoTasksCompleted()) {
-				Loggers.MSG.debug(
-					"{}: await exit because all I/O tasks have been completed", getName()
-				);
-				return true;
-			}
-			// issue SLTM-938 fix
-			if(nothingToRecycle()) {
-				Loggers.ERR.debug(
-					"{}: exit because there's no I/O task to recycle (all failed)", getName()
-				);
-				return true;
+			synchronized(driversMap) {
+				if(!isAnyCircular && allIoTasksCompleted()) {
+					Loggers.MSG.debug(
+						"{}: await exit because all I/O tasks have been completed", getName()
+					);
+					return true;
+				}
+				// issue SLTM-938 fix
+				if(nothingToRecycle()) {
+					Loggers.ERR.debug(
+						"{}: exit because there's no I/O task to recycle (all failed)", getName()
+					);
+					return true;
+				}
 			}
 		}
 		Loggers.MSG.debug("{}: await exit due to timeout", getName());
