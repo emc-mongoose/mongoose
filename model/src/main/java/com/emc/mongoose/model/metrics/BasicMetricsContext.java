@@ -200,7 +200,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final int getThresholdConcurrency() {
+	public final int getConcurrencyThreshold() {
 		return thresholdConcurrency;
 	}
 	//

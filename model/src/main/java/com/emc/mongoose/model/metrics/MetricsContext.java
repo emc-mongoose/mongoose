@@ -31,7 +31,7 @@ extends Closeable {
 	IoType getIoType();
 	int getDriverCount();
 	int getConcurrency();
-	int getThresholdConcurrency();
+	int getConcurrencyThreshold();
 	SizeInBytes getItemSize();
 	boolean getVolatileOutputFlag();
 	long getOutputPeriodMillis();

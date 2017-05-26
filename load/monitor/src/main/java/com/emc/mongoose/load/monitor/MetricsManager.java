@@ -94,19 +94,22 @@ implements SvcTask {
 					final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 						.get(controller);
 					if(controllerMetrics != null && controllerMetrics.remove(metricsCtx)) {
-						// check for the metrics threshold state if entered
-						if(
-							metricsCtx.isThresholdStateEntered() &&
-								!metricsCtx.isThresholdStateExited()
-						) {
-							exitMetricsThresholdState(metricsCtx);
+						if(!metricsCtx.getVolatileOutputFlag()) {
+							// check for the metrics threshold state if entered
+							if(
+								metricsCtx.isThresholdStateEntered() &&
+									!metricsCtx.isThresholdStateExited()
+								) {
+								exitMetricsThresholdState(metricsCtx);
+							}
+							// file output
+							Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
+							Loggers.METRICS_EXT_RESULTS_FILE.info(
+								new ExtResultsXmlLogMessage(metricsCtx)
+							);
 						}
-						// output
-						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
+						// console output
 						Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
-						Loggers.METRICS_EXT_RESULTS_FILE.info(
-							new ExtResultsXmlLogMessage(metricsCtx)
-						);
 					} else {
 						Loggers.ERR.debug(
 							"Metrics context \"{}\" has not been registered", metricsCtx
@@ -132,28 +135,35 @@ implements SvcTask {
 			try {
 				nextOutputTs = System.currentTimeMillis();
 				int controllerActiveTaskCount;
+				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
 						metricsCtx.refreshLastSnapshot();
 						// threshold load state checks
-						if(controllerActiveTaskCount >= metricsCtx.getThresholdConcurrency()) {
+						if(!metricsCtx.getVolatileOutputFlag()) {
+							nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
 							if(
-								!metricsCtx.isThresholdStateEntered() &&
+								nextConcurrencyThreshold > 0 &&
+									controllerActiveTaskCount >= nextConcurrencyThreshold
+							) {
+								if(
+									!metricsCtx.isThresholdStateEntered() &&
+										!metricsCtx.isThresholdStateExited()
+								) {
+									Loggers.MSG.info(
+										"The threshold of {} active tasks count is reached, " +
+											"starting the additional metrics accounting",
+										metricsCtx.getConcurrencyThreshold()
+									);
+									metricsCtx.enterThresholdState();
+								}
+							} else if(
+								metricsCtx.isThresholdStateEntered() &&
 									!metricsCtx.isThresholdStateExited()
 							) {
-								Loggers.MSG.info(
-									"The threshold of {} active tasks count is reached, " +
-										"starting the additional metrics accounting",
-									metricsCtx.getThresholdConcurrency()
-								);
-								metricsCtx.enterThresholdState();
+								exitMetricsThresholdState(metricsCtx);
 							}
-						} else if(
-							metricsCtx.isThresholdStateEntered() &&
-								!metricsCtx.isThresholdStateExited()
-						) {
-							exitMetricsThresholdState(metricsCtx);
 						}
 						// periodic file output
 						if(
@@ -187,7 +197,7 @@ implements SvcTask {
 		Loggers.MSG.info(
 			"The active tasks count is below the threshold of {}, " +
 				"stopping the additional metrics accounting",
-			metricsCtx.getThresholdConcurrency()
+			metricsCtx.getConcurrencyThreshold()
 		);
 		final MetricsContext lastThresholdMetrics = metricsCtx
 			.getThresholdMetrics();
