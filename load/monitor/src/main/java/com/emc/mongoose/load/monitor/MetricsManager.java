@@ -173,11 +173,11 @@ implements SvcTask {
 							try(
 								final Instance logCtx = CloseableThreadContext
 									.put(KEY_STEP_NAME, metricsCtx.getStepName())
-							        .put(KEY_CLASS_NAME, CLASS_NAME)
+									.put(KEY_CLASS_NAME, CLASS_NAME)
 							) {
 								Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
 							}
-							metricsCtx.setLastOutputTs(System.currentTimeMillis());
+							metricsCtx.setLastOutputTs(nextOutputTs);
 						}
 					}
 				}

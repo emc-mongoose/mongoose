@@ -16,9 +16,9 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static java.io.File.separatorChar;
@@ -32,7 +32,7 @@ extends AbstractManager {
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
 	private final int buffSize;
-	private final Map<String, OutputStream> outStreamsMap = new HashMap<>();
+	private final Map<String, OutputStream> outStreamsMap = new ConcurrentHashMap<>();
 	private final Layout<? extends Serializable> layout;
 	//
 	protected LoadJobLogFileManager(
@@ -173,7 +173,6 @@ extends AbstractManager {
 			newOutPutStream = new BufferedOutputStream(
 				new FileOutputStream(outPutFile.getPath(), flagAppend), this.buffSize
 			);
-			outStreamsMap.put(jobName, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
 				final byte header[] = layout.getHeader();
 				if(header != null) {
