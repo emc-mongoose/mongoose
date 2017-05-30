@@ -116,7 +116,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		concurrencyMap.put(IoType.CREATE, 100);
 		concurrencyMap.put(IoType.READ, 100);
 		final Map<IoType, Integer> weightsMap = new HashMap<>();
-		testMetricsTableStdout(STD_OUTPUT, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
+		testMetricsTableStdout(STD_OUTPUT, JOB_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
 
 }

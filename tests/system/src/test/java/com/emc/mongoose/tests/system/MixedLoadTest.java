@@ -68,16 +68,16 @@ extends HttpStorageDistributedScenarioTestBase {
 		final Thread runner = new Thread(
 			() -> {
 				try {
-					STD_OUT_STREAM.startRecording();
 					SCENARIO.run();
-					STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.sleep(30); // warmup
+		TimeUnit.SECONDS.sleep(10);
+		STD_OUT_STREAM.startRecording();
+		TimeUnit.SECONDS.sleep(10);
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			ACTUAL_CONCURRENCY += PortListener
@@ -86,6 +86,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 50);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
+		STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 		LoadJobLogFileManager.flush(JOB_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
@@ -112,6 +113,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, 20);
 		concurrencyMap.put(IoType.READ, 50);
-		testMetricsTableStdout(STD_OUTPUT, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
+		testMetricsTableStdout(STD_OUTPUT, JOB_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
 }

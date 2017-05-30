@@ -177,6 +177,7 @@ implements SvcTask {
 							) {
 								Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
 							}
+							metricsCtx.setLastOutputTs(System.currentTimeMillis());
 						}
 					}
 				}

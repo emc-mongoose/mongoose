@@ -26,8 +26,7 @@ extends LogMessageBase {
 		"----------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +
 		"    Step    |Operat| Concur|Drive|       Count       | Step |   Last Rate    |  Mean    |   Mean    " + LINE_SEPARATOR +
 		"    Name    | ion  | rency | rs  |-------------------| Time |----------------| Latency  | Duration  " + LINE_SEPARATOR +
-		"            | Type |       |Count|   Success  |Failed| [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR;
-	public static final String TABLE_BORDER_ROW =
+		"            | Type |       |Count|   Success  |Failed| [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
 		"------------|------|-------|-----|------------|------|------|--------|-------|----------|-----------" + LINE_SEPARATOR;
 	public static final String TABLE_BORDER_BOTTOM =
 		"----------------------------------------------------------------------------------------------------";
@@ -55,7 +54,6 @@ extends LogMessageBase {
 					succCount = snapshot.getSuccCount();
 					failCount = snapshot.getFailCount();
 					ioType = metricsContext.getIoType();
-					strb.append(TABLE_BORDER_ROW);
 					strb.appendFixedWidthPadLeft(metricsContext.getStepName(), 12, ' ')
 						.append(TABLE_BORDER_VERTICAL);
 					switch(ioType) {

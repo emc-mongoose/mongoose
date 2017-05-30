@@ -36,6 +36,7 @@ extends Closeable {
 	boolean getVolatileOutputFlag();
 	long getOutputPeriodMillis();
 	long getLastOutputTs();
+	void setLastOutputTs(final long ts);
 	
 	void refreshLastSnapshot();
 	Snapshot getLastSnapshot();

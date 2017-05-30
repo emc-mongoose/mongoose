@@ -219,8 +219,14 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		return outputPeriodMillis;
 	}
 	//
+	@Override
 	public final long getLastOutputTs() {
 		return lastOutputTs;
+	}
+	
+	@Override
+	public final void setLastOutputTs(final long ts) {
+		lastOutputTs = ts;
 	}
 	//
 	@Override

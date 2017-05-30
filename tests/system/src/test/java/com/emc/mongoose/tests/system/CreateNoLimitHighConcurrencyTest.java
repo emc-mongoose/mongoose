@@ -34,7 +34,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, CreateNoLimitHighConcurrencyTest.class.getSimpleName());
+		JOB_NAME = CreateNoLimitHighConcurrencyTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		RUNNER = new Thread(

@@ -31,6 +31,12 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
 import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
+import static com.emc.mongoose.ui.log.LogUtil.CREATE_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.DELETE_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.LIST_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.NOOP_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.READ_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.UPDATE_COLOR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -250,7 +256,7 @@ public abstract class LoggingTestBase {
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
 			if(Double.isNaN(prevJobDuration)) {
-				assertEquals(Double.toString(jobDuration), 0, jobDuration, 1);
+				assertEquals(Double.toString(jobDuration), 0, jobDuration, 15);
 			} else {
 				assertEquals(
 					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 2
@@ -523,8 +529,8 @@ public abstract class LoggingTestBase {
 	}
 	
 	protected static void testMetricsTableStdout(
-		final String stdOutContent, final int driverCount, final long countLimit,
-		final Map<IoType, Integer> concurrencyMap
+		final String stdOutContent, final String stepName, final int driverCount,
+		final long countLimit, final Map<IoType, Integer> concurrencyMap
 	) throws Exception {
 		
 		final List<String[]> records = new ArrayList<>();
@@ -550,11 +556,30 @@ public abstract class LoggingTestBase {
 		int lat, dur;
 		float currStepTime;
 		float tp, bw;
-		SizeInBytes size;
 		for(final String rec[] : records) {
 			for(final String row : rec) {
 				cells = CELL_BORDER.split(WHITESPACES.matcher(row).replaceAll(""));
-				final IoType actualIoType = IoType.valueOf(cells[0]);
+				assertEquals(
+					stepName.length() > 12 ? stepName.substring(stepName.length() - 12) : stepName,
+					cells[0]
+				);
+				if(cells[1].startsWith(NOOP_COLOR)) {
+					cells[1] = cells[1].substring(NOOP_COLOR.length());
+				} else if(cells[1].startsWith(CREATE_COLOR)) {
+					cells[1] = cells[1].substring(CREATE_COLOR.length());
+				} else if(cells[1].startsWith(READ_COLOR)) {
+					cells[1] = cells[1].substring(READ_COLOR.length());
+				} else if(cells[1].startsWith(UPDATE_COLOR)) {
+					cells[1] = cells[1].substring(UPDATE_COLOR.length());
+				} else if(cells[1].startsWith(DELETE_COLOR)) {
+					cells[1] = cells[1].substring(DELETE_COLOR.length());
+				} else if(cells[1].startsWith(LIST_COLOR)) {
+					cells[1] = cells[1].substring(LIST_COLOR.length());
+				}
+				if(cells[1].endsWith(LogUtil.RESET)) {
+					cells[1] = cells[1].substring(0, cells[1].length() - LogUtil.RESET.length());
+				}
+				final IoType actualIoType = IoType.valueOf(cells[1]);
 				ioTypeFoundFlag = false;
 				for(final IoType nextIoType : concurrencyMap.keySet()) {
 					if(nextIoType.equals(actualIoType)) {
@@ -566,34 +591,31 @@ public abstract class LoggingTestBase {
 					"I/O type \"" + actualIoType + "\" not found, expected one of: " +
 					Arrays.toString(concurrencyMap.keySet().toArray()), ioTypeFoundFlag
 				);
-				assertEquals((int) concurrencyMap.get(actualIoType), Integer.parseInt(cells[1])); // concurrency
-				assertEquals(driverCount, Integer.parseInt(cells[2])); // driver count
-				cells[3] = cells[3].substring(LogUtil.WHITE.length());
-				cells[3] = cells[3].substring(0, cells[3].indexOf(LogUtil.RESET));
-				countSucc = Long.parseLong(cells[3]);
+				assertEquals((int) concurrencyMap.get(actualIoType), Integer.parseInt(cells[2])); // concurrency
+				assertEquals(driverCount, Integer.parseInt(cells[3])); // driver count
+				countSucc = Long.parseLong(cells[4]);
 				if(countLimit > 0) {
 					assertTrue(countLimit > countSucc); // count succ
 				}
-				if(cells[4].startsWith(LogUtil.GREEN)) {
-					cells[4] = cells[4].substring(LogUtil.GREEN.length());
-					cells[4] = cells[4].substring(0, cells[4].indexOf(LogUtil.RESET));
-					assertTrue(0 == Long.parseLong(cells[4])); // count fail
+				if(cells[5].startsWith("\u001B[38;2;0;200;0m")) {
+					cells[5] = cells[5].substring("\u001B[38;2;0;200;0m".length());
+					cells[5] = cells[5].substring(0, cells[5].indexOf(LogUtil.RESET));
+					assertTrue(0 == Long.parseLong(cells[5])); // count fail
 				} else {
-					fail("Failures count is not green");
+					fail("Failures count is not 0");
 				}
-				currStepTime = Float.parseFloat(cells[5]); // job time
-				tp = Float.parseFloat(cells[6]); // TP mean
+				currStepTime = Float.parseFloat(cells[6]); // job time
+				tp = Float.parseFloat(cells[7]); // TP last
 				if(currStepTime > 0) {
-					assertEquals(countSucc / currStepTime, tp, tp / 100);
+					assertTrue(tp >= 0);
 				}
-				size = new SizeInBytes(cells[8]);
-				bw = Float.parseFloat(cells[9]); // BW mean
-				if(tp > 0) {
-					assertEquals(MIB * bw / tp, size.getAvg() / countSucc, size.getAvg() / 1000);
+				bw = Float.parseFloat(cells[8]); // BW last
+				if(currStepTime > 0) {
+					assertTrue(bw >= 0);
 				}
-				lat = Integer.parseInt(cells[11]); // latency
+				lat = Integer.parseInt(cells[9]); // latency
 				assertTrue(lat >= 0);
-				dur = Integer.parseInt(cells[12]); // duration
+				dur = Integer.parseInt(cells[10]); // duration
 				assertTrue("Mean duration " + dur + " is less than mean latency " + lat, dur >= lat);
 			}
 		}
