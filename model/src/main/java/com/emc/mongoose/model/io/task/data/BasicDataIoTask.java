@@ -16,7 +16,6 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import static java.lang.System.nanoTime;
 
 /**
@@ -135,7 +134,7 @@ implements DataIoTask<T> {
 	}
 	
 	private void markRandomRangesActually(final int countRangesTotal) {
-		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
+		final int startCellPos = (int) (nanoTime() % countRangesTotal);
 		int nextCellPos;
 		if(countRangesTotal > item.getUpdatedRangesCount() + markedRangesMaskPair[0].cardinality()) {
 			// current layer has not updated yet ranges

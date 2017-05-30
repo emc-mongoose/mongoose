@@ -426,14 +426,14 @@ implements LoadController<I, O> {
 						);
 					}
 				}
-				
 				ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-				counterResults.increment();
 			}
 		} else if(!Status.CANCELLED.equals(status)) {
 			Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
 			ioTypeStats.markFail();
 		}
+		
+		counterResults.increment();
 		return true;
 	}
 	
@@ -520,12 +520,13 @@ implements LoadController<I, O> {
 					}
 					
 					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
-					counterResults.increment();
 				}
 			} else if(!Status.CANCELLED.equals(status)) {
 				Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
 				ioTypeStats.markFail();
 			}
+			
+			counterResults.increment();
 		}
 		
 		return i - from;

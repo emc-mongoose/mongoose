@@ -55,8 +55,8 @@
 						"Filter" : [
 							{
 								"type" : "BurstFilter",
-								"rate" : 10,
-								"maxBurst" : 100
+								"rate" : 100,
+								"maxBurst" : 1000
 							}
 						]
 					}
@@ -72,8 +72,8 @@
 						"Filter" : [
 							{
 								"type" : "BurstFilter",
-								"rate" : 10,
-								"maxBurst" : 100
+								"rate" : 10000,
+								"maxBurst" : 100000
 							}
 						]
 					}
