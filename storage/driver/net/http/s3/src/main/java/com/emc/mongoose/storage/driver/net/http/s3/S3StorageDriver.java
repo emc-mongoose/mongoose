@@ -349,6 +349,7 @@ extends HttpStorageDriverBase<I, O> {
 				listRespParser.parse(contentStream, listingHandler);
 			}
 			listRespContent.release();
+			listResp.release();
 			if(buff.size() == 0) {
 				throw new EOFException();
 			}
