@@ -184,6 +184,7 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final String requestNewAuthToken(final Credential credential) {
+
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -204,6 +205,7 @@ extends HttpStorageDriverBase<I, O> {
 			HttpVersion.HTTP_1_1, HttpMethod.GET, AUTH_URI, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
+
 		final FullHttpResponse getAuthTokenResp;
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
@@ -213,8 +215,11 @@ extends HttpStorageDriverBase<I, O> {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
+
+		final String authTokenValue = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
+		getAuthTokenResp.release();
 		
-		return getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
+		return authTokenValue;
 	}
 	
 	@Override
@@ -253,7 +258,7 @@ extends HttpStorageDriverBase<I, O> {
 			EmptyHttpHeaders.INSTANCE
 		);
 		final List<I> buff = new ArrayList<>(countLimit);
-		final FullHttpResponse listResp;
+		FullHttpResponse listResp = null;
 		try {
 			listResp = executeHttpRequest(checkBucketReq);
 			final HttpResponseStatus respStatus = listResp.status();
@@ -264,6 +269,8 @@ extends HttpStorageDriverBase<I, O> {
 					final ByteBuf listRespContent = listResp.content();
 					try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
 						parseContainerListing(buff, contentStream, path, itemFactory, idRadix);
+					} finally {
+						listRespContent.release();
 					}
 				}
 			} else {
@@ -272,6 +279,10 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException ignored) {
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+		}
+
+		if(listResp != null) {
+			listResp.release();
 		}
 
 		return buff;
