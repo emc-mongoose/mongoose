@@ -108,7 +108,8 @@ extends HttpStorageDistributedScenarioTestBase {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test @Ignore public void testMetricsLogFile()
+	@Test
+	public final void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -122,7 +123,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test //@Ignore
+	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();

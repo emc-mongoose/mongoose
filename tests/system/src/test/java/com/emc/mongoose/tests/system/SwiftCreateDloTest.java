@@ -92,7 +92,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
-	@Test //@Ignore
+	@Test
 	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();

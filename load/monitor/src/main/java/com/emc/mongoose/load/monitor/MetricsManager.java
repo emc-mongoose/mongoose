@@ -157,8 +157,8 @@ implements SvcTask {
 											!metricsCtx.isThresholdStateExited()
 									) {
 										Loggers.MSG.info(
-											"{}: the threshold of {} active tasks count is reached, " +
-												"starting the additional metrics accounting",
+											"{}: the threshold of {} active tasks count is " +
+											"reached, starting the additional metrics accounting",
 											metricsCtx.toString(),
 											metricsCtx.getConcurrencyThreshold()
 										);
@@ -170,14 +170,14 @@ implements SvcTask {
 								) {
 									exitMetricsThresholdState(metricsCtx);
 								}
-							}
-							// periodic file output
-							if(
-								nextOutputTs - metricsCtx.getLastOutputTs() >=
-									metricsCtx.getOutputPeriodMillis()
-							) {
-								Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
-								metricsCtx.setLastOutputTs(nextOutputTs);
+								// periodic file output
+								if(
+									nextOutputTs - metricsCtx.getLastOutputTs() >=
+										metricsCtx.getOutputPeriodMillis()
+									) {
+									Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
+									metricsCtx.setLastOutputTs(nextOutputTs);
+								}
 							}
 						}
 					}

@@ -111,7 +111,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test //@Ignore
+	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(

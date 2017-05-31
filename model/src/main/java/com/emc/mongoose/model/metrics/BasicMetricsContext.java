@@ -35,7 +35,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final SizeInBytes itemSize;
 	private final boolean volatileOutputFlag;
 	private final long outputPeriodMillis;
-	private volatile long lastOutputTs = System.currentTimeMillis();
+	private volatile long lastOutputTs = 0;
 	private volatile Snapshot lastSnapshot = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
