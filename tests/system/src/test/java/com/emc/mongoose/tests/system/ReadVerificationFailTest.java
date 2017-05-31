@@ -28,12 +28,25 @@ import static org.junit.Assert.assertEquals;
 
 /**
  Created by kurila on 30.05.17.
+ * 1.1. Configuration Syntax
+ * 1.2. CLI Arguments Aliasing
+ * 2.2.1. Items Input File
+ * 2.3.2. Items Output File
+ * 4.3. Medium Concurrency Level (11-100)
+ * 6.2.2. Limit Step by Processed Item Count
+ * 6.2.6. Limit Step by End of Items Input
+ * 7.4. I/O Traces Reporting
+ * 8.2.1. Create New Items
+ * 8.3.2. Read With Enabled Validation
+ * 8.4.2.1. Single Random Range Update
+ * 9.2. Default Scenario
+ * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
 public final class ReadVerificationFailTest
 extends HttpStorageDistributedScenarioTestBase {
 	
 	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("10KB");
-	private static final int EXPECTED_CONCURRENCY = 15;
+	private static final int EXPECTED_CONCURRENCY = 20;
 	private static final long EXPECTED_COUNT = 1000;
 	private static final String ITEM_OUTPUT_FILE = ReadVerificationFailTest.class.getSimpleName() +
 		".csv";

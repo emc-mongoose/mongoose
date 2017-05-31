@@ -43,7 +43,7 @@ implements SvcTask {
 		lastOutputTs = System.currentTimeMillis() - outputPeriodMillis;
 	}
 	
-	private static final String CLASS_NAME = MetricsManager.class.getName();
+	private static final String CLASS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
 	
 	static {
@@ -139,52 +139,55 @@ implements SvcTask {
 				for(final LoadController controller : allMetrics.keySet()) {
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
-						metricsCtx.refreshLastSnapshot();
-						// threshold load state checks
-						if(!metricsCtx.getVolatileOutputFlag()) {
-							nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
-							if(
-								nextConcurrencyThreshold > 0 &&
-									controllerActiveTaskCount >= nextConcurrencyThreshold
-							) {
+						try(
+							final Instance logCtx = CloseableThreadContext
+								.put(KEY_STEP_NAME, metricsCtx.getStepName())
+								.put(KEY_CLASS_NAME, CLASS_NAME)
+						) {
+							metricsCtx.refreshLastSnapshot();
+							// threshold load state checks
+							if(!metricsCtx.getVolatileOutputFlag()) {
+								nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
 								if(
-									!metricsCtx.isThresholdStateEntered() &&
+									nextConcurrencyThreshold > 0 &&
+										controllerActiveTaskCount >= nextConcurrencyThreshold
+								) {
+									if(
+										!metricsCtx.isThresholdStateEntered() &&
+											!metricsCtx.isThresholdStateExited()
+									) {
+										Loggers.MSG.info(
+											"{}: the threshold of {} active tasks count is reached, " +
+												"starting the additional metrics accounting",
+											metricsCtx.toString(),
+											metricsCtx.getConcurrencyThreshold()
+										);
+										metricsCtx.enterThresholdState();
+									}
+								} else if(
+									metricsCtx.isThresholdStateEntered() &&
 										!metricsCtx.isThresholdStateExited()
 								) {
-									Loggers.MSG.info(
-										"The threshold of {} active tasks count is reached, " +
-											"starting the additional metrics accounting",
-										metricsCtx.getConcurrencyThreshold()
-									);
-									metricsCtx.enterThresholdState();
+									exitMetricsThresholdState(metricsCtx);
 								}
-							} else if(
-								metricsCtx.isThresholdStateEntered() &&
-									!metricsCtx.isThresholdStateExited()
-							) {
-								exitMetricsThresholdState(metricsCtx);
 							}
-						}
-						// periodic file output
-						if(
-							nextOutputTs - metricsCtx.getLastOutputTs() >=
-								metricsCtx.getOutputPeriodMillis()
-						) {
-							try(
-								final Instance logCtx = CloseableThreadContext
-									.put(KEY_STEP_NAME, metricsCtx.getStepName())
-									.put(KEY_CLASS_NAME, CLASS_NAME)
+							// periodic file output
+							if(
+								nextOutputTs - metricsCtx.getLastOutputTs() >=
+									metricsCtx.getOutputPeriodMillis()
 							) {
 								Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
+								metricsCtx.setLastOutputTs(nextOutputTs);
 							}
-							metricsCtx.setLastOutputTs(nextOutputTs);
 						}
 					}
 				}
 				// periodic console output
 				if(nextOutputTs - lastOutputTs >= outputPeriodMillis) {
 					lastOutputTs = nextOutputTs;
-					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(allMetrics));
+					if(allMetrics.size() > 0) {
+						Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(allMetrics));
+					}
 				}
 			} catch(final Throwable cause) {
 				LogUtil.exception(Level.WARN, cause, "Metrics manager failure");
@@ -196,12 +199,11 @@ implements SvcTask {
 
 	private static void exitMetricsThresholdState(final MetricsContext metricsCtx) {
 		Loggers.MSG.info(
-			"The active tasks count is below the threshold of {}, " +
+			"{}: the active tasks count is below the threshold of {}, " +
 				"stopping the additional metrics accounting",
-			metricsCtx.getConcurrencyThreshold()
+			metricsCtx.toString(), metricsCtx.getConcurrencyThreshold()
 		);
-		final MetricsContext lastThresholdMetrics = metricsCtx
-			.getThresholdMetrics();
+		final MetricsContext lastThresholdMetrics = metricsCtx.getThresholdMetrics();
 		Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
 			new MetricsCsvLogMessage(lastThresholdMetrics)
 		);
