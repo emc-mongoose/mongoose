@@ -281,10 +281,6 @@ extends HttpStorageDriverBase<I, O> {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
 
-		if(listResp != null) {
-			listResp.release();
-		}
-
 		return buff;
 	}
 
