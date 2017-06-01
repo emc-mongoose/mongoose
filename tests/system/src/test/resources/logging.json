@@ -261,14 +261,6 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.ui.log.metrics.threshold.File",
-					"level" : "INFO",
-					"AppenderRef" : {
-						"ref" : "metricsMedFile"
-					},
-					"additivity" : false
-				},
-				{
 					"name" : "com.emc.mongoose.ui.log.metrics.threshold.FileTotal",
 					"level" : "INFO",
 					"AppenderRef" : {

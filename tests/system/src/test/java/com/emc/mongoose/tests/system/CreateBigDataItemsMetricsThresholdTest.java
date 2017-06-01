@@ -105,15 +105,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMedMetricsLogFile()
-	throws Exception {
-		testMetricsLogRecords(
-			getMetricsMedLogRecords(),
-			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			0, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
-	}
-	
 	@Test public void testMedTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(

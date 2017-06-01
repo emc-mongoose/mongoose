@@ -132,7 +132,7 @@ implements SvcTask {
 	@Override
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
-			try {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)) {
 				nextOutputTs = System.currentTimeMillis();
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;
@@ -140,9 +140,8 @@ implements SvcTask {
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
 						try(
-							final Instance logCtx = CloseableThreadContext
+							final Instance logCtx_ = CloseableThreadContext
 								.put(KEY_STEP_NAME, metricsCtx.getStepName())
-								.put(KEY_CLASS_NAME, CLASS_NAME)
 						) {
 							metricsCtx.refreshLastSnapshot();
 							// threshold load state checks
@@ -174,7 +173,7 @@ implements SvcTask {
 								if(
 									nextOutputTs - metricsCtx.getLastOutputTs() >=
 										metricsCtx.getOutputPeriodMillis()
-									) {
+								) {
 									Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
 									metricsCtx.setLastOutputTs(nextOutputTs);
 								}

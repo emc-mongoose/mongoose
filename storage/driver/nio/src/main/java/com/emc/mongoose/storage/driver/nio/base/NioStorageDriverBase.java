@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
@@ -14,6 +15,8 @@ import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
+import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -88,71 +91,78 @@ implements NioStorageDriver<I, O> {
 			O ioTask;
 			final List<O> ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
 
-			while(isStarted() || isShutdown()) {
+			try(
+				final Instance logCtx = CloseableThreadContext
+					.put(KEY_CLASS_NAME, NioWorkerTask.class.getSimpleName())
+			) {
+
+				while(isStarted() || isShutdown()) {
+					if(ioTaskBuff.tryLock()) {
+						ioTaskBuffSize = ioTaskBuff.size();
+						if(ioTaskBuffSize > 0) {
+							try {
+								for(int i = 0; i < ioTaskBuffSize; i ++) {
+									ioTask = ioTaskBuff.get(i);
+									// check if the task is invoked 1st time
+									if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
+										// do not start the new task if the state is not more active
+										if(!isStarted()) {
+											continue;
+										}
+										// respect the configured concurrency level
+										if(!concurrencyThrottle.tryAcquire()) {
+											ioTaskLocalBuff.add(ioTask);
+											continue;
+										}
+										// mark the task as active
+										ioTask.startRequest();
+										ioTask.finishRequest();
+									}
+									// perform non blocking I/O for the task
+									invokeNio(ioTask);
+									// remove the task from the buffer if it is not active more
+									if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+										concurrencyThrottle.release();
+										ioTaskCompleted(ioTask);
+									} else {
+										// the task remains in the buffer for the next iteration
+										ioTaskLocalBuff.add(ioTask);
+									}
+								}
+							} catch(final Throwable cause) {
+								LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
+							} finally {
+								// put the active tasks back into the buffer
+								ioTaskBuff.clear();
+								ioTaskBuffSize = ioTaskLocalBuff.size();
+								if(ioTaskBuffSize > 0) {
+									for(int i = 0; i < ioTaskBuffSize; i ++) {
+										ioTaskBuff.add(ioTaskLocalBuff.get(i));
+									}
+									ioTaskLocalBuff.clear();
+								}
+								ioTaskBuff.unlock();
+							}
+						} else {
+							ioTaskBuff.unlock();
+							LockSupport.parkNanos(1);
+						}
+					}
+				}
+
 				if(ioTaskBuff.tryLock()) {
 					ioTaskBuffSize = ioTaskBuff.size();
-					if(ioTaskBuffSize > 0) {
-						try {
-							for(int i = 0; i < ioTaskBuffSize; i ++) {
-								ioTask = ioTaskBuff.get(i);
-								// check if the task is invoked 1st time
-								if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
-									// do not start the new task if the state is not more active
-									if(!isStarted()) {
-										continue;
-									}
-									// respect the configured concurrency level
-									if(!concurrencyThrottle.tryAcquire()) {
-										ioTaskLocalBuff.add(ioTask);
-										continue;
-									}
-									// mark the task as active
-									ioTask.startRequest();
-									ioTask.finishRequest();
-								}
-								// perform non blocking I/O for the task
-								invokeNio(ioTask);
-								// remove the task from the buffer if it is not active more
-								if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
-									concurrencyThrottle.release();
-									ioTaskCompleted(ioTask);
-								} else { // the task remains in the buffer for the next iteration
-									ioTaskLocalBuff.add(ioTask);
-								}
-							}
-						} catch(final Throwable cause) {
-							LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
-						} finally {
-							// put the active tasks back into the buffer
-							ioTaskBuff.clear();
-							ioTaskBuffSize = ioTaskLocalBuff.size();
-							if(ioTaskBuffSize > 0) {
-								for(int i = 0; i < ioTaskBuffSize; i ++) {
-									ioTaskBuff.add(ioTaskLocalBuff.get(i));
-								}
-								ioTaskLocalBuff.clear();
-							}
-							ioTaskBuff.unlock();
+					Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
+					for(int i = 0; i < ioTaskBuffSize; i ++) {
+						ioTask = ioTaskBuff.get(i);
+						while(IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+							invokeNio(ioTask);
 						}
-					} else {
-						ioTaskBuff.unlock();
-						LockSupport.parkNanos(1);
+						concurrencyThrottle.release();
+						ioTaskCompleted(ioTask);
 					}
+					Loggers.MSG.debug("Finish the remaining active tasks done");
 				}
-			}
-
-			if(ioTaskBuff.tryLock()) {
-				ioTaskBuffSize = ioTaskBuff.size();
-				Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
-				for(int i = 0; i < ioTaskBuffSize; i ++) {
-					ioTask = ioTaskBuff.get(i);
-					while(IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
-						invokeNio(ioTask);
-					}
-					concurrencyThrottle.release();
-					ioTaskCompleted(ioTask);
-				}
-				Loggers.MSG.debug("Finish the remaining active tasks done");
 			}
 		}
 	}
@@ -263,10 +273,13 @@ implements NioStorageDriver<I, O> {
 		super.doClose();
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioWorkerTasks[i] = null;
-			try {
+			try(
+				final Instance logCtx = CloseableThreadContext
+					.put(KEY_CLASS_NAME, NioStorageDriverBase.class.getSimpleName())
+			) {
 				if(ioTaskBuffs[i].tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					ioTaskBuffs[i].clear();
-				} else {
+				} else if(ioTaskBuffs[i].size() > 0){
 					Loggers.ERR.debug(
 						"Failed to obtain the lock, I/O tasks buff remains uncleared"
 					);

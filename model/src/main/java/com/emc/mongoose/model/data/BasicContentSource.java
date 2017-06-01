@@ -49,6 +49,7 @@ implements ContentSource {
 				n += m;
 			}
 		} while(n < size);
+		zeroByteLayer.flip();
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		this.cacheLimit = cacheLimit;
 		threadLocalByteLayersCache = new ThreadLocal<>();
