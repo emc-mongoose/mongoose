@@ -1,12 +1,11 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
 import com.emc.mongoose.model.item.DataItem;
+
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 public class DataItemFileRegion

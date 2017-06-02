@@ -455,7 +455,6 @@ implements HttpStorageDriver<I, O> {
 								if(updRangesMaskPair[0].get(i)) {
 									dataIoTask.setCurrRangeIdx(i);
 									updatedRange = dataIoTask.getCurrRangeUpdate();
-									assert updatedRange != null;
 									channel.write(
 										new SeekableByteChannelChunkedNioStream(updatedRange)
 									);
@@ -466,7 +465,6 @@ implements HttpStorageDriver<I, O> {
 								if(updRangesMaskPair[1].get(i)) {
 									dataIoTask.setCurrRangeIdx(i);
 									updatedRange = dataIoTask.getCurrRangeUpdate();
-									assert updatedRange != null;
 									channel.write(
 										new SeekableByteChannelChunkedNioStream(updatedRange)
 									);
@@ -478,7 +476,6 @@ implements HttpStorageDriver<I, O> {
 								if(updRangesMaskPair[0].get(i)) {
 									dataIoTask.setCurrRangeIdx(i);
 									updatedRange = dataIoTask.getCurrRangeUpdate();
-									assert updatedRange != null;
 									channel.write(new DataItemFileRegion(updatedRange));
 								}
 							}
@@ -487,7 +484,6 @@ implements HttpStorageDriver<I, O> {
 								if(updRangesMaskPair[1].get(i)) {
 									dataIoTask.setCurrRangeIdx(i);
 									updatedRange = dataIoTask.getCurrRangeUpdate();
-									assert updatedRange != null;
 									channel.write(new DataItemFileRegion(updatedRange));
 								}
 							}

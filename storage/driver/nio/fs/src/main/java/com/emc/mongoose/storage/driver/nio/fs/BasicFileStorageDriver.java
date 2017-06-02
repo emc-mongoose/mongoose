@@ -18,6 +18,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.File;
@@ -27,15 +28,12 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.BitSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -45,25 +43,7 @@ import java.util.function.Function;
 public final class BasicFileStorageDriver<I extends DataItem, O extends DataIoTask<I>>
 extends NioStorageDriverBase<I, O>
 implements FileStorageDriver<I, O> {
-
-	private static final Set<OpenOption> CREATE_OPEN_OPT = new HashSet<OpenOption>() {
-		{
-			add(StandardOpenOption.CREATE);
-			add(StandardOpenOption.TRUNCATE_EXISTING);
-			add(StandardOpenOption.WRITE);
-		}
-	};
-	private static final Set<OpenOption> READ_OPEN_OPT = new HashSet<OpenOption>() {
-		{
-			add(StandardOpenOption.READ);
-		}
-	};
-	private static final Set<OpenOption> WRITE_OPEN_OPT = new HashSet<OpenOption>() {
-		{
-			add(StandardOpenOption.WRITE);
-		}
-	};
-
+	
 	private final Map<O, FileChannel> srcOpenFiles = new ConcurrentHashMap<>();
 	private final Function<O, FileChannel> openSrcFileFunc;
 	
@@ -653,6 +633,9 @@ implements FileStorageDriver<I, O> {
 				ioTask.setCountBytesDone(0);
 			}
 		} else {
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.debug("{}: {} bytes updated", fileItem.getName(), updatingRangesSize);
+			}
 			finishIoTask(ioTask);
 			fileItem.commitUpdatedRanges(ioTask.getMarkedRangesMaskPair());
 		}
