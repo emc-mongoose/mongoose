@@ -60,7 +60,7 @@ public abstract class ResponseContentUtil {
 			dataIoTask.setStatus(IoTask.Status.RESP_FAIL_CORRUPT);
 			if(e instanceof DataSizeException) {
 				try {
-					Loggers.MSG.warn(
+					Loggers.MSG.debug(
 						"{}: invalid size, expected: {}, actual: {} ",
 						dataItem.getName(), dataItem.size(), e.getOffset()
 					);
@@ -68,7 +68,7 @@ public abstract class ResponseContentUtil {
 				}
 			} else if(e instanceof DataCorruptionException) {
 				final DataCorruptionException ee = (DataCorruptionException) e;
-				Loggers.MSG.warn(
+				Loggers.MSG.debug(
 					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 					dataItem.getName(), ee.getOffset(), String.format("\"0x%X\"", ee.expected),
 					String.format("\"0x%X\"", ee.actual)

@@ -190,13 +190,26 @@ implements FileStorageDriver<I, O> {
 									);
 								}
 							} catch(final DataSizeException e) {
+								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
 								final long
 									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-								Loggers.MSG.warn(
+								ioTask.setCountBytesDone(countBytesDone);
+								Loggers.MSG.debug(
 									"{}: content size mismatch, expected: {}, actual: {}",
 									item.getName(), item.size(), countBytesDone
 								);
+							} catch(final DataCorruptionException e) {
 								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
+								final long
+									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
+								ioTask.setCountBytesDone(countBytesDone);
+								Loggers.MSG.debug(
+									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+									item.getName(), countBytesDone,
+									String.format(
+										"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
+									)
+								);
 							}
 						} else {
 							if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
@@ -367,7 +380,7 @@ implements FileStorageDriver<I, O> {
 				ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
 				countBytesDone += e.getOffset();
 				ioTask.setCountBytesDone(countBytesDone);
-				Loggers.MSG.warn(
+				Loggers.MSG.debug(
 					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 					fileItem.getName(), countBytesDone,
 					String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
@@ -382,7 +395,7 @@ implements FileStorageDriver<I, O> {
 	private void invokeReadAndVerifyRandomRanges(
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
 		final BitSet maskRangesPair[]
-	) throws DataSizeException, IOException {
+	) throws DataSizeException, DataCorruptionException, IOException {
 
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long rangesSizeSum = ioTask.getMarkedRangesSize();
@@ -423,7 +436,7 @@ implements FileStorageDriver<I, O> {
 	private void invokeReadAndVerifyFixedRanges(
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
 		final List<ByteRange> byteRanges
-	) throws DataSizeException, IOException {
+	) throws DataSizeException, DataCorruptionException, IOException {
 
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long baseItemSize = fileItem.size();
@@ -634,7 +647,7 @@ implements FileStorageDriver<I, O> {
 			}
 		} else {
 			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.debug("{}: {} bytes updated", fileItem.getName(), updatingRangesSize);
+				Loggers.MSG.trace("{}: {} bytes updated", fileItem.getName(), updatingRangesSize);
 			}
 			finishIoTask(ioTask);
 			fileItem.commitUpdatedRanges(ioTask.getMarkedRangesMaskPair());
