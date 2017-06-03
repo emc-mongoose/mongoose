@@ -236,7 +236,8 @@ implements StorageDriver<I, O> {
 		}
 		if(requestPathFunc != null) {
 			final String dstPath = ioTask.getDstPath();
-			if(dstPath != null) {
+			// NOTE: in the distributed mode null dstPath becomes empty one
+			if(dstPath != null && !dstPath.isEmpty()) {
 				pathMap.computeIfAbsent(dstPath, requestPathFunc);
 			}
 		}

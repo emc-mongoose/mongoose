@@ -28,7 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
  The provided semaphore limits the count of the simultaneously used connections.
  Based on netty.
  */
-public class BasicMultiNodeConnPool
+public class
+BasicMultiNodeConnPool
 implements NonBlockingConnPool {
 
 	private final Semaphore concurrencyThrottle;
@@ -84,7 +85,7 @@ implements NonBlockingConnPool {
 		for(int i = 0; i < concurrencyLevel; i ++) {
 			final Channel conn = connect();
 			if(conn == null) {
-				Loggers.ERR.error("Failed to pre-create the connections to the target nodes");
+				Loggers.ERR.warn("Failed to pre-create the connections to the target nodes");
 				break;
 			}
 			final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();

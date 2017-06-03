@@ -130,7 +130,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
-		connPool = createConnectionPool();
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
+		) {
+			connPool = createConnectionPool();
+		}
 	}
 
 	protected NonBlockingConnPool createConnectionPool() {
