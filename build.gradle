@@ -256,10 +256,9 @@ String defineVersion() {
 	json.version
 }
 
-ENV = System.getenv()
 task printTestEnv {
-	println("\tStorage type: " + ENV["STORAGE_DRIVER_TYPE"])
-	println("\tDistributed mode: " + ENV["STORAGE_DRIVER_REMOTE"])
-	println("\tConcurrency: " + ENV["STORAGE_DRIVER_CONCURRENCY"])
-	println("\tData size: " + ENV["ITEM_DATA_SIZE"])
+	println("\tStorage type: $System.env.STORAGE_DRIVER_TYPE")
+	println("\tDistributed mode: $System.env.STORAGE_DRIVER_REMOTE")
+	println("\tConcurrency: $System.env.STORAGE_DRIVER_CONCURRENCY")
+	println("\tData size: $System.env.ITEM_DATA_SIZE")
 }
