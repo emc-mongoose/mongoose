@@ -257,9 +257,9 @@ String defineVersion() {
 }
 
 task printTestEnv {
-	println("Next test:")
-	println("\tStorage type: " + System.getProperty("STORAGE_DRIVER_TYPE"))
-	println("\tDistributed mode: " + System.getProperty("STORAGE_DRIVER_REMOTE"))
-	println("\tConcurrency: " + System.getProperty("STORAGE_DRIVER_CONCURRENCY"))
-	println("\tData size: " + System.getProperty("ITEM_DATA_SIZE"))
+	ENV = System.getenv();
+	println("\tStorage type: " + ENV["STORAGE_DRIVER_TYPE"])
+	println("\tDistributed mode: " + ENV["STORAGE_DRIVER_REMOTE"])
+	println("\tConcurrency: " + ENV["STORAGE_DRIVER_CONCURRENCY"])
+	println("\tData size: " + ENV["ITEM_DATA_SIZE"])
 }
