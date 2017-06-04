@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system.deprecated;
 
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -10,6 +10,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * 9.5.2. Load Job
  * 10.4.4. Two Local Separate Storage Driver Services (at different ports)
  */
+@Ignore
 public class CreateNoLimitHighConcurrencyTest
 extends HttpStorageDistributedScenarioTestBase {
 	

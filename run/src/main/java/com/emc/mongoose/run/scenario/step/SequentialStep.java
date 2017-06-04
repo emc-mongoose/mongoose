@@ -10,7 +10,7 @@ import java.util.Map;
  Created by kurila on 02.02.16.
  */
 public class SequentialStep
-extends ParentStepBase {
+extends CompositeStepBase {
 	//
 	public SequentialStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
@@ -27,16 +27,16 @@ extends ParentStepBase {
 	protected void invoke() {
 		synchronized(this) {
 			Loggers.MSG.info(
-				"{}: execute {} child steps sequentially", toString(), subSteps.size()
+				"{}: execute {} child steps sequentially", toString(), childSteps.size()
 			);
-			for(final Step subStep : subSteps) {
+			for(final Step subStep : childSteps) {
 				Loggers.MSG.debug("{}: child step \"{}\" start", toString(), subStep.toString());
 				subStep.run();
 				Loggers.MSG.debug("{}: child step \"{}\" is done", toString(), subStep.toString());
 			}
 			Loggers.MSG.info(
 				"{}: finished the sequential execution of {} child steps", toString(),
-				subSteps.size()
+				childSteps.size()
 			);
 		}
 	}

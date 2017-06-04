@@ -73,7 +73,8 @@ implements Serializable {
 	private long min, range = 0;
 	private double bias = 1;
 
-	public SizeInBytes(final String sizeInfo) {
+	public SizeInBytes(final String sizeInfo)
+	throws NumberFormatException, IllegalArgumentException {
 		final int
 			sep1pos = sizeInfo.indexOf(SEP1, 0),
 			sep2pos = sizeInfo.indexOf(SEP2, 0);

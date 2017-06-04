@@ -6,7 +6,7 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.Status;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
@@ -16,6 +16,7 @@ import org.apache.logging.log4j.CloseableThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ import static org.junit.Assert.assertEquals;
  * 9.2. Default Scenario
  * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
+@Ignore
 public final class ReadVerificationFailTest
 extends HttpStorageDistributedScenarioTestBase {
 	

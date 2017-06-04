@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public class ParallelStep
-extends ParentStepBase {
+extends CompositeStepBase {
 	//
 	protected ParallelStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
@@ -25,12 +25,12 @@ extends ParentStepBase {
 	protected final synchronized void invoke() {
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			subSteps.size(), new NamingThreadFactory("stepWorker" + hashCode(), true)
+			childSteps.size(), new NamingThreadFactory("stepWorker" + hashCode(), true)
 		);
-		for(final Step subStep : subSteps) {
+		for(final Step subStep : childSteps) {
 			parallelJobsExecutor.submit(subStep);
 		}
-		Loggers.MSG.info("{}: execute {} child steps in parallel", toString(), subSteps.size());
+		Loggers.MSG.info("{}: execute {} child steps in parallel", toString(), childSteps.size());
 		parallelJobsExecutor.shutdown();
 		
 		final long limitTime = localConfig
@@ -47,7 +47,7 @@ extends ParentStepBase {
 			parallelJobsExecutor.shutdownNow();
 		}
 		Loggers.MSG.info(
-			"{}: finished parallel execution of {} child steps", toString(), subSteps.size()
+			"{}: finished parallel execution of {} child steps", toString(), childSteps.size()
 		);
 	}
 	//

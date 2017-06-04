@@ -255,10 +255,3 @@ String defineVersion() {
 	def json = new JsonSlurper().parseText(inputFile.text)
 	json.version
 }
-
-task printTestEnv {
-	println("\tStorage type: $System.env.STORAGE_DRIVER_TYPE")
-	println("\tDistributed mode: $System.env.STORAGE_DRIVER_REMOTE")
-	println("\tConcurrency: $System.env.STORAGE_DRIVER_CONCURRENCY")
-	println("\tData size: $System.env.ITEM_DATA_SIZE")
-}

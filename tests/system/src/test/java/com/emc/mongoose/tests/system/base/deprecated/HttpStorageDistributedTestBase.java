@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system.base;
+package com.emc.mongoose.tests.system.base.deprecated;
 
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
@@ -13,6 +13,7 @@ import java.util.List;
 /**
  Created by andrey on 19.01.17.
  */
+@Deprecated
 public abstract class HttpStorageDistributedTestBase
 extends HttpStorageTestBase {
 

@@ -163,6 +163,7 @@ public class BasicStorageDriverBuilder<
 				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
 					String.class, LoadConfig.class, StorageConfig.class, Boolean.TYPE
 				);
+				Loggers.MSG.info("New storage driver for type \"{}\"", driverType);
 				return constructor.newInstance(stepName, loadConfig, storageConfig, verifyFlag);
 			} catch(final NoSuchMethodException e) {
 				throw new UserShootHisFootException(

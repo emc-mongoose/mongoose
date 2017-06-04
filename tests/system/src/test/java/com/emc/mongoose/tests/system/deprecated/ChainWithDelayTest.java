@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 28.03.17.
  */
+@Ignore
 public class ChainWithDelayTest
 extends HttpStorageDistributedScenarioTestBase {
 	

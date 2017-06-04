@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system.base;
+package com.emc.mongoose.tests.system.base.deprecated;
 
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
@@ -8,6 +8,8 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConf
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 
 import static org.junit.Assert.assertEquals;
+
+import com.emc.mongoose.tests.system.base.ConfiguredTestBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -23,6 +25,7 @@ import java.util.Map;
 /**
  Created by andrey on 19.01.17.
  */
+@Deprecated
 public abstract class HttpStorageTestBase
 extends ConfiguredTestBase {
 

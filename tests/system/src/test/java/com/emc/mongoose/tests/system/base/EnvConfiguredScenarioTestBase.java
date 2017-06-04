@@ -13,11 +13,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- Created by andrey on 19.01.17.
+ Created by andrey on 04.06.17.
  */
-public abstract class HttpStorageDistributedScenarioTestBase
-extends HttpStorageDistributedTestBase {
-	
+public class EnvConfiguredScenarioTestBase
+extends EnvConfiguredTestBase {
+
 	protected static final Path DEFAULT_SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO
 	);
@@ -27,7 +27,7 @@ extends HttpStorageDistributedTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		HttpStorageDistributedTestBase.setUpClass();
+		EnvConfiguredTestBase.setUpClass();
 		final String scenarioValue = CONFIG.getTestConfig().getScenarioConfig().getFile();
 		if(scenarioValue != null && !scenarioValue.isEmpty()) {
 			SCENARIO_PATH = Paths.get(scenarioValue);
@@ -40,7 +40,9 @@ extends HttpStorageDistributedTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		SCENARIO.close();
-		HttpStorageDistributedTestBase.tearDownClass();
+		if(SCENARIO != null) {
+			SCENARIO.close();
+		}
+		EnvConfiguredTestBase.tearDownClass();
 	}
 }

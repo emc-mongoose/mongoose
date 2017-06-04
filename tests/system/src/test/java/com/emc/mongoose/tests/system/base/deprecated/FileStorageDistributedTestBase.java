@@ -1,9 +1,10 @@
-package com.emc.mongoose.tests.system.base;
+package com.emc.mongoose.tests.system.base.deprecated;
 
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 
+import com.emc.mongoose.tests.system.base.ConfiguredTestBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  Created by andrey on 07.02.17.
  */
+@Deprecated
 public class FileStorageDistributedTestBase
 extends FileStorageTestBase {
 
@@ -24,7 +26,7 @@ extends FileStorageTestBase {
 	public static void setUpClass()
 	throws Exception {
 		FileStorageTestBase.setUpClass();
-		final DriverConfig driverConfig = CONFIG.getStorageConfig().getDriverConfig();
+		final DriverConfig driverConfig = ConfiguredTestBase.CONFIG.getStorageConfig().getDriverConfig();
 		final List<String> storageDriverAddrs = new ArrayList<>(STORAGE_DRIVERS_COUNT);
 		int nextStorageDriverPort;
 		StorageDriverBuilderSvc nextStorageDriverBuilder;

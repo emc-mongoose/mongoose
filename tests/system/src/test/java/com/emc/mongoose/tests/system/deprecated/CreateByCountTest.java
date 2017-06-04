@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVFormat;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -47,6 +48,7 @@ import static org.junit.Assert.fail;
  * 10.1.4. Many Remote Storage Driver Services
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
+@Ignore
 public class CreateByCountTest
 extends HttpStorageDistributedScenarioTestBase {
 	

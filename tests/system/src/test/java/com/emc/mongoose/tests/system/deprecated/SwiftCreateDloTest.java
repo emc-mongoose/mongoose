@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVRecord;
@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -40,6 +41,7 @@ import static org.junit.Assert.assertTrue;
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  * 10.4.5.4.3. Create Dynamic Large Objects
  */
+@Ignore
 public class SwiftCreateDloTest
 extends HttpStorageDistributedScenarioTestBase {
 

@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system.base;
+package com.emc.mongoose.tests.system.base.deprecated;
 
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.run.scenario.Scenario;
@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 /**
  Created by andrey on 17.02.17.
  */
+@Deprecated
 public class HttpStorageScenarioTestBase
 extends HttpStorageTestBase {
 

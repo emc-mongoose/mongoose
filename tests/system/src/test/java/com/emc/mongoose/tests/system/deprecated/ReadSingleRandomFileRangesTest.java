@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.FileStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.FileStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -16,6 +16,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -49,6 +50,7 @@ import java.util.concurrent.TimeUnit;
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  * 10.3. Filesystem Storage Driver
  */
+@Ignore
 public class ReadSingleRandomFileRangesTest
 extends FileStorageDistributedScenarioTestBase {
 

@@ -12,12 +12,13 @@ import java.util.Map;
 /**
  Created by andrey on 06.06.16.
  */
-public abstract class ParentStepBase
-extends StepBase {
+public abstract class CompositeStepBase
+extends StepBase
+implements CompositeStep {
 
-	protected final List<Step> subSteps = new LinkedList<>();
+	protected final List<Step> childSteps = new LinkedList<>();
 
-	protected ParentStepBase(final Config appConfig, final Map<String, Object> subTree)
+	protected CompositeStepBase(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
 		loadSubTree(subTree);
@@ -100,18 +101,23 @@ extends StepBase {
 	}
 
 	protected synchronized boolean append(final Step subStep) {
-		return subSteps.add(subStep);
+		return childSteps.add(subStep);
+	}
+
+	@Override
+	public final List<Step> getChildSteps() {
+		return childSteps;
 	}
 
 	@Override
 	public void close()
 	throws IOException {
 		try {
-			for(final Step subStep : subSteps) {
+			for(final Step subStep : childSteps) {
 				subStep.close();
 			}
 		} finally {
-			subSteps.clear();
+			childSteps.clear();
 		}
 	}
 }

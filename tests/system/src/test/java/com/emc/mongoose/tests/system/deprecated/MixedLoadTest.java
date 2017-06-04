@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -43,6 +44,7 @@ import static org.junit.Assert.assertTrue;
  * 9.5.7.1. Separate Configuration in the Mixed Load Job
  * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
+@Ignore
 public class MixedLoadTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final Path SCENARIO_PATH = Paths.get(

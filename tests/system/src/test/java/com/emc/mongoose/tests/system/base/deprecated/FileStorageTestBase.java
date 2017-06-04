@@ -1,11 +1,13 @@
-package com.emc.mongoose.tests.system.base;
+package com.emc.mongoose.tests.system.base.deprecated;
 
+import com.emc.mongoose.tests.system.base.ConfiguredTestBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
  Created by andrey on 07.02.17.
  */
+@Deprecated
 public abstract class FileStorageTestBase
 extends ConfiguredTestBase {
 

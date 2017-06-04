@@ -176,7 +176,7 @@ implements Scenario {
 	//
 	@Override
 	protected final synchronized boolean append(final Step step) {
-		if(subSteps.size() == 0) {
+		if(childSteps.size() == 0) {
 			return super.append(step);
 		} else {
 			return false;

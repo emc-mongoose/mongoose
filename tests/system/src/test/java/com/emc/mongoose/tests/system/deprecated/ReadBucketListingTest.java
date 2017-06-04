@@ -4,7 +4,7 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.deprecated.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -39,6 +40,7 @@ import static org.junit.Assert.fail;
  * 10.2.2. Destination Path Precondition Hook
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
+@Ignore
 public class ReadBucketListingTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
