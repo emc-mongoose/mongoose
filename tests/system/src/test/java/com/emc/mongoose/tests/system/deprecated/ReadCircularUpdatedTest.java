@@ -1,24 +1,28 @@
-
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.FileStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.stat.Frequency;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,37 +33,33 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- Created by andrey on 07.02.17.
- Covered use cases:
- * 2.1.1.1.2. Small Data Items (1KB-100KB)
+ Created by andrey on 06.02.17.
+ * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
  * 2.2.1. Items Input File
- * 2.2.3.1. Random Item Ids
  * 2.3.2. Items Output File
- * 2.3.3.1. Constant Items Destination Path
- * 4.1. Default Concurrency Level (1)
- * 6.1. Load Jobs Naming
+ * 4.2. Small Concurrency Level (2-10)
+ * 5. Circularity
  * 6.2.2. Limit Load Job by Processed Item Count
+ * 6.2.5. Limit Load Job by Time
  * 8.2.1. Create New Items
  * 8.3.2. Read With Enabled Validation
- * 8.3.3.1.2. Multiple Random Byte Ranges Read
+ * 8.4.2.1. Single Random Range Update
  * 9.3. Custom Scenario File
- * 9.4.3. Reusing The Items in the Scenario
- * 9.5.2. Load Job
+ * 9.4.1. Override Default Configuration in the Scenario
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
- * 10.3. Filesystem Storage Driver
  */
-public class ReadMultipleRandomFileRangesTest
-extends FileStorageDistributedScenarioTestBase {
+public class ReadCircularUpdatedTest
+extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-random-ranges.json"
+		getBaseDir(), DIR_SCENARIO, "circular", "read-updated.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1-1KB");
-	private static final int EXPECTED_CONCURRENCY = 1;
+	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1MB");
+	private static final int EXPECTED_CONCURRENCY = 10;
 	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE = "read-multiple-random-ranges.csv";
-	private static final String ITEM_OUTPUT_PATH = "/tmp/read-multiple-random-ranges";
+	private static final String ITEM_OUTPUT_FILE_0 = "circular-read-updated-0.csv";
+	private static final String ITEM_OUTPUT_FILE_1 = "circular-read-updated-1.csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
@@ -67,17 +67,15 @@ extends FileStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadMultipleRandomFileRangesTest.class.getSimpleName();
+		JOB_NAME = ReadCircularUpdatedTest.class.getSimpleName();
 		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
-			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
+			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
+			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
-		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
-		CONFIG_ARGS.add("--item-data-verify=true");
-		FileStorageDistributedScenarioTestBase.setUpClass();
+		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
 				try {
@@ -90,7 +88,7 @@ extends FileStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 1);
+		TimeUnit.MINUTES.timedJoin(runner, 90);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
@@ -100,16 +98,15 @@ extends FileStorageDistributedScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		FileStorageDistributedScenarioTestBase.tearDownClass();
+		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
 	@Test
-	public final void testFinishedInTime() {
-		assertTrue(FINISHED_IN_TIME);
+	public void testFinishedInTime() {
+		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
-	@Test
-	public void testMetricsLogFile()
+	@Test public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -156,5 +153,54 @@ extends FileStorageDistributedScenarioTestBase {
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), EXPECTED_ITEM_DATA_SIZE);
 		}
+	}
+
+	@Test public void testUpdatedItemsOutputFile()
+	throws Exception {
+		final List<CSVRecord> items = new ArrayList<>();
+		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE_1))) {
+			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+			for(final CSVRecord csvRecord : csvParser) {
+				items.add(csvRecord);
+			}
+		}
+		final int itemIdRadix = CONFIG.getItemConfig().getNamingConfig().getRadix();
+		final Frequency freq = new Frequency();
+		String itemPath, itemId;
+		long itemOffset;
+		long itemSize;
+		String modLayerAndMask[];
+		String rangesMask;
+		char rangesMaskChars[];
+		int layer;
+		BitSet mask;
+		for(final CSVRecord itemRec : items) {
+			itemPath = itemRec.get(0);
+			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
+			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+			freq.addValue(itemOffset);
+			itemSize = Long.parseLong(itemRec.get(2));
+			assertEquals(EXPECTED_ITEM_DATA_SIZE.get(), itemSize);
+			modLayerAndMask = itemRec.get(3).split("/");
+			assertEquals("Modification record should contain 2 parts", 2, modLayerAndMask.length);
+			layer = Integer.parseInt(modLayerAndMask[0], 0x10);
+			rangesMask = modLayerAndMask[1];
+			if(rangesMask.length() == 0) {
+				rangesMaskChars = ("00" + rangesMask).toCharArray();
+			} else if(rangesMask.length() % 2 == 1) {
+				rangesMaskChars = ("0" + rangesMask).toCharArray();
+			} else {
+				rangesMaskChars = rangesMask.toCharArray();
+			}
+			mask = BitSet.valueOf(Hex.decodeHex(rangesMaskChars));
+			if(layer == 0) {
+				assertTrue(
+					"The modification record \"" + itemRec.get(3) + "\" is not updated",
+					mask.cardinality() > 0
+				);
+			}
+		}
+		assertEquals(items.size(), freq.getUniqueCount());
 	}
 }

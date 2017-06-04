@@ -1,20 +1,18 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.FileStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,21 +44,18 @@ import static org.junit.Assert.assertTrue;
  * 9.5.2. Load Job
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
- * 10.3. Filesystem Storage Driver
  */
-public class ReadMultipleFixedFileRangesTest
-extends FileStorageDistributedScenarioTestBase {
+public class TlsReadUpdatedMultipleRandomRangesTest
+extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-fixed-ranges.json"
+		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-random-ranges-updated.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes(
-		(456 - 123) + (1011 - 789) + (151617 - 121314) + (212223 - 181920) + (256 * 1024 - 242526)
-	);
-	private static final int EXPECTED_CONCURRENCY = 1;
+	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1-1KB");
+	private static final int EXPECTED_CONCURRENCY = 4;
 	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE = "read-multiple-fixed-ranges.csv";
-	private static final String ITEM_OUTPUT_PATH = "/tmp/read-multiple-fixed-ranges";
+	private static final String ITEM_OUTPUT_FILE_0 = "read-multiple-random-ranges-0.csv";
+	private static final String ITEM_OUTPUT_FILE_1 = "read-multiple-random-ranges-1.csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
@@ -68,17 +63,21 @@ extends FileStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadMultipleFixedFileRangesTest.class.getSimpleName();
+		JOB_NAME = TlsReadUpdatedMultipleRandomRangesTest.class.getSimpleName();
 		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
-			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
+			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
+		} catch(final Exception ignored) {
+		}
+		try {
+			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
-		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
-		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--item-data-verify=true");
-		FileStorageDistributedScenarioTestBase.setUpClass();
+		CONFIG_ARGS.add("--storage-driver-concurrency=" + EXPECTED_CONCURRENCY);
+		CONFIG_ARGS.add("--storage-net-ssl=true");
+		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
+		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
 				try {
@@ -91,17 +90,16 @@ extends FileStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 1);
+		TimeUnit.MINUTES.timedJoin(runner, 2);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
-		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		FileStorageDistributedScenarioTestBase.tearDownClass();
+		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
 	@Test
@@ -109,7 +107,8 @@ extends FileStorageDistributedScenarioTestBase {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test public void testMetricsLogFile()
+	@Test
+	public final void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -148,6 +147,7 @@ extends FileStorageDistributedScenarioTestBase {
 
 	@Test public void testIoTraceLogFile()
 	throws Exception {
+		TimeUnit.SECONDS.sleep(15);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(
 			"There should be " + EXPECTED_COUNT + " records in the I/O trace log file",
@@ -156,5 +156,18 @@ extends FileStorageDistributedScenarioTestBase {
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), EXPECTED_ITEM_DATA_SIZE);
 		}
+	}
+
+	@Test public void testTlsEnableLogged()
+	throws Exception {
+		final List<String> msgLogLines = getMessageLogLines();
+		int msgCount = 0;
+		for(final String msgLogLine : msgLogLines) {
+			if(msgLogLine.contains(JOB_NAME + ": SSL/TLS is enabled for the channel")) {
+				msgCount ++;
+			}
+		}
+		// 3 steps + additional bucket checking/creating connections
+		Assert.assertTrue(3 * STORAGE_DRIVERS_COUNT * EXPECTED_CONCURRENCY <= msgCount);
 	}
 }

@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -30,7 +29,6 @@ import static org.junit.Assert.assertTrue;
  Covered use cases:
  * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
  * 2.2.1. Items Input File
- * 2.2.3.1. Random Item Ids
  * 2.3.2. Items Output File
  * 2.3.3.1. Constant Items Destination Path
  * 4.1. Default Concurrency Level (1)
@@ -45,17 +43,18 @@ import static org.junit.Assert.assertTrue;
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
-public class ReadUpdatedMultipleRandomRangesTest
+public class ReadMultipleFixedRangesTest
 extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-random-ranges-updated.json"
+		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-fixed-ranges.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1-1KB");
+	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes(
+		(456 - 123) + (1011 - 789) + (151617 - 121314) + (212223 - 181920) + (256 * 1024 - 242526)
+	);
 	private static final int EXPECTED_CONCURRENCY = 1;
 	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE_0 = "read-multiple-random-ranges-0.csv";
-	private static final String ITEM_OUTPUT_FILE_1 = "read-multiple-random-ranges-1.csv";
+	private static final String ITEM_OUTPUT_FILE = "read-multiple-fixed-ranges.csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
@@ -63,13 +62,9 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadUpdatedMultipleRandomRangesTest.class.getSimpleName();
+		JOB_NAME = ReadMultipleFixedRangesTest.class.getSimpleName();
 		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
-		} catch(final Exception ignored) {
-		}
-		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
+			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
@@ -88,7 +83,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 2);
+		TimeUnit.MINUTES.timedJoin(runner, 20000);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);

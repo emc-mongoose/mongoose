@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
@@ -10,10 +10,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -26,59 +24,42 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- Created by andrey on 07.02.17.
+ Created by andrey on 05.03.17.
  Covered use cases:
- * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
- * 2.2.1. Items Input File
- * 2.2.3.1. Random Item Ids
- * 2.3.2. Items Output File
- * 2.3.3.1. Constant Items Destination Path
- * 4.1. Default Concurrency Level (1)
+ * 2.1.1.1.5. Very Big Data Items (100MB-10GB)
+ * 4.2. Small Concurrency Level (2-10)
  * 6.1. Load Jobs Naming
  * 6.2.2. Limit Load Job by Processed Item Count
+ * 7.1. Metrics Periodic Reporting
  * 8.2.1. Create New Items
- * 8.3.2. Read With Enabled Validation
- * 8.3.3.2.4. Read Multiple Fixed Ranges
- * 8.4.2.2. Multiple Random Ranges Update
  * 9.3. Custom Scenario File
- * 9.4.3. Reusing The Items in the Scenario
+ * 9.4.1. Override Default Configuration in the Scenario
  * 9.5.2. Load Job
- * 9.5.5. Sequential Job
- * 10.1.1. Single Local Separate Storage Driver Service
+ * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
+ * 10.2.2. Destination Path Precondition Hook
+ * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
+ * 10.4.5.4.3. Create Dynamic Large Objects
  */
-public class ReadUpdatedMultipleFixedRangesTest
+public class SwiftCreateDloTest
 extends HttpStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-fixed-ranges-updated.json"
+		getBaseDir(), DIR_SCENARIO, "swift", "create-dlo.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes(
-		(0 - 0 + 1) + (34 - 12 + 1) + (78 - 56 + 1) + (1024 - 910 + 1)
-	);
-	private static final int EXPECTED_CONCURRENCY = 1;
-	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE_0 = "read-multiple-fixed-ranges-0.csv";
-	private static final String ITEM_OUTPUT_FILE_1 = "read-multiple-fixed-ranges-1.csv";
+	private static final int EXPECTED_CONCURRENCY = 10;
+	private static final long EXPECTED_COUNT = 100;
+	private static final SizeInBytes EXPECTED_SIZE = new SizeInBytes("1GB");
+	private static final SizeInBytes EXPECTED_PART_SIZE = new SizeInBytes("64MB");
 
-	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
+	private static String STD_OUTPUT;
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadUpdatedMultipleFixedRangesTest.class.getSimpleName();
-		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
-		} catch(final Exception ignored) {
-		}
-		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
-		} catch(final Exception ignored) {
-		}
+		JOB_NAME = SwiftCreateDloTest.class.getSimpleName();
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
-		CONFIG_ARGS.add("--item-data-verify=true");
-		STORAGE_DRIVERS_COUNT = 1;
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
@@ -92,7 +73,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 2);
+		TimeUnit.SECONDS.timedJoin(runner, 300);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
@@ -103,12 +84,11 @@ extends HttpStorageDistributedScenarioTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
-		STORAGE_DRIVERS_COUNT = 2; // to default
 	}
 
 	@Test
-	public final void testFinishedInTime() {
-		assertTrue(FINISHED_IN_TIME);
+	public void testFinishedInTime() {
+		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
 	@Test
@@ -118,11 +98,6 @@ extends HttpStorageDistributedScenarioTestBase {
 		assertTrue(
 			"There should be more than 0 metrics records in the log file",
 			metricsLogRecords.size() > 0
-		);
-		testMetricsLogRecords(
-			metricsLogRecords, IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_ITEM_DATA_SIZE,
-			EXPECTED_COUNT, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
@@ -135,29 +110,44 @@ extends HttpStorageDistributedScenarioTestBase {
 			totalMetrcisLogRecords.size()
 		);
 		testTotalMetricsLogRecords(
-			totalMetrcisLogRecords.get(0), IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_ITEM_DATA_SIZE, EXPECTED_COUNT, 0
+			totalMetrcisLogRecords.get(0), IoType.CREATE, EXPECTED_CONCURRENCY,
+			STORAGE_DRIVERS_COUNT, EXPECTED_SIZE, EXPECTED_COUNT, 0
 		);
 	}
 
-	@Test public void testMetricsStdout()
+	@Test
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_ITEM_DATA_SIZE,
+			IoType.CREATE, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
-	@Test public void testIoTraceLogFile()
+	@Test
+	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(
-			"There should be " + EXPECTED_COUNT + " records in the I/O trace log file",
-			EXPECTED_COUNT, ioTraceRecords.size()
+		assertTrue(
+			"There should be more than " + EXPECTED_COUNT +
+				" records in the I/O trace log file, but got: " + ioTraceRecords.size(),
+			EXPECTED_COUNT < ioTraceRecords.size()
+		);
+		final SizeInBytes ZERO_SIZE = new SizeInBytes(0);
+		final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(
+			EXPECTED_SIZE.get() % EXPECTED_PART_SIZE.get()
 		);
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), EXPECTED_ITEM_DATA_SIZE);
+			try {
+				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ZERO_SIZE);
+			} catch(final AssertionError e) {
+				try {
+					testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), EXPECTED_PART_SIZE);
+				} catch(final AssertionError ee) {
+					testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), TAIL_PART_SIZE);
+				}
+			}
 		}
 	}
 }

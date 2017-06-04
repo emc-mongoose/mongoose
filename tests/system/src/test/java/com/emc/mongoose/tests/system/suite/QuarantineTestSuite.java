@@ -1,10 +1,10 @@
 package com.emc.mongoose.tests.system.suite;
 
-import com.emc.mongoose.tests.system.CreateByCountTest;
-import com.emc.mongoose.tests.system.ReadBucketListingTest;
-import com.emc.mongoose.tests.system.ReadMultipleRandomFileRangesTest;
-import com.emc.mongoose.tests.system.ReadSmallDataItemsMetricsThresholdTest;
-import com.emc.mongoose.tests.system.S3MpuTest;
+import com.emc.mongoose.tests.system.deprecated.CreateByCountTest;
+import com.emc.mongoose.tests.system.deprecated.ReadBucketListingTest;
+import com.emc.mongoose.tests.system.deprecated.ReadMultipleRandomFileRangesTest;
+import com.emc.mongoose.tests.system.deprecated.ReadSmallDataItemsMetricsThresholdTest;
+import com.emc.mongoose.tests.system.deprecated.S3MpuTest;
 
 import org.junit.Ignore;
 import org.junit.runners.Suite;

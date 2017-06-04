@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
@@ -25,44 +25,41 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- Created by andrey on 27.03.17.
- Covered use cases:
- * 2.1.1.1.2. Small Data Items (1B-100KB)
- * 2.2.1. Items Input File
+ Created by kurila on 23.03.17.
+ Covered Use Cases:
+ * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
  * 2.3.2. Items Output File
+ * 2.3.3.1. Constant Items Destination Path
  * 4.3. Medium Concurrency Level (11-100)
  * 5. Circularity
- * 6.2.2. Limit Step by Processed Item Count
- * 6.2.5. Limit Step by Time
+ * 6.2.5. Limit Load Job by Time
  * 7.1. Metrics Periodic Reporting
- * 7.2. Metrics Reporting is Suppressed for the Precondition Steps
  * 8.2.1. Create New Items
  * 8.3.1. Read With Disabled Validation
  * 9.1. Scenarios Syntax
- * 9.3. Custom Scenario File
  * 9.4.1. Override Default Configuration in the Scenario
- * 9.4.2. Step Configuration Inheritance
  * 9.4.3. Reusing The Items in the Scenario
- * 9.5.7.2. Weighted Load Step
+ * 9.5.3. Precondition Load Job
+ * 9.5.7.1. Separate Configuration in the Mixed Load Job
  * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
-public class WeightedLoadTest
+public class MixedLoadTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "mixed", "weighted.json"
+		getBaseDir(), DIR_SCENARIO, "mixed", "mixed.json"
 	);
-	private static final int EXPECTED_CONCURRENCY = 100 + 100;
-
+	private static final int EXPECTED_CONCURRENCY = 20 + 50;
+	
 	private static boolean FINISHED_IN_TIME;
 	private static String STD_OUTPUT;
 	private static int ACTUAL_CONCURRENCY;
-
+	
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = WeightedLoadTest.class.getSimpleName();
+		JOB_NAME = MixedLoadTest.class.getSimpleName();
 		try {
-			Files.delete(Paths.get("weighted-load.csv"));
+			Files.delete(Paths.get("items2read.csv"));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
@@ -71,34 +68,35 @@ extends HttpStorageDistributedScenarioTestBase {
 		final Thread runner = new Thread(
 			() -> {
 				try {
-					STD_OUT_STREAM.startRecording();
 					SCENARIO.run();
-					STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.sleep(30); // warmup
+		TimeUnit.SECONDS.sleep(10);
+		STD_OUT_STREAM.startRecording();
+		TimeUnit.SECONDS.sleep(10);
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		for(int i = 0; i < STORAGE_NODE_COUNT; i ++) {
 			ACTUAL_CONCURRENCY += PortListener
 				.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
 		}
-		TimeUnit.SECONDS.timedJoin(runner, 100);
+		TimeUnit.SECONDS.timedJoin(runner, 50);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
+		STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 		LoadJobLogFileManager.flush(JOB_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
-
+	
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
-
+	
 	@Test
 	public void testFinishedInTime() {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
@@ -108,15 +106,13 @@ extends HttpStorageDistributedScenarioTestBase {
 	public void testActualConcurrency() {
 		assertEquals(STORAGE_DRIVERS_COUNT * EXPECTED_CONCURRENCY, ACTUAL_CONCURRENCY, 5);
 	}
-
+	
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
-		concurrencyMap.put(IoType.CREATE, 100);
-		concurrencyMap.put(IoType.READ, 100);
-		final Map<IoType, Integer> weightsMap = new HashMap<>();
+		concurrencyMap.put(IoType.CREATE, 20);
+		concurrencyMap.put(IoType.READ, 50);
 		testMetricsTableStdout(STD_OUTPUT, JOB_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
-
 }

@@ -1,19 +1,20 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.deprecated;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.tests.system.base.FileStorageDistributedScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,36 +28,40 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- Created by andrey on 07.02.17.
+ Created by andrey on 04.03.17.
  Covered use cases:
- * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
- * 2.2.1. Items Input File
- * 2.2.3.1. Random Item Ids
+ * 2.1.1.1.2. Small Data Items (4KB)
+ * 2.2.2. Items Path Listing Input
  * 2.3.2. Items Output File
  * 2.3.3.1. Constant Items Destination Path
- * 4.1. Default Concurrency Level (1)
+ * 4.2. Small Concurrency Level (2-10)
  * 6.1. Load Jobs Naming
  * 6.2.2. Limit Load Job by Processed Item Count
+ * 6.2.6. Limit Load Job by End of Items Input
  * 8.2.1. Create New Items
- * 8.3.2. Read With Enabled Validation
- * 8.3.3.2.4. Read Multiple Fixed Ranges
+ * 8.2.2. Copy Mode
  * 9.3. Custom Scenario File
+ * 9.4.1. Override Default Configuration in the Scenario
+ * 9.4.2. Job Configuration Inheritance
  * 9.4.3. Reusing The Items in the Scenario
  * 9.5.2. Load Job
+ * 9.5.3. Precondition Load Job
  * 9.5.5. Sequential Job
- * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
+ * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
+ * 10.2.2. Destination Path Precondition Hook
+ * 10.3. Filesystem Storage Driver
  */
-public class TlsReadUpdatedMultipleRandomRangesTest
-extends HttpStorageDistributedScenarioTestBase {
+public class CopyFilesUsingDirectoryListingItemsInputTest
+extends FileStorageDistributedScenarioTestBase {
 
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "partial", "read-multiple-random-ranges-updated.json"
+		getBaseDir(), DIR_SCENARIO, "copy", "files-from-dir.json"
 	);
-	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("1-1KB");
-	private static final int EXPECTED_CONCURRENCY = 4;
+	private static final SizeInBytes EXPECTED_ITEM_DATA_SIZE = new SizeInBytes("4KB");
+	private static final int EXPECTED_CONCURRENCY = 10;
 	private static final long EXPECTED_COUNT = 1000;
-	private static final String ITEM_OUTPUT_FILE_0 = "read-multiple-random-ranges-0.csv";
-	private static final String ITEM_OUTPUT_FILE_1 = "read-multiple-random-ranges-1.csv";
+	private static final String ITEM_INPUT_PATH = "/tmp/src-dir";
+	private static final String ITEM_OUTPUT_PATH = "/tmp/dst-dir";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
@@ -64,21 +69,18 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = TlsReadUpdatedMultipleRandomRangesTest.class.getSimpleName();
+		JOB_NAME = CopyFilesUsingDirectoryListingItemsInputTest.class.getSimpleName();
 		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
+			FileUtils.deleteDirectory(new File(ITEM_INPUT_PATH));
 		} catch(final Exception ignored) {
 		}
 		try {
-			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
+			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
 		} catch(final Exception ignored) {
 		}
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
-		CONFIG_ARGS.add("--item-data-verify=true");
-		CONFIG_ARGS.add("--storage-driver-concurrency=" + EXPECTED_CONCURRENCY);
-		CONFIG_ARGS.add("--storage-net-ssl=true");
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
-		HttpStorageDistributedScenarioTestBase.setUpClass();
+		FileStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
 			() -> {
 				try {
@@ -91,16 +93,17 @@ extends HttpStorageDistributedScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.MINUTES.timedJoin(runner, 2);
+		TimeUnit.SECONDS.timedJoin(runner, 20);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(JOB_NAME);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		HttpStorageDistributedScenarioTestBase.tearDownClass();
+		FileStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
 	@Test
@@ -109,7 +112,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	}
 
 	@Test
-	public final void testMetricsLogFile()
+	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -117,7 +120,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			metricsLogRecords.size() > 0
 		);
 		testMetricsLogRecords(
-			metricsLogRecords, IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
+			metricsLogRecords, IoType.CREATE, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			EXPECTED_ITEM_DATA_SIZE,
 			EXPECTED_COUNT, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
@@ -132,43 +135,41 @@ extends HttpStorageDistributedScenarioTestBase {
 			totalMetrcisLogRecords.size()
 		);
 		testTotalMetricsLogRecords(
-			totalMetrcisLogRecords.get(0), IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
+			totalMetrcisLogRecords.get(0), IoType.CREATE, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			EXPECTED_ITEM_DATA_SIZE, EXPECTED_COUNT, 0
 		);
 	}
 
-	@Test public void testMetricsStdout()
+	@Test
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_ITEM_DATA_SIZE,
+			IoType.CREATE, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
-	@Test public void testIoTraceLogFile()
+	@Test
+	public void testIoTraceLogFile()
 	throws Exception {
-		TimeUnit.SECONDS.sleep(15);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(
 			"There should be " + EXPECTED_COUNT + " records in the I/O trace log file",
 			EXPECTED_COUNT, ioTraceRecords.size()
 		);
+		String nextItemPath, nextItemId;
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), EXPECTED_ITEM_DATA_SIZE);
+			testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), EXPECTED_ITEM_DATA_SIZE);
+			nextItemPath = ioTraceRecord.get("ItemPath");
+			Assert.assertTrue(
+				"File \"" + nextItemPath + "\" doesn't exist", Files.exists(Paths.get(nextItemPath))
+			);
+			nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf(File.separatorChar) + 1);
+			Assert.assertTrue(
+				"File \"" + ITEM_INPUT_PATH + File.separatorChar + nextItemId + "\" doesn't exist",
+				Files.exists(Paths.get(ITEM_INPUT_PATH, nextItemId))
+			);
 		}
-	}
-
-	@Test public void testTlsEnableLogged()
-	throws Exception {
-		final List<String> msgLogLines = getMessageLogLines();
-		int msgCount = 0;
-		for(final String msgLogLine : msgLogLines) {
-			if(msgLogLine.contains(JOB_NAME + ": SSL/TLS is enabled for the channel")) {
-				msgCount ++;
-			}
-		}
-		// 3 steps + additional bucket checking/creating connections
-		Assert.assertTrue(3 * STORAGE_DRIVERS_COUNT * EXPECTED_CONCURRENCY <= msgCount);
 	}
 }
