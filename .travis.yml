@@ -21,10 +21,13 @@ env:
 
 jobs:
   include:
+
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
+
     - stage: "Component performance tests"
       script: "./gradlew :tests:perf:test"
+
     - script: "STORAGE_DRIVER_TYPE=atmos STORAGE_DRIVER_REMOTE=false STORAGE_DRIVER_CONCURRENCY=1 ITEM_DATA_SIZE=0 ./gradlew :tests:system:test"
     - script: "STORAGE_DRIVER_TYPE=atmos STORAGE_DRIVER_REMOTE=false STORAGE_DRIVER_CONCURRENCY=1 ITEM_DATA_SIZE=10KB ./gradlew :tests:system:test"
     - script: "STORAGE_DRIVER_TYPE=atmos STORAGE_DRIVER_REMOTE=false STORAGE_DRIVER_CONCURRENCY=1 ITEM_DATA_SIZE=1MB ./gradlew :tests:system:test"
@@ -139,6 +142,7 @@ jobs:
     - script: "STORAGE_DRIVER_TYPE=swift STORAGE_DRIVER_REMOTE=true STORAGE_DRIVER_CONCURRENCY=100 ITEM_DATA_SIZE=1MB ./gradlew :tests:system:test"
     - script: "STORAGE_DRIVER_TYPE=swift STORAGE_DRIVER_REMOTE=true STORAGE_DRIVER_CONCURRENCY=100 ITEM_DATA_SIZE=100MB ./gradlew :tests:system:test"
     - script: "STORAGE_DRIVER_TYPE=swift STORAGE_DRIVER_REMOTE=true STORAGE_DRIVER_CONCURRENCY=100 ITEM_DATA_SIZE=10GB ./gradlew :tests:system:test"
+
     - stage: "GitHub release deploy"
       script: "./gradlew clean dist"
       deploy:
@@ -151,6 +155,7 @@ jobs:
         - "./build/dist/mongoose-*.tgz"
         on:
           tags: true
+
     - stage: "DockerHub image deploy"
       script:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
