@@ -35,7 +35,7 @@ extends ConfiguredTestBase {
 	protected static SizeInBytes ITEM_DATA_SIZE = null;
 	protected static Map<String, Daemon> HTTP_STORAGE_MOCKS = null;
 	protected static final int HTTP_STORAGE_NODE_COUNT = 1;
-	protected static final int STORAGE_DRIVERS_COUNT = 2;
+	protected static int STORAGE_DRIVERS_COUNT = 1;
 	private static List<StorageDriverBuilderSvc> STORAGE_DRIVER_BUILDER_SVCS = null;
 	protected static final String STORAGE_TYPE_FS_KEY = "fs";
 
@@ -117,6 +117,7 @@ extends ConfiguredTestBase {
 			System.getenv(KEY_ENV_STORAGE_DRIVER_REMOTE)
 		);
 		if(DISTRIBUTED_MODE_FLAG) {
+			STORAGE_DRIVERS_COUNT = 2;
 			STORAGE_DRIVER_BUILDER_SVCS = new ArrayList<>(STORAGE_DRIVERS_COUNT);
 			final DriverConfig driverConfig = CONFIG.getStorageConfig().getDriverConfig();
 			final List<String> storageDriverAddrs = new ArrayList<>(STORAGE_DRIVERS_COUNT);

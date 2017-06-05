@@ -279,21 +279,25 @@ implements FileStorageDriver<I, O> {
 
 		if(!Status.ACTIVE.equals(ioTask.getStatus())) {
 
-			if(srcChannel != null && srcChannel.isOpen()) {
+			if(srcChannel != null) {
 				srcOpenFiles.remove(ioTask);
-				try {
-					srcChannel.close();
-				} catch(final IOException e) {
-					Loggers.ERR.warn("Failed to close the source I/O channel");
+				if(srcChannel.isOpen()) {
+					try {
+						srcChannel.close();
+					} catch(final IOException e) {
+						Loggers.ERR.warn("Failed to close the source I/O channel");
+					}
 				}
 			}
 
-			if(dstChannel != null && dstChannel.isOpen()) {
+			if(dstChannel != null) {
 				dstOpenFiles.remove(ioTask);
-				try {
-					dstChannel.close();
-				} catch(final IOException e) {
-					Loggers.ERR.warn("Failed to close the destination I/O channel");
+				if(dstChannel.isOpen()) {
+					try {
+						dstChannel.close();
+					} catch(final IOException e) {
+						Loggers.ERR.warn("Failed to close the destination I/O channel");
+					}
 				}
 			}
 		}
@@ -732,11 +736,13 @@ implements FileStorageDriver<I, O> {
 				srcChannel.close();
 			}
 		}
+		srcOpenFiles.clear();
 		for(final FileChannel dstChannel : dstOpenFiles.values()) {
 			if(dstChannel.isOpen()) {
 				dstChannel.close();
 			}
 		}
+		dstOpenFiles.clear();
 	}
 	
 	@Override

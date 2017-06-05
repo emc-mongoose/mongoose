@@ -12,7 +12,7 @@ public interface OpenFilesCounter {
 
 	static List<String> getOutputLines(final String path)
 	throws IOException {
-		final String[] cmd = { "lsof", path };
+		final String[] cmd = { "lsof", "+d", path };
 		final Process p = Runtime.getRuntime().exec(cmd);
 		final List<String> lines = new ArrayList<>();
 		try(
@@ -33,7 +33,7 @@ public interface OpenFilesCounter {
 		if(lines.size() > 0) {
 			return Integer.parseInt(lines.get(0));
 		} else {
-			throw new IllegalArgumentException();
+			return 0;
 		}
 	}
 }
