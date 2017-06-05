@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  * 10.4.5.3.4. Multipart Upload
  */
-@Ignore
+
 public class S3MpuTest
 extends HttpStorageDistributedScenarioTestBase {
 
@@ -88,12 +88,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test
+
 	public void testFinishedInTime() {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
-	@Test
+
 	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
@@ -103,7 +103,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -117,7 +117,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -126,7 +126,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
@@ -152,7 +152,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 
-	@Test
+
 	public void testUploadLogRecords()
 	throws Exception {
 		final List<CSVRecord> uploadRecs = getPartsUploadRecords();

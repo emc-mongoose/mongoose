@@ -48,7 +48,7 @@ import static org.junit.Assert.fail;
  * 10.1.4. Many Remote Storage Driver Services
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
-@Ignore
+
 public class CreateByCountTest
 extends HttpStorageDistributedScenarioTestBase {
 	
@@ -97,12 +97,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test public void testFinishedInTime()
+	public void testFinishedInTime()
 	throws Exception {
 		assertTrue(FINISHED_IN_TIME);
 	}
 	
-	@Test
+
 	public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogRecords(
@@ -112,7 +112,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -122,7 +122,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -131,7 +131,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testIoTraceLogFile()
+	public void testIoTraceLogFile()
 	throws Exception {
 		final String nodeAddr = STORAGE_MOCKS.keySet().iterator().next();
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
@@ -145,7 +145,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 	
-	@Test public void testIoBufferSizeAdjustment()
+	public void testIoBufferSizeAdjustment()
 	throws Exception {
 		String msg = "Adjust output buffer size: " + SizeInBytes.formatFixedSize(BUFF_SIZE_MIN);
 		int k;
@@ -159,7 +159,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 	
-	@Test public void testItemsOutputFile()
+	public void testItemsOutputFile()
 	throws Exception {
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {

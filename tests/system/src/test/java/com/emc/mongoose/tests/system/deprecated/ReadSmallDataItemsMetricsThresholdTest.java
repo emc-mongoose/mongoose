@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
  * 9.5.2. Load Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
-@Ignore
+
 public class ReadSmallDataItemsMetricsThresholdTest
 extends HttpStorageDistributedScenarioTestBase {
 	
@@ -117,7 +117,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test
+
 	public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogRecords(
@@ -127,7 +127,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -137,7 +137,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -146,7 +146,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+
 	public void testMedTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -156,7 +156,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testFullThrottleConditionMessagesInStdout()
+	public void testFullThrottleConditionMessagesInStdout()
 	throws Exception {
 		Matcher m = LogPatterns.STD_OUT_LOAD_THRESHOLD_ENTRANCE.matcher(STD_OUTPUT);
 		assertTrue(m.find());

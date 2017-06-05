@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * 10.2.2. Destination Path Precondition Hook
  * 10.3. Filesystem Storage Driver
  */
-@Ignore
+
 public class CopyFilesUsingItemsInputFileTest
 extends FileStorageDistributedScenarioTestBase {
 
@@ -116,12 +116,12 @@ extends FileStorageDistributedScenarioTestBase {
 		FileStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test
+
 	public final void testFinishedInTime() {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test
+
 	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
@@ -136,7 +136,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -150,7 +150,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
@@ -160,7 +160,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();

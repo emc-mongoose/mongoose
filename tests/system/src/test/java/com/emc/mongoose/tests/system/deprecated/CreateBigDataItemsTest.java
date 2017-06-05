@@ -46,7 +46,7 @@ import static org.junit.Assert.fail;
  * 10.1.4. Two Local Separate Storage Driver Services (at different ports)
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
-@Ignore
+
 public class CreateBigDataItemsTest
 extends HttpStorageDistributedScenarioTestBase {
 	
@@ -102,12 +102,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test public void testActiveConnectionsCount()
+	public void testActiveConnectionsCount()
 	throws Exception {
 		assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, ACTUAL_CONCURRENCY);
 	}
 	
-	@Test public void testMetricsLogFile()
+	public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogRecords(
 			getMetricsLogRecords(), IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT,
@@ -116,7 +116,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -126,7 +126,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -135,7 +135,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testIoTraceLogFile()
+	public void testIoTraceLogFile()
 	throws Exception {
 		final String nodeAddr = STORAGE_MOCKS.keySet().iterator().next();
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
@@ -148,7 +148,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 
-	@Test public void testIoBufferSizeAdjustment()
+	public void testIoBufferSizeAdjustment()
 	throws Exception {
 		String msg = "Adjust output buffer size: " + SizeInBytes.formatFixedSize(BUFF_SIZE_MAX);
 		int k;
@@ -162,7 +162,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 
-	@Test public void testItemsOutputFile()
+	public void testItemsOutputFile()
 	throws Exception {
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {

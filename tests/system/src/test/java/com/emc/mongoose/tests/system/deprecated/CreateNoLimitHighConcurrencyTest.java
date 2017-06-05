@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * 9.5.2. Load Job
  * 10.4.4. Two Local Separate Storage Driver Services (at different ports)
  */
-@Ignore
+
 public class CreateNoLimitHighConcurrencyTest
 extends HttpStorageDistributedScenarioTestBase {
 	
@@ -52,7 +52,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		RUNNER.start();
 	}
 	
-	@Test
+
 	public final void testActiveConnectionsCount()
 	throws Exception {
 		final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();

@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  * 10.4.5.4.3. Create Dynamic Large Objects
  */
-@Ignore
+
 public class SwiftCreateDloTest
 extends HttpStorageDistributedScenarioTestBase {
 
@@ -88,12 +88,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test
+
 	public void testFinishedInTime() {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
-	@Test
+
 	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
@@ -103,7 +103,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -117,7 +117,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
@@ -127,7 +127,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();

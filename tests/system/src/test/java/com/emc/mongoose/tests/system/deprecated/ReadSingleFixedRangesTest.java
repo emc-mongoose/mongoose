@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
-@Ignore
+
 public class ReadSingleFixedRangesTest
 extends HttpStorageDistributedScenarioTestBase {
 
@@ -97,12 +97,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test
+
 	public final void testFinishedInTime() {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test public void testMetricsLogFile()
+	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -116,7 +116,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -130,7 +130,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -139,7 +139,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testIoTraceLogFile()
+	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(

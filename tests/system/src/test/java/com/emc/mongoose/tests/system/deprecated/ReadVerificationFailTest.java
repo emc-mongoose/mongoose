@@ -45,7 +45,7 @@ import static org.junit.Assert.assertEquals;
  * 9.2. Default Scenario
  * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
-@Ignore
+
 public final class ReadVerificationFailTest
 extends HttpStorageDistributedScenarioTestBase {
 	
@@ -140,7 +140,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test
+
 	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();

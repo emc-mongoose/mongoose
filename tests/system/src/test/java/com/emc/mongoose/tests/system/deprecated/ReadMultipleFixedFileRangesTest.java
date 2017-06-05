@@ -48,7 +48,7 @@ import static org.junit.Assert.assertTrue;
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  * 10.3. Filesystem Storage Driver
  */
-@Ignore
+
 public class ReadMultipleFixedFileRangesTest
 extends FileStorageDistributedScenarioTestBase {
 
@@ -105,12 +105,12 @@ extends FileStorageDistributedScenarioTestBase {
 		FileStorageDistributedScenarioTestBase.tearDownClass();
 	}
 
-	@Test
+
 	public final void testFinishedInTime() {
 		assertTrue(FINISHED_IN_TIME);
 	}
 
-	@Test public void testMetricsLogFile()
+	public void testMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
@@ -124,7 +124,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
@@ -138,7 +138,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -147,7 +147,7 @@ extends FileStorageDistributedScenarioTestBase {
 		);
 	}
 
-	@Test public void testIoTraceLogFile()
+	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(

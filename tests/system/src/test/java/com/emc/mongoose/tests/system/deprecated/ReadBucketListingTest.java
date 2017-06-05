@@ -40,7 +40,7 @@ import static org.junit.Assert.fail;
  * 10.2.2. Destination Path Precondition Hook
  * 10.4.4. I/O Buffer Size Adjustment for Optimal Performance
  */
-@Ignore
+
 public class ReadBucketListingTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("10KB");
@@ -115,13 +115,13 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test
+
 	public void testActiveConnectionsCount()
 	throws Exception {
 		assertEquals(STORAGE_DRIVERS_COUNT * LOAD_CONCURRENCY, ACTUAL_CONCURRENCY);
 	}
 	
-	@Test public void testMetricsLogFile()
+	public void testMetricsLogFile()
 	throws Exception {
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
@@ -130,7 +130,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test
+
 	public void testTotalMetricsLogFile()
 	throws Exception {
 		testTotalMetricsLogRecords(
@@ -139,7 +139,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testMetricsStdout()
+	public void testMetricsStdout()
 	throws Exception {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -148,7 +148,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 	}
 	
-	@Test public void testIoTraceLogFile()
+	public void testIoTraceLogFile()
 	throws Exception {
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
@@ -156,7 +156,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 	
-	@Test public void testIoBufferSizeAdjustment()
+	public void testIoBufferSizeAdjustment()
 	throws Exception {
 		String msg = "Adjust input buffer size: " + ITEM_DATA_SIZE.toString();
 		int k;

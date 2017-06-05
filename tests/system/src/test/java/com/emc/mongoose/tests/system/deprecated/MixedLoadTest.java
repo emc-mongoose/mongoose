@@ -44,7 +44,7 @@ import static org.junit.Assert.assertTrue;
  * 9.5.7.1. Separate Configuration in the Mixed Load Job
  * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
-@Ignore
+
 public class MixedLoadTest
 extends HttpStorageDistributedScenarioTestBase {
 	private static final Path SCENARIO_PATH = Paths.get(
@@ -99,17 +99,17 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test
+
 	public void testFinishedInTime() {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
-	@Test
+
 	public void testActualConcurrency() {
 		assertEquals(STORAGE_DRIVERS_COUNT * EXPECTED_CONCURRENCY, ACTUAL_CONCURRENCY, 5);
 	}
 	
-	@Test
+
 	public void testMetricsStdout()
 	throws Exception {
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();

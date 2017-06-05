@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 28.03.17.
  */
-@Ignore
+
 public class ChainWithDelayTest
 extends HttpStorageDistributedScenarioTestBase {
 	
@@ -100,12 +100,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		HttpStorageDistributedScenarioTestBase.tearDownClass();
 	}
 	
-	@Test
+
 	public void testFinishedInTime() {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 	
-	@Test
+
 	public void testIoTraceFile()
 	throws Exception {
 		final Map<String, Long> timingMap = new HashMap<>();
