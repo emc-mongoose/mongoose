@@ -38,15 +38,22 @@ extends EnvConfiguredScenarioTestBase {
 		JOB_NAME = CreateNoLimitTest.class.getSimpleName();
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(STORAGE_TYPE_FS_KEY.equals(STORAGE_DRIVER_TYPE)) {
-			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), JOB_NAME
-			).toString();
-			// need to re-init the scenario
-			SCENARIO.close();
-			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
-			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
+
+		SCENARIO.close();
+		switch(STORAGE_DRIVER_TYPE) {
+			case STORAGE_TYPE_FS:
+				ITEM_OUTPUT_PATH = Paths.get(
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), JOB_NAME
+				).toString();
+				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+				break;
+			case STORAGE_TYPE_SWIFT:
+				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
+				break;
 		}
+		// need to re-init the scenario
+		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
+
 		RUNNER = new Thread(
 			() -> {
 				try {
@@ -66,7 +73,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(RUNNER != null) {
 			RUNNER.interrupt();
 		}
-		if(STORAGE_TYPE_FS_KEY.equals(STORAGE_DRIVER_TYPE)) {
+		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
 		}
 		EnvConfiguredScenarioTestBase.tearDownClass();
@@ -76,7 +83,7 @@ extends EnvConfiguredScenarioTestBase {
 	public final void testActualConcurrencyCount()
 	throws Exception {
 		final int expectedConcurrency = STORAGE_DRIVERS_COUNT * CONCURRENCY;
-		if(STORAGE_TYPE_FS_KEY.equals(STORAGE_DRIVER_TYPE)) {
+		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
 			assertTrue(actualConcurrency <= expectedConcurrency);
 		} else {

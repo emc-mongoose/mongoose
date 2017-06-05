@@ -37,7 +37,10 @@ extends ConfiguredTestBase {
 	protected static final int HTTP_STORAGE_NODE_COUNT = 1;
 	protected static int STORAGE_DRIVERS_COUNT = 1;
 	private static List<StorageDriverBuilderSvc> STORAGE_DRIVER_BUILDER_SVCS = null;
-	protected static final String STORAGE_TYPE_FS_KEY = "fs";
+	protected static final String STORAGE_TYPE_FS = "fs";
+	protected static final String STORAGE_TYPE_ATMOS = "atmos";
+	protected static final String STORAGE_TYPE_S3 = "s3";
+	protected static final String STORAGE_TYPE_SWIFT = "swift";
 
 	@BeforeClass
 	public static void setUpClass()
@@ -69,28 +72,34 @@ extends ConfiguredTestBase {
 		STORAGE_DRIVER_TYPE = System.getenv(KEY_ENV_STORAGE_DRIVER_TYPE);
 		final StorageConfig storageConfig = CONFIG.getStorageConfig();
 		storageConfig.getDriverConfig().setType(STORAGE_DRIVER_TYPE);
-		if(!STORAGE_TYPE_FS_KEY.equals(STORAGE_DRIVER_TYPE)) {
-			HTTP_STORAGE_MOCKS = new HashMap<>();
-			final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
-			final ItemConfig itemConfig = CONFIG.getItemConfig();
-			final StepConfig stepConfig = CONFIG.getTestConfig().getStepConfig();
-			final int port = nodeConfig.getPort();
-			final List<String> nodeAddrs = new ArrayList<>();
-			String nextNodeAddr;
-			Daemon storageMock;
-			final StorageMockFactory storageMockFactory = new StorageMockFactory(
-				storageConfig, itemConfig, stepConfig
-			);
-			for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
-				nodeConfig.setPort(port + i);
-				storageMock = storageMockFactory.newStorageMock();
-				nextNodeAddr = "127.0.0.1:" + (port + i);
-				storageMock.start();
-				HTTP_STORAGE_MOCKS.put(nextNodeAddr, storageMock);
-				nodeAddrs.add(nextNodeAddr);
-			}
-			nodeConfig.setAddrs(nodeAddrs);
-			nodeConfig.setPort(port);
+		switch(STORAGE_DRIVER_TYPE) {
+			case STORAGE_TYPE_ATMOS:
+			case STORAGE_TYPE_S3:
+			case STORAGE_TYPE_SWIFT:
+				HTTP_STORAGE_MOCKS = new HashMap<>();
+				final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
+				final ItemConfig itemConfig = CONFIG.getItemConfig();
+				final StepConfig stepConfig = CONFIG.getTestConfig().getStepConfig();
+				final int port = nodeConfig.getPort();
+				final List<String> nodeAddrs = new ArrayList<>();
+				String nextNodeAddr;
+				Daemon storageMock;
+				final StorageMockFactory storageMockFactory = new StorageMockFactory(
+					storageConfig, itemConfig, stepConfig
+				);
+				for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
+					nodeConfig.setPort(port + i);
+					storageMock = storageMockFactory.newStorageMock();
+					nextNodeAddr = "127.0.0.1:" + (port + i);
+					storageMock.start();
+					HTTP_STORAGE_MOCKS.put(nextNodeAddr, storageMock);
+					nodeAddrs.add(nextNodeAddr);
+				}
+				nodeConfig.setAddrs(nodeAddrs);
+				nodeConfig.setPort(port);
+				break;
+			case STORAGE_TYPE_FS:
+				break;
 		}
 	}
 
