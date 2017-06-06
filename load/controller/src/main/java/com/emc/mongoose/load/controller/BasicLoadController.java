@@ -869,6 +869,7 @@ implements LoadController<I, O> {
 			}
 
 			ioResultsExecutor.shutdown();
+			
 			try {
 				if(ioResultsExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
 					Loggers.MSG.debug(
@@ -887,14 +888,14 @@ implements LoadController<I, O> {
 			}
 			driversMap.clear();
 		}
-
+		
 		ioTaskOutputs.clear();
 		circularityMap.clear();
 		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
 			recycleQueue.clear();
 		}
 		recycleQueuesMap.clear();
-
+		
 		for(final MetricsContext nextStats : ioStats.values()) {
 			MetricsManager.unregister(this, nextStats);
 			nextStats.close();
@@ -919,7 +920,6 @@ implements LoadController<I, O> {
 			}
 			latestIoResultsPerItem.clear();
 		}
-
 		if(ioResultsOutput != null) {
 			ioResultsOutput.close();
 			Loggers.MSG.debug("{}: closed the items output", getName());

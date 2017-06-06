@@ -10,9 +10,9 @@ import java.util.Scanner;
  */
 public interface OpenFilesCounter {
 
-	static List<String> getOutputLines(final String path)
+	static List<String> getLsofOutputLines(final String path)
 	throws IOException {
-		final String[] cmd = { "lsof", "+d", path };
+		final String[] cmd = { "/bin/sh", "-c", "lsof -b | grep " + path };
 		final Process p = Runtime.getRuntime().exec(cmd);
 		final List<String> lines = new ArrayList<>();
 		try(
@@ -29,7 +29,7 @@ public interface OpenFilesCounter {
 
 	static int getOpenFilesCount(final String path)
 	throws IOException, NumberFormatException, IllegalArgumentException {
-		final List<String> lines = getOutputLines(path);
+		final List<String> lines = getLsofOutputLines(path);
 		final int linesCount = lines.size();
 		if(linesCount > 0) {
 			for(int i = linesCount - 1; i >= 0; i --) {

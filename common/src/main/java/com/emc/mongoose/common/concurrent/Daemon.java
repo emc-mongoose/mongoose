@@ -10,12 +10,15 @@ import java.util.concurrent.TimeUnit;
  */
 public interface Daemon
 extends Closeable {
-
+	
+	List<SvcTask> getSvcTasks()
+	throws RemoteException;
+	
 	enum State {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
 	}
 
-	List<SvcTask> getSvcTasks()
+	State getState()
 	throws RemoteException;
 
 	void start()

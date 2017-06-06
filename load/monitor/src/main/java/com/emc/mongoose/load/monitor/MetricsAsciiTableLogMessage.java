@@ -13,6 +13,7 @@ import org.apache.commons.lang.text.StrBuilder;
 
 import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
 
+import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.SortedSet;
 
@@ -48,6 +49,12 @@ extends LogMessageBase {
 		long failCount;
 		IoType ioType;
 		for(final LoadController loadController : metrics.keySet()) {
+			try {
+				if(loadController.isInterrupted() || loadController.isClosed()) {
+					continue;
+				}
+			} catch(final RemoteException ignored) {
+			}
 			for(final MetricsContext metricsContext : metrics.get(loadController)) {
 				snapshot = metricsContext.getLastSnapshot();
 				succCount = snapshot.getSuccCount();

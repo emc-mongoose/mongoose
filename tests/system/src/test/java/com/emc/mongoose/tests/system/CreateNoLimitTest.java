@@ -3,12 +3,11 @@ package com.emc.mongoose.tests.system;
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-
-import org.apache.commons.io.FileUtils;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -19,8 +18,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +36,7 @@ extends EnvConfiguredScenarioTestBase {
 		JOB_NAME = CreateNoLimitTest.class.getSimpleName();
 		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-
-		SCENARIO.close();
+		
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
@@ -52,7 +48,6 @@ extends EnvConfiguredScenarioTestBase {
 				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
 				break;
 		}
-		// need to re-init the scenario
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 
 		RUNNER = new Thread(
@@ -76,8 +71,8 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			try {
-				FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
-			} catch(final IOException e) {
+				DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}
 		}

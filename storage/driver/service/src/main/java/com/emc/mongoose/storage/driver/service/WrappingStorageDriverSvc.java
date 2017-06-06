@@ -120,7 +120,13 @@ implements StorageDriverSvc<I, O> {
 	public final List<SvcTask> getSvcTasks() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
-
+	
+	@Override
+	public final State getState()
+	throws RemoteException {
+		return driver.getState();
+	}
+	
 	@Override
 	public final void start()
 	throws IllegalStateException {

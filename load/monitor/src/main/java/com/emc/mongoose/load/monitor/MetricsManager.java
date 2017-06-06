@@ -120,6 +120,7 @@ implements SvcTask {
 					}
 				} finally {
 					INSTANCE.allMetricsLock.unlock();
+					Loggers.MSG.info("Metrics context \"{}\" unregistered", metricsCtx);
 				}
 			} else {
 				Loggers.ERR.warn("Locking timeout at unregister call");
@@ -137,6 +138,9 @@ implements SvcTask {
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {
+					if(controller.isInterrupted() || controller.isClosed()) {
+						continue;
+					}
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
 						try(

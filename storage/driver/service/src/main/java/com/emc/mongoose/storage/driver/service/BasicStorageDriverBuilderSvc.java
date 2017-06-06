@@ -78,7 +78,13 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	public final List<SvcTask> getSvcTasks() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
-
+	
+	@Override
+	public final State getState()
+	throws RemoteException {
+		return State.INITIAL;
+	}
+	
 	@Override
 	public void start()
 	throws IllegalStateException, RemoteException {

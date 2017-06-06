@@ -73,6 +73,11 @@ implements Daemon {
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
 	
+	@Override
+	public final State getState() {
+		return stateRef.get();
+	}
+	
 	protected void doStart()
 	throws IllegalStateException {
 		SVC_TASKS.put(this, svcTasks);

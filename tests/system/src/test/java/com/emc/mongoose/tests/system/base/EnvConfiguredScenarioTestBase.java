@@ -1,11 +1,10 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.run.scenario.Scenario;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
 
+import com.emc.mongoose.run.scenario.Scenario;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -34,7 +33,6 @@ extends EnvConfiguredTestBase {
 		} else {
 			SCENARIO_PATH = DEFAULT_SCENARIO_PATH;
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 	}
 
 	@AfterClass
@@ -42,6 +40,7 @@ extends EnvConfiguredTestBase {
 	throws Exception {
 		if(SCENARIO != null) {
 			SCENARIO.close();
+			SCENARIO = null;
 		}
 		EnvConfiguredTestBase.tearDownClass();
 	}
