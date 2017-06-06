@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +75,11 @@ extends EnvConfiguredScenarioTestBase {
 			RUNNER.interrupt();
 		}
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
-			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
+			try {
+				FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
+			} catch(final IOException e) {
+				e.printStackTrace(System.err);
+			}
 		}
 		EnvConfiguredScenarioTestBase.tearDownClass();
 	}
@@ -85,7 +90,10 @@ extends EnvConfiguredScenarioTestBase {
 		final int expectedConcurrency = STORAGE_DRIVERS_COUNT * CONCURRENCY;
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
-			assertTrue(actualConcurrency <= expectedConcurrency);
+			assertTrue(
+				"Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,
+				actualConcurrency <= expectedConcurrency
+			);
 		} else {
 			int actualConcurrency = 0;
 			final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
@@ -93,7 +101,10 @@ extends EnvConfiguredScenarioTestBase {
 				actualConcurrency += PortListener
 					.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
 			}
-			assertEquals(expectedConcurrency, actualConcurrency, expectedConcurrency / 100);
+			assertEquals(
+				"Expected concurrency: " + actualConcurrency + ", actual: " + actualConcurrency,
+				expectedConcurrency, actualConcurrency, expectedConcurrency / 100
+			);
 		}
 
 	}

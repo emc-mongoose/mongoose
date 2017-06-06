@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import static org.junit.Assert.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -113,6 +114,7 @@ public class RoundRobinOutputsTransferSvcTaskTest {
 							i += rrcOutput.put(buff, i, BATCH_SIZE);
 						}
 					}
+				} catch(final EOFException ignored) {
 				} catch(final Throwable e) {
 					fail(e.toString());
 				}

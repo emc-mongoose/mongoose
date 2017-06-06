@@ -99,7 +99,8 @@ public class BasicMultiNodeConnPoolTest {
 			e.printStackTrace(System.err);
 		} finally {
 			System.out.println(
-				concurrencyLevel + "x" + nodeCount + ": " + opCount.sum() / TEST_STEP_TIME_SECONDS
+				"concurrency = " + concurrencyLevel + ", nodes = " + nodeCount + " -> rate: " +
+					opCount.sum() / TEST_STEP_TIME_SECONDS
 			);
 		}
 	}

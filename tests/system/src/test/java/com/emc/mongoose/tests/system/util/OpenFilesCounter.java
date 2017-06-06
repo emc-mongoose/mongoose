@@ -30,10 +30,16 @@ public interface OpenFilesCounter {
 	static int getOpenFilesCount(final String path)
 	throws IOException, NumberFormatException, IllegalArgumentException {
 		final List<String> lines = getOutputLines(path);
-		if(lines.size() > 0) {
-			return Integer.parseInt(lines.get(0));
-		} else {
-			return 0;
+		final int linesCount = lines.size();
+		if(linesCount > 0) {
+			for(int i = linesCount - 1; i >= 0; i --) {
+				try {
+					return Integer.parseInt(lines.get(0));
+				} catch(final NumberFormatException e) {
+					continue;
+				}
+			}
 		}
+		return 0;
 	}
 }

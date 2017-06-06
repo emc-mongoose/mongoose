@@ -193,6 +193,5 @@ implements Output<T> {
 			}
 		}
 		buffs.clear();
-		outputs.clear();
 	}
 }
