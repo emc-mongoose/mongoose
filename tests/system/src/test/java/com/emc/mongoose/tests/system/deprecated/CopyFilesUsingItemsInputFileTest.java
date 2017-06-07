@@ -18,8 +18,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -75,7 +74,7 @@ extends FileStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = CopyFilesUsingItemsInputFileTest.class.getSimpleName();
+		STEP_NAME = CopyFilesUsingItemsInputFileTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get(ITEM_INPUT_FILE));
 		} catch(final Exception ignored) {
@@ -88,7 +87,7 @@ extends FileStorageDistributedScenarioTestBase {
 			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		FileStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
@@ -106,7 +105,7 @@ extends FileStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 20);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 

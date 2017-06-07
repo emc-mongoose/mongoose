@@ -1,0 +1,46 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f ReadUsingItemsInputFileLimitByCountTest.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "ReadUsingItemsInputFileLimitByCountTest.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 10000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "ReadUsingItemsInputFileLimitByCountTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
+				}
+			}
+		}
+	]
+}

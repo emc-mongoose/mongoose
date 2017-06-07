@@ -13,8 +13,6 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -65,12 +63,12 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = CircularReadSingleItemTest.class.getSimpleName();
+		STEP_NAME = CircularReadSingleItemTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get("circular-read.csv"));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
@@ -90,7 +88,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 65); // 1m + up to 5s for the precondition job
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 

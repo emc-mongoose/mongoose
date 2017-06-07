@@ -41,9 +41,11 @@ extends EnvConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(SCENARIO != null) {
-			SCENARIO.close();
-			SCENARIO = null;
+		if(!EXCLUDE_FLAG) {
+			if(SCENARIO != null) {
+				SCENARIO.close();
+				SCENARIO = null;
+			}
 		}
 		EnvConfiguredTestBase.tearDownClass();
 	}

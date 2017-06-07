@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -40,14 +39,14 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = CreateNoLimitTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = CreateNoLimitTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), JOB_NAME
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
 				).toString();
 				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 				break;

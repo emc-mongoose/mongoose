@@ -10,8 +10,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -47,8 +45,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = CreateBigDataItemsMetricsThresholdTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = CreateBigDataItemsMetricsThresholdTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
 		CONFIG_ARGS.add("--test-step-limit-count=" + LOAD_LIMIT_COUNT);
@@ -68,7 +66,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		runner.start();
 		TimeUnit.MINUTES.timedJoin(runner, 10);
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

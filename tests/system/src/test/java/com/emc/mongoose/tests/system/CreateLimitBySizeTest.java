@@ -63,11 +63,8 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
-		JOB_NAME = CreateLimitBySizeTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = CreateLimitBySizeTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1GB")) {
 			SIZE_LIMIT = new SizeInBytes("100GB");
 		} else if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1MB")) {
@@ -85,10 +82,13 @@ extends EnvConfiguredScenarioTestBase {
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.add("--test-step-limit-size=" + SIZE_LIMIT.toString());
 		EnvConfiguredScenarioTestBase.setUpClass();
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), JOB_NAME
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
 				).toString();
 				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 				break;
@@ -112,21 +112,20 @@ extends EnvConfiguredScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 1000);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
-		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
-			try {
-				FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
-			} catch(final IOException e) {
-				e.printStackTrace(System.err);
+		if(!EXCLUDE_FLAG) {
+			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
+				try {
+					FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
+				} catch(final IOException e) {
+					e.printStackTrace(System.err);
+				}
 			}
 		}
 		EnvConfiguredScenarioTestBase.tearDownClass();

@@ -16,8 +16,6 @@ import org.apache.logging.log4j.CloseableThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -69,12 +67,12 @@ extends HttpStorageDistributedScenarioTestBase {
 		} catch(final IOException ignored) {
 		}
 		
-		JOB_NAME = ReadVerificationFailTest.class.getSimpleName() + "0";
+		STEP_NAME = ReadVerificationFailTest.class.getSimpleName() + "0";
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_NAME, JOB_NAME)
+				.put(KEY_STEP_NAME, STEP_NAME)
 		) {
-			FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
+			FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
 			CONFIG_ARGS.add("--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes");
 			CONFIG_ARGS.add("--item-data-size=" + EXPECTED_ITEM_DATA_SIZE.toString());
 			CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE_0);
@@ -84,12 +82,12 @@ extends HttpStorageDistributedScenarioTestBase {
 			SCENARIO.run();
 		}
 		
-		JOB_NAME = ReadVerificationFailTest.class.getSimpleName() + "1";
+		STEP_NAME = ReadVerificationFailTest.class.getSimpleName() + "1";
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_NAME, JOB_NAME)
+				.put(KEY_STEP_NAME, STEP_NAME)
 		) {
-			FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
+			FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
 			CONFIG_ARGS.clear();
 			CONFIG_ARGS.add("--update");
 			CONFIG_ARGS.add("--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes");
@@ -103,18 +101,18 @@ extends HttpStorageDistributedScenarioTestBase {
 					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 				)
 			);
-			CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
+			CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
 			CONFIG.getTestConfig().getStepConfig().getLimitConfig().setCount(0);
 			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 			SCENARIO.run();
 		}
 		
-		JOB_NAME = ReadVerificationFailTest.class.getSimpleName() + "2";
+		STEP_NAME = ReadVerificationFailTest.class.getSimpleName() + "2";
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_NAME, JOB_NAME)
+				.put(KEY_STEP_NAME, STEP_NAME)
 		) {
-			FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
+			FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
 			CONFIG_ARGS.clear();
 			CONFIG_ARGS.add("--read");
 			CONFIG_ARGS.add("--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes");
@@ -127,11 +125,11 @@ extends HttpStorageDistributedScenarioTestBase {
 					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 				)
 			);
-			CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
+			CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
 			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 			SCENARIO.run();
 		}
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 	}
 	
 	@AfterClass

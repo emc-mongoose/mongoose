@@ -9,8 +9,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,12 +60,12 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = WeightedLoadTest.class.getSimpleName();
+		STEP_NAME = WeightedLoadTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get("weighted-load.csv"));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
@@ -91,7 +89,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 100);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 
@@ -118,7 +116,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		concurrencyMap.put(IoType.CREATE, 100);
 		concurrencyMap.put(IoType.READ, 100);
 		final Map<IoType, Integer> weightsMap = new HashMap<>();
-		testMetricsTableStdout(STD_OUTPUT, JOB_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
+		testMetricsTableStdout(STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
 
 }

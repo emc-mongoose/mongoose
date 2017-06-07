@@ -15,8 +15,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -62,8 +60,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadBigDataItemsTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = ReadBigDataItemsTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
@@ -77,9 +75,9 @@ extends HttpStorageDistributedScenarioTestBase {
 		
 		// reinit
 		SCENARIO.close();
-		JOB_NAME = ReadBigDataItemsTest.class.getSimpleName() + "_";
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = ReadBigDataItemsTest.class.getSimpleName() + "_";
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		LogUtil.init();
 		CONFIG_ARGS.add("--item-data-verify");
 		CONFIG_ARGS.add("--item-input-file=" + ITEM_OUTPUT_FILE);
@@ -91,7 +89,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 		CONFIG.getItemConfig().getOutputConfig().setFile(null);
 		CONFIG.getTestConfig().getStepConfig().getLimitConfig().setCount(0);
-		CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
+		CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
 		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
 		
 		final Thread runner = new Thread(
@@ -114,7 +112,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 		TimeUnit.MINUTES.timedJoin(runner, 5);
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

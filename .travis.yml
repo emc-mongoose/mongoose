@@ -22,11 +22,11 @@ env:
 jobs:
   include:
 
-    - stage: "Unit tests"
-      script: "./gradlew :tests:unit:test"
+#    - stage: "Unit tests"
+#      script: "./gradlew :tests:unit:test"
 
-    - stage: "Component performance tests"
-      script: "./gradlew :tests:perf:test"
+#    - stage: "Component performance tests"
+#      script: "./gradlew :tests:perf:test"
 
     - stage: "System tests"
       env:
@@ -937,7 +937,8 @@ jobs:
       - STORAGE_DRIVER_TYPE=swift
       - STORAGE_DRIVER_REMOTE=true
       - STORAGE_DRIVER_CONCURRENCY=100
-      - ITEM_DATA_SIZE=10GB ./gradlew :tests:system:test"
+      - ITEM_DATA_SIZE=10GB
+      script: ./gradlew :tests:system:test"
 
     - stage: "GitHub release deploy"
       script: "./gradlew clean dist"

@@ -9,7 +9,6 @@ import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.Constants.MIB;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 
 import org.apache.commons.csv.CSVFormat;
@@ -64,7 +63,7 @@ import java.util.stream.Collectors;
 public abstract class LoggingTestBase {
 	
 	protected static Logger LOG;
-	protected static String JOB_NAME;
+	protected static String STEP_NAME;
 	protected static BufferingOutputStream STD_OUT_STREAM;
 	protected static int LOG_FILE_TIMEOUT_SEC = 50;
 
@@ -72,11 +71,11 @@ public abstract class LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		// remove previous logs if exist
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
 		final URL u = LoggingTestBase.class.getClassLoader().getResource("logging.json");
 		System.setProperty("log4j.configurationFile", u.toString());
 		LogUtil.init();
-		JOB_NAME = ThreadContext.get(KEY_STEP_NAME);
+		STEP_NAME = ThreadContext.get(KEY_STEP_NAME);
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	
@@ -89,7 +88,7 @@ public abstract class LoggingTestBase {
 
 	private static List<String> getLogFileLines(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME, fileName).toFile();
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			return br.lines().collect(Collectors.toList());
 		}
@@ -117,7 +116,7 @@ public abstract class LoggingTestBase {
 
 	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME, fileName).toFile();
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {

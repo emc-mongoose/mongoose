@@ -31,7 +31,7 @@ extends LoggingTestBase {
 				)
 			);
 		}
-		CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
+		CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
 	}
 
 	@AfterClass

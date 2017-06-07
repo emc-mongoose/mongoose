@@ -10,8 +10,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,8 +57,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = SwiftCreateDloTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = SwiftCreateDloTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
@@ -78,7 +76,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 300);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 

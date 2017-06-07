@@ -14,8 +14,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -69,13 +67,13 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadCircularUpdatedTest.class.getSimpleName();
+		STEP_NAME = ReadCircularUpdatedTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		final Thread runner = new Thread(
@@ -93,7 +91,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 90);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 

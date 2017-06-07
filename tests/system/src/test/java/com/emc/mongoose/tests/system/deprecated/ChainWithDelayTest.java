@@ -20,8 +20,6 @@ import static org.junit.Assert.fail;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,8 +63,8 @@ extends HttpStorageDistributedScenarioTestBase {
 				}
 			}
 		);
-		JOB_NAME = ChainWithDelayTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = ChainWithDelayTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--storage-driver-concurrency=10");
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
@@ -90,7 +88,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

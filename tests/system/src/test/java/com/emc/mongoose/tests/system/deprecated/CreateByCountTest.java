@@ -23,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
@@ -62,8 +60,8 @@ extends HttpStorageDistributedScenarioTestBase {
 	
 	@BeforeClass public static void setUpClass()
 	throws Exception {
-		JOB_NAME = CreateByCountTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = CreateByCountTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
 		CONFIG_ARGS.add("--test-step-limit-count=" + LOAD_LIMIT_COUNT);
@@ -87,7 +85,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 1000);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 		STD_OUTPUT = STD_OUT_STREAM.stopRecording();
 	}

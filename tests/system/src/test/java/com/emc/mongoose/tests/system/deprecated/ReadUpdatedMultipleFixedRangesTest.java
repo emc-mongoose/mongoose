@@ -10,8 +10,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,7 +65,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadUpdatedMultipleFixedRangesTest.class.getSimpleName();
+		STEP_NAME = ReadUpdatedMultipleFixedRangesTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE_1));
 		} catch(final Exception ignored) {
@@ -76,7 +74,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE_0));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-data-verify=true");
 		STORAGE_DRIVERS_COUNT = 1;
@@ -96,7 +94,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 2);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 

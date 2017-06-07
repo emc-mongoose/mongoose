@@ -15,8 +15,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.nio.file.Paths;
 import java.util.List;
@@ -54,27 +52,27 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadBucketListingTest.class.getSimpleName();
+		STEP_NAME = ReadBucketListingTest.class.getSimpleName();
 		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--storage-driver-concurrency=100");
 		CONFIG_ARGS.add("--test-step-limit-time=" + LOAD_LIMIT_TIME);
-		CONFIG_ARGS.add("--test-step-name=" + JOB_NAME);
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		CONFIG_ARGS.add("--test-step-name=" + STEP_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		HttpStorageDistributedScenarioTestBase.setUpClass();
 		SCENARIO.run();
 		
 		// reinit
 		SCENARIO.close();
-		JOB_NAME = ReadBucketListingTest.class.getSimpleName() + "_";
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", JOB_NAME).toFile());
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		STEP_NAME = ReadBucketListingTest.class.getSimpleName() + "_";
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		LogUtil.init();
 		CONFIG_ARGS.add("--item-data-verify");
 		CONFIG_ARGS.add("--item-input-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--load-type=read");
 		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
-		CONFIG_ARGS.add("--test-step-name=" + JOB_NAME);
+		CONFIG_ARGS.add("--test-step-name=" + STEP_NAME);
 		CONFIG.apply(
 			CliArgParser.parseArgs(
 				CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
@@ -82,7 +80,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		);
 		CONFIG.getItemConfig().getOutputConfig().setPath(null);
 		CONFIG.getTestConfig().getStepConfig().getLimitConfig().setTime(0);
-		CONFIG.getTestConfig().getStepConfig().setName(JOB_NAME);
+		CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
 		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
 		
 		final Thread runner = new Thread(
@@ -105,7 +103,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 		TimeUnit.MINUTES.timedJoin(runner, 5);
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

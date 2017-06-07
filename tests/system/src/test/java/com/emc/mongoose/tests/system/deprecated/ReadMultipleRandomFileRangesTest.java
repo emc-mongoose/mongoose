@@ -12,8 +12,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -68,13 +66,13 @@ extends FileStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = ReadMultipleRandomFileRangesTest.class.getSimpleName();
+		STEP_NAME = ReadMultipleRandomFileRangesTest.class.getSimpleName();
 		try {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
 			FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
 		} catch(final Exception ignored) {
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
 		CONFIG_ARGS.add("--item-output-path=" + ITEM_OUTPUT_PATH);
 		CONFIG_ARGS.add("--item-data-verify=true");
@@ -94,7 +92,7 @@ extends FileStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 1);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 
