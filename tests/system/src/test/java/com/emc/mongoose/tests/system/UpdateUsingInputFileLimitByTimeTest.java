@@ -163,6 +163,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testUpdatedItemsListFile()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader("UpdateUsingInputFileLimitByTimeTest_.csv"))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
