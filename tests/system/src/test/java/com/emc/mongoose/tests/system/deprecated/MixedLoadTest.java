@@ -86,7 +86,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 50);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecording();
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}

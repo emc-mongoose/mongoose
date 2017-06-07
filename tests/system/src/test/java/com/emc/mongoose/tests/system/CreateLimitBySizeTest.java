@@ -5,6 +5,7 @@ import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
@@ -58,13 +59,17 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
+		STEP_NAME = CreateLimitBySizeTest.class.getSimpleName();
 	}
 	
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		STEP_NAME = CreateLimitBySizeTest.class.getSimpleName();
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		EnvConfiguredScenarioTestBase.setUpClass();
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1GB")) {
 			SIZE_LIMIT = new SizeInBytes("100GB");
 		} else if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1MB")) {
@@ -79,12 +84,8 @@ extends EnvConfiguredScenarioTestBase {
 			Files.delete(Paths.get(ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
-		CONFIG_ARGS.add("--item-output-file=" + ITEM_OUTPUT_FILE);
-		CONFIG_ARGS.add("--test-step-limit-size=" + SIZE_LIMIT.toString());
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		CONFIG.getItemConfig().getOutputConfig().setFile(ITEM_OUTPUT_FILE);
+		CONFIG.getTestConfig().getStepConfig().getLimitConfig().setSize(SIZE_LIMIT);
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
@@ -102,7 +103,7 @@ extends EnvConfiguredScenarioTestBase {
 				try {
 					STD_OUT_STREAM.startRecording();
 					SCENARIO.run();
-					STD_OUTPUT = STD_OUT_STREAM.stopRecording();
+					STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
@@ -122,7 +123,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(!EXCLUDE_FLAG) {
 			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 				try {
-					FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
+					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
 				} catch(final IOException e) {
 					e.printStackTrace(System.err);
 				}

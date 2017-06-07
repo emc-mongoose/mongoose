@@ -182,7 +182,7 @@ implements Output<T> {
 		for(final O output : outputs) {
 			final OptLockBuffer<T> buff = buffs.get(output);
 			try {
-				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(buff != null && buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					try {
 						buff.clear();
 					} finally {

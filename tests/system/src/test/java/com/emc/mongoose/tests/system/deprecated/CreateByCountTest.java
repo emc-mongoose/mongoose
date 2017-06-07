@@ -87,7 +87,7 @@ extends HttpStorageDistributedScenarioTestBase {
 		runner.interrupt();
 		LoadJobLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
-		STD_OUTPUT = STD_OUT_STREAM.stopRecording();
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 	}
 	
 	@AfterClass public static void tearDownClass()

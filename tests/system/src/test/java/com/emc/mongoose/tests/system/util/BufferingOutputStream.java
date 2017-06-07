@@ -22,7 +22,7 @@ extends ByteArrayOutputStream {
 		}
 	}
 
-	public final String stopRecording() {
+	public final String stopRecordingAndGet() {
 		synchronized(System.out) {
 			System.out.flush();
 			System.setOut(replacedStream);

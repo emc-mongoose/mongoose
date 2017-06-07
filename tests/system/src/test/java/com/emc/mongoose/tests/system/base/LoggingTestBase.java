@@ -10,6 +10,18 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
+import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
+import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
+import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
+import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
+import static com.emc.mongoose.ui.log.LogUtil.CREATE_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.DELETE_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.LIST_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.NOOP_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.READ_COLOR;
+import static com.emc.mongoose.ui.log.LogUtil.UPDATE_COLOR;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -23,19 +35,6 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
-import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
-import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
-import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
-import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
-import static com.emc.mongoose.ui.log.LogUtil.CREATE_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.DELETE_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.LIST_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.NOOP_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.READ_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.UPDATE_COLOR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

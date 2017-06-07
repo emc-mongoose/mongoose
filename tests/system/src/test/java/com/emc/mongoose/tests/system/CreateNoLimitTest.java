@@ -34,12 +34,12 @@ extends EnvConfiguredScenarioTestBase {
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100));
+		STEP_NAME = CreateNoLimitTest.class.getSimpleName();
 	}
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		STEP_NAME = CreateNoLimitTest.class.getSimpleName();
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		

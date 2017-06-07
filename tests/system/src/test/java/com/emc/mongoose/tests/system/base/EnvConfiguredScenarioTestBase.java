@@ -20,7 +20,7 @@ extends EnvConfiguredTestBase {
 	protected static final Path DEFAULT_SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO
 	);
-	protected static Path SCENARIO_PATH;
+	protected static Path SCENARIO_PATH = null;
 	protected static Scenario SCENARIO;
 
 	@BeforeClass
@@ -30,11 +30,13 @@ extends EnvConfiguredTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		final String scenarioValue = CONFIG.getTestConfig().getScenarioConfig().getFile();
-		if(scenarioValue != null && !scenarioValue.isEmpty()) {
-			SCENARIO_PATH = Paths.get(scenarioValue);
-		} else {
-			SCENARIO_PATH = DEFAULT_SCENARIO_PATH;
+		if(SCENARIO_PATH == null) {
+			final String scenarioValue = CONFIG.getTestConfig().getScenarioConfig().getFile();
+			if(scenarioValue != null && !scenarioValue.isEmpty()) {
+				SCENARIO_PATH = Paths.get(scenarioValue);
+			} else {
+				SCENARIO_PATH = DEFAULT_SCENARIO_PATH;
+			}
 		}
 	}
 

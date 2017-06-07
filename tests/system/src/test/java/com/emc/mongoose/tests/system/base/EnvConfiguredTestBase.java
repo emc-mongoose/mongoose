@@ -11,9 +11,11 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConf
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 
+import com.emc.mongoose.ui.log.Loggers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +95,12 @@ extends ConfiguredTestBase {
 		}
 		ITEM_DATA_SIZE = new SizeInBytes(System.getenv(KEY_ENV_ITEM_DATA_SIZE));
 		checkExclusionAndSetFlag(KEY_ENV_ITEM_DATA_SIZE, ITEM_DATA_SIZE);
+
+		Loggers.MSG.info("* Storage type:     {}", STORAGE_DRIVER_TYPE);
+		Loggers.MSG.info("* Distributed mode: {}", DISTRIBUTED_MODE_FLAG);
+		Loggers.MSG.info("* Concurrency:      {}", CONCURRENCY);
+		Loggers.MSG.info("* Items size:       {}", ITEM_DATA_SIZE);
+		Loggers.MSG.info("* Excluded:         {}", EXCLUDE_FLAG);
 
 		if(EXCLUDE_FLAG) {
 			return;
