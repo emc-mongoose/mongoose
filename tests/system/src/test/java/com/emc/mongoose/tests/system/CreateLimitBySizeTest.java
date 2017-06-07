@@ -15,7 +15,6 @@ import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -203,7 +202,7 @@ extends EnvConfiguredScenarioTestBase {
 			final String nodeAddr = HTTP_STORAGE_MOCKS.keySet().iterator().next();
 			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
-				HttpStorageMockUtil.checkItem(
+				HttpStorageMockUtil.assertItemExists(
 					nodeAddr, ioTraceRecord.get("ItemPath"),
 					Long.parseLong(ioTraceRecord.get("TransferSize"))
 				);

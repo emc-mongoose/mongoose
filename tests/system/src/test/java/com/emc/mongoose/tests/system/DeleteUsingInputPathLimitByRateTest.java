@@ -6,6 +6,7 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.EnvUtil;
+import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -22,10 +23,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -159,8 +163,20 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(ioTraceRecords.size() > 0);
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.DELETE.ordinal(), new SizeInBytes(0));
+		String nextItemPath;
+		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
+			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
+				testIoTraceRecord(ioTraceRecord, IoType.DELETE.ordinal(), new SizeInBytes(0));
+				nextItemPath = ioTraceRecord.get("ItemPath");
+				assertFalse(Files.exists(Paths.get(nextItemPath)));
+			}
+		} else {
+			final String nodeAddr = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getAddrs().get(0);
+			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
+				testIoTraceRecord(ioTraceRecord, IoType.DELETE.ordinal(), new SizeInBytes(0));
+				nextItemPath = ioTraceRecord.get("ItemPath");
+				HttpStorageMockUtil.assertItemNotExists(nodeAddr, nextItemPath);
+			}
 		}
 	}
 }

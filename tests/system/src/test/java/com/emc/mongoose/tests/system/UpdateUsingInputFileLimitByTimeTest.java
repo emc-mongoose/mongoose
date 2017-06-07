@@ -51,7 +51,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("1MB"),
+				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("100MB"),
 				new SizeInBytes("10GB")
 			)
 		);

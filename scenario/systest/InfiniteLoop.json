@@ -1,0 +1,8 @@
+{
+	"type" : "for",
+	"steps" : [
+		{
+			"type" : "load"
+		}
+	]
+}
