@@ -4,7 +4,6 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.run.scenario.Scenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
@@ -34,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 07.06.17.
  */
-public class ReadUsingItemsInputFileLimitByCountTest
+public class ReadUsingInputFileLimitByCountTest
 extends EnvConfiguredScenarioTestBase {
 
 	private static final int EXPECTED_COUNT = 1000;
@@ -46,9 +45,9 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = ReadUsingItemsInputFileLimitByCountTest.class.getSimpleName();
+		STEP_NAME = ReadUsingInputFileLimitByCountTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingItemsInputFileLimitByCount.json"
+			getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingInputFileLimitByCount.json"
 		);
 	}
 
@@ -107,8 +106,7 @@ extends EnvConfiguredScenarioTestBase {
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			EXPECTED_COUNT, 0,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			EXPECTED_COUNT, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
@@ -120,8 +118,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		testTotalMetricsLogRecords(
 			getMetricsTotalLogRecords().get(0),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			EXPECTED_COUNT, 0
+			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
 		);
 	}
 
@@ -133,7 +130,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
+			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}

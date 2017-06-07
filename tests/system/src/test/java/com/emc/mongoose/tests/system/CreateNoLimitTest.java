@@ -42,6 +42,9 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
@@ -54,7 +57,7 @@ extends EnvConfiguredScenarioTestBase {
 				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
 				break;
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
+		SCENARIO = new JsonScenario(CONFIG, DEFAULT_SCENARIO_PATH.toFile());
 
 		RUNNER = new Thread(
 			() -> {
@@ -72,14 +75,16 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(RUNNER != null) {
-			RUNNER.interrupt();
-		}
-		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
+		if(!EXCLUDE_FLAG) {
+			if(RUNNER != null) {
+				RUNNER.interrupt();
+			}
+			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
+				try {
+					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
 			}
 		}
 		EnvConfiguredScenarioTestBase.tearDownClass();
@@ -88,6 +93,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testActualConcurrencyCount()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final int expectedConcurrency = STORAGE_DRIVERS_COUNT * CONCURRENCY;
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
