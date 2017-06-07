@@ -27,6 +27,9 @@ extends EnvConfiguredTestBase {
 	public static void setUpClass()
 	throws Exception {
 		EnvConfiguredTestBase.setUpClass();
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final String scenarioValue = CONFIG.getTestConfig().getScenarioConfig().getFile();
 		if(scenarioValue != null && !scenarioValue.isEmpty()) {
 			SCENARIO_PATH = Paths.get(scenarioValue);

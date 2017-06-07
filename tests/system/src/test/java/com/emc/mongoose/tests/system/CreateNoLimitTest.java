@@ -19,6 +19,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,6 +31,11 @@ extends EnvConfiguredScenarioTestBase {
 
 	private static Thread RUNNER;
 	private static String ITEM_OUTPUT_PATH;
+
+	static {
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100));
+	}
 
 	@BeforeClass
 	public static void setUpClass()

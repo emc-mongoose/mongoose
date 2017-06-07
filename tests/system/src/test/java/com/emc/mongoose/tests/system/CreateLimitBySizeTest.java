@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -49,11 +50,20 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_OUTPUT_PATH = null;
 	private static SizeInBytes SIZE_LIMIT;
 	private static long EXPECTED_COUNT;
+
+	static {
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "atmos"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
+	}
 	
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		JOB_NAME = CreateLimitBySizeTest.class.getSimpleName();
@@ -109,7 +119,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
@@ -125,7 +135,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testFinishedInTime()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		assertTrue(FINISHED_IN_TIME);
@@ -134,7 +144,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		testMetricsLogRecords(
@@ -148,7 +158,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		testTotalMetricsLogRecords(
@@ -161,7 +171,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		testSingleMetricsStdout(
@@ -174,7 +184,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
@@ -204,7 +214,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoBufferSizeAdjustment()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		String msg = "Adjust output buffer size: " + SizeInBytes.formatFixedSize(BUFF_SIZE_MIN);
@@ -222,7 +232,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testItemsOutputFile()
 	throws Exception {
-		if(ITEM_DATA_SIZE.get() == 0) {
+		if(EXCLUDE_FLAG) {
 			return;
 		}
 		final List<CSVRecord> items = new ArrayList<>();

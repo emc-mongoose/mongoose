@@ -25,14 +25,22 @@ import java.util.Map;
 public class EnvConfiguredTestBase
 extends ConfiguredTestBase {
 
+	// environment parameter names
 	public static final String KEY_ENV_STORAGE_DRIVER_TYPE = "STORAGE_DRIVER_TYPE";
 	public static final String KEY_ENV_STORAGE_DRIVER_REMOTE = "STORAGE_DRIVER_REMOTE";
 	public static final String KEY_ENV_STORAGE_DRIVER_CONCURRENCY = "STORAGE_DRIVER_CONCURRENCY";
 	public static final String KEY_ENV_ITEM_DATA_SIZE = "ITEM_DATA_SIZE";
+
+	// parameter values to be set
 	protected static String STORAGE_DRIVER_TYPE = null;
 	protected static boolean DISTRIBUTED_MODE_FLAG = false;
 	protected static int CONCURRENCY = 0;
 	protected static SizeInBytes ITEM_DATA_SIZE = null;
+
+	// test exclusion mechanism
+	protected static final Map<String, List<Object>> EXCLUDE_PARAMS = new HashMap<>();
+	protected static boolean EXCLUDE_FLAG = false;
+
 	protected static Map<String, Daemon> HTTP_STORAGE_MOCKS = null;
 	protected static final int HTTP_STORAGE_NODE_COUNT = 1;
 	protected static int STORAGE_DRIVERS_COUNT = 1;
@@ -45,24 +53,10 @@ extends ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+
 		ConfiguredTestBase.setUpClass();
 		final Map<String, String> env = System.getenv();
-		setUpStorageMockIfNeeded(env);
-		setUpDistributedModeIfNeeded(env);
-		setUpConcurrency(env);
-		setUpItemDataSize(env);
-	}
 
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		tearDownStorageMockIfNeeded();
-		tearDownDistributedModeIfNeeded();
-		ConfiguredTestBase.tearDownClass();
-	}
-
-	private static void setUpStorageMockIfNeeded(final Map<String, String> env)
-	throws Exception {
 		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_TYPE)) {
 			throw new IllegalArgumentException(
 				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_TYPE +
@@ -70,6 +64,71 @@ extends ConfiguredTestBase {
 			);
 		}
 		STORAGE_DRIVER_TYPE = System.getenv(KEY_ENV_STORAGE_DRIVER_TYPE);
+		checkExclusionAndSetFlag(KEY_ENV_STORAGE_DRIVER_TYPE, STORAGE_DRIVER_TYPE);
+
+		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_REMOTE)) {
+			throw new IllegalArgumentException(
+				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_REMOTE +
+					"\" is not defined"
+			);
+		}
+		DISTRIBUTED_MODE_FLAG = Boolean.parseBoolean(
+			System.getenv(KEY_ENV_STORAGE_DRIVER_REMOTE)
+		);
+		checkExclusionAndSetFlag(KEY_ENV_STORAGE_DRIVER_REMOTE, DISTRIBUTED_MODE_FLAG);
+
+		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_CONCURRENCY)) {
+			throw new IllegalArgumentException(
+				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_CONCURRENCY +
+					"\" is not defined"
+			);
+		}
+		CONCURRENCY = Integer.parseInt(System.getenv(KEY_ENV_STORAGE_DRIVER_CONCURRENCY));
+		checkExclusionAndSetFlag(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, CONCURRENCY);
+
+		if(!env.containsKey(KEY_ENV_ITEM_DATA_SIZE)) {
+			throw new IllegalArgumentException(
+				"Environment property w/ name \"" + KEY_ENV_ITEM_DATA_SIZE + "\" is not defined"
+			);
+		}
+		ITEM_DATA_SIZE = new SizeInBytes(System.getenv(KEY_ENV_ITEM_DATA_SIZE));
+		checkExclusionAndSetFlag(KEY_ENV_ITEM_DATA_SIZE, ITEM_DATA_SIZE);
+
+		if(EXCLUDE_FLAG) {
+			return;
+		}
+
+		setUpStorageMockIfNeeded();
+		setUpDistributedModeIfNeeded();
+		setUpConcurrency();
+		setUpItemDataSize();
+	}
+
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		if(!EXCLUDE_FLAG) {
+			tearDownStorageMockIfNeeded();
+			tearDownDistributedModeIfNeeded();
+		}
+		ConfiguredTestBase.tearDownClass();
+	}
+
+	private static void checkExclusionAndSetFlag(final String name, final Object value) {
+		final List<Object> excludeParams = EXCLUDE_PARAMS.get(name);
+		if(excludeParams != null && !excludeParams.isEmpty()) {
+			for(final Object nextExcludeParam : excludeParams) {
+				if(nextExcludeParam.equals(value)) {
+					System.out.println("Test excluded for the " + name + "=" + value);
+					EXCLUDE_FLAG = true;
+					break;
+				}
+			}
+		}
+	}
+
+	private static void setUpStorageMockIfNeeded()
+	throws Exception {
 		final StorageConfig storageConfig = CONFIG.getStorageConfig();
 		storageConfig.getDriverConfig().setType(STORAGE_DRIVER_TYPE);
 		switch(STORAGE_DRIVER_TYPE) {
@@ -114,17 +173,8 @@ extends ConfiguredTestBase {
 		}
 	}
 
-	private static void setUpDistributedModeIfNeeded(final Map<String, String> env)
+	private static void setUpDistributedModeIfNeeded()
 	throws Exception {
-		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_REMOTE)) {
-			throw new IllegalArgumentException(
-				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_REMOTE +
-					"\" is not defined"
-			);
-		}
-		DISTRIBUTED_MODE_FLAG = Boolean.parseBoolean(
-			System.getenv(KEY_ENV_STORAGE_DRIVER_REMOTE)
-		);
 		if(DISTRIBUTED_MODE_FLAG) {
 			STORAGE_DRIVERS_COUNT = 2;
 			STORAGE_DRIVER_BUILDER_SVCS = new ArrayList<>(STORAGE_DRIVERS_COUNT);
@@ -155,29 +205,16 @@ extends ConfiguredTestBase {
 		}
 	}
 
-	private static void setUpConcurrency(final Map<String, String> env)
+	private static void setUpConcurrency()
 	throws Exception {
-		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_CONCURRENCY)) {
-			throw new IllegalArgumentException(
-				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_CONCURRENCY +
-					"\" is not defined"
-			);
-		}
-		CONCURRENCY = Integer.parseInt(System.getenv(KEY_ENV_STORAGE_DRIVER_CONCURRENCY));
 		if(CONCURRENCY < 1) {
 			throw new IllegalArgumentException("Concurrency level should be an integer > 0");
 		}
 		CONFIG.getStorageConfig().getDriverConfig().setConcurrency(CONCURRENCY);
 	}
 
-	private static void setUpItemDataSize(final Map<String, String> env)
+	private static void setUpItemDataSize()
 	throws Exception {
-		if(!env.containsKey(KEY_ENV_ITEM_DATA_SIZE)) {
-			throw new IllegalArgumentException(
-				"Environment property w/ name \"" + KEY_ENV_ITEM_DATA_SIZE + "\" is not defined"
-			);
-		}
-		ITEM_DATA_SIZE = new SizeInBytes(System.getenv(KEY_ENV_ITEM_DATA_SIZE));
 		CONFIG.getItemConfig().getDataConfig().setSize(ITEM_DATA_SIZE);
 	}
 }
