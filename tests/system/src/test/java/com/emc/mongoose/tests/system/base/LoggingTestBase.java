@@ -324,7 +324,15 @@ public abstract class LoggingTestBase {
 		final int driverCount = Integer.parseInt(metrics.get("DriverCount"));
 		assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
-		assertTrue(Long.toString(totalBytes), totalBytes > 0);
+		if(
+			expectedItemDataSize.get() > 0 &&
+				(
+					IoType.CREATE.equals(expectedIoType) || IoType.READ.equals(expectedIoType) ||
+						IoType.UPDATE.equals(expectedIoType)
+				)
+		) {
+			assertTrue(Long.toString(totalBytes), totalBytes > 0);
+		}
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
 			assertEquals(expectedMaxCount, countSucc);

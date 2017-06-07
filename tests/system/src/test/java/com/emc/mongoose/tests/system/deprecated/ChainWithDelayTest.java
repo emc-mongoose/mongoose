@@ -55,7 +55,7 @@ extends HttpStorageDistributedScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		EnvUtil.set(
+		EnvUtil.replace(
 			new HashMap<String, String>() {
 				{
 					put("ZONE1_ADDRS", ZONE1_ADDR);

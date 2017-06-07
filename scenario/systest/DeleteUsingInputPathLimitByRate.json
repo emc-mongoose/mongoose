@@ -1,0 +1,42 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"path" : "${ITEMS_PATH}"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"input" : {
+						"path" : "${ITEMS_PATH}"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"rate" : 1234
+						}
+					}
+				}
+			}
+		}
+	]
+}
