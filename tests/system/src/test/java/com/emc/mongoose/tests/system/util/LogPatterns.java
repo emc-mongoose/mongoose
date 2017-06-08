@@ -10,7 +10,7 @@ public interface LogPatterns {
 	// common
 	Pattern WHITESPACES = Pattern.compile("\\s+");
 	Pattern CELL_BORDER = Pattern.compile("\\|");
-	Pattern ASCII_COLOR = Pattern.compile("\\u001B[\\u001B\\[0-9m;]+");
+	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]+");
 	
 	Pattern DATE_TIME_ISO8601 = Pattern.compile(
 		"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"

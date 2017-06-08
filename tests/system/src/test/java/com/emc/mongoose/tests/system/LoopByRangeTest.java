@@ -8,6 +8,7 @@ import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static org.junit.Assert.assertEquals;
 
 import org.apache.logging.log4j.ThreadContext;
 
@@ -29,12 +30,12 @@ extends EnvConfiguredScenarioTestBase {
 	private static final double EXPECTED_LOOP_START_VALUE = 2.71828182846;
 	private static final double EXPECTED_LOOP_LIMIT_VALUE = 3.1415926;
 	private static final double EXPECTED_STEP_VALUE = 0.1;
-	private static final Pattern PTRN_MSG = Pattern.compile(
+	private static final Pattern PTRN_LOOP_STEP_MSG = Pattern.compile(
 		LogPatterns.ASCII_COLOR.pattern() + LogPatterns.DATE_TIME_ISO8601.pattern() +
 			"\\s+" + LogPatterns.STD_OUT_LOG_LEVEL.pattern() +
 			"\\s+" + LogPatterns.STD_OUT_CLASS_NAME.pattern() +
 			"\\s+" + LogPatterns.STD_OUT_THREAD_NAME.pattern() +
-			"\\s+Use\\snext\\svalue\\sfor\\s\"i\":\\s(\\d\\.\\d+)"
+			"\\s+Use\\snext\\svalue\\sfor\\s\"i\":\\s(?<stepValue>\\d\\.\\d+)"
 	);
 
 	private static String STD_OUTPUT;
@@ -83,9 +84,12 @@ extends EnvConfiguredScenarioTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		final Matcher m = PTRN_MSG.matcher(STD_OUTPUT);
-		while(m.matches()) {
-			System.out.println(m.group(0));
+		final Matcher m = PTRN_LOOP_STEP_MSG.matcher(STD_OUTPUT);
+		double nextExpectedStepVal = EXPECTED_LOOP_START_VALUE;
+		while(m.find()) {
+			final String t = m.group("stepValue");
+			assertEquals(nextExpectedStepVal, Double.parseDouble(t), EXPECTED_STEP_VALUE / 100);
+			nextExpectedStepVal += EXPECTED_STEP_VALUE;
 		}
 	}
 }

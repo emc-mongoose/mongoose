@@ -940,7 +940,7 @@ jobs:
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
 
-    - stage: "GitHub release deploy"
+    - stage: "Deploy"
       script: "./gradlew clean dist"
       deploy:
         skip_cleanup: true
@@ -952,9 +952,7 @@ jobs:
         - "./build/dist/mongoose-*.tgz"
         on:
           tags: true
-
-    - stage: "DockerHub image deploy"
-      script:
+      after_deploy:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - export REPO=emcmongoose/mongoose
       - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
