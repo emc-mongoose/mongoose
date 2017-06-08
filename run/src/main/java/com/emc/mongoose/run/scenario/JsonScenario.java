@@ -3,10 +3,14 @@ package com.emc.mongoose.run.scenario;
 import com.emc.mongoose.run.scenario.step.Step;
 import com.emc.mongoose.run.scenario.step.SequentialStep;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.io.IOException;

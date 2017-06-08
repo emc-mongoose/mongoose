@@ -36,7 +36,7 @@ extends EnvConfiguredScenarioTestBase {
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 10));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(true));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_REMOTE, Arrays.asList(true));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(
@@ -64,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO.run();
 		ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
 		TimeUnit.SECONDS.sleep(15);
-		LoadJobLogFileManager.flush(KEY_STEP_NAME);
+		LoadJobLogFileManager.flushAll();
 	}
 
 	@AfterClass

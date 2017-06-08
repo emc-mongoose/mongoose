@@ -5,7 +5,7 @@
 	"steps" : [
 		{
 			"type" : "command",
-			"value" : "echo ${i}"
+			"value" : "echo \"next value: ${i}\""
 		}
 	]
 }

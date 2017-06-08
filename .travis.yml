@@ -938,7 +938,7 @@ jobs:
       - STORAGE_DRIVER_REMOTE=true
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: ./gradlew :tests:system:test"
+      script: "./gradlew :tests:system:test"
 
     - stage: "GitHub release deploy"
       script: "./gradlew clean dist"
