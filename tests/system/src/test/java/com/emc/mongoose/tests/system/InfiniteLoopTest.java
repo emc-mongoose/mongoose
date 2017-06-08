@@ -1,21 +1,18 @@
 package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.file.Paths;
@@ -24,29 +21,31 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- Created by andrey on 07.06.17.
+ Created by andrey on 08.06.17.
  */
-public class LoopByCountTest
+public class InfiniteLoopTest
 extends EnvConfiguredScenarioTestBase {
 
-	private static final int EXPECTED_LOOP_COUNT = 10;
+	private static final int SCENARIO_TIMEOUT = 54;
 	private static final int EXPECTED_STEP_TIME = 5;
+	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME;
+
 	private static long ACTUAL_TEST_TIME;
 
 	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "s3", "swift"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs", "swift"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_REMOTE, Arrays.asList(false));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 10));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_REMOTE, Arrays.asList(true));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("100MB"),
+				new SizeInBytes(0), new SizeInBytes("1MB"), new SizeInBytes("100MB"),
 				new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = LoopByCountTest.class.getSimpleName();
+		STEP_NAME = InfiniteLoopTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "LoopByCount.json"
+			getBaseDir(), DIR_SCENARIO, "systest", "InfiniteLoop.json"
 		);
 	}
 
@@ -54,23 +53,25 @@ extends EnvConfiguredScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		CONFIG_ARGS.add("--item-output-path=/default");
 		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(EXCLUDE_FLAG) {
 			return;
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		ACTUAL_TEST_TIME = System.currentTimeMillis();
-		SCENARIO.run();
-		ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
+		final Thread runner = new Thread(
+			() -> {
+				ACTUAL_TEST_TIME = System.currentTimeMillis();
+				SCENARIO.run();
+				ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
+			}
+		);
+		runner.start();
+		TimeUnit.SECONDS.sleep(ACTUAL_TEST_TIME);
+		runner.interrupt();
 		TimeUnit.SECONDS.sleep(10);
 		LoadJobLogFileManager.flushAll();
-	}
-
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		EnvConfiguredScenarioTestBase.tearDownClass();
 	}
 
 	@Test
@@ -79,7 +80,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, ACTUAL_TEST_TIME, 10);
+		assertEquals(SCENARIO_TIMEOUT, ACTUAL_TEST_TIME, 1);
 	}
 
 	@Test
@@ -90,11 +91,5 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
-		for(final CSVRecord totalRec : totalRecs) {
-			testTotalMetricsLogRecord(
-				totalRec, IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0,
-				EXPECTED_STEP_TIME
-			);
-		}
 	}
 }

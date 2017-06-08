@@ -10,7 +10,6 @@ import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -34,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -70,13 +70,13 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1GB")) {
-			SIZE_LIMIT = new SizeInBytes("100GB");
+			SIZE_LIMIT = new SizeInBytes(100 * ITEM_DATA_SIZE.get());
 		} else if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1MB")) {
-			SIZE_LIMIT = new SizeInBytes("1GB");
+			SIZE_LIMIT = new SizeInBytes(1_000 * ITEM_DATA_SIZE.get());
 		} else if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("10KB")){
-			SIZE_LIMIT = new SizeInBytes(100_000 * ITEM_DATA_SIZE.get());
+			SIZE_LIMIT = new SizeInBytes(10_000 * ITEM_DATA_SIZE.get());
 		} else {
-			SIZE_LIMIT = new SizeInBytes(1_000_000 * ITEM_DATA_SIZE.get());
+			SIZE_LIMIT = new SizeInBytes(100_000 * ITEM_DATA_SIZE.get());
 		}
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.get();
 		try {
@@ -160,7 +160,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			EXPECTED_COUNT, 0
@@ -177,6 +177,10 @@ extends EnvConfiguredScenarioTestBase {
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+		);
+		testMetricsTableStdout(
+			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, EXPECTED_COUNT,
+			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}
 		);
 	}
 	
@@ -216,7 +220,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		String msg = "Adjust output buffer size: " + SizeInBytes.formatFixedSize(BUFF_SIZE_MIN);
+		String msg = "Adjust output buffer size: " + ITEM_DATA_SIZE.toString();
 		int k;
 		for(int i = 0; i < STORAGE_DRIVERS_COUNT; i ++) {
 			k = STD_OUTPUT.indexOf(msg);

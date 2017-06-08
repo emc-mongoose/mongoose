@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -76,9 +77,6 @@ extends EnvConfiguredScenarioTestBase {
 				).toString();
 				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 				break;
-			case STORAGE_TYPE_SWIFT:
-				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
-				break;
 		}
 		try {
 			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
@@ -127,7 +125,7 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, updateSize, 0, EXPECTED_TIME
 		);
@@ -143,6 +141,10 @@ extends EnvConfiguredScenarioTestBase {
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+		);
+		testMetricsTableStdout(
+			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			new HashMap<IoType, Integer>() {{ put(IoType.UPDATE, CONCURRENCY ); }}
 		);
 	}
 

@@ -9,6 +9,7 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.logging.log4j.ThreadContext;
 
@@ -42,7 +43,7 @@ extends EnvConfiguredScenarioTestBase {
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10, 100));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10, 100, 1000));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_REMOTE, Arrays.asList(true));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
@@ -89,6 +90,7 @@ extends EnvConfiguredScenarioTestBase {
 		while(m.find()) {
 			final String t = m.group("stepValue");
 			assertEquals(nextExpectedStepVal, Double.parseDouble(t), EXPECTED_STEP_VALUE / 100);
+			assertTrue(nextExpectedStepVal <= EXPECTED_LOOP_LIMIT_VALUE);
 			nextExpectedStepVal += EXPECTED_STEP_VALUE;
 		}
 	}

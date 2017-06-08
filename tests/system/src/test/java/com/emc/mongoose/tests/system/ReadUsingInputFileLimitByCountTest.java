@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class ReadUsingInputFileLimitByCountTest
 extends EnvConfiguredScenarioTestBase {
 
-	private static final int EXPECTED_COUNT = 1000;
+	private static final int EXPECTED_COUNT = 10_000;
 	private static String STD_OUTPUT = null;
 	private static String ITEM_OUTPUT_PATH = null;
 
@@ -116,7 +116,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
 		);

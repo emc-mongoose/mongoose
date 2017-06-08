@@ -130,7 +130,7 @@ extends FileStorageDistributedScenarioTestBase {
 			"There should be 1 total metrics records in the log file", 1,
 			totalMetrcisLogRecords.size()
 		);
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			totalMetrcisLogRecords.get(0), IoType.READ, EXPECTED_CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			EXPECTED_ITEM_DATA_SIZE, EXPECTED_COUNT, 0
 		);

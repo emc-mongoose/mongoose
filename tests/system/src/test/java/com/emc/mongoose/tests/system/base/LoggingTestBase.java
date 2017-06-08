@@ -306,7 +306,7 @@ public abstract class LoggingTestBase {
 		}
 	}
 
-	protected static void testTotalMetricsLogRecords(
+	protected static void testTotalMetricsLogRecord(
 		final CSVRecord metrics,
 		final IoType expectedIoType, final int expectedConcurrency, final int expectedDriverCount,
 		final SizeInBytes expectedItemDataSize, final long expectedMaxCount,

@@ -140,7 +140,7 @@ extends HttpStorageDistributedScenarioTestBase {
 
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
 		);

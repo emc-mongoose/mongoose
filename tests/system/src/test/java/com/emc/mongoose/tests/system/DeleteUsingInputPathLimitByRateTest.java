@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -133,7 +134,7 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		final CSVRecord totalRec = getMetricsTotalLogRecords().get(0);
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			totalRec,
 			IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, new SizeInBytes(0), EXPECTED_COUNT, 0
 		);
@@ -152,6 +153,10 @@ extends EnvConfiguredScenarioTestBase {
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+		);
+		testMetricsTableStdout(
+			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, EXPECTED_COUNT,
+			new HashMap<IoType, Integer>() {{ put(IoType.DELETE, CONCURRENCY); }}
 		);
 	}
 

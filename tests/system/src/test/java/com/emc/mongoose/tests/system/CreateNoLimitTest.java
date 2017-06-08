@@ -1,6 +1,7 @@
 package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.common.env.PathUtil;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
@@ -20,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,10 +32,11 @@ extends EnvConfiguredScenarioTestBase {
 
 	private static Thread RUNNER;
 	private static String ITEM_OUTPUT_PATH;
+	private static String STD_OUTPUT;
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
 		STEP_NAME = CreateNoLimitTest.class.getSimpleName();
 	}
 
@@ -68,8 +71,10 @@ extends EnvConfiguredScenarioTestBase {
 				}
 			}
 		);
+		STD_OUT_STREAM.startRecording();
 		RUNNER.start();
 		TimeUnit.SECONDS.sleep(25);
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 	}
 
 	@AfterClass
@@ -115,6 +120,17 @@ extends EnvConfiguredScenarioTestBase {
 				expectedConcurrency, actualConcurrency, expectedConcurrency / 100
 			);
 		}
+	}
 
+	@Test
+	public final void testStdOutput()
+	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
+		testMetricsTableStdout(
+			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}
+		);
 	}
 }

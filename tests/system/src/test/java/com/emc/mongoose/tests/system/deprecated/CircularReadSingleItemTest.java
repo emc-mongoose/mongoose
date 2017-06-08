@@ -124,7 +124,7 @@ extends HttpStorageDistributedScenarioTestBase {
 			"There should be 1 total metrics records in the log file", 1,
 			totalMetrcisLogRecords.size()
 		);
-		testTotalMetricsLogRecords(
+		testTotalMetricsLogRecord(
 			totalMetrcisLogRecords.get(0), IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			ITEM_DATA_SIZE, 0, 60
 		);

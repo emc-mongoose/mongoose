@@ -16,7 +16,7 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 10000
+							"count" : 100000
 						}
 					}
 				}
@@ -36,7 +36,7 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 1000
+							"count" : 10000
 						}
 					}
 				}
