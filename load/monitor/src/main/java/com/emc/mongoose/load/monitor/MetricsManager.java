@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -61,72 +62,64 @@ implements SvcTask {
 		}
 	}
 	
-	public static void register(final LoadController controller, final MetricsContext metricsCtx) {
-		try {
-			if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-				try {
-					final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
-						.computeIfAbsent(controller, c -> new TreeSet<>());
-					if(controllerMetrics.add(metricsCtx)) {
-						Loggers.MSG.info("Metrics context \"{}\" registered", metricsCtx);
-					} else {
-						Loggers.ERR.warn(
-							"Metrics context \"{}\" has been registered already", metricsCtx
-						);
-					}
-				} finally {
-					INSTANCE.allMetricsLock.unlock();
+	public static void register(final LoadController controller, final MetricsContext metricsCtx)
+	throws InterruptedException, TimeoutException {
+		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+			try {
+				final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
+					.computeIfAbsent(controller, c -> new TreeSet<>());
+				if(controllerMetrics.add(metricsCtx)) {
+					Loggers.MSG.info("Metrics context \"{}\" registered", metricsCtx);
+				} else {
+					Loggers.ERR.warn(
+						"Metrics context \"{}\" has been registered already", metricsCtx
+					);
 				}
-			} else {
-				Loggers.ERR.warn("Locking timeout at register call");
+			} finally {
+				INSTANCE.allMetricsLock.unlock();
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to register \"{}\"", metricsCtx);
+		} else {
+			throw new TimeoutException("Locking timeout at register call");
 		}
 	}
 	
-	public static void unregister(
-		final LoadController controller, final MetricsContext metricsCtx
-	) {
-		try {
-			if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-				try {
-					final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
-						.get(controller);
-					if(controllerMetrics != null && controllerMetrics.remove(metricsCtx)) {
-						if(!metricsCtx.getVolatileOutputFlag()) {
-							// check for the metrics threshold state if entered
-							if(
-								metricsCtx.isThresholdStateEntered() &&
-									!metricsCtx.isThresholdStateExited()
-								) {
-								exitMetricsThresholdState(metricsCtx);
-							}
-							// file output
-							Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
-							Loggers.METRICS_EXT_RESULTS_FILE.info(
-								new ExtResultsXmlLogMessage(metricsCtx)
-							);
+	public static void unregister(final LoadController controller, final MetricsContext metricsCtx)
+	throws InterruptedException, TimeoutException {
+		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+			try {
+				final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
+					.get(controller);
+				if(controllerMetrics != null && controllerMetrics.remove(metricsCtx)) {
+					if(!metricsCtx.getVolatileOutputFlag()) {
+						// check for the metrics threshold state if entered
+						if(
+							metricsCtx.isThresholdStateEntered() &&
+								!metricsCtx.isThresholdStateExited()
+							) {
+							exitMetricsThresholdState(metricsCtx);
 						}
-						// console output
-						Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
-					} else {
-						Loggers.ERR.debug(
-							"Metrics context \"{}\" has not been registered", metricsCtx
+						// file output
+						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
+						Loggers.METRICS_EXT_RESULTS_FILE.info(
+							new ExtResultsXmlLogMessage(metricsCtx)
 						);
 					}
-					if(controllerMetrics != null && controllerMetrics.size() == 0) {
-						INSTANCE.allMetrics.remove(controller);
-					}
-				} finally {
-					INSTANCE.allMetricsLock.unlock();
-					Loggers.MSG.info("Metrics context \"{}\" unregistered", metricsCtx);
+					// console output
+					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
+				} else {
+					Loggers.ERR.debug(
+						"Metrics context \"{}\" has not been registered", metricsCtx
+					);
 				}
-			} else {
-				Loggers.ERR.warn("Locking timeout at unregister call");
+				if(controllerMetrics != null && controllerMetrics.size() == 0) {
+					INSTANCE.allMetrics.remove(controller);
+				}
+			} finally {
+				INSTANCE.allMetricsLock.unlock();
+				Loggers.MSG.info("Metrics context \"{}\" unregistered", metricsCtx);
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to unregister \"{}\"", metricsCtx);
+		} else {
+			throw new TimeoutException("Locking timeout at unregister call");
 		}
 	}
 	

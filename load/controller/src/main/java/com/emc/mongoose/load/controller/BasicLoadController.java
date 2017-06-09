@@ -59,11 +59,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -583,7 +585,13 @@ implements LoadController<I, O> {
 
 		for(final int ioTypeCode : concurrencyMap.keySet()) {
 			ioStats.get(ioTypeCode).start();
-			MetricsManager.register(this, ioStats.get(ioTypeCode));
+			try {
+				MetricsManager.register(this, ioStats.get(ioTypeCode));
+			} catch(final InterruptedException e) {
+				throw new CancellationException(e.getMessage());
+			} catch(final TimeoutException e) {
+				LogUtil.exception(Level.WARN, e, "{}: metrics context registering timeout", name);
+			}
 		}
 
 		for(final int originCode : recycleQueuesMap.keySet()) {
@@ -897,7 +905,11 @@ implements LoadController<I, O> {
 		recycleQueuesMap.clear();
 		
 		for(final MetricsContext nextStats : ioStats.values()) {
-			MetricsManager.unregister(this, nextStats);
+			try {
+				MetricsManager.unregister(this, nextStats);
+			} catch(final InterruptedException | TimeoutException e) {
+				LogUtil.exception(Level.WARN, e, "{}: metrics context unregister failure", name);
+			}
 			nextStats.close();
 		}
 		ioStats.clear();

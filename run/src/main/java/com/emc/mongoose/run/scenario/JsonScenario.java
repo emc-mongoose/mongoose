@@ -9,7 +9,6 @@ import com.emc.mongoose.ui.log.Loggers;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.logging.log4j.Level;
 
 import java.io.File;
@@ -17,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,7 +68,7 @@ implements Scenario {
 	//
 	public JsonScenario(final Config config, final Map<String, Object> tree)
 	throws IOException, ScenarioParseException {
-		super(config, overrideFromEnv(validateAgainstSchema(tree)));
+		super(config, overrideByEnv(validateAgainstSchema(tree)));
 	}
 	//
 	private static final Map<String, Object> validateAgainstSchema(final Map<String, Object> tree) {
@@ -89,7 +89,7 @@ implements Scenario {
 	private static final Pattern PATTERN_ENV_VAR = Pattern.compile(
 		".*\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}.*"
 	);
-	private static Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
+	private static Map<String, Object> overrideByEnv(final Map<String, Object> tree) {
 
 		Object value;
 		String valueStr;
@@ -101,9 +101,9 @@ implements Scenario {
 		for(final String key : tree.keySet()) {
 			value = tree.get(key);
 			if(value instanceof Map) {
-				overrideFromEnv((Map<String, Object>) value);
+				overrideByEnv((Map<String, Object>) value);
 			} else if(value instanceof List) {
-				overrideFromEnv((List<Object>) value);
+				overrideByEnv((List<Object>) value);
 			} else if(value instanceof String) {
 				valueStr = (String) value;
 				m = PATTERN_ENV_VAR.matcher(valueStr);
@@ -131,7 +131,7 @@ implements Scenario {
 		return tree;
 	}
 	//
-	private static List<Object> overrideFromEnv(final List<Object> values) {
+	private static List<Object> overrideByEnv(final List<Object> values) {
 
 		Object value;
 		String valueStr;
@@ -143,9 +143,9 @@ implements Scenario {
 		for(int i = 0; i < values.size(); i ++) {
 			value = values.get(i);
 			if(value instanceof Map) {
-				overrideFromEnv((Map<String, Object>) value);
+				overrideByEnv((Map<String, Object>) value);
 			} else if(value instanceof List) {
-				overrideFromEnv((List) value);
+				overrideByEnv((List) value);
 			} else if(value instanceof String) {
 				valueStr = (String) value;
 				m = PATTERN_ENV_VAR.matcher(valueStr);
@@ -190,7 +190,13 @@ implements Scenario {
 	@Override
 	protected final void invoke() {
 		Loggers.MSG.info("Scenario start");
-		super.invoke();
+		try {
+			super.invoke();
+		} catch(final CancellationException e) {
+			Loggers.MSG.info("Scenario interrupted");
+		} catch(final Throwable cause) {
+			LogUtil.exception(Level.ERROR, cause, "Scenario failure");
+		}
 		Loggers.MSG.info("Scenario end");
 	}
 	//

@@ -79,7 +79,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(EXCLUDE_FLAG) {
 			return;
 		}
-		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, ACTUAL_TEST_TIME, 10);
+		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, ACTUAL_TEST_TIME, 25);
 	}
 
 	@Test

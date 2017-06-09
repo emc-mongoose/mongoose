@@ -11,6 +11,8 @@ import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
+import java.util.concurrent.CancellationException;
+
 /**
  Created by kurila on 08.04.16.
  */
@@ -49,11 +51,9 @@ implements Step {
 		) {
 			Loggers.CONFIG.info(localConfig.toString());
 			invoke();
-		} catch(final Throwable cause) {
-			LogUtil.exception(Level.ERROR, cause, "Test step failure");
-			cause.printStackTrace(System.err);
 		}
 	}
 
-	protected abstract void invoke();
+	protected abstract void invoke()
+	throws CancellationException;
 }

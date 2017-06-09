@@ -26,11 +26,9 @@ import java.util.concurrent.TimeUnit;
 public class InfiniteLoopTest
 extends EnvConfiguredScenarioTestBase {
 
-	private static final int SCENARIO_TIMEOUT = 54;
+	private static final int SCENARIO_TIMEOUT = 50;
 	private static final int EXPECTED_STEP_TIME = 5;
 	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME;
-
-	private static long ACTUAL_TEST_TIME;
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs", "swift"));
@@ -60,27 +58,12 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		final Thread runner = new Thread(
-			() -> {
-				ACTUAL_TEST_TIME = System.currentTimeMillis();
-				SCENARIO.run();
-				ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
-			}
-		);
+		final Thread runner = new Thread(() -> SCENARIO.run());
 		runner.start();
-		TimeUnit.SECONDS.sleep(ACTUAL_TEST_TIME);
+		TimeUnit.SECONDS.timedJoin(runner, SCENARIO_TIMEOUT);
 		runner.interrupt();
 		TimeUnit.SECONDS.sleep(10);
 		LoadJobLogFileManager.flushAll();
-	}
-
-	@Test
-	public final void testDuration()
-	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
-		assertEquals(SCENARIO_TIMEOUT, ACTUAL_TEST_TIME, 1);
 	}
 
 	@Test
