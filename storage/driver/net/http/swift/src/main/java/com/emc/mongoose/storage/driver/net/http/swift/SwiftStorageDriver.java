@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.IoType.CREATE;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
@@ -79,10 +80,10 @@ extends HttpStorageDriverBase<I, O> {
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
 		}

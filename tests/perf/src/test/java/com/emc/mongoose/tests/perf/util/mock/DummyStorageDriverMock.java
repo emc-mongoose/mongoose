@@ -4,6 +4,7 @@ import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.DaemonBase;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
@@ -40,8 +41,8 @@ implements StorageDriver<I, O> {
 	private final LongAdder completedTaskCount = new LongAdder();
 
 	public DummyStorageDriverMock(
-		final String stepName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) {
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		this.queueCapacity = loadConfig.getQueueConfig().getSize();

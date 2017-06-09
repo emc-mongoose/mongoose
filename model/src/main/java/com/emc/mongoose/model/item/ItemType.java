@@ -11,9 +11,9 @@ public enum ItemType {
 	PATH,
 	TOKEN;
 	
-	public static ItemFactory getItemFactory(final ItemType itemType, final ContentSource contentSrc) {
+	public static ItemFactory getItemFactory(final ItemType itemType) {
 		if(ItemType.DATA.equals(itemType)) {
-			return new BasicDataItemFactory(contentSrc);
+			return new BasicDataItemFactory();
 		} else if(ItemType.PATH.equals(itemType)) {
 			return new BasicPathItemFactory();
 		} else if(ItemType.TOKEN.equals(itemType)) {

@@ -21,7 +21,6 @@ import java.util.List;
 public interface StorageDriver<I extends Item, O extends IoTask<I>>
 extends Daemon, Input<O>, Output<O>, Remote {
 	
-	String HOST_ADDR = ServiceUtil.getHostAddr();
 	int BUFF_SIZE_MIN = 0x1_000;
 	int BUFF_SIZE_MAX = 0x1_000_000;
 	

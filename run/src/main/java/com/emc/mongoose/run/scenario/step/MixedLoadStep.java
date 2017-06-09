@@ -109,7 +109,7 @@ extends StepBase {
 					ringConfig.getSize(), ringConfig.getCache()
 				);
 				
-				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
+				final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
 				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();

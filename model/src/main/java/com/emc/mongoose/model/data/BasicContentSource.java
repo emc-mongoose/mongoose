@@ -19,7 +19,8 @@ implements ContentSource {
 	protected long seed;
 	private int cacheLimit;
 	protected ByteBuffer zeroByteLayer;
-	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>> threadLocalByteLayersCache;
+	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
+		threadLocalByteLayersCache;
 	//
 	public BasicContentSource() {
 		threadLocalByteLayersCache = new ThreadLocal<>();

@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.model.NamingThreadFactory;
@@ -67,10 +68,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final boolean sslFlag;
 
 	protected NetStorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
 		final long sto = netConfig.getTimeoutMilliSec();

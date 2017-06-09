@@ -933,8 +933,8 @@ implements LoadController<I, O> {
 			latestIoResultsPerItem.clear();
 		}
 		if(ioResultsOutput != null) {
-			ioResultsOutput.close();
-			Loggers.MSG.debug("{}: closed the items output", getName());
+			ioResultsOutput.put((O) null);
+			Loggers.MSG.debug("{}: poisoned the items output", getName());
 		}
 
 		Loggers.MSG.debug("{}: closed the load controller", getName());

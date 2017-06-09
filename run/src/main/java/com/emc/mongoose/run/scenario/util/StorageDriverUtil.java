@@ -33,7 +33,6 @@ public interface StorageDriverUtil {
 		final StorageConfig storageConfig, final StepConfig stepConfig,
 		final ContentSource contentSrc
 	) {
-		
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
 		final String testStepName = stepConfig.getName();
@@ -133,6 +132,7 @@ public interface StorageDriverUtil {
 					new BasicStorageDriverBuilder<>()
 						.setTestStepName(testStepName)
 						.setItemConfig(itemConfig)
+						.setContentSource(contentSrc)
 						.setLoadConfig(loadConfig)
 						.setMetricsConfig(metricsConfig)
 						.setStorageConfig(storageConfig)

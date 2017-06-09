@@ -90,6 +90,7 @@ implements SvcTask {
 				final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 					.get(controller);
 				if(controllerMetrics != null && controllerMetrics.remove(metricsCtx)) {
+					metricsCtx.refreshLastSnapshot(); // last time
 					if(!metricsCtx.getVolatileOutputFlag()) {
 						// check for the metrics threshold state if entered
 						if(

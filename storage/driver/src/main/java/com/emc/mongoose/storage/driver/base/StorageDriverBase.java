@@ -11,8 +11,10 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.Credential;
@@ -45,7 +47,8 @@ import java.util.function.Function;
 public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
-	
+
+	private final ContentSource contentSrc;
 	private final int batchSize;
 	private final int queueCapacity;
 	protected final BlockingQueue<O> childTasksQueue;
@@ -69,9 +72,10 @@ implements StorageDriver<I, O> {
 	private final IoTasksDispatch ioTasksDispatchTask;
 	
 	protected StorageDriverBase(
-		final String stepName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
+		this.contentSrc = contentSrc;
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		this.queueCapacity = loadConfig.getQueueConfig().getSize();
 		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
@@ -171,7 +175,7 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		checkStateFor(task);
+		prepareIoTask(task);
 		if(inTasksQueue.offer(task)) {
 			scheduledTaskCount.increment();
 			return true;
@@ -190,7 +194,7 @@ implements StorageDriver<I, O> {
 		O nextTask;
 		while(i < to && isStarted()) {
 			nextTask = tasks.get(i);
-			checkStateFor(nextTask);
+			prepareIoTask(nextTask);
 			if(inTasksQueue.offer(tasks.get(i))) {
 				i ++;
 			} else {
@@ -211,7 +215,7 @@ implements StorageDriver<I, O> {
 		int n = 0;
 		for(final O nextIoTask : tasks) {
 			if(isStarted()) {
-				checkStateFor(nextIoTask);
+				prepareIoTask(nextIoTask);
 				if(inTasksQueue.offer(nextIoTask)) {
 					n ++;
 				} else {
@@ -225,9 +229,12 @@ implements StorageDriver<I, O> {
 		return n;
 	}
 	
-	private void checkStateFor(final O ioTask)
+	private void prepareIoTask(final O ioTask)
 	throws ServerException {
 		ioTask.reset();
+		if(ioTask instanceof DataIoTask) {
+			((DataIoTask) ioTask).getItem().setContentSrc(contentSrc);
+		}
 		if(requestAuthTokenFunc != null) {
 			final Credential credential = ioTask.getCredential();
 			if(credential != null) {
@@ -382,6 +389,7 @@ implements StorageDriver<I, O> {
 				.put(KEY_STEP_NAME, stepName)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
+			contentSrc.close();
 			childTasksQueue.clear();
 			inTasksQueue.clear();
 			final int ioResultsQueueSize = ioResultsQueue.size();

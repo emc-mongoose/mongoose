@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -192,25 +191,13 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(EXPECTED_COUNT, ioTraceRecords.size());
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			File nextItemFile;
-			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
-				nextItemFile = new File(ITEM_OUTPUT_PATH, ioTraceRecord.get("ItemPath"));
-				assertTrue(nextItemFile.exists());
-				assertEquals(
-					Long.parseLong(ioTraceRecord.get("TransferSize")), nextItemFile.length()
-				);
-			}
-		} else {
-			final String nodeAddr = HTTP_STORAGE_MOCKS.keySet().iterator().next();
-			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
-				HttpStorageMockUtil.assertItemExists(
-					nodeAddr, ioTraceRecord.get("ItemPath"),
-					Long.parseLong(ioTraceRecord.get("TransferSize"))
-				);
-			}
+		final String nodeAddr = HTTP_STORAGE_MOCKS.keySet().iterator().next();
+		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
+			testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
+			HttpStorageMockUtil.assertItemExists(
+				nodeAddr, ioTraceRecord.get("ItemPath"),
+				Long.parseLong(ioTraceRecord.get("TransferSize"))
+			);
 		}
 	}
 	

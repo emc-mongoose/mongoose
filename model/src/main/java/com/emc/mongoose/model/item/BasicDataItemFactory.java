@@ -10,42 +10,19 @@ import java.io.IOException;
 public class BasicDataItemFactory<I extends DataItem>
 extends BasicItemFactory<I>
 implements DataItemFactory<I> {
-	
-	private transient volatile ContentSource contentSrc;
-	
-	public BasicDataItemFactory(final ContentSource contentSrc) {
-		this.contentSrc = contentSrc;
-	}
-	
+
 	@Override
 	public I getItem(final String name, final long id, final long size) {
-		return (I) new BasicDataItem(name, id, size, contentSrc);
+		return (I) new BasicDataItem(name, id, size);
 	}
 	
 	@Override
 	public I getItem(final String line) {
-		return (I) new BasicDataItem(line, contentSrc);
+		return (I) new BasicDataItem(line);
 	}
 
 	@Override
 	public Class<I> getItemClass() {
 		return (Class<I>) BasicDataItem.class;
-	}
-
-	@Override
-	public final ContentSource getContentSource() {
-		return contentSrc;
-	}
-
-	@Override
-	public final void setContentSource(final ContentSource contentSrc) {
-		this.contentSrc = contentSrc;
-	}
-
-	@Override
-	public void close()
-	throws IOException {
-		super.close();
-		contentSrc.close();
 	}
 }

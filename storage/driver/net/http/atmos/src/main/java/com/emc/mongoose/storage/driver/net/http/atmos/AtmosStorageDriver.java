@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.atmos;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.IoType.CREATE;
 import com.emc.mongoose.model.item.Item;
@@ -90,10 +91,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 	
 	public AtmosStorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}

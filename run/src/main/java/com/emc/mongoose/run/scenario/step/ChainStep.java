@@ -98,7 +98,7 @@ extends StepBase {
 					ringConfig.getSize(), ringConfig.getCache()
 				);
 				
-				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
+				final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
 				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 				
 				final LoadConfig loadConfig = config.getLoadConfig();
@@ -198,21 +198,19 @@ extends StepBase {
 					break;
 				} catch(final RemoteException e) {
 					throw new AssertionError(e);
+				} finally {
+					try {
+						nextController.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to close the step \"{}\"",
+							nextController.getName()
+						);
+					}
 				}
 				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
 			} else {
 				break;
-			}
-		}
-		
-		for(final LoadController nextLoadController : loadChain) {
-			try {
-				nextLoadController.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed o close the load controller \"{}\"",
-					nextLoadController.getName()
-				);
 			}
 		}
 	}

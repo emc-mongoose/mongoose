@@ -7,8 +7,6 @@ import com.emc.mongoose.common.io.collection.CircularListInput;
 import com.emc.mongoose.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.load.generator.BasicLoadGenerator;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
@@ -19,6 +17,7 @@ import com.emc.mongoose.model.item.ItemNameSupplier;
 import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.load.LoadGenerator;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,17 +30,6 @@ import java.util.concurrent.atomic.LongAdder;
  Created by kurila on 30.03.17.
  */
 public class BasicLoadGeneratorTest {
-	
-	private static final ContentSource DEFAULT_CONTENT_SRC;
-	static {
-		try {
-			DEFAULT_CONTENT_SRC = ContentSourceUtil.getInstance(
-				null, "7a42d9c483244167", new SizeInBytes("4MB"), 1
-			);
-		} catch(final IOException e) {
-			throw new AssertionError(e);
-		}
-	}
 	
 	private static final int BATCH_SIZE = 0x1000;
 	
@@ -96,7 +84,7 @@ public class BasicLoadGeneratorTest {
 		final LongAdder counter = new LongAdder();
 		
 		final SizeInBytes itemSize = new SizeInBytes(0);
-		final ItemFactory itemFactory = new BasicDataItemFactory(DEFAULT_CONTENT_SRC);
+		final ItemFactory itemFactory = new BasicDataItemFactory();
 		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
@@ -128,7 +116,7 @@ public class BasicLoadGeneratorTest {
 		final LongAdder counter = new LongAdder();
 		
 		final SizeInBytes itemSize = new SizeInBytes(0);
-		final ItemFactory itemFactory = new BasicDataItemFactory(DEFAULT_CONTENT_SRC);
+		final ItemFactory itemFactory = new BasicDataItemFactory();
 		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 			ItemNamingType.ASC, null, 10, 10, 0
 		);
@@ -160,7 +148,7 @@ public class BasicLoadGeneratorTest {
 		final LongAdder counter = new LongAdder();
 		
 		final SizeInBytes itemSize = new SizeInBytes(0);
-		final ItemFactory itemFactory = new BasicDataItemFactory(DEFAULT_CONTENT_SRC);
+		final ItemFactory itemFactory = new BasicDataItemFactory();
 		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
@@ -192,7 +180,7 @@ public class BasicLoadGeneratorTest {
 		final LongAdder counter = new LongAdder();
 		
 		final SizeInBytes itemSize = new SizeInBytes(0);
-		final ItemFactory itemFactory = new BasicDataItemFactory(DEFAULT_CONTENT_SRC);
+		final ItemFactory itemFactory = new BasicDataItemFactory();
 		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
@@ -226,7 +214,7 @@ public class BasicLoadGeneratorTest {
 		final List items = new ArrayList(BATCH_SIZE);
 		BasicDataItem item;
 		for(int i = 0; i < BATCH_SIZE; i ++) {
-			item = new BasicDataItem(DEFAULT_CONTENT_SRC);
+			item = new BasicDataItem();
 			item.setName(Long.toString(System.nanoTime(), Character.MAX_RADIX));
 			items.add(item);
 		}
@@ -260,7 +248,7 @@ public class BasicLoadGeneratorTest {
 		final List items = new ArrayList(BATCH_SIZE);
 		BasicDataItem item;
 		for(int i = 0; i < BATCH_SIZE; i ++) {
-			item = new BasicDataItem(DEFAULT_CONTENT_SRC);
+			item = new BasicDataItem();
 			item.setName(Long.toString(System.nanoTime(), Character.MAX_RADIX));
 			items.add(item);
 		}

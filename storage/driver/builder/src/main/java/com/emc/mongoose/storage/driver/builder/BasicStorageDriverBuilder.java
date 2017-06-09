@@ -47,11 +47,6 @@ public class BasicStorageDriverBuilder<
 		return stepName;
 	}
 	
-	protected final ContentSource getContentSource()
-	throws IOException {
-		return contentSrc;
-	}
-
 	@Override
 	public ItemConfig getItemConfig() {
 		return itemConfig;
@@ -161,10 +156,13 @@ public class BasicStorageDriverBuilder<
 
 			try {
 				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
-					String.class, LoadConfig.class, StorageConfig.class, Boolean.TYPE
+					String.class, ContentSource.class, LoadConfig.class, StorageConfig.class,
+					Boolean.TYPE
 				);
 				Loggers.MSG.info("New storage driver for type \"{}\"", driverType);
-				return constructor.newInstance(stepName, loadConfig, storageConfig, verifyFlag);
+				return constructor.newInstance(
+					stepName, contentSrc, loadConfig, storageConfig, verifyFlag
+				);
 			} catch(final NoSuchMethodException e) {
 				throw new UserShootHisFootException(
 					"No valid constructor to make the \"" + driverType +

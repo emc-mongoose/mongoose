@@ -8,6 +8,7 @@ import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.model.NamingThreadFactory;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -45,10 +46,10 @@ implements NioStorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
 		if(confWorkerCount < 1) {
 			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());

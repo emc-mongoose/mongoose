@@ -24,6 +24,8 @@ implements IoResultsItemInput<I, O> {
 	private final int ioResultsBuffCapacity;
 	private final long delayMicroseconds;
 
+	private volatile boolean poisonedFlag = false;
+
 	public BasicIoResultsItemInput(
 		final int queueCapacity, final TimeUnit timeUnit, final long delay
 	) {
@@ -35,6 +37,9 @@ implements IoResultsItemInput<I, O> {
 	@Override
 	public final synchronized boolean put(final O ioResult)
 	throws IOException {
+		if(ioResult == null) {
+			return poisonedFlag = true;
+		}
 		if(ioResultsBuffSize < ioResultsBuffCapacity) {
 			ioResultsBuff.add(ioResult);
 			ioResultsBuffSize ++;
@@ -48,7 +53,14 @@ implements IoResultsItemInput<I, O> {
 	public final synchronized int put(final List<O> ioResults, final int from, final int to)
 	throws IOException {
 		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, to - from);
-		for(final O ioResult : ioResults.subList(from, from + n)) {
+		O ioResult;
+		for(int i = 0; i < n; i ++) {
+			ioResult = ioResults.get(i + from);
+			if(ioResult == null) {
+				poisonedFlag = true;
+				ioResultsBuffSize += i;
+				return i;
+			}
 			ioResultsBuff.add(ioResult);
 		}
 		ioResultsBuffSize += n;
@@ -59,7 +71,14 @@ implements IoResultsItemInput<I, O> {
 	public final synchronized int put(final List<O> ioResults)
 	throws IOException {
 		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, ioResults.size());
-		for(final O ioResult : ioResults.subList(0, n)) {
+		O ioResult;
+		for(int i = 0; i < n; i ++) {
+			ioResult = ioResults.get(i);
+			if(ioResult == null) {
+				poisonedFlag = true;
+				ioResultsBuffSize += i;
+				return i;
+			}
 			ioResultsBuff.add(ioResult);
 		}
 		ioResultsBuffSize += n;
@@ -70,12 +89,17 @@ implements IoResultsItemInput<I, O> {
 	@Override
 	public final Input<O> getInput()
 	throws IOException {
-		return new ListInput<>(ioResultsBuff);
+		throw new AssertionError();
 	}
 	
 	@Override
 	public final synchronized I get()
 	throws EOFException, IOException {
+
+		if(ioResultsBuffSize == 0 && poisonedFlag) {
+			throw new EOFException();
+		}
+
 		O nextIoResult;
 		long nextFinishTime, currTime;
 		I item = null;
@@ -104,6 +128,11 @@ implements IoResultsItemInput<I, O> {
 	@Override
 	public final synchronized int get(final List<I> buffer, final int limit)
 	throws IOException {
+
+		if(ioResultsBuffSize == 0 && poisonedFlag) {
+			throw new EOFException();
+		}
+
 		O nextIoResult;
 		long nextFinishTime, currTime;
 		int n = 0;
@@ -132,7 +161,7 @@ implements IoResultsItemInput<I, O> {
 	}
 	
 	@Override
-	public final long skip(final long count)
+	public final synchronized long skip(final long count)
 	throws IOException {
 		final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
 		long n;

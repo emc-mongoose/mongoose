@@ -38,12 +38,11 @@ implements StorageDriverSvc<I, O> {
 	
 	private final int port;
 	private final StorageDriver<I, O> driver;
-	private final ContentSource contentSrc;
 	private final SvcTask stateReportSvcTask;
 
 	public WrappingStorageDriverSvc(
-		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
-		final long metricsPeriodSec, final String stepName
+		final int port, final StorageDriver<I, O> driver, final long metricsPeriodSec,
+		final String stepName
 	) throws RemoteException {
 		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
 			stateReportSvcTask = new StateReportingTask(driver, metricsPeriodSec, stepName);
@@ -52,7 +51,6 @@ implements StorageDriverSvc<I, O> {
 		}
 		this.port = port;
 		this.driver = driver;
-		this.contentSrc = contentSrc;
 		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 	
@@ -162,38 +160,24 @@ implements StorageDriverSvc<I, O> {
 	public final void close()
 	throws IOException {
 		driver.close();
-		contentSrc.close();
 		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
 	}
 
 	@Override
 	public final boolean put(final O ioTask)
 	throws IOException {
-		if(ioTask instanceof DataIoTask) {
-			((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
-		}
 		return driver.put(ioTask);
 	}
 
 	@Override
 	public final int put(final List<O> buffer, final int from, final int to)
 	throws IOException {
-		if(buffer.get(from) instanceof DataIoTask) {
-			for(int i = from; i < to; i ++) {
-				((DataItem) buffer.get(i).getItem()).setContentSrc(contentSrc);
-			}
-		}
 		return driver.put(buffer, from, to);
 	}
 
 	@Override
 	public final int put(final List<O> buffer)
 	throws IOException {
-		if(buffer.get(0) instanceof DataIoTask) {
-			for(final O ioTask : buffer) {
-				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
-			}
-		}
 		return driver.put(buffer);
 	}
 
@@ -268,9 +252,6 @@ implements StorageDriverSvc<I, O> {
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws IOException {
-		if(itemFactory instanceof DataItemFactory) {
-			((DataItemFactory) itemFactory).setContentSource(contentSrc);
-		}
 		return driver.list(itemFactory, path, prefix, idRadix, lastPrevItem, count);
 	}
 

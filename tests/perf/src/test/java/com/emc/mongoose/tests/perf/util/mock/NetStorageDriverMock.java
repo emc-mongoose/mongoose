@@ -2,6 +2,7 @@ package com.emc.mongoose.tests.perf.util.mock;
 
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -29,10 +30,10 @@ public final class NetStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O> {
 
 	public NetStorageDriverMock(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 
 	@Override

@@ -94,7 +94,7 @@ extends StepBase {
 		);
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
+		final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
 		Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 		final LoadGenerator loadGenerator;

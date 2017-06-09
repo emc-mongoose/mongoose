@@ -3,6 +3,7 @@ package com.emc.mongoose.tests.perf.util.mock;
 import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
@@ -25,10 +26,10 @@ public final class NioStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends NioStorageDriverBase<I, O> {
 
 	public NioStorageDriverMock(
-		final String jobName, final Config.LoadConfig loadConfig,
+		final String jobName, final ContentSource contentSrc, final Config.LoadConfig loadConfig,
 		final Config.StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 
 	@Override

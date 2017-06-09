@@ -51,17 +51,11 @@ implements DataItem {
 		super();
 	}
 	//
-	public BasicDataItem(final ContentSource contentSrc) {
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
-		//setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
+	public BasicDataItem(final String value) {
+		this(value.split(",", 4));
 	}
 	//
-	public BasicDataItem(final String value, final ContentSource contentSrc) {
-		this(value.split(",", 4), contentSrc);
-	}
-	//
-	private BasicDataItem(final String tokens[], final ContentSource contentSrc) {
+	private BasicDataItem(final String tokens[]) {
 		super(tokens[0]);
 		if(tokens.length == 4) {
 			try {
@@ -103,34 +97,25 @@ implements DataItem {
 		this.ringBuffSize = contentSrc.getSize();
 	}
 	//
-	public BasicDataItem(
-		final long offset, final long size, final ContentSource contentSrc
-	) {
-		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+	public BasicDataItem(final long offset, final long size) {
+		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0);
 	}
 	//
-	public BasicDataItem(
-		final String name, final long offset, final long size, final ContentSource contentSrc
-	) {
-		this(name, offset, size, 0, contentSrc);
+	public BasicDataItem(final String name, final long offset, final long size) {
+		this(name, offset, size, 0);
 	}
 	//
-	public BasicDataItem(
-		final long offset, final long size, final int layerNum, final ContentSource contentSrc
-	) {
-		this(contentSrc);
+	public BasicDataItem(final long offset, final long size, final int layerNum) {
+		this();
 		this.layerNum = layerNum;
 		this.offset = offset;
 		this.size = size;
 	}
 	//
 	public BasicDataItem(
-		final String name, final long offset, final long size, final int layerNum,
-		final ContentSource contentSrc
+		final String name, final long offset, final long size, final int layerNum
 	) {
 		super(name);
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
 		this.layerNum = layerNum;
 		this.offset = offset;
 		this.size = size;
@@ -238,10 +223,13 @@ implements DataItem {
 		if(partSize < 1) {
 			throw new IllegalArgumentException();
 		}
-		/*if(from + partSize > size) {
-			throw new IllegalArgumentException();
-		}*/
-		return new BasicDataItem(name, offset + from, partSize, layerNum, contentSrc);
+		final BasicDataItem dataItemSlice = new BasicDataItem(
+			name, offset + from, partSize, layerNum
+		);
+		if(contentSrc != null) {
+			dataItemSlice.setContentSrc(contentSrc);
+		}
+		return dataItemSlice;
 	}
 	//
 	public long position() {

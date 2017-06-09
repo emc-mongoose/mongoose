@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.s3;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
@@ -108,10 +109,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 	
 	public S3StorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		requestAuthTokenFunc = null; // do not use
 	}
 	
