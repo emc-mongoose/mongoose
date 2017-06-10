@@ -1,0 +1,97 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"storage" : {
+			"net" : {
+				"http" : {
+					"namespace" : "ns1"
+				}
+			}
+		},
+		"test" : {
+			"step" :{
+				"metrics" : {
+					"threshold" : 0.8
+				}
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f HttpStorageMetricsThresholdTest.csv"
+		},
+		{
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "HttpStorageMetricsThresholdTest.csv",
+						"path" : "/default"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000000,
+							"size" : "1TB",
+							"time" : "100s"
+						}
+					}
+				}
+			}
+		},
+		{
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "MetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		},
+		{
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 10
+						}
+					},
+					"input" : {
+						"file" : "MetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "MetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				},
+				"storage" : {
+					"driver" : {
+						"concurrency" : 50
+					}
+				},
+				"test" : {
+					"step" : {
+						"metrics" : {
+							"precondition" : true
+						}
+					}
+				}
+			}
+		}
+	]
+}

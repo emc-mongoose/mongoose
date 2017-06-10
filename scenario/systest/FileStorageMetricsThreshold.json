@@ -1,0 +1,93 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"storage" : {
+			"driver" : {
+				"type" : "fs"
+			}
+		},
+		"test" : {
+			"step" :{
+				"metrics" : {
+					"threshold" : 0.8
+				}
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f FileStorageMetricsThresholdTest.csv"
+		},
+		{
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "FileStorageMetricsThresholdTest.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000000,
+							"size" : "1GB"
+						}
+					}
+				}
+			}
+		},
+		{
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "MetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		},
+		{
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 10
+						}
+					},
+					"input" : {
+						"file" : "MetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "MetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				},
+				"storage" : {
+					"driver" : {
+						"concurrency" : 50
+					}
+				},
+				"test" : {
+					"step" : {
+						"metrics" : {
+							"precondition" : true
+						}
+					}
+				}
+			}
+		}
+	]
+}
