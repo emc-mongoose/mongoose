@@ -93,8 +93,6 @@ implements DataItem {
 				"Invalid data item description: " + Arrays.toString(tokens)
 			);
 		}
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
 	}
 	//
 	public BasicDataItem(final long offset, final long size) {

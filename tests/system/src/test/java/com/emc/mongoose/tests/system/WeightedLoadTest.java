@@ -160,8 +160,8 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
-		concurrencyMap.put(IoType.CREATE, 100);
-		concurrencyMap.put(IoType.READ, 100);
+		concurrencyMap.put(IoType.CREATE, CONCURRENCY);
+		concurrencyMap.put(IoType.READ, CONCURRENCY);
 		final Map<IoType, Integer> weightsMap = new HashMap<>();
 		testMetricsTableStdout(STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}

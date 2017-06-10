@@ -31,7 +31,8 @@
 					"step" : {
 						"limit" : {
 							"count" : 1000000,
-							"size" : "1GB"
+							"size" : "1GB",
+							"time" : "50s"
 						}
 					}
 				}
@@ -42,7 +43,7 @@
 			"config" : {
 				"item" : {
 					"input" : {
-						"file" : "MetricsThresholdTest.csv"
+						"file" : "FileStorageMetricsThresholdTest.csv"
 					}
 				},
 				"load" : {
@@ -60,7 +61,7 @@
 						}
 					},
 					"input" : {
-						"file" : "MetricsThresholdTest.csv"
+						"file" : "FileStorageMetricsThresholdTest.csv"
 					}
 				},
 				"load" : {
@@ -73,7 +74,7 @@
 			"config" : {
 				"item" : {
 					"input" : {
-						"file" : "MetricsThresholdTest.csv"
+						"file" : "FileStorageMetricsThresholdTest.csv"
 					}
 				},
 				"load" : {
