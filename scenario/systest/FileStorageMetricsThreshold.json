@@ -20,6 +20,7 @@
 			"value" : "rm -f FileStorageMetricsThresholdTest.csv"
 		},
 		{
+			"type" : "load",
 			"config" : {
 				"item" : {
 					"output" : {
@@ -37,6 +38,7 @@
 			}
 		},
 		{
+			"type" : "load",
 			"config" : {
 				"item" : {
 					"input" : {
@@ -49,6 +51,7 @@
 			}
 		},
 		{
+			"type" : "load",
 			"config" : {
 				"item" : {
 					"data" : {
@@ -66,6 +69,7 @@
 			}
 		},
 		{
+			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"input" : {
@@ -78,13 +82,6 @@
 				"storage" : {
 					"driver" : {
 						"concurrency" : 50
-					}
-				},
-				"test" : {
-					"step" : {
-						"metrics" : {
-							"precondition" : true
-						}
 					}
 				}
 			}
