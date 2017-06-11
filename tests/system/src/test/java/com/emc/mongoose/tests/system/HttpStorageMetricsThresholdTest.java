@@ -77,6 +77,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords();
 		final List<CSVRecord> createMetricsRecs = new ArrayList<>();
 		final List<CSVRecord> readMetricsRecs = new ArrayList<>();
@@ -124,6 +127,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final List<CSVRecord> totalMetricsRecs = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalMetricsRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
@@ -142,6 +148,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final long period = CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod();
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
@@ -161,6 +170,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMedTotalMetricsLogFile()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		final List<CSVRecord> totalThresholdMetricsRecs = getMetricsMedTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalThresholdMetricsRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
@@ -179,6 +191,9 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testThresholdConditionMessagesInStdout()
 	throws Exception {
+		if(EXCLUDE_FLAG) {
+			return;
+		}
 		int n = 0;
 		Matcher m;
 		while(true) {
