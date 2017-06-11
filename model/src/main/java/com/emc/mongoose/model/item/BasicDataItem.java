@@ -52,46 +52,57 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(final String value) {
-		this(value.split(",", 4));
+		this(value, value.indexOf(','));
 	}
 	//
-	private BasicDataItem(final String tokens[]) {
-		super(tokens[0]);
-		if(tokens.length == 4) {
-			try {
-				offset(Long.parseLong(tokens[1], 0x10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
+	private BasicDataItem(final String value, final int firstCommaPos) {
+
+		super(value.substring(0, firstCommaPos));
+
+		int prevCommaPos = firstCommaPos;
+		int nextCommaPos = value.indexOf(',', prevCommaPos + 1);
+		if(nextCommaPos < prevCommaPos) {
+			throw new IllegalArgumentException("Invalid data item description: " + value);
+		}
+		final String offsetInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+		try {
+			offset(Long.parseLong(offsetInfo, 0x10));
+		} catch(final NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, offsetInfo));
+		}
+
+		prevCommaPos = nextCommaPos;
+		nextCommaPos = value.indexOf(',', prevCommaPos + 1);
+		if(nextCommaPos < prevCommaPos) {
+			throw new IllegalArgumentException("Invalid data item description: " + value);
+		}
+		final String sizeInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+		try {
+			truncate(Long.parseLong(sizeInfo, 10));
+		} catch(final NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, sizeInfo));
+		}
+
+		prevCommaPos = nextCommaPos;
+		final String rangesInfo = value.substring(prevCommaPos + 1);
+		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
+		try {
+			// extract hexadecimal layer number
+			layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
+			// extract hexadecimal mask, convert into bit set and add to the existing mask
+			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+			final char rangesMaskChars[];
+			if(rangesMask.length() == 0) {
+				rangesMaskChars = ("00" + rangesMask).toCharArray();
+			} else if(rangesMask.length() % 2 == 1) {
+				rangesMaskChars = ("0" + rangesMask).toCharArray();
+			} else {
+				rangesMaskChars = rangesMask.toCharArray();
 			}
-			try {
-				truncate(Long.parseLong(tokens[2], 10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
-			}
-			final String rangesInfo = tokens[3];
-			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
-			try {
-				// extract hexadecimal layer number
-				layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
-				// extract hexadecimal mask, convert into bit set and add to the existing mask
-				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
-				final char rangesMaskChars[];
-				if(rangesMask.length() == 0) {
-					rangesMaskChars = ("00" + rangesMask).toCharArray();
-				} else if(rangesMask.length() % 2 == 1) {
-					rangesMaskChars = ("0" + rangesMask).toCharArray();
-				} else {
-					rangesMaskChars = rangesMask.toCharArray();
-				}
-				// method "or" to merge w/ the existing mask
-				modifiedRangesMask.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
-			} catch(final DecoderException | NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
-			}
-		} else {
-			throw new IllegalArgumentException(
-				"Invalid data item description: " + Arrays.toString(tokens)
-			);
+			// method "or" to merge w/ the existing mask
+			modifiedRangesMask.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
+		} catch(final DecoderException | NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 		}
 	}
 	//

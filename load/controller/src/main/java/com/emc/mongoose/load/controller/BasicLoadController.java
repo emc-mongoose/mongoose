@@ -408,7 +408,7 @@ implements LoadController<I, O> {
 					if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
 						return false;
 					}
-				} else if(ioResultsOutput != null){
+				} else if(ioResultsOutput != null) {
 					try {
 						if(!ioResultsOutput.put(ioTaskResult)) {
 							return false;

@@ -16,7 +16,7 @@ import com.emc.mongoose.model.item.BasicDataItemFactory;
 import com.emc.mongoose.model.item.ItemNameSupplier;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.IoResultsItemInput;
+import com.emc.mongoose.model.item.IoResultsOutputItemInput;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemNamingType;
@@ -117,7 +117,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
-		if(!(itemInput instanceof IoResultsItemInput)) {
+		if(!(itemInput instanceof IoResultsOutputItemInput)) {
 			this.itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
 		}
 		return this;

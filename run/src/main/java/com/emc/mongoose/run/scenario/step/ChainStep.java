@@ -6,8 +6,8 @@ import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.model.item.BasicIoResultsItemInput;
-import com.emc.mongoose.model.item.IoResultsItemInput;
+import com.emc.mongoose.model.item.BasicIoResultsOutputItemInput;
+import com.emc.mongoose.model.item.IoResultsOutputItemInput;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
@@ -76,7 +76,7 @@ extends StepBase {
 		
 		try {
 			
-			IoResultsItemInput nextItemBuff = null;
+			IoResultsOutputItemInput nextItemBuff = null;
 			
 			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
@@ -146,7 +146,7 @@ extends StepBase {
 				loadChain.add(loadController);
 				
 				if(i < nodeConfigList.size() - 1) {
-					nextItemBuff = new BasicIoResultsItemInput<>(
+					nextItemBuff = new BasicIoResultsOutputItemInput<>(
 						queueConfig.getSize(), TimeUnit.SECONDS, outputConfig.getDelay()
 					);
 					loadController.setIoResultsOutput(nextItemBuff);

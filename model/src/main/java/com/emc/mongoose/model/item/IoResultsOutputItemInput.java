@@ -7,6 +7,6 @@ import com.emc.mongoose.model.io.task.IoTask;
 /**
  Created by kurila on 16.01.17.
  */
-public interface IoResultsItemInput<I extends Item, O extends IoTask<I>>
+public interface IoResultsOutputItemInput<I extends Item, O extends IoTask<I>>
 extends Input<I>, Output<O> {
 }

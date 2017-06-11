@@ -1,7 +1,6 @@
 package com.emc.mongoose.model.item;
 
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.collection.ListInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import static com.emc.mongoose.model.io.task.IoTask.START_OFFSET_MICROS;
 
@@ -16,8 +15,8 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 16.01.17.
  */
-public final class BasicIoResultsItemInput<I extends Item, O extends IoTask<I>>
-implements IoResultsItemInput<I, O> {
+public final class BasicIoResultsOutputItemInput<I extends Item, O extends IoTask<I>>
+implements IoResultsOutputItemInput<I, O> {
 	
 	private final List<O> ioResultsBuff;
 	private volatile int ioResultsBuffSize = 0;
@@ -26,7 +25,7 @@ implements IoResultsItemInput<I, O> {
 
 	private volatile boolean poisonedFlag = false;
 
-	public BasicIoResultsItemInput(
+	public BasicIoResultsOutputItemInput(
 		final int queueCapacity, final TimeUnit timeUnit, final long delay
 	) {
 		this.ioResultsBuff = new LinkedList<>();
