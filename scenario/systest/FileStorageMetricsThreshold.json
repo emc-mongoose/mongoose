@@ -42,6 +42,9 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
+					"data" : {
+						"verify" : true
+					},
 					"input" : {
 						"file" : "FileStorageMetricsThresholdTest.csv"
 					}

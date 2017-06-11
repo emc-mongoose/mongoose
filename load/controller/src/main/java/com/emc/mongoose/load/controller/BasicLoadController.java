@@ -431,7 +431,7 @@ implements LoadController<I, O> {
 				ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
 				counterResults.increment();
 			}
-		} else if(!Status.CANCELLED.equals(status)) {
+		} else if(!Status.INTERRUPTED.equals(status)) {
 			Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
 			ioTypeStats.markFail();
 			counterResults.increment();
@@ -525,7 +525,7 @@ implements LoadController<I, O> {
 					ioTypeStats.markSucc(countBytesDone, reqDuration, respLatency);
 					counterResults.increment();
 				}
-			} else if(!Status.CANCELLED.equals(status)) {
+			} else if(!Status.INTERRUPTED.equals(status)) {
 				Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
 				ioTypeStats.markFail();
 				counterResults.increment();

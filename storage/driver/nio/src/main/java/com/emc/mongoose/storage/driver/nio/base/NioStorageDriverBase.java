@@ -1,6 +1,9 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.io.task.IoTask.Status.ACTIVE;
+import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
+import static com.emc.mongoose.model.io.task.IoTask.Status.PENDING;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.common.collection.OptLockBuffer;
@@ -105,7 +108,7 @@ implements NioStorageDriver<I, O> {
 								for(int i = 0; i < ioTaskBuffSize; i ++) {
 									ioTask = ioTaskBuff.get(i);
 									// check if the task is invoked 1st time
-									if(IoTask.Status.PENDING.equals(ioTask.getStatus())) {
+									if(PENDING.equals(ioTask.getStatus())) {
 										// do not start the new task if the state is not more active
 										if(!isStarted()) {
 											continue;
@@ -122,7 +125,7 @@ implements NioStorageDriver<I, O> {
 									// perform non blocking I/O for the task
 									invokeNio(ioTask);
 									// remove the task from the buffer if it is not active more
-									if(!IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
+									if(!ACTIVE.equals(ioTask.getStatus())) {
 										concurrencyThrottle.release();
 										ioTaskCompleted(ioTask);
 									} else {
@@ -156,11 +159,11 @@ implements NioStorageDriver<I, O> {
 					Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
 					for(int i = 0; i < ioTaskBuffSize; i ++) {
 						ioTask = ioTaskBuff.get(i);
-						while(IoTask.Status.ACTIVE.equals(ioTask.getStatus())) {
-							invokeNio(ioTask);
+						if(ACTIVE.equals(ioTask.getStatus())) {
+							ioTask.setStatus(INTERRUPTED);
+							concurrencyThrottle.release();
+							ioTaskCompleted(ioTask);
 						}
-						concurrencyThrottle.release();
-						ioTaskCompleted(ioTask);
 					}
 					Loggers.MSG.debug("Finish the remaining active tasks done");
 				}

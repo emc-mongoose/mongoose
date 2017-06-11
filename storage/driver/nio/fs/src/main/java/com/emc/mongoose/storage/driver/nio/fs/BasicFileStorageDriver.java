@@ -262,7 +262,7 @@ implements FileStorageDriver<I, O> {
 			LogUtil.exception(Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.RESP_FAIL_AUTH);
 		} catch(final ClosedChannelException e) {
-			ioTask.setStatus(Status.CANCELLED);
+			ioTask.setStatus(Status.INTERRUPTED);
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, ioTask.toString());
 			ioTask.setStatus(Status.FAIL_IO);

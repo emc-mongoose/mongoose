@@ -12,7 +12,7 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
-import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
+import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
 import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
@@ -396,7 +396,7 @@ public abstract class LoggingTestBase {
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
 		assertTrue(
 			"Actual status code is " + IoTask.Status.values()[actualStatusCode],
-			actualStatusCode == CANCELLED.ordinal() || actualStatusCode == SUCC.ordinal()
+			actualStatusCode == INTERRUPTED.ordinal() || actualStatusCode == SUCC.ordinal()
 		);
 		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
 		final String latencyStr = ioTraceRecord.get("RespLatency[us]");

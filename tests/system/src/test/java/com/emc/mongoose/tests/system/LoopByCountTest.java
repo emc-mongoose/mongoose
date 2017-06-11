@@ -36,7 +36,7 @@ extends EnvConfiguredScenarioTestBase {
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 10));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_REMOTE, Arrays.asList(true));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(

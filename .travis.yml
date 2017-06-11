@@ -40,7 +40,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -48,7 +48,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -56,7 +56,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -64,7 +64,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -72,7 +72,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -80,7 +80,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -88,7 +88,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -96,7 +96,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -104,7 +104,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -112,7 +112,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -120,7 +120,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -128,7 +128,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -136,7 +136,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -144,7 +144,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -152,7 +152,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -160,7 +160,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -168,7 +168,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -176,7 +176,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -184,7 +184,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -192,7 +192,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -200,7 +200,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -208,7 +208,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -216,7 +216,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -224,7 +224,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -232,7 +232,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -240,7 +240,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -248,7 +248,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -256,7 +256,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -264,7 +264,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -272,7 +272,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -280,7 +280,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -288,7 +288,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -296,7 +296,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -304,7 +304,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -312,7 +312,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -320,7 +320,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -328,7 +328,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -336,7 +336,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -344,7 +344,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -352,7 +352,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=atmos
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -360,7 +360,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -368,7 +368,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -376,7 +376,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -384,135 +384,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=1
-      - ITEM_DATA_SIZE=100MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=10
-      - ITEM_DATA_SIZE=0
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=10
-      - ITEM_DATA_SIZE=10KB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=10
-      - ITEM_DATA_SIZE=1MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=10
-      - ITEM_DATA_SIZE=100MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=100
-      - ITEM_DATA_SIZE=0
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=100
-      - ITEM_DATA_SIZE=10KB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=100
-      - ITEM_DATA_SIZE=1MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=100
-      - ITEM_DATA_SIZE=100MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=1000
-      - ITEM_DATA_SIZE=0
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=1000
-      - ITEM_DATA_SIZE=10KB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=1000
-      - ITEM_DATA_SIZE=1MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=false
-      - STORAGE_DRIVER_CONCURRENCY=1000
-      - ITEM_DATA_SIZE=100MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
-      - STORAGE_DRIVER_CONCURRENCY=1
-      - ITEM_DATA_SIZE=0
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
-      - STORAGE_DRIVER_CONCURRENCY=1
-      - ITEM_DATA_SIZE=10KB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
-      - STORAGE_DRIVER_CONCURRENCY=1
-      - ITEM_DATA_SIZE=1MB
-      script: "./gradlew :tests:system:test"
-
-    - stage: "System tests"
-      env:
-      - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -520,7 +392,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -528,7 +400,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -536,7 +408,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -544,7 +416,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -552,7 +424,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -560,7 +432,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -568,7 +440,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -576,7 +448,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -584,7 +456,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -592,7 +464,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -600,7 +472,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -608,7 +480,135 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=fs
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -616,7 +616,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -624,7 +624,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -632,7 +632,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -640,7 +640,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -648,7 +648,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -656,7 +656,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -664,7 +664,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -672,7 +672,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -680,7 +680,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -688,7 +688,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -696,7 +696,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -704,7 +704,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -712,7 +712,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -720,7 +720,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -728,7 +728,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -736,7 +736,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -744,7 +744,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -752,7 +752,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -760,7 +760,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -768,7 +768,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -776,7 +776,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -784,7 +784,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -792,7 +792,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -800,7 +800,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -808,7 +808,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -816,7 +816,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -824,7 +824,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -832,7 +832,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -840,7 +840,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -848,7 +848,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -856,7 +856,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -864,7 +864,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -872,7 +872,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -880,7 +880,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -888,7 +888,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -896,7 +896,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -904,7 +904,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -912,7 +912,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -920,7 +920,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -928,7 +928,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=s3
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -936,7 +936,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -944,7 +944,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -952,7 +952,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -960,7 +960,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -968,7 +968,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -976,7 +976,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -984,7 +984,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -992,7 +992,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1000,7 +1000,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1008,7 +1008,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -1016,7 +1016,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -1024,7 +1024,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -1032,7 +1032,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1040,7 +1040,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1048,7 +1048,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -1056,7 +1056,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -1064,7 +1064,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -1072,7 +1072,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1080,7 +1080,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1088,7 +1088,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=false
+      - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -1096,7 +1096,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -1104,7 +1104,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -1112,7 +1112,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1120,7 +1120,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1128,7 +1128,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -1136,7 +1136,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -1144,7 +1144,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -1152,7 +1152,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1160,7 +1160,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1168,7 +1168,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -1176,7 +1176,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -1184,7 +1184,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -1192,7 +1192,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1200,7 +1200,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1208,7 +1208,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"
@@ -1216,7 +1216,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
       script: "./gradlew :tests:system:test"
@@ -1224,7 +1224,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
       script: "./gradlew :tests:system:test"
@@ -1232,7 +1232,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
       script: "./gradlew :tests:system:test"
@@ -1240,7 +1240,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
       script: "./gradlew :tests:system:test"
@@ -1248,7 +1248,7 @@ jobs:
     - stage: "System tests"
       env:
       - STORAGE_DRIVER_TYPE=swift
-      - STORAGE_DRIVER_REMOTE=true
+      - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
       script: "./gradlew :tests:system:test"

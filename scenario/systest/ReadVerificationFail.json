@@ -1,0 +1,62 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f ReadVerificationFailTest0.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "ReadVerificationFailTest0.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000000,
+							"size" : "1GB",
+							"time" : "50s"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 4
+						}
+					},
+					"input" : {
+						"file" : "ReadVerificationFailTest0.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"verify" : true
+					},
+					"input" : {
+						"file" : "ReadVerificationFailTest0.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

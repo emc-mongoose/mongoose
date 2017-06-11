@@ -36,7 +36,6 @@ import java.util.regex.Matcher;
 /**
  Created by andrey on 10.06.17.
  */
-@Ignore
 public class FileStorageMetricsThresholdTest
 extends EnvConfiguredScenarioTestBase {
 

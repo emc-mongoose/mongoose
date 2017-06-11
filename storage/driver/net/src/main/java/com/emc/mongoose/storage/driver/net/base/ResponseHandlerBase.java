@@ -5,7 +5,7 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
+import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 
@@ -59,7 +59,7 @@ extends SimpleChannelInboundHandler<M> {
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		if(ioTask != null) {
 			if(driver.isInterrupted() || driver.isClosed()) {
-				ioTask.setStatus(CANCELLED);
+				ioTask.setStatus(INTERRUPTED);
 			} else if(cause instanceof PrematureChannelClosureException) {
 				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
 				ioTask.setStatus(FAIL_IO);

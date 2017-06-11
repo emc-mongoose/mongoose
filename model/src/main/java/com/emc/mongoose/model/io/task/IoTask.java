@@ -23,7 +23,7 @@ extends Externalizable {
 	enum Status {
 		PENDING, // 0
 		ACTIVE, // 1
-		CANCELLED, // 2
+		INTERRUPTED, // 2
 		FAIL_UNKNOWN, // 3
 		SUCC, // 4
 		FAIL_IO, // 5

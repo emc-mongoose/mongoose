@@ -15,7 +15,6 @@ import com.emc.mongoose.ui.log.Loggers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +28,7 @@ extends ConfiguredTestBase {
 
 	// environment parameter names
 	public static final String KEY_ENV_STORAGE_DRIVER_TYPE = "STORAGE_DRIVER_TYPE";
-	public static final String KEY_ENV_STORAGE_DRIVER_REMOTE = "STORAGE_DRIVER_REMOTE";
+	public static final String KEY_ENV_STORAGE_DRIVER_COUNT = "STORAGE_DRIVER_COUNT";
 	public static final String KEY_ENV_STORAGE_DRIVER_CONCURRENCY = "STORAGE_DRIVER_CONCURRENCY";
 	public static final String KEY_ENV_ITEM_DATA_SIZE = "ITEM_DATA_SIZE";
 
@@ -45,7 +44,7 @@ extends ConfiguredTestBase {
 
 	protected static Map<String, Daemon> HTTP_STORAGE_MOCKS = null;
 	protected static final int HTTP_STORAGE_NODE_COUNT = 1;
-	protected static int STORAGE_DRIVERS_COUNT = 1;
+	protected static int STORAGE_DRIVERS_COUNT;
 	private static List<StorageDriverBuilderSvc> STORAGE_DRIVER_BUILDER_SVCS = null;
 	protected static final String STORAGE_TYPE_FS = "fs";
 	protected static final String STORAGE_TYPE_ATMOS = "atmos";
@@ -68,16 +67,15 @@ extends ConfiguredTestBase {
 		STORAGE_DRIVER_TYPE = System.getenv(KEY_ENV_STORAGE_DRIVER_TYPE);
 		checkExclusionAndSetFlag(KEY_ENV_STORAGE_DRIVER_TYPE, STORAGE_DRIVER_TYPE);
 
-		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_REMOTE)) {
+		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_COUNT)) {
 			throw new IllegalArgumentException(
-				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_REMOTE +
+				"Environment property w/ name \"" + KEY_ENV_STORAGE_DRIVER_COUNT +
 					"\" is not defined"
 			);
 		}
-		DISTRIBUTED_MODE_FLAG = Boolean.parseBoolean(
-			System.getenv(KEY_ENV_STORAGE_DRIVER_REMOTE)
-		);
-		checkExclusionAndSetFlag(KEY_ENV_STORAGE_DRIVER_REMOTE, DISTRIBUTED_MODE_FLAG);
+		STORAGE_DRIVERS_COUNT = Integer.parseInt(System.getenv(KEY_ENV_STORAGE_DRIVER_COUNT));
+		DISTRIBUTED_MODE_FLAG = STORAGE_DRIVERS_COUNT > 1;
+		checkExclusionAndSetFlag(KEY_ENV_STORAGE_DRIVER_COUNT, DISTRIBUTED_MODE_FLAG);
 
 		if(!env.containsKey(KEY_ENV_STORAGE_DRIVER_CONCURRENCY)) {
 			throw new IllegalArgumentException(
@@ -184,7 +182,6 @@ extends ConfiguredTestBase {
 	private static void setUpDistributedModeIfNeeded()
 	throws Exception {
 		if(DISTRIBUTED_MODE_FLAG) {
-			STORAGE_DRIVERS_COUNT = 2;
 			STORAGE_DRIVER_BUILDER_SVCS = new ArrayList<>(STORAGE_DRIVERS_COUNT);
 			final DriverConfig driverConfig = CONFIG.getStorageConfig().getDriverConfig();
 			final List<String> storageDriverAddrs = new ArrayList<>(STORAGE_DRIVERS_COUNT);
