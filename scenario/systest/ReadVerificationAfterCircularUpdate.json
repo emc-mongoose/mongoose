@@ -3,7 +3,7 @@
 	"steps" : [
 		{
 			"type" : "command",
-			"value" : "rm -f ReadVerificationAfterUpdateTest0.csv ReadVerificationAfterUpdateTest1.csv"
+			"value" : "rm -f ReadVerificationAfterUpdateTest0.csv ReadVerificationAfterCircularUpdateTest1.csv"
 		},
 		{
 			"type" : "precondition",
@@ -16,9 +16,7 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 1000000,
-							"size" : "1GB",
-							"time" : "50s"
+							"count" : 1000
 						}
 					}
 				}
@@ -41,7 +39,15 @@
 					}
 				},
 				"load" : {
-					"type" : "update"
+					"type" : "update",
+					"circular" : true
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "3m"
+						}
+					}
 				}
 			}
 		},

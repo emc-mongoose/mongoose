@@ -24,6 +24,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -133,18 +134,14 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testFinishedInTime()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		assertTrue(FINISHED_IN_TIME);
 	}
 	
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -156,9 +153,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -169,9 +164,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -186,9 +179,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(EXPECTED_COUNT, ioTraceRecords.size());
 		final String nodeAddr = HTTP_STORAGE_MOCKS.keySet().iterator().next();
@@ -204,9 +195,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoBufferSizeAdjustment()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		String msg = "Adjust output buffer size: " + ITEM_DATA_SIZE.toString();
 		int k;
 		for(int i = 0; i < STORAGE_DRIVERS_COUNT; i ++) {
@@ -222,9 +211,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testItemsOutputFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);

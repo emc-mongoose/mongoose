@@ -18,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -98,9 +99,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testActualConcurrencyCount()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final int expectedConcurrency = STORAGE_DRIVERS_COUNT * CONCURRENCY;
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
@@ -125,9 +124,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testStdOutput()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testMetricsTableStdout(
 			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
 			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}

@@ -12,6 +12,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -29,22 +30,26 @@ import static org.junit.Assume.assumeFalse;
 /**
  Created by andrey on 12.06.17.
  */
-public class ReadVerificationDisableTest
+@Ignore
+public class ReadVerificationAfterCircularUpdateTest
 extends EnvConfiguredScenarioTestBase {
 
 	private static String ITEM_OUTPUT_PATH;
 	private static String STD_OUTPUT;
 
 	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+			Arrays.asList(
+				new SizeInBytes(0), new SizeInBytes("1MB"), new SizeInBytes("100MB"),
+				new SizeInBytes("10GB")
+			)
 		);
-		STEP_NAME = ReadVerificationDisableTest.class.getSimpleName();
+		STEP_NAME = ReadVerificationAfterCircularUpdateTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationDisable.json"
+			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationAfterCircularUpdate.json"
 		);
 	}
 

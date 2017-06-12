@@ -17,6 +17,7 @@ import org.junit.Test;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -76,18 +77,14 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testDuration()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, ACTUAL_TEST_TIME, 25);
 	}
 
 	@Test
 	public final void testTotalMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
 		for(final CSVRecord totalRec : totalRecs) {

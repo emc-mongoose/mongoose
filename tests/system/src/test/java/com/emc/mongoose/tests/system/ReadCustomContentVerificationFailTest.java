@@ -12,6 +12,7 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
@@ -87,9 +88,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		CSVRecord csvRecord;
 		for(int i = 0; i < ioTraceRecords.size(); i ++) {

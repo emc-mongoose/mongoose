@@ -35,6 +35,7 @@ import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 /**
  Created by andrey on 07.06.17.
@@ -108,9 +109,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, EXPECTED_TIME,
@@ -121,9 +120,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
@@ -134,9 +131,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -151,9 +146,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(ioTraceRecords.size() > 0);
 		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
@@ -165,9 +158,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testUpdatedItemsListFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader("UpdateUsingInputFileLimitByTimeTest_.csv"))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -69,9 +70,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testTotalMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
 	}

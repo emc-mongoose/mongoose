@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -140,26 +141,20 @@ extends EnvConfiguredScenarioTestBase {
 	
 	@Test
 	public void testFinishedInTime() {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
 	@Test
 	public void testActualConcurrency() {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		assertEquals(2 * STORAGE_DRIVERS_COUNT * CONCURRENCY, ACTUAL_CONCURRENCY, 5);
 	}
 	
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, CONCURRENCY);
 		concurrencyMap.put(IoType.READ, CONCURRENCY);

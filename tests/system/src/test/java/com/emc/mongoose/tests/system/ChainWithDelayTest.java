@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -104,18 +105,14 @@ extends EnvConfiguredScenarioTestBase {
 	
 	@Test
 	public void testFinishedInTime() {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 	
 	@Test
 	public void testIoTraceFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final Map<String, Long> timingMap = new HashMap<>();
 		String storageNode;
 		String itemPath;

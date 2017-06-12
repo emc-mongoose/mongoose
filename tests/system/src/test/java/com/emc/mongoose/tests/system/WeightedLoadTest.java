@@ -16,15 +16,19 @@ import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-
+import org.hamcrest.core.IsEqual;
+import org.hamcrest.core.IsNot;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -139,26 +143,21 @@ extends EnvConfiguredScenarioTestBase {
 
 	@Test
 	public void testFinishedInTime() {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
 	@Test
 	public void testActualConcurrency() {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
+		assumeThat(STORAGE_DRIVER_TYPE, not(equalTo(STORAGE_TYPE_FS)));
 		assertEquals(2 * STORAGE_DRIVERS_COUNT * CONCURRENCY, ACTUAL_CONCURRENCY, 5);
 	}
 
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, CONCURRENCY);
 		concurrencyMap.put(IoType.READ, CONCURRENCY);

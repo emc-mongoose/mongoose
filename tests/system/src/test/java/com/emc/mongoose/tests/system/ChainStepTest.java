@@ -10,6 +10,7 @@ import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static org.junit.Assume.assumeFalse;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
@@ -96,9 +97,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testStdOutput()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		testMetricsTableStdout(
 			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, COUNT_LIMIT,
 			new HashMap<IoType, Integer>() {{
@@ -114,9 +113,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testTotalMetricsLogFile()
 	throws Exception {
-		if(EXCLUDE_FLAG) {
-			return;
-		}
+		assumeFalse(EXCLUDE_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
