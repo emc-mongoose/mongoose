@@ -28,9 +28,7 @@
 				"item" : {
 					"data" : {
 						"ranges" : {
-							"fixed" : [
-								"-${ITEM_DATA_SIZE}-"
-							]
+							"fixed" : "-${ITEM_DATA_SIZE}-"
 						}
 					},
 					"input" : {

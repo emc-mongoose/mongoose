@@ -30,7 +30,6 @@ import static org.junit.Assume.assumeFalse;
 /**
  Created by andrey on 12.06.17.
  */
-@Ignore
 public class ReadVerificationAfterCircularUpdateTest
 extends EnvConfiguredScenarioTestBase {
 
@@ -38,7 +37,8 @@ extends EnvConfiguredScenarioTestBase {
 	private static String STD_OUTPUT;
 
 	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
+		// exclude atmos as far as storage mock is unable to get the data item offset from its id
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,

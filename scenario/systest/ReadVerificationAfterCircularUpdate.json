@@ -3,14 +3,14 @@
 	"steps" : [
 		{
 			"type" : "command",
-			"value" : "rm -f ReadVerificationAfterUpdateTest0.csv ReadVerificationAfterCircularUpdateTest1.csv"
+			"value" : "rm -f ReadVerificationAfterCircularUpdateTest0.csv ReadVerificationAfterCircularUpdateTest1.csv"
 		},
 		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "ReadVerificationAfterUpdateTest0.csv"
+						"file" : "ReadVerificationAfterCircularUpdateTest0.csv"
 					}
 				},
 				"test" : {
@@ -32,10 +32,10 @@
 						}
 					},
 					"input" : {
-						"file" : "ReadVerificationAfterUpdateTest0.csv"
+						"file" : "ReadVerificationAfterCircularUpdateTest0.csv"
 					},
 					"output" : {
-						"file" : "ReadVerificationAfterUpdateTest1.csv"
+						"file" : "ReadVerificationAfterCircularUpdateTest1.csv"
 					}
 				},
 				"load" : {
@@ -45,11 +45,15 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"time" : "3m"
+							"time" : "1m"
 						}
 					}
 				}
 			}
+		},
+		{
+			"type" : "command",
+			"value" : "sleep 5"
 		},
 		{
 			"type" : "load",
@@ -59,7 +63,7 @@
 						"verify" : true
 					},
 					"input" : {
-						"file" : "ReadVerificationAfterUpdateTest1.csv"
+						"file" : "ReadVerificationAfterCircularUpdateTest1.csv"
 					}
 				},
 				"load" : {

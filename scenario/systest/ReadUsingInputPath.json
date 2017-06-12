@@ -1,0 +1,46 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"output" : {
+				"path" : "/default"
+			}
+		},
+		"storage" : {
+			"net" : {
+				"http" : {
+					"namespace" : "ns1"
+				}
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 200000,
+							"size" : "200GB",
+							"time" : "3m"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"input" : {
+						"path" : "/default"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

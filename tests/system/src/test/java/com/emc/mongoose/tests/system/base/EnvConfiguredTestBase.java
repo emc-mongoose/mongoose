@@ -43,7 +43,7 @@ extends ConfiguredTestBase {
 	protected static boolean EXCLUDE_FLAG = false;
 
 	protected static Map<String, Daemon> HTTP_STORAGE_MOCKS = null;
-	protected static final int HTTP_STORAGE_NODE_COUNT = 1;
+	protected static int HTTP_STORAGE_NODE_COUNT = 1;
 	protected static int STORAGE_DRIVERS_COUNT;
 	private static List<StorageDriverBuilderSvc> STORAGE_DRIVER_BUILDER_SVCS = null;
 	protected static final String STORAGE_TYPE_FS = "fs";
