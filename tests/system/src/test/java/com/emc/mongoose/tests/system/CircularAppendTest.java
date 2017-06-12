@@ -76,7 +76,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		STEP_NAME = CircularAppendTest.class.getSimpleName();
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--storage-driver-net-http-namespace=ns1");
+		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(EXCLUDE_FLAG) {
 			return;
