@@ -206,8 +206,8 @@ extends EnvConfiguredScenarioTestBase {
 		long itemOffset;
 		long itemSize;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			(EXPECTED_APPEND_COUNT - EXPECTED_APPEND_COUNT / 10) * ITEM_DATA_SIZE.get(),
-			(EXPECTED_APPEND_COUNT + EXPECTED_APPEND_COUNT / 10) * ITEM_DATA_SIZE.get(),
+			(EXPECTED_APPEND_COUNT - EXPECTED_APPEND_COUNT / 4) * ITEM_DATA_SIZE.get(),
+			(EXPECTED_APPEND_COUNT + EXPECTED_APPEND_COUNT / 4) * ITEM_DATA_SIZE.get(),
 			1
 		);
 		for(final CSVRecord itemRec : items) {

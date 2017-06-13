@@ -325,7 +325,7 @@ public abstract class LoggingTestBase {
 		assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
 		if(
-			expectedItemDataSize.get() > 0 &&
+			expectedMaxCount > 0 && expectedItemDataSize.get() > 0 &&
 				(
 					IoType.CREATE.equals(expectedIoType) || IoType.READ.equals(expectedIoType) ||
 						IoType.UPDATE.equals(expectedIoType)
@@ -336,8 +336,8 @@ public abstract class LoggingTestBase {
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
 			assertEquals(expectedMaxCount, countSucc);
+			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
-		assertTrue(Long.toString(countSucc), countSucc > 0);
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		assertTrue(Long.toString(countFail), countFail < 1);
 		final long avgItemSize = totalBytes / countSucc;
@@ -394,9 +394,12 @@ public abstract class LoggingTestBase {
 	) throws Exception {
 		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
-		assertTrue(
+		if(INTERRUPTED.ordinal() == actualStatusCode) {
+			return;
+		}
+		assertEquals(
 			"Actual status code is " + IoTask.Status.values()[actualStatusCode],
-			actualStatusCode == INTERRUPTED.ordinal() || actualStatusCode == SUCC.ordinal()
+			SUCC.ordinal(), actualStatusCode
 		);
 		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
 		final String latencyStr = ioTraceRecord.get("RespLatency[us]");
@@ -430,7 +433,6 @@ public abstract class LoggingTestBase {
 			respLatency = Long.parseLong(rec.get("RespLatency[us]"));
 			assertTrue(respLatency > 0);
 		}
-
 	}
 	
 	protected static void testSingleMetricsStdout(

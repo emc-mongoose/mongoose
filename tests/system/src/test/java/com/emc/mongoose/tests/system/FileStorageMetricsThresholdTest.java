@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
 public class FileStorageMetricsThresholdTest
 extends EnvConfiguredScenarioTestBase {
 
-	private static final double LOAD_THRESHOLD = 0.8;
+	private static final double LOAD_THRESHOLD = 0.1;
 	private static final int RANDOM_RANGES_COUNT = 10;
 
 	private static String ITEM_OUTPUT_PATH;
@@ -51,7 +51,10 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+			Arrays.asList(
+				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("100MB"),
+				new SizeInBytes("10GB")
+			)
 		);
 		STEP_NAME = FileStorageMetricsThresholdTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
