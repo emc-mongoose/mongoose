@@ -68,7 +68,6 @@ extends EnvConfiguredScenarioTestBase {
 	private static final String ITEM_OUTPUT_FILE_1 = "CircularAppendTest1.csv";
 
 	private static String STD_OUTPUT;
-	private static boolean FINISHED_IN_TIME;
 	private static String ITEM_OUTPUT_PATH;
 
 	@BeforeClass
@@ -88,22 +87,10 @@ extends EnvConfiguredScenarioTestBase {
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		final Thread runner = new Thread(
-			() -> {
-				try {
-					STD_OUT_STREAM.startRecording();
-					SCENARIO.run();
-					STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-				} catch(final Throwable t) {
-					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
-				}
-			}
-		);
-		runner.start();
-		TimeUnit.SECONDS.timedJoin(runner, 65);
-		FINISHED_IN_TIME = !runner.isAlive();
-		runner.interrupt();
-		LoadJobLogFileManager.flush(STEP_NAME);
+		STD_OUT_STREAM.startRecording();
+		SCENARIO.run();
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+		LoadJobLogFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
@@ -120,12 +107,6 @@ extends EnvConfiguredScenarioTestBase {
 			}
 		}
 		EnvConfiguredScenarioTestBase.tearDownClass();
-	}
-
-	@Test
-	public void testFinishedInTime() {
-		assumeFalse(EXCLUDE_FLAG);
-		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
 	@Test
@@ -206,9 +187,7 @@ extends EnvConfiguredScenarioTestBase {
 		long itemOffset;
 		long itemSize;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			(EXPECTED_APPEND_COUNT - EXPECTED_APPEND_COUNT / 4) * ITEM_DATA_SIZE.get(),
-			(EXPECTED_APPEND_COUNT + EXPECTED_APPEND_COUNT / 4) * ITEM_DATA_SIZE.get(),
-			1
+			ITEM_DATA_SIZE.get(), 2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get(), 1
 		);
 		for(final CSVRecord itemRec : items) {
 			itemPath = itemRec.get(0);

@@ -1,0 +1,31 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"ranges" : {
+					"threshold" : "10MB"
+				}
+			}
+		},
+		"load" : {
+			"batch" : {
+				"size" : 1
+			}
+		},
+		"storage" : {
+			"net" : {
+				"http" : {
+					"namespace" : "ns1"
+				}
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"size" : "100GB"
+				}
+			}
+		}
+	}
+}
