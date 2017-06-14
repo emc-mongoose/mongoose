@@ -98,7 +98,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to send the I/O config");
 			}
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
-				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
+				String.format("//%s:%d/%s", addr, ServiceUtil.REGISTRY_PORT, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}

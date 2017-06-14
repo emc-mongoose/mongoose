@@ -6,14 +6,13 @@
 				"container" : "circular-update"
 			},
 			"data" : {
-				"size" : "1KB"
+				"size" : 4
 			}
 		},
 		"load" : {
 			"limit" : {
-				"count" : 1000
-			},
-			"threads" : 10
+				"count" : 1
+			}
 		}
 	},
 	"jobs" : [
@@ -33,7 +32,7 @@
 				"item" : {
 					"data" : {
 						// partial write or random ranges update
-						"ranges" : 5
+						"ranges" : 2
 					},
 					"src" : {
 						"file" : "circular-update.csv"

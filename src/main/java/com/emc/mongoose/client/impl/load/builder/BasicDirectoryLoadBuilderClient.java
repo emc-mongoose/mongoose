@@ -83,7 +83,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
-				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
+				String.format("//%s:%d/%s", addr, ServiceUtil.REGISTRY_PORT, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
