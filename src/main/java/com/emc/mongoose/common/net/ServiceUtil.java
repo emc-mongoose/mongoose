@@ -82,12 +82,18 @@ public abstract class ServiceUtil {
 		REGISTRY_LOCK.lock();
 		try {
 			if(REGISTRY == null) {
+				int rmiRegPort = Registry.REGISTRY_PORT;
+				final String rmiRegPortText = System.getenv("RMI_REGISTRY_PORT");
 				try {
-					REGISTRY = LocateRegistry.createRegistry(1099);
+					rmiRegPort = Integer.parseInt(rmiRegPortText);
+				} catch(final Exception ignored) {
+				}
+				try {
+					REGISTRY = LocateRegistry.createRegistry(rmiRegPort);
 					LOG.debug(Markers.MSG, "RMI registry created");
 				} catch(final RemoteException e) {
 					try {
-						REGISTRY = LocateRegistry.getRegistry(1099);
+						REGISTRY = LocateRegistry.getRegistry(rmiRegPort);
 						LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 					} catch(final RemoteException ee) {
 						LOG.fatal(Markers.ERR, "Failed to obtain a RMI registry", ee);
@@ -198,6 +204,7 @@ public abstract class ServiceUtil {
 				}
 			} catch(final RemoteException e) {
 				LOG.error(Markers.ERR, "Failed to rebind the service", e);
+				e.printStackTrace();
 			} catch(final MalformedURLException e) {
 				LOG.error(Markers.ERR, "Invailid service URL: \"{}\"", svcUri);
 			}
