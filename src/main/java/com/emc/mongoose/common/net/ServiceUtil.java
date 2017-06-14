@@ -53,6 +53,7 @@ public abstract class ServiceUtil {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static Registry REGISTRY = null;
+	private static int REGISTRY_PORT = Registry.REGISTRY_PORT;
 	private final static Lock REGISTRY_LOCK = new ReentrantLock();
 	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 	private final static Map<Integer, MBeanServer> MBEAN_SERVERS = new ConcurrentHashMap<>();
@@ -82,18 +83,17 @@ public abstract class ServiceUtil {
 		REGISTRY_LOCK.lock();
 		try {
 			if(REGISTRY == null) {
-				int rmiRegPort = Registry.REGISTRY_PORT;
 				final String rmiRegPortText = System.getenv("RMI_REGISTRY_PORT");
 				try {
-					rmiRegPort = Integer.parseInt(rmiRegPortText);
+					REGISTRY_PORT = Integer.parseInt(rmiRegPortText);
 				} catch(final Exception ignored) {
 				}
 				try {
-					REGISTRY = LocateRegistry.createRegistry(rmiRegPort);
+					REGISTRY = LocateRegistry.createRegistry(REGISTRY_PORT);
 					LOG.debug(Markers.MSG, "RMI registry created");
 				} catch(final RemoteException e) {
 					try {
-						REGISTRY = LocateRegistry.getRegistry(rmiRegPort);
+						REGISTRY = LocateRegistry.getRegistry(REGISTRY_PORT);
 						LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 					} catch(final RemoteException ee) {
 						LOG.fatal(Markers.ERR, "Failed to obtain a RMI registry", ee);
@@ -184,7 +184,7 @@ public abstract class ServiceUtil {
 		//final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		Remote stub = null;
 		try {
-			stub = UnicastRemoteObject.exportObject(svc, 0);
+			stub = UnicastRemoteObject.exportObject(svc, REGISTRY_PORT);
 			LOG.debug(Markers.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
 			LogUtil.exception(
@@ -223,7 +223,7 @@ public abstract class ServiceUtil {
 	public static String getSvcUrl(final String name) {
 		final String rmiHostName = System.getProperty(ServiceUtil.KEY_RMI_HOSTNAME);
 		return "//" + (rmiHostName == null ? getHostAddr() : rmiHostName) +
-			"/" + name;
+			":" + REGISTRY_PORT + "/" + name;
 	}
 
 	/**
