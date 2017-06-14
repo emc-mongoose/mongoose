@@ -64,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
@@ -83,7 +83,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testSteps()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final Matcher m = PTRN_LOOP_STEP_MSG.matcher(STD_OUTPUT);
 		double nextExpectedStepVal = EXPECTED_LOOP_START_VALUE;
 		while(m.find()) {

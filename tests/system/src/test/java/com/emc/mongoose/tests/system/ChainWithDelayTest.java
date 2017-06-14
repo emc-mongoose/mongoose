@@ -70,7 +70,7 @@ extends EnvConfiguredScenarioTestBase {
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
@@ -105,14 +105,14 @@ extends EnvConfiguredScenarioTestBase {
 	
 	@Test
 	public void testFinishedInTime() {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 	
 	@Test
 	public void testIoTraceFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final Map<String, Long> timingMap = new HashMap<>();
 		String storageNode;
 		String itemPath;

@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 		CONFIG_ARGS.add("--item-output-path=/default");
 		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
@@ -70,7 +70,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
 	}

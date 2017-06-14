@@ -57,7 +57,7 @@ extends EnvConfiguredScenarioTestBase {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-step-limit-count=" + COUNT_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		switch(STORAGE_DRIVER_TYPE) {
@@ -82,7 +82,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 				try {
 					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
@@ -97,7 +97,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testStdOutput()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testMetricsTableStdout(
 			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, COUNT_LIMIT,
 			new HashMap<IoType, Integer>() {{
@@ -113,7 +113,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
