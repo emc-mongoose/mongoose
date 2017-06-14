@@ -69,7 +69,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	protected FileLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
 		FileLoadBuilderSvc<T, W> rlb;
-		final String svcUri = "//" + serverAddr + '/' +
+		final String svcUri = "//" + serverAddr + ':' + ServiceUtil.REGISTRY_PORT + '/' +
 			getClass().getName().replace("client", "server").replace("Client", "Svc");
 		rlb = (FileLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
 		rlb = (FileLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());

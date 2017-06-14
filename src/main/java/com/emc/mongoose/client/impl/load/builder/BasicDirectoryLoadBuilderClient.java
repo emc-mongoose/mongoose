@@ -54,7 +54,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	protected DirectoryLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
 		DirectoryLoadBuilderSvc<T, C, W> rlb;
-		final String svcUri = "//" + serverAddr + '/' +
+		final String svcUri = "//" + serverAddr + ':' + ServiceUtil.REGISTRY_PORT + '/' +
 			getClass().getName().replace("client", "server").replace("Client", "Svc");
 		rlb = (DirectoryLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
 		rlb = (DirectoryLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());

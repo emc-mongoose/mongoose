@@ -73,7 +73,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 				nextMixedLoadSvc = remoteLoadMap.get(svcAddr);
 				nextWrappedLoadSvcName = nextMixedLoadSvc.getWrappedLoadSvcNameFor(nextLoadType);
 				nextWrappedLoadSvc = (FileLoadSvc<F>) ServiceUtil
-					.getRemoteSvc("//" + svcAddr + "/" + nextWrappedLoadSvcName);
+					.getRemoteSvc("//" + svcAddr + ':' + ServiceUtil.REGISTRY_PORT + "/" + nextWrappedLoadSvcName);
 				nextRemoteLoadMap.put(svcAddr, nextWrappedLoadSvc);
 			}
 			//

@@ -56,7 +56,7 @@ implements HttpContainerLoadBuilderClient<T, C, W, U> {
 	protected HttpContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
 		HttpContainerLoadBuilderSvc<T, C, W> rlb;
-		final String svcUri = "//" + serverAddr + '/' +
+		final String svcUri = "//" + serverAddr + ':' + ServiceUtil.REGISTRY_PORT + '/' +
 			getClass().getName().replace("client", "server").replace("Client", "Svc");
 		rlb = (HttpContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
 		rlb = (HttpContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());

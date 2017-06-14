@@ -53,7 +53,7 @@ public abstract class ServiceUtil {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static Registry REGISTRY = null;
-	private static int REGISTRY_PORT = Registry.REGISTRY_PORT;
+	public static int REGISTRY_PORT = Registry.REGISTRY_PORT;
 	private final static Lock REGISTRY_LOCK = new ReentrantLock();
 	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 	private final static Map<Integer, MBeanServer> MBEAN_SERVERS = new ConcurrentHashMap<>();

@@ -67,7 +67,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	protected HttpDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
 		HttpDataLoadBuilderSvc<T, W> rlb;
-		final String svcUri = "//" + serverAddr + '/' +
+		final String svcUri = "//" + serverAddr + ':' + ServiceUtil.REGISTRY_PORT + '/' +
 			getClass().getName().replace("client", "server").replace("Client", "Svc");
 		rlb = (HttpDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
 		rlb = (HttpDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());

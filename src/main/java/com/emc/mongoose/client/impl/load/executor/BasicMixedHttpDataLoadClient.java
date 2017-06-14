@@ -80,7 +80,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 				nextMixedLoadSvc = remoteLoadMap.get(svcAddr);
 				nextWrappedLoadSvcName = nextMixedLoadSvc.getWrappedLoadSvcNameFor(nextLoadType);
 				nextWrappedLoadSvc = (HttpDataLoadSvc<T>) ServiceUtil
-					.getRemoteSvc("//" + svcAddr + "/" + nextWrappedLoadSvcName);
+					.getRemoteSvc("//" + svcAddr + ':' + ServiceUtil.REGISTRY_PORT + "/" + nextWrappedLoadSvcName);
 				nextRemoteLoadMap.put(svcAddr, nextWrappedLoadSvc);
 			}
 			//
