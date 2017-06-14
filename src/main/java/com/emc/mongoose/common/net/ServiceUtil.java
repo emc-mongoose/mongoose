@@ -204,7 +204,6 @@ public abstract class ServiceUtil {
 				}
 			} catch(final RemoteException e) {
 				LOG.error(Markers.ERR, "Failed to rebind the service", e);
-				e.printStackTrace();
 			} catch(final MalformedURLException e) {
 				LOG.error(Markers.ERR, "Invailid service URL: \"{}\"", svcUri);
 			}
