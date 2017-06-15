@@ -3,6 +3,7 @@ import groovy.json.JsonSlurper
 import de.gesellix.gradle.docker.tasks.*
 
 buildscript {
+
 	repositories {
 		jcenter {
 			url "http://jcenter.bintray.com/"
@@ -15,6 +16,7 @@ buildscript {
 			}
 		}
 	}
+
 	dependencies {
 		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
 		classpath "com.google.gradle:osdetector-gradle-plugin:1.4.0"
