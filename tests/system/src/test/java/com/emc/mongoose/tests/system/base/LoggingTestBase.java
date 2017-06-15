@@ -213,7 +213,7 @@ public abstract class LoggingTestBase {
 			}
 			lastTimeStamp = nextDateTimeStamp;
 			ioTypeStr = nextRecord.get("TypeLoad").toUpperCase();
-			assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
+			assertEquals(expectedIoType.name(), ioTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals(
 				"Expected concurrency level: " + expectedConcurrency, expectedConcurrency,

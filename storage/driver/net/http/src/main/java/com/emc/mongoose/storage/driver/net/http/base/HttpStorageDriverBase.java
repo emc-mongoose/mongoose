@@ -5,7 +5,6 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.BatchSupplier;
 import com.emc.mongoose.common.supply.async.AsyncPatternDefinedSupplier;
 import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -25,8 +24,6 @@ import com.emc.mongoose.model.item.PathItem;
 import com.emc.mongoose.model.item.TokenItem;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
-import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
-import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -405,11 +402,7 @@ implements HttpStorageDriver<I, O> {
 	) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
-		final IoType ioType = ioTask.getIoType();
-		final I item = ioTask.getItem();
-		
 		try {
-
 			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 			if(channel == null) {
 				return;
@@ -421,130 +414,7 @@ implements HttpStorageDriver<I, O> {
 					);
 				}
 			}
-
-			if(IoType.CREATE.equals(ioType)) {
-				if(item instanceof DataItem) {
-					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-					if(!(dataIoTask instanceof CompositeDataIoTask)) {
-						final DataItem dataItem = (DataItem) item;
-						final String srcPath = dataIoTask.getSrcPath();
-						if(null == srcPath || srcPath.isEmpty()) {
-							if(sslFlag) {
-								channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
-							} else {
-								channel.write(new DataItemFileRegion(dataItem));
-							}
-						}
-						dataIoTask.setCountBytesDone(dataItem.size());
-					}
-				}
-			} else if(IoType.UPDATE.equals(ioType)) {
-				if(item instanceof DataItem) {
-					
-					final DataItem dataItem = (DataItem) item;
-					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-						// random range update case
-						final BitSet updRangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
-						final int rangeCount = getRangeCount(dataItem.size());
-						DataItem updatedRange;
-						if(sslFlag) {
-							// current layer updates first
-							for(int i = 0; i < rangeCount; i ++) {
-								if(updRangesMaskPair[0].get(i)) {
-									dataIoTask.setCurrRangeIdx(i);
-									updatedRange = dataIoTask.getCurrRangeUpdate();
-									channel.write(
-										new SeekableByteChannelChunkedNioStream(updatedRange)
-									);
-								}
-							}
-							// then next layer updates if any
-							for(int i = 0; i < rangeCount; i ++) {
-								if(updRangesMaskPair[1].get(i)) {
-									dataIoTask.setCurrRangeIdx(i);
-									updatedRange = dataIoTask.getCurrRangeUpdate();
-									channel.write(
-										new SeekableByteChannelChunkedNioStream(updatedRange)
-									);
-								}
-							}
-						} else {
-							// current layer updates first
-							for(int i = 0; i < rangeCount; i ++) {
-								if(updRangesMaskPair[0].get(i)) {
-									dataIoTask.setCurrRangeIdx(i);
-									updatedRange = dataIoTask.getCurrRangeUpdate();
-									channel.write(new DataItemFileRegion(updatedRange));
-								}
-							}
-							// then next layer updates if any
-							for(int i = 0; i < rangeCount; i ++) {
-								if(updRangesMaskPair[1].get(i)) {
-									dataIoTask.setCurrRangeIdx(i);
-									updatedRange = dataIoTask.getCurrRangeUpdate();
-									channel.write(new DataItemFileRegion(updatedRange));
-								}
-							}
-						}
-						dataItem.commitUpdatedRanges(dataIoTask.getMarkedRangesMaskPair());
-					} else { // append case
-						final long baseItemSize = dataItem.size();
-						long beg;
-						long end;
-						long size;
-						if(sslFlag) {
-							for(final ByteRange fixedByteRange : fixedByteRanges) {
-								beg = fixedByteRange.getBeg();
-								end = fixedByteRange.getEnd();
-								size = fixedByteRange.getSize();
-								if(size == -1) {
-									if(beg == -1) {
-										beg = baseItemSize - end;
-										size = end;
-									} else if(end == -1) {
-										size = baseItemSize - beg;
-									} else {
-										size = end - beg + 1;
-									}
-								} else {
-									// append
-									beg = baseItemSize;
-								}
-								channel.write(
-									new SeekableByteChannelChunkedNioStream(
-										dataItem.slice(beg, size)
-									)
-								);
-							}
-						} else {
-							for(final ByteRange fixedByteRange : fixedByteRanges) {
-								beg = fixedByteRange.getBeg();
-								end = fixedByteRange.getEnd();
-								size = fixedByteRange.getSize();
-								if(size == -1) {
-									if(beg == -1) {
-										beg = baseItemSize - end;
-										size = end;
-									} else if(end == -1) {
-										size = baseItemSize - beg;
-									} else {
-										size = end - beg + 1;
-									}
-								} else {
-									// append
-									beg = baseItemSize;
-								}
-								channel.write(new DataItemFileRegion(dataItem.slice(beg, size)));
-							}
-						}
-						dataItem.size(dataItem.size() + dataIoTask.getMarkedRangesSize());
-					}
-					dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
-				}
-			}
+			sendRequestData(channel, ioTask);
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {

@@ -696,6 +696,8 @@ implements FileStorageDriver<I, O> {
 				} else {
 					// append
 					rangeBeg = baseItemSize;
+					// note down the new size
+					fileItem.size(baseItemSize + updatingRangesSize);
 				}
 				updatingRange = fileItem.slice(rangeBeg, rangeSize);
 				updatingRange.position(countBytesDone);
@@ -714,7 +716,6 @@ implements FileStorageDriver<I, O> {
 			}
 		} else {
 			finishIoTask(ioTask);
-			fileItem.size(baseItemSize + updatingRangesSize);
 		}
 	}
 

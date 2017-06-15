@@ -1,0 +1,83 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"storage" : {
+			"net" : {
+				"http" : {
+					"namespace" : "ns1"
+				}
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f MultipleFixedUpdateAndSingleFixedRead-0.csv MultipleFixedUpdateAndSingleFixedRead-1.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "MultipleFixedUpdateAndSingleFixedRead-0.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "command",
+			"value" : "sleep 5"
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"fixed" : "2-5,10-20,50-100,200-500,1000-2000"
+						}
+					},
+					"input" : {
+						"file" : "MultipleFixedUpdateAndSingleFixedRead-0.csv"
+					},
+					"output" : {
+						"file" : "MultipleFixedUpdateAndSingleFixedRead-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"type" : "command",
+			"value" : "sleep 5"
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"fixed" : "256-"
+						},
+						"verify" : true
+					},
+					"input" : {
+						"file" : "MultipleFixedUpdateAndSingleFixedRead-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

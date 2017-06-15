@@ -1,0 +1,83 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"storage" : {
+			"net" : {
+				"http" : {
+					"namespace" : "ns1"
+				}
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f SingleFixedUpdateAndSingleRandomRead-0.csv SingleFixedUpdateAndSingleRandomRead-1.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "SingleFixedUpdateAndSingleRandomRead-0.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "command",
+			"value" : "sleep 5"
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"fixed" : "2KB-5KB"
+						}
+					},
+					"input" : {
+						"file" : "SingleFixedUpdateAndSingleRandomRead-0.csv"
+					},
+					"output" : {
+						"file" : "SingleFixedUpdateAndSingleRandomRead-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"type" : "command",
+			"value" : "sleep 5"
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 1
+						},
+						"verify" : true
+					},
+					"input" : {
+						"file" : "SingleFixedUpdateAndSingleRandomRead-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
