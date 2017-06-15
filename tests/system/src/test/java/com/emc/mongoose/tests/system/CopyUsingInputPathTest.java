@@ -26,7 +26,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -110,10 +109,19 @@ extends EnvConfiguredScenarioTestBase {
 			"There should be more than 0 metrics records in the log file",
 			metricsLogRecords.size() > 0
 		);
-		testMetricsLogRecords(
-			metricsLogRecords, IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			0, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
+		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
+			// some files may remain not written fully
+			testMetricsLogRecords(metricsLogRecords, IoType.CREATE, CONCURRENCY,
+				STORAGE_DRIVERS_COUNT,
+				new SizeInBytes(ITEM_DATA_SIZE.get() / 2, ITEM_DATA_SIZE.get(), 1),
+				0, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			);
+		} else {
+			testMetricsLogRecords(metricsLogRecords, IoType.CREATE, CONCURRENCY,
+				STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0,
+				CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			);
+		}
 	}
 
 	@Test
@@ -125,10 +133,18 @@ extends EnvConfiguredScenarioTestBase {
 			"There should be 1 total metrics records in the log file", 1,
 			totalMetrcisLogRecords.size()
 		);
-		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, 0, 0
-		);
+		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
+			// some files may remain not written fully
+			testTotalMetricsLogRecord(
+				totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
+				new SizeInBytes(ITEM_DATA_SIZE.get() / 2, ITEM_DATA_SIZE.get(), 1), 0, 0
+			);
+		} else {
+			testTotalMetricsLogRecord(
+				totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
+				ITEM_DATA_SIZE, 0, 0
+			);
+		}
 	}
 
 	@Test
