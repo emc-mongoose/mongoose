@@ -125,7 +125,7 @@ implements Serializable {
 		} else if(bias == 1) {
 			return min + ThreadLocalRandom.current().nextLong(range + 1);
 		} else {
-			return min + (long) Math.pow(ThreadLocalRandom.current().nextDouble(), bias) * range;
+			return min + (long) (Math.pow(ThreadLocalRandom.current().nextDouble(), bias) * range);
 		}
 	}
 	

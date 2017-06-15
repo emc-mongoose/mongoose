@@ -1,9 +1,5 @@
 package com.emc.mongoose.model.item;
 
-import com.emc.mongoose.model.data.ContentSource;
-
-import java.io.IOException;
-
 /**
  Created by kurila on 21.09.16.
  */
