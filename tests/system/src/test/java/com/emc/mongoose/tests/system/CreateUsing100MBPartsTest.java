@@ -14,6 +14,8 @@ import static org.junit.Assume.assumeFalse;
 
 import com.emc.mongoose.tests.system.base.LoggingTestBase;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -21,7 +23,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +52,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(
 				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("1MB"),
-				new SizeInBytes("100MB")
+				new SizeInBytes("10GB")
 			)
 		);
 		STEP_NAME = CreateUsing100MBPartsTest.class.getSimpleName();
@@ -65,7 +70,7 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		ITEM_DATA_SIZE = new SizeInBytes(
-			SizeInBytes.toFixedSize("128MB"), SizeInBytes.toFixedSize("16GB"), 2
+			SizeInBytes.toFixedSize("64MB"), SizeInBytes.toFixedSize("4GB"), 3
 		);
 		CONFIG.getItemConfig().getDataConfig().setSize(ITEM_DATA_SIZE);
 		try {
@@ -143,7 +148,14 @@ extends EnvConfiguredScenarioTestBase {
 	public void testItemsOutputFile()
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> itemRecs = getLogFileCsvRecords(ITEM_OUTPUT_FILE);
+		final List<CSVRecord> itemRecs = new ArrayList<>();
+		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
+			try(final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
+				for(final CSVRecord csvRecord : csvParser) {
+					itemRecs.add(csvRecord);
+				}
+			}
+		}
 		long nextItemSize;
 		long sizeSum = 0;
 		final int n = itemRecs.size();
