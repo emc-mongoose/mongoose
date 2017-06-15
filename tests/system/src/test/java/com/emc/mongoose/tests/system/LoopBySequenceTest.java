@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		switch(STORAGE_DRIVER_TYPE) {
@@ -80,7 +80,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 				try {
 					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
@@ -95,14 +95,14 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testDuration()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, ACTUAL_TEST_TIME, 10);
 	}
 
 	@Test
 	public final void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
 		testTotalMetricsLogRecord(

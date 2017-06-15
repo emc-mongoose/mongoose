@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 		);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
@@ -73,7 +73,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 				try {
 					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
@@ -88,7 +88,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		CSVRecord csvRecord;
 		for(int i = 0; i < ioTraceRecords.size(); i ++) {

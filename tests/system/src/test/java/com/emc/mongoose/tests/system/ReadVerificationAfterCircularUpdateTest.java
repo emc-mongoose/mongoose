@@ -12,7 +12,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -59,7 +58,7 @@ extends EnvConfiguredScenarioTestBase {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
@@ -79,7 +78,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 				try {
 					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
@@ -94,7 +93,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		CSVRecord csvRecord;
 		for(int i = 0; i < ioTraceRecords.size(); i ++) {
@@ -114,7 +113,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0,
@@ -125,7 +124,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0
@@ -135,7 +134,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,

@@ -27,7 +27,7 @@ extends EnvConfiguredTestBase {
 	public static void setUpClass()
 	throws Exception {
 		EnvConfiguredTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		if(SCENARIO_PATH == null) {
@@ -43,7 +43,7 @@ extends EnvConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(SCENARIO != null) {
 				SCENARIO.close();
 				SCENARIO = null;

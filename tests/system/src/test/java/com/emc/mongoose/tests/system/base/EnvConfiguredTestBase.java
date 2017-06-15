@@ -40,7 +40,7 @@ extends ConfiguredTestBase {
 
 	// test exclusion mechanism
 	protected static final Map<String, List<Object>> EXCLUDE_PARAMS = new HashMap<>();
-	protected static boolean EXCLUDE_FLAG = false;
+	protected static boolean SKIP_FLAG = false;
 
 	protected static Map<String, Daemon> HTTP_STORAGE_MOCKS = null;
 	protected static int HTTP_STORAGE_NODE_COUNT = 1;
@@ -98,9 +98,9 @@ extends ConfiguredTestBase {
 		Loggers.MSG.info("* Distributed mode: {}", DISTRIBUTED_MODE_FLAG);
 		Loggers.MSG.info("* Concurrency:      {}", CONCURRENCY);
 		Loggers.MSG.info("* Items size:       {}", ITEM_DATA_SIZE);
-		Loggers.MSG.info("* Excluded:         {}", EXCLUDE_FLAG);
+		Loggers.MSG.info("* Excluded:         {}", SKIP_FLAG);
 
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 
@@ -113,7 +113,7 @@ extends ConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			tearDownStorageMockIfNeeded();
 			tearDownDistributedModeIfNeeded();
 		}
@@ -126,7 +126,7 @@ extends ConfiguredTestBase {
 			for(final Object nextExcludeParam : excludeParams) {
 				if(nextExcludeParam.equals(value)) {
 					System.out.println("Test excluded for the " + name + "=" + value);
-					EXCLUDE_FLAG = true;
+					SKIP_FLAG = true;
 					break;
 				}
 			}

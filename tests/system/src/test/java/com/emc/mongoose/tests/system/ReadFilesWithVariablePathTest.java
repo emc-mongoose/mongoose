@@ -59,7 +59,7 @@ extends EnvConfiguredScenarioTestBase {
 		CONFIG_ARGS.add("--item-naming-radix=16");
 		CONFIG_ARGS.add("--item-naming-length=16");
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
@@ -79,7 +79,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			try {
 				DirWithManyFilesDeleter.deleteExternal(FILE_OUTPUT_PATH);
 			} catch(final Exception e) {
@@ -92,7 +92,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -103,7 +103,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
@@ -113,7 +113,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -125,7 +125,7 @@ extends EnvConfiguredScenarioTestBase {
 	public void testIoTraceLogFile()
 	throws Exception {
 
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(EXPECTED_COUNT, ioTraceRecords.size());
 

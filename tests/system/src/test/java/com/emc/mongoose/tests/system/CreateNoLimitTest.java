@@ -46,7 +46,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		
@@ -81,7 +81,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(RUNNER != null) {
 				RUNNER.interrupt();
 			}
@@ -99,7 +99,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testActualConcurrencyCount()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final int expectedConcurrency = STORAGE_DRIVERS_COUNT * CONCURRENCY;
 		if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
@@ -124,7 +124,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public final void testStdOutput()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testMetricsTableStdout(
 			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
 			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}

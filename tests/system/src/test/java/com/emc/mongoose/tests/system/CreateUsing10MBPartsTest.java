@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.get();
@@ -76,7 +76,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
 			"There should be 1 total metrics records in the log file", 1,
@@ -91,7 +91,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -102,7 +102,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(
 			"There should be more than " + EXPECTED_COUNT +

@@ -68,7 +68,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		switch(STORAGE_DRIVER_TYPE) {
@@ -94,7 +94,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 				try {
 					FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
@@ -109,7 +109,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, EXPECTED_TIME,
@@ -120,7 +120,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
@@ -131,7 +131,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -146,7 +146,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(ioTraceRecords.size() > 0);
 		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
@@ -158,7 +158,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testUpdatedItemsListFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader("UpdateUsingInputFileLimitByTimeTest_.csv"))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);

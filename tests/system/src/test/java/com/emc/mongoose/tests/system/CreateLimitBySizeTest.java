@@ -66,7 +66,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		if(ITEM_DATA_SIZE.get() > SizeInBytes.toFixedSize("1GB")) {
@@ -119,7 +119,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
 				try {
 					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
@@ -134,14 +134,14 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testFinishedInTime()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		assertTrue(FINISHED_IN_TIME);
 	}
 	
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -153,7 +153,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -164,7 +164,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -179,7 +179,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertEquals(EXPECTED_COUNT, ioTraceRecords.size());
 		final String nodeAddr = HTTP_STORAGE_MOCKS.keySet().iterator().next();
@@ -195,7 +195,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoBufferSizeAdjustment()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		String msg = "Adjust output buffer size: " + ITEM_DATA_SIZE.toString();
 		int k;
 		for(int i = 0; i < STORAGE_DRIVERS_COUNT; i ++) {
@@ -211,7 +211,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testItemsOutputFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);

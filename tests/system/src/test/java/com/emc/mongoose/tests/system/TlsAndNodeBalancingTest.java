@@ -58,7 +58,7 @@ extends EnvConfiguredScenarioTestBase {
 		CONFIG_ARGS.add("--storage-mock-node=true");
 		CONFIG_ARGS.add("--storage-net-ssl=true");
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
@@ -78,7 +78,7 @@ extends EnvConfiguredScenarioTestBase {
 
 	@Test
 	public void testFinishedInTime() {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		assertEquals(
 			TimeUnit.MINUTES.toMillis(EXPECTED_TEST_TIME_MINUTES) + 10000,
 			ACTUAL_TEST_TIME_MILLISECONDS,
@@ -89,7 +89,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
@@ -104,7 +104,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -120,7 +120,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		String storageNodeAddr;
 		final Object2IntMap<String> nodeFreq = new Object2IntOpenHashMap<>();
@@ -149,7 +149,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTlsEnableLogged()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<String> msgLogLines = getMessageLogLines();
 		int msgCount = 0;
 		for(final String msgLogLine : msgLogLines) {

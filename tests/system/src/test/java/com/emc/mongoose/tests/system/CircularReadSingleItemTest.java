@@ -79,7 +79,7 @@ extends EnvConfiguredScenarioTestBase {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
-		if(EXCLUDE_FLAG) {
+		if(SKIP_FLAG) {
 			return;
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
@@ -111,7 +111,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(!EXCLUDE_FLAG) {
+		if(! SKIP_FLAG) {
 			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 				try {
 					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
@@ -125,14 +125,14 @@ extends EnvConfiguredScenarioTestBase {
 
 	@Test
 	public void testFinishedInTime() {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
 	@Test
 	public void testMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
 			"There should be more than 2 metrics records in the log file",
@@ -147,7 +147,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
 			"There should be 1 total metrics records in the log file", 1,
@@ -162,7 +162,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testMetricsStdout()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
@@ -173,7 +173,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testIoTraceLogFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(
 			"There should be more than 1 record in the I/O trace log file",
@@ -187,7 +187,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testItemsOutputFile()
 	throws Exception {
-		assumeFalse(EXCLUDE_FLAG);
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
