@@ -64,6 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 		ITEM_DATA_SIZE = new SizeInBytes(
 			SizeInBytes.toFixedSize("128MB"), SizeInBytes.toFixedSize("16GB"), 2
 		);
+		CONFIG.getItemConfig().getDataConfig().setSize(ITEM_DATA_SIZE);
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
