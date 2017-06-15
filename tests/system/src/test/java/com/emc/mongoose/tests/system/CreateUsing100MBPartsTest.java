@@ -12,6 +12,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import com.emc.mongoose.tests.system.base.LoggingTestBase;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -36,6 +37,8 @@ extends EnvConfiguredScenarioTestBase {
 
 	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("100GB");
 	private static final SizeInBytes PART_SIZE = new SizeInBytes("100MB");
+	private static final String ITEM_OUTPUT_FILE = CreateUsing100MBPartsTest.class.getSimpleName() +
+		"Items.csv";
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs"));
@@ -65,6 +68,7 @@ extends EnvConfiguredScenarioTestBase {
 			SizeInBytes.toFixedSize("128MB"), SizeInBytes.toFixedSize("16GB"), 2
 		);
 		CONFIG.getItemConfig().getDataConfig().setSize(ITEM_DATA_SIZE);
+		CONFIG.getItemConfig().getOutputConfig().setFile(ITEM_OUTPUT_FILE);
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
@@ -91,7 +95,7 @@ extends EnvConfiguredScenarioTestBase {
 		);
 		testTotalMetricsLogRecord(
 			totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, EXPECTED_COUNT, 0
+			ITEM_DATA_SIZE, 0, 0
 		);
 	}
 
@@ -129,5 +133,24 @@ extends EnvConfiguredScenarioTestBase {
 				}
 			}
 		}
+	}
+
+	@Test
+	public void testItemsOutputFile()
+	throws Exception {
+		assumeFalse(SKIP_FLAG);
+		final List<CSVRecord> itemRecs = getLogFileCsvRecords(ITEM_OUTPUT_FILE);
+		long nextItemSize;
+		long sizeSum = 0;
+		final int n = itemRecs.size();
+		assertEquals(EXPECTED_COUNT, n, EXPECTED_COUNT / 100);
+		for(int i = 0; i < n; i ++) {
+			nextItemSize = Long.parseLong(itemRecs.get(i).get(2));
+			assertTrue(ITEM_DATA_SIZE.getMin() <= nextItemSize);
+			assertTrue(ITEM_DATA_SIZE.getMax() >= nextItemSize);
+			sizeSum += nextItemSize;
+		}
+		final long expectedAvgSize = ITEM_DATA_SIZE.getAvg();
+		assertEquals(expectedAvgSize, sizeSum / n, expectedAvgSize / 10);
 	}
 }
