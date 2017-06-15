@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"ranges" : {
-					"threshold" : "10MB"
+					"threshold" : "100MB"
 				}
 			}
 		},

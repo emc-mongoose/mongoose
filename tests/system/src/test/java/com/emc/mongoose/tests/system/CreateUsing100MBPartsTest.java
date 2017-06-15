@@ -28,25 +28,28 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 13.06.17.
  */
-public class CreateUsing10MBPartsTest
+public class CreateUsing100MBPartsTest
 extends EnvConfiguredScenarioTestBase {
 
 	private static String STD_OUTPUT;
 	private static long EXPECTED_COUNT;
 
 	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("100GB");
-	private static final SizeInBytes PART_SIZE = new SizeInBytes("10MB");
+	private static final SizeInBytes PART_SIZE = new SizeInBytes("100MB");
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("1MB"))
+			Arrays.asList(
+				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("1MB"),
+				new SizeInBytes("100MB")
+			)
 		);
-		STEP_NAME = CreateUsing10MBPartsTest.class.getSimpleName();
+		STEP_NAME = CreateUsing100MBPartsTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "CreateUsing10MBParts.json"
+			getBaseDir(), DIR_SCENARIO, "systest", "CreateUsing100MBParts.json"
 		);
 	}
 
@@ -58,7 +61,10 @@ extends EnvConfiguredScenarioTestBase {
 		if(SKIP_FLAG) {
 			return;
 		}
-		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.get();
+		ITEM_DATA_SIZE = new SizeInBytes(
+			SizeInBytes.toFixedSize("128MB"), SizeInBytes.toFixedSize("16GB"), 2
+		);
+		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
 		SCENARIO.run();
@@ -105,14 +111,12 @@ extends EnvConfiguredScenarioTestBase {
 		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(
-			"There should be more than " + EXPECTED_COUNT +
-				" records in the I/O trace log file, but got: " + ioTraceRecords.size(),
+			"There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file, " +
+				"but got: " + ioTraceRecords.size(),
 			EXPECTED_COUNT < ioTraceRecords.size()
 		);
 		final SizeInBytes ZERO_SIZE = new SizeInBytes(0);
-		final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(
-			ITEM_DATA_SIZE.get() % PART_SIZE.get()
-		);
+		final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, PART_SIZE.get(), 1);
 		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 			try {
 				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ZERO_SIZE);
