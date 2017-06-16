@@ -423,12 +423,12 @@ implements DataItem {
 			return false;
 		}
 		final BasicDataItem other = (BasicDataItem) o;
-		return (size == other.size) && (offset == other.offset);
+		return super.equals(other) && offset == other.offset;
 	}
 	//
 	@Override
 	public int hashCode() {
-		return (int) (offset ^ size);
+		return super.hashCode() ^ (int) offset;
 	}
 	
 	@Override

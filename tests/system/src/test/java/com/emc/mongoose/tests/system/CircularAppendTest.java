@@ -21,6 +21,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
@@ -186,8 +187,14 @@ extends EnvConfiguredScenarioTestBase {
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
 			ITEM_DATA_SIZE.get(), 2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get(), 1
 		);
-		for(final CSVRecord itemRec : items) {
+		final int n = items.size();
+		CSVRecord itemRec;
+		for(int i = 0; i < n; i ++) {
+			itemRec = items.get(i);
 			itemPath = itemRec.get(0);
+			for(int j = i; j < n; j ++) {
+				assertFalse(itemPath.equals(items.get(j).get(0)));
+			}
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
 			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
 			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);

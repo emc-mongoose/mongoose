@@ -11,6 +11,7 @@ public class BasicItem
 implements Item {
 	
 	protected volatile String name = null;
+	private int hashCode;
 	
 	public BasicItem() {
 	}
@@ -20,6 +21,7 @@ implements Item {
 			throw new IllegalArgumentException("Empty/null item value");
 		}
 		this.name = value;
+		this.hashCode = hashCode();
 	}
 	
 	@Override
@@ -58,23 +60,25 @@ implements Item {
 		if(name == null) {
 			return other.name == null;
 		}
-		return name.equals(other.name);
+		return this.hashCode == other.hashCode;
 	}
 	
 	@Override
 	public int hashCode() {
-		return name == null ? 0 : name.hashCode();
+		return hashCode;
 	}
 	
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeUTF(name);
+		out.writeInt(hashCode);
 	}
 	
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		name = in.readUTF();
+		hashCode = in.readInt();
 	}
 }
