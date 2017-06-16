@@ -98,7 +98,7 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
 				shuffleFlag
 			)
 		) {
@@ -130,7 +130,7 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
 				shuffleFlag
 			)
 		) {
@@ -162,7 +162,7 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
 				shuffleFlag
 			)
 		) {
@@ -194,7 +194,7 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
 				shuffleFlag
 			)
 		) {
@@ -228,7 +228,7 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
 				shuffleFlag
 			)
 		) {
@@ -262,7 +262,7 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, null, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
 				shuffleFlag
 			)
 		) {
