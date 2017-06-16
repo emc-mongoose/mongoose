@@ -28,8 +28,8 @@ extends ListInput<T> {
 	}
 
 	/**
-	 Called when the "items" buffer is exhausted. Should put more (but not more than "capacity")
-	 new items into the empty "items" buffer.
+	 Called when the elements buffer is exhausted. Should put more (but not more than "capacity")
+	 new elements into the empty buffer.
 	 @return the count of the items was actually loaded into the "items" buffer or 0 if no more items are available.
 	 */
 	protected abstract int loadMoreItems(final T lastItem)

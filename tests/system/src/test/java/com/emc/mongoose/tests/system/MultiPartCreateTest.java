@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
-import com.emc.mongoose.tests.system.base.LoggingTestBase;
+import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -34,30 +34,28 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 13.06.17.
  */
-public class CreateUsing100MBPartsTest
+public class MultiPartCreateTest
 extends EnvConfiguredScenarioTestBase {
 
 	private static String STD_OUTPUT;
 	private static long EXPECTED_COUNT;
-
-	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("100GB");
-	private static final SizeInBytes PART_SIZE = new SizeInBytes("100MB");
-	private static final String ITEM_OUTPUT_FILE = CreateUsing100MBPartsTest.class.getSimpleName() +
+	private static SizeInBytes PART_SIZE;
+	private static SizeInBytes SIZE_LIMIT;
+	
+	private static final String ITEM_OUTPUT_FILE = MultiPartCreateTest.class.getSimpleName() +
 		"Items.csv";
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
 		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("1MB"),
-				new SizeInBytes("10GB")
+			KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(
+				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = CreateUsing100MBPartsTest.class.getSimpleName();
+		STEP_NAME = MultiPartCreateTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "CreateUsing100MBParts.json"
+			getBaseDir(), DIR_SCENARIO, "systest", "MultiPartCreate.json"
 		);
 	}
 
@@ -69,15 +67,15 @@ extends EnvConfiguredScenarioTestBase {
 		if(SKIP_FLAG) {
 			return;
 		}
-		ITEM_DATA_SIZE = new SizeInBytes(
-			SizeInBytes.toFixedSize("64MB"), SizeInBytes.toFixedSize("4GB"), 3
-		);
+		PART_SIZE = ITEM_DATA_SIZE;
+		ITEM_DATA_SIZE = new SizeInBytes(PART_SIZE.get(), 100 * PART_SIZE.get(), 3);
 		CONFIG.getItemConfig().getDataConfig().setSize(ITEM_DATA_SIZE);
-		try {
-			Paths.get(ITEM_OUTPUT_FILE).toFile().delete();
-		} catch(final Exception ignored) {
-		}
-		CONFIG.getItemConfig().getOutputConfig().setFile(ITEM_OUTPUT_FILE);
+		EnvUtil.set("PART_SIZE", PART_SIZE.toString());
+		EnvUtil.set("ITEM_OUTPUT_FILE", ITEM_OUTPUT_FILE);
+		SIZE_LIMIT = new SizeInBytes(
+			Math.min(SizeInBytes.toFixedSize("100GB"), 1000 * CONCURRENCY * PART_SIZE.get())
+		);
+		EnvUtil.set("SIZE_LIMIT", SIZE_LIMIT.toString());
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
@@ -159,7 +157,7 @@ extends EnvConfiguredScenarioTestBase {
 		long nextItemSize;
 		long sizeSum = 0;
 		final int n = itemRecs.size();
-		assertEquals(EXPECTED_COUNT, n, EXPECTED_COUNT / 100);
+		assertEquals(EXPECTED_COUNT, n, EXPECTED_COUNT / 5);
 		for(int i = 0; i < n; i ++) {
 			nextItemSize = Long.parseLong(itemRecs.get(i).get(2));
 			assertTrue(ITEM_DATA_SIZE.getMin() <= nextItemSize);
@@ -167,6 +165,6 @@ extends EnvConfiguredScenarioTestBase {
 			sizeSum += nextItemSize;
 		}
 		final long expectedAvgSize = ITEM_DATA_SIZE.getAvg();
-		assertEquals(expectedAvgSize, sizeSum / n, expectedAvgSize / 10);
+		assertEquals(expectedAvgSize, sizeSum / n, expectedAvgSize / 5);
 	}
 }

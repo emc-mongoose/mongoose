@@ -1,7 +1,6 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.IoType;
@@ -41,7 +40,7 @@ extends NioStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
 	throws RemoteException {
 	}
 

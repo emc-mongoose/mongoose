@@ -43,7 +43,7 @@ extends Closeable {
 	throws IOException {
 		return null;
 	}
-
+	
 	/**
 	 * Skip some items.
 	 * @param count count of items should be skipped from the input stream
@@ -51,7 +51,7 @@ extends Closeable {
 	 */
 	long skip(final long count)
 	throws IOException;
-
+	
 	/**
 	 Reset this input making this readable from the beginning
 	 */

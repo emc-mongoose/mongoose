@@ -24,11 +24,10 @@ implements Input<T> {
 	/**
 	 @return next data item
 	 @throws EOFException if there's nothing to get more
-	 @throws IOException doesn't throw
 	 */
 	@Override
 	public T get()
-	throws IOException {
+	throws EOFException, IOException {
 		if(i < size) {
 			return items.get(i++);
 		} else {
@@ -42,11 +41,10 @@ implements Input<T> {
 	 @param maxCount the count limit
 	 @return the count of the data items been get
 	 @throws EOFException if there's nothing to get more
-	 @throws IOException if fails some-why
 	 */
 	@Override
 	public int get(final List<T> buffer, final int maxCount)
-	throws IOException {
+	throws EOFException, IOException {
 		int n = size - i;
 		if(n > 0) {
 			n = Math.min(n, maxCount);

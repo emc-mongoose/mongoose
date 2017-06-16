@@ -52,8 +52,8 @@ extends LogMessageBase {
 		buffer.append("clients=\"").append(driversCount).append("\" ");
 		buffer.append("error=\"").append(snapshot.getFailCount()).append("\" ");
 		buffer.append("runtime=\"").append(((float) elapsedTimeMillis) / 1000).append("\" ");
-		final SizeInBytes itemSize = metricsCtx.getItemSize();
-		buffer.append("filesize=\"").append(itemSize == null ? 0 : itemSize.toString()).append("\" ");
+		final String transferSize = SizeInBytes.formatFixedSize(metricsCtx.getTransferSizeEstimate());
+		buffer.append("filesize=\"").append(transferSize).append("\" ");
 		buffer.append("tps=\"").append(snapshot.getSuccRateMean()).append("\" tps_unit=\"Fileps\" ");
 		buffer.append("bw=\"").append(snapshot.getByteRateMean() / MIB).append("\" bw_unit=\"MBps\" ");
 		buffer.append("latency=\"").append(snapshot.getLatencyMean()).append("\" latency_unit=\"us\" ");

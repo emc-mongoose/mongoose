@@ -157,19 +157,19 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType) {
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
 		int size;
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_NAME, stepName)
 				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
 		) {
-			if(avgDataItemSize.get() < BUFF_SIZE_MIN) {
+			if(avgTransferSize < BUFF_SIZE_MIN) {
 				size = BUFF_SIZE_MIN;
-			} else if(BUFF_SIZE_MAX < avgDataItemSize.get()) {
+			} else if(BUFF_SIZE_MAX < avgTransferSize) {
 				size = BUFF_SIZE_MAX;
 			} else {
-				size = (int) avgDataItemSize.get();
+				size = (int) avgTransferSize;
 			}
 			if(IoType.CREATE.equals(ioType)) {
 				Loggers.MSG.info(

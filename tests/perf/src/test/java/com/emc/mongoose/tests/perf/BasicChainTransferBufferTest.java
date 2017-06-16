@@ -7,9 +7,9 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.BasicIoResultsOutputItemInput;
+import com.emc.mongoose.model.item.BasicChainTransferBuffer;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.IoResultsOutputItemInput;
+import com.emc.mongoose.model.item.ChainTransferBuffer;
 import com.emc.mongoose.model.item.ItemNameSupplier;
 import com.emc.mongoose.model.item.ItemNamingType;
 import com.emc.mongoose.model.item.ItemType;
@@ -30,13 +30,13 @@ import static org.junit.Assert.fail;
 /**
  Created by andrey on 11.06.17.
  */
-public class BasicIoResultsOutputItemInputTest {
+public class BasicChainTransferBufferTest {
 
 	private static final int BATCH_SIZE = 0x1000;
 	private static final int BUFF_CAPACITY = 1_000_000;
 	private static Input<DataItem> ITEM_INPUT;
 	private static IoTaskBuilder<DataItem, DataIoTask<DataItem>> IO_TASK_BUILDER;
-	private static IoResultsOutputItemInput<DataItem, DataIoTask<DataItem>> BUFF;
+	private static ChainTransferBuffer<DataItem, DataIoTask<DataItem>> BUFF;
 	private static final int TIMEOUT = 100;
 
 	@BeforeClass
@@ -52,7 +52,7 @@ public class BasicIoResultsOutputItemInputTest {
 		IO_TASK_BUILDER.setOutputPathSupplier(new ConstantStringSupplier("/default"));
 		IO_TASK_BUILDER.setUidSupplier(new ConstantStringSupplier("uid1"));
 		IO_TASK_BUILDER.setSecretSupplier(new ConstantStringSupplier("secret1"));
-		BUFF = new BasicIoResultsOutputItemInput<>(BUFF_CAPACITY, TimeUnit.SECONDS, 0);
+		BUFF = new BasicChainTransferBuffer<>(BUFF_CAPACITY, TimeUnit.SECONDS, 0);
 	}
 
 	@AfterClass

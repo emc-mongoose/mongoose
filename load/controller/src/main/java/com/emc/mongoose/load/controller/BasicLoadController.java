@@ -174,7 +174,7 @@ implements LoadController<I, O> {
 				new BasicMetricsContext(
 					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * metricsConfig.getThreshold()),
-					nextGenerator.getItemSizeEstimate(), preconditionJobFlag, metricsPeriodSec
+					nextGenerator.getTransferSizeEstimate(), preconditionJobFlag, metricsPeriodSec
 				)
 			);
 		}

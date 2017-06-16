@@ -32,7 +32,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final int driverCount;
 	private final int concurrency;
 	private final int thresholdConcurrency;
-	private final SizeInBytes itemSize;
+	private final long transferSizeEstimate;
 	private final boolean volatileOutputFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
@@ -43,7 +43,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	//
 	public BasicMetricsContext(
 		final String stepName, final IoType ioType, final int driverCount, final int concurrency,
-		final int thresholdConcurrency, final SizeInBytes itemSize,
+		final int thresholdConcurrency, final long transferSizeEstimate,
 		final boolean volatileOutputFlag, final int updateIntervalSec
 	) {
 		this.stepName = stepName;
@@ -52,7 +52,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.concurrency = concurrency;
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
 			thresholdConcurrency : Integer.MAX_VALUE;
-		this.itemSize = itemSize;
+		this.transferSizeEstimate = transferSizeEstimate;
 		this.volatileOutputFlag = volatileOutputFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
@@ -205,8 +205,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final SizeInBytes getItemSize() {
-		return itemSize;
+	public final long getTransferSizeEstimate() {
+		return transferSizeEstimate;
 	}
 	//
 	@Override
@@ -271,7 +271,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new BasicMetricsContext(
-			stepName, ioType, driverCount, concurrency, 0, itemSize, volatileOutputFlag,
+			stepName, ioType, driverCount, concurrency, 0, transferSizeEstimate, volatileOutputFlag,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis)
 		);
 		thresholdMetricsCtx.start();

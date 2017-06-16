@@ -48,9 +48,8 @@ extends StorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final void adjustIoBuffers(
-		final SizeInBytes avgDataItemSize, final IoType ioType
-	) throws RemoteException {
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
+	throws RemoteException {
 	}
 
 	@Override

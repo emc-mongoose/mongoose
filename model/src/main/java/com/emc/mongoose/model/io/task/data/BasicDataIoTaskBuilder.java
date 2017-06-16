@@ -38,6 +38,21 @@ implements DataIoTaskBuilder<I, O> {
 		return this;
 	}
 	
+	@Override
+	public List<ByteRange> getFixedRanges() {
+		return fixedRanges;
+	}
+	
+	@Override
+	public int getRandomRangesCount() {
+		return randomRangesCount;
+	}
+	
+	@Override
+	public long getSizeThreshold() {
+		return sizeThreshold;
+	}
+	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem)
 	throws IOException {

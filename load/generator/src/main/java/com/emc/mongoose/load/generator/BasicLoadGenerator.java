@@ -17,6 +17,8 @@ import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
@@ -31,8 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 
 /**
  Created by kurila on 11.07.16.
@@ -51,7 +51,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final int batchSize;
 	private final Input<I> itemInput;
 	private final Lock inputLock = new ReentrantLock();
-	private final SizeInBytes itemSizeEstimate;
+	private final long transferSizeEstimate;
 	private final Random rnd;
 	private final long countLimit;
 	private final boolean shuffleFlag;
@@ -66,22 +66,19 @@ implements LoadGenerator<I, O>, SvcTask {
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final Input<I> itemInput, final int batchSize, final SizeInBytes itemSizeEstimate,
+		final Input<I> itemInput, final int batchSize, final long transferSizeEstimate,
 		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
 		final boolean shuffleFlag
 	) throws UserShootHisFootException {
 		this.batchSize = batchSize;
 		this.itemInput = itemInput;
-		this.itemSizeEstimate = itemSizeEstimate;
+		this.transferSizeEstimate = transferSizeEstimate;
 		this.ioTaskBuilder = ioTaskBuilder;
 		this.originCode = ioTaskBuilder.getOriginCode();
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
-		} else if(
-			sizeLimit.get() > 0 && itemSizeEstimate.get() > 0 &&
-				itemSizeEstimate.getMin() == itemSizeEstimate.getMax()
-		) {
-			this.countLimit = sizeLimit.get() / itemSizeEstimate.get();
+		} else if(sizeLimit.get() > 0 && this.transferSizeEstimate > 0) {
+			this.countLimit = sizeLimit.get() / this.transferSizeEstimate;
 		} else {
 			this.countLimit = Long.MAX_VALUE;
 		}
@@ -116,8 +113,8 @@ implements LoadGenerator<I, O>, SvcTask {
 	}
 
 	@Override
-	public final SizeInBytes getItemSizeEstimate() {
-		return itemSizeEstimate;
+	public final long getTransferSizeEstimate() {
+		return transferSizeEstimate;
 	}
 
 	@Override

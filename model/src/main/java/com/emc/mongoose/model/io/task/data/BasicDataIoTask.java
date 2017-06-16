@@ -89,6 +89,7 @@ implements DataIoTask<T> {
 				}
 				break;
 			case READ:
+			case UPDATE:
 				if(randomRangesCount == 0 && (fixedRanges == null || fixedRanges.isEmpty())) {
 					try {
 						contentSize = item.size();
@@ -102,13 +103,6 @@ implements DataIoTask<T> {
 					contentSize = getMarkedRangesSize();
 				}
 				break;
-			case UPDATE:
-				if(randomRangesCount > 0) {
-					markRandomRanges(randomRangesCount);
-				} else if(fixedRanges == null || fixedRanges.isEmpty()) {
-					throw new AssertionError("Range update is not configured correctly");
-				}
-				contentSize = getMarkedRangesSize();
 			default:
 				contentSize = 0;
 				break;

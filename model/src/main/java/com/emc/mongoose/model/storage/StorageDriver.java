@@ -1,10 +1,8 @@
 package com.emc.mongoose.model.storage;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -56,6 +54,6 @@ extends Daemon, Input<O>, Output<O>, Remote {
 	boolean isIdle()
 	throws RemoteException;
 
-	void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
+	void adjustIoBuffers(final long avgDataItemSize, final IoType ioType)
 	throws RemoteException;
 }

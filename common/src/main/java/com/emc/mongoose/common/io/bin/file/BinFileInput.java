@@ -24,18 +24,14 @@ implements FileItemInput<T> {
 	 */
 	public BinFileInput(final Path srcPath)
 	throws IOException {
-		super(
-			buildObjectInputStream(srcPath)
-		);
+		super(buildObjectInputStream(srcPath));
 		this.srcPath = srcPath;
 	}
 	
 	protected static ObjectInputStream buildObjectInputStream(final Path itemsSrcPath)
 	throws IOException {
 		return new ObjectInputStream(
-			new BufferedInputStream(
-				Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
-			)
+			new BufferedInputStream(Files.newInputStream(itemsSrcPath, StandardOpenOption.READ))
 		);
 	}
 	

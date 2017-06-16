@@ -15,21 +15,22 @@ import static java.lang.System.nanoTime;
 /**
  Created by kurila on 16.01.17.
  */
-public final class BasicIoResultsOutputItemInput<I extends Item, O extends IoTask<I>>
-implements IoResultsOutputItemInput<I, O> {
+public final class BasicChainTransferBuffer<I extends Item, O extends IoTask<I>>
+implements ChainTransferBuffer<I, O> {
 	
 	private final List<O> ioResultsBuff;
-	private volatile int ioResultsBuffSize = 0;
-	private final int ioResultsBuffCapacity;
+	private final int ioResultsBuffLimit;
+	private final List<O> markBuffer;
 	private final long delayMicroseconds;
-
+	
+	private volatile int markLimit = 0;
+	private volatile int ioResultsBuffSize = 0;
 	private volatile boolean poisonedFlag = false;
 
-	public BasicIoResultsOutputItemInput(
-		final int queueCapacity, final TimeUnit timeUnit, final long delay
-	) {
+	public BasicChainTransferBuffer(final int limit, final TimeUnit timeUnit, final long delay) {
 		this.ioResultsBuff = new LinkedList<>();
-		this.ioResultsBuffCapacity = queueCapacity;
+		this.ioResultsBuffLimit = limit;
+		this.markBuffer = new LinkedList<>();
 		this.delayMicroseconds = timeUnit.toMicros(delay);
 	}
 
@@ -39,7 +40,7 @@ implements IoResultsOutputItemInput<I, O> {
 		if(ioResult == null) {
 			return poisonedFlag = true;
 		}
-		if(ioResultsBuffSize < ioResultsBuffCapacity) {
+		if(ioResultsBuffSize < ioResultsBuffLimit) {
 			ioResultsBuff.add(ioResult);
 			ioResultsBuffSize ++;
 			return true;
@@ -51,7 +52,7 @@ implements IoResultsOutputItemInput<I, O> {
 	@Override
 	public final synchronized int put(final List<O> ioResults, final int from, final int to)
 	throws IOException {
-		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, to - from);
+		final int n = Math.min(ioResultsBuffLimit - ioResultsBuffSize, to - from);
 		O ioResult;
 		for(int i = 0; i < n; i ++) {
 			ioResult = ioResults.get(i + from);
@@ -69,7 +70,7 @@ implements IoResultsOutputItemInput<I, O> {
 	@Override
 	public final synchronized int put(final List<O> ioResults)
 	throws IOException {
-		final int n = Math.min(ioResultsBuffCapacity - ioResultsBuffSize, ioResults.size());
+		final int n = Math.min(ioResultsBuffLimit - ioResultsBuffSize, ioResults.size());
 		O ioResult;
 		for(int i = 0; i < n; i ++) {
 			ioResult = ioResults.get(i);
@@ -110,12 +111,18 @@ implements IoResultsOutputItemInput<I, O> {
 				currTime = START_OFFSET_MICROS + nanoTime() / 1000;
 				if(currTime - nextFinishTime > delayMicroseconds) {
 					item = nextIoResult.getItem();
+					if(markLimit > 0 && markLimit > markBuffer.size()) {
+						markBuffer.add(nextIoResult);
+					}
 					ioResultsIter.remove();
 					ioResultsBuffSize --;
 					break;
 				}
 			} else {
 				item = nextIoResult.getItem();
+				if(markBuffer.size() < markLimit) {
+					markBuffer.add(nextIoResult);
+				}
 				ioResultsIter.remove();
 				ioResultsBuffSize --;
 				break;
@@ -143,6 +150,9 @@ implements IoResultsOutputItemInput<I, O> {
 				currTime = START_OFFSET_MICROS + nanoTime() / 1000;
 				if(currTime - nextFinishTime > delayMicroseconds) {
 					buffer.add(nextIoResult.getItem());
+					if(markLimit > 0 && markLimit > markBuffer.size()) {
+						markBuffer.add(nextIoResult);
+					}
 					ioResultsIter.remove();
 					ioResultsBuffSize --;
 					n ++;
@@ -150,7 +160,11 @@ implements IoResultsOutputItemInput<I, O> {
 			}
 		} else {
 			while(ioResultsIter.hasNext()) {
-				buffer.add(ioResultsIter.next().getItem());
+				nextIoResult = ioResultsIter.next();
+				buffer.add(nextIoResult.getItem());
+				if(markLimit > 0 && markLimit > markBuffer.size()) {
+					markBuffer.add(nextIoResult);
+				}
 				ioResultsIter.remove();
 				ioResultsBuffSize --;
 				n ++;
@@ -163,13 +177,10 @@ implements IoResultsOutputItemInput<I, O> {
 	public final synchronized long skip(final long count)
 	throws IOException {
 		final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
-		long n;
-		for(n = 0; n < count; n ++) {
-			if(ioResultsIter.hasNext()) {
-				ioResultsIter.remove();
-			} else {
-				break;
-			}
+		long n = 0;
+		while(n < count && ioResultsIter.hasNext()) {
+			ioResultsIter.remove();
+			n ++;
 		}
 		return n;
 	}
@@ -177,6 +188,7 @@ implements IoResultsOutputItemInput<I, O> {
 	@Override
 	public final void reset()
 	throws IOException {
+		throw new AssertionError("Unable to reset this input");
 	}
 	
 	@Override

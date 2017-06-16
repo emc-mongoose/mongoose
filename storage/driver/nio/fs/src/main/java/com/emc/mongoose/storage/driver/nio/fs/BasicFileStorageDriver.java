@@ -136,7 +136,7 @@ implements FileStorageDriver<I, O> {
 	}
 	
 	@Override
-	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType) {
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
 	}
 	
 	@Override

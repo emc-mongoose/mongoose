@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-
-import static java.nio.file.Files.newInputStream;
 
 /**
  Created by kurila on 30.06.15.
@@ -25,7 +22,7 @@ implements FileItemInput<I> {
 	 @throws NoSuchMethodException */
 	public CsvFileItemInput(final Path itemsFilePath, final ItemFactory<I> itemFactory)
 	throws IOException, NoSuchMethodException {
-		super(newInputStream(itemsFilePath, StandardOpenOption.READ), itemFactory);
+		super(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8), itemFactory);
 		this.itemsFilePath = itemsFilePath;
 	}
 	//

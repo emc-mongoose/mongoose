@@ -34,7 +34,7 @@ implements Input<I> {
 	}
 
 	/**
-	 * Does nothing
+	 * Skips the specified count of the new item ids
 	 * @param itemsCount count of items which should be skipped from the beginning
 	 * @throws IOException doesn't throw
 	 */
@@ -45,7 +45,9 @@ implements Input<I> {
 	}
 
 	@Override
-	public final void reset() {
+	public final void reset()
+	throws IOException {
+		idInput.reset();
 	}
 
 	@Override

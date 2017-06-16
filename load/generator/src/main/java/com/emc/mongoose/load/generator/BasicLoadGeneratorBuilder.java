@@ -10,13 +10,14 @@ import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.model.io.task.data.DataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
 import com.emc.mongoose.model.io.task.token.BasicTokenIoTaskBuilder;
 import com.emc.mongoose.model.item.BasicDataItemFactory;
 import com.emc.mongoose.model.item.ItemNameSupplier;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.IoResultsOutputItemInput;
+import com.emc.mongoose.model.item.ChainTransferBuffer;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemNamingType;
@@ -24,6 +25,7 @@ import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -46,9 +48,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  Created by andrey on 12.11.16.
@@ -66,7 +70,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private AuthConfig authConfig;
 	private List<StorageDriver<I, O>> storageDrivers;
 	private Input<I> itemInput = null;
-	private SizeInBytes itemSizeEstimate = null;
+	private long sizeEstimate = 0;
 	private int batchSize;
 	
 	@Override
@@ -117,8 +121,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
-		if(!(itemInput instanceof IoResultsOutputItemInput)) {
-			this.itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+		// chain transfer buffer is not resettable
+		if(!(itemInput instanceof ChainTransferBuffer)) {
+			sizeEstimate = estimateTransferSize(
+				null, IoType.valueOf(loadConfig.getType().toUpperCase()), (Input<DataItem>) itemInput
+			);
 		}
 		return this;
 	}
@@ -145,11 +152,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
-			final List<ByteRange> fixedRanges = new ArrayList<>();
+			final List<ByteRange> fixedRanges;
 			if(fixedRangesConfig != null) {
-				for(final String fixedRangeConfig : fixedRangesConfig) {
-					fixedRanges.add(new ByteRange(fixedRangeConfig));
-				}
+				fixedRanges = fixedRangesConfig
+					.stream()
+					.map(ByteRange::new)
+					.collect(Collectors.toList());
+			} else {
+				fixedRanges = Collections.EMPTY_LIST;
 			}
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder()
 				.setFixedRanges(fixedRanges)
@@ -205,41 +215,46 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
 			if(ItemType.DATA.equals(itemType)) {
-				itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+				sizeEstimate = estimateTransferSize(
+					(DataIoTaskBuilder) ioTaskBuilder, ioTaskBuilder.getIoType(),
+					(Input<DataItem>) itemInput
+				);
 			} else {
-				itemSizeEstimate = new SizeInBytes(BUFF_SIZE_MIN);
+				sizeEstimate = BUFF_SIZE_MIN;
 			}
 		}
 
-		if(itemSizeEstimate != null && ItemType.DATA.equals(itemType)) {
-			try {
-				for(final StorageDriver<I, O> storageDriver : storageDrivers) {
-					try {
-						storageDriver.adjustIoBuffers(itemSizeEstimate, ioType);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
-						);
-					}
-				}
-			} catch(final Exception e) {
-				LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
-			} finally {
+		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
+			for(final StorageDriver<I, O> storageDriver : storageDrivers) {
 				try {
-					itemInput.reset();
-				} catch(final IOException e) {
-					LogUtil.exception(Level.WARN, e, "Failed to reset the item input");
+					storageDriver.adjustIoBuffers(sizeEstimate, ioType);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
+					);
 				}
 			}
 		}
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, batchSize, itemSizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
-			shuffleFlag
+			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit, shuffleFlag
 		);
 	}
 	
-	private static SizeInBytes estimateDataItemSize(final Input<DataItem> itemInput) {
+	private static long estimateTransferSize(
+		final DataIoTaskBuilder dataIoTaskBuilder, final IoType ioType,
+		final Input<DataItem> itemInput
+	) {
+		long sizeThreshold = 0;
+		int randomRangesCount = 0;
+		List<ByteRange> fixedRanges = null;
+		if(dataIoTaskBuilder != null) {
+			sizeThreshold = dataIoTaskBuilder.getSizeThreshold();
+			randomRangesCount = dataIoTaskBuilder.getRandomRangesCount();
+			fixedRanges = dataIoTaskBuilder.getFixedRanges();
+		}
+		
+		long itemSize = 0;
 		final int maxCount = 0x100;
 		final List<DataItem> items = new ArrayList<>(maxCount);
 		int n = 0;
@@ -250,6 +265,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 		} catch(final EOFException ignored) {
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+		} finally {
+			try {
+				itemInput.reset();
+			} catch(final IOException e) {
+				LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+			}
 		}
 		
 		long sumSize = 0;
@@ -271,10 +292,28 @@ implements LoadGeneratorBuilder<I, O, T> {
 			} catch(final IOException e) {
 				throw new AssertionError(e);
 			}
-			return minSize == maxSize ?
-				new SizeInBytes(sumSize / n) : new SizeInBytes(minSize, maxSize, 1);
+			itemSize = minSize == maxSize ? sumSize / n : (minSize + maxSize) / 2;
 		}
-		return null;
+		
+		switch(ioType) {
+			case CREATE:
+				return Math.min(itemSize, sizeThreshold);
+			case READ:
+			case UPDATE:
+				if(randomRangesCount > 0) {
+					return itemSize * randomRangesCount / getRangeCount(itemSize);
+				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
+					return fixedRanges
+						.stream()
+						.mapToLong(ByteRange::getSize)
+						.filter(size -> size > 0)
+						.sum();
+				} else {
+					return itemSize;
+				}
+			default:
+				return 0;
+		}
 	}
 
 	private BatchSupplier<String> getOutputPathSupplier()

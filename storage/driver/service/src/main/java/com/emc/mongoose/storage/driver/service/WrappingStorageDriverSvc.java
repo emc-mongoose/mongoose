@@ -286,8 +286,8 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
 	throws RemoteException {
-		driver.adjustIoBuffers(avgDataItemSize, ioType);
+		driver.adjustIoBuffers(avgTransferSize, ioType);
 	}
 }
