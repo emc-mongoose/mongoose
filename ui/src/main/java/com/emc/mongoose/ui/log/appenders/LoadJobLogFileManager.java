@@ -160,8 +160,8 @@ extends AbstractManager {
 		final File
 			outPutFile = new File(
 				jobName == null ?
-					getBaseDir() + separatorChar + "log" + separatorChar + fileName :
-					getBaseDir() + separatorChar + "log" + separatorChar + jobName + separatorChar + fileName
+					getBaseDir() + "log" + separatorChar + fileName :
+					getBaseDir() + "log" + separatorChar + jobName + separatorChar + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();

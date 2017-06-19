@@ -4,7 +4,6 @@ import static com.emc.mongoose.model.io.task.IoTask.Status;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.model.data.ContentSource;
@@ -27,6 +26,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 
@@ -207,9 +209,8 @@ implements FileStorageDriver<I, O> {
 								Loggers.MSG.debug(
 									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 									item.getName(), countBytesDone,
-									String.format(
-										"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
-									)
+									String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
+									String.format("\"0x%X\"", (int) (e.actual & 0xFF))
 								);
 							}
 						} else {
@@ -304,22 +305,9 @@ implements FileStorageDriver<I, O> {
 		}
 	}
 	
-	private void finishIoTask(final O ioTask) {
-		try {
-			ioTask.startResponse();
-			ioTask.finishResponse();
-			ioTask.setStatus(Status.SUCC);
-		} catch(final IllegalStateException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: finishing the I/O task which is in an invalid state",
-				ioTask.toString()
-			);
-			ioTask.setStatus(Status.FAIL_UNKNOWN);
-		}
-	}
-
-	private void invokeCreate(final I fileItem, final O ioTask, final FileChannel dstChannel)
-	throws IOException {
+	private void invokeCreate(
+		final I fileItem, final O ioTask, final WritableByteChannel dstChannel
+	) throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
@@ -347,8 +335,9 @@ implements FileStorageDriver<I, O> {
 		}
 	}
 
-	private void invokeReadAndVerify(final I fileItem, final O ioTask, final FileChannel srcChannel)
-	throws DataSizeException, IOException {
+	private void invokeReadAndVerify(
+		final I fileItem, final O ioTask, final ReadableByteChannel srcChannel
+	) throws DataSizeException, IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize) {
@@ -388,7 +377,8 @@ implements FileStorageDriver<I, O> {
 				Loggers.MSG.debug(
 					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 					fileItem.getName(), countBytesDone,
-					String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
+					String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
+					String.format("\"0x%X\"", (int) (e.actual & 0xFF))
 				);
 			}
 			ioTask.setCountBytesDone(countBytesDone);
@@ -398,7 +388,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeReadAndVerifyRandomRanges(
-		final I fileItem, final O ioTask, final FileChannel srcChannel,
+		final I fileItem, final O ioTask, final SeekableByteChannel srcChannel,
 		final BitSet maskRangesPair[]
 	) throws DataSizeException, DataCorruptionException, IOException {
 
@@ -439,7 +429,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeReadAndVerifyFixedRanges(
-		final I fileItem, final O ioTask, final FileChannel srcChannel,
+		final I fileItem, final O ioTask, final SeekableByteChannel srcChannel,
 		final List<ByteRange> fixedRanges
 	) throws DataSizeException, DataCorruptionException, IOException {
 		
@@ -515,7 +505,7 @@ implements FileStorageDriver<I, O> {
 		}
 	}
 	
-	private void invokeRead(final I fileItem, final O ioTask, final FileChannel srcChannel)
+	private void invokeRead(final I fileItem, final O ioTask, final ReadableByteChannel srcChannel)
 	throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
@@ -642,7 +632,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeRandomRangesUpdate(
-		final I fileItem, final O ioTask, final FileChannel dstChannel
+		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel
 	) throws IOException {
 		
 		long countBytesDone = ioTask.getCountBytesDone();
@@ -684,7 +674,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeFixedRangesUpdate(
-		final I fileItem, final O ioTask, final FileChannel dstChannel,
+		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel,
 		final List<ByteRange> byteRanges
 	) throws IOException {
 

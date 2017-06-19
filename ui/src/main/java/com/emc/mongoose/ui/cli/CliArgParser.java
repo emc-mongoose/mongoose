@@ -152,27 +152,29 @@ public final class CliArgParser {
 			if(field.getType().equals(String.class)) {
 				final String fieldName = field.getName();
 				if(fieldName.startsWith(FIELD_PREFIX)) {
-					final String argName = fieldName
+					final String rawArgName = fieldName
 						.substring(FIELD_PREFIX.length())
 						.toLowerCase();
 					boolean configLeaf = true;
 					for(final Class innerCls : innerClasses) {
-						if(innerCls.getSimpleName().equalsIgnoreCase(argName + CONFIG_CLS_SUFFIX)) {
+						if(innerCls.getSimpleName().equalsIgnoreCase(rawArgName + CONFIG_CLS_SUFFIX)) {
 							configLeaf = false;
 							break;
 						}
 					}
 					if(configLeaf) {
 						try {
-							final String[] methodNameParts = argName.split("_");
-							final StringBuilder methodNameBuilder = new StringBuilder("get");
-							for(final String methodNamePart : methodNameParts) {
-								methodNameBuilder
-									.append(Character.toUpperCase(methodNamePart.charAt(0)))
-									.append(methodNamePart.substring(1));
+							final String[] argNameParts = rawArgName.split("_");
+							final StringBuilder argNameBuilder = new StringBuilder();
+							for(final String argNamePart : argNameParts) {
+								argNameBuilder
+									.append(Character.toUpperCase(argNamePart.charAt(0)))
+									.append(argNamePart.substring(1));
 							}
-							final Method m = configCls.getMethod(methodNameBuilder.toString());
+							final Method m = configCls.getMethod("get" + argNameBuilder.toString());
 							final Class type = m.getReturnType();
+							final String argName = Character.toLowerCase(argNameBuilder.charAt(0)) +
+								argNameBuilder.substring(1);
 							if(prefix.equals(ARG_PREFIX)) {
 								argsWithTypes.put(ARG_PREFIX + argName, type);
 							} else {

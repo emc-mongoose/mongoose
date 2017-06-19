@@ -384,9 +384,9 @@ implements DataItem {
 						final int wordPos = k << 3;
 						byte bs, bi;
 						for(int i = 0; i < 8; i ++) {
-							bs = (byte) (ws & 0xFF);
+							bs = (byte) ws;
 							ws >>= 8;
-							bi = (byte) (wi & 0xFF);
+							bi = (byte) wi;
 							wi >>= 8;
 							if(bs != bi) {
 								throw new DataCorruptionException(wordPos + i, bs, bi);

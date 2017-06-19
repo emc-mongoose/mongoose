@@ -24,6 +24,9 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -264,7 +267,21 @@ implements NioStorageDriver<I, O> {
 	throws InterruptedException {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
-
+	
+	protected final void finishIoTask(final O ioTask) {
+		try {
+			ioTask.startResponse();
+			ioTask.finishResponse();
+			ioTask.setStatus(IoTask.Status.SUCC);
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(
+				Level.WARN, e, "{}: finishing the I/O task which is in an invalid state",
+				ioTask.toString()
+			);
+			ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
+		}
+	}
+	
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {

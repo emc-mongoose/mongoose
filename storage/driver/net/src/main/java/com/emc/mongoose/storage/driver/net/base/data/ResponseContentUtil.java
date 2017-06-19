@@ -70,8 +70,9 @@ public abstract class ResponseContentUtil {
 				final DataCorruptionException ee = (DataCorruptionException) e;
 				Loggers.MSG.debug(
 					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-					dataItem.getName(), ee.getOffset(), String.format("\"0x%X\"", ee.expected),
-					String.format("\"0x%X\"", ee.actual)
+					dataItem.getName(), ee.getOffset(),
+					String.format("\"0x%X\"", (int) (ee.expected & 0xFF)),
+					String.format("\"0x%X\"", (int) (ee.actual & 0xFF))
 				);
 			}
 		}

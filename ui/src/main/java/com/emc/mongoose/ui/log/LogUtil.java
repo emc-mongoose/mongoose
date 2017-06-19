@@ -94,8 +94,8 @@ implements ShutdownCallbackRegistry {
 				try {
 					String log4jConfigFile = System.getProperty("log4j.configurationFile");
 					if(log4jConfigFile == null) {
-						log4jConfigFile = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
-							File.separator + FNAME_LOG_CONFIG;
+						log4jConfigFile = PathUtil.getBaseDir() + DIR_CONFIG + File.separator +
+							FNAME_LOG_CONFIG;
 					}
 					LOG_CTX = Configurator.initialize(NAME, log4jConfigFile);
 					//
