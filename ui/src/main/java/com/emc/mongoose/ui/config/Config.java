@@ -39,9 +39,9 @@ import java.util.Map;
 public final class Config
 implements Serializable {
 
-	public static final String KEY_NAME = "name";
-	public static final String KEY_DEPRECATED = "deprecated";
-	public static final String KEY_TARGET = "target";
+	public static final String NAME = "name";
+	public static final String DEPRECATED = "deprecated";
+	public static final String TARGET = "target";
 	public static final String PATH_SEP = "-";
 
 	private static final class TimeStrToLongDeserializer
@@ -932,15 +932,15 @@ implements Serializable {
 				}
 			}
 			
-			public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
+			public static final String KEY_TIMEOUT_MILLI_SEC = "timeoutMilliSec";
 			public static final String KEY_REUSE_ADDR = "reuseAddr";
 			public static final String KEY_KEEP_ALIVE = "keepAlive";
 			public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
 			public static final String KEY_LINGER = "linger";
 			public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
 			public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
-			public static final String KEY_RCVBUF = "rcvBuf";
-			public static final String KEY_SNDBUF = "sndBuf";
+			public static final String KEY_RCV_BUF = "rcvBuf";
+			public static final String KEY_SND_BUF = "sndBuf";
 			public static final String KEY_SSL = "ssl";
 			public static final String KEY_HTTP = "http";
 			public static final String KEY_NODE = "node";
@@ -965,8 +965,8 @@ implements Serializable {
 				return linger;
 			}
 			
-			public final int getBindBackLogSize() {
-				return bindBackLogSize;
+			public final int getBindBacklogSize() {
+				return bindBacklogSize;
 			}
 			
 			public final boolean getInterestOpQueued() {
@@ -1013,8 +1013,8 @@ implements Serializable {
 				this.linger = linger;
 			}
 			
-			public final void setBindBackLogSize(final int bindBackLogSize) {
-				this.bindBackLogSize = bindBackLogSize;
+			public final void setBindBacklogSize(final int bindBacklogSize) {
+				this.bindBacklogSize = bindBacklogSize;
 			}
 			
 			public final void setInterestOpQueued(final boolean interestOpQueued) {
@@ -1041,7 +1041,7 @@ implements Serializable {
 				this.nodeConfig = nodeConfig;
 			}
 			
-			@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
+			@JsonProperty(KEY_TIMEOUT_MILLI_SEC) private int timeoutMilliSec;
 			
 			@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
 			
@@ -1051,16 +1051,16 @@ implements Serializable {
 
 			@JsonProperty(KEY_LINGER) private int linger;
 			
-			@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
+			@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBacklogSize;
 			
 			@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
 			
-			@JsonProperty(KEY_RCVBUF)
+			@JsonProperty(KEY_RCV_BUF)
 			@JsonDeserialize(using = SizeInBytesDeserializer.class)
 			@JsonSerialize(using = SizeInBytesSerializer.class)
 			private SizeInBytes rcvBuf;
 			
-			@JsonProperty(KEY_SNDBUF)
+			@JsonProperty(KEY_SND_BUF)
 			@JsonDeserialize(using = SizeInBytesDeserializer.class)
 			@JsonSerialize(using = SizeInBytesSerializer.class)
 			private SizeInBytes sndBuf;
@@ -1078,7 +1078,7 @@ implements Serializable {
 				this.keepAlive = other.getKeepAlive();
 				this.tcpNoDelay = other.getTcpNoDelay();
 				this.linger = other.getLinger();
-				this.bindBackLogSize = other.getBindBackLogSize();
+				this.bindBacklogSize = other.getBindBacklogSize();
 				this.interestOpQueued = other.getInterestOpQueued();
 				this.rcvBuf = new SizeInBytes(other.getRcvBuf());
 				this.sndBuf = new SizeInBytes(other.getSndBuf());
@@ -1570,8 +1570,8 @@ implements Serializable {
 
 		for(final Map<String, Object> nextAliasNode : rawAliases) {
 
-			aliasName = (String) nextAliasNode.get(KEY_NAME);
-			aliasTarget = (String) nextAliasNode.get(KEY_TARGET);
+			aliasName = (String) nextAliasNode.get(NAME);
+			aliasTarget = (String) nextAliasNode.get(TARGET);
 			if(aliasName.equals(aliasTarget)) {
 				throw new IllegalAliasNameException(aliasName);
 			}
@@ -1591,8 +1591,8 @@ implements Serializable {
 							System.err.println(
 								"ERROR: configuration value @ \"" + aliasName + "\" is deprecated"
 							);
-						} else if(nextAliasNode.containsKey(KEY_DEPRECATED)) {
-							if((boolean) nextAliasNode.get(KEY_DEPRECATED)) {
+						} else if(nextAliasNode.containsKey(DEPRECATED)) {
+							if((boolean) nextAliasNode.get(DEPRECATED)) {
 								System.err.println(
 									"WARNING: configuration value @ \"" + aliasName +
 										"\" is deprecated, please use \"" + aliasTarget +

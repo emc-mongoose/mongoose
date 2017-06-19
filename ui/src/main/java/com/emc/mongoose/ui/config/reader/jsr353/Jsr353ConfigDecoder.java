@@ -27,7 +27,7 @@ implements Decoder<Config> {
 		final Config.SocketConfig.SocketConfigBuilder socketConfigBuilder =
 			Config.SocketConfig.newBuilder();
 		socketConfigBuilder.setTimeoutInMilliseconds(
-			socketConfigJson.getInt(Config.SocketConfig.KEY_TIMEOUT_MILLISEC));
+			socketConfigJson.getInt(Config.SocketConfig.KEY_TIMEOUT_MILLI_SEC));
 		socketConfigBuilder.setReusableAddress(
 			socketConfigJson.getBoolean(Config.SocketConfig.KEY_REUSE_ADDR));
 		socketConfigBuilder.setKeepAlive(
@@ -181,7 +181,7 @@ implements Decoder<Config> {
 		storageConfigBuilder.setMockConfig(mockConfig);
 		final Config.StorageConfig storageConfig = storageConfigBuilder.build();
 		final Config.ConfigBuilder configBuilder = Config.newBuilder();
-		configBuilder.setName(getString(commonConfigJson, Config.KEY_NAME));
+		configBuilder.setName(getString(commonConfigJson, Config.NAME));
 		configBuilder.setVersion(getString(commonConfigJson, Config.KEY_VERSION));
 		configBuilder.setIoConfig(ioConfig);
 		configBuilder.setSocketConfig(socketConfig);

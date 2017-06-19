@@ -127,7 +127,7 @@ public abstract class ResponseContentUtil {
 			cellOffset = getRangeOffset(n);
 			cellEnd = Math.min(baseItemSize, getRangeOffset(n + 1));
 			// get the found cell data item (updated or not)
-			currRange = dataItem.slice(cellOffset, cellEnd);
+			currRange = dataItem.slice(cellOffset, cellEnd - cellOffset);
 			if(dataItem.isRangeUpdated(n)) {
 				currRange.layer(dataItem.layer() + 1);
 			}

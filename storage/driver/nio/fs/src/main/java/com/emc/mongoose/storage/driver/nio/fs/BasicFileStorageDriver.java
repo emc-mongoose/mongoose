@@ -440,51 +440,75 @@ implements FileStorageDriver<I, O> {
 
 	private void invokeReadAndVerifyFixedRanges(
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
-		final List<ByteRange> byteRanges
+		final List<ByteRange> fixedRanges
 	) throws DataSizeException, DataCorruptionException, IOException {
-
-		long countBytesDone = ioTask.getCountBytesDone();
+		
 		final long baseItemSize = fileItem.size();
-		final long rangesSizeSum = ioTask.getMarkedRangesSize();
+		final long fixedRangesSizeSum = ioTask.getMarkedRangesSize();
+		
+		long countBytesDone = ioTask.getCountBytesDone();
+		// "countBytesDone" is the current range done bytes counter here
+		long rangeBytesDone = countBytesDone;
+		long currOffset;
+		long cellOffset;
+		long cellEnd;
+		int n;
+		
+		if(fixedRangesSizeSum > 0 && fixedRangesSizeSum > countBytesDone) {
 
-		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
-
-			ByteRange byteRange;
+			ByteRange fixedRange;
 			DataItem currRange;
-			int currRangeIdx = ioTask.getCurrRangeIdx();
-			long rangeBeg;
-			long rangeEnd;
-			long rangeSize;
+			int currFixedRangeIdx = ioTask.getCurrRangeIdx();
+			long fixedRangeEnd;
+			long fixedRangeSize;
 
-			if(currRangeIdx < byteRanges.size()) {
-				byteRange = byteRanges.get(currRangeIdx);
-				rangeBeg = byteRange.getBeg();
-				rangeEnd = byteRange.getEnd();
-				if(rangeBeg == -1) {
+			if(currFixedRangeIdx < fixedRanges.size()) {
+				fixedRange = fixedRanges.get(currFixedRangeIdx);
+				currOffset = fixedRange.getBeg();
+				fixedRangeEnd = fixedRange.getEnd();
+				if(currOffset == -1) {
 					// last "rangeEnd" bytes
-					rangeBeg = baseItemSize - rangeEnd;
-					rangeSize = rangeEnd;
-				} else if(rangeEnd == -1) {
+					currOffset = baseItemSize - fixedRangeEnd;
+					fixedRangeSize = fixedRangeEnd;
+				} else if(fixedRangeEnd == -1) {
 					// start @ offset equal to "rangeBeg"
-					rangeSize = baseItemSize - rangeBeg;
+					fixedRangeSize = baseItemSize - currOffset;
 				} else {
-					rangeSize = rangeEnd - rangeBeg + 1;
+					fixedRangeSize = fixedRangeEnd - currOffset + 1;
 				}
-				currRange = fileItem.slice(rangeBeg, rangeSize);
-				currRange.position(countBytesDone);
-				srcChannel.position(rangeBeg + countBytesDone);
+				
+				// let (current offset = rangeBeg + rangeBytesDone)
+				currOffset += rangeBytesDone;
+				// find the internal data item's cell index which has:
+				// (cell's offset <= current offset) && (cell's end > current offset)
+				n = getRangeCount(currOffset + 1) - 1;
+				cellOffset = getRangeOffset(n);
+				cellEnd = Math.min(baseItemSize, getRangeOffset(n + 1));
+				// get the found cell data item (updated or not)
+				currRange = fileItem.slice(cellOffset, cellEnd - cellOffset);
+				if(fileItem.isRangeUpdated(n)) {
+					currRange.layer(fileItem.layer() + 1);
+				}
+				// set the cell data item internal position to (current offset - cell's offset)
+				currRange.position(currOffset - cellOffset);
+				srcChannel.position(currOffset + countBytesDone);
 				countBytesDone += currRange.readAndVerify(
-					srcChannel, ThreadLocalByteBuffer.get(rangeSize - countBytesDone)
+					srcChannel,
+					ThreadLocalByteBuffer.get(
+						Math.min(
+							fixedRangeSize - countBytesDone, currRange.size() - currRange.position()
+						)
+					)
 				);
 
-				if(countBytesDone == rangeSize) {
-					ioTask.setCurrRangeIdx(currRangeIdx + 1);
+				if(countBytesDone == fixedRangeSize) {
+					ioTask.setCurrRangeIdx(currFixedRangeIdx + 1);
 					ioTask.setCountBytesDone(0);
 				} else {
 					ioTask.setCountBytesDone(countBytesDone);
 				}
 			} else {
-				ioTask.setCountBytesDone(rangesSizeSum);
+				ioTask.setCountBytesDone(fixedRangesSizeSum);
 			}
 		} else {
 			finishIoTask(ioTask);

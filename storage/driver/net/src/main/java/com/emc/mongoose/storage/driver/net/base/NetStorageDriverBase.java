@@ -135,7 +135,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_SNDBUF, size);
 		}
-		//bootstrap.option(ChannelOption.SO_BACKLOG, netConfig.getBindBackLogSize());
+		//bootstrap.option(ChannelOption.SO_BACKLOG, netConfig.getBindBacklogSize());
 		bootstrap.option(ChannelOption.SO_KEEPALIVE, netConfig.getKeepAlive());
 		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
