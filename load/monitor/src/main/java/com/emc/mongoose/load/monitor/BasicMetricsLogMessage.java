@@ -51,14 +51,35 @@ extends LogMessageBase {
 				ioTypeColorCode = LogUtil.LIST_COLOR;
 				break;
 		}
+		buffer.append("Step \"").append(metricsCtx.getStepName()).append("\" results:\n\t");
+		if(LogUtil.isConsoleColoringEnabled()) {
+			buffer.append(ioTypeColorCode);
+		}
+		buffer.append(metricsCtx.getIoType().name());
+		if(LogUtil.isConsoleColoringEnabled()) {
+			buffer.append(RESET);
+		}
 		buffer
-			.append("Step \"").append(metricsCtx.getStepName()).append("\" results:\n\t")
-			.append(ioTypeColorCode).append(metricsCtx.getIoType().name()).append(RESET)
 			.append('-').append(metricsCtx.getConcurrency())
 			.append('x').append(metricsCtx.getDriverCount())
-			.append(": n=(").append(WHITE).append(succCount).append(RESET).append('/')
-			.append(getFailureRatioAnsiColorCode(succCount, failCount))
-			.append(failCount).append(RESET).append("); t[s]=(")
+			.append(": n=(");
+		if(LogUtil.isConsoleColoringEnabled()) {
+			buffer.append(WHITE);
+		}
+		buffer.append(succCount);
+		if(LogUtil.isConsoleColoringEnabled()) {
+			buffer.append(RESET);
+		}
+		buffer.append('/');
+		if(LogUtil.isConsoleColoringEnabled()) {
+			buffer.append(getFailureRatioAnsiColorCode(succCount, failCount));
+		}
+		buffer.append(failCount);
+		if(LogUtil.isConsoleColoringEnabled()) {
+			buffer.append(RESET);
+		}
+		buffer
+			.append("); t[s]=(")
 			.append(formatFixedWidth(snapshot.getElapsedTime() / K, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
 			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
