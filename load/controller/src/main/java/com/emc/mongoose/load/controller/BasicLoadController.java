@@ -96,6 +96,7 @@ implements LoadController<I, O> {
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
 	
 	private volatile Output<O> ioResultsOutput;
+	private volatile boolean recycleQueueFullState = false;
 	
 	/**
 	 @param name test step name
@@ -393,8 +394,7 @@ implements LoadController<I, O> {
 			} else {
 				final int originCode = ioTaskResult.getOriginCode();
 				if(circularityMap.get(originCode)) {
-					final I item = ioTaskResult.getItem();
-					latestIoResultsPerItem.put(item, ioTaskResult);
+					latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
 					if(rateThrottle != null) {
 						if(!rateThrottle.tryAcquire(ioTaskResult)) {
 							return false;
@@ -406,6 +406,15 @@ implements LoadController<I, O> {
 						}
 					}
 					if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
+						if(
+							!recycleQueueFullState &&
+								0 == recycleQueuesMap.get(originCode).remainingCapacity()
+						) {
+							recycleQueueFullState = true;
+							Loggers.ERR.warn(
+								"{}: cannot recycle I/O tasks, recycling queue is full", name
+							);
+						}
 						return false;
 					}
 				} else if(ioResultsOutput != null) {
@@ -449,14 +458,13 @@ implements LoadController<I, O> {
 		}
 
 		int originCode;
-		I item;
 		O ioTaskResult;
 		int ioTypeCode;
 		Status status;
 		long reqDuration;
 		long respLatency;
 		long countBytesDone = 0;
-		MetricsContext ioTypeStats, ioTypeMedStats;
+		MetricsContext ioTypeStats;
 
 		int i;
 		for(i = from; i < to; i++) {
@@ -488,8 +496,7 @@ implements LoadController<I, O> {
 					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 				} else {
 					if(circularityMap.get(originCode)) {
-						item = ioTaskResult.getItem();
-						latestIoResultsPerItem.put(item, ioTaskResult);
+						latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
 						if(rateThrottle != null) {
 							if(!rateThrottle.tryAcquire(ioTaskResult)) {
 								break;
@@ -499,6 +506,15 @@ implements LoadController<I, O> {
 							break;
 						}
 						if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
+							if(
+								!recycleQueueFullState &&
+									0 == recycleQueuesMap.get(originCode).remainingCapacity()
+							) {
+								recycleQueueFullState = true;
+								Loggers.ERR.warn(
+									"{}: cannot recycle I/O tasks, recycling queue is full", name
+								);
+							}
 							break;
 						}
 					} else if(ioResultsOutput != null){
@@ -916,6 +932,10 @@ implements LoadController<I, O> {
 
 		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
 			try {
+				final int ioResultCount = latestIoResultsPerItem.size();
+				Loggers.MSG.info(
+					"{}: please wait while performing {} I/O results output...", name, ioResultCount
+				);
 				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {
 					if(!ioResultsOutput.put(latestItemIoResult)) {
 						Loggers.ERR.debug(
@@ -929,6 +949,8 @@ implements LoadController<I, O> {
 					}
 				}
 			} catch(final InterruptedException ignored) {
+			} finally {
+				Loggers.MSG.info("{}: I/O results output done", name);
 			}
 			latestIoResultsPerItem.clear();
 		}

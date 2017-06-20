@@ -60,52 +60,63 @@ extends LogMessageBase {
 				succCount = snapshot.getSuccCount();
 				failCount = snapshot.getFailCount();
 				ioType = metricsContext.getIoType();
-				strb.appendFixedWidthPadLeft(metricsContext.getStepName(), 12, ' ')
+				strb
+					.appendFixedWidthPadLeft(metricsContext.getStepName(), 12, ' ')
 					.append(TABLE_BORDER_VERTICAL);
-				switch(ioType) {
-					case NOOP:
-						strb.append(LogUtil.NOOP_COLOR);
-						break;
-					case CREATE:
-						strb.append(LogUtil.CREATE_COLOR);
-						break;
-					case READ:
-						strb.append(LogUtil.READ_COLOR);
-						break;
-					case UPDATE:
-						strb.append(LogUtil.UPDATE_COLOR);
-						break;
-					case DELETE:
-						strb.append(LogUtil.DELETE_COLOR);
-						break;
-					case LIST:
-						strb.append(LogUtil.LIST_COLOR);
-						break;
+				if(LogUtil.isConsoleColoringEnabled()) {
+					switch(ioType) {
+						case NOOP:
+							strb.append(LogUtil.NOOP_COLOR);
+							break;
+						case CREATE:
+							strb.append(LogUtil.CREATE_COLOR);
+							break;
+						case READ:
+							strb.append(LogUtil.READ_COLOR);
+							break;
+						case UPDATE:
+							strb.append(LogUtil.UPDATE_COLOR);
+							break;
+						case DELETE:
+							strb.append(LogUtil.DELETE_COLOR);
+							break;
+						case LIST:
+							strb.append(LogUtil.LIST_COLOR);
+							break;
+					}
 				}
-				strb.appendFixedWidthPadRight(metricsContext.getIoType().name(), 6, ' ')
-					.append(RESET).append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadLeft(metricsContext.getConcurrency(), 7, ' ')
-					.append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadLeft(metricsContext.getDriverCount(), 5, ' ')
-					.append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
+				strb.appendFixedWidthPadRight(metricsContext.getIoType().name(), 6, ' ');
+				if(LogUtil.isConsoleColoringEnabled()) {
+					strb.append(RESET);
+				}
 				strb
-					.append(getFailureRatioAnsiColorCode(succCount, failCount))
-					.appendFixedWidthPadLeft(failCount, 6, ' ')
-					.append(RESET).append(TABLE_BORDER_VERTICAL);
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadLeft(metricsContext.getConcurrency(), 7, ' ')
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadLeft(metricsContext.getDriverCount(), 5, ' ')
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
+				if(LogUtil.isConsoleColoringEnabled()) {
+					strb.append(getFailureRatioAnsiColorCode(succCount, failCount));
+				}
+				strb.appendFixedWidthPadLeft(failCount, 6, ' ');
+				if(LogUtil.isConsoleColoringEnabled()) {
+					strb.append(RESET);
+				}
 				strb
+					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(
 						formatFixedWidth(snapshot.getElapsedTime() / 1000.0, 6), 6, ' '
 					)
-					.append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadRight(snapshot.getSuccRateLast(), 8, ' ')
-					.append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadRight(snapshot.getByteRateLast() / MIB, 7, ' ')
-					.append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadLeft((long) snapshot.getLatencyMean(), 10, ' ')
-					.append(TABLE_BORDER_VERTICAL);
-				strb.appendFixedWidthPadLeft((long) snapshot.getDurationMean(), 11, ' ');
-				strb.appendNewLine();
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadRight(snapshot.getSuccRateLast(), 8, ' ')
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadRight(snapshot.getByteRateLast() / MIB, 7, ' ')
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadLeft((long) snapshot.getLatencyMean(), 10, ' ')
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadLeft((long) snapshot.getDurationMean(), 11, ' ')
+					.appendNewLine();
 			}
 		}
 		strb.append(TABLE_BORDER_BOTTOM);

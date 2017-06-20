@@ -214,6 +214,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+			if(itemInput == null) {
+				throw new UserShootHisFootException("No item input available");
+			}
 			if(ItemType.DATA.equals(itemType)) {
 				sizeEstimate = estimateTransferSize(
 					(DataIoTaskBuilder) ioTaskBuilder, ioTaskBuilder.getIoType(),
