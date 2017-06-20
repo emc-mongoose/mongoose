@@ -37,7 +37,6 @@ extends EnvConfiguredScenarioTestBase {
 
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
@@ -52,6 +51,9 @@ extends EnvConfiguredScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		CONFIG_ARGS.add(
+			"--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"
+		);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -74,10 +76,10 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(! SKIP_FLAG) {
+		if(!SKIP_FLAG) {
 			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+					//DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

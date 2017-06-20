@@ -32,7 +32,11 @@ public class SingleFixedUpdateAndSingleRandomReadTest
 extends EnvConfiguredScenarioTestBase {
 	
 	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
+		/**
+		 All HTTP storage drivers excluded due to storage mock missing functionality:
+		 https://github.com/emc-mongoose/nagaina/issues/3
+		 */
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,

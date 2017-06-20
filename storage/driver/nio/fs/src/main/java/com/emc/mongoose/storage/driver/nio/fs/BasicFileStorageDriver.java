@@ -665,11 +665,24 @@ implements FileStorageDriver<I, O> {
 			}
 			
 			final long updatingRangeSize = updatingRange.size();
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"{}: set the file position = {} + {}", fileItem.getName(),
+					getRangeOffset(currRangeIdx), countBytesDone
+				);
+			}
 			dstChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
 			countBytesDone += updatingRange.write(dstChannel, updatingRangeSize - countBytesDone);
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"{}: {} bytes written totally", fileItem.getName(), countBytesDone
+				);
+			}
 			if(countBytesDone == updatingRangeSize) {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
+			} else {
+				ioTask.setCountBytesDone(countBytesDone);
 			}
 		} else {
 			if(Loggers.MSG.isTraceEnabled()) {
