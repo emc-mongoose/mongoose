@@ -1,6 +1,8 @@
 package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.model.io.task.composite.data.BasicCompositeDataIoTask;
 import com.emc.mongoose.model.item.DataItem;
@@ -8,6 +10,9 @@ import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
 import java.util.List;
+
+import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 
 /**
  Created by kurila on 14.07.16.
@@ -55,15 +60,26 @@ implements DataIoTaskBuilder<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I dataItem)
-	throws IOException {
+	throws IOException, IllegalArgumentException {
 		final String uid;
 		if(dataItem.size() > sizeThreshold) {
+			if(randomRangesCount > 0 || (fixedRanges != null && fixedRanges.size() > 0)) {
+				throw new IllegalArgumentException(
+					"Not supported - both byte ranges configured and size threshold"
+				);
+			}
 			return (O) new BasicCompositeDataIoTask<>(
 				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount, sizeThreshold
 			);
 		} else {
+			if(randomRangesCount > getRangeCount(dataItem.size())) {
+				throw new IllegalArgumentException(
+					"Configured random ranges count (" + randomRangesCount + ") is more than " +
+						"allowed for the data item w/ size " + formatFixedSize(dataItem.size())
+				);
+			}
 			return (O) new BasicDataIoTask<>(
 				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
@@ -74,10 +90,15 @@ implements DataIoTaskBuilder<I, O> {
 
 	@Override @SuppressWarnings("unchecked")
 	public void getInstances(final List<I> items, final List<O> buff)
-	throws IOException {
+	throws IOException, IllegalArgumentException {
 		String uid;
 		for(final I nextItem : items) {
 			if(nextItem.size() > sizeThreshold) {
+				if(randomRangesCount > 0 || (fixedRanges != null && fixedRanges.size() > 0)) {
+					throw new IllegalArgumentException(
+						"Not supported - both byte ranges configured and size threshold"
+					);
+				}
 				buff.add(
 					(O) new BasicCompositeDataIoTask<>(
 						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
@@ -86,6 +107,12 @@ implements DataIoTaskBuilder<I, O> {
 					)
 				);
 			} else {
+				if(randomRangesCount > getRangeCount(nextItem.size())) {
+					throw new IllegalArgumentException(
+						"Configured random ranges count (" + randomRangesCount + ") is more than " +
+							"allowed for the data item w/ size " + formatFixedSize(nextItem.size())
+					);
+				}
 				buff.add(
 					(O) new BasicDataIoTask<>(
 						originCode, ioType, nextItem, inputPath, getNextOutputPath(),

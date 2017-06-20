@@ -161,9 +161,15 @@ implements LoadGenerator<I, O>, SvcTask {
 								if(shuffleFlag) {
 									Collections.shuffle(items, rnd);
 								}
-								ioTaskBuilder.getInstances(items, tasksBuff);
-								pendingTasksCount += n;
-								builtTasksCounter.add(n);
+								try {
+									ioTaskBuilder.getInstances(items, tasksBuff);
+									pendingTasksCount += n;
+									builtTasksCounter.add(n);
+								} catch(final IllegalArgumentException e) {
+									LogUtil.exception(
+										Level.ERROR, e, "Failed to generate the I/O task"
+									);
+								}
 							}
 
 							if(itemInputFinishFlag) {

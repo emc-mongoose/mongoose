@@ -481,8 +481,8 @@ implements FileStorageDriver<I, O> {
 				}
 				// set the cell data item internal position to (current offset - cell's offset)
 				currRange.position(currOffset - cellOffset);
-				srcChannel.position(currOffset + countBytesDone);
-				countBytesDone += currRange.readAndVerify(
+				srcChannel.position(currOffset);
+				rangeBytesDone += currRange.readAndVerify(
 					srcChannel,
 					ThreadLocalByteBuffer.get(
 						Math.min(
@@ -491,12 +491,19 @@ implements FileStorageDriver<I, O> {
 					)
 				);
 
-				if(countBytesDone == fixedRangeSize) {
-					ioTask.setCurrRangeIdx(currFixedRangeIdx + 1);
-					ioTask.setCountBytesDone(0);
-				} else {
-					ioTask.setCountBytesDone(countBytesDone);
+				if(rangeBytesDone == fixedRangeSize) {
+					// current byte range verification is finished
+					if(currFixedRangeIdx == fixedRanges.size() - 1) {
+						// current byte range was last in the list
+						ioTask.setCountBytesDone(fixedRangesSizeSum);
+						finishIoTask(ioTask);
+						return;
+					} else {
+						ioTask.setCurrRangeIdx(currFixedRangeIdx + 1);
+						rangeBytesDone = 0;
+					}
 				}
+				ioTask.setCountBytesDone(rangeBytesDone);
 			} else {
 				ioTask.setCountBytesDone(fixedRangesSizeSum);
 			}

@@ -1,12 +1,14 @@
 package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.storage.Credential;
 
+import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
@@ -46,7 +48,7 @@ implements DataIoTask<T> {
 		final int originCode, final IoType ioType, final T item, final String srcPath,
 		final String dstPath, final Credential credential,
 		final List<ByteRange> fixedRanges, final int randomRangesCount
-	) {
+	) throws IllegalArgumentException {
 		super(originCode, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
@@ -70,7 +72,8 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public void reset() {
+	public void reset()
+	throws IllegalArgumentException {
 		super.reset();
 
 		countBytesDone = 0;
@@ -89,6 +92,16 @@ implements DataIoTask<T> {
 				}
 				break;
 			case READ:
+				try {
+					if(randomRangesCount == 0 && getMarkedRangesSize() > item.size()) {
+						throw new IllegalArgumentException(
+							"Fixed ranges size (" + formatFixedSize(getMarkedRangesSize()) + ") " +
+								"is more than data item size (" + formatFixedSize(item.size())
+						);
+					}
+				} catch(final IOException e) {
+					throw new AssertionError(e);
+				}
 			case UPDATE:
 				if(randomRangesCount == 0 && (fixedRanges == null || fixedRanges.isEmpty())) {
 					try {

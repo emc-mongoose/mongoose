@@ -34,8 +34,8 @@ extends Closeable {
 	IoTaskBuilder<I, O> setCredentialsMap(final Map<String, String> credentials);
 
 	O getInstance(final I item)
-	throws IOException;
+	throws IOException, IllegalArgumentException;
 
 	void getInstances(final List<I> items, final List<O> buff)
-	throws IOException;
+	throws IOException, IllegalArgumentException;
 }
