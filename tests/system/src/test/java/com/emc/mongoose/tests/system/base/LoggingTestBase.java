@@ -565,6 +565,9 @@ public abstract class LoggingTestBase {
 		float currStepTime;
 		float tp, bw;
 		for(final String rec[] : records) {
+			if(rec.length < 7) {
+				continue;
+			}
 			for(final String row : rec) {
 				cells = CELL_BORDER.split(WHITESPACES.matcher(row).replaceAll(""));
 				assertEquals(
