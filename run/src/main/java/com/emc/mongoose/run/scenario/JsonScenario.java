@@ -83,7 +83,7 @@ implements Scenario {
 	}
 	//
 	private static final Pattern PATTERN_ENV_VAR = Pattern.compile(
-		".*\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}.*"
+		"\\$\\{([\\w\\-_.!@#%\\^&*=+()\\[\\]~:;'\\\\|/<>,?]+)\\}"
 	);
 	private static Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
 
