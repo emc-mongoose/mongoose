@@ -157,7 +157,7 @@ extends EnvConfiguredScenarioTestBase {
 		long nextItemSize;
 		long sizeSum = 0;
 		final int n = itemRecs.size();
-		assertEquals(EXPECTED_COUNT, n, EXPECTED_COUNT / 5);
+		assertEquals(EXPECTED_COUNT, n, EXPECTED_COUNT / 2);
 		for(int i = 0; i < n; i ++) {
 			nextItemSize = Long.parseLong(itemRecs.get(i).get(2));
 			assertTrue(ITEM_DATA_SIZE.getMin() <= nextItemSize);
