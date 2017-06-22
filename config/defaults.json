@@ -140,7 +140,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "Keep-Alive",
-					"User-Agent" : "mongoose/3.4.1"
+					"User-Agent" : "mongoose/3.5.0"
 				},
 				"namespace" : null,
 				"versioning" : false
@@ -172,7 +172,7 @@
 			"precondition" : false
 		}
 	},
-	"version" : "3.4.1",
+	"version" : "3.5.0",
 	"aliasing" : [
 		{
 			"name" : "load-threads",
