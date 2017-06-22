@@ -172,6 +172,31 @@
 			"precondition" : false
 		}
 	},
+	/*
+	"output" : {
+		"color" : true,
+		"metrics" : {
+			"period" : "10s",
+			"threshold" : 0
+		},
+		"persist" : true
+	},
+	"test" : {
+		"scenario" : {
+			"file" : null
+		},
+		"name" : null,
+		"step" : {
+			"limit" : {
+				"count" : 0,
+				"rate" : 0,
+				"size" : 0,
+				"time" : "0s"
+			},
+			"name" : null
+		}
+	},
+	*/
 	"version" : "3.4.1",
 	"aliasing" : [
 		{

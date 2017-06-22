@@ -21,9 +21,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -147,6 +150,7 @@ extends EnvConfiguredScenarioTestBase {
 	@Test
 	public void testActualConcurrency() {
 		assumeFalse(SKIP_FLAG);
+		assumeThat(STORAGE_DRIVER_TYPE, not(equalTo(STORAGE_TYPE_FS)));
 		assertEquals(2 * STORAGE_DRIVERS_COUNT * CONCURRENCY, ACTUAL_CONCURRENCY, 5);
 	}
 	
