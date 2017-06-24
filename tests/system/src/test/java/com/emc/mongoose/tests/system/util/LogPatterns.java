@@ -13,11 +13,11 @@ public interface LogPatterns {
 	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]+");
 	
 	Pattern DATE_TIME_ISO8601 = Pattern.compile(
-		"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
+		"(?<dateTime>[\\d]{4}-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
 	);
 	Pattern STD_OUT_LOG_LEVEL = Pattern.compile("(?<levelLog>[FEWIDT])");
 	Pattern STD_OUT_CLASS_NAME = Pattern.compile("[A-Za-z]+[\\w]*");
-	Pattern STD_OUT_THREAD_NAME = Pattern.compile("(?<nameThread>\\w[\\w\\s#\\.\\-<>]+\\w)");
+	Pattern STD_OUT_THREAD_NAME = Pattern.compile("(?<nameThread>\\w[\\w\\s#.\\-<>]+\\w)");
 	
 	// metrics
 	Pattern TYPE_LOAD = Pattern.compile(
@@ -30,16 +30,16 @@ public interface LogPatterns {
 		"n=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
 	);
 	Pattern STD_OUT_METRICS_TIME = Pattern.compile(
-		"t\\[s\\]=\\((?<jobDur>[0-9\\.]+[eE]?[0-9]{0,2})/(?<sumDur>[0-9\\.]+[eE]?[0-9]{0,2})\\)"
+		"t\\[s\\]=\\((?<jobDur>[0-9.]+[eE]?[0-9]{0,2})/(?<sumDur>[0-9.]+[eE]?[0-9]{0,2})\\)"
 	);
 	Pattern STD_OUT_METRICS_SIZE = Pattern.compile(
-		"size=\\((?<size>[\\d\\.]+[KMGTPE]?B?)\\)"
+		"size=\\((?<size>[\\d.]+[KMGTPE]?B?)\\)"
 	);
 	Pattern STD_OUT_METRICS_TP = Pattern.compile(
-		"TP\\[op/s\\]=\\((?<tpMean>[0-9\\.]+)/(?<tpLast>[0-9\\.]+)\\)"
+		"TP\\[op/s\\]=\\((?<tpMean>[0-9.]+)/(?<tpLast>[0-9.]+)\\)"
 	);
 	Pattern STD_OUT_METRICS_BW = Pattern.compile(
-		"BW\\[MB/s\\]=\\((?<bwMean>[0-9\\.]+)/(?<bwLast>[0-9\\.]+)\\)"
+		"BW\\[MB/s\\]=\\((?<bwMean>[0-9.]+)/(?<bwLast>[0-9.]+)\\)"
 	);
 	Pattern STD_OUT_METRICS_DUR = Pattern.compile(
 		"dur\\[us\\]=\\((?<durAvg>[0-9]+)/(?<durMin>[0-9]+)/(?<durMax>[0-9]+)\\)"
@@ -55,6 +55,15 @@ public interface LogPatterns {
 			STD_OUT_METRICS_SIZE.pattern() + ";\\s+" + STD_OUT_METRICS_TP.pattern() + ";\\s+" +
 			STD_OUT_METRICS_BW.pattern() + ";\\s+" + STD_OUT_METRICS_DUR.pattern() + ";\\s+" +
 			STD_OUT_METRICS_LAT.pattern()
+	);
+	Pattern STD_OUT_METRICS_TABLE_ROW = Pattern.compile(
+		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]+)\\|(?<timestamp>[\\d]{6}-[\\d]{6})" +
+			"\\|" + ASCII_COLOR.pattern() + "(?<ioType>[NCRUDL])" + ASCII_COLOR.pattern() +
+			"\\|\\s*(?<concurrency>[\\d]{1,7})x(?<driverCount>[\\d]{1,4})" +
+			"\\|\\s*(?<succCount>[\\d]{1,12})" +
+			"\\|\\s*" + ASCII_COLOR.pattern() + "\\s*(?<failCount>[\\d]{1,6})" + ASCII_COLOR.pattern() +
+			"\\|(?<tp>[\\d]+\\.?[\\d]?)\\.?\\s*\\|(?<bw>[\\d]+\\.?[\\d]?)\\.?\\s*" +
+			"\\|\\s*(?<lat>[\\d]{1,10})\\|\\s*(?<dur>[\\d]{1,11})"
 	);
 	
 	Pattern STD_OUT_LOAD_THRESHOLD_ENTRANCE = Pattern.compile(

@@ -2,6 +2,7 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
+import com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
@@ -10,8 +11,10 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
+import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
 import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
@@ -35,6 +38,8 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+
+import static com.emc.mongoose.ui.log.LogUtil.getFailureRatioAnsiColorCode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -54,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -535,100 +541,87 @@ public abstract class LoggingTestBase {
 			assertTrue(latMax >= latAvg);
 		}
 	}
-	
+
 	protected static void testMetricsTableStdout(
 		final String stdOutContent, final String stepName, final int driverCount,
 		final long countLimit, final Map<IoType, Integer> concurrencyMap
 	) throws Exception {
-		
-		final List<String[]> records = new ArrayList<>();
-		
-		int tableDataStartPos;
-		int tableDataEndPos;
-		String remainingStdOut = stdOutContent;
-		String tableData;
-		while(-1 != (tableDataStartPos = remainingStdOut.indexOf(TABLE_HEADER))) {
-			tableDataStartPos += TABLE_HEADER.length();
-			tableDataEndPos = remainingStdOut.indexOf(TABLE_BORDER_BOTTOM, tableDataStartPos);
-			if(-1 == tableDataEndPos) {
-				break;
-			}
-			tableData = remainingStdOut.substring(tableDataStartPos, tableDataEndPos);
-			records.add(tableData.split(SystemUtils.LINE_SEPARATOR));
-			remainingStdOut = remainingStdOut.substring(tableDataEndPos + TABLE_BORDER_BOTTOM.length());
-		}
-		
-		String cells[];
+
+		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
 		boolean ioTypeFoundFlag;
-		long countSucc;
-		int lat, dur;
-		float currStepTime;
-		float tp, bw;
-		for(final String rec[] : records) {
-			if(rec.length < 7) {
-				continue;
+		int rowCount = 0;
+
+		while(m.find()) {
+			rowCount ++;
+
+			final String actualStepNameEnding = m.group("stepName");
+			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
+			final String ioTypeLetter = m.group("ioType");
+			final IoType actualIoType;
+			switch(ioTypeLetter) {
+				case "N":
+					actualIoType = IoType.NOOP;
+					break;
+				case "C":
+					actualIoType = IoType.CREATE;
+					break;
+				case "R":
+					actualIoType = IoType.READ;
+					break;
+				case "U":
+					actualIoType = IoType.UPDATE;
+					break;
+				case "D":
+					actualIoType = IoType.DELETE;
+					break;
+				case "L":
+					actualIoType = IoType.LIST;
+					break;
+				default:
+					fail("Unknown I/O type letter: " + ioTypeLetter);
+					actualIoType = null;
 			}
-			for(final String row : rec) {
-				cells = CELL_BORDER.split(WHITESPACES.matcher(row).replaceAll(""));
-				assertEquals(
-					stepName.length() > 12 ? stepName.substring(stepName.length() - 12) : stepName,
-					cells[0]
-				);
-				if(cells[1].startsWith(NOOP_COLOR)) {
-					cells[1] = cells[1].substring(NOOP_COLOR.length());
-				} else if(cells[1].startsWith(CREATE_COLOR)) {
-					cells[1] = cells[1].substring(CREATE_COLOR.length());
-				} else if(cells[1].startsWith(READ_COLOR)) {
-					cells[1] = cells[1].substring(READ_COLOR.length());
-				} else if(cells[1].startsWith(UPDATE_COLOR)) {
-					cells[1] = cells[1].substring(UPDATE_COLOR.length());
-				} else if(cells[1].startsWith(DELETE_COLOR)) {
-					cells[1] = cells[1].substring(DELETE_COLOR.length());
-				} else if(cells[1].startsWith(LIST_COLOR)) {
-					cells[1] = cells[1].substring(LIST_COLOR.length());
+			final int actualConcurrency = Integer.parseInt(m.group("concurrency"));
+			final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
+			final long succCount = Long.parseLong(m.group("succCount"));
+			final long failCount = Long.parseLong(m.group("failCount"));
+			final float tp = Float.parseFloat(m.group("tp"));
+			final float bw = Float.parseFloat(m.group("bw"));
+			final long lat = Long.parseLong(m.group("lat"));
+			final long dur = Long.parseLong(m.group("dur"));
+
+			assertEquals(
+				stepName.length() > 12 ? stepName.substring(stepName.length() - 12) : stepName,
+				actualStepNameEnding
+			);
+			ioTypeFoundFlag = false;
+			for(final IoType nextIoType : concurrencyMap.keySet()) {
+				if(nextIoType.equals(actualIoType)) {
+					ioTypeFoundFlag = true;
+					break;
 				}
-				if(cells[1].endsWith(LogUtil.RESET)) {
-					cells[1] = cells[1].substring(0, cells[1].length() - LogUtil.RESET.length());
-				}
-				final IoType actualIoType = IoType.valueOf(cells[1]);
-				ioTypeFoundFlag = false;
-				for(final IoType nextIoType : concurrencyMap.keySet()) {
-					if(nextIoType.equals(actualIoType)) {
-						ioTypeFoundFlag = true;
-						break;
-					}
-				}
-				assertTrue(
-					"I/O type \"" + actualIoType + "\" not found, expected one of: " +
+			}
+			assertTrue(
+				"I/O type \"" + actualIoType + "\" not found, expected one of: " +
 					Arrays.toString(concurrencyMap.keySet().toArray()), ioTypeFoundFlag
-				);
-				assertEquals((int) concurrencyMap.get(actualIoType), Integer.parseInt(cells[2])); // concurrency
-				assertEquals(driverCount, Integer.parseInt(cells[3])); // driver count
-				countSucc = Long.parseLong(cells[4]);
-				if(countLimit > 0) {
-					assertTrue(countLimit > countSucc); // count succ
-				}
-				if(cells[5].startsWith("\u001B[38;2;0;200;0m")) {
-					cells[5] = cells[5].substring("\u001B[38;2;0;200;0m".length());
-					cells[5] = cells[5].substring(0, cells[5].indexOf(LogUtil.RESET));
-					assertTrue(0 == Long.parseLong(cells[5])); // count fail
-				} else {
-					fail("Failures count is not 0");
-				}
-				currStepTime = Float.parseFloat(cells[6]); // job time
-				tp = Float.parseFloat(cells[7]); // TP last
-				if(currStepTime > 0) {
-					assertTrue(tp >= 0);
-				}
-				bw = Float.parseFloat(cells[8]); // BW last
-				if(currStepTime > 0) {
-					assertTrue(bw >= 0);
-				}
-				lat = Integer.parseInt(cells[9]); // latency
-				assertTrue(lat >= 0);
-				dur = Integer.parseInt(cells[10]); // duration
-				assertTrue("Mean duration " + dur + " is less than mean latency " + lat, dur >= lat);
+			);
+			assertEquals((int) concurrencyMap.get(actualIoType), actualConcurrency);
+			assertEquals(driverCount, actualDriverCount);
+			if(countLimit > 0) {
+				assertTrue(countLimit > succCount); // count succ
 			}
+			assertTrue(tp >= 0);
+			assertTrue(bw >= 0);
+			assertTrue(failCount == 0);
+			assertTrue(lat >= 0);
+			assertTrue(lat <= dur);
 		}
+
+		assertTrue(rowCount > 0);
+		
+		final int tableHeaderCount =
+			(stdOutContent.length() - stdOutContent.replaceAll(TABLE_HEADER, "").length())
+				/ TABLE_HEADER.length();
+		assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
 	}
 }
