@@ -59,7 +59,7 @@ public class ConfigParserTest {
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
 		assertThat(contentConfig, notNullValue());
 		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
-		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483.4.067", "item.data.content.seed"));
+		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
 		assertThat(
 			contentConfig.getRingConfig().getSize(),
 			equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize")
