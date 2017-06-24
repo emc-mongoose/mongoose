@@ -556,42 +556,19 @@ public abstract class LoggingTestBase {
 
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
-			final String ioTypeLetter = m.group("ioType");
-			final IoType actualIoType;
-			switch(ioTypeLetter) {
-				case "N":
-					actualIoType = IoType.NOOP;
-					break;
-				case "C":
-					actualIoType = IoType.CREATE;
-					break;
-				case "R":
-					actualIoType = IoType.READ;
-					break;
-				case "U":
-					actualIoType = IoType.UPDATE;
-					break;
-				case "D":
-					actualIoType = IoType.DELETE;
-					break;
-				case "L":
-					actualIoType = IoType.LIST;
-					break;
-				default:
-					fail("Unknown I/O type letter: " + ioTypeLetter);
-					actualIoType = null;
-			}
+			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
 			final int actualConcurrency = Integer.parseInt(m.group("concurrency"));
 			final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
 			final long succCount = Long.parseLong(m.group("succCount"));
 			final long failCount = Long.parseLong(m.group("failCount"));
+			final float stepTimeSec = Float.parseFloat(m.group("stepTime"));
 			final float tp = Float.parseFloat(m.group("tp"));
 			final float bw = Float.parseFloat(m.group("bw"));
 			final long lat = Long.parseLong(m.group("lat"));
 			final long dur = Long.parseLong(m.group("dur"));
 
 			assertEquals(
-				stepName.length() > 12 ? stepName.substring(stepName.length() - 12) : stepName,
+				stepName.length() > 17 ? stepName.substring(stepName.length() - 17) : stepName,
 				actualStepNameEnding
 			);
 			ioTypeFoundFlag = false;
@@ -610,9 +587,10 @@ public abstract class LoggingTestBase {
 			if(countLimit > 0) {
 				assertTrue(countLimit > succCount); // count succ
 			}
+			assertTrue(failCount == 0);
+			assertTrue(stepTimeSec >= 0);
 			assertTrue(tp >= 0);
 			assertTrue(bw >= 0);
-			assertTrue(failCount == 0);
 			assertTrue(lat >= 0);
 			assertTrue(lat <= dur);
 		}

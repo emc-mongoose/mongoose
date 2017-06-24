@@ -24,7 +24,7 @@ public interface DateUtil {
 		setTimeZone(TZ_UTC);
 	}};
 
-	String PATTERN_METRICS_TABLE = "yyMMdd-HHmmss";
+	String PATTERN_METRICS_TABLE = "yyyyMMdd-HHmmss";
 	DateFormat FMT_DATE_METRICS_TABLE = new SimpleDateFormat(PATTERN_METRICS_TABLE, LOCALE_DEFAULT) {{
 		setTimeZone(TZ_UTC);
 	}};

@@ -57,13 +57,15 @@ public interface LogPatterns {
 			STD_OUT_METRICS_LAT.pattern()
 	);
 	Pattern STD_OUT_METRICS_TABLE_ROW = Pattern.compile(
-		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]+)\\|(?<timestamp>[\\d]{6}-[\\d]{6})" +
-			"\\|" + ASCII_COLOR.pattern() + "(?<ioType>[NCRUDL])" + ASCII_COLOR.pattern() +
+		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]{1,17})\\|(?<timestamp>[\\d]{8}-[\\d]{6})" +
+			"\\|" + ASCII_COLOR.pattern() + "(?<ioType>[NOPCREATDULIS]{4,6})\\s*" + ASCII_COLOR.pattern() +
 			"\\|\\s*(?<concurrency>[\\d]{1,7})x(?<driverCount>[\\d]{1,4})" +
 			"\\|\\s*(?<succCount>[\\d]{1,12})" +
 			"\\|\\s*" + ASCII_COLOR.pattern() + "\\s*(?<failCount>[\\d]{1,6})" + ASCII_COLOR.pattern() +
+			"\\|(?<stepTime>[\\d\\.]{1,7})\\s*" +
 			"\\|(?<tp>[\\d]+\\.?[\\d]?)\\.?\\s*\\|(?<bw>[\\d]+\\.?[\\d]?)\\.?\\s*" +
-			"\\|\\s*(?<lat>[\\d]{1,10})\\|\\s*(?<dur>[\\d]{1,11})"
+			"\\|\\s*(?<lat>[\\d]{1,10})" +
+			"\\|\\s*(?<dur>[\\d]{1,11})"
 	);
 	
 	Pattern STD_OUT_LOAD_THRESHOLD_ENTRANCE = Pattern.compile(
