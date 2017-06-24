@@ -33,7 +33,7 @@
 					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class.name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+						"pattern" : "%highlight{%m}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
 					}
 				},
 				{
