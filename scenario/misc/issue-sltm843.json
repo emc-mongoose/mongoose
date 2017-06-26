@@ -6,14 +6,16 @@
 				"size" : "100KB"
 			}
 		},
+		"output" : {
+			"metrics" : {
+				"period" : 1
+			}
+		},
 		"test" : {
 			"step" : {
 				"limit" : {
 					"count" : 100000,
 					"time" : "10m"
-				},
-				"metrics" : {
-					"period" : 1
 				}
 			}
 		},

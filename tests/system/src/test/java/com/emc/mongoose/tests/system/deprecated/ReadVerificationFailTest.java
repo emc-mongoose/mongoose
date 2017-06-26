@@ -101,7 +101,7 @@ extends HttpStorageDistributedScenarioTestBase {
 					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 				)
 			);
-			CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
+			CONFIG.getTestConfig().getStepConfig().setId(STEP_NAME);
 			CONFIG.getTestConfig().getStepConfig().getLimitConfig().setCount(0);
 			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 			SCENARIO.run();
@@ -125,7 +125,7 @@ extends HttpStorageDistributedScenarioTestBase {
 					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
 				)
 			);
-			CONFIG.getTestConfig().getStepConfig().setName(STEP_NAME);
+			CONFIG.getTestConfig().getStepConfig().setId(STEP_NAME);
 			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 			SCENARIO.run();
 		}

@@ -66,7 +66,7 @@ extends StepBase {
 	protected final void invoke() {
 
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
-		final String jobName = stepConfig.getName();
+		final String jobName = stepConfig.getId();
 		Loggers.MSG.info("Run the load step \"{}\"", jobName);
 		stepConfig.setPrecondition(preconditionFlag);
 

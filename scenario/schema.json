@@ -1,5 +1,5 @@
 {
-	"$schema" : "http://json-schema.org/draft-04/schema#",
+	"$schema" : "http://json-schema.org/draft-04/scema#",
 	"definitions" : {
 		"config" : {
 			"type": "object",
@@ -383,6 +383,115 @@
 						}
 					}
 				},
+				"output" : {
+					"type" : "object",
+					"additionalProperties" : false,
+					"properties" : {
+						"color" : {
+							"oneOf" : [
+								{
+									"type" : "boolean"
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
+							]
+						},
+						"metrics" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"persist" : {
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"service" : {
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"table" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"header" : {
+											"type" : "object",
+											"additionalProperties" : false,
+											"properties" : {
+												"period" : {
+													"oneOf" : [
+														{
+															"type" : "integer",
+															"minimum" : 1
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
+												}
+											}
+										}
+									}
+								},
+								"threshold" : {
+									"oneOf" : [
+										{
+											"type" : "number",
+											"minimum" : 0,
+											"maximum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								}
+							}
+						},
+						"persist" : {
+							"oneOf" : [
+								{
+									"type" : "boolean"
+								},
+								{
+									"type" : "string",
+									"pattern" : "\\$\\{.+\\}"
+								}
+							]
+						}
+					}
+				},
 				"storage": {
 					"type": "object",
 					"additionalProperties": false,
@@ -580,6 +689,10 @@
 										{
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMG]?B?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -595,6 +708,10 @@
 										{
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMG]?B?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -610,11 +727,27 @@
 									]
 								},
 								"tcpNoDelay": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type" : "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"timeoutMilliSec": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
 								},
 								"writeBufferHighWaterMark" : {
 									"oneOf" : [
@@ -626,6 +759,10 @@
 										{
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMG]?B?"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -707,10 +844,20 @@
 					"type" : "object",
 					"additionalProperties" : false,
 					"properties" : {
+						"id" : {
+							"type" : [
+								"null", "string"
+							]
+						},
 						"step" : {
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
+								"id" : {
+									"type" : [
+										"null", "string"
+									]
+								},
 								"limit": {
 									"type": "object",
 									"additionalProperties": false,
@@ -770,56 +917,6 @@
 											]
 										}
 									}
-								},
-								"metrics" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"period" : {
-											"oneOf" : [
-												{
-													"type" : "integer",
-													"minimum" : 0
-												}, {
-													"type" : "string",
-													"pattern" : "[\\d]+[SsMmHhDd]?"
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
-												}
-											]
-										},
-										"threshold" : {
-											"oneOf" : [
-												{
-													"type" : "number",
-													"minimum" : 0,
-													"maximum" : 1
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
-												}
-											]
-										}
-									}
-								},
-								"name" : {
-									"type" : [
-										"null", "string"
-									]
-								},
-								"precondition" : {
-									"oneOf" : [
-										{
-											"type" : "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
 								}
 							}
 						}

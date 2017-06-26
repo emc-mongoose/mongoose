@@ -38,7 +38,7 @@
 			"config" : {
 				"test" : {
 					"step" : {
-						"name" : "LONGEVITY-${iteration}"
+						"id" : "LONGEVITY-${iteration}"
 					}
 				}
 			},

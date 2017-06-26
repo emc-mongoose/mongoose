@@ -12,7 +12,7 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.GeneratorConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.ScenarioConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
@@ -107,7 +107,7 @@ public class ConfigParserTest {
 		assertThat(
 			generatorConfig.getAddrs().get(0), equalTo("127.0.0.1", "load.generator.addrs")
 		);
-		final MetricsConfig metricsConfig = config.getTestConfig().getStepConfig().getMetricsConfig();
+		final MetricsConfig metricsConfig = config.getOutputConfig().getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
 		assertThat(metricsConfig.getThreshold(), equalTo(0.0, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
@@ -120,7 +120,6 @@ public class ConfigParserTest {
 				"load.metrics.period"
 			)
 		);
-		assertThat(config.getTestConfig().getStepConfig().getPrecondition(), equalTo(false, "load.metrics.precondition"));
 		final ScenarioConfig scenarioConfig = config.getTestConfig().getScenarioConfig();
 		assertThat(scenarioConfig, notNullValue());
 		assertThat(scenarioConfig.getFile(), nullValue("run.file"));

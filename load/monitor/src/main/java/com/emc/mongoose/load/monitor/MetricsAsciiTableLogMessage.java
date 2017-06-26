@@ -4,7 +4,6 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
-
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.ui.log.LogUtil.RESET;
 import static com.emc.mongoose.common.Constants.MIB;
@@ -33,8 +32,6 @@ extends LogMessageBase {
 		"      Name       |               | Type |     x     |-------------------| Time  |----------------| Latency  | Duration  " + LINE_SEPARATOR +
 		" (last 17 chars) |yyyyMMdd-HHmmss|      |  Drivers  |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
 		"-----------------|---------------|------|-----------|------------|------|-------|--------|-------|----------|-----------" + LINE_SEPARATOR;
-	public static final String TABLE_BORDER_BOTTOM =
-		"------------------------------------------------------------------------------------------------------------------------";
 	public static final String TABLE_BORDER_VERTICAL = "|";
 	public static final int TABLE_HEADER_PERIOD = 20;
 

@@ -291,6 +291,74 @@
 				"batch", "circular", "generator", "queue", "type"
 			]
 		},
+		"output" : {
+			"type" : "object",
+			"required" : [
+				"color", "metrics", "persist"
+			],
+			"additionalProperties" : false,
+			"properties" : {
+				"color" : {
+					"type" : "boolean"
+				},
+				"metrics" : {
+					"type" : "object",
+					"required" : [
+						"period", "persist", "service", "table", "threshold"
+					],
+					"additionalProperties" : false,
+					"properties" : {
+						"period" : {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								}, {
+									"type" : "string",
+									"pattern" : "[\\d]+[SsMmHhDd]?"
+								}
+							]
+						},
+						"persist" : {
+							"type" : "boolean"
+						},
+						"service" : {
+							"type" : "boolean"
+						},
+						"table" : {
+							"type" : "object",
+							"required" : [
+								"header"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"header" : {
+									"type" : "object",
+									"required" : [
+										"period"
+									],
+									"additionalProperties" : false,
+									"properties" : {
+										"period" : {
+											"type" : "integer",
+											"minimum" : 1
+										}
+									}
+								}
+							}
+						},
+						"threshold" : {
+							"type" : "number",
+							"minimum" : 0,
+							"maximum" : 1
+						}
+					}
+				},
+				"persist" : {
+					"type" : "boolean"
+				}
+			}
+		},
 		"storage": {
 			"type": "object",
 			"additionalProperties": false,
@@ -555,10 +623,15 @@
 		"test" : {
 			"type" : "object",
 			"required" : [
-				"scenario", "step"
+				"id", "scenario", "step"
 			],
 			"additionalProperties" : false,
 			"properties" : {
+				"id" : {
+					"type" : [
+						"null", "string"
+					]
+				},
 				"scenario" : {
 					"type" : "object",
 					"required" : [
@@ -576,7 +649,7 @@
 				"step" : {
 					"type" : "object",
 					"required" : [
-						"limit", "metrics", "name", "precondition"
+						"id", "limit"
 					],
 					"additionalProperties" : false,
 					"properties" : {
@@ -621,38 +694,10 @@
 								"count", "rate", "size", "time"
 							]
 						},
-						"metrics" : {
-							"type" : "object",
-							"required" : [
-								"period", "threshold"
-							],
-							"additionalProperties" : false,
-							"properties" : {
-								"period" : {
-									"oneOf" : [
-										{
-											"type" : "integer",
-											"minimum" : 0
-										}, {
-											"type" : "string",
-											"pattern" : "[\\d]+[SsMmHhDd]?"
-										}
-									]
-								},
-								"threshold" : {
-									"type" : "number",
-									"minimum" : 0,
-									"maximum" : 1
-								}
-							}
-						},
-						"name" : {
+						"id" : {
 							"type" : [
 								"null", "string"
 							]
-						},
-						"precondition" : {
-							"type" : "boolean"
 						}
 					}
 				}
@@ -665,6 +710,7 @@
 	"required": [
 		"item",
 		"load",
+		"output",
 		"storage",
 		"test",
 		"version"

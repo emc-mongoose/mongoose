@@ -1,17 +1,15 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"output" : {
+			"metrics" : {
+				"threshold" : 0.8
+			}
+		},
 		"storage" : {
 			"net" : {
 				"http" : {
 					"namespace" : "ns1"
-				}
-			}
-		},
-		"test" : {
-			"step" :{
-				"metrics" : {
-					"threshold" : 0.8
 				}
 			}
 		}

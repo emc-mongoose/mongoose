@@ -35,7 +35,7 @@ public interface StorageDriverUtil {
 	) {
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
-		final String testStepName = stepConfig.getName();
+		final String testStepName = stepConfig.getId();
 		final int driverPort = driverConfig.getPort();
 		final boolean remoteDriversFlag = driverConfig.getRemote();
 		

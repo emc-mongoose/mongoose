@@ -52,6 +52,21 @@
 		},
 		"type" : "create"
 	},
+	"output" : {
+		"color" : true,
+		"metrics" : {
+			"period" : "10s",
+			"persist" : true,
+			"service" : false,
+			"table" : {
+				"header" : {
+					"period" : 20
+				}
+			},
+			"threshold" : 0
+		},
+		"persist" : true
+	},
 	"storage" : {
 		"auth" : {
 			"file" : null,
@@ -154,22 +169,18 @@
 		}
 	},
 	"test" : {
+		"id" : null,
 		"scenario" : {
 			"file" : null
 		},
 		"step" : {
+			"id" : null,
 			"limit" : {
 				"count" : 0,
 				"rate" : 0,
 				"size" : 0,
 				"time" : "0s"
-			},
-			"metrics" : {
-				"period" : "10s",
-				"threshold" : 0
-			},
-			"name" : null,
-			"precondition" : false
+			}
 		}
 	},
 	"version" : "3.5.0",
@@ -182,7 +193,7 @@
 		{
 			"name" : "run-id",
 			"deprecated" : true,
-			"target" : "test-step-name"
+			"target" : "test-id"
 		},
 		{
 			"name" : "noop",
@@ -327,7 +338,7 @@
 		{
 			"name" : "load-job-name",
 			"deprecated" : true,
-			"target" : "test-step-name"
+			"target" : "test-step-id"
 		},
 		{
 			"name" : "load-limit-count",
@@ -374,10 +385,29 @@
 			"deprecated" : true,
 			"target" : "storage-auth-uid"
 		},
+
+		// v3.4.0
 		{
 			"name" : "item-data-content-ringSize",
-			"deprecate" : true,
+			"deprecated" : true,
 			"target" : "item-data-content-ring-size"
+		},
+
+		// v3.5.0
+		{
+			"name" : "test-step-metrics-period",
+			"deprecated" : true,
+			"target" : "output-metrics-period"
+		},
+		{
+			"name" : "test-step-metrics-threshold",
+			"deprecated" : true,
+			"target" : "output-metrics-threshold"
+		},
+		{
+			"name" : "test-step-name",
+			"deprecated" : true,
+			"target" : "test-step-id"
 		}
 	]
 }

@@ -10,6 +10,11 @@
 				"file" : "weighted2-read-input.csv"
 			}
 		},
+		"output" : {
+			"metrics" : {
+				"persist" : false
+			}
+		},
 		"storage" : {
 			"driver" : {
 				"concurrency" : 100
@@ -19,9 +24,6 @@
 			"step" : {
 				"limit" : {
 					"count" : 10000
-				},
-				"metrics" : {
-					"period" : 0
 				}
 			}
 		}
@@ -39,7 +41,8 @@
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
@@ -50,14 +53,16 @@
 						"file" : "weighted2-delete-input.csv"
 					}
 				},
+				"output" : {
+					"metrics": {
+						"period" : 10
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
 							"count" : 0,
 							"time" : "5m"
-						},
-						"metrics": {
-							"period" : 10
 						}
 					}
 				}

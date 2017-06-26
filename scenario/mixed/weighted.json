@@ -24,13 +24,15 @@
 						"file" : "weighted-load.csv"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"persist" : false
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
 							"count" : 10000
-						},
-						"metrics" : {
-							"period" : 0
 						}
 					}
 				}

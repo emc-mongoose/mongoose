@@ -67,7 +67,7 @@ extends StepBase {
 	@Override
 	protected final void invoke() {
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
-		final String testStepName = stepConfig.getName();
+		final String testStepName = stepConfig.getId();
 		Loggers.MSG.info("Run the chain load step \"{}\"", testStepName);
 		final LimitConfig commonLimitConfig = stepConfig.getLimitConfig();
 		

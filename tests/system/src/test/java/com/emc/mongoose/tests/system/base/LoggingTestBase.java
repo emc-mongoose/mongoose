@@ -2,7 +2,6 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
@@ -12,26 +11,16 @@ import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
 import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
-import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
-import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
-import static com.emc.mongoose.ui.log.LogUtil.CREATE_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.DELETE_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.LIST_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.NOOP_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.READ_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.UPDATE_COLOR;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.SystemUtils;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;

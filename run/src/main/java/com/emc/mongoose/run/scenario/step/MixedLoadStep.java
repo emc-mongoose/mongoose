@@ -75,7 +75,7 @@ extends StepBase {
 	protected final void invoke() {
 
 		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
-		final String jobName = localStepConfig.getName();
+		final String jobName = localStepConfig.getId();
 		Loggers.MSG.info("Run the mixed load step \"{}\"", jobName);
 		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
 		

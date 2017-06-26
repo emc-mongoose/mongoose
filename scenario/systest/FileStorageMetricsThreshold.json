@@ -1,16 +1,14 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"output" : {
+			"metrics" : {
+				"threshold" : 0.1
+			}
+		},
 		"storage" : {
 			"driver" : {
 				"type" : "fs"
-			}
-		},
-		"test" : {
-			"step" :{
-				"metrics" : {
-					"threshold" : 0.1
-				}
 			}
 		}
 	},

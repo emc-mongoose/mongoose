@@ -77,12 +77,14 @@ implements Serializable {
 	public static final String KEY_VERSION = "version";
 	public static final String KEY_ITEM = "item";
 	public static final String KEY_LOAD = "load";
+	public static final String KEY_OUTPUT = "output";
 	public static final String KEY_STORAGE = "storage";
 	public static final String KEY_TEST = "test";
 	public static final String KEY_ALIASING = "aliasing";
 	
 	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
 	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
+	@JsonProperty(KEY_OUTPUT) private OutputConfig outputConfig;
 	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
 	@JsonProperty(KEY_TEST) private TestConfig testConfig;
 	@JsonProperty(KEY_VERSION) private String version;
@@ -94,6 +96,7 @@ implements Serializable {
 		this.version = config.getVersion();
 		this.itemConfig = new ItemConfig(config.getItemConfig());
 		this.loadConfig = new LoadConfig(config.getLoadConfig());
+		this.outputConfig = new OutputConfig(config.getOutputConfig());
 		this.storageConfig = new StorageConfig(config.getStorageConfig());
 		this.testConfig = new TestConfig(config.getTestConfig());
 		final List<Map<String, Object>> ac = config.getAliasingConfig();
@@ -102,6 +105,10 @@ implements Serializable {
 
 	public final String getVersion() {
 		return version;
+	}
+
+	public final OutputConfig getOutputConfig() {
+		return outputConfig;
 	}
 
 	public final StorageConfig getStorageConfig() {
@@ -126,6 +133,10 @@ implements Serializable {
 	
 	public final void setVersion(final String version) {
 		this.version = version;
+	}
+
+	public final void setOutputConfig(final OutputConfig outputConfig) {
+		this.outputConfig = outputConfig;
 	}
 	
 	public final void setStorageConfig(final StorageConfig storageConfig) {
@@ -721,6 +732,165 @@ implements Serializable {
 			
 			public final int getSize() {
 				return size;
+			}
+		}
+	}
+
+	public static final class OutputConfig
+	implements Serializable {
+
+		public static final String KEY_COLOR = "color";
+		public static final String KEY_METRICS = "metrics";
+		public static final String KEY_PERSIST = "persist";
+
+		public final void setColor(final boolean colorFlag) {
+			this.colorFlag = colorFlag;
+		}
+
+		public final void setMetricsConfig(final MetricsConfig metricsConfig) {
+			this.metricsConfig = metricsConfig;
+		}
+
+		public final void setPersist(final boolean persistFlag) {
+			this.persistFlag = persistFlag;
+		}
+
+		@JsonProperty(KEY_COLOR) private boolean colorFlag;
+		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
+		@JsonProperty(KEY_PERSIST) private boolean persistFlag;
+
+		public OutputConfig() {
+		}
+
+		public OutputConfig(final OutputConfig other) {
+			this.colorFlag = other.getColor();
+			this.metricsConfig = new MetricsConfig(other.getMetricsConfig());
+			this.persistFlag = other.getPersist();
+		}
+
+		public final boolean getColor() {
+			return colorFlag;
+		}
+
+		public final MetricsConfig getMetricsConfig() {
+			return metricsConfig;
+		}
+
+		public final boolean getPersist() {
+			return persistFlag;
+		}
+
+		public static final class MetricsConfig
+			implements Serializable {
+
+			public static final String KEY_PERIOD = "period";
+			public static final String KEY_PERSIST = "persist";
+			public static final String KEY_SERVICE = "service";
+			public static final String KEY_TABLE = "table";
+			public static final String KEY_THRESHOLD = "threshold";
+
+			public final void setPeriod(final long period) {
+				this.period = period;
+			}
+
+			public final void setPersist(final boolean persistFlag) {
+				this.persistFlag = persistFlag;
+			}
+
+			public final void setTableConfig(final TableConfig tableConfig) {
+				this.tableConfig = tableConfig;
+			}
+
+			public final void setService(final boolean serviceFlag) {
+				this.serviceFlag = serviceFlag;
+			}
+
+			public final void setThreshold(final double threshold) {
+				this.threshold = threshold;
+			}
+
+			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
+			private long period;
+			@JsonProperty(KEY_PERSIST) private boolean persistFlag;
+			@JsonProperty(KEY_SERVICE) private boolean serviceFlag;
+			@JsonProperty(KEY_TABLE) private TableConfig tableConfig;
+			@JsonProperty(KEY_THRESHOLD) private double threshold;
+
+			public MetricsConfig() {
+			}
+
+			public MetricsConfig(final MetricsConfig other) {
+				this.threshold = other.getThreshold();
+				this.persistFlag = other.getPersist();
+				this.serviceFlag = other.getService();
+				this.tableConfig = new TableConfig(other.getTableConfig());
+				this.period = other.getPeriod();
+			}
+
+			public final long getPeriod() {
+				return period;
+			}
+
+			public final boolean getPersist() {
+				return persistFlag;
+			}
+
+			public TableConfig getTableConfig() {
+				return tableConfig;
+			}
+
+			public final boolean getService() {
+				return serviceFlag;
+			}
+
+			public final double getThreshold() {
+				return threshold;
+			}
+
+			public static final class TableConfig
+			implements Serializable {
+
+				public static final String KEY_HEADER = "header";
+
+				public final void setHeaderConfig(final HeaderConfig headerConfig) {
+					this.headerConfig = headerConfig;
+				}
+
+				@JsonProperty(KEY_HEADER) private HeaderConfig headerConfig;
+
+				public TableConfig() {
+				}
+
+				public TableConfig(final TableConfig other) {
+					this.headerConfig = new HeaderConfig(other.getHeaderConfig());
+				}
+
+				public final HeaderConfig getHeaderConfig() {
+					return headerConfig;
+				}
+
+				public static final class HeaderConfig
+				implements Serializable {
+
+					public static final String KEY_PERIOD = "period";
+
+					public final void setPeriod(final int period) {
+						this.period = period;
+					}
+
+					@JsonProperty(KEY_PERIOD) private int period;
+
+					public HeaderConfig() {
+					}
+
+					public HeaderConfig(final HeaderConfig other) {
+						this.period = other.getPeriod();
+					}
+
+					public final int getPeriod() {
+						return period;
+					}
+				}
 			}
 		}
 	}
@@ -1331,13 +1501,20 @@ implements Serializable {
 	public static final class TestConfig
 	implements Serializable {
 
+		public static final String KEY_ID = "id";
 		public static final String KEY_SCENARIO = "scenario";
 		public static final String KEY_STEP = "step";
 
+		@JsonProperty(KEY_ID)
+		private String id;
 		@JsonProperty(KEY_SCENARIO)
 		private ScenarioConfig scenarioConfig;
 		@JsonProperty(KEY_STEP)
 		private StepConfig stepConfig;
+
+		public final String getId() {
+			return id;
+		}
 
 		public final ScenarioConfig getScenarioConfig() {
 			return this.scenarioConfig;
@@ -1345,6 +1522,10 @@ implements Serializable {
 
 		public final StepConfig getStepConfig() {
 			return this.stepConfig;
+		}
+
+		public final void setId(final String id) {
+			this.id = id;
 		}
 
 		public final void setScenarioConfig(final ScenarioConfig scenarioConfig) {
@@ -1359,6 +1540,7 @@ implements Serializable {
 		}
 
 		public TestConfig(final TestConfig other) {
+			this.id = other.getId();
 			this.scenarioConfig = new ScenarioConfig(other.getScenarioConfig());
 			this.stepConfig = new StepConfig(other.getStepConfig());
 		}
@@ -1390,62 +1572,35 @@ implements Serializable {
 		implements Serializable {
 
 			public static final String KEY_LIMIT = "limit";
-			public static final String KEY_METRICS = "metrics";
-			public static final String KEY_NAME = "name";
-			public static final String KEY_PRECONDITION = "precondition";
+			public static final String KEY_ID = "id";
 
 			@JsonProperty(KEY_LIMIT)
 			private LimitConfig limitConfig;
 
-			@JsonProperty(KEY_METRICS)
-			private MetricsConfig metricsConfig;
-
-			@JsonProperty(KEY_NAME)
-			private String name;
-
-			@JsonProperty(KEY_PRECONDITION)
-			private boolean precondition;
+			@JsonProperty(KEY_ID)
+			private String id;
 
 			public StepConfig() {
 			}
 
 			public StepConfig(final StepConfig other) {
 				this.limitConfig = new LimitConfig(other.getLimitConfig());
-				this.metricsConfig = new MetricsConfig(other.getMetricsConfig());
-				this.name = other.getName();
-				this.precondition = other.getPrecondition();
-			}
+				this.id = other.getId();}
 
 			public final LimitConfig getLimitConfig() {
 				return limitConfig;
 			}
 
-			public final MetricsConfig getMetricsConfig() {
-				return metricsConfig;
-			}
-
-			public final String getName() {
-				return name;
-			}
-
-			public final boolean getPrecondition() {
-				return precondition;
+			public final String getId() {
+				return id;
 			}
 
 			public final void setLimitConfig(final LimitConfig limitConfig) {
 				this.limitConfig = limitConfig;
 			}
 
-			public final void setMetricsConfig(final MetricsConfig metricsConfig) {
-				this.metricsConfig = metricsConfig;
-			}
-
-			public final void setName(final String name) {
-				this.name = name;
-			}
-
-			public final void setPrecondition(final boolean precondition) {
-				this.precondition = precondition;
+			public final void setId(final String id) {
+				this.id = id;
 			}
 
 			public static final class LimitConfig
@@ -1508,42 +1663,6 @@ implements Serializable {
 
 				public final long getTime() {
 					return time;
-				}
-			}
-
-			public static final class MetricsConfig
-			implements Serializable {
-
-				public static final String KEY_PERIOD = "period";
-				public static final String KEY_THRESHOLD = "threshold";
-
-				public final void setPeriod(final long period) {
-					this.period = period;
-				}
-
-				public final void setThreshold(final double threshold) {
-					this.threshold = threshold;
-				}
-
-				@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
-				private long period;
-
-				@JsonProperty(KEY_THRESHOLD) private double threshold;
-
-				public MetricsConfig() {
-				}
-
-				public MetricsConfig(final MetricsConfig other) {
-					this.threshold = other.getThreshold();
-					this.period = other.getPeriod();
-				}
-
-				public final long getPeriod() {
-					return period;
-				}
-
-				public final double getThreshold() {
-					return threshold;
 				}
 			}
 		}
