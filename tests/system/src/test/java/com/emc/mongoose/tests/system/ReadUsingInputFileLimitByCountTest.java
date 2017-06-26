@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class ReadUsingInputFileLimitByCountTest
 extends EnvConfiguredScenarioTestBase {
 
-	private static final int EXPECTED_COUNT = 10_000;
+	private static long EXPECTED_COUNT = 10_000;
 	private static String STD_OUTPUT = null;
 	private static String ITEM_OUTPUT_PATH = null;
 
@@ -62,6 +62,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
+				EXPECTED_COUNT = new SizeInBytes("1GB").get() / ITEM_DATA_SIZE.get();
 				ITEM_OUTPUT_PATH = Paths.get(
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
 				).toString();

@@ -60,6 +60,7 @@ extends EnvConfiguredScenarioTestBase {
 	}
 	
 	private static boolean FINISHED_IN_TIME;
+	private static String STD_OUTPUT;
 	
 	@BeforeClass
 	public static void setUpClass()
@@ -89,11 +90,13 @@ extends EnvConfiguredScenarioTestBase {
 				}
 			}
 		);
+		STD_OUT_STREAM.startRecording();
 		runner.start();
 		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LoadJobLogFileManager.flush(STEP_NAME);
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
 	}
 	
@@ -107,6 +110,19 @@ extends EnvConfiguredScenarioTestBase {
 	public void testFinishedInTime() {
 		assumeFalse(SKIP_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
+	}
+
+	@Test
+	public final void testStdOutput()
+	throws Exception {
+		assumeFalse(SKIP_FLAG);
+		testMetricsTableStdout(
+			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			new HashMap<IoType, Integer>() {{
+				put(IoType.CREATE, CONCURRENCY);
+				put(IoType.READ, CONCURRENCY);
+			}}
+		);
 	}
 	
 	@Test

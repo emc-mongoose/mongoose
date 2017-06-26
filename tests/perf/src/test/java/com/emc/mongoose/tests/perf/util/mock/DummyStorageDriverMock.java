@@ -36,6 +36,7 @@ implements StorageDriver<I, O> {
 
 	private final int batchSize;
 	private final int queueCapacity;
+	private final int concurrencyLevel;
 	private final BlockingQueue<O> ioResultsQueue;
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
@@ -46,6 +47,7 @@ implements StorageDriver<I, O> {
 	) {
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		this.queueCapacity = loadConfig.getQueueConfig().getSize();
+		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
 	}
 
@@ -188,7 +190,7 @@ implements StorageDriver<I, O> {
 	@Override
 	public final int getConcurrencyLevel()
 	throws RemoteException {
-		return 0;
+		return concurrencyLevel;
 	}
 
 	@Override
