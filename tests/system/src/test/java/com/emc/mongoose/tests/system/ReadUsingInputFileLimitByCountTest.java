@@ -44,7 +44,8 @@ extends EnvConfiguredScenarioTestBase {
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3"));
 		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes("1MB"), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
 		STEP_NAME = ReadUsingInputFileLimitByCountTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
@@ -62,7 +63,6 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
-				EXPECTED_COUNT = new SizeInBytes("1GB").get() / ITEM_DATA_SIZE.get();
 				ITEM_OUTPUT_PATH = Paths.get(
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
 				).toString();
