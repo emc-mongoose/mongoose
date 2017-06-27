@@ -5,6 +5,7 @@ import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -15,6 +16,8 @@ import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
+import javax.management.MBeanServer;
+import java.lang.management.ManagementFactory;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,13 +38,23 @@ implements SvcTask {
 	private final Map<LoadController, SortedSet<MetricsContext>> allMetrics = new HashMap<>();
 	private final Lock allMetricsLock = new ReentrantLock();
 	private final long outputPeriodMillis;
+	private final MBeanServer mBeanServer;
 	private volatile long lastOutputTs;
 	private volatile long nextOutputTs;
 	
-	private MetricsManager(final long outputPeriodMillis) {
+	private MetricsManager(final long outputPeriodMillis, final boolean svcFlag) {
 		svcTasks.add(this);
 		this.outputPeriodMillis = outputPeriodMillis;
 		lastOutputTs = System.currentTimeMillis() - outputPeriodMillis;
+		if(svcFlag) {
+			System.setProperty("com.sun.management.jmxremote", "true");
+			System.setProperty("com.sun.management.jmxremote.local.only", "false");
+			System.setProperty("com.sun.management.jmxremote.authenticate", "false");
+			System.setProperty("com.sun.management.jmxremote.ssl", "false");
+			mBeanServer = ManagementFactory.getPlatformMBeanServer();
+		} else {
+			mBeanServer = null;
+		}
 	}
 	
 	private static final String CLASS_NAME = MetricsManager.class.getSimpleName();
@@ -50,12 +63,10 @@ implements SvcTask {
 	static {
 		try {
 			final Config defaultConfig  = ConfigParser.loadDefaultConfig();
-			final long defaultPeriod = defaultConfig
-				.getTestConfig()
-				.getStepConfig()
-				.getMetricsConfig()
-				.getPeriod();
-			INSTANCE = new MetricsManager(TimeUnit.SECONDS.toMillis(defaultPeriod));
+			final MetricsConfig metricsConfig = defaultConfig.getOutputConfig().getMetricsConfig();
+			final long defaultPeriod = metricsConfig.getPeriod();
+			final boolean svcFlag = metricsConfig.getService();
+			INSTANCE = new MetricsManager(TimeUnit.SECONDS.toMillis(defaultPeriod), svcFlag);
 			INSTANCE.start();
 		} catch(final Throwable cause) {
 			throw new AssertionError(cause);

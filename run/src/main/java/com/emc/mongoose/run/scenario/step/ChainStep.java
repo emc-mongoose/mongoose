@@ -27,6 +27,7 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.OutputConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -104,6 +105,7 @@ extends StepBase {
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final QueueConfig queueConfig = loadConfig.getQueueConfig();
+				final MetricsConfig metricsConfig = config.getOutputConfig().getMetricsConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
 				StorageDriverUtil.init(
@@ -140,8 +142,10 @@ extends StepBase {
 				loadConfigMap.put(loadGenerator, loadConfig);
 				final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 				stepConfigMap.put(loadGenerator, stepConfig);
+				final Map<LoadGenerator, MetricsConfig> metricsConfigMap = new HashMap<>();
+				metricsConfigMap.put(loadGenerator, metricsConfig);
 				final LoadController loadController = new BasicLoadController(
-					testStepName, driversMap, null, loadConfigMap, stepConfigMap
+					testStepName, driversMap, null, loadConfigMap, stepConfigMap, metricsConfigMap
 				);
 				loadChain.add(loadController);
 				

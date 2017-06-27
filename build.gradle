@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import groovy.json.JsonParserType
 
 description = "Mongoose is a high-load storage performance testing tool"
 
@@ -252,6 +253,6 @@ void collectName(Project p, LinkedList<String> names) {
 String defineVersion() {
 	def configFilePath = [rootDir, "config", "defaults.json"].join(File.separator);
 	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().parseText(inputFile.text)
+	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
 	json.version
 }

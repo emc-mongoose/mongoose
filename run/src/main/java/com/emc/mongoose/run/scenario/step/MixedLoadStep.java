@@ -23,6 +23,7 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -87,6 +88,7 @@ extends StepBase {
 		final Int2IntMap weightMap = weights == null ?
 			null : new Int2IntOpenHashMap(loadGeneratorCount);
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>(loadGeneratorCount);
+		final Map<LoadGenerator, MetricsConfig> metricsConfigMap = new HashMap<>(loadGeneratorCount);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>(loadGeneratorCount);
 		
 		try {
@@ -113,6 +115,7 @@ extends StepBase {
 				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();
+				final MetricsConfig metricsConfig = config.getOutputConfig().getMetricsConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
 				final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 				final LimitConfig limitConfig = stepConfig.getLimitConfig();
@@ -137,6 +140,7 @@ extends StepBase {
 					weightMap.put(loadGenerator.hashCode(), (int) weights.get(i));
 				}
 				loadConfigMap.put(loadGenerator, loadConfig);
+				metricsConfigMap.put(loadGenerator, metricsConfig);
 				stepConfigMap.put(loadGenerator, stepConfig);
 			}
 		} catch(final IOException e) {
@@ -147,7 +151,7 @@ extends StepBase {
 		
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap
+				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap, metricsConfigMap
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();

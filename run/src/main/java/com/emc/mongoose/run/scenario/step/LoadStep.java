@@ -21,6 +21,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -68,10 +69,10 @@ extends StepBase {
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = stepConfig.getId();
 		Loggers.MSG.info("Run the load step \"{}\"", jobName);
-		stepConfig.setPrecondition(preconditionFlag);
-
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
+		final MetricsConfig metricsConfig = localConfig.getOutputConfig().getMetricsConfig();
+		metricsConfig.setPersist(!preconditionFlag);
 		final ItemConfig itemConfig = localConfig.getItemConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
@@ -127,9 +128,11 @@ extends StepBase {
 		loadConfigMap.put(loadGenerator, loadConfig);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 		stepConfigMap.put(loadGenerator, stepConfig);
+		final Map<LoadGenerator, MetricsConfig> metricsConfigMap = new HashMap<>();
+		metricsConfigMap.put(loadGenerator, metricsConfig);
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driversMap, null, loadConfigMap, stepConfigMap
+				jobName, driversMap, null, loadConfigMap, stepConfigMap, metricsConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();

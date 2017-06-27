@@ -26,7 +26,7 @@ import com.emc.mongoose.load.monitor.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.load.monitor.MetricsManager;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.model.metrics.BasicMetricsContext;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
@@ -77,8 +77,7 @@ implements LoadController<I, O> {
 	
 	private final String name;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
-	private final boolean preconditionJobFlag;
-	private final int metricsPeriodSec;
+	private final boolean metricsPersistFlag;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
@@ -105,7 +104,8 @@ implements LoadController<I, O> {
 	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
+		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs,
+		final Map<LoadGenerator<I, O>, MetricsConfig> metricsConfigs
 	) {
 		this.name = name;
 		final StepConfig anyStepConfig = stepConfigs.values().iterator().next();
@@ -137,9 +137,7 @@ implements LoadController<I, O> {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
-		final MetricsConfig metricsConfig = anyStepConfig.getMetricsConfig();
-		preconditionJobFlag = anyStepConfig.getPrecondition();
-		metricsPeriodSec = (int) metricsConfig.getPeriod();
+		metricsPersistFlag = metricsConfigs.values().iterator().next().getPersist();
 
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
@@ -153,6 +151,7 @@ implements LoadController<I, O> {
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
+			final MetricsConfig nextMetricsConfig = metricsConfigs.get(nextGenerator);
 			final int nextOriginCode = nextGenerator.hashCode();
 			circularityMap.put(nextOriginCode, nextLoadConfig.getCircular());
 			if(circularityMap.get(nextOriginCode)) {
@@ -174,8 +173,9 @@ implements LoadController<I, O> {
 				ioTypeCode,
 				new BasicMetricsContext(
 					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
-					(int) (ioTypeSpecificConcurrency * metricsConfig.getThreshold()),
-					nextGenerator.getTransferSizeEstimate(), preconditionJobFlag, metricsPeriodSec
+					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
+					nextGenerator.getTransferSizeEstimate(), nextMetricsConfig.getPersist(),
+					(int) nextMetricsConfig.getPeriod()
 				)
 			);
 		}
@@ -362,7 +362,7 @@ implements LoadController<I, O> {
 	public final boolean put(final O ioTaskResult) {
 		
 		// I/O trace logging
-		if(!preconditionJobFlag && Loggers.IO_TRACE.isDebugEnabled()) {
+		if(Loggers.IO_TRACE.isDebugEnabled() && metricsPersistFlag) {
 			Loggers.IO_TRACE.debug(new IoTraceCsvLogMessage<>(ioTaskResult));
 		}
 		
@@ -453,7 +453,7 @@ implements LoadController<I, O> {
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
 		
 		// I/O trace logging
-		if(!preconditionJobFlag && Loggers.IO_TRACE.isDebugEnabled()) {
+		if(Loggers.IO_TRACE.isDebugEnabled() && metricsPersistFlag) {
 			Loggers.IO_TRACE.debug(new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
 		}
 
