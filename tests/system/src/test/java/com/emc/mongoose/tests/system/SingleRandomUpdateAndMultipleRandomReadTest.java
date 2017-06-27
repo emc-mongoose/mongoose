@@ -109,12 +109,12 @@ extends EnvConfiguredScenarioTestBase {
 		testMetricsLogRecords(
 			updateMetricsRecords, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			EXPECTED_UPDATE_SIZE, EXPECTED_COUNT, 0,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsLogRecords(
 			readMetricsRecords, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			EXPECTED_READ_SIZE, EXPECTED_COUNT, 0,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}
 	
@@ -140,11 +140,11 @@ extends EnvConfiguredScenarioTestBase {
 		final String stdOutput = STD_OUTPUT.replaceAll("[\r\n]+", " ");
 		testSingleMetricsStdout(
 			stdOutput, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_UPDATE_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testSingleMetricsStdout(
 			stdOutput, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_READ_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}
 	

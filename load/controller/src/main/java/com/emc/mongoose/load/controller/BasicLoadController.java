@@ -77,7 +77,6 @@ implements LoadController<I, O> {
 	
 	private final String name;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
-	private final boolean metricsPersistFlag;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
@@ -93,6 +92,7 @@ implements LoadController<I, O> {
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
+	private final boolean tracePersistFlag;
 	
 	private volatile Output<O> ioResultsOutput;
 	private volatile boolean recycleQueueFullState = false;
@@ -137,7 +137,8 @@ implements LoadController<I, O> {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
-		metricsPersistFlag = metricsConfigs.values().iterator().next().getPersist();
+		final MetricsConfig anyMetricsConfig = metricsConfigs.values().iterator().next();
+		tracePersistFlag = anyMetricsConfig.getTraceConfig().getPersist();
 
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
@@ -174,8 +175,10 @@ implements LoadController<I, O> {
 				new BasicMetricsContext(
 					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
-					nextGenerator.getTransferSizeEstimate(), nextMetricsConfig.getPersist(),
-					(int) nextMetricsConfig.getPeriod()
+					nextGenerator.getTransferSizeEstimate(),
+					(int) nextMetricsConfig.getAverageConfig().getPeriod(),
+					nextMetricsConfig.getAverageConfig().getPersist(),
+					nextMetricsConfig.getSummaryConfig().getPersist()
 				)
 			);
 		}
@@ -362,8 +365,8 @@ implements LoadController<I, O> {
 	public final boolean put(final O ioTaskResult) {
 		
 		// I/O trace logging
-		if(Loggers.IO_TRACE.isDebugEnabled() && metricsPersistFlag) {
-			Loggers.IO_TRACE.debug(new IoTraceCsvLogMessage<>(ioTaskResult));
+		if(tracePersistFlag) {
+			Loggers.IO_TRACE.info(new IoTraceCsvLogMessage<>(ioTaskResult));
 		}
 		
 		if( // account only completed composite I/O tasks
@@ -453,8 +456,8 @@ implements LoadController<I, O> {
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
 		
 		// I/O trace logging
-		if(Loggers.IO_TRACE.isDebugEnabled() && metricsPersistFlag) {
-			Loggers.IO_TRACE.debug(new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
+		if(tracePersistFlag) {
+			Loggers.IO_TRACE.info(new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
 		}
 
 		int originCode;

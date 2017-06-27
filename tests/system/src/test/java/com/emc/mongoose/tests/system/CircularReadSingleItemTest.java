@@ -140,7 +140,7 @@ extends EnvConfiguredScenarioTestBase {
 		);
 		testMetricsLogRecords(
 			metricsLogRecords, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			0, 60, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			0, 60, CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}
 
@@ -166,7 +166,7 @@ extends EnvConfiguredScenarioTestBase {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}
 

@@ -113,7 +113,7 @@ extends EnvConfiguredScenarioTestBase {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}
 

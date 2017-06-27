@@ -104,7 +104,7 @@ extends EnvConfiguredScenarioTestBase {
 					break;
 			}
 		}
-		final long period = CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod();
+		final long period = CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod();
 		testMetricsLogRecords(
 			createMetricsRecs, IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			0, 0, period
@@ -143,7 +143,7 @@ extends EnvConfiguredScenarioTestBase {
 	public void testMetricsStdout()
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
-		final long period = CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod();
+		final long period = CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod();
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, period

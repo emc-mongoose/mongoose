@@ -304,48 +304,81 @@
 				"metrics" : {
 					"type" : "object",
 					"required" : [
-						"period", "persist", "service", "table", "threshold"
+						"average", "summary", "trace", "service", "threshold"
 					],
 					"additionalProperties" : false,
 					"properties" : {
-						"period" : {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								}, {
-									"type" : "string",
-									"pattern" : "[\\d]+[SsMmHhDd]?"
-								}
-							]
-						},
-						"persist" : {
-							"type" : "boolean"
-						},
-						"service" : {
-							"type" : "boolean"
-						},
-						"table" : {
+						"average" : {
 							"type" : "object",
 							"required" : [
-								"header"
+								"period", "persist", "table"
 							],
 							"additionalProperties" : false,
 							"properties" : {
-								"header" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								},
+								"persist" : {
+									"type" : "boolean"
+								},
+								"table" : {
 									"type" : "object",
 									"required" : [
-										"period"
+										"header"
 									],
 									"additionalProperties" : false,
 									"properties" : {
-										"period" : {
-											"type" : "integer",
-											"minimum" : 1
+										"header" : {
+											"type" : "object",
+											"required" : [
+												"period"
+											],
+											"additionalProperties" : false,
+											"properties" : {
+												"period" : {
+													"type" : "integer",
+													"minimum" : 1
+												}
+											}
 										}
 									}
 								}
 							}
+						},
+						"summary" : {
+							"type" : "object",
+							"required" : [
+								"persist"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"persist" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"trace" : {
+							"type" : "object",
+							"required" : [
+								"persist"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"persist" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"service" : {
+							"type" : "boolean"
 						},
 						"threshold" : {
 							"type" : "number",

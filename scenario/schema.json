@@ -402,32 +402,96 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"period" : {
-									"oneOf" : [
-										{
-											"type" : "integer",
-											"minimum" : 0
+								"average" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"period" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d]+[SsMmHhDd]?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										},
-										{
-											"type" : "string",
-											"pattern" : "[\\d]+[SsMmHhDd]?"
+										"persist" : {
+											"oneOf" : [
+												{
+													"type" : "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+										"table" : {
+											"type" : "object",
+											"additionalProperties" : false,
+											"properties" : {
+												"header" : {
+													"type" : "object",
+													"additionalProperties" : false,
+													"properties" : {
+														"period" : {
+															"oneOf" : [
+																{
+																	"type" : "integer",
+																	"minimum" : 1
+																},
+																{
+																	"type" : "string",
+																	"pattern" : "\\$\\{.+\\}"
+																}
+															]
+														}
+													}
+												}
+											}
 										}
-									]
+									}
 								},
-								"persist" : {
-									"oneOf" : [
-										{
-											"type" : "boolean"
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+								"summary" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"persist" : {
+											"oneOf" : [
+												{
+													"type" : "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										}
-									]
+									}
+								},
+								"trace" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"persist" : {
+											"oneOf" : [
+												{
+													"type" : "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										}
+									}
 								},
 								"service" : {
 									"oneOf" : [
@@ -439,30 +503,6 @@
 											"pattern" : "\\$\\{.+\\}"
 										}
 									]
-								},
-								"table" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"header" : {
-											"type" : "object",
-											"additionalProperties" : false,
-											"properties" : {
-												"period" : {
-													"oneOf" : [
-														{
-															"type" : "integer",
-															"minimum" : 1
-														},
-														{
-															"type" : "string",
-															"pattern" : "\\$\\{.+\\}"
-														}
-													]
-												}
-											}
-										}
-									}
 								},
 								"threshold" : {
 									"oneOf" : [

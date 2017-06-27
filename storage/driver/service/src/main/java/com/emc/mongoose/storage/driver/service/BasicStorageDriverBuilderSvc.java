@@ -11,11 +11,10 @@ import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.ui.log.Loggers;
-
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig.AverageConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -62,8 +61,10 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig) {
-		super.setMetricsConfig(metricsConfig);
+	public BasicStorageDriverBuilderSvc<I, O, T> setAverageConfig(
+		final AverageConfig avgMetricsConfig
+	) {
+		super.setAverageConfig(avgMetricsConfig);
 		return this;
 	}
 
@@ -165,7 +166,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getMetricsConfig().getPeriod(), getStepName()
+			port, driver, getAverageConfig().getPeriod(), getStepName()
 		);
 		return wrapper.getName();
 	}

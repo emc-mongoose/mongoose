@@ -33,7 +33,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final int concurrency;
 	private final int thresholdConcurrency;
 	private final long transferSizeEstimate;
-	private final boolean volatileOutputFlag;
+	private final boolean avgPersistFlag;
+	private final boolean sumPersistFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
 	private volatile Snapshot lastSnapshot = null;
@@ -44,7 +45,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	public BasicMetricsContext(
 		final String stepName, final IoType ioType, final int driverCount, final int concurrency,
 		final int thresholdConcurrency, final long transferSizeEstimate,
-		final boolean volatileOutputFlag, final int updateIntervalSec
+		final int updateIntervalSec, final boolean avgPersistFlag, final boolean sumPersistFlag
 	) {
 		this.stepName = stepName;
 		this.ioType = ioType;
@@ -53,7 +54,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
 			thresholdConcurrency : Integer.MAX_VALUE;
 		this.transferSizeEstimate = transferSizeEstimate;
-		this.volatileOutputFlag = volatileOutputFlag;
+		this.avgPersistFlag = avgPersistFlag;
+		this.sumPersistFlag = sumPersistFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
 		respLatSnapshot = respLatency.getSnapshot();
@@ -210,8 +212,13 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final boolean getVolatileOutputFlag() {
-		return volatileOutputFlag;
+	public final boolean getAvgPersistFlag() {
+		return avgPersistFlag;
+	}
+	//
+	@Override
+	public final boolean getSumPersistFlag() {
+		return sumPersistFlag;
 	}
 	//
 	@Override
@@ -271,8 +278,9 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new BasicMetricsContext(
-			stepName, ioType, driverCount, concurrency, 0, transferSizeEstimate, volatileOutputFlag,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis)
+			stepName, ioType, driverCount, concurrency, 0, transferSizeEstimate,
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), avgPersistFlag,
+			sumPersistFlag
 		);
 		thresholdMetricsCtx.start();
 	}

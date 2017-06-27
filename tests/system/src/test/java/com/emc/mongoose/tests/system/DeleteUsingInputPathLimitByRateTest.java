@@ -116,7 +116,7 @@ extends EnvConfiguredScenarioTestBase {
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords();
 		testMetricsLogRecords(
 			metricsLogRecs, IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, new SizeInBytes(0),
-			EXPECTED_COUNT, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			EXPECTED_COUNT, 0, CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		for(final CSVRecord metricsLogRec : metricsLogRecs) {
 			assertEquals(
@@ -147,7 +147,7 @@ extends EnvConfiguredScenarioTestBase {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsTableStdout(
 			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, EXPECTED_COUNT,

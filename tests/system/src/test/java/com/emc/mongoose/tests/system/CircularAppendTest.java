@@ -120,7 +120,7 @@ extends EnvConfiguredScenarioTestBase {
 			testMetricsLogRecords(
 				metricsLogRecords, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
 				ITEM_DATA_SIZE, EXPECTED_APPEND_COUNT * EXPECTED_COUNT, 0,
-				CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+				CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		} catch(final FileNotFoundException ignored) {
 			// there may be no metrics file if append step duration is less than 10s
@@ -149,7 +149,7 @@ extends EnvConfiguredScenarioTestBase {
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
 			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}
 

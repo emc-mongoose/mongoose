@@ -112,7 +112,7 @@ public class ConfigParserTest {
 		assertThat(metricsConfig.getThreshold(), equalTo(0.0, "load.metrics.intermediate"));
 		final String periodTestValue = "10s";
 		assertThat(
-			metricsConfig.getPeriod(),
+			metricsConfig.getAverageConfig().getPeriod(),
 			equalTo(
 				TimeUtil
 					.getTimeUnit(periodTestValue)

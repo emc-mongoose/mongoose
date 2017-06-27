@@ -64,7 +64,7 @@ implements SvcTask {
 		try {
 			final Config defaultConfig  = ConfigParser.loadDefaultConfig();
 			final MetricsConfig metricsConfig = defaultConfig.getOutputConfig().getMetricsConfig();
-			final long defaultPeriod = metricsConfig.getPeriod();
+			final long defaultPeriod = metricsConfig.getAverageConfig().getPeriod();
 			final boolean svcFlag = metricsConfig.getService();
 			INSTANCE = new MetricsManager(TimeUnit.SECONDS.toMillis(defaultPeriod), svcFlag);
 			INSTANCE.start();
@@ -100,24 +100,30 @@ implements SvcTask {
 			try {
 				final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 					.get(controller);
+
 				if(controllerMetrics != null && controllerMetrics.remove(metricsCtx)) {
+
 					metricsCtx.refreshLastSnapshot(); // last time
-					if(!metricsCtx.getVolatileOutputFlag()) {
-						// check for the metrics threshold state if entered
-						if(
-							metricsCtx.isThresholdStateEntered() &&
-								!metricsCtx.isThresholdStateExited()
-							) {
-							exitMetricsThresholdState(metricsCtx);
-						}
-						// file output
+
+					// check for the metrics threshold state if entered
+					if(
+						metricsCtx.isThresholdStateEntered() &&
+							!metricsCtx.isThresholdStateExited()
+					) {
+						exitMetricsThresholdState(metricsCtx);
+					}
+
+					// file output
+					if(!metricsCtx.getSumPersistFlag()) {
 						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
 						Loggers.METRICS_EXT_RESULTS_FILE.info(
 							new ExtResultsXmlLogMessage(metricsCtx)
 						);
 					}
+
 					// console output
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
+
 				} else {
 					Loggers.ERR.debug(
 						"Metrics context \"{}\" has not been registered", metricsCtx
@@ -153,32 +159,34 @@ implements SvcTask {
 								.put(KEY_STEP_NAME, metricsCtx.getStepName())
 						) {
 							metricsCtx.refreshLastSnapshot();
+
 							// threshold load state checks
-							if(!metricsCtx.getVolatileOutputFlag()) {
-								nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
+							nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
+							if(
+								nextConcurrencyThreshold > 0 &&
+									controllerActiveTaskCount >= nextConcurrencyThreshold
+							) {
 								if(
-									nextConcurrencyThreshold > 0 &&
-										controllerActiveTaskCount >= nextConcurrencyThreshold
-								) {
-									if(
-										!metricsCtx.isThresholdStateEntered() &&
-											!metricsCtx.isThresholdStateExited()
-									) {
-										Loggers.MSG.info(
-											"{}: the threshold of {} active tasks count is " +
-											"reached, starting the additional metrics accounting",
-											metricsCtx.toString(),
-											metricsCtx.getConcurrencyThreshold()
-										);
-										metricsCtx.enterThresholdState();
-									}
-								} else if(
-									metricsCtx.isThresholdStateEntered() &&
+									!metricsCtx.isThresholdStateEntered() &&
 										!metricsCtx.isThresholdStateExited()
 								) {
-									exitMetricsThresholdState(metricsCtx);
+									Loggers.MSG.info(
+										"{}: the threshold of {} active tasks count is " +
+										"reached, starting the additional metrics accounting",
+										metricsCtx.toString(),
+										metricsCtx.getConcurrencyThreshold()
+									);
+									metricsCtx.enterThresholdState();
 								}
-								// periodic file output
+							} else if(
+								metricsCtx.isThresholdStateEntered() &&
+									!metricsCtx.isThresholdStateExited()
+							) {
+								exitMetricsThresholdState(metricsCtx);
+							}
+
+							// periodic file output
+							if(!metricsCtx.getAvgPersistFlag()) {
 								if(
 									nextOutputTs - metricsCtx.getLastOutputTs() >=
 										metricsCtx.getOutputPeriodMillis()
@@ -190,6 +198,7 @@ implements SvcTask {
 						}
 					}
 				}
+
 				// periodic console output
 				if(nextOutputTs - lastOutputTs >= outputPeriodMillis) {
 					lastOutputTs = nextOutputTs;

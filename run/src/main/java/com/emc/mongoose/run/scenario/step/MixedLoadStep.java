@@ -122,7 +122,8 @@ extends StepBase {
 
 				final List<StorageDriver> drivers = new ArrayList<>();
 				StorageDriverUtil.init(
-					drivers, itemConfig, loadConfig, storageConfig, stepConfig, contentSrc
+					drivers, itemConfig, loadConfig, metricsConfig.getAverageConfig(),
+					storageConfig, stepConfig, contentSrc
 				);
 
 				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()

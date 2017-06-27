@@ -12,7 +12,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig.AverageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -30,11 +30,10 @@ public interface StorageDriverUtil {
 	
 	static void init(
 		final List<StorageDriver> drivers, final ItemConfig itemConfig, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final StepConfig stepConfig,
-		final ContentSource contentSrc
+		final AverageConfig avgMetricsConfig, final StorageConfig storageConfig,
+		final StepConfig stepConfig, final ContentSource contentSrc
 	) {
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
 		final String testStepName = stepConfig.getId();
 		final int driverPort = driverConfig.getPort();
 		final boolean remoteDriversFlag = driverConfig.getRemote();
@@ -87,7 +86,7 @@ public interface StorageDriverUtil {
 						.setContentSource(contentSrc)
 						.setItemConfig(itemConfig)
 						.setLoadConfig(loadConfig)
-						.setMetricsConfig(metricsConfig)
+						.setAverageConfig(avgMetricsConfig)
 						.setStorageConfig(storageConfig)
 						.buildRemotely();
 				} catch(final IOException | UserShootHisFootException e) {
@@ -134,7 +133,7 @@ public interface StorageDriverUtil {
 						.setItemConfig(itemConfig)
 						.setContentSource(contentSrc)
 						.setLoadConfig(loadConfig)
-						.setMetricsConfig(metricsConfig)
+						.setAverageConfig(avgMetricsConfig)
 						.setStorageConfig(storageConfig)
 						.build()
 				);

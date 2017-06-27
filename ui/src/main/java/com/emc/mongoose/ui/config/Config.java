@@ -781,24 +781,24 @@ implements Serializable {
 		}
 
 		public static final class MetricsConfig
-			implements Serializable {
+		implements Serializable {
 
-			public static final String KEY_PERIOD = "period";
-			public static final String KEY_PERSIST = "persist";
+			public static final String KEY_AVERAGE = "average";
+			public static final String KEY_SUMMARY = "summary";
+			public static final String KEY_TRACE = "trace";
 			public static final String KEY_SERVICE = "service";
-			public static final String KEY_TABLE = "table";
 			public static final String KEY_THRESHOLD = "threshold";
 
-			public final void setPeriod(final long period) {
-				this.period = period;
+			public final void setAverageConfig(final AverageConfig averageConfig) {
+				this.averageConfig = averageConfig;
 			}
 
-			public final void setPersist(final boolean persistFlag) {
-				this.persistFlag = persistFlag;
+			public final void setSummaryConfig(final SummaryConfig summaryConfig) {
+				this.summaryConfig = summaryConfig;
 			}
 
-			public final void setTableConfig(final TableConfig tableConfig) {
-				this.tableConfig = tableConfig;
+			public final void setTraceConfig(final TraceConfig traceConfig) {
+				this.traceConfig = traceConfig;
 			}
 
 			public final void setService(final boolean serviceFlag) {
@@ -809,34 +809,33 @@ implements Serializable {
 				this.threshold = threshold;
 			}
 
-			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
-			private long period;
-			@JsonProperty(KEY_PERSIST) private boolean persistFlag;
+			@JsonProperty(KEY_AVERAGE) private AverageConfig averageConfig;
+			@JsonProperty(KEY_SUMMARY) private SummaryConfig summaryConfig;
+			@JsonProperty(KEY_TRACE) private TraceConfig traceConfig;
 			@JsonProperty(KEY_SERVICE) private boolean serviceFlag;
-			@JsonProperty(KEY_TABLE) private TableConfig tableConfig;
 			@JsonProperty(KEY_THRESHOLD) private double threshold;
 
 			public MetricsConfig() {
 			}
 
 			public MetricsConfig(final MetricsConfig other) {
-				this.threshold = other.getThreshold();
-				this.persistFlag = other.getPersist();
+				this.averageConfig = new AverageConfig(other.getAverageConfig());
+				this.summaryConfig = new SummaryConfig(other.getSummaryConfig());
+				this.traceConfig = new TraceConfig(other.getTraceConfig());
 				this.serviceFlag = other.getService();
-				this.tableConfig = new TableConfig(other.getTableConfig());
-				this.period = other.getPeriod();
+				this.threshold = other.getThreshold();
 			}
 
-			public final long getPeriod() {
-				return period;
+			public final AverageConfig getAverageConfig() {
+				return averageConfig;
 			}
 
-			public final boolean getPersist() {
-				return persistFlag;
+			public final SummaryConfig getSummaryConfig() {
+				return summaryConfig;
 			}
 
-			public TableConfig getTableConfig() {
-				return tableConfig;
+			public final TraceConfig getTraceConfig() {
+				return traceConfig;
 			}
 
 			public final boolean getService() {
@@ -847,49 +846,141 @@ implements Serializable {
 				return threshold;
 			}
 
-			public static final class TableConfig
+			public static final class AverageConfig
 			implements Serializable {
 
-				public static final String KEY_HEADER = "header";
+				public static final String KEY_PERIOD = "period";
+				public static final String KEY_PERSIST = "persist";
+				public static final String KEY_TABLE = "table";
 
-				public final void setHeaderConfig(final HeaderConfig headerConfig) {
-					this.headerConfig = headerConfig;
+				public final void setPeriod(final long period) {
+					this.period = period;
 				}
 
-				@JsonProperty(KEY_HEADER) private HeaderConfig headerConfig;
-
-				public TableConfig() {
+				public final void setPersist(final boolean persistFlag) {
+					this.persistFlag = persistFlag;
 				}
 
-				public TableConfig(final TableConfig other) {
-					this.headerConfig = new HeaderConfig(other.getHeaderConfig());
+				public final void setTableConfig(final TableConfig tableConfig) {
+					this.tableConfig = tableConfig;
 				}
 
-				public final HeaderConfig getHeaderConfig() {
-					return headerConfig;
+				@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
+				private long period;
+				@JsonProperty(KEY_PERSIST) private boolean persistFlag;
+				@JsonProperty(KEY_TABLE) private TableConfig tableConfig;
+
+				public AverageConfig() {
 				}
 
-				public static final class HeaderConfig
-				implements Serializable {
+				public AverageConfig(final AverageConfig other) {
+					this.period = other.getPeriod();
+					this.persistFlag = other.getPersist();
+					this.tableConfig = new TableConfig(other.getTableConfig());
+				}
 
-					public static final String KEY_PERIOD = "period";
+				public final long getPeriod() {
+					return period;
+				}
 
-					public final void setPeriod(final int period) {
-						this.period = period;
+				public final boolean getPersist() {
+					return persistFlag;
+				}
+
+				public final TableConfig getTableConfig() {
+					return tableConfig;
+				}
+
+				public static final class TableConfig
+					implements Serializable {
+
+					public static final String KEY_HEADER = "header";
+
+					public final void setHeaderConfig(final HeaderConfig headerConfig) {
+						this.headerConfig = headerConfig;
 					}
 
-					@JsonProperty(KEY_PERIOD) private int period;
+					@JsonProperty(KEY_HEADER) private HeaderConfig headerConfig;
 
-					public HeaderConfig() {
+					public TableConfig() {
 					}
 
-					public HeaderConfig(final HeaderConfig other) {
-						this.period = other.getPeriod();
+					public TableConfig(final TableConfig other) {
+						this.headerConfig = new HeaderConfig(other.getHeaderConfig());
 					}
 
-					public final int getPeriod() {
-						return period;
+					public final HeaderConfig getHeaderConfig() {
+						return headerConfig;
 					}
+
+					public static final class HeaderConfig
+						implements Serializable {
+
+						public static final String KEY_PERIOD = "period";
+
+						public final void setPeriod(final int period) {
+							this.period = period;
+						}
+
+						@JsonProperty(KEY_PERIOD) private int period;
+
+						public HeaderConfig() {
+						}
+
+						public HeaderConfig(final HeaderConfig other) {
+							this.period = other.getPeriod();
+						}
+
+						public final int getPeriod() {
+							return period;
+						}
+					}
+				}
+			}
+
+			public static final class SummaryConfig
+			implements Serializable {
+
+				public static final String KEY_PERSIST = "persist";
+
+				public final void setPersist(final boolean persistFlag) {
+					this.persistFlag = persistFlag;
+				}
+
+				@JsonProperty(KEY_PERSIST) private boolean persistFlag;
+
+				public SummaryConfig() {
+				}
+
+				public SummaryConfig(final SummaryConfig other) {
+					this.persistFlag = other.getPersist();
+				}
+
+				public final boolean getPersist() {
+					return persistFlag;
+				}
+			}
+
+			public static final class TraceConfig
+			implements Serializable {
+
+				public static final String KEY_PERSIST = "persist";
+
+				public final void setPersist(final boolean persistFlag) {
+					this.persistFlag = persistFlag;
+				}
+
+				@JsonProperty(KEY_PERSIST) private boolean persistFlag;
+
+				public TraceConfig() {
+				}
+
+				public TraceConfig(final TraceConfig other) {
+					this.persistFlag = other.getPersist();
+				}
+
+				public final boolean getPersist() {
+					return persistFlag;
 				}
 			}
 		}
@@ -923,7 +1014,6 @@ implements Serializable {
 		@JsonProperty(KEY_NET) private NetConfig netConfig;
 		@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
 		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
-
 
 		public StorageConfig() {
 		}

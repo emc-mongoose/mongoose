@@ -12,14 +12,13 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig.AverageConfig;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
@@ -40,7 +39,7 @@ public class BasicStorageDriverBuilder<
 	private ContentSource contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
-	private MetricsConfig metricsConfig;
+	private AverageConfig avgMetricsConfig;
 	private StorageConfig storageConfig;
 
 	protected final String getStepName() {
@@ -58,8 +57,8 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public MetricsConfig getMetricsConfig() {
-		return metricsConfig;
+	public AverageConfig getAverageConfig() {
+		return avgMetricsConfig;
 	}
 
 	@Override
@@ -92,8 +91,10 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig) {
-		this.metricsConfig = metricsConfig;
+	public BasicStorageDriverBuilder<I, O, T> setAverageConfig(
+		final AverageConfig avgMetricsConfig
+	) {
+		this.avgMetricsConfig = avgMetricsConfig;
 		return this;
 	}
 

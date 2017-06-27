@@ -33,7 +33,8 @@ extends Closeable {
 	int getConcurrency();
 	int getConcurrencyThreshold();
 	long getTransferSizeEstimate();
-	boolean getVolatileOutputFlag();
+	boolean getAvgPersistFlag();
+	boolean getSumPersistFlag();
 	long getOutputPeriodMillis();
 	long getLastOutputTs();
 	void setLastOutputTs(final long ts);

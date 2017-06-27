@@ -103,8 +103,6 @@
 				"period" : "10s",
 				// Use files metrics output flag
 				"persist" : true,
-				// Expose metrics using JMX flag
-				"service" : false,
 				"table" : {
 					"header" : {
 						// Output the metrics table header every N rows
@@ -115,13 +113,15 @@
 			"summary" : {
 				"persist" : true
 			},
-			// The concurrency threshold to enable intermediate statistics calculation,
-			// 0 means no threshold
-			"threshold" : 0,
 			// Persist the information about each load operation
 			"traces" : {
 				"persist" : true
-			}
+			},
+			// Expose metrics using JMX flag
+			"service" : false,
+			// The concurrency threshold to enable intermediate statistics calculation,
+			// 0 means no threshold
+			"threshold" : 0
 		},
 		// Use files output flag
 		"persist" : true
