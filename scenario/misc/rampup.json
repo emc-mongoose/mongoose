@@ -12,7 +12,9 @@
 		},
 		"output" : {
 			"metrics" : {
-				"period" : 0
+				"average" : {
+					"period" : 0
+				}
 			}
 		},
 		"test" : {

@@ -8,7 +8,9 @@
 		},
 		"output" : {
 			"metrics" : {
-				"period" : 1
+				"average" : {
+					"period" : 1
+				}
 			}
 		},
 		"test" : {

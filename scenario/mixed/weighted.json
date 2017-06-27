@@ -26,7 +26,15 @@
 				},
 				"output" : {
 					"metrics" : {
-						"persist" : false
+						"average" : {
+							"persist" : false
+						},
+						"summary" : {
+							"persist" : false
+						},
+						"trace" : {
+							"persist" : false
+						}
 					}
 				},
 				"test" : {

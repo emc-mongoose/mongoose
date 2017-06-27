@@ -12,7 +12,15 @@
 		},
 		"output" : {
 			"metrics" : {
-				"persist" : false
+				"average" : {
+					"persist" : false
+				},
+				"summary" : {
+					"persist" : false
+				},
+				"trace" : {
+					"persist" : false
+				}
 			}
 		},
 		"storage" : {
@@ -55,7 +63,9 @@
 				},
 				"output" : {
 					"metrics": {
-						"period" : 10
+						"average" : {
+							"period" : 10
+						}
 					}
 				},
 				"test" : {

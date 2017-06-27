@@ -101,7 +101,7 @@
 				// The time period for the load step's metrics console output.
 				// 0 means to not to output the metrics to the console
 				"period" : "10s",
-				// Use files metrics output flag
+				// Persist the average (periodic) metrics if true
 				"persist" : true,
 				"table" : {
 					"header" : {
@@ -113,17 +113,17 @@
 			"summary" : {
 				"persist" : true
 			},
-			// Persist the information about each load operation
-			"traces" : {
+			// Persist the information about each load operation if true
+			"trace" : {
 				"persist" : true
 			},
-			// Expose metrics using JMX flag
+			// Expose metrics using JMX for monitoring purposes if true
 			"service" : false,
 			// The concurrency threshold to enable intermediate statistics calculation,
 			// 0 means no threshold
 			"threshold" : 0
 		},
-		// Use files output flag
+		// Persist the output to files if true
 		"persist" : true
 	},
 	"storage" : {
