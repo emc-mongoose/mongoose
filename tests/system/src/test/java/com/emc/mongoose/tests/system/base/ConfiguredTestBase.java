@@ -32,6 +32,7 @@ extends LoggingTestBase {
 			);
 		}
 		CONFIG.getTestConfig().getStepConfig().setId(STEP_NAME);
+		CONFIG.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);
 	}
 
 	@AfterClass

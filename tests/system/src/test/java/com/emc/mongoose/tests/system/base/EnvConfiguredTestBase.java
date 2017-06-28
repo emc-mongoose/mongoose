@@ -2,6 +2,8 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.Daemon;
+import com.emc.mongoose.model.data.ContentSource;
+import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
@@ -10,8 +12,14 @@ import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.FailConfig;
+import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
 import com.emc.mongoose.ui.log.Loggers;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -149,11 +157,29 @@ extends ConfiguredTestBase {
 				final List<String> nodeAddrs = new ArrayList<>();
 				String nextNodeAddr;
 				Daemon storageMock;
-				final StorageMockFactory storageMockFactory = new StorageMockFactory(
-					storageConfig, itemConfig, stepConfig
+				final MockConfig mockConfig = storageConfig.getMockConfig();
+				final NetConfig netConfig = storageConfig.getNetConfig();
+				final ContainerConfig containerConfig = mockConfig.getContainerConfig();
+				final FailConfig failConfig = mockConfig.getFailConfig();
+				final NamingConfig namingConfig = itemConfig.getNamingConfig();
+				final DataConfig.ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+				final ContentSource contentSrc = ContentSourceUtil.getInstance(
+					contentConfig.getFile(), contentConfig.getSeed(),
+					contentConfig.getRingConfig().getSize(),
+					contentConfig.getRingConfig().getCache()
 				);
+				StorageMockFactory storageMockFactory;
 				for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
 					nodeConfig.setPort(port + i);
+					storageMockFactory = new StorageMockFactory(
+						itemConfig.getInputConfig().getFile(), mockConfig.getCapacity(),
+						containerConfig.getCapacity(), containerConfig.getCountLimit(),
+						(int) CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod(),
+						failConfig.getConnections(), failConfig.getResponses(), contentSrc,
+						netConfig.getNodeConfig().getPort(), netConfig.getSsl(),
+						(float) stepConfig.getLimitConfig().getRate(), namingConfig.getPrefix(),
+						namingConfig.getRadix()
+					);
 					storageMock = storageMockFactory.newStorageMock();
 					nextNodeAddr = "127.0.0.1:" + (port + i);
 					storageMock.start();

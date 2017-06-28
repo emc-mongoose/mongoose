@@ -13,8 +13,6 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-	MultipleFixedUpdateAndSingleFixedReadTest.class,
-	SingleFixedUpdateAndSingleRandomReadTest.class,
 	TlsAndNodeBalancingTest.class,
 })
 

@@ -29,18 +29,18 @@ extends StepBase {
 	//
 	private final String cmdLine;
 	private final boolean blockingFlag;
-	private final boolean consoleColorFlag;
+	private final boolean stdOutColorFlag;
 	//
 	public CommandStep(final Config appConfig, final Map<String, Object> subTree)
 	throws IllegalArgumentException {
 		super(appConfig);
 		cmdLine = (String) subTree.get(KEY_NODE_VALUE);
 		if(subTree.containsKey(KEY_NODE_BLOCKING)) {
-			blockingFlag = (boolean)subTree.get(KEY_NODE_BLOCKING);
+			blockingFlag = (boolean) subTree.get(KEY_NODE_BLOCKING);
 		} else {
 			blockingFlag = true;
 		}
-		consoleColorFlag = LogUtil.isConsoleColoringEnabled();
+		stdOutColorFlag = appConfig.getOutputConfig().getColor();
 	}
 	//
 	@Override
@@ -48,7 +48,7 @@ extends StepBase {
 		try {
 			Loggers.MSG.info(
 				"Invoking the shell command:\n{}{}{}",
-				consoleColorFlag ? CYAN : "", cmdLine, consoleColorFlag ? RESET : ""
+				stdOutColorFlag ? CYAN : "", cmdLine, stdOutColorFlag ? RESET : ""
 			);
 			final Process process = new ProcessBuilder("bash", "-c", cmdLine).start();
 			final Thread processStdInReader = TF_STD_IN.newThread(
@@ -61,8 +61,8 @@ extends StepBase {
 						String nextLine;
 						while(null != (nextLine = bufferedReader.readLine())) {
 							Loggers.MSG.info(
-								"{}{}{}", consoleColorFlag ? BLUE : "", nextLine,
-								consoleColorFlag ? RESET : ""
+								"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
+								stdOutColorFlag ? RESET : ""
 							);
 						}
 					} catch(final IOException e) {
@@ -82,8 +82,8 @@ extends StepBase {
 						String nextLine;
 						while(null != (nextLine = bufferedReader.readLine())) {
 							Loggers.MSG.info(
-								"{}{}{}", consoleColorFlag ? RED : "", nextLine,
-								consoleColorFlag ? RESET : ""
+								"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
+								stdOutColorFlag ? RESET : ""
 							);
 						}
 					} catch(final IOException e) {

@@ -463,6 +463,17 @@
 									"type" : "object",
 									"additionalProperties" : false,
 									"properties" : {
+										"perfDbResultsFile" : {
+											"oneOf" : [
+												{
+													"type" : "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
 										"persist" : {
 											"oneOf" : [
 												{
@@ -518,17 +529,6 @@
 									]
 								}
 							}
-						},
-						"persist" : {
-							"oneOf" : [
-								{
-									"type" : "boolean"
-								},
-								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
-								}
-							]
 						}
 					}
 				},

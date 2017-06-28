@@ -30,6 +30,7 @@ extends LogMessageBase {
 		final long succCount = snapshot.getSuccCount();
 		final long failCount = snapshot.getFailCount();
 		final IoType ioType = metricsCtx.getIoType();
+		final boolean stdOutColorFlag = metricsCtx.getStdOutColorFlag();
 		String ioTypeColorCode = WHITE;
 		switch(ioType) {
 			case NOOP:
@@ -52,30 +53,30 @@ extends LogMessageBase {
 				break;
 		}
 		buffer.append("Step \"").append(metricsCtx.getStepName()).append("\" results:\n\t");
-		if(LogUtil.isConsoleColoringEnabled()) {
+		if(stdOutColorFlag) {
 			buffer.append(ioTypeColorCode);
 		}
 		buffer.append(metricsCtx.getIoType().name());
-		if(LogUtil.isConsoleColoringEnabled()) {
+		if(stdOutColorFlag) {
 			buffer.append(RESET);
 		}
 		buffer
 			.append('-').append(metricsCtx.getConcurrency())
 			.append('x').append(metricsCtx.getDriverCount())
 			.append(": n=(");
-		if(LogUtil.isConsoleColoringEnabled()) {
+		if(stdOutColorFlag) {
 			buffer.append(WHITE);
 		}
 		buffer.append(succCount);
-		if(LogUtil.isConsoleColoringEnabled()) {
+		if(stdOutColorFlag) {
 			buffer.append(RESET);
 		}
 		buffer.append('/');
-		if(LogUtil.isConsoleColoringEnabled()) {
+		if(stdOutColorFlag) {
 			buffer.append(getFailureRatioAnsiColorCode(succCount, failCount));
 		}
 		buffer.append(failCount);
-		if(LogUtil.isConsoleColoringEnabled()) {
+		if(stdOutColorFlag) {
 			buffer.append(RESET);
 		}
 		buffer

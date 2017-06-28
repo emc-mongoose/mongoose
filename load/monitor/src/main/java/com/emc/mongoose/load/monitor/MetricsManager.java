@@ -114,8 +114,10 @@ implements SvcTask {
 					}
 
 					// file output
-					if(!metricsCtx.getSumPersistFlag()) {
+					if(metricsCtx.getSumPersistFlag()) {
 						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
+					}
+					if(metricsCtx.getPerfDbResultsFileFlag()) {
 						Loggers.METRICS_EXT_RESULTS_FILE.info(
 							new ExtResultsXmlLogMessage(metricsCtx)
 						);
@@ -186,7 +188,7 @@ implements SvcTask {
 							}
 
 							// periodic file output
-							if(!metricsCtx.getAvgPersistFlag()) {
+							if(metricsCtx.getAvgPersistFlag()) {
 								if(
 									nextOutputTs - metricsCtx.getLastOutputTs() >=
 										metricsCtx.getOutputPeriodMillis()
@@ -221,12 +223,16 @@ implements SvcTask {
 			metricsCtx.toString(), metricsCtx.getConcurrencyThreshold()
 		);
 		final MetricsContext lastThresholdMetrics = metricsCtx.getThresholdMetrics();
-		Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
-			new MetricsCsvLogMessage(lastThresholdMetrics)
-		);
-		Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
-			new ExtResultsXmlLogMessage(lastThresholdMetrics)
-		);
+		if(lastThresholdMetrics.getSumPersistFlag()) {
+			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
+				new MetricsCsvLogMessage(lastThresholdMetrics)
+			);
+		}
+		if(lastThresholdMetrics.getPerfDbResultsFileFlag()) {
+			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
+				new ExtResultsXmlLogMessage(lastThresholdMetrics)
+			);
+		}
 		metricsCtx.exitThresholdState();
 	}
 	

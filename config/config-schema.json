@@ -294,7 +294,7 @@
 		"output" : {
 			"type" : "object",
 			"required" : [
-				"color", "metrics", "persist"
+				"color", "metrics"
 			],
 			"additionalProperties" : false,
 			"properties" : {
@@ -356,10 +356,13 @@
 						"summary" : {
 							"type" : "object",
 							"required" : [
-								"persist"
+								"perfDbResultsFile", "persist"
 							],
 							"additionalProperties" : false,
 							"properties" : {
+								"perfDbResultsFile" : {
+									"type" : "boolean"
+								},
 								"persist" : {
 									"type" : "boolean"
 								}
@@ -386,9 +389,6 @@
 							"maximum" : 1
 						}
 					}
-				},
-				"persist" : {
-					"type" : "boolean"
 				}
 			}
 		},

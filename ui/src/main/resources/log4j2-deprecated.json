@@ -11,7 +11,6 @@
 				{
 					"name" : "stdout",
 					"type" : "Console",
-					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
 						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class.name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
@@ -40,6 +39,7 @@
 					"name" : "msgFile",
 					"type" : "loadJobFile",
 					"fileName" : "messages.log",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					}
@@ -48,6 +48,7 @@
 					"name" : "3rdPartyFile",
 					"type" : "loadJobFile",
 					"fileName" : "3rdparty.log",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
 					},
@@ -65,6 +66,7 @@
 					"name" : "errFile",
 					"type" : "loadJobFile",
 					"fileName" : "errors.log",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					},
@@ -72,19 +74,10 @@
 						"Filter" : [
 							{
 								"type" : "BurstFilter",
-								"rate" : 10000,
-								"maxBurst" : 100000
+								"rate" : 1000,
+								"maxBurst" : 10000
 							}
 						]
-					}
-				},
-				{
-					"name" : "metricsMedFile",
-					"type" : "loadJobFile",
-					"fileName" : "metrics.med.csv",
-					"PatternLayout" : {
-						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern" : "%m%n"
 					}
 				},
 				{
@@ -118,6 +111,7 @@
 					"name" : "ioTraceFile",
 					"type" : "loadJobFile",
 					"fileName" : "io.trace.csv",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
 						"pattern" : "%m"
@@ -139,30 +133,32 @@
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern" : "%m%n"
 					}
-//				},
-//				{
-//					"name" : "extResultsFile",
-//					"type" : "file",
-//					"fileName" : "result.xml",
-//					"bufferedIO" : false,
-//					"PatternLayout" : {
-//						"header" : "<result>\n",
-//						"footer" : "</result>\n",
-//						"pattern" : "%m",
-//						"noConsoleNoAnsi" : true
-//					}
-//				},
-//				{
-//					"name" : "extThresholdResultsFile",
-//					"type" : "file",
-//					"fileName" : "result-with-threshold.xml",
-//					"bufferedIO" : false,
-//					"PatternLayout" : {
-//						"header" : "<result-with-threshold>\n",
-//						"footer" : "</result-with-threshold>\n",
-//						"pattern" : "%m",
-//						"noConsoleNoAnsi" : true
-//					}
+				},
+				{
+					"name" : "extResultsFile",
+					"type" : "file",
+					"fileName" : "result.xml",
+					"bufferedIO" : false,
+					"createOnDemand" : true,
+					"PatternLayout" : {
+						"header" : "<result>\n",
+						"footer" : "</result>\n",
+						"pattern" : "%m",
+						"noConsoleNoAnsi" : true
+					}
+				},
+				{
+					"name" : "extThresholdResultsFile",
+					"type" : "file",
+					"fileName" : "result-with-threshold.xml",
+					"bufferedIO" : false,
+					"createOnDemand" : true,
+					"PatternLayout" : {
+						"header" : "<result-with-threshold>\n",
+						"footer" : "</result-with-threshold>\n",
+						"pattern" : "%m",
+						"noConsoleNoAnsi" : true
+					}
 				}
 			]
 		},
@@ -214,7 +210,7 @@
 				},
 				{
 					"name" : "com.emc.mongoose.ui.log.IoTraces",
-					"level" : "DEBUG",
+					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "ioTraceFile"
 					},
@@ -257,6 +253,14 @@
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "extThresholdResultsFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.File",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "metricsMedFile"
 					},
 					"additivity" : false
 				},

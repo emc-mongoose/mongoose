@@ -741,7 +741,6 @@ implements Serializable {
 
 		public static final String KEY_COLOR = "color";
 		public static final String KEY_METRICS = "metrics";
-		public static final String KEY_PERSIST = "persist";
 
 		public final void setColor(final boolean colorFlag) {
 			this.colorFlag = colorFlag;
@@ -751,13 +750,8 @@ implements Serializable {
 			this.metricsConfig = metricsConfig;
 		}
 
-		public final void setPersist(final boolean persistFlag) {
-			this.persistFlag = persistFlag;
-		}
-
 		@JsonProperty(KEY_COLOR) private boolean colorFlag;
 		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
-		@JsonProperty(KEY_PERSIST) private boolean persistFlag;
 
 		public OutputConfig() {
 		}
@@ -765,7 +759,6 @@ implements Serializable {
 		public OutputConfig(final OutputConfig other) {
 			this.colorFlag = other.getColor();
 			this.metricsConfig = new MetricsConfig(other.getMetricsConfig());
-			this.persistFlag = other.getPersist();
 		}
 
 		public final boolean getColor() {
@@ -774,10 +767,6 @@ implements Serializable {
 
 		public final MetricsConfig getMetricsConfig() {
 			return metricsConfig;
-		}
-
-		public final boolean getPersist() {
-			return persistFlag;
 		}
 
 		public static final class MetricsConfig
@@ -941,19 +930,30 @@ implements Serializable {
 			public static final class SummaryConfig
 			implements Serializable {
 
+				public static final String KEY_PERFDBRESULTSFILE = "perfDbResultsFile";
 				public static final String KEY_PERSIST = "persist";
+
+				public final void setPerfDbResultsFile(final boolean perfDbResultsFileFlag) {
+					this.perfDbResultsFileFlag = perfDbResultsFileFlag;
+				}
 
 				public final void setPersist(final boolean persistFlag) {
 					this.persistFlag = persistFlag;
 				}
 
+				@JsonProperty(KEY_PERFDBRESULTSFILE) private boolean perfDbResultsFileFlag;
 				@JsonProperty(KEY_PERSIST) private boolean persistFlag;
 
 				public SummaryConfig() {
 				}
 
 				public SummaryConfig(final SummaryConfig other) {
+					this.perfDbResultsFileFlag = other.getPerfDbResultsFileFlag();
 					this.persistFlag = other.getPersist();
+				}
+
+				public final boolean getPerfDbResultsFileFlag() {
+					return perfDbResultsFileFlag;
 				}
 
 				public final boolean getPersist() {

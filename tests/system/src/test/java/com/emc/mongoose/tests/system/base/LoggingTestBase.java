@@ -66,8 +66,6 @@ public abstract class LoggingTestBase {
 	throws Exception {
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
-		final URL u = LoggingTestBase.class.getClassLoader().getResource("logging.json");
-		System.setProperty("log4j.configurationFile", u.toString());
 		LogUtil.init();
 		STEP_NAME = ThreadContext.get(KEY_STEP_NAME);
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);

@@ -31,6 +31,7 @@ import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfi
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.svc.TransferSvcTask;
+import com.emc.mongoose.ui.config.Config.OutputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -105,7 +106,7 @@ implements LoadController<I, O> {
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
 		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs,
-		final Map<LoadGenerator<I, O>, MetricsConfig> metricsConfigs
+		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
 		this.name = name;
 		final StepConfig anyStepConfig = stepConfigs.values().iterator().next();
@@ -137,7 +138,8 @@ implements LoadController<I, O> {
 			nextGenerator.setOutput(nextGeneratorOutput);
 		}
 
-		final MetricsConfig anyMetricsConfig = metricsConfigs.values().iterator().next();
+		final MetricsConfig anyMetricsConfig = outputConfigs
+			.values().iterator().next().getMetricsConfig();
 		tracePersistFlag = anyMetricsConfig.getTraceConfig().getPersist();
 
 		this.driversMap = driversMap;
@@ -152,7 +154,8 @@ implements LoadController<I, O> {
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
-			final MetricsConfig nextMetricsConfig = metricsConfigs.get(nextGenerator);
+			final MetricsConfig nextMetricsConfig = outputConfigs
+				.get(nextGenerator).getMetricsConfig();
 			final int nextOriginCode = nextGenerator.hashCode();
 			circularityMap.put(nextOriginCode, nextLoadConfig.getCircular());
 			if(circularityMap.get(nextOriginCode)) {
@@ -177,8 +180,10 @@ implements LoadController<I, O> {
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
 					nextGenerator.getTransferSizeEstimate(),
 					(int) nextMetricsConfig.getAverageConfig().getPeriod(),
+					outputConfigs.get(nextGenerator).getColor(),
 					nextMetricsConfig.getAverageConfig().getPersist(),
-					nextMetricsConfig.getSummaryConfig().getPersist()
+					nextMetricsConfig.getSummaryConfig().getPersist(),
+					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFileFlag()
 				)
 			);
 		}
@@ -244,7 +249,7 @@ implements LoadController<I, O> {
 				if(sizeSum >= sizeLimit) {
 					Loggers.MSG.debug(
 						"{}: size limit reached, done {} >= {} limit",
-						SizeInBytes.formatFixedSize(sizeSum), sizeLimit
+						name, SizeInBytes.formatFixedSize(sizeSum), sizeLimit
 					);
 					return true;
 				}

@@ -33,19 +33,21 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final int concurrency;
 	private final int thresholdConcurrency;
 	private final long transferSizeEstimate;
+	private final boolean stdOutColorFlag;
 	private final boolean avgPersistFlag;
 	private final boolean sumPersistFlag;
+	private final boolean perfDbResultsFileFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
 	private volatile Snapshot lastSnapshot = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
 
-	//
 	public BasicMetricsContext(
 		final String stepName, final IoType ioType, final int driverCount, final int concurrency,
 		final int thresholdConcurrency, final long transferSizeEstimate,
-		final int updateIntervalSec, final boolean avgPersistFlag, final boolean sumPersistFlag
+		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
+		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
 	) {
 		this.stepName = stepName;
 		this.ioType = ioType;
@@ -54,8 +56,10 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
 			thresholdConcurrency : Integer.MAX_VALUE;
 		this.transferSizeEstimate = transferSizeEstimate;
+		this.stdOutColorFlag = stdOutColorFlag;
 		this.avgPersistFlag = avgPersistFlag;
 		this.sumPersistFlag = sumPersistFlag;
+		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
 		respLatSnapshot = respLatency.getSnapshot();
@@ -211,6 +215,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		return transferSizeEstimate;
 	}
 	//
+	//
+	@Override
+	public final boolean getStdOutColorFlag() {
+		return stdOutColorFlag;
+	}
+	//
 	@Override
 	public final boolean getAvgPersistFlag() {
 		return avgPersistFlag;
@@ -219,6 +229,11 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	@Override
 	public final boolean getSumPersistFlag() {
 		return sumPersistFlag;
+	}
+	//
+	@Override
+	public final boolean getPerfDbResultsFileFlag() {
+		return perfDbResultsFileFlag;
 	}
 	//
 	@Override
@@ -279,8 +294,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 		thresholdMetricsCtx = new BasicMetricsContext(
 			stepName, ioType, driverCount, concurrency, 0, transferSizeEstimate,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), avgPersistFlag,
-			sumPersistFlag
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
+			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);
 		thresholdMetricsCtx.start();
 	}

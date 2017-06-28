@@ -21,6 +21,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.OutputConfig;
 import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
 import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig.AverageConfig;
@@ -72,11 +73,15 @@ extends StepBase {
 		Loggers.MSG.info("Run the load step \"{}\"", jobName);
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
-		final MetricsConfig metricsConfig = localConfig.getOutputConfig().getMetricsConfig();
+		final OutputConfig outputConfig = localConfig.getOutputConfig();
+		final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
 		final AverageConfig avgMetricsConfig = metricsConfig.getAverageConfig();
-		avgMetricsConfig.setPersist(!preconditionFlag);
-		metricsConfig.getSummaryConfig().setPersist(!preconditionFlag);
-		metricsConfig.getTraceConfig().setPersist(!preconditionFlag);
+		if(preconditionFlag) {
+			avgMetricsConfig.setPersist(false);
+			metricsConfig.getSummaryConfig().setPersist(false);
+			metricsConfig.getSummaryConfig().setPerfDbResultsFile(false);
+			metricsConfig.getTraceConfig().setPersist(false);
+		}
 		final ItemConfig itemConfig = localConfig.getItemConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final ContentConfig contentConfig = dataConfig.getContentConfig();
@@ -132,11 +137,11 @@ extends StepBase {
 		loadConfigMap.put(loadGenerator, loadConfig);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 		stepConfigMap.put(loadGenerator, stepConfig);
-		final Map<LoadGenerator, MetricsConfig> metricsConfigMap = new HashMap<>();
-		metricsConfigMap.put(loadGenerator, metricsConfig);
+		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
+		outputConfigMap.put(loadGenerator, outputConfig);
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driversMap, null, loadConfigMap, stepConfigMap, metricsConfigMap
+				jobName, driversMap, null, loadConfigMap, stepConfigMap, outputConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();

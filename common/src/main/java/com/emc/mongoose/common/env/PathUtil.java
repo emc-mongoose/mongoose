@@ -9,6 +9,8 @@ import java.net.URISyntaxException;
  */
 public interface PathUtil {
 
+	String BASE_DIR = getBaseDir();
+
 	static String getBaseDir() {
 		return getBasePathForClass(PathUtil.class);
 	}

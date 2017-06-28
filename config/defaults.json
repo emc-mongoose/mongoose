@@ -111,20 +111,21 @@
 				}
 			},
 			"summary" : {
+				// Output the results.xml file used as a PerfDb input if true
+				"perfDbResultsFile" : false,
+				// Persist the summary (total) metrics if true
 				"persist" : true
 			},
-			// Persist the information about each load operation if true
 			"trace" : {
-				"persist" : true
+				// Persist the information about each load operation if true
+				"persist" : false
 			},
 			// Expose metrics using JMX for monitoring purposes if true
 			"service" : false,
 			// The concurrency threshold to enable intermediate statistics calculation,
 			// 0 means no threshold
 			"threshold" : 0
-		},
-		// Persist the output to files if true
-		"persist" : true
+		}
 	},
 	"storage" : {
 		"auth" : {

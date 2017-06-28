@@ -11,7 +11,6 @@
 				{
 					"name" : "stdout",
 					"type" : "Console",
-					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
 						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class.name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
@@ -38,16 +37,18 @@
 				},
 				{
 					"name" : "msgFile",
-					"type" : "loadJobFile",
-					"fileName" : "messages.log",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}messages.log",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					}
 				},
 				{
 					"name" : "3rdPartyFile",
-					"type" : "loadJobFile",
-					"fileName" : "3rdparty.log",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}3rdparty.log",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
 					},
@@ -63,8 +64,9 @@
 				},
 				{
 					"name" : "errFile",
-					"type" : "loadJobFile",
-					"fileName" : "errors.log",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}errors.log",
+					"bufferedIO" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					},
@@ -80,8 +82,8 @@
 				},
 				{
 					"name" : "metricsMedFileTotal",
-					"type" : "loadJobFile",
-					"fileName" : "metrics.med.total.csv",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}metrics.med.total.csv",
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -89,8 +91,8 @@
 				},
 				{
 					"name" : "metricsFile",
-					"type" : "loadJobFile",
-					"fileName" : "metrics.csv",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}metrics.csv",
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -98,8 +100,8 @@
 				},
 				{
 					"name" : "metricsFileTotal",
-					"type" : "loadJobFile",
-					"fileName" : "metrics.total.csv",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}metrics.total.csv",
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -107,8 +109,10 @@
 				},
 				{
 					"name" : "ioTraceFile",
-					"type" : "loadJobFile",
-					"fileName" : "io.trace.csv",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}io.trace.csv",
+					"bufferedIO" : true,
+					"createOnDemand" : true,
 					"PatternLayout" : {
 						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
 						"pattern" : "%m"
@@ -116,44 +120,48 @@
 				},
 				{
 					"name" : "cfgFile",
-					"type" : "loadJobFile",
-					"fileName" : "effective-config.log",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}effective-config.log",
+					"createOnDemand" : true,
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0}:%n%m%n%n"
 					}
 				},
 				{
 					"name" : "partsUploadFile",
-					"type" : "loadJobFile",
-					"fileName" : "parts.upload.csv",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}parts.upload.csv",
+					"createOnDemand" : true,
 					"PatternLayout" : {
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern" : "%m%n"
 					}
-//				},
-//				{
-//					"name" : "extResultsFile",
-//					"type" : "file",
-//					"fileName" : "result.xml",
-//					"bufferedIO" : false,
-//					"PatternLayout" : {
-//						"header" : "<result>\n",
-//						"footer" : "</result>\n",
-//						"pattern" : "%m",
-//						"noConsoleNoAnsi" : true
-//					}
-//				},
-//				{
-//					"name" : "extThresholdResultsFile",
-//					"type" : "file",
-//					"fileName" : "result-with-threshold.xml",
-//					"bufferedIO" : false,
-//					"PatternLayout" : {
-//						"header" : "<result-with-threshold>\n",
-//						"footer" : "</result-with-threshold>\n",
-//						"pattern" : "%m",
-//						"noConsoleNoAnsi" : true
-//					}
+				},
+				{
+					"name" : "extResultsFile",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}result.xml",
+					"bufferedIO" : false,
+					"createOnDemand" : true,
+					"PatternLayout" : {
+						"header" : "<result>\n",
+						"footer" : "</result>\n",
+						"pattern" : "%m",
+						"noConsoleNoAnsi" : true
+					}
+				},
+				{
+					"name" : "extThresholdResultsFile",
+					"type" : "file",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.name}${sys:file.separator}result-with-threshold.xml",
+					"bufferedIO" : false,
+					"createOnDemand" : true,
+					"PatternLayout" : {
+						"header" : "<result-with-threshold>\n",
+						"footer" : "</result-with-threshold>\n",
+						"pattern" : "%m",
+						"noConsoleNoAnsi" : true
+					}
 				}
 			]
 		},

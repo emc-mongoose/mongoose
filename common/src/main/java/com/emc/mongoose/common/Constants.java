@@ -11,7 +11,7 @@ public interface Constants {
 
 	String FNAME_CONFIG = "defaults.json";
 
-	String FNAME_LOG_CONFIG = "logging.json";
+	String KEY_BASE_DIR = "base.dir";
 
 	String KEY_STEP_NAME = "step.name";
 	

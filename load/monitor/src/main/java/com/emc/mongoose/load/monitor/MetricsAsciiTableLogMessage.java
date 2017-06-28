@@ -54,6 +54,7 @@ extends LogMessageBase {
 			long succCount;
 			long failCount;
 			IoType ioType;
+			boolean stdOutColorFlag;
 			for(final LoadController loadController : metrics.keySet()) {
 				try {
 					if(loadController.isInterrupted() || loadController.isClosed()) {
@@ -61,21 +62,22 @@ extends LogMessageBase {
 					}
 				} catch(final RemoteException ignored) {
 				}
-				for(final MetricsContext metricsContext : metrics.get(loadController)) {
-					snapshot = metricsContext.getLastSnapshot();
+				for(final MetricsContext metricsCtx : metrics.get(loadController)) {
+					snapshot = metricsCtx.getLastSnapshot();
 					succCount = snapshot.getSuccCount();
 					failCount = snapshot.getFailCount();
-					ioType = metricsContext.getIoType();
+					ioType = metricsCtx.getIoType();
+					stdOutColorFlag = metricsCtx.getStdOutColorFlag();
 					if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
 						strb.append(TABLE_HEADER);
 					}
 					ROW_OUTPUT_COUNTER ++;
 					strb
-						.appendFixedWidthPadLeft(metricsContext.getStepName(), 17, ' ')
+						.appendFixedWidthPadLeft(metricsCtx.getStepName(), 17, ' ')
 						.append(TABLE_BORDER_VERTICAL)
 						.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 15, ' ')
 						.append(TABLE_BORDER_VERTICAL);
-					if(LogUtil.isConsoleColoringEnabled()) {
+					if(stdOutColorFlag) {
 						switch(ioType) {
 							case NOOP:
 								strb.append(LogUtil.NOOP_COLOR);
@@ -97,24 +99,24 @@ extends LogMessageBase {
 								break;
 						}
 					}
-					strb.appendFixedWidthPadRight(metricsContext.getIoType().name(), 6, ' ');
-					if(LogUtil.isConsoleColoringEnabled()) {
+					strb.appendFixedWidthPadRight(metricsCtx.getIoType().name(), 6, ' ');
+					if(stdOutColorFlag) {
 						strb.append(RESET);
 					}
 					strb
 						.append(TABLE_BORDER_VERTICAL)
 						.appendFixedWidthPadLeft(
-							Integer.toString(metricsContext.getConcurrency()) + 'x' +
-								Integer.toString(metricsContext.getDriverCount()),
+							Integer.toString(metricsCtx.getConcurrency()) + 'x' +
+								Integer.toString(metricsCtx.getDriverCount()),
 							11, ' '
 						)
 						.append(TABLE_BORDER_VERTICAL)
 						.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
-					if(LogUtil.isConsoleColoringEnabled()) {
+					if(stdOutColorFlag) {
 						strb.append(getFailureRatioAnsiColorCode(succCount, failCount));
 					}
 					strb.appendFixedWidthPadLeft(failCount, 6, ' ');
-					if(LogUtil.isConsoleColoringEnabled()) {
+					if(stdOutColorFlag) {
 						strb.append(RESET);
 					}
 					strb
