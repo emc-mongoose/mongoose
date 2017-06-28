@@ -104,17 +104,18 @@ implements DataIoTask<T> {
 				}
 			case UPDATE:
 				if(randomRangesCount == 0 && (fixedRanges == null || fixedRanges.isEmpty())) {
+					fixedRanges = new ArrayList<>(1);
 					try {
-						contentSize = item.size();
-					} catch(IOException e) {
-						throw new AssertionError();
+						fixedRanges.add(new ByteRange(0L, item.size() - 1, -1));
+					} catch(final Exception e) {
+						throw new AssertionError(e);
 					}
 				} else {
 					if(randomRangesCount > 0) {
 						markRandomRanges(randomRangesCount);
 					}
-					contentSize = getMarkedRangesSize();
 				}
+				contentSize = getMarkedRangesSize();
 				break;
 			default:
 				contentSize = 0;
