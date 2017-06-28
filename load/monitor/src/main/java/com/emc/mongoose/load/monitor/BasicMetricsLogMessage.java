@@ -92,6 +92,7 @@ extends LogMessageBase {
 			.append(snapshot.getDurationMax()).append("); lat[us]=(")
 			.append((long) snapshot.getLatencyMean()).append('/')
 			.append(snapshot.getLatencyMin()).append('/')
-			.append(snapshot.getLatencyMax()).append(')');
+			.append(snapshot.getLatencyMax()).append(')')
+			.append(System.lineSeparator());
 	}
 }

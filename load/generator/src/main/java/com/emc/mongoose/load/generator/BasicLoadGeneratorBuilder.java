@@ -306,11 +306,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 				if(randomRangesCount > 0) {
 					return itemSize * randomRangesCount / getRangeCount(itemSize);
 				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
-					return fixedRanges
-						.stream()
-						.mapToLong(ByteRange::getSize)
-						.filter(size -> size > 0)
-						.sum();
+					long sizeSum = 0;
+					long rangeSize;
+					for(final ByteRange byteRange : fixedRanges) {
+						rangeSize = byteRange.getSize();
+						if(rangeSize == -1) {
+							rangeSize = byteRange.getEnd() - byteRange.getBeg() + 1;
+						}
+						if(rangeSize > 0) {
+							sizeSum += rangeSize;
+						}
+					}
+					return sizeSum;
 				} else {
 					return itemSize;
 				}
