@@ -6,10 +6,10 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +56,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -80,7 +80,7 @@ extends EnvConfiguredScenarioTestBase {
 		} catch(final Throwable t) {
 			LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 		}
-		LoadJobLogFileManager.flush(STEP_NAME);
+		TestStepIdLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 

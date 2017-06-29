@@ -10,7 +10,7 @@ import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -158,7 +158,7 @@ implements SvcTask {
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
 						try(
 							final Instance logCtx_ = CloseableThreadContext
-								.put(KEY_STEP_NAME, metricsCtx.getStepName())
+								.put(KEY_STEP_ID, metricsCtx.getStepName())
 						) {
 							metricsCtx.refreshLastSnapshot();
 

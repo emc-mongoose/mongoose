@@ -9,8 +9,8 @@ import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
@@ -76,7 +76,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -122,7 +122,7 @@ extends EnvConfiguredScenarioTestBase {
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-		LoadJobLogFileManager.flushAll();
+		TestStepIdLogFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

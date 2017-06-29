@@ -7,7 +7,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
@@ -50,7 +50,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		CONFIG_ARGS.add(
 			"--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"
 		);
@@ -68,7 +68,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
 		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
+		TestStepIdLogFileManager.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(5);
 	}

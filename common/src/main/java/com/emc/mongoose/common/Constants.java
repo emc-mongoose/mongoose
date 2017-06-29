@@ -13,7 +13,7 @@ public interface Constants {
 
 	String KEY_BASE_DIR = "base.dir";
 
-	String KEY_STEP_NAME = "step.name";
+	String KEY_STEP_ID = "step.id";
 	
 	String KEY_CLASS_NAME = "class.name";
 

@@ -17,7 +17,7 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.net.Advertiser;
 import org.apache.logging.log4j.core.util.Booleans;
 
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -26,15 +26,15 @@ import java.util.Map;
 /**
  Created by andrey on 13.03.15.
  */
-@Plugin(name = "LoadJobFile", category = "Core", elementType = "appender", printObject = true)
-public final class LoadJobFileAppender
+@Plugin(name = "TestStepIdLogFile", category = "Core", elementType = "appender", printObject = true)
+public final class TestStepIdLogFileAppender
 extends AbstractAppender {
 	//
 	private final String fName;
 	private final Advertiser advertiser;
 	private Object advertisement;
 	private final boolean ignoreExceptions, flagFlush;
-	private final LoadJobLogFileManager manager;
+	private final TestStepIdLogFileManager manager;
 	/**
 	 Instantiate a WriterAppender and set the output destination to a
 	 new {@link java.io.OutputStreamWriter} initialized with <code>os</code>
@@ -44,13 +44,13 @@ extends AbstractAppender {
 	 @param filter filter
 	 @param ignoreExceptions ignore exceptions
 	 @param manager The OutputStreamManager. */
-	protected LoadJobFileAppender(
+	protected TestStepIdLogFileAppender(
 		final String name,
 		final Layout<? extends Serializable> layout,
 		final Filter filter,
 		final boolean ignoreExceptions,
 		final boolean flagFlush,
-		final LoadJobLogFileManager manager,
+		final TestStepIdLogFileManager manager,
 		final String fName,
 		final Advertiser advertiser
 	) {
@@ -86,7 +86,7 @@ extends AbstractAppender {
 	private static final long DEFAULT_SIZE_TO_ROTATE = 0x400000; // 4MB
 	//
 	@PluginFactory
-	public static LoadJobFileAppender createAppender(
+	public static TestStepIdLogFileAppender createAppender(
 		@PluginAttribute("fileName") final String fileNamePrefix,
 		@PluginAttribute("name") final String name,
 		@PluginAttribute("bufferSize") final String bufferSize,
@@ -130,11 +130,11 @@ extends AbstractAppender {
 			}
 		}
 		//
-		final LoadJobLogFileManager manager = LoadJobLogFileManager.getRunIdFileManager(
+		final TestStepIdLogFileManager manager = TestStepIdLogFileManager.getRunIdFileManager(
 			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize, config
 		);
 		//
-		return new LoadJobFileAppender(
+		return new TestStepIdLogFileAppender(
 			name, layout, filter, ignoreExceptions, flagFlush, manager, fileNamePrefix,
 			isAdvertise ? config.getAdvertiser() : null
 		);
@@ -142,9 +142,9 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		String jobName = event.getContextData().getValue(KEY_STEP_NAME);
+		String jobName = event.getContextData().getValue(KEY_STEP_ID);
 		if(jobName == null) {
-			jobName = ThreadContext.get(KEY_STEP_NAME);
+			jobName = ThreadContext.get(KEY_STEP_ID);
 		}
 		final byte[] buff = getLayout().toByteArray(event);
 		if(buff.length > 0) {

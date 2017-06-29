@@ -1591,20 +1591,13 @@ implements Serializable {
 	public static final class TestConfig
 	implements Serializable {
 
-		public static final String KEY_ID = "id";
 		public static final String KEY_SCENARIO = "scenario";
 		public static final String KEY_STEP = "step";
 
-		@JsonProperty(KEY_ID)
-		private String id;
 		@JsonProperty(KEY_SCENARIO)
 		private ScenarioConfig scenarioConfig;
 		@JsonProperty(KEY_STEP)
 		private StepConfig stepConfig;
-
-		public final String getId() {
-			return id;
-		}
 
 		public final ScenarioConfig getScenarioConfig() {
 			return this.scenarioConfig;
@@ -1612,10 +1605,6 @@ implements Serializable {
 
 		public final StepConfig getStepConfig() {
 			return this.stepConfig;
-		}
-
-		public final void setId(final String id) {
-			this.id = id;
 		}
 
 		public final void setScenarioConfig(final ScenarioConfig scenarioConfig) {
@@ -1630,7 +1619,6 @@ implements Serializable {
 		}
 
 		public TestConfig(final TestConfig other) {
-			this.id = other.getId();
 			this.scenarioConfig = new ScenarioConfig(other.getScenarioConfig());
 			this.stepConfig = new StepConfig(other.getStepConfig());
 		}

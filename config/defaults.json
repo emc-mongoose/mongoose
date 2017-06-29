@@ -259,9 +259,6 @@
 		}
 	},
 	"test" : {
-		// The value to identify the test run. Generated automatically if not specified (null).
-		// Specifies also the logs directory path: log/<TEST_ID>/<STEP_ID>/
-		"id" : null,
 		"scenario" : {
 			// The default JSON scenario to run, null means invoking the default.json scenario bundled into the distribution
 			"file" : null

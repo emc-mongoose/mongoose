@@ -2,18 +2,16 @@ package com.emc.mongoose.ui.log;
 
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.KEY_BASE_DIR;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.common.env.PathUtil.BASE_DIR;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LifeCycle;
-import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
@@ -57,9 +55,9 @@ implements ShutdownCallbackRegistry {
 	public static void init() {
 		ThreadContext.put(KEY_BASE_DIR, BASE_DIR);
 		// set step name property with timestamp value if not set before
-		final String testStepName = ThreadContext.get(KEY_STEP_NAME);
+		final String testStepName = ThreadContext.get(KEY_STEP_ID);
 		if(testStepName == null || testStepName.length() == 0) {
-			ThreadContext.put(KEY_STEP_NAME, getDateTimeStamp());
+			ThreadContext.put(KEY_STEP_ID, getDateTimeStamp());
 		}
 		try {
 			Runtime.getRuntime().addShutdownHook(
@@ -70,7 +68,6 @@ implements ShutdownCallbackRegistry {
 					}
 				}
 			);
-			Loggers.MSG.info("Logging initialized");
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
 		}
@@ -81,13 +78,9 @@ implements ShutdownCallbackRegistry {
 			//System.out.println("close all daemons...");
 			DaemonBase.closeAll();
 			//System.out.println("flush all loggers...");
-			LoadJobLogFileManager.flushAll();
+			TestStepIdLogFileManager.flushAll();
 			//
-			final LifeCycle logCtx = (LoggerContext) LogManager.getContext();
-			if(logCtx.isStarted()) {
-				//System.out.println("stop the loggers...");
-				logCtx.stop();
-			}
+			LogManager.shutdown();
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
 		}

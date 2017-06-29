@@ -1,16 +1,11 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.DataItemFactory;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
@@ -18,7 +13,7 @@ import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -78,7 +73,7 @@ implements StorageDriverSvc<I, O> {
 		protected final void invoke() {
 			try(
 				final Instance ctx = CloseableThreadContext
-					.put(KEY_STEP_NAME, stepName)
+					.put(KEY_STEP_ID, stepName)
 					.put(KEY_CLASS_NAME, getClass().getSimpleName())
 			) {
 				nextNanoTimeStamp = nanoTime();

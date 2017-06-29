@@ -6,7 +6,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
@@ -110,7 +110,7 @@ public class BasicStorageDriverBuilder<
 
 		try(
 			final Instance ctx = CloseableThreadContext
-				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 

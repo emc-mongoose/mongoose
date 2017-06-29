@@ -3,8 +3,8 @@ package com.emc.mongoose.tests.system;
 import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
@@ -51,7 +51,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		CONFIG_ARGS.add("--item-output-path=/default");
 		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		EnvConfiguredScenarioTestBase.setUpClass();
@@ -64,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, SCENARIO_TIMEOUT);
 		runner.interrupt();
 		TimeUnit.SECONDS.sleep(10);
-		LoadJobLogFileManager.flushAll();
+		TestStepIdLogFileManager.flushAll();
 	}
 
 	@Test

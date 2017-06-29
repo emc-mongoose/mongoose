@@ -8,8 +8,8 @@ import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -64,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -112,7 +112,7 @@ extends EnvConfiguredScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 1000);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(STEP_NAME);
+		TestStepIdLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

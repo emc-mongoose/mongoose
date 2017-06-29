@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.log.appenders;
+package com.emc.mongoose.ui.log;
 
 import org.apache.logging.log4j.core.LogEvent;
 

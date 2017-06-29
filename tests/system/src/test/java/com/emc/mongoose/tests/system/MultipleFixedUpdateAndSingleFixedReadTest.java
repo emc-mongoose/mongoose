@@ -6,8 +6,8 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
@@ -59,7 +59,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -77,7 +77,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
 		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
+		TestStepIdLogFileManager.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 	}
 	

@@ -24,10 +24,10 @@ import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static java.io.File.separatorChar;
 
 /** Created by andrey on 13.03.15. */
-public final class LoadJobLogFileManager
+public final class TestStepIdLogFileManager
 extends AbstractManager {
 	//
-	public static final List<LoadJobLogFileManager> INSTANCES = new ArrayList<>();
+	public static final List<TestStepIdLogFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -35,7 +35,7 @@ extends AbstractManager {
 	private final Map<String, OutputStream> outStreamsMap = new ConcurrentHashMap<>();
 	private final Layout<? extends Serializable> layout;
 	//
-	protected LoadJobLogFileManager(
+	protected TestStepIdLogFileManager(
 		final LoggerContext loggerContext, final String fileName, final boolean flagAppend,
 		final boolean flagLock, final boolean flagBuffered, final String uriAdvertise,
 		final Layout<? extends Serializable> layout, final int buffSize
@@ -87,7 +87,7 @@ extends AbstractManager {
 	 * Factory to create a FileManager.
 	 */
 	private static final class LoadJobFileManagerFactory
-	implements ManagerFactory<LoadJobLogFileManager, FactoryData> {
+	implements ManagerFactory<TestStepIdLogFileManager, FactoryData> {
 		/**
 		 * Create a FileManager.
 		 * @param fileName The prefix for the name of the File.
@@ -95,8 +95,8 @@ extends AbstractManager {
 		 * @return The FileManager for the File.
 		 */
 		@Override
-		public LoadJobLogFileManager createManager(final String fileName, final FactoryData data) {
-			return new LoadJobLogFileManager(
+		public TestStepIdLogFileManager createManager(final String fileName, final FactoryData data) {
+			return new TestStepIdLogFileManager(
 				data.getLoggerContext(), fileName, data.flagAppend, data.flagLock,
 				data.flagBuffered, data.uriAdvertise, data.layout, data.buffSize
 			);
@@ -105,13 +105,13 @@ extends AbstractManager {
 	//
 	private static final LoadJobFileManagerFactory FACTORY = new LoadJobFileManagerFactory();
 	//
-	public static LoadJobLogFileManager getRunIdFileManager(
+	public static TestStepIdLogFileManager getRunIdFileManager(
 		final String fileName,
 		final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
 		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize,
 		final Configuration config
 	) {
-		return LoadJobLogFileManager.class.cast(
+		return TestStepIdLogFileManager.class.cast(
 			getManager(
 				fileName, FACTORY,
 				new FactoryData(
@@ -222,7 +222,7 @@ extends AbstractManager {
 	}
 	//
 	public static void flush(final String runId) {
-		for(final LoadJobLogFileManager instance : INSTANCES) {
+		for(final TestStepIdLogFileManager instance : INSTANCES) {
 			final OutputStream outStream = instance.outStreamsMap.get(runId);
 			if(outStream != null) {
 				try {
@@ -236,7 +236,7 @@ extends AbstractManager {
 	//
 	public static void flushAll()
 	throws IOException {
-		for(final LoadJobLogFileManager manager : INSTANCES) {
+		for(final TestStepIdLogFileManager manager : INSTANCES) {
 			manager.flush();
 		}
 	}

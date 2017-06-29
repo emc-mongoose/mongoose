@@ -8,7 +8,7 @@ import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
@@ -28,7 +28,6 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import static com.emc.mongoose.ui.log.LogUtil.getFailureRatioAnsiColorCode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -38,7 +37,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -48,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +64,7 @@ public abstract class LoggingTestBase {
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
 		LogUtil.init();
-		STEP_NAME = ThreadContext.get(KEY_STEP_NAME);
+		STEP_NAME = ThreadContext.get(KEY_STEP_ID);
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	

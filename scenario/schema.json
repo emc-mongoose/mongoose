@@ -884,11 +884,6 @@
 					"type" : "object",
 					"additionalProperties" : false,
 					"properties" : {
-						"id" : {
-							"type" : [
-								"null", "string"
-							]
-						},
 						"step" : {
 							"type" : "object",
 							"additionalProperties" : false,

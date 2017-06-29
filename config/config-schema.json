@@ -656,15 +656,10 @@
 		"test" : {
 			"type" : "object",
 			"required" : [
-				"id", "scenario", "step"
+				"scenario", "step"
 			],
 			"additionalProperties" : false,
 			"properties" : {
-				"id" : {
-					"type" : [
-						"null", "string"
-					]
-				},
 				"scenario" : {
 					"type" : "object",
 					"required" : [

@@ -8,8 +8,8 @@ import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
+import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
@@ -64,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -90,7 +90,7 @@ extends EnvConfiguredScenarioTestBase {
 		} catch(final Throwable t) {
 			LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 		}
-		LoadJobLogFileManager.flush(STEP_NAME);
+		TestStepIdLogFileManager.flush(STEP_NAME);
 		TimeUnit.SECONDS.sleep(10);
 	}
 
