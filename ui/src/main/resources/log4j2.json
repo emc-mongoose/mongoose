@@ -3,7 +3,7 @@
 		"status" : "warn",
 		"name" : "mongoose",
 		"monitorInterval" : 1000,
-		"packages" : "com.emc.mongoose.ui.log.appenders",
+		"packages" : "com.emc.mongoose.ui.log",
 		"shutdownHook" : "enable",
 		"shutdownTimeout" : 10000,
 		"appenders" : {
@@ -37,16 +37,30 @@
 				},
 				{
 					"name" : "msgFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "messages.log",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}messages.log",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}messages.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					}
 				},
 				{
 					"name" : "3rdPartyFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "3rdparty.log",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}3rdparty.log",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}3rdparty.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
 					},
@@ -62,8 +76,15 @@
 				},
 				{
 					"name" : "errFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "errors.log",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}errors.log",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}errors.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					},
@@ -79,8 +100,15 @@
 				},
 				{
 					"name" : "metricsFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "metrics.csv",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.csv",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -88,8 +116,15 @@
 				},
 				{
 					"name" : "metricsThresholdFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "metrics.threshold.csv",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.csv",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -97,8 +132,15 @@
 				},
 				{
 					"name" : "metricsFileTotal",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "metrics.total.csv",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.total.csv",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.total.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -106,8 +148,15 @@
 				},
 				{
 					"name" : "metricsThresholdFileTotal",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "metrics.threshold.total.csv",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.total.csv",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.total.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
@@ -115,8 +164,15 @@
 				},
 				{
 					"name" : "ioTraceFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "io.trace.csv",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}io.trace.csv",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}io.trace.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
 						"pattern" : "%m"
@@ -124,16 +180,30 @@
 				},
 				{
 					"name" : "cfgFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "effective.config.log",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}effective.config.log",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}effective.config.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0}:%n%m%n%n"
 					}
 				},
 				{
 					"name" : "partsUploadFile",
-					"type" : "TestStepIdLogFile",
-					"fileName" : "parts.upload.csv",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}parts.upload.csv",
+					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}parts.upload.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"Policies" : {
+						"StepIdTriggeringPolicy" : {
+						},
+						"OnStartupTriggeringPolicy" : {
+						}
+					},
 					"PatternLayout" : {
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern" : "%m%n"
@@ -141,30 +211,28 @@
 				},
 				{
 					"name" : "extResultsFile",
-					"type" : "RandomAccessFile",
+					"type" : "File",
 					"fileName" : "result.xml",
-					"filePattern" : "result.%d{yyyy.MM.dd.hh.mm.ss.SSS}.xml",
+					"append" : false,
+					"createOnDemand" : true,
 					"PatternLayout" : {
 						"header" : "<result>\n",
 						"footer" : "</result>\n",
 						"pattern" : "%m",
 						"noConsoleNoAnsi" : true
-					},
-					"OnStartupTriggeringPolicy" : {
 					}
 				},
 				{
 					"name" : "extThresholdResultsFile",
-					"type" : "RandomAccessFile",
+					"type" : "File",
 					"fileName" : "result-threshold.xml",
-					"filePattern" : "result.threshold.%d{yyyy.MM.dd.hh.mm.ss.SSS}.xml",
+					"append" : false,
+					"createOnDemand" : true,
 					"PatternLayout" : {
 						"header" : "<result-with-threshold>\n",
 						"footer" : "</result-with-threshold>\n",
 						"pattern" : "%m",
 						"noConsoleNoAnsi" : true
-					},
-					"OnStartupTriggeringPolicy" : {
 					}
 				}
 			]
