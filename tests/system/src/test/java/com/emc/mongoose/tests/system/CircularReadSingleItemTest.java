@@ -104,7 +104,7 @@ extends EnvConfiguredScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 65); // 1m + up to 5s for the precondition job
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(STEP_NAME);
+		LoadJobLogFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 

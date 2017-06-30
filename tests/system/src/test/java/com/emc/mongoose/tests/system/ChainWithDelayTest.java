@@ -95,7 +95,7 @@ extends EnvConfiguredScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(STEP_NAME);
+		LoadJobLogFileManager.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
 	}

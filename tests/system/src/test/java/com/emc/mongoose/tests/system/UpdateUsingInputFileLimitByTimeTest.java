@@ -87,7 +87,7 @@ extends EnvConfiguredScenarioTestBase {
 		} catch(final Throwable t) {
 			LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 		}
-		LoadJobLogFileManager.flush(STEP_NAME);
+		LoadJobLogFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 

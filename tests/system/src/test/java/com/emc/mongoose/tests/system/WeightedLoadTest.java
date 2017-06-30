@@ -120,7 +120,7 @@ extends EnvConfiguredScenarioTestBase {
 		TimeUnit.SECONDS.timedJoin(runner, 100);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(STEP_NAME);
+		LoadJobLogFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
