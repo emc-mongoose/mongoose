@@ -13,6 +13,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import com.emc.mongoose.tests.system.util.EnvUtil;
+import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.junit.AfterClass;

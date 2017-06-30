@@ -1,6 +1,5 @@
 package com.emc.mongoose.ui.log;
 
-import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.rolling.AbstractTriggeringPolicy;

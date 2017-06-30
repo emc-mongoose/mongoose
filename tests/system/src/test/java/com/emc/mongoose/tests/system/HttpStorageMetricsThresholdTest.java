@@ -5,6 +5,7 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.LogPatterns;
+import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;

@@ -38,8 +38,8 @@
 				{
 					"name" : "msgFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}messages.log",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}messages.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}messages.log",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}messages.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -53,8 +53,8 @@
 				{
 					"name" : "3rdPartyFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}3rdparty.log",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}3rdparty.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}3rdparty.log",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}3rdparty.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -77,8 +77,8 @@
 				{
 					"name" : "errFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}errors.log",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}errors.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}errors.log",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}errors.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -101,8 +101,8 @@
 				{
 					"name" : "metricsFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.csv",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.csv",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -117,8 +117,8 @@
 				{
 					"name" : "metricsThresholdFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.csv",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.csv",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -133,8 +133,8 @@
 				{
 					"name" : "metricsFileTotal",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.total.csv",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.total.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.total.csv",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.total.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -149,8 +149,8 @@
 				{
 					"name" : "metricsThresholdFileTotal",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.total.csv",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.total.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.total.csv",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}metrics.threshold.total.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -165,8 +165,8 @@
 				{
 					"name" : "ioTraceFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}io.trace.csv",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}io.trace.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}io.trace.csv",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}io.trace.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -181,8 +181,8 @@
 				{
 					"name" : "cfgFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}effective.config.log",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}effective.config.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}effective.config.log",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}effective.config.log.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},
@@ -196,8 +196,8 @@
 				{
 					"name" : "partsUploadFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}parts.upload.csv",
-					"filePattern" : "log${sys:file.separator}${ctx:step.id}${sys:file.separator}parts.upload.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
+					"fileName" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}parts.upload.csv",
+					"filePattern" : "${ctx:base.dir}${sys:file.separator}log${sys:file.separator}${ctx:step.id}${sys:file.separator}parts.upload.csv.%d{yyyyMMdd-hhmmss}{GMT+0}",
 					"Policies" : {
 						"StepIdTriggeringPolicy" : {
 						},

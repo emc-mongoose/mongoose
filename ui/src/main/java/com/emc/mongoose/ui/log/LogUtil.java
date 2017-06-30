@@ -1,8 +1,8 @@
 package com.emc.mongoose.ui.log;
 
 import com.emc.mongoose.model.DaemonBase;
+
 import static com.emc.mongoose.common.Constants.KEY_BASE_DIR;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.common.env.PathUtil.BASE_DIR;
@@ -26,8 +26,6 @@ import java.util.Calendar;
  */
 public final class LogUtil
 implements ShutdownCallbackRegistry {
-	//
-	private static final String NAME = "mongoose";
 	//
 	public static final DatePrinter
 		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
@@ -56,11 +54,6 @@ implements ShutdownCallbackRegistry {
 	//
 	public static void init() {
 		ThreadContext.put(KEY_BASE_DIR, BASE_DIR);
-		// set step name property with timestamp value if not set before
-		final String testStepName = ThreadContext.get(KEY_STEP_ID);
-		if(testStepName == null || testStepName.length() == 0) {
-			ThreadContext.put(KEY_STEP_ID, getDateTimeStamp());
-		}
 		try {
 			Runtime.getRuntime().addShutdownHook(
 				new Thread("logCtxShutDownHook") {

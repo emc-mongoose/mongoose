@@ -6,6 +6,7 @@ import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
+import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 

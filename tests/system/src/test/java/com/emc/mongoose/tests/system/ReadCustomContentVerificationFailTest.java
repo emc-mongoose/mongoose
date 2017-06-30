@@ -13,6 +13,7 @@ import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
+import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 
