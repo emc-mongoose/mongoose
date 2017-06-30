@@ -4,7 +4,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;
-
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 
 import java.util.List;
@@ -24,6 +24,9 @@ extends LogMessageBase {
 		this.ioResults = ioResults;
 		this.from = from;
 		this.to = to;
+		if(to - from > 100_000) {
+			Loggers.ERR.warn("I/O trace batch size too big: {}", to - from);
+		}
 	}
 
 	@Override @SuppressWarnings("unchecked")

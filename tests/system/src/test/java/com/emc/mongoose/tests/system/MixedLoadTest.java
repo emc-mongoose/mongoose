@@ -9,7 +9,6 @@ import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
@@ -122,7 +121,7 @@ extends EnvConfiguredScenarioTestBase {
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-		TestStepIdLogFileManager.flushAll();
+		LogUtil.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 	

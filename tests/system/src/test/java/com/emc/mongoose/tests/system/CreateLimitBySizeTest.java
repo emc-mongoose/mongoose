@@ -8,7 +8,6 @@ import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
 import org.apache.commons.csv.CSVFormat;

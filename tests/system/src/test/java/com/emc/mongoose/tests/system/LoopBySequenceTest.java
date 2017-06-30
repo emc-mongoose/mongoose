@@ -6,7 +6,6 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
@@ -74,7 +73,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO.run();
 		ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
 		TimeUnit.SECONDS.sleep(15);
-		TestStepIdLogFileManager.flushAll();
+		LogUtil.flushAll();
 	}
 
 	@AfterClass

@@ -3,7 +3,6 @@ package com.emc.mongoose.tests.system;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
@@ -66,7 +65,7 @@ extends EnvConfiguredScenarioTestBase {
 		ACTUAL_TEST_TIME_MILLISECONDS = System.currentTimeMillis();
 		SCENARIO.run();
 		ACTUAL_TEST_TIME_MILLISECONDS = System.currentTimeMillis() - ACTUAL_TEST_TIME_MILLISECONDS;
-		TestStepIdLogFileManager.flushAll();
+		LogUtil.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 	}
 

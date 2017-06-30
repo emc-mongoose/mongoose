@@ -5,7 +5,6 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.LogPatterns;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
@@ -61,7 +60,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
 		SCENARIO.run();
-		TestStepIdLogFileManager.flushAll();
+		LogUtil.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
 	}

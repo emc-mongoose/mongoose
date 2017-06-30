@@ -9,7 +9,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;

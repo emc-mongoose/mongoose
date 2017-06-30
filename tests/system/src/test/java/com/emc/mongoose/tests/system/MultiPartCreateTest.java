@@ -13,7 +13,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import com.emc.mongoose.tests.system.util.EnvUtil;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.junit.AfterClass;
@@ -80,7 +79,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
 		SCENARIO.run();
-		TestStepIdLogFileManager.flushAll();
+		LogUtil.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(5);
 	}

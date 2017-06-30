@@ -4,7 +4,6 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 
 import org.apache.commons.csv.CSVRecord;
@@ -65,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO.run();
 		ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
 		TimeUnit.SECONDS.sleep(10);
-		TestStepIdLogFileManager.flushAll();
+		LogUtil.flushAll();
 	}
 
 	@AfterClass

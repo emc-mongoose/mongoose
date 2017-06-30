@@ -6,12 +6,14 @@ import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.common.env.PathUtil.BASE_DIR;
-import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
@@ -73,13 +75,20 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 	//
+	public static void flushAll() {
+		final LoggerContext logCtx = ((LoggerContext) LogManager.getContext());
+		for(final org.apache.logging.log4j.core.Logger logger : logCtx.getLoggers()) {
+			for(final Appender appender : logger.getAppenders().values()) {
+				if(appender instanceof AbstractOutputStreamAppender) {
+					((AbstractOutputStreamAppender) appender).getManager().flush();
+				}
+			}
+		}
+	}
+	//
 	public static void shutdown() {
 		try {
-			//System.out.println("close all daemons...");
 			DaemonBase.closeAll();
-			//System.out.println("flush all loggers...");
-			TestStepIdLogFileManager.flushAll();
-			//
 			LogManager.shutdown();
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
