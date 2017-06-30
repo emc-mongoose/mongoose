@@ -4,12 +4,10 @@ import com.emc.mongoose.ui.config.Config;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.ThreadContext;
 
 import java.util.concurrent.CancellationException;
 
