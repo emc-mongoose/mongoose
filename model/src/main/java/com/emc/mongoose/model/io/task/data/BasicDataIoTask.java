@@ -1,13 +1,11 @@
 package com.emc.mongoose.model.io.task.data;
 
 import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.storage.Credential;
-
 import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
@@ -83,43 +81,48 @@ implements DataIoTask<T> {
 		markedRangesMaskPair[0].clear();
 		markedRangesMaskPair[1].clear();
 
-		switch(ioType) {
-			case CREATE:
-				try {
+		try {
+			switch(ioType) {
+				case CREATE:
 					contentSize = item.size();
-				} catch(IOException e) {
-					throw new AssertionError();
-				}
-				break;
-			case READ:
-				try {
-					if(randomRangesCount == 0 && getMarkedRangesSize() > item.size()) {
-						throw new IllegalArgumentException(
-							"Fixed ranges size (" + formatFixedSize(getMarkedRangesSize()) + ") " +
-								"is more than data item size (" + formatFixedSize(item.size())
-						);
+					break;
+				case READ:
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
+						if(randomRangesCount > 0) {
+							markRandomRanges(randomRangesCount);
+							contentSize = getMarkedRangesSize();
+						} else {
+							// read the entire data item
+							contentSize = item.size();
+						}
+					} else {
+						contentSize = getMarkedRangesSize();
+						if(contentSize > item.size()) {
+							throw new IllegalArgumentException(
+								"Fixed ranges size (" + formatFixedSize(contentSize) + ") " +
+									"is more than data item size (" + formatFixedSize(item.size())
+							);
+						}
 					}
-				} catch(final IOException e) {
-					throw new AssertionError(e);
-				}
-			case UPDATE:
-				if(randomRangesCount == 0 && (fixedRanges == null || fixedRanges.isEmpty())) {
-					fixedRanges = new ArrayList<>(1);
-					try {
-						fixedRanges.add(new ByteRange(0L, item.size() - 1, -1));
-					} catch(final Exception e) {
-						throw new AssertionError(e);
+					break;
+				case UPDATE:
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
+						if(randomRangesCount > 0) {
+							markRandomRanges(randomRangesCount);
+						} else {
+							// overwrite the entire data item
+							fixedRanges = new ArrayList<>(1);
+							fixedRanges.add(new ByteRange(0L, item.size() - 1, -1));
+						}
 					}
-				} else {
-					if(randomRangesCount > 0) {
-						markRandomRanges(randomRangesCount);
-					}
-				}
-				contentSize = getMarkedRangesSize();
-				break;
-			default:
-				contentSize = 0;
-				break;
+					contentSize = getMarkedRangesSize();
+					break;
+				default:
+					contentSize = 0;
+					break;
+			}
+		} catch(final IOException e) {
+			throw new AssertionError(e);
 		}
 	}
 	
