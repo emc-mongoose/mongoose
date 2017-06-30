@@ -5,6 +5,8 @@ import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
 /**
  Created by andrey on 17.11.16.
 
@@ -18,6 +20,7 @@ import com.emc.mongoose.ui.log.LogMessageBase;
  DataLatency[us],
  TransferSize
  */
+@AsynchronouslyFormattable
 public final class IoTraceCsvLogMessage<I extends Item, O extends IoTask<I>>
 extends LogMessageBase {
 

@@ -4,7 +4,6 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.IOException;
@@ -27,7 +26,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final long ts;
 	private volatile long tsStart = -1, prevElapsedTime = 0;
 	
-	private final String stepName;
+	private final String stepId;
 	private final IoType ioType;
 	private final int driverCount;
 	private final int concurrency;
@@ -44,12 +43,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public BasicMetricsContext(
-		final String stepName, final IoType ioType, final int driverCount, final int concurrency,
+		final String stepId, final IoType ioType, final int driverCount, final int concurrency,
 		final int thresholdConcurrency, final long transferSizeEstimate,
 		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
 		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
 	) {
-		this.stepName = stepName;
+		this.stepId = stepId;
 		this.ioType = ioType;
 		this.driverCount = driverCount;
 		this.concurrency = concurrency;
@@ -186,8 +185,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final String getStepName() {
-		return stepName;
+	public final String getStepId() {
+		return stepId;
 	}
 	//
 	@Override
@@ -292,8 +291,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new BasicMetricsContext(
-			stepName, ioType, driverCount, concurrency, 0, transferSizeEstimate,
+		thresholdMetricsCtx = new BasicMetricsContext(stepId, ioType, driverCount, concurrency, 0, transferSizeEstimate,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);
@@ -336,7 +334,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	@Override
 	public final String toString() {
 		return "MetricsContext(" + ioType.name() + '-' + concurrency + 'x' + driverCount  + '@' +
-			stepName + ")";
+			stepId + ")";
 	}
 	//
 	protected static final class BasicSnapshot

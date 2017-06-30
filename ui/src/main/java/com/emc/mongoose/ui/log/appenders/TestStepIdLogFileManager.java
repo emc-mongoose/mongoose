@@ -105,7 +105,7 @@ extends AbstractManager {
 	//
 	private static final LoadJobFileManagerFactory FACTORY = new LoadJobFileManagerFactory();
 	//
-	public static TestStepIdLogFileManager getRunIdFileManager(
+	public static TestStepIdLogFileManager getFileManager(
 		final String fileName,
 		final boolean flagAppend, final boolean flagLock, final boolean flagBuffered,
 		final String uriAdvertise, final Layout<? extends Serializable> layout, final int buffSize,

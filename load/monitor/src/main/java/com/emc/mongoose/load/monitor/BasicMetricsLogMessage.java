@@ -12,9 +12,12 @@ import static com.emc.mongoose.ui.log.LogUtil.RESET;
 import static com.emc.mongoose.ui.log.LogUtil.WHITE;
 import static com.emc.mongoose.ui.log.LogUtil.getFailureRatioAnsiColorCode;
 
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
 /**
  Created by kurila on 18.05.17.
  */
+@AsynchronouslyFormattable
 public final class BasicMetricsLogMessage
 extends LogMessageBase {
 	
@@ -52,7 +55,7 @@ extends LogMessageBase {
 				ioTypeColorCode = LogUtil.LIST_COLOR;
 				break;
 		}
-		buffer.append("Step \"").append(metricsCtx.getStepName()).append("\" results:\n\t");
+		buffer.append("Step \"").append(metricsCtx.getStepId()).append("\" results:\n\t");
 		if(stdOutColorFlag) {
 			buffer.append(ioTypeColorCode);
 		}

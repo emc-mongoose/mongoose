@@ -12,9 +12,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
 /**
  Created by andrey on 12.12.16.
  */
+@AsynchronouslyFormattable
 public final class ExtResultsXmlLogMessage
 extends LogMessageBase {
 
@@ -32,7 +35,7 @@ extends LogMessageBase {
 
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
-		buffer.append("<result id=\"").append(metricsCtx.getStepName()).append("\" ");
+		buffer.append("<result id=\"").append(metricsCtx.getStepId()).append("\" ");
 		final Snapshot snapshot = metricsCtx.getLastSnapshot();
 		final long startTimeMillis = snapshot.getStartTime();
 		final Date startDate = new Date(startTimeMillis);

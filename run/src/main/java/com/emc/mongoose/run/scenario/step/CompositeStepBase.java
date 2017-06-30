@@ -79,7 +79,7 @@ implements CompositeStep {
 			} else {
 				switch(jobType) {
 					case NODE_TYPE_CHAIN:
-						append(new ChainStep(config, subTree));
+						append(new ChainLoadStep(config, subTree));
 						break;
 					case NODE_TYPE_COMMAND:
 						append(new CommandStep(config, subTree));

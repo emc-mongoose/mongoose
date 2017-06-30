@@ -4,9 +4,6 @@ import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.model.DaemonBase;
 import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.metrics.MetricsContext;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
@@ -36,25 +33,21 @@ extends DaemonBase
 implements SvcTask {
 	
 	private final Map<LoadController, SortedSet<MetricsContext>> allMetrics = new HashMap<>();
+	private final SortedSet<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock allMetricsLock = new ReentrantLock();
-	private final long outputPeriodMillis;
 	private final MBeanServer mBeanServer;
-	private volatile long lastOutputTs;
-	private volatile long nextOutputTs;
 	
-	private MetricsManager(final long outputPeriodMillis, final boolean svcFlag) {
+	private long outputPeriodMillis;
+	private long lastOutputTs;
+	private long nextOutputTs;
+	
+	private MetricsManager() {
 		svcTasks.add(this);
-		this.outputPeriodMillis = outputPeriodMillis;
-		lastOutputTs = System.currentTimeMillis() - outputPeriodMillis;
-		if(svcFlag) {
-			System.setProperty("com.sun.management.jmxremote", "true");
-			System.setProperty("com.sun.management.jmxremote.local.only", "false");
-			System.setProperty("com.sun.management.jmxremote.authenticate", "false");
-			System.setProperty("com.sun.management.jmxremote.ssl", "false");
-			mBeanServer = ManagementFactory.getPlatformMBeanServer();
-		} else {
-			mBeanServer = null;
-		}
+		System.setProperty("com.sun.management.jmxremote", "true");
+		System.setProperty("com.sun.management.jmxremote.local.only", "false");
+		System.setProperty("com.sun.management.jmxremote.authenticate", "false");
+		System.setProperty("com.sun.management.jmxremote.ssl", "false");
+		mBeanServer = ManagementFactory.getPlatformMBeanServer();
 	}
 	
 	private static final String CLASS_NAME = MetricsManager.class.getSimpleName();
@@ -62,11 +55,7 @@ implements SvcTask {
 	
 	static {
 		try {
-			final Config defaultConfig  = ConfigParser.loadDefaultConfig();
-			final MetricsConfig metricsConfig = defaultConfig.getOutputConfig().getMetricsConfig();
-			final long defaultPeriod = metricsConfig.getAverageConfig().getPeriod();
-			final boolean svcFlag = metricsConfig.getService();
-			INSTANCE = new MetricsManager(TimeUnit.SECONDS.toMillis(defaultPeriod), svcFlag);
+			INSTANCE = new MetricsManager();
 			INSTANCE.start();
 		} catch(final Throwable cause) {
 			throw new AssertionError(cause);
@@ -146,8 +135,9 @@ implements SvcTask {
 	@Override
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
-			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)) {
-				nextOutputTs = System.currentTimeMillis();
+			try(
+				final Instance logClassName = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)
+			) {
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {
@@ -157,8 +147,8 @@ implements SvcTask {
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
 						try(
-							final Instance logCtx_ = CloseableThreadContext
-								.put(KEY_STEP_ID, metricsCtx.getStepName())
+							final Instance logStepId = CloseableThreadContext
+								.put(KEY_STEP_ID, metricsCtx.getStepId())
 						) {
 							metricsCtx.refreshLastSnapshot();
 
@@ -187,14 +177,22 @@ implements SvcTask {
 								exitMetricsThresholdState(metricsCtx);
 							}
 
-							// periodic file output
-							if(metricsCtx.getAvgPersistFlag()) {
-								if(
-									nextOutputTs - metricsCtx.getLastOutputTs() >=
-										metricsCtx.getOutputPeriodMillis()
-								) {
-									Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
+							// periodic output
+							outputPeriodMillis = metricsCtx.getOutputPeriodMillis();
+							lastOutputTs = metricsCtx.getLastOutputTs();
+							nextOutputTs = System.currentTimeMillis();
+							if(
+								outputPeriodMillis > 0 &&
+									nextOutputTs - lastOutputTs >= outputPeriodMillis
+							) {
+								if(!controller.isInterrupted() && !controller.isClosed()) {
+									selectedMetrics.add(metricsCtx);
 									metricsCtx.setLastOutputTs(nextOutputTs);
+									if(metricsCtx.getAvgPersistFlag()) {
+										Loggers.METRICS_FILE.info(
+											new MetricsCsvLogMessage(metricsCtx)
+										);
+									}
 								}
 							}
 						}
@@ -202,11 +200,9 @@ implements SvcTask {
 				}
 
 				// periodic console output
-				if(nextOutputTs - lastOutputTs >= outputPeriodMillis) {
-					lastOutputTs = nextOutputTs;
-					if(allMetrics.size() > 0) {
-						Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(allMetrics));
-					}
+				if(!selectedMetrics.isEmpty()) {
+					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
+					selectedMetrics.clear();
 				}
 			} catch(final Throwable cause) {
 				LogUtil.exception(Level.WARN, cause, "Metrics manager failure");

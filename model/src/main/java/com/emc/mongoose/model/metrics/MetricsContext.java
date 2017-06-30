@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.metrics;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.model.io.IoType;
 
 import java.io.Closeable;
@@ -27,7 +26,7 @@ extends Closeable {
 
 	void markElapsedTime(final long millis);
 	
-	String getStepName();
+	String getStepId();
 	IoType getIoType();
 	int getDriverCount();
 	int getConcurrency();

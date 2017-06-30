@@ -168,10 +168,11 @@ extends StepBase {
 				controller.setIoResultsOutput(itemOutput);
 			}
 			controller.start();
+			Loggers.MSG.info("Mixed load step \"{}\" started", controller.getName());
 			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
-				Loggers.MSG.info("Load step done");
+				Loggers.MSG.info("Mixed load step \"{}\" done", controller.getName());
 			} else {
-				Loggers.MSG.info("Load step timeout");
+				Loggers.MSG.info("Mixed load step \"{}\" timeout", controller.getName());
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.ERROR, e, "Unexpected failure");

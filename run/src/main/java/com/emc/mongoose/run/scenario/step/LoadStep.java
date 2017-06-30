@@ -69,8 +69,8 @@ extends StepBase {
 	protected final void invoke() {
 
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
-		final String jobName = stepConfig.getId();
-		Loggers.MSG.info("Run the load step \"{}\"", jobName);
+		final String stepId = stepConfig.getId();
+		Loggers.MSG.info("Run the load step \"{}\"", stepId);
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		final OutputConfig outputConfig = localConfig.getOutputConfig();
@@ -141,7 +141,7 @@ extends StepBase {
 		outputConfigMap.put(loadGenerator, outputConfig);
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driversMap, null, loadConfigMap, stepConfigMap, outputConfigMap
+				stepId, driversMap, null, loadConfigMap, stepConfigMap, outputConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();
@@ -154,17 +154,18 @@ extends StepBase {
 				controller.setIoResultsOutput(itemOutput);
 			}
 			controller.start();
+			Loggers.MSG.info("Load step \"{}\" started", stepId);
 			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
-				Loggers.MSG.info("Load step \"{}\" done", jobName);
+				Loggers.MSG.info("Load step \"{}\" done", stepId);
 			} else {
-				Loggers.MSG.info("Load step \"{}\" timeout", jobName);
+				Loggers.MSG.info("Load step \"{}\" timeout", stepId);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			Loggers.MSG.debug("Load step \"{}\" interrupted", jobName);
+			Loggers.MSG.debug("Load step \"{}\" interrupted", stepId);
 		}
 	}
 	

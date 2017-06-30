@@ -95,7 +95,7 @@ extends AbstractAppender {
 		@PluginAttribute("ignoreExceptions") final String ignore,
 		@PluginAttribute("advertise") final String advertise,
 		@PluginAttribute("advertiseUri") final String advertiseUri,
-		@PluginAttribute("immediateFlust") final String immediateFlush,
+		@PluginAttribute("immediateFlush") final String immediateFlush,
 		@PluginConfiguration final Configuration config
 	) {
 		final boolean
@@ -130,7 +130,7 @@ extends AbstractAppender {
 			}
 		}
 		//
-		final TestStepIdLogFileManager manager = TestStepIdLogFileManager.getRunIdFileManager(
+		final TestStepIdLogFileManager manager = TestStepIdLogFileManager.getFileManager(
 			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize, config
 		);
 		//

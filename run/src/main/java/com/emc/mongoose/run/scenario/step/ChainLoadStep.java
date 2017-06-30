@@ -47,14 +47,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.01.17.
  */
-public class ChainStep
+public class ChainLoadStep
 extends StepBase {
 	
 	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<LoadController> loadChain;
 	
-	public ChainStep(final Config appConfig, final Map<String, Object> subTree)
+	public ChainLoadStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
 		this.appConfig = appConfig;
@@ -183,6 +183,7 @@ extends StepBase {
 		try {
 			for(final LoadController nextController : loadChain) {
 				nextController.start();
+				Loggers.MSG.info("Load step \"{}\" started", nextController.getName());
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.WARN, e, "Unexpected failure");

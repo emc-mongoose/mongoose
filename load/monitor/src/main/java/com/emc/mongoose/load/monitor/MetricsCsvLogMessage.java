@@ -2,6 +2,9 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
+
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
 import static com.emc.mongoose.common.Constants.K;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
@@ -36,6 +39,7 @@ import java.util.Date;
  LatencyHiQ[us],
  LatencyMax[us]
  */
+@AsynchronouslyFormattable
 public final class MetricsCsvLogMessage
 extends LogMessageBase {
 	

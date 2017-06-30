@@ -141,7 +141,7 @@
 				},
 				{
 					"name" : "extResultsFile",
-					"type" : "RollingRandomAccessFile",
+					"type" : "RandomAccessFile",
 					"fileName" : "result.xml",
 					"filePattern" : "result.%d{yyyy.MM.dd.hh.mm.ss.SSS}.xml",
 					"PatternLayout" : {
@@ -155,7 +155,7 @@
 				},
 				{
 					"name" : "extThresholdResultsFile",
-					"type" : "RollingRandomAccessFile",
+					"type" : "RandomAccessFile",
 					"fileName" : "result-threshold.xml",
 					"filePattern" : "result.threshold.%d{yyyy.MM.dd.hh.mm.ss.SSS}.xml",
 					"PatternLayout" : {

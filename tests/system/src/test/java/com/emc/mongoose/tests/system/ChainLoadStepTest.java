@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 09.06.17.
  */
-public class ChainStepTest
+public class ChainLoadStepTest
 extends EnvConfiguredScenarioTestBase {
 
 	private static final long COUNT_LIMIT = 100_000;
@@ -45,7 +45,7 @@ extends EnvConfiguredScenarioTestBase {
 				new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = ChainStepTest.class.getSimpleName();
+		STEP_NAME = ChainLoadStepTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json"
 		);
