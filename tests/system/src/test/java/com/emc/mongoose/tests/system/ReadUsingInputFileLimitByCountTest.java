@@ -12,7 +12,6 @@ import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import com.emc.mongoose.ui.log.appenders.TestStepIdLogFileManager;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import org.apache.commons.csv.CSVRecord;
