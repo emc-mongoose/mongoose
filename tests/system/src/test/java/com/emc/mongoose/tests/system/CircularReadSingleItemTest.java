@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
@@ -75,7 +75,7 @@ extends EnvConfiguredScenarioTestBase {
 	public static void setUpClass()
 	throws Exception {
 		STEP_NAME = CircularReadSingleItemTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

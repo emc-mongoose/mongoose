@@ -3,6 +3,7 @@ package com.emc.mongoose.ui.log;
 import com.emc.mongoose.model.DaemonBase;
 
 import static com.emc.mongoose.common.Constants.KEY_BASE_DIR;
+import static com.emc.mongoose.common.Constants.KEY_TEST_ID;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.common.env.PathUtil.BASE_DIR;
@@ -28,7 +29,7 @@ public final class LogUtil
 implements ShutdownCallbackRegistry {
 	//
 	public static final DatePrinter
-		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
+		FMT_DT = FastDateFormat.getInstance("yyyyMMdd-HHmmss.SSS", TZ_UTC, LOCALE_DEFAULT);
 	// console colors
 	public static final String
 		RED = "\u001B[31m",
@@ -54,6 +55,7 @@ implements ShutdownCallbackRegistry {
 	//
 	public static void init() {
 		ThreadContext.put(KEY_BASE_DIR, BASE_DIR);
+		ThreadContext.put(KEY_TEST_ID, getDateTimeStamp());
 		try {
 			Runtime.getRuntime().addShutdownHook(
 				new Thread("logCtxShutDownHook") {

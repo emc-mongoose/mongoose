@@ -7,7 +7,7 @@ import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.model.DaemonBase;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.common.io.Input;
@@ -115,7 +115,7 @@ implements StorageDriver<I, O> {
 			if(buff.tryLock()) {
 				try(
 					final Instance logCtx = CloseableThreadContext
-						.put(KEY_STEP_ID, stepName)
+						.put(KEY_TEST_STEP_ID, stepName)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())
 				) {
 					if(n < batchSize) {
@@ -149,7 +149,7 @@ implements StorageDriver<I, O> {
 		protected final void doClose() {
 			try(
 				final Instance logCtx = CloseableThreadContext
-					.put(KEY_STEP_ID, stepName)
+					.put(KEY_TEST_STEP_ID, stepName)
 					.put(KEY_CLASS_NAME, IoTasksDispatch.class.getSimpleName())
 			) {
 				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
@@ -367,7 +367,7 @@ implements StorageDriver<I, O> {
 	protected void doInterrupt() {
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
@@ -386,7 +386,7 @@ implements StorageDriver<I, O> {
 		super.doClose();
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			contentSrc.close();

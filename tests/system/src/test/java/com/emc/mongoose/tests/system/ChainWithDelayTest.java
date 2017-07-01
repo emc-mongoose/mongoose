@@ -7,7 +7,7 @@ import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.common.Constants.M;
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
@@ -66,7 +66,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
 		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
-		ThreadContext.put(KEY_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();

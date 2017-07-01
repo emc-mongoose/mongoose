@@ -5,6 +5,8 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.api.TimeUtil;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
 
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Loggers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -1748,6 +1750,8 @@ implements Serializable {
 
 	public void apply(final Map<String, Object> tree)
 	throws IllegalArgumentException {
+		final TestConfig.StepConfig testStepConfg = getTestConfig().getStepConfig();
+		final String oldTestStepId = testStepConfg.getId();
 		applyAliasing(tree, getAliasingConfig());
 		try {
 			applyRecursively(this, tree);
@@ -1755,6 +1759,13 @@ implements Serializable {
 			throw new IllegalArgumentNameException(ARG_PREFIX + e.getMessage());
 		} catch(final InvocationTargetException | IllegalAccessException e) {
 			e.printStackTrace(System.err);
+		} finally {
+			final String newTestStepId = testStepConfg.getId();
+			if(oldTestStepId == null) {
+				if(newTestStepId == null) {
+					testStepConfg.setId(LogUtil.getDateTimeStamp());
+				}
+			}
 		}
 	}
 

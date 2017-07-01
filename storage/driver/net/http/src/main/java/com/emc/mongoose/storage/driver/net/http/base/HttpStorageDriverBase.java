@@ -12,7 +12,7 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
@@ -115,7 +115,7 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel = getUnpooledConnection();
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, HttpStorageDriverBase.class.getSimpleName())
 		) {
 			final ChannelPipeline pipeline = channel.pipeline();

@@ -18,7 +18,7 @@ import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.Throttle;
@@ -652,7 +652,7 @@ implements LoadController<I, O> {
 				() -> {
 					try(
 						final Instance ctx = CloseableThreadContext
-							.put(KEY_STEP_ID, name)
+							.put(KEY_TEST_STEP_ID, name)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
 						nextGenerator.interrupt();
@@ -673,7 +673,7 @@ implements LoadController<I, O> {
 					() -> {
 						try(
 							final Instance ctx = CloseableThreadContext
-								.put(KEY_STEP_ID, name)
+								.put(KEY_TEST_STEP_ID, name)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							driver.shutdown();
@@ -772,7 +772,7 @@ implements LoadController<I, O> {
 						() -> {
 							try(
 								final Instance ctx = CloseableThreadContext
-									.put(KEY_STEP_ID, name)
+									.put(KEY_TEST_STEP_ID, name)
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
 								driver.interrupt();
@@ -844,7 +844,7 @@ implements LoadController<I, O> {
 						() -> {
 							try(
 								final Instance ctx = CloseableThreadContext
-									.put(KEY_STEP_ID, name)
+									.put(KEY_TEST_STEP_ID, name)
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
 								try {

@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 
 /**
  Created by andrey on 06.06.16.
@@ -67,7 +67,7 @@ implements CompositeStep {
 	throws ScenarioParseException {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext.put(
-				KEY_STEP_ID, config.getTestConfig().getStepConfig().getId()
+				KEY_TEST_STEP_ID, config.getTestConfig().getStepConfig().getId()
 			)
 		) {
 			Loggers.MSG.debug("Load the subtree to the step \"{}\"", this.toString());

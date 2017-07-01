@@ -8,7 +8,7 @@ import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.common.Constants.K;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
@@ -64,7 +64,7 @@ public abstract class LoggingTestBase {
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
 		LogUtil.init();
-		STEP_NAME = ThreadContext.get(KEY_STEP_ID);
+		STEP_NAME = ThreadContext.get(KEY_TEST_STEP_ID);
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	

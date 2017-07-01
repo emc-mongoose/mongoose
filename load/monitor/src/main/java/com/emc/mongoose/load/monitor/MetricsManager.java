@@ -7,10 +7,10 @@ import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 
-import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
 import javax.management.MBeanServer;
@@ -65,7 +65,10 @@ implements SvcTask {
 	public static void register(final LoadController controller, final MetricsContext metricsCtx)
 	throws InterruptedException, TimeoutException {
 		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-			try {
+			try(
+				final Instance stepIdCtx = CloseableThreadContext
+					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
+			) {
 				final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 					.computeIfAbsent(controller, c -> new TreeSet<>());
 				if(controllerMetrics.add(metricsCtx)) {
@@ -86,7 +89,10 @@ implements SvcTask {
 	public static void unregister(final LoadController controller, final MetricsContext metricsCtx)
 	throws InterruptedException, TimeoutException {
 		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-			try {
+			try(
+				final Instance stepIdCtx = CloseableThreadContext
+					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
+			) {
 				final SortedSet<MetricsContext> controllerMetrics = INSTANCE.allMetrics
 					.get(controller);
 
@@ -136,7 +142,7 @@ implements SvcTask {
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
 			try(
-				final Instance logClassName = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)
+				final Instance clsNameCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)
 			) {
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;
@@ -147,8 +153,8 @@ implements SvcTask {
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller)) {
 						try(
-							final Instance logStepId = CloseableThreadContext
-								.put(KEY_STEP_ID, metricsCtx.getStepId())
+							final Instance stepIdCtx = CloseableThreadContext
+								.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
 						) {
 							metricsCtx.refreshLastSnapshot();
 

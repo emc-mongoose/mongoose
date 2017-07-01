@@ -19,7 +19,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
@@ -142,7 +142,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
 		) {
 			connPool = createConnectionPool();
@@ -161,7 +161,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		int size;
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
 		) {
 			if(avgTransferSize < BUFF_SIZE_MIN) {
@@ -210,7 +210,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					throws Exception {
 						try(
 							final Instance logCtx = CloseableThreadContext
-								.put(KEY_STEP_ID, stepName)
+								.put(KEY_TEST_STEP_ID, stepName)
 								.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 						) {
 							appendHandlers(channel.pipeline());
@@ -235,7 +235,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		ioTask.reset();
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
@@ -273,7 +273,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		O nextIoTask;
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			for(int i = from; i < to && isStarted(); i ++) {
@@ -472,7 +472,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	public void complete(final Channel channel, final O ioTask) {
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			ioTask.finishResponse();
@@ -538,7 +538,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws IllegalStateException {
 		try(
 			final Instance ctx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			super.doInterrupt();

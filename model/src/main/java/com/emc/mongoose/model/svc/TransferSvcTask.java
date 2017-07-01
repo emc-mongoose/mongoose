@@ -7,7 +7,7 @@ import com.emc.mongoose.common.concurrent.SvcTaskBase;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -51,7 +51,7 @@ extends SvcTaskBase {
 		if(deferredItems.tryLock()) { // works like exclusive invocation lock
 			try(
 				final Instance ctx = CloseableThreadContext
-					.put(KEY_STEP_ID, stepName)
+					.put(KEY_TEST_STEP_ID, stepName)
 					.put(KEY_CLASS_NAME, getClass().getSimpleName())
 			) {
 

@@ -13,7 +13,7 @@ import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -73,7 +73,7 @@ implements StorageDriverSvc<I, O> {
 		protected final void invoke() {
 			try(
 				final Instance ctx = CloseableThreadContext
-					.put(KEY_STEP_ID, stepName)
+					.put(KEY_TEST_STEP_ID, stepName)
 					.put(KEY_CLASS_NAME, getClass().getSimpleName())
 			) {
 				nextNanoTimeStamp = nanoTime();
