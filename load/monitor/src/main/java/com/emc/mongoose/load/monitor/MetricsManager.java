@@ -44,7 +44,7 @@ implements SvcTask {
 		lastOutputTs = System.currentTimeMillis() - outputPeriodMillis;
 	}
 	
-	private static final String CLASS_NAME = MetricsManager.class.getSimpleName();
+	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
 	
 	static {
@@ -127,7 +127,7 @@ implements SvcTask {
 	@Override
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
-			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)) {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				nextOutputTs = System.currentTimeMillis();
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;

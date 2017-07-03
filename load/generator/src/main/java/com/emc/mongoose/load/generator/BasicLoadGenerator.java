@@ -41,6 +41,8 @@ public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadGenerator<I, O>, SvcTask {
 
+	private final static String CLS_NAME = BasicLoadGenerator.class.getSimpleName();
+
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
@@ -135,7 +137,7 @@ implements LoadGenerator<I, O>, SvcTask {
 
 		try(
 			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(n > 0 && !itemInputFinishFlag) {
 				if(inputLock.tryLock()) {

@@ -43,6 +43,8 @@ public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements NioStorageDriver<I, O> {
 
+	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
+
 	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
@@ -100,7 +102,7 @@ implements NioStorageDriver<I, O> {
 
 			try(
 				final Instance logCtx = CloseableThreadContext
-					.put(KEY_CLASS_NAME, NioWorkerTask.class.getSimpleName())
+					.put(KEY_CLASS_NAME, CLS_NAME)
 			) {
 
 				while(isStarted() || isShutdown()) {
@@ -294,10 +296,7 @@ implements NioStorageDriver<I, O> {
 		super.doClose();
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioWorkerTasks[i] = null;
-			try(
-				final Instance logCtx = CloseableThreadContext
-					.put(KEY_CLASS_NAME, NioStorageDriverBase.class.getSimpleName())
-			) {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				if(ioTaskBuffs[i].tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){
