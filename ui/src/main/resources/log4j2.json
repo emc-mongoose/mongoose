@@ -39,8 +39,10 @@
 					"name" : "msgFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}messages.log",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}messages.log",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}messages.log",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
@@ -50,8 +52,10 @@
 					"name" : "3rdPartyFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}3rdparty.log",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}3rdparty.log",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}3rdparty.log",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
@@ -70,8 +74,10 @@
 					"name" : "errFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}errors.log",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}errors.log",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}errors.log",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
@@ -90,8 +96,10 @@
 					"name" : "metricsFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.csv",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}metrics.csv",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.csv",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
@@ -102,8 +110,10 @@
 					"name" : "metricsThresholdFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.threshold.csv",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}metrics.threshold.csv",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.threshold.csv",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
@@ -114,8 +124,10 @@
 					"name" : "metricsFileTotal",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.total.csv",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}metrics.total.csv",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.total.csv",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
@@ -126,8 +138,10 @@
 					"name" : "metricsThresholdFileTotal",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.threshold.total.csv",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}metrics.threshold.total.csv",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}metrics.threshold.total.csv",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
@@ -138,8 +152,10 @@
 					"name" : "ioTraceFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}io.trace.csv",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}io.trace.csv",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}io.trace.csv",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
@@ -150,8 +166,10 @@
 					"name" : "cfgFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}effective.config.log",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}effective.config.log",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}effective.config.log",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"pattern" : "%d{ISO8601}{GMT+0}:%n%m%n%n"
@@ -161,8 +179,10 @@
 					"name" : "partsUploadFile",
 					"type" : "RollingRandomAccessFile",
 					"fileName" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}parts.upload.csv",
-					"filePattern" : "${ctx:base.dir}log${sys:file.separator}$${ctx:test.step.id}${sys:file.separator}parts.upload.csv",
+					"filePattern" : "${ctx:base.dir}log${sys:file.separator}${ctx:test.step.id}${sys:file.separator}parts.upload.csv",
 					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
