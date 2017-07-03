@@ -31,6 +31,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.ServerException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -283,6 +284,9 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final List<O> getAll() {
+		if(ioResultsQueue.isEmpty()) {
+			return Collections.emptyList();
+		}
 		final List<O> ioTaskResults = new ArrayList<>(queueCapacity);
 		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
 		return ioTaskResults;

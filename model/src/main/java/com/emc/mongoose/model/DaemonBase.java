@@ -58,7 +58,7 @@ implements Daemon {
 										);
 										t.printStackTrace(System.err);
 									}
-									LockSupport.parkNanos(1);
+									//LockSupport.parkNanos(1);
 								}
 							}
 						}
