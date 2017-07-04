@@ -32,7 +32,7 @@ implements Daemon {
 	protected static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
 	
 	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
-		getHardwareThreadCount(), new NamingThreadFactory("svcTasksWorker", true)
+		Math.max(1, getHardwareThreadCount() / 2), new NamingThreadFactory("svcTasksWorker", true)
 	);
 	
 	static {
@@ -58,7 +58,7 @@ implements Daemon {
 										);
 										t.printStackTrace(System.err);
 									}
-									Thread.yield();
+									LockSupport.parkNanos(1);
 								}
 							}
 						}
