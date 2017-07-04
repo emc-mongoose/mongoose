@@ -58,6 +58,7 @@ implements Daemon {
 										);
 										t.printStackTrace(System.err);
 									}
+									Thread.yield();
 								}
 							}
 						}

@@ -67,6 +67,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
+
+	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();
 	
 	protected final String storageNodeAddrs[];
 	protected final Bootstrap bootstrap;
@@ -105,7 +107,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final int workerCount;
 		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
 		if(confWorkerCount < 1) {
-			workerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
+			workerCount = Math.min(concurrencyLevel, 2 * ThreadUtil.getHardwareThreadCount());
 		} else {
 			workerCount = confWorkerCount;
 		}
@@ -274,7 +276,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_NAME, stepName)
-				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
