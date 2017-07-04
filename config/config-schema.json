@@ -381,7 +381,21 @@
 							}
 						},
 						"service" : {
-							"type" : "boolean"
+							"type" : "object",
+							"required" : [
+								"enabled", "port"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"enabled" : {
+									"type" : "boolean"
+								},
+								"port" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 65535
+								}
+							}
 						},
 						"threshold" : {
 							"type" : "number",

@@ -3,7 +3,6 @@ package com.emc.mongoose.run.scenario.step;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.Loggers;
 
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
@@ -210,11 +209,9 @@ extends SequentialStep {
 					Config childJobConfig;
 					Map<String, Object> newJobTree;
 					for(final Object nextValue : valueSeq) {
-						childJobConfig = ConfigParser.replace(
-							localConfig, replacePattern, nextValue
-						);
+						childJobConfig = localConfig.replace(replacePattern, nextValue);
 						if(nodeConfig != null) {
-							nextNodeConfig = ConfigParser.replace(
+							nextNodeConfig = Config.replace(
 								(Map<String, Object>) nodeConfig, replacePattern, nextValue
 							);
 							childJobConfig.apply(nextNodeConfig);

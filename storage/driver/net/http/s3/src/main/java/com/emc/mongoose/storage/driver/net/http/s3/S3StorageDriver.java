@@ -31,8 +31,9 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.URL_ARG_VERSIONING;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_ENABLE_CONTENT;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_DISABLE_CONTENT;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
+
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 

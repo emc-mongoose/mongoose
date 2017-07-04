@@ -15,16 +15,16 @@ import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
-import static com.emc.mongoose.ui.config.Config.OutputConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.DataConfig;
+import com.emc.mongoose.ui.config.item.data.content.ContentConfig;
+import com.emc.mongoose.ui.config.item.data.content.ring.RingConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.OutputConfig;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -63,8 +63,8 @@ extends StepBase {
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
-		localConfig.apply(nodeConfigList.get(0));
 
+		localConfig.apply(nodeConfigList.get(0));
 		weights = (List<Integer>) subTree.get(KEY_NODE_WEIGHTS);
 		if(weights != null) {
 			if(weights.size() != nodeConfigList.size()) {
@@ -101,6 +101,7 @@ extends StepBase {
 					config.apply(nodeConfigList.get(0));
 				}
 				config.apply(nodeConfigList.get(i));
+
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final ContentConfig contentConfig = dataConfig.getContentConfig();

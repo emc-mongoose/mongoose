@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Level;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
@@ -35,7 +36,6 @@ implements SvcTask {
 	private final Map<LoadController, SortedSet<MetricsContext>> allMetrics = new HashMap<>();
 	private final SortedSet<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock allMetricsLock = new ReentrantLock();
-	private final MBeanServer mBeanServer;
 	
 	private long outputPeriodMillis;
 	private long lastOutputTs;
@@ -43,11 +43,6 @@ implements SvcTask {
 
 	private MetricsManager() {
 		svcTasks.add(this);
-		System.setProperty("com.sun.management.jmxremote", "true");
-		System.setProperty("com.sun.management.jmxremote.local.only", "false");
-		System.setProperty("com.sun.management.jmxremote.authenticate", "false");
-		System.setProperty("com.sun.management.jmxremote.ssl", "false");
-		mBeanServer = ManagementFactory.getPlatformMBeanServer();
 	}
 	
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();

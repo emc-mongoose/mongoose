@@ -7,17 +7,17 @@ import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.NodeConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.ContainerConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.MockConfig.FailConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.content.ContentConfig;
+import com.emc.mongoose.ui.config.item.naming.NamingConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
+import com.emc.mongoose.ui.config.storage.mock.MockConfig;
+import com.emc.mongoose.ui.config.storage.mock.container.ContainerConfig;
+import com.emc.mongoose.ui.config.storage.mock.fail.FailConfig;
+import com.emc.mongoose.ui.config.storage.net.NetConfig;
+import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.junit.AfterClass;
@@ -162,7 +162,7 @@ extends ConfiguredTestBase {
 				final ContainerConfig containerConfig = mockConfig.getContainerConfig();
 				final FailConfig failConfig = mockConfig.getFailConfig();
 				final NamingConfig namingConfig = itemConfig.getNamingConfig();
-				final DataConfig.ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
+				final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
 				final ContentSource contentSrc = ContentSourceUtil.getInstance(
 					contentConfig.getFile(), contentConfig.getSeed(),
 					contentConfig.getRingConfig().getSize(),

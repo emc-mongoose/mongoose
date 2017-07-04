@@ -2,7 +2,6 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -23,7 +22,7 @@ extends LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		LoggingTestBase.setUpClass();
-		CONFIG = ConfigParser.loadDefaultConfig();
+		CONFIG = Config.loadDefaults();
 		if(CONFIG_ARGS != null) {
 			CONFIG.apply(
 				CliArgParser.parseArgs(

@@ -14,8 +14,8 @@ import com.emc.mongoose.model.data.DataSizeException;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 

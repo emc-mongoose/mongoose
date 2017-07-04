@@ -8,10 +8,10 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
 import com.emc.mongoose.model.storage.StorageDriver;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 
 import java.io.IOException;
 import java.util.List;

@@ -4,7 +4,10 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.rolling.AbstractTriggeringPolicy;
+import org.apache.logging.log4j.core.appender.rolling.DirectFileRolloverStrategy;
+import org.apache.logging.log4j.core.appender.rolling.DirectWriteRolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
+import org.apache.logging.log4j.core.appender.rolling.RolloverStrategy;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
@@ -18,6 +21,7 @@ import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 public final class StepIdTriggeringPolicy
 extends AbstractTriggeringPolicy {
 
+	private RollingFileManager manager;
 	private String lastStepId = null;
 	
 	@PluginFactory
@@ -27,6 +31,7 @@ extends AbstractTriggeringPolicy {
 	
 	@Override
 	public final void initialize(final RollingFileManager manager) {
+		this.manager = manager;
 	}
 	
 	@Override
@@ -40,6 +45,7 @@ extends AbstractTriggeringPolicy {
 			return false;
 		} else {
 			lastStepId = stepId;
+			manager.getFileName();
 			return true;
 		}
 	}

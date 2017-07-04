@@ -13,6 +13,8 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -27,8 +29,8 @@ public final class BasicStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O> {
 
 	public BasicStorageDriverMock(
-		final String stepName, final ContentSource contentSrc, final Config.LoadConfig loadConfig,
-		final Config.StorageConfig storageConfig, final boolean verifyFlag
+		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(stepName, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}

@@ -17,17 +17,17 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.QueueConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
-import static com.emc.mongoose.ui.config.Config.OutputConfig;
-import static com.emc.mongoose.ui.config.Config.OutputConfig.MetricsConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.DataConfig;
+import com.emc.mongoose.ui.config.item.data.content.ContentConfig;
+import com.emc.mongoose.ui.config.item.data.content.ring.RingConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.load.queue.QueueConfig;
+import com.emc.mongoose.ui.config.output.OutputConfig;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -62,6 +62,9 @@ extends StepBase {
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
+		// add the config params from the 1st element as defaults
+		this.appConfig.apply(nodeConfigList.get(0));
+
 		loadChain = new ArrayList<>(nodeConfigList.size());
 	}
 	
@@ -82,15 +85,13 @@ extends StepBase {
 			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
 				final Config config = new Config(appConfig);
-				if(i > 0) {
-					// add the config params from the 1st element as defaults
-					config.apply(nodeConfigList.get(0));
-				}
 				config.apply(nodeConfigList.get(i));
+
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final ContentConfig contentConfig = dataConfig.getContentConfig();
-				final ItemConfig.OutputConfig itemOutputConfig = itemConfig.getOutputConfig();
+				final com.emc.mongoose.ui.config.item.output.OutputConfig
+					itemOutputConfig = itemConfig.getOutputConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 				final RingConfig ringConfig = contentConfig.getRingConfig();

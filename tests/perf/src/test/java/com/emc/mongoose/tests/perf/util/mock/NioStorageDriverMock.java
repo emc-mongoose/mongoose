@@ -11,7 +11,8 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
-import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -25,8 +26,8 @@ public final class NioStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends NioStorageDriverBase<I, O> {
 
 	public NioStorageDriverMock(
-		final String jobName, final ContentSource contentSrc, final Config.LoadConfig loadConfig,
-		final Config.StorageConfig storageConfig, final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}

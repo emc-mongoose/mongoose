@@ -37,7 +37,7 @@ public abstract class ServiceUtil {
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
 	private static final Map<String, Service> SVC_MAP = new HashMap<>();
 
-	private static synchronized void ensureRmiRegistryIsAvailableAt(final int port)
+	public static synchronized void ensureRmiRegistryIsAvailableAt(final int port)
 	throws RemoteException {
 		if(!REGISTRY_MAP.containsKey(port)) {
 			try {
