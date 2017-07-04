@@ -49,6 +49,8 @@ public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
 
+	private final static String CLS_NAME = StorageDriverBase.class.getSimpleName();
+
 	private final ContentSource contentSrc;
 	private final int batchSize;
 	private final int queueCapacity;
@@ -117,7 +119,7 @@ implements StorageDriver<I, O> {
 				try(
 					final Instance logCtx = CloseableThreadContext
 						.put(KEY_TEST_STEP_ID, stepName)
-						.put(KEY_CLASS_NAME, getClass().getSimpleName())
+						.put(KEY_CLASS_NAME, CLS_NAME)
 				) {
 					if(n < batchSize) {
 						n += childTasksQueue.drainTo(buff, batchSize - n);

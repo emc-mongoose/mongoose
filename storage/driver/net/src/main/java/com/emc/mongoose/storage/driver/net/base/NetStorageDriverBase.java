@@ -67,7 +67,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
-	
+
+	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();
+
 	protected final String storageNodeAddrs[];
 	protected final Bootstrap bootstrap;
 	protected final int storageNodePort;
@@ -143,7 +145,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			connPool = createConnectionPool();
 		}
@@ -162,7 +164,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, NetStorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(avgTransferSize < BUFF_SIZE_MIN) {
 				size = BUFF_SIZE_MIN;
@@ -211,7 +213,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						try(
 							final Instance logCtx = CloseableThreadContext
 								.put(KEY_TEST_STEP_ID, stepName)
-								.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
 							appendHandlers(channel.pipeline());
 							Loggers.MSG.debug(
@@ -236,7 +238,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
 				concurrencyThrottle.acquire();
@@ -274,7 +276,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
@@ -473,7 +475,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
@@ -539,7 +541,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try(
 			final Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			super.doInterrupt();
 			try {

@@ -27,6 +27,8 @@ import java.net.SocketTimeoutException;
  */
 public abstract class ResponseHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
+
+	private final static String CLS_NAME = ResponseHandlerBase.class.getSimpleName();
 	
 	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
@@ -41,10 +43,7 @@ extends SimpleChannelInboundHandler<M> {
 	throws Exception {
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
-		) {
+		try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 			handle(channel, ioTask, msg);
 		}
 	}

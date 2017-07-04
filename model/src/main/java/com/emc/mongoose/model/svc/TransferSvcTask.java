@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 public class TransferSvcTask<T>
 extends SvcTaskBase {
 
+	private final static String CLS_NAME = TransferSvcTask.class.getSimpleName();
+
 	private final String stepName;
 	private final Input<T> input;
 	private final Output<T> output;
@@ -52,7 +54,7 @@ extends SvcTaskBase {
 			try(
 				final Instance ctx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, stepName)
-					.put(KEY_CLASS_NAME, getClass().getSimpleName())
+					.put(KEY_CLASS_NAME, CLS_NAME)
 			) {
 
 				// 1st try to output all deferred items if any

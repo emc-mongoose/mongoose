@@ -68,7 +68,9 @@ import java.util.function.Function;
 public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
-	
+
+	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
+
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
 	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
@@ -116,7 +118,7 @@ implements HttpStorageDriver<I, O> {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
-				.put(KEY_CLASS_NAME, HttpStorageDriverBase.class.getSimpleName())
+				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(

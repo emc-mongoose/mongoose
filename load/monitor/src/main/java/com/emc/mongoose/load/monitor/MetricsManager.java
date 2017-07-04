@@ -40,7 +40,7 @@ implements SvcTask {
 	private long outputPeriodMillis;
 	private long lastOutputTs;
 	private long nextOutputTs;
-	
+
 	private MetricsManager() {
 		svcTasks.add(this);
 		System.setProperty("com.sun.management.jmxremote", "true");
@@ -50,7 +50,7 @@ implements SvcTask {
 		mBeanServer = ManagementFactory.getPlatformMBeanServer();
 	}
 	
-	private static final String CLASS_NAME = MetricsManager.class.getSimpleName();
+	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
 	
 	static {
@@ -141,9 +141,7 @@ implements SvcTask {
 	@Override
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
-			try(
-				final Instance clsNameCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLASS_NAME)
-			) {
+			try(final Instance clsNameCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {

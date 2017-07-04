@@ -66,7 +66,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
 		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();
