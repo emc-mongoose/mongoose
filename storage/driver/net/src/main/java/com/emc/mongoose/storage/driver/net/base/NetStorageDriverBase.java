@@ -107,7 +107,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final int workerCount;
 		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
 		if(confWorkerCount < 1) {
-			workerCount = Math.min(concurrencyLevel, 2 * ThreadUtil.getHardwareThreadCount());
+			workerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
 		} else {
 			workerCount = confWorkerCount;
 		}
