@@ -20,6 +20,8 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -37,10 +39,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class MetricsManager
 extends DaemonBase
 implements SvcTask {
-
-	public static final String METRICS_DOMAIN = MetricsManager.class.getPackage().getName();
 	
-	private final Map<LoadController, Map<MetricsContext, ObjectName>>
+	private final Map<LoadController, Map<MetricsContext, Closeable>>
 		allMetrics = new HashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock allMetricsLock = new ReentrantLock();
@@ -76,29 +76,16 @@ implements SvcTask {
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
 			) {
-				final Map<MetricsContext, ObjectName>
+				final Map<MetricsContext, Closeable>
 					controllerMetrics = INSTANCE.allMetrics.computeIfAbsent(
 						controller, c -> new HashMap<>()
 					);
-				final ObjectName metricsCtxObjName = new ObjectName(
-					METRICS_DOMAIN, KEY_TEST_STEP_ID, metricsCtx.getStepId()
-				);
-				controllerMetrics.put(metricsCtx, metricsCtxObjName);
-				final Meter meterMBean = new Meter();
-				metricsCtx.setMetricsListener(meterMBean);
-				MBEAN_SRV.registerMBean(meterMBean, metricsCtxObjName);
+				controllerMetrics.put(metricsCtx, new Meter(metricsCtx));
 				Loggers.MSG.info("Metrics context \"{}\" registered", metricsCtx);
-			} catch(final MalformedObjectNameException | MBeanRegistrationException |
-				NotCompliantMBeanException e
-			) {
+			} catch(final MalformedObjectNameException e) {
 				LogUtil.exception(
 					Level.WARN, e,
 					"Failed to register the MBean for the metrics context \"{}\"",
-					metricsCtx.toString()
-				);
-			} catch(final InstanceAlreadyExistsException e) {
-				Loggers.ERR.error(
-					"MBean instance already registered for the metrics context \"{}\"",
 					metricsCtx.toString()
 				);
 			} finally {
@@ -116,7 +103,7 @@ implements SvcTask {
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
 			) {
-				final Map<MetricsContext, ObjectName>
+				final Map<MetricsContext, Closeable>
 					controllerMetrics = INSTANCE.allMetrics.get(controller);
 				if(controllerMetrics != null) {
 					metricsCtx.refreshLastSnapshot(); // last time
@@ -136,17 +123,20 @@ implements SvcTask {
 					}
 					// console output
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
-					MBEAN_SRV.unregisterMBean(controllerMetrics.remove(metricsCtx));
+					final Closeable meterMBean = controllerMetrics.remove(metricsCtx);
+					if(meterMBean != null) {
+						try {
+							meterMBean.close();
+						} catch(final IOException e) {
+							LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+						}
+					}
 				} else {
 					Loggers.ERR.debug("Metrics context \"{}\" has not been registered", metricsCtx);
 				}
 				if(controllerMetrics != null && controllerMetrics.size() == 0) {
 					INSTANCE.allMetrics.remove(controller);
 				}
-			} catch(final InstanceNotFoundException e) {
-
-			} catch(final MBeanRegistrationException e) {
-
 			} finally {
 				INSTANCE.allMetricsLock.unlock();
 				Loggers.MSG.info("Metrics context \"{}\" unregistered", metricsCtx);

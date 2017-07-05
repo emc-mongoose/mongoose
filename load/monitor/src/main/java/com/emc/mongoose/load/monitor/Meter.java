@@ -2,11 +2,54 @@ package com.emc.mongoose.load.monitor;
 
 import com.emc.mongoose.model.metrics.MetricsContext;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+import java.io.IOException;
+
+import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.common.net.ServiceUtil.MBEAN_SERVER;
+
 /**
  Created by andrey on 05.07.17.
  */
 public final class Meter
 implements MeterMBean {
+
+	private final MetricsContext metricsCtx;
+	private final ObjectName objectName;
+
+	public Meter(final MetricsContext metricsCtx)
+	throws MalformedObjectNameException {
+		this.metricsCtx = metricsCtx;
+		objectName = new ObjectName(METRICS_DOMAIN, KEY_TEST_STEP_ID, metricsCtx.getStepId());
+		metricsCtx.setMetricsListener(this);
+		try {
+			MBEAN_SERVER.registerMBean(this, objectName);
+		} catch(final InstanceAlreadyExistsException e) {
+
+		} catch(final MBeanRegistrationException e) {
+
+		} catch(final NotCompliantMBeanException e) {
+
+		}
+	}
+
+	@Override
+	public final void close()
+	throws IOException {
+		metricsCtx.setMetricsListener(null);
+		try {
+			MBEAN_SERVER.unregisterMBean(objectName);
+		} catch(final InstanceNotFoundException e) {
+
+		} catch(final MBeanRegistrationException e) {
+
+		}
+	}
 
 	private long startTimeMillis;
 	private long succCount;

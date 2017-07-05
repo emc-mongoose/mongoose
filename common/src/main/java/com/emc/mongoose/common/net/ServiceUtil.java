@@ -7,7 +7,10 @@ import sun.rmi.server.UnicastRef;
 import sun.rmi.transport.Channel;
 import sun.rmi.transport.LiveRef;
 import sun.rmi.transport.tcp.TCPEndpoint;
+
+import javax.management.MBeanServer;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -36,6 +39,8 @@ public abstract class ServiceUtil {
 	private static final String RMI_SCHEME = "rmi";
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
 	private static final Map<String, Service> SVC_MAP = new HashMap<>();
+
+	public static final MBeanServer MBEAN_SERVER = ManagementFactory.getPlatformMBeanServer();
 
 	public static synchronized void ensureRmiRegistryIsAvailableAt(final int port)
 	throws RemoteException {
