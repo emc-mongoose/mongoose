@@ -43,6 +43,7 @@ extends Closeable {
 	
 	void refreshLastSnapshot();
 	Snapshot getLastSnapshot();
+	void setMetricsListener(final MetricsListener metricsListener);
 	
 	boolean isThresholdStateEntered();
 	
@@ -60,7 +61,7 @@ extends Closeable {
 	extends Serializable {
 
 		/** @return value in milliseconds */
-		long getStartTime();
+		long getStartTimeMillis();
 		//
 		long getSuccCount();
 		double getSuccRateMean();
@@ -75,7 +76,7 @@ extends Closeable {
 		double getByteRateLast();
 		
 		/** @return value in milliseconds */
-		long getElapsedTime();
+		long getElapsedTimeMillis();
 
 		/** @return value in microseconds */
 		long getDurationSum();
@@ -91,8 +92,6 @@ extends Closeable {
 		long getDurationHiQ();
 		/** @return value in microseconds */
 		long getDurationMax();
-		/** @return values in microseconds */
-		long[] getDurationValues();
 		/** @return value in microseconds */
 		double getDurationMean();
 		/** @return value in microseconds */
@@ -105,8 +104,6 @@ extends Closeable {
 		long getLatencyHiQ();
 		/** @return value in microseconds */
 		long getLatencyMax();
-		/** @return values in microseconds */
-		long[] getLatencyValues();
 		/** @return value in microseconds */
 		double getLatencyMean();
 	}

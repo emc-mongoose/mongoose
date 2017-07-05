@@ -60,7 +60,7 @@ extends LogMessageBase {
 			.append(snapshot.getSuccCount()).append(',')
 			.append(snapshot.getFailCount()).append(',')
 			.append(snapshot.getByteCount()).append(',')
-			.append(snapshot.getElapsedTime() / K).append(',')
+			.append(snapshot.getElapsedTimeMillis() / K).append(',')
 			.append(snapshot.getDurationSum() / M).append(',')
 			.append(snapshot.getSuccRateMean()).append(',')
 			.append(snapshot.getSuccRateLast()).append(',')

@@ -37,11 +37,11 @@ extends LogMessageBase {
 	public final void formatTo(final StringBuilder buffer) {
 		buffer.append("<result id=\"").append(metricsCtx.getStepId()).append("\" ");
 		final Snapshot snapshot = metricsCtx.getLastSnapshot();
-		final long startTimeMillis = snapshot.getStartTime();
+		final long startTimeMillis = snapshot.getStartTimeMillis();
 		final Date startDate = new Date(startTimeMillis);
 		buffer.append("StartDate=\"").append(FMT_DATE_RESULTS.format(startDate)).append("\" ");
 		buffer.append("StartTimestamp=\"").append(startTimeMillis).append("\" ");
-		final long elapsedTimeMillis = snapshot.getElapsedTime();
+		final long elapsedTimeMillis = snapshot.getElapsedTimeMillis();
 		final long endTimeStamp = startTimeMillis + elapsedTimeMillis;
 		final Date endDate = new Date(endTimeStamp);
 		buffer.append("EndDate=\"").append(FMT_DATE_RESULTS.format(endDate)).append("\" ");

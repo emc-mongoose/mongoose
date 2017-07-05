@@ -39,6 +39,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
 	private volatile Snapshot lastSnapshot = null;
+	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
 
@@ -267,6 +268,9 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
 			reqDurationSum.sum(), respLatencySum.sum(), reqDurSnapshot, respLatSnapshot
 		);
+		if(metricsListener != null) {
+			metricsListener.notify(lastSnapshot);
+		}
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.refreshLastSnapshot();
 		}
@@ -278,6 +282,11 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			refreshLastSnapshot();
 		}
 		return lastSnapshot;
+	}
+	//
+	@Override
+	public final void setMetricsListener(final MetricsListener metricsListener) {
+		this.metricsListener = metricsListener;
 	}
 	//
 	@Override
@@ -469,11 +478,6 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 		//
 		@Override
-		public final long[] getDurationValues() {
-			return durValues;
-		}
-		//
-		@Override
 		public final double getDurationMean() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
@@ -521,11 +525,6 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 		//
 		@Override
-		public final long[] getLatencyValues() {
-			return latValues;
-		}
-		//
-		@Override
 		public final long getLatencySum() {
 			return sumDur;
 		}
@@ -539,12 +538,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 		//
 		@Override
-		public final long getStartTime() {
+		public final long getStartTimeMillis() {
 			return startTime;
 		}
 		
 		@Override
-		public final long getElapsedTime() {
+		public final long getElapsedTimeMillis() {
 			return elapsedTime;
 		}
 	}

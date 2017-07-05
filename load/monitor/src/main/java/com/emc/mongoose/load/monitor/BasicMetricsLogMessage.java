@@ -84,7 +84,7 @@ extends LogMessageBase {
 		}
 		buffer
 			.append("); t[s]=(")
-			.append(formatFixedWidth(snapshot.getElapsedTime() / K, 7)).append('/')
+			.append(formatFixedWidth(snapshot.getElapsedTimeMillis() / K, 7)).append('/')
 			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
 			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
 			.append(formatFixedWidth(snapshot.getSuccRateMean(), 7)).append('/')

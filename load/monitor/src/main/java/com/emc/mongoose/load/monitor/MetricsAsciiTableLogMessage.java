@@ -14,7 +14,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
 
 import java.util.Date;
-import java.util.SortedSet;
+import java.util.Set;
 
 /**
  Created by kurila on 18.05.17.
@@ -34,10 +34,10 @@ extends LogMessageBase {
 
 	private static volatile long ROW_OUTPUT_COUNTER = 0;
 
-	private final SortedSet<MetricsContext> metrics;
+	private final Set<MetricsContext> metrics;
 	private volatile String formattedMsg = null;
 	
-	public MetricsAsciiTableLogMessage(SortedSet<MetricsContext> metrics) {
+	public MetricsAsciiTableLogMessage(Set<MetricsContext> metrics) {
 		this.metrics = metrics;
 	}
 	
@@ -109,7 +109,7 @@ extends LogMessageBase {
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight((double) snapshot.getElapsedTime() / 1000, 7, ' ')
+					.appendFixedWidthPadRight((double) snapshot.getElapsedTimeMillis() / 1000, 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight(snapshot.getSuccRateLast(), 8, ' ')
 					.append(TABLE_BORDER_VERTICAL)
