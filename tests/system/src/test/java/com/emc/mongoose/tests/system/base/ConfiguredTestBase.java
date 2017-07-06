@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
-
+import com.emc.mongoose.ui.log.LogUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -27,7 +27,8 @@ extends LoggingTestBase {
 			CONFIG.apply(
 				CliArgParser.parseArgs(
 					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
-				)
+				),
+				"systest-" + LogUtil.getDateTimeStamp()
 			);
 		}
 		CONFIG.getTestConfig().getStepConfig().setId(STEP_NAME);

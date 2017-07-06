@@ -120,10 +120,6 @@
 				// Persist the information about each load operation if true
 				"persist" : false
 			},
-			"service" : {
-				"enabled" : false,
-				"port" : 9010
-			},
 			// The concurrency threshold to enable intermediate statistics calculation,
 			// 0 means no threshold
 			"threshold" : 0
@@ -296,7 +292,7 @@
 		{
 			"name" : "run-id",
 			"deprecated" : true,
-			"target" : "test-id"
+			"target" : "test-step-id"
 		},
 		{
 			"name" : "noop",

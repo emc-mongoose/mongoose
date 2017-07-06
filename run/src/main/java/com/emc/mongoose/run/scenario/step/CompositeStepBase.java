@@ -32,23 +32,10 @@ implements CompositeStep {
 	protected void loadSubTree(final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		final Object nodeConfig = subTree.get(KEY_NODE_CONFIG);
-		if(nodeConfig != null) {
-			if(nodeConfig instanceof Map) {
-				final StepConfig testStepConfg = localConfig.getTestConfig().getStepConfig();
-				final String oldTestStepId = testStepConfg.getId();
-				localConfig.apply((Map<String, Object>) nodeConfig);
-				final String newTestStepId = testStepConfg.getId();
-				if(oldTestStepId == null) {
-					if(newTestStepId == null) {
-						testStepConfg.setId("composite-" + LogUtil.getDateTimeStamp());
-					}
-				}
-			} else {
-				throw new ScenarioParseException(
-					"Invalid config node type: \"" + nodeConfig.getClass() + "\""
-				);
-			}
-		}
+		localConfig.apply(
+			(Map<String, Object>) nodeConfig,
+			"composite-" + LogUtil.getDateTimeStamp() + "-" + hashCode()
+		);
 		final Object jobList = subTree.getOrDefault(KEY_NODE_STEPS, subTree.get(KEY_NODE_JOBS));
 		if(jobList != null) {
 			if(jobList instanceof List) {

@@ -504,36 +504,6 @@
 										}
 									}
 								},
-								"service" : {
-									"type" : "object",
-									"additionalProperites" : false,
-									"properties" : {
-										"enabled" : {
-											"oneOf" : [
-												{
-													"type" : "boolean"
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
-												}
-											]
-										},
-										"port" : {
-											"oneOf" : [
-												{
-													"type" : "integer",
-													"min" : 1,
-													"max" : 65535
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
-												}
-											]
-										}
-									}
-								},
 								"threshold" : {
 									"oneOf" : [
 										{

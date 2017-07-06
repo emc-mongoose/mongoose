@@ -19,7 +19,6 @@ implements Serializable {
 	public static final String KEY_AVERAGE = "average";
 	public static final String KEY_SUMMARY = "summary";
 	public static final String KEY_TRACE = "trace";
-	public static final String KEY_SERVICE = "service";
 	public static final String KEY_THRESHOLD = "threshold";
 
 	public final void setAverageConfig(final AverageConfig averageConfig) {
@@ -34,10 +33,6 @@ implements Serializable {
 		this.traceConfig = traceConfig;
 	}
 
-	public final void setServiceConfig(final ServiceConfig serviceConfig) {
-		this.serviceConfig = serviceConfig;
-	}
-
 	public final void setThreshold(final double threshold) {
 		this.threshold = threshold;
 	}
@@ -45,7 +40,6 @@ implements Serializable {
 	@JsonProperty(KEY_AVERAGE) private AverageConfig averageConfig;
 	@JsonProperty(KEY_SUMMARY) private SummaryConfig summaryConfig;
 	@JsonProperty(KEY_TRACE) private TraceConfig traceConfig;
-	@JsonProperty(KEY_SERVICE) private ServiceConfig serviceConfig;
 	@JsonProperty(KEY_THRESHOLD) private double threshold;
 
 	public MetricsConfig() {
@@ -55,7 +49,6 @@ implements Serializable {
 		this.averageConfig = new AverageConfig(other.getAverageConfig());
 		this.summaryConfig = new SummaryConfig(other.getSummaryConfig());
 		this.traceConfig = new TraceConfig(other.getTraceConfig());
-		this.serviceConfig = new ServiceConfig(other.getServiceConfig());
 		this.threshold = other.getThreshold();
 	}
 
@@ -69,10 +62,6 @@ implements Serializable {
 
 	public final TraceConfig getTraceConfig() {
 		return traceConfig;
-	}
-
-	public final ServiceConfig getServiceConfig() {
-		return serviceConfig;
 	}
 
 	public final double getThreshold() {

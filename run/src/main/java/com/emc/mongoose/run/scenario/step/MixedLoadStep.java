@@ -50,21 +50,21 @@ import java.util.concurrent.TimeUnit;
 public class MixedLoadStep
 extends StepBase {
 
-	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<Integer> weights;
 
 	public MixedLoadStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
-		this.appConfig = appConfig;
 
 		nodeConfigList = (List<Map<String, Object>>) subTree.get(KEY_NODE_CONFIG);
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
 
-		localConfig.apply(nodeConfigList.get(0));
+		localConfig.apply(
+			nodeConfigList.get(0), "mixed-" + LogUtil.getDateTimeStamp() + "-" + hashCode()
+		);
 		weights = (List<Integer>) subTree.get(KEY_NODE_WEIGHTS);
 		if(weights != null) {
 			if(weights.size() != nodeConfigList.size()) {
@@ -77,8 +77,8 @@ extends StepBase {
 	protected final void invoke() {
 
 		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
-		final String jobName = localStepConfig.getId();
-		Loggers.MSG.info("Run the mixed load step \"{}\"", jobName);
+		final String stepName = localStepConfig.getId();
+		Loggers.MSG.info("Run the mixed load step \"{}\"", stepName);
 		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
 		
 		final long t = localLimitConfig.getTime();
@@ -95,12 +95,8 @@ extends StepBase {
 		try {
 			for(int i = 0; i < loadGeneratorCount; i ++) {
 				
-				final Config config = new Config(appConfig);
-				if(i > 0) {
-					// add the config params from the 1st element as defaults
-					config.apply(nodeConfigList.get(0));
-				}
-				config.apply(nodeConfigList.get(i));
+				final Config config = new Config(localConfig);
+				config.apply(nodeConfigList.get(i), null);
 
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
@@ -155,7 +151,7 @@ extends StepBase {
 		
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap, outputConfigMap
+				stepName, driverMap, weightMap, loadConfigMap, stepConfigMap, outputConfigMap
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();

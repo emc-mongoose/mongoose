@@ -29,7 +29,7 @@ public final class LogUtil
 implements ShutdownCallbackRegistry {
 	//
 	public static final DatePrinter
-		FMT_DT = FastDateFormat.getInstance("yyyyMMdd-HHmmss.SSS", TZ_UTC, LOCALE_DEFAULT);
+		FMT_DT = FastDateFormat.getInstance("yyyyMMdd.HHmmss.SSS", TZ_UTC, LOCALE_DEFAULT);
 	// console colors
 	public static final String
 		RED = "\u001B[31m",

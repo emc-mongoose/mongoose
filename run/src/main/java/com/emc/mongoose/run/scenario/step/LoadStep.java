@@ -59,9 +59,7 @@ extends StepBase {
 	) {
 		super(appConfig);
 		final Map<String, Object> nodeConfig = (Map<String, Object>) subTree.get(KEY_NODE_CONFIG);
-		if(nodeConfig != null) {
-			localConfig.apply(nodeConfig);
-		}
+		localConfig.apply(nodeConfig, "load-" + LogUtil.getDateTimeStamp() + "-" + hashCode());
 		this.preconditionFlag = preconditionFlag;
 	}
 	

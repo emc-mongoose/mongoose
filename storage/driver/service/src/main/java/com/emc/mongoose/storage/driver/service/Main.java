@@ -31,7 +31,10 @@ public final class Main {
 		}
 
 		try {
-			config.apply(CliArgParser.parseArgs(config.getAliasingConfig(), args));
+			config.apply(
+				CliArgParser.parseArgs(config.getAliasingConfig(), args),
+				"none-" + LogUtil.getDateTimeStamp()
+			);
 		} catch(final IllegalArgumentNameException e) {
 			Loggers.ERR.fatal(
 				"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),

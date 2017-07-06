@@ -677,7 +677,7 @@ implements LoadController<I, O> {
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							driver.shutdown();
-							Loggers.MSG.info(
+							Loggers.MSG.debug(
 								"{}: next storage driver {} shutdown", getName(),
 								(
 									(driver instanceof Service)?
@@ -776,7 +776,7 @@ implements LoadController<I, O> {
 									.put(KEY_CLASS_NAME, getClass().getSimpleName())
 							) {
 								driver.interrupt();
-								Loggers.MSG.info(
+								Loggers.MSG.debug(
 									"{}: next storage driver {} interrupted", getName(),
 									(
 										(driver instanceof Service)?
@@ -869,7 +869,7 @@ implements LoadController<I, O> {
 								}
 								try {
 									driver.close();
-									Loggers.MSG.info("{}: next storage driver {} closed", getName(),
+									Loggers.MSG.debug("{}: next storage driver {} closed", getName(),
 										((driver instanceof Service) ?
 											((Service) driver).getName() + " @ " +
 												ServiceUtil.getAddress((Service) driver) :

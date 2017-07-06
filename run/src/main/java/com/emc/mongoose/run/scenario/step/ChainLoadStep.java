@@ -50,27 +50,28 @@ import java.util.concurrent.TimeUnit;
 public class ChainLoadStep
 extends StepBase {
 	
-	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<LoadController> loadChain;
 	
 	public ChainLoadStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
-		this.appConfig = appConfig;
 		nodeConfigList = (List<Map<String, Object>>) subTree.get(KEY_NODE_CONFIG);
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
 		// add the config params from the 1st element as defaults
-		this.appConfig.apply(nodeConfigList.get(0));
+		this.localConfig.apply(
+			nodeConfigList.get(0), "chain-" + LogUtil.getDateTimeStamp() + "-" + hashCode()
+		);
 
 		loadChain = new ArrayList<>(nodeConfigList.size());
 	}
 	
 	@Override
 	protected final void invoke() {
-		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
+
+		StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String testStepName = stepConfig.getId();
 		Loggers.MSG.info("Run the chain load step \"{}\"", testStepName);
 		final LimitConfig commonLimitConfig = stepConfig.getLimitConfig();
@@ -84,9 +85,13 @@ extends StepBase {
 			
 			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
-				final Config config = new Config(appConfig);
-				config.apply(nodeConfigList.get(i));
+				final Config config = new Config(localConfig);
+				config.apply(
+					nodeConfigList.get(i),
+					"chain-load-" + LogUtil.getDateTimeStamp() + "-" + config.hashCode()
+				);
 
+				stepConfig = config.getTestConfig().getStepConfig();
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final ContentConfig contentConfig = dataConfig.getContentConfig();
@@ -148,7 +153,8 @@ extends StepBase {
 				final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
 				outputConfigMap.put(loadGenerator, outputConfig);
 				final LoadController loadController = new BasicLoadController(
-					testStepName, driversMap, null, loadConfigMap, stepConfigMap, outputConfigMap
+					stepConfig.getId(), driversMap, null, loadConfigMap, stepConfigMap,
+					outputConfigMap
 				);
 				loadChain.add(loadController);
 				
@@ -206,19 +212,20 @@ extends StepBase {
 					break;
 				} catch(final RemoteException e) {
 					throw new AssertionError(e);
-				} finally {
-					try {
-						nextController.close();
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to close the step \"{}\"",
-							nextController.getName()
-						);
-					}
 				}
 				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
 			} else {
 				break;
+			}
+		}
+
+		for(final LoadController nextController : loadChain) {
+			try {
+				nextController.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to close the step \"{}\"",  nextController.getName()
+				);
 			}
 		}
 	}

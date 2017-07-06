@@ -213,7 +213,7 @@ public class ConfigTest {
 		final Map<String, Object> argTree = CliArgParser.parseArgs(null, args.toArray(new String[]{}));
 		
 		final Config config = Config.loadDefaults();
-		config.apply(argTree);
+		config.apply(argTree, null);
 		
 		assertEquals(argsMap.get("--version"), config.getVersion());
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
@@ -254,7 +254,7 @@ public class ConfigTest {
 						put("size", "invalidSizeValue");
 					}});
 				}});
-			}});
+			}}, null);
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentException e) {
 		}
@@ -273,7 +273,7 @@ public class ConfigTest {
 						}});
 					}});
 				}});
-			}});
+			}}, null);
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentException e) {
 		}
@@ -292,7 +292,7 @@ public class ConfigTest {
 						}});
 					}});
 				}});
-			}});
+			}}, null);
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentException e) {
 		}
@@ -311,7 +311,7 @@ public class ConfigTest {
 						}});
 					}});
 				}});
-			}});
+			}}, null);
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentException e) {
 		}
@@ -328,7 +328,7 @@ public class ConfigTest {
 						put("blabla", "123");
 					}});
 				}});
-			}});
+			}}, null);
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentNameException e) {
 			Assert.assertEquals("--storage-driver-blabla", e.getMessage());
