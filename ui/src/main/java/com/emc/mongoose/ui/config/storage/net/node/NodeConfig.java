@@ -14,6 +14,7 @@ implements Serializable {
 
 	public static final String KEY_ADDRS = "addrs";
 	public static final String KEY_PORT = "port";
+	public static final String KEY_CONN_ATTEMPTS_LIMIT = "connAttemptsLimit";
 
 	public final void setAddrs(final List<String> addrs) {
 		this.addrs = addrs;
@@ -23,8 +24,13 @@ implements Serializable {
 		this.port = port;
 	}
 
+	public final void setConnAttemptsLimit(final int connAttemtsLimit) {
+		this.connAttemptsLimit = connAttemtsLimit;
+	}
+
 	@JsonProperty(KEY_ADDRS) private List<String> addrs;
 	@JsonProperty(KEY_PORT) private int port;
+	@JsonProperty(KEY_CONN_ATTEMPTS_LIMIT) private int connAttemptsLimit;
 
 	public NodeConfig() {
 	}
@@ -32,13 +38,18 @@ implements Serializable {
 	public NodeConfig(final NodeConfig other) {
 		this.addrs = new ArrayList<>(other.getAddrs());
 		this.port = other.getPort();
+		this.connAttemptsLimit = other.getConnAttemptsLimit();
 	}
 
-	public List<String> getAddrs() {
+	public final List<String> getAddrs() {
 		return addrs;
 	}
 
-	public int getPort() {
+	public final int getPort() {
 		return port;
+	}
+
+	public final int getConnAttemptsLimit() {
+		return connAttemptsLimit;
 	}
 }

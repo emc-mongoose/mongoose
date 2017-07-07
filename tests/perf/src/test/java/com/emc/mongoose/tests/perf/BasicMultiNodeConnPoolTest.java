@@ -58,7 +58,7 @@ public class BasicMultiNodeConnPoolTest {
 		try(
 			final NonBlockingConnPool connPool = new BasicMultiNodeConnPoolMock(
 				concurrencyLevel, new Semaphore(concurrencyLevel), nodes, new Bootstrap(),
-				new DummyChannelPoolHandlerMock(), 9020
+				new DummyChannelPoolHandlerMock(), 9020, 0
 			)
 		) {
 			final ExecutorService poolLoader = Executors.newFixedThreadPool(

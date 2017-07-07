@@ -862,6 +862,18 @@
 													"pattern" : "\\$\\{.+\\}"
 												}
 											]
+										},
+										"connAttemptsLimit" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										}
 									}
 								}

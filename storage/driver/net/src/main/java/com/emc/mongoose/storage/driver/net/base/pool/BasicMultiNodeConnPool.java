@@ -35,23 +35,28 @@ implements NonBlockingConnPool {
 	private final Semaphore concurrencyThrottle;
 	private final String nodes[];
 	private final int n;
+	private final int connAttemptsLimit;
 	private final Map<String, Bootstrap> bootstrapMap;
 	private final Map<String, Queue<Channel>> connsMap;
 	private final Object2IntMap<String> connsCountMap;
+	private final Object2IntMap<String> failedConnAttemptsCounts;
 
 	public BasicMultiNodeConnPool(
 		final int concurrencyLevel, final Semaphore concurrencyThrottle,  final String nodes[],
-		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort
+		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort,
+		final int connAttemptsLimit
 	) {
 		this.concurrencyThrottle = concurrencyThrottle;
 		if(nodes.length == 0) {
 			throw new IllegalArgumentException("Empty nodes array argument");
 		}
 		this.nodes = nodes;
+		this.connAttemptsLimit = connAttemptsLimit;
 		this.n = nodes.length;
 		bootstrapMap = new HashMap<>(n);
 		connsMap = new HashMap<>(n);
 		connsCountMap = new Object2IntOpenHashMap<>(n);
+		failedConnAttemptsCounts = new Object2IntOpenHashMap<>(n);
 
 		for(final String node : nodes) {
 			final InetSocketAddress nodeAddr;
@@ -79,6 +84,7 @@ implements NonBlockingConnPool {
 			);
 			connsMap.put(node, new ConcurrentLinkedQueue<>());
 			connsCountMap.put(node, 0);
+			failedConnAttemptsCounts.put(node, 0);
 		}
 
 		// pre-create the connections
@@ -96,7 +102,7 @@ implements NonBlockingConnPool {
 				}
 			} else {
 				synchronized(connsCountMap) {
-					connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+					connsCountMap.put(nodeAddr, connsCountMap.getInt(nodeAddr) - 1);
 				}
 				conn.close();
 			}
@@ -104,13 +110,18 @@ implements NonBlockingConnPool {
 	}
 
 	private Channel connect() {
+
 		Channel conn = null;
-		String selectedNodeAddr = null, nextNodeAddr;
-		int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
+		String selectedNodeAddr = null;
+
 		synchronized(connsCountMap) {
+
+			// select the endpoint node having the minimum count of established connections
+			int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
+			String nextNodeAddr;
 			for(int i = 0; i < n; i ++) {
 				nextNodeAddr = nodes[i];
-				nextConnsCount = connsCountMap.get(nextNodeAddr);
+				nextConnsCount = connsCountMap.getInt(nextNodeAddr);
 				if(nextConnsCount == 0) {
 					selectedNodeAddr = nextNodeAddr;
 					break;
@@ -119,17 +130,41 @@ implements NonBlockingConnPool {
 					selectedNodeAddr = nextNodeAddr;
 				}
 			}
+
+			// connect to the selected endpoint node
 			Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
 			try {
 				conn = connect(selectedNodeAddr);
 				conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
 				connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
+				if(connAttemptsLimit > 0) {
+					// reset the connection failures counter if connected successfully
+					failedConnAttemptsCounts.put(selectedNodeAddr, 0);
+				}
 			} catch(final Exception e) {
 				LogUtil.exception(
-					Level.WARN, e, "Failed to create a new connection to {}", selectedNodeAddr
+					Level.DEBUG, e, "Failed to create a new connection to {}", selectedNodeAddr
 				);
+				if(connAttemptsLimit > 0) {
+					final int selectedNodeFailedConnAttemptsCount = failedConnAttemptsCounts
+						.getInt(selectedNodeAddr) + 1;
+					failedConnAttemptsCounts.put(
+						selectedNodeAddr, selectedNodeFailedConnAttemptsCount
+					);
+					if(selectedNodeFailedConnAttemptsCount > connAttemptsLimit) {
+						Loggers.ERR.warn(
+							"Failed to connect to the node \"{}\" {} times successively, " +
+								"excluding from the node from the pool",
+							selectedNodeAddr, selectedNodeFailedConnAttemptsCount
+						);
+						// the node having virtually Integer.MAX_VALUE established connections
+						// will never be selected by the algorithm
+						connsCountMap.put(selectedNodeAddr, Integer.MAX_VALUE);
+					}
+				}
 			}
 		}
+
 		return conn;
 	}
 
@@ -202,7 +237,7 @@ implements NonBlockingConnPool {
 			}
 		} else {
 			synchronized(connsCountMap) {
-				connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+				connsCountMap.put(nodeAddr, connsCountMap.getInt(nodeAddr) - 1);
 			}
 			conn.close();
 		}
@@ -220,7 +255,7 @@ implements NonBlockingConnPool {
 				connQueue.add(conn);
 			} else {
 				synchronized(connsCountMap) {
-					connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+					connsCountMap.put(nodeAddr, connsCountMap.getInt(nodeAddr) - 1);
 				}
 				conn.close();
 			}

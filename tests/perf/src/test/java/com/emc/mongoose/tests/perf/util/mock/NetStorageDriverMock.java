@@ -39,7 +39,7 @@ extends NetStorageDriverBase<I, O> {
 	protected final NonBlockingConnPool createConnectionPool() {
 		return new BasicMultiNodeConnPoolMock(
 			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this,
-			storageNodePort
+			storageNodePort, connAttemptsLimit
 		);
 	}
 

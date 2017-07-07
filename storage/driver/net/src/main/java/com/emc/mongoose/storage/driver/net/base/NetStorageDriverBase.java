@@ -74,6 +74,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final String storageNodeAddrs[];
 	protected final Bootstrap bootstrap;
 	protected final int storageNodePort;
+	protected final int connAttemptsLimit;
 	private final EventLoopGroup workerGroup;
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
@@ -97,6 +98,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		final NodeConfig nodeConfig = netConfig.getNodeConfig();
 		storageNodePort = nodeConfig.getPort();
+		connAttemptsLimit = nodeConfig.getConnAttemptsLimit();
 		final String t[] = nodeConfig.getAddrs().toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
 		String n;
@@ -155,7 +157,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected NonBlockingConnPool createConnectionPool() {
 		return new BasicMultiNodeConnPool(
 			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this,
-			storageNodePort
+			storageNodePort, connAttemptsLimit
 		);
 	}
 	
