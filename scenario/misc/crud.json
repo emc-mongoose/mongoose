@@ -22,10 +22,10 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "parallel",
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "precondition",
 					"config" : {
@@ -60,7 +60,7 @@
 			"value" : "sleep 5s"
 		}, {
 			"type" : "parallel",
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load"
 				}, {

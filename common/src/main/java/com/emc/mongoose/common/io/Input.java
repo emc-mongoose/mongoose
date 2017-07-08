@@ -32,7 +32,18 @@ extends Closeable {
 	 */
 	int get(final List<I> buffer, final int limit)
 	throws IOException;
-
+	
+	/**
+	 Bulk items get method useful for remote invocation.
+	 @return the items, null if the method is disabled
+	 @throws EOFException if not items available more
+	 @throws IOException if failed to get for some reason
+	 */
+	default List<I> getAll()
+	throws IOException {
+		return null;
+	}
+	
 	/**
 	 * Skip some items.
 	 * @param count count of items should be skipped from the input stream
@@ -40,7 +51,7 @@ extends Closeable {
 	 */
 	long skip(final long count)
 	throws IOException;
-
+	
 	/**
 	 Reset this input making this readable from the beginning
 	 */

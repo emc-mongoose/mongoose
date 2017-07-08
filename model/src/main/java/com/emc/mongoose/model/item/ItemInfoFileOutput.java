@@ -26,6 +26,10 @@ implements Output<O> {
 	@Override
 	public final boolean put(final O ioResult)
 	throws IOException {
+		if(ioResult == null) { // poison
+			close();
+			return true;
+		}
 		return itemInfoOutput.put(ioResult.getItem().toString());
 	}
 	
@@ -34,8 +38,17 @@ implements Output<O> {
 	throws IOException {
 		final int n = to - from;
 		final List<String> itemsInfo = new ArrayList<>(n);
+		O ioResult;
 		for(int i = from; i < to; i ++) {
-			itemsInfo.add(ioResults.get(i).getItem().toString());
+			ioResult = ioResults.get(i);
+			if(ioResult == null) { // poison
+				try {
+					return itemInfoOutput.put(itemsInfo, 0, i);
+				} finally {
+					close();
+				}
+			}
+			itemsInfo.add(ioResult.getItem().toString());
 		}
 		return itemInfoOutput.put(itemsInfo, 0, n);
 	}
@@ -45,6 +58,13 @@ implements Output<O> {
 	throws IOException {
 		final List<String> itemsInfo = new ArrayList<>(ioResults.size());
 		for(final O nextIoResult : ioResults) {
+			if(nextIoResult == null) { // poison
+				try {
+					return itemInfoOutput.put(itemsInfo);
+				} finally {
+					close();
+				}
+			}
 			itemsInfo.add(nextIoResult.getItem().toString());
 		}
 		return itemInfoOutput.put(itemsInfo);

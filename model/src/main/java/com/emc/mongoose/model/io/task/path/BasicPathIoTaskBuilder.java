@@ -5,7 +5,6 @@ import com.emc.mongoose.model.item.PathItem;
 import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,18 +25,16 @@ implements PathIoTaskBuilder<I, O> {
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items)
+	public void getInstances(final List<I> items, final List<O> buff)
 	throws IOException {
-		final List<O> tasks = new ArrayList<>(items.size());
 		String uid;
 		for(final I nextItem : items) {
-			tasks.add(
+			buff.add(
 				(O) new BasicPathIoTask<>(
 					originCode, ioType, nextItem,
 					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);
 		}
-		return tasks;
 	}
 }

@@ -1,24 +1,29 @@
 {
-	"type" : "load",
-	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 100
-			},
-			"threads" : 10
-		},
-		"run" : {
-			"id" : "backward-compatibility-test"
-		},
-		"storage" : {
-			"auth" : {
-				"id" : "wuser1@sanity.local"
-			},
-			"node" : {
-				"addrs" : [
-					"127.0.0.1"
-				]
+	"type" : "sequential",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"load" : {
+					"limit" : {
+						"count" : 100
+					},
+					"threads" : 10
+				},
+				"run" : {
+					"id" : "backward-compatibility-test"
+				},
+				"storage" : {
+					"auth" : {
+						"id" : "wuser1@sanity.local"
+					},
+					"node" : {
+						"addrs" : [
+							"127.0.0.1"
+						]
+					}
+				}
 			}
 		}
-	}
+	]
 }

@@ -1,0 +1,54 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f UpdateUsingInputFileLimitByTimeTest.csv UpdateUsingInputFileLimitByTimeTest_.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "UpdateUsingInputFileLimitByTimeTest.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 10000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 1
+						}
+					},
+					"input" : {
+						"file" : "UpdateUsingInputFileLimitByTimeTest.csv"
+					},
+					"output" : {
+						"file" : "UpdateUsingInputFileLimitByTimeTest_.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : 25
+						}
+					}
+				}
+			}
+		}
+	]
+}

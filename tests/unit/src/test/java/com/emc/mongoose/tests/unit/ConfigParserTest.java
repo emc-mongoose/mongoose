@@ -41,7 +41,7 @@ public class ConfigParserTest {
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("3.3.0", "version"));
+		assertThat(config.getVersion(), equalTo("3.4.0", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertThat(netConfig, notNullValue());
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
@@ -49,7 +49,7 @@ public class ConfigParserTest {
 		assertThat(netConfig.getKeepAlive(), equalTo(true, "storage.net.keepAlive"));
 		assertThat(netConfig.getTcpNoDelay(), equalTo(true, "storage.net.tcpNoDelay"));
 		assertThat(netConfig.getLinger(), equalTo(0, "storage.net.linger"));
-		assertThat(netConfig.getBindBackLogSize(), equalTo(0, "storage.net.bindBacklogSize"));
+		assertThat(netConfig.getBindBacklogSize(), equalTo(0, "storage.net.bindBacklogSize"));
 		assertThat(netConfig.getInterestOpQueued(), equalTo(false, "storage.net.interestOpQueued"));
 		final ItemConfig itemConfig = config.getItemConfig();
 		assertThat(itemConfig, notNullValue());
@@ -61,7 +61,7 @@ public class ConfigParserTest {
 		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
 		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
 		assertThat(
-			contentConfig.getRingSize(),
+			contentConfig.getRingConfig().getSize(),
 			equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize")
 		);
 		assertThat(dataConfig.getRangesConfig().getRandom(), equalTo(0, "item.data.ranges.random"));
@@ -143,7 +143,7 @@ public class ConfigParserTest {
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_USER_AGENT),
 			equalTo(true, "storage.net.http.headers[User-Agent]"));
 		assertThat(headers.get(HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo("mongoose/3.3.0", "storage.net.http.headers[User-Agent]"));
+			equalTo("mongoose/3.4.0", "storage.net.http.headers[User-Agent]"));
 		assertThat(httpConfig.getNamespace(), nullValue("storage.net.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.net.http.versioning"));
 		assertThat(

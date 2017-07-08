@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.load.monitor.BasicLoadMonitor;
+import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.data.ContentSourceUtil;
 import com.emc.mongoose.common.io.Output;
@@ -9,7 +9,7 @@ import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadMonitor;
+import com.emc.mongoose.model.load.LoadController;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
@@ -20,17 +20,16 @@ import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
-import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
+import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,8 +47,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MixedLoadStep
 extends StepBase {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
@@ -75,18 +72,15 @@ extends StepBase {
 	}
 
 	@Override
-	public final void run() {
-		super.run();
+	protected final void invoke() {
 
 		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
 		final String jobName = localStepConfig.getName();
-		LOG.info(Markers.MSG, "Run the mixed load job \"{}\"", jobName);
+		Loggers.MSG.info("Run the mixed load step \"{}\"", jobName);
 		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
 		
 		final long t = localLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
-		final boolean remoteDriversFlag = localConfig
-			.getStorageConfig().getDriverConfig().getRemote();
 		
 		final int loadGeneratorCount = nodeConfigList.size();
 		final Map<LoadGenerator, List<StorageDriver>> driverMap = new HashMap<>(loadGeneratorCount);
@@ -109,12 +103,14 @@ extends StepBase {
 				final ContentConfig contentConfig = dataConfig.getContentConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+				final RingConfig ringConfig = contentConfig.getRingConfig();
 				final ContentSource contentSrc = ContentSourceUtil.getInstance(
-					contentConfig.getFile(), contentConfig.getSeed(), contentConfig.getRingSize()
+					contentConfig.getFile(), contentConfig.getSeed(),
+					ringConfig.getSize(), ringConfig.getCache()
 				);
 				
-				final ItemFactory itemFactory = ItemType.getItemFactory(itemType, contentSrc);
-				LOG.info(Markers.MSG, "Work on the " + itemType.toString().toLowerCase() + " items");
+				final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
+				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
@@ -144,13 +140,13 @@ extends StepBase {
 				stepConfigMap.put(loadGenerator, stepConfig);
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the content source");
+			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
 		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the load generator");
+			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		}
 		
 		try(
-			final LoadMonitor monitor = new BasicLoadMonitor(
+			final LoadController controller = new BasicLoadController(
 				jobName, driverMap, weightMap, loadConfigMap, stepConfigMap
 			)
 		) {
@@ -158,26 +154,24 @@ extends StepBase {
 			if(itemOutputFile != null && itemOutputFile.length() > 0) {
 				final Path itemOutputPath = Paths.get(itemOutputFile);
 				if(Files.exists(itemOutputPath)) {
-					LOG.warn(
-						Markers.ERR, "Items output file \"{}\" already exists", itemOutputPath
-					);
+					Loggers.ERR.warn("Items output file \"{}\" already exists", itemOutputPath);
 				}
 				// NOTE: using null as an ItemFactory
 				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-				monitor.setIoResultsOutput(itemOutput);
+				controller.setIoResultsOutput(itemOutput);
 			}
-			monitor.start();
-			if(monitor.await(timeLimitSec, TimeUnit.SECONDS)) {
-				LOG.info(Markers.MSG, "Load monitor done");
+			controller.start();
+			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
+				Loggers.MSG.info("Load step done");
 			} else {
-				LOG.info(Markers.MSG, "Load monitor timeout");
+				Loggers.MSG.info("Load step timeout");
 			}
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to open the item output file");
+			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Load monitor interrupted");
+			Loggers.MSG.debug("Load step interrupted");
 		}
 	}
 

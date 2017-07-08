@@ -7,8 +7,4 @@ import com.emc.mongoose.model.data.ContentSource;
  */
 public interface DataItemFactory<I extends DataItem>
 extends ItemFactory<I> {
-
-	ContentSource getContentSource();
-
-	void setContentSource(final ContentSource contentSrc);
 }

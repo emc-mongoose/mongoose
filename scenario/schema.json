@@ -34,21 +34,39 @@
 												}
 											]
 										},
-										"ringSize": {
-											"oneOf" : [
-												{
-													"type": "integer",
-													"minimum" : 1
+										"ring" :{
+											"type" : "object",
+											"additionalProperties" : false,
+											"properties" : {
+												"cache" : {
+													"oneOf" : [
+														{
+															"type": "integer",
+															"minimum" : 1
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
 												},
-												{
-													"type" : "string",
-													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+												"size": {
+													"oneOf" : [
+														{
+															"type": "integer",
+															"minimum" : 1
+														},
+														{
+															"type" : "string",
+															"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
 												}
-											]
+											}
 										}
 									}
 								},
@@ -260,6 +278,24 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
+						"batch" : {
+							"type" : "object",
+							"additionalProperties": false,
+							"properties" : {
+								"size": {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								}
+							}
+						},
 						"circular": {
 							"oneOf" : [
 								{
@@ -543,7 +579,7 @@
 										},
 										{
 											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+											"pattern" : "[\\d\\.]+[KMG]?B?"
 										}
 									]
 								},
@@ -558,7 +594,18 @@
 										},
 										{
 											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+											"pattern" : "[\\d\\.]+[KMG]?B?"
+										}
+									]
+								},
+								"ssl" : {
+									"oneOf" : [
+										{
+											"type": "boolean"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -569,14 +616,16 @@
 									"type": "integer",
 									"minimum" : 0
 								},
-								"ssl" : {
+								"writeBufferHighWaterMark" : {
 									"oneOf" : [
 										{
-											"type" : "boolean"
+											"type" : "integer",
+											"minimum" : 0,
+											"maximum" : 2147483647
 										},
 										{
 											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"pattern" : "[\\d\\.]+[KMG]?B?"
 										}
 									]
 								},
@@ -815,7 +864,7 @@
 				}
 			]
 		},
-		"jobs" : {
+		"steps" : {
 			"type" : "array",
 			"items" : {
 				"$ref" : "#"

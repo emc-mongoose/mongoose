@@ -1,0 +1,11 @@
+{
+	"type" : "for",
+	"value" : "i",
+	"in" : "2.71828182846-3.1415926,0.1",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "echo \"next value: ${i}\""
+		}
+	]
+}

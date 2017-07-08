@@ -1,11 +1,9 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
-import com.emc.mongoose.ui.log.NamingThreadFactory;
+import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.Markers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -16,9 +14,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public class ParallelStep
-extends ParentStepBase {
-	//
-	private static final Logger LOG = LogManager.getLogger();
+extends CompositeStepBase {
 	//
 	protected ParallelStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
@@ -26,19 +22,15 @@ extends ParentStepBase {
 	}
 	//
 	@Override
-	public final synchronized void run() {
-		
-		super.run();
+	protected final synchronized void invoke() {
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			subSteps.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
+			childSteps.size(), new NamingThreadFactory("stepWorker" + hashCode(), true)
 		);
-		for(final Step subStep : subSteps) {
+		for(final Step subStep : childSteps) {
 			parallelJobsExecutor.submit(subStep);
 		}
-		LOG.info(
-			Markers.MSG, "{}: execute {} child jobs in parallel", toString(), subSteps.size()
-		);
+		Loggers.MSG.info("{}: execute {} child steps in parallel", toString(), childSteps.size());
 		parallelJobsExecutor.shutdown();
 		
 		final long limitTime = localConfig
@@ -50,18 +42,17 @@ extends ParentStepBase {
 				parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 			}
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "{}: interrupted the child jobs execution", toString());
+			Loggers.MSG.debug("{}: interrupted the child steps execution", toString());
 		} finally {
 			parallelJobsExecutor.shutdownNow();
 		}
-		LOG.info(
-			Markers.MSG, "{}: finished parallel execution of {} child jobs", toString(),
-			subSteps.size()
+		Loggers.MSG.info(
+			"{}: finished parallel execution of {} child steps", toString(), childSteps.size()
 		);
 	}
 	//
 	@Override
 	public String toString() {
-		return "parallelJob#" + hashCode();
+		return "parallelStep#" + hashCode();
 	}
 }

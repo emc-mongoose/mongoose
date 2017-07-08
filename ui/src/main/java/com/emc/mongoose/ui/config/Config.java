@@ -39,9 +39,9 @@ import java.util.Map;
 public final class Config
 implements Serializable {
 
-	public static final String KEY_NAME = "name";
-	public static final String KEY_DEPRECATED = "deprecated";
-	public static final String KEY_TARGET = "target";
+	public static final String NAME = "name";
+	public static final String DEPRECATED = "deprecated";
+	public static final String TARGET = "target";
 	public static final String PATH_SEP = "-";
 
 	private static final class TimeStrToLongDeserializer
@@ -281,7 +281,7 @@ implements Serializable {
 
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
-				public static final String KEY_RING_SIZE = "ringSize";
+				public static final String KEY_RING = "ring";
 				
 				public final void setFile(final String file) {
 					this.file = file;
@@ -291,18 +291,53 @@ implements Serializable {
 					this.seed = seed;
 				}
 				
-				public final void setRingSize(final SizeInBytes ringSize) {
-					this.ringSize = ringSize;
+				public final void setRingConfig(final RingConfig ringConfig) {
+					this.ringConfig = ringConfig;
 				}
 				
 				@JsonProperty(KEY_FILE) private String file;
 
 				@JsonProperty(KEY_SEED) private String seed;
 
-				@JsonProperty(KEY_RING_SIZE)
-				@JsonDeserialize(using = SizeInBytesDeserializer.class)
-				@JsonSerialize(using = SizeInBytesSerializer.class)
-				private SizeInBytes ringSize;
+				@JsonProperty(KEY_RING) private RingConfig ringConfig;
+				
+				public static final class RingConfig
+				implements Serializable {
+					
+					public static final String KEY_CACHE = "cache";
+					public static final String KEY_SIZE = "size";
+					
+					@JsonProperty(KEY_CACHE) private int cache;
+					
+					@JsonProperty(KEY_SIZE)
+					@JsonDeserialize(using = SizeInBytesDeserializer.class)
+					@JsonSerialize(using = SizeInBytesSerializer.class)
+					private SizeInBytes size;
+					
+					public final void setCache(final int cache) {
+						this.cache = cache;
+					}
+					
+					public final void setSize(final SizeInBytes size) {
+						this.size = size;
+					}
+					
+					public RingConfig() {
+					}
+					
+					public RingConfig(final RingConfig other) {
+						this.cache = other.getCache();
+						this.size = other.getSize();
+					}
+					
+					public final int getCache() {
+						return cache;
+					}
+					
+					public final SizeInBytes getSize() {
+						return size;
+					}
+				}
 
 				public ContentConfig() {
 				}
@@ -310,7 +345,7 @@ implements Serializable {
 				public ContentConfig(final ContentConfig other) {
 					this.file = other.getFile();
 					this.seed = other.getSeed();
-					this.ringSize = new SizeInBytes(other.getRingSize());
+					this.ringConfig = other.getRingConfig();
 				}
 
 				public final String getFile() {
@@ -321,8 +356,8 @@ implements Serializable {
 					return seed;
 				}
 
-				public final SizeInBytes getRingSize() {
-					return ringSize;
+				public final RingConfig getRingConfig() {
+					return ringConfig;
 				}
 			}
 
@@ -535,10 +570,15 @@ implements Serializable {
 	public static final class LoadConfig
 	implements Serializable {
 
+		public static final String KEY_BATCH = "batch";
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_GENERATOR = "generator";
 		public static final String KEY_QUEUE = "queue";
 		public static final String KEY_TYPE = "type";
+		
+		public final void setBatchConfig(final BatchConfig batchConfig) {
+			this.batchConfig = batchConfig;
+		}
 		
 		public final void setCircular(final boolean circular) {
 			this.circular = circular;
@@ -556,6 +596,7 @@ implements Serializable {
 			this.type = type;
 		}
 		
+		@JsonProperty(KEY_BATCH) private BatchConfig batchConfig;
 		@JsonProperty(KEY_CIRCULAR) private boolean circular;
 		@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
 		@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
@@ -565,12 +606,40 @@ implements Serializable {
 		}
 
 		public LoadConfig(final LoadConfig other) {
-			this.circular = other.getCircular();
-			this.generatorConfig = new GeneratorConfig(other.getGeneratorConfig());
-			this.queueConfig = new QueueConfig(other.getQueueConfig());
-			this.type = other.getType();
+			this.batchConfig = new BatchConfig(other.batchConfig);
+			this.circular = other.circular;
+			this.generatorConfig = new GeneratorConfig(other.generatorConfig);
+			this.queueConfig = new QueueConfig(other.queueConfig);
+			this.type = other.type;
 		}
-
+		
+		public static final class BatchConfig
+		implements Serializable {
+			
+			public static final String KEY_SIZE = "size";
+			
+			@JsonProperty(KEY_SIZE) private int size;
+			
+			public BatchConfig() {
+			}
+			
+			public BatchConfig(final BatchConfig other) {
+				this.size = other.size;
+			}
+			
+			public final void setSize(final int size) {
+				this.size = size;
+			}
+			
+			public final int getSize() {
+				return size;
+			}
+		}
+		
+		public final BatchConfig getBatchConfig() {
+			return batchConfig;
+		}
+		
 		public final String getType() {
 			return type;
 		}
@@ -588,7 +657,7 @@ implements Serializable {
 		}
 
 		public static final class GeneratorConfig
-			implements Serializable {
+		implements Serializable {
 
 			public static final String KEY_ADDRS = "addrs";
 			public static final String KEY_REMOTE = "remote";
@@ -641,8 +710,7 @@ implements Serializable {
 				this.size = size;
 			}
 			
-			@JsonProperty(KEY_SIZE)
-			private int size;
+			@JsonProperty(KEY_SIZE) private int size;
 			
 			public QueueConfig() {
 			}
@@ -864,15 +932,15 @@ implements Serializable {
 				}
 			}
 			
-			public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
+			public static final String KEY_TIMEOUT_MILLI_SEC = "timeoutMilliSec";
 			public static final String KEY_REUSE_ADDR = "reuseAddr";
 			public static final String KEY_KEEP_ALIVE = "keepAlive";
 			public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
 			public static final String KEY_LINGER = "linger";
 			public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
 			public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
-			public static final String KEY_RCVBUF = "rcvBuf";
-			public static final String KEY_SNDBUF = "sndBuf";
+			public static final String KEY_RCV_BUF = "rcvBuf";
+			public static final String KEY_SND_BUF = "sndBuf";
 			public static final String KEY_SSL = "ssl";
 			public static final String KEY_HTTP = "http";
 			public static final String KEY_NODE = "node";
@@ -897,8 +965,8 @@ implements Serializable {
 				return linger;
 			}
 			
-			public final int getBindBackLogSize() {
-				return bindBackLogSize;
+			public final int getBindBacklogSize() {
+				return bindBacklogSize;
 			}
 			
 			public final boolean getInterestOpQueued() {
@@ -940,13 +1008,13 @@ implements Serializable {
 			public final void setTcpNoDelay(final boolean tcpNoDelay) {
 				this.tcpNoDelay = tcpNoDelay;
 			}
-			
+
 			public final void setLinger(final int linger) {
 				this.linger = linger;
 			}
 			
-			public final void setBindBackLogSize(final int bindBackLogSize) {
-				this.bindBackLogSize = bindBackLogSize;
+			public final void setBindBacklogSize(final int bindBacklogSize) {
+				this.bindBacklogSize = bindBacklogSize;
 			}
 			
 			public final void setInterestOpQueued(final boolean interestOpQueued) {
@@ -973,26 +1041,26 @@ implements Serializable {
 				this.nodeConfig = nodeConfig;
 			}
 			
-			@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
+			@JsonProperty(KEY_TIMEOUT_MILLI_SEC) private int timeoutMilliSec;
 			
 			@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
 			
 			@JsonProperty(KEY_KEEP_ALIVE) private boolean keepAlive;
 			
 			@JsonProperty(KEY_TCP_NO_DELAY) private boolean tcpNoDelay;
-			
+
 			@JsonProperty(KEY_LINGER) private int linger;
 			
-			@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
+			@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBacklogSize;
 			
 			@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
 			
-			@JsonProperty(KEY_RCVBUF)
+			@JsonProperty(KEY_RCV_BUF)
 			@JsonDeserialize(using = SizeInBytesDeserializer.class)
 			@JsonSerialize(using = SizeInBytesSerializer.class)
 			private SizeInBytes rcvBuf;
 			
-			@JsonProperty(KEY_SNDBUF)
+			@JsonProperty(KEY_SND_BUF)
 			@JsonDeserialize(using = SizeInBytesDeserializer.class)
 			@JsonSerialize(using = SizeInBytesSerializer.class)
 			private SizeInBytes sndBuf;
@@ -1010,7 +1078,7 @@ implements Serializable {
 				this.keepAlive = other.getKeepAlive();
 				this.tcpNoDelay = other.getTcpNoDelay();
 				this.linger = other.getLinger();
-				this.bindBackLogSize = other.getBindBackLogSize();
+				this.bindBacklogSize = other.getBindBacklogSize();
 				this.interestOpQueued = other.getInterestOpQueued();
 				this.rcvBuf = new SizeInBytes(other.getRcvBuf());
 				this.sndBuf = new SizeInBytes(other.getSndBuf());
@@ -1502,8 +1570,8 @@ implements Serializable {
 
 		for(final Map<String, Object> nextAliasNode : rawAliases) {
 
-			aliasName = (String) nextAliasNode.get(KEY_NAME);
-			aliasTarget = (String) nextAliasNode.get(KEY_TARGET);
+			aliasName = (String) nextAliasNode.get(NAME);
+			aliasTarget = (String) nextAliasNode.get(TARGET);
 			if(aliasName.equals(aliasTarget)) {
 				throw new IllegalAliasNameException(aliasName);
 			}
@@ -1523,8 +1591,8 @@ implements Serializable {
 							System.err.println(
 								"ERROR: configuration value @ \"" + aliasName + "\" is deprecated"
 							);
-						} else if(nextAliasNode.containsKey(KEY_DEPRECATED)) {
-							if((boolean) nextAliasNode.get(KEY_DEPRECATED)) {
+						} else if(nextAliasNode.containsKey(DEPRECATED)) {
+							if((boolean) nextAliasNode.get(DEPRECATED)) {
 								System.err.println(
 									"WARNING: configuration value @ \"" + aliasName +
 										"\" is deprecated, please use \"" + aliasTarget +

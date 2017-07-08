@@ -20,8 +20,8 @@ public final class SslContext {
 	throws OmgDoesNotPerformException {
 		try {
 			final SSLContext sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(null, new TrustManager[] {X509TrustAllManager.INSTANCE},
-				new SecureRandom()
+			sslContext.init(
+				null, new TrustManager[] { X509TrustAllManager.INSTANCE }, new SecureRandom()
 			);
 			return sslContext;
 		} catch(final NoSuchAlgorithmException | KeyManagementException e) {

@@ -1,8 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base.pool;
 
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -12,8 +11,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -31,10 +28,9 @@ import java.util.concurrent.ThreadLocalRandom;
  The provided semaphore limits the count of the simultaneously used connections.
  Based on netty.
  */
-public class BasicMultiNodeConnPool
+public class
+BasicMultiNodeConnPool
 implements NonBlockingConnPool {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	private final Semaphore concurrencyThrottle;
 	private final String nodes[];
@@ -88,6 +84,10 @@ implements NonBlockingConnPool {
 		// pre-create the connections
 		for(int i = 0; i < concurrencyLevel; i ++) {
 			final Channel conn = connect();
+			if(conn == null) {
+				Loggers.ERR.warn("Failed to pre-create the connections to the target nodes");
+				break;
+			}
 			final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
 			if(conn.isActive()) {
 				final Queue<Channel> connQueue = connsMap.get(nodeAddr);
@@ -103,7 +103,7 @@ implements NonBlockingConnPool {
 		}
 	}
 
-	protected Channel connect() {
+	private Channel connect() {
 		Channel conn = null;
 		String selectedNodeAddr = null, nextNodeAddr;
 		int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
@@ -119,18 +119,23 @@ implements NonBlockingConnPool {
 					selectedNodeAddr = nextNodeAddr;
 				}
 			}
-			LOG.debug(Markers.MSG, "New connection to \"{}\"", selectedNodeAddr);
+			Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
 			try {
-				conn = bootstrapMap.get(selectedNodeAddr).connect().sync().channel();
+				conn = connect(selectedNodeAddr);
 				conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
 				connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
 			} catch(final Exception e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create a new connection to {}", selectedNodeAddr
+					Level.WARN, e, "Failed to create a new connection to {}", selectedNodeAddr
 				);
 			}
 		}
 		return conn;
+	}
+
+	protected Channel connect(final String addr)
+	throws Exception {
+		return bootstrapMap.get(addr).connect().sync().channel();
 	}
 	
 	protected Channel poll() {

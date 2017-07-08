@@ -14,8 +14,35 @@
 			}
 		},
 		{
+			"item" : {
+				"data" : {
+					"ranges" : {
+						"random" : 1
+					}
+				}
+			},
+			"load" : {
+				"type" : "update"
+			}
+		},
+		{
+			"item" : {
+				"data" : {
+					"verify" : true
+				}
+			},
+			"load" : {
+				"type" : "read"
+			}
+		},
+		{
 			"load" : {
 				"type" : "delete"
+			}
+		},
+		{
+			"load" : {
+				"type" : "noop"
 			}
 		}
 	]

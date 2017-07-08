@@ -4,13 +4,15 @@ import com.emc.mongoose.common.api.ByteRange;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.BatchSupplier;
 import com.emc.mongoose.common.supply.async.AsyncPatternDefinedSupplier;
-import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.model.io.IoType;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
@@ -22,13 +24,13 @@ import com.emc.mongoose.model.item.PathItem;
 import com.emc.mongoose.model.item.TokenItem;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
-import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -45,9 +47,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -67,8 +68,8 @@ import java.util.function.Function;
 public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
-	
-	private static final Logger LOG = LogManager.getLogger();
+
+	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
 	
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
@@ -76,7 +77,7 @@ implements HttpStorageDriver<I, O> {
 		try {
 			return new AsyncPatternDefinedSupplier(pattern);
 		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create the pattern defined input");
+			LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
 			return null;
 		}
 	};
@@ -88,10 +89,10 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	
 	protected HttpStorageDriverBase(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
@@ -114,8 +115,16 @@ implements HttpStorageDriver<I, O> {
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
 		final Channel channel = getUnpooledConnection();
-		try {
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
 			final ChannelPipeline pipeline = channel.pipeline();
+			Loggers.MSG.debug(
+				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepName,
+				channel.hashCode(), pipeline
+			);
 			pipeline.removeLast(); // remove the API specific handler
 			final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
 			pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
@@ -390,112 +399,38 @@ implements HttpStorageDriver<I, O> {
 	throws URISyntaxException;
 
 	@Override
-	protected final ChannelFuture sendRequest(final Channel channel, final O ioTask) {
+	protected final void sendRequest(
+		final Channel channel, final ChannelPromise channelPromise, final O ioTask
+	) {
 
 		final String nodeAddr = ioTask.getNodeAddr();
-		final IoType ioType = ioTask.getIoType();
-		final I item = ioTask.getItem();
-		
 		try {
-
 			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 			if(channel == null) {
-				return null;
+				return;
 			} else {
 				channel.write(httpRequest);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "{} >>>> {} {}", ioTask.hashCode(), httpRequest.method(),
-						httpRequest.uri()
+				if(Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace(
+						"{} >>>> {} {}", ioTask.hashCode(), httpRequest.method(), httpRequest.uri()
 					);
 				}
 			}
-
-			if(IoType.CREATE.equals(ioType)) {
-				if(item instanceof DataItem) {
-					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-					if(!(dataIoTask instanceof CompositeDataIoTask)) {
-						final DataItem dataItem = (DataItem) item;
-						final String srcPath = dataIoTask.getSrcPath();
-						if(null == srcPath || srcPath.isEmpty()) {
-							channel.write(new DataItemFileRegion<>(dataItem));
-						}
-						dataIoTask.setCountBytesDone(dataItem.size());
-					}
-				}
-			} else if(IoType.UPDATE.equals(ioType)) {
-				if(item instanceof DataItem) {
-					
-					final DataItem dataItem = (DataItem) item;
-					final DataIoTask dataIoTask = (DataIoTask) ioTask;
-
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-						// random range update case
-						final BitSet updRangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
-						final int rangeCount = getRangeCount(dataItem.size());
-						DataItem updatedRange;
-						// current layer updates first
-						for(int i = 0; i < rangeCount; i ++) {
-							if(updRangesMaskPair[0].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
-								assert updatedRange != null;
-								channel.write(new DataItemFileRegion<>(updatedRange));
-							}
-						}
-						// then next layer updates if any
-						for(int i = 0; i < rangeCount; i ++) {
-							if(updRangesMaskPair[1].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
-								assert updatedRange != null;
-								channel.write(new DataItemFileRegion<>(updatedRange));
-							}
-						}
-						dataItem.commitUpdatedRanges(dataIoTask.getMarkedRangesMaskPair());
-					} else { // append case
-						final long baseItemSize = dataItem.size();
-						long beg;
-						long end;
-						long size;
-						for(final ByteRange fixedByteRange : fixedByteRanges) {
-							beg = fixedByteRange.getBeg();
-							end = fixedByteRange.getEnd();
-							size = fixedByteRange.getSize();
-							if(size == -1) {
-								if(beg == -1) {
-									beg = baseItemSize - end;
-									size = end;
-								} else if(end == -1) {
-									size = baseItemSize - beg;
-								} else {
-									size = end - beg + 1;
-								}
-							} else {
-								// append
-								beg = baseItemSize;
-							}
-							channel.write(new DataItemFileRegion<>(dataItem.slice(beg, size)));
-						}
-						dataItem.size(dataItem.size() + dataIoTask.getMarkedRangesSize());
-					}
-					dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
-				}
-			}
+			sendRequestData(channel, ioTask);
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data");
+			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to build the request URI");
+			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
 		} catch(final Exception e) {
 			if(!isInterrupted() && !isClosed()) {
-				LogUtil.exception(LOG, Level.WARN, e, "Send HTTP request failure");
+				LogUtil.exception(Level.WARN, e, "Send HTTP request failure");
 			}
 		} catch(final Throwable e) {
 			e.printStackTrace(System.err);
 		}
 
-		return channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		channel.write(LastHttpContent.EMPTY_LAST_CONTENT, channelPromise);
+		channel.flush();
 	}
 
 	@Override

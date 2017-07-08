@@ -3,7 +3,9 @@ package com.emc.mongoose.storage.driver.net.base;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.model.io.task.IoTask.Status.CANCELLED;
+
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 
@@ -12,14 +14,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.PrematureChannelClosureException;
 import io.netty.handler.timeout.IdleStateEvent;
-
+import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
  Created by kurila on 04.10.16.
@@ -27,9 +27,9 @@ import java.util.concurrent.RejectedExecutionException;
  */
 public abstract class ResponseHandlerBase<M, I extends Item, O extends IoTask<I>>
 extends SimpleChannelInboundHandler<M> {
-	
-	private static final Logger LOG = LogManager.getLogger();
 
+	private final static String CLS_NAME = ResponseHandlerBase.class.getSimpleName();
+	
 	protected final NetStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
 	
@@ -43,7 +43,9 @@ extends SimpleChannelInboundHandler<M> {
 	throws Exception {
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		handle(channel, ioTask, msg);
+		try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
+			handle(channel, ioTask, msg);
+		}
 	}
 	
 	protected abstract void handle(final Channel channel, final O ioTask, final M msg)
@@ -54,22 +56,22 @@ extends SimpleChannelInboundHandler<M> {
 	throws IOException {
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		if(driver.isInterrupted() || driver.isClosed()) {
-			ioTask.setStatus(CANCELLED);
-		} else if(!driver.isInterrupted() && !driver.isClosed()) {
-			if(cause instanceof PrematureChannelClosureException) {
-				LogUtil.exception(LOG, Level.WARN, cause, "Premature channel closure");
+		if(ioTask != null) {
+			if(driver.isInterrupted() || driver.isClosed()) {
+				ioTask.setStatus(INTERRUPTED);
+			} else if(cause instanceof PrematureChannelClosureException) {
+				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
 				ioTask.setStatus(FAIL_IO);
 			} else {
-				LogUtil.exception(LOG, Level.WARN, cause, "Client handler failure");
+				LogUtil.exception(Level.WARN, cause, "Client handler failure");
 				ioTask.setStatus(FAIL_UNKNOWN);
 			}
-		}
-		if(!driver.isInterrupted()) {
-			try {
-				driver.complete(channel, ioTask);
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to complete the I/O task");
+			if(!driver.isInterrupted()) {
+				try {
+					driver.complete(channel, ioTask);
+				} catch(final Exception e) {
+					LogUtil.exception(Level.DEBUG, e, "Failed to complete the I/O task");
+				}
 			}
 		}
 	}

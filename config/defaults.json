@@ -4,7 +4,10 @@
 			"content" : {
 				"file" : null,
 				"seed" : "7a42d9c483244167",
-				"ringSize" : "4MB"
+				"ring" : {
+					"cache" : 25,
+					"size" : "4MB"
+				}
 			},
 			"ranges" : {
 				"fixed" : null,
@@ -33,6 +36,9 @@
 		"type" : "data"
 	},
 	"load" : {
+		"batch" : {
+			"size": 4096
+		},
 		"circular" : false,
 		"generator" : {
 			"addrs" : [
@@ -78,6 +84,26 @@
 					"type" : "swift",
 					"file" : "mongoose-storage-driver-net-http-swift.jar",
 					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
+				},
+				{
+					"type" : "mock-dummy",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.DummyStorageDriverMock"
+				},
+				{
+					"type" : "mock-basic",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.BasicStorageDriverMock"
+				},
+				{
+					"type" : "mock-net",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NetStorageDriverMock"
+				},
+				{
+					"type" : "mock-nio",
+					"file" : "mongoose-tests-perf.jar",
+					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NioStorageDriverMock"
 				}
 			],
 			"io" : {
@@ -114,7 +140,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "Keep-Alive",
-					"User-Agent" : "mongoose/3.3.0"
+					"User-Agent" : "mongoose/3.4.0"
 				},
 				"namespace" : null,
 				"versioning" : false
@@ -146,7 +172,7 @@
 			"precondition" : false
 		}
 	},
-	"version" : "3.3.0",
+	"version" : "3.4.0",
 	"aliasing" : [
 		{
 			"name" : "load-threads",
@@ -347,6 +373,11 @@
 			"name" : "storage-auth-id",
 			"deprecated" : true,
 			"target" : "storage-auth-uid"
+		},
+		{
+			"name" : "item-data-content-ringSize",
+			"deprecate" : true,
+			"target" : "item-data-content-ring-size"
 		}
 	]
 }

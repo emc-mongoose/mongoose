@@ -1,6 +1,6 @@
 {
 	"type" : "sequential",
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {

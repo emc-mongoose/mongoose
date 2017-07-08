@@ -10,13 +10,14 @@ import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.model.io.task.data.DataIoTaskBuilder;
 import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
 import com.emc.mongoose.model.io.task.token.BasicTokenIoTaskBuilder;
 import com.emc.mongoose.model.item.BasicDataItemFactory;
 import com.emc.mongoose.model.item.ItemNameSupplier;
 import com.emc.mongoose.model.item.CsvFileItemInput;
 import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.IoResultsItemInput;
+import com.emc.mongoose.model.item.ChainTransferBuffer;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemNamingType;
@@ -24,6 +25,7 @@ import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.item.NewDataItemInput;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
@@ -35,11 +37,9 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -48,9 +48,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  Created by andrey on 12.11.16.
@@ -59,9 +61,7 @@ public class BasicLoadGeneratorBuilder<
 	I extends Item, O extends IoTask<I>, T extends BasicLoadGenerator<I, O>
 >
 implements LoadGeneratorBuilder<I, O, T> {
-
-	private final static Logger LOG = LogManager.getLogger();
-
+	
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private LimitConfig limitConfig;
@@ -70,7 +70,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private AuthConfig authConfig;
 	private List<StorageDriver<I, O>> storageDrivers;
 	private Input<I> itemInput = null;
-	private SizeInBytes itemSizeEstimate = null;
+	private long sizeEstimate = 0;
+	private int batchSize;
 	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
@@ -81,6 +82,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
+		this.batchSize = loadConfig.getBatchConfig().getSize();
 		return this;
 	}
 
@@ -119,8 +121,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
-		if(!(itemInput instanceof IoResultsItemInput)) {
-			this.itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+		// chain transfer buffer is not resettable
+		if(!(itemInput instanceof ChainTransferBuffer)) {
+			sizeEstimate = estimateTransferSize(
+				null, IoType.valueOf(loadConfig.getType().toUpperCase()), (Input<DataItem>) itemInput
+			);
 		}
 		return this;
 	}
@@ -128,7 +133,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
-
+		
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
@@ -147,11 +152,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
-			final List<ByteRange> fixedRanges = new ArrayList<>();
+			final List<ByteRange> fixedRanges;
 			if(fixedRangesConfig != null) {
-				for(final String fixedRangeConfig : fixedRangesConfig) {
-					fixedRanges.add(new ByteRange(fixedRangeConfig));
-				}
+				fixedRanges = fixedRangesConfig
+					.stream()
+					.map(ByteRange::new)
+					.collect(Collectors.toList());
+			} else {
+				fixedRanges = Collections.EMPTY_LIST;
 			}
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder()
 				.setFixedRanges(fixedRanges)
@@ -206,45 +214,50 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+			if(itemInput == null) {
+				throw new UserShootHisFootException("No item input available");
+			}
 			if(ItemType.DATA.equals(itemType)) {
-				itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+				sizeEstimate = estimateTransferSize(
+					(DataIoTaskBuilder) ioTaskBuilder, ioTaskBuilder.getIoType(),
+					(Input<DataItem>) itemInput
+				);
 			} else {
-				itemSizeEstimate = new SizeInBytes(BUFF_SIZE_MIN);
+				sizeEstimate = BUFF_SIZE_MIN;
 			}
 		}
 
-		if(itemSizeEstimate != null && ItemType.DATA.equals(itemType)) {
-			try {
-				for(final StorageDriver<I, O> storageDriver : storageDrivers) {
-					try {
-						storageDriver.adjustIoBuffers(itemSizeEstimate, ioType);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to adjust the storage driver buffer sizes"
-						);
-					}
-				}
-			} catch(final Exception e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to estimate the average data item size"
-				);
-			} finally {
+		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
+			for(final StorageDriver<I, O> storageDriver : storageDrivers) {
 				try {
-					itemInput.reset();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to reset the item input");
+					storageDriver.adjustIoBuffers(sizeEstimate, ioType);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
+					);
 				}
 			}
 		}
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, itemSizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
-			shuffleFlag
+			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit, shuffleFlag
 		);
 	}
 	
-	private static SizeInBytes estimateDataItemSize(final Input<DataItem> itemInput) {
+	private static long estimateTransferSize(
+		final DataIoTaskBuilder dataIoTaskBuilder, final IoType ioType,
+		final Input<DataItem> itemInput
+	) {
+		long sizeThreshold = 0;
+		int randomRangesCount = 0;
+		List<ByteRange> fixedRanges = null;
+		if(dataIoTaskBuilder != null) {
+			sizeThreshold = dataIoTaskBuilder.getSizeThreshold();
+			randomRangesCount = dataIoTaskBuilder.getRandomRangesCount();
+			fixedRanges = dataIoTaskBuilder.getFixedRanges();
+		}
+		
+		long itemSize = 0;
 		final int maxCount = 0x100;
 		final List<DataItem> items = new ArrayList<>(maxCount);
 		int n = 0;
@@ -254,7 +267,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		} catch(final EOFException ignored) {
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to estimate the average data item size");
+			LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+		} finally {
+			try {
+				itemInput.reset();
+			} catch(final IOException e) {
+				LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+			}
 		}
 		
 		long sumSize = 0;
@@ -276,10 +295,35 @@ implements LoadGeneratorBuilder<I, O, T> {
 			} catch(final IOException e) {
 				throw new AssertionError(e);
 			}
-			return minSize == maxSize ?
-				new SizeInBytes(sumSize / n) : new SizeInBytes(minSize, maxSize, 1);
+			itemSize = minSize == maxSize ? sumSize / n : (minSize + maxSize) / 2;
 		}
-		return null;
+		
+		switch(ioType) {
+			case CREATE:
+				return Math.min(itemSize, sizeThreshold);
+			case READ:
+			case UPDATE:
+				if(randomRangesCount > 0) {
+					return itemSize * randomRangesCount / getRangeCount(itemSize);
+				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
+					long sizeSum = 0;
+					long rangeSize;
+					for(final ByteRange byteRange : fixedRanges) {
+						rangeSize = byteRange.getSize();
+						if(rangeSize == -1) {
+							rangeSize = byteRange.getEnd() - byteRange.getBeg() + 1;
+						}
+						if(rangeSize > 0) {
+							sizeSum += rangeSize;
+						}
+					}
+					return sizeSum;
+				} else {
+					return itemSize;
+				}
+			default:
+				return 0;
+		}
 	}
 
 	private BatchSupplier<String> getOutputPathSupplier()
@@ -336,7 +380,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 				}
 			} else {
 				itemInput = new StorageItemInput<>(
-					storageDrivers.get(0), itemFactory, itemInputPath, namingPrefix, namingRadix
+					storageDrivers.get(0), batchSize, itemFactory, itemInputPath, namingPrefix,
+					namingRadix
 				);
 			}
 		} else {
@@ -346,7 +391,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				throw new RuntimeException(e);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
+					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
 				);
 			}
 		}
@@ -365,20 +410,19 @@ implements LoadGeneratorBuilder<I, O, T> {
 			while(null != (line = br.readLine()) && count < countLimit) {
 				firstCommaPos = line.indexOf(',');
 				if(-1 == firstCommaPos) {
-					LOG.warn(Markers.ERR, "Invalid credentials line: \"{}\"", line);
+					Loggers.ERR.warn("Invalid credentials line: \"{}\"", line);
 				} else {
 					parts = line.split(",", 2);
 					credentials.put(parts[0], parts[1]);
 					count ++;
 				}
 			}
-			LOG.info(
-				Markers.MSG, "Loaded {} credential pairs from the file \"{}\"", credentials.size(),
-				file
+			Loggers.MSG.info(
+				"Loaded {} credential pairs from the file \"{}\"", credentials.size(), file
 			);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file
+				Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file
 			);
 		}
 		return credentials;

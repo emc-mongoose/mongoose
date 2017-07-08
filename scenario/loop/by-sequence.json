@@ -4,7 +4,7 @@
 	"in" : [
 		"a", "b", "c", "d", "e"
 	],
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "command",
 			"value" : "echo ${e}"

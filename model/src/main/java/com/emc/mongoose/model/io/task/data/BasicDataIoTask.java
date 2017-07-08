@@ -6,7 +6,7 @@ import com.emc.mongoose.model.io.task.BasicIoTask;
 import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.storage.Credential;
-
+import static com.emc.mongoose.common.api.SizeInBytes.formatFixedSize;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
@@ -16,7 +16,6 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import static java.lang.System.nanoTime;
 
 /**
@@ -47,7 +46,7 @@ implements DataIoTask<T> {
 		final int originCode, final IoType ioType, final T item, final String srcPath,
 		final String dstPath, final Credential credential,
 		final List<ByteRange> fixedRanges, final int randomRangesCount
-	) {
+	) throws IllegalArgumentException {
 		super(originCode, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
@@ -71,7 +70,8 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public void reset() {
+	public void reset()
+	throws IllegalArgumentException {
 		super.reset();
 
 		countBytesDone = 0;
@@ -81,38 +81,48 @@ implements DataIoTask<T> {
 		markedRangesMaskPair[0].clear();
 		markedRangesMaskPair[1].clear();
 
-		switch(ioType) {
-			case CREATE:
-				try {
+		try {
+			switch(ioType) {
+				case CREATE:
 					contentSize = item.size();
-				} catch(IOException e) {
-					throw new AssertionError();
-				}
-				break;
-			case READ:
-				if(randomRangesCount == 0 && (fixedRanges == null || fixedRanges.isEmpty())) {
-					try {
-						contentSize = item.size();
-					} catch(IOException e) {
-						throw new AssertionError();
+					break;
+				case READ:
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
+						if(randomRangesCount > 0) {
+							markRandomRanges(randomRangesCount);
+							contentSize = getMarkedRangesSize();
+						} else {
+							// read the entire data item
+							contentSize = item.size();
+						}
+					} else {
+						contentSize = getMarkedRangesSize();
+						if(contentSize > item.size()) {
+							throw new IllegalArgumentException(
+								"Fixed ranges size (" + formatFixedSize(contentSize) + ") " +
+									"is more than data item size (" + formatFixedSize(item.size())
+							);
+						}
 					}
-				} else {
-					if(randomRangesCount > 0) {
-						markRandomRanges(randomRangesCount);
+					break;
+				case UPDATE:
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
+						if(randomRangesCount > 0) {
+							markRandomRanges(randomRangesCount);
+						} else {
+							// overwrite the entire data item
+							fixedRanges = new ArrayList<>(1);
+							fixedRanges.add(new ByteRange(0L, item.size() - 1, -1));
+						}
 					}
 					contentSize = getMarkedRangesSize();
-				}
-				break;
-			case UPDATE:
-				if(randomRangesCount > 0) {
-					markRandomRanges(randomRangesCount);
-				} else if(fixedRanges == null || fixedRanges.isEmpty()) {
-					throw new AssertionError("Range update is not configured correctly");
-				}
-				contentSize = getMarkedRangesSize();
-			default:
-				contentSize = 0;
-				break;
+					break;
+				default:
+					contentSize = 0;
+					break;
+			}
+		} catch(final IOException e) {
+			throw new AssertionError(e);
 		}
 	}
 	
@@ -135,7 +145,7 @@ implements DataIoTask<T> {
 	}
 	
 	private void markRandomRangesActually(final int countRangesTotal) {
-		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
+		final int startCellPos = (int) (nanoTime() % countRangesTotal);
 		int nextCellPos;
 		if(countRangesTotal > item.getUpdatedRangesCount() + markedRangesMaskPair[0].cardinality()) {
 			// current layer has not updated yet ranges
@@ -284,6 +294,12 @@ implements DataIoTask<T> {
 	@Override
 	public final void startDataResponse() {
 		respDataTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
+		if(reqTimeDone == 0) {
+			throw new IllegalStateException(
+				"Response data is started (" + respDataTimeStart +
+				") before the request is finished (" + reqTimeDone + ")"
+			);
+		}
 	}
 
 	@Override

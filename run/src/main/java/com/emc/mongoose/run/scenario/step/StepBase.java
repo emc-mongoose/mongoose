@@ -1,23 +1,23 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.ui.config.Config;
+import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+
+import java.util.concurrent.CancellationException;
 
 /**
  Created by kurila on 08.04.16.
  */
 public abstract class StepBase
 implements Step {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	protected final Config localConfig;
 
@@ -32,22 +32,28 @@ implements Step {
 	
 	@Override
 	public void run() {
-		LOG.info(Markers.CFG, localConfig.toString());
+
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
-		try {
-			String jobName = stepConfig.getName();
-			if(jobName == null) {
-				jobName = ThreadContext.get(KEY_STEP_NAME);
-				if(jobName == null) {
-					LOG.fatal(Markers.ERR, "Job name is not set");
-				} else {
-					stepConfig.setName(jobName);
-				}
+		String stepName = stepConfig.getName();
+		if(stepName == null) {
+			stepName = ThreadContext.get(KEY_STEP_NAME);
+			if(stepName == null) {
+				Loggers.ERR.fatal("Step name is not set");
 			} else {
-				ThreadContext.put(KEY_STEP_NAME, jobName);
+				stepConfig.setName(stepName);
 			}
-		} catch(final Throwable t) {
-			LogUtil.exception(LOG, Level.ERROR, t, "Unexpected failure");
+		}
+
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
+				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			Loggers.CONFIG.info(localConfig.toString());
+			invoke();
 		}
 	}
+
+	protected abstract void invoke()
+	throws CancellationException;
 }

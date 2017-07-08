@@ -22,7 +22,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "for",
 			"value" : "threads",
@@ -41,7 +41,7 @@
 					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load",
 					"config" : {

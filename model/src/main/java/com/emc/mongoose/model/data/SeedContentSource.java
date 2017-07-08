@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.data;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 /**
  Created by kurila on 23.07.14.
@@ -14,8 +13,8 @@ extends BasicContentSource {
 		super();
 	}
 	//
-	public SeedContentSource(final long seed, final long size) {
-		super(ByteBuffer.allocateDirect((int) size));
+	public SeedContentSource(final long seed, final long size, final int cacheLimit) {
+		super(ByteBuffer.allocateDirect((int) size), cacheLimit);
 		this.seed = seed;
 		generateData(zeroByteLayer, seed);
 	}
@@ -29,17 +28,5 @@ extends BasicContentSource {
 	@Override
 	public final String toString() {
 		return Long.toHexString(seed) + ',' + Integer.toHexString(zeroByteLayer.capacity());
-	}
-	//
-	public static SeedContentSource fromString(final String metaInfo)
-		throws IllegalArgumentException, IOException {
-		final String values[] = metaInfo.split(",");
-		if(values.length == 2) {
-			return new SeedContentSource(
-				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
-			);
-		} else {
-			throw new IllegalArgumentException();
-		}
 	}
 }

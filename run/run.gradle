@@ -5,7 +5,7 @@ dependencies {
 	compile(
 		project(":common"),
 		project(":model"),
-		project(":load:monitor"),
+		project(":load:controller"),
 		project(":load:generator"),
 		project(":storage:driver:builder"),
 		project(":ui"),

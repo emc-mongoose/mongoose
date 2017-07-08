@@ -6,8 +6,8 @@ import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.HttpResponseHandlerBase;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_ATTR_UPLOAD_ID;
+import com.emc.mongoose.ui.log.Loggers;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -18,8 +18,6 @@ import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -32,8 +30,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class S3ResponseHandler<I extends Item, O extends IoTask<I>>
 extends HttpResponseHandlerBase<I, O> {
 
-	private static final Logger LOG = LogManager.getLogger();
-	private static final AttributeKey<ByteBuf> contentAttrKey = AttributeKey.newInstance("content");
+	private static final AttributeKey<ByteBuf> CONTENT_ATTR_KEY = AttributeKey.newInstance(
+		"content"
+	);
 	private static final int MIN_CONTENT_SIZE = 0x100;
 	private static final int MAX_CONTENT_SIZE = 0x400;
 	private static final Pattern PATTERN_UPLOAD_ID = Pattern.compile(
@@ -69,14 +68,14 @@ extends HttpResponseHandlerBase<I, O> {
 		final Channel channel, final ByteBuf contentChunk
 	) {
 		// expect the XML data which is not large (up to 1KB)
-		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
+		final Attribute<ByteBuf> contentAttr = channel.attr(CONTENT_ATTR_KEY);
 		contentAttr.compareAndSet(null, Unpooled.buffer(MIN_CONTENT_SIZE));
 		final ByteBuf content = contentAttr.get();
 		try {
 			content.writeBytes(contentChunk);
 		} catch(final IndexOutOfBoundsException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e,
+				Level.WARN, e,
 				"HTTP content input buffer overflow, expected no more than {} bytes",
 				MAX_CONTENT_SIZE
 			);
@@ -85,7 +84,7 @@ extends HttpResponseHandlerBase<I, O> {
 
 	@Override
 	protected final void handleResponseContentFinish(final Channel channel, final O ioTask) {
-		final Attribute<ByteBuf> contentAttr = channel.attr(contentAttrKey);
+		final Attribute<ByteBuf> contentAttr = channel.attr(CONTENT_ATTR_KEY);
 		final ByteBuf content = contentAttr.get();
 		if(content != null && content.readableBytes() > 0) {
 			if(ioTask instanceof CompositeDataIoTask) {
@@ -97,8 +96,7 @@ extends HttpResponseHandlerBase<I, O> {
 					if(m.find()) {
 						channel.attr(KEY_ATTR_UPLOAD_ID).set(m.group(1));
 					} else {
-						LOG.warn(
-							Markers.ERR,
+						Loggers.ERR.warn(
 							"Upload id not found in the following response content:\n{}", contentStr
 						);
 					}

@@ -3,6 +3,10 @@ package com.emc.mongoose.common.net;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
+import sun.rmi.server.UnicastRef;
+import sun.rmi.transport.Channel;
+import sun.rmi.transport.LiveRef;
+import sun.rmi.transport.tcp.TCPEndpoint;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -16,10 +20,12 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RemoteObjectInvocationHandler;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import static java.lang.reflect.Proxy.getInvocationHandler;
 
 /**
  Created on 28.09.16.
@@ -173,6 +179,15 @@ public abstract class ServiceUtil {
 		}
 
 		REGISTRY_MAP.clear();
+	}
+
+	public static String getAddress(final Service svc)
+	throws RemoteException {
+		final RemoteObjectInvocationHandler h = (RemoteObjectInvocationHandler) getInvocationHandler(svc);
+		final LiveRef ref = ((UnicastRef) h.getRef()).getLiveRef();
+		final Channel channel = ref.getChannel();
+		final TCPEndpoint endpoint = (TCPEndpoint) channel.getEndpoint();
+		return endpoint.getHost() + ":" + endpoint.getPort();
 	}
 
 }

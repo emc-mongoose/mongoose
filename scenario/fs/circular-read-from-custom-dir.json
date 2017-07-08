@@ -19,7 +19,7 @@
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition"
 		}, {

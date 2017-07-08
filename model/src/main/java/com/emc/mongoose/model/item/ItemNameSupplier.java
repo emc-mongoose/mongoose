@@ -2,7 +2,6 @@ package com.emc.mongoose.model.item;
 
 import com.emc.mongoose.common.exception.DanShootHisFootException;
 import com.emc.mongoose.common.math.MathUtil;
-import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.common.supply.BasicUpdatingValueSupplier;
 
 import static java.lang.System.currentTimeMillis;
@@ -57,10 +56,7 @@ implements IdStringInput {
 		this.radix = radix;
 		// xorShift(0) = 0, so override this behaviour (which is by default)
 		if(ItemNamingType.RANDOM.equals(namingType) && offset == 0) {
-			this.lastValue = Math.abs(
-				Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime()) ^
-				NetUtil.getHostAddrCode()
-			);
+			this.lastValue = Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime());
 		} else {
 			this.lastValue = offset;
 		}
@@ -77,7 +73,7 @@ implements IdStringInput {
 		// calc next number
 		switch(namingType) {
 			case RANDOM:
-				lastValue = Math.abs(MathUtil.xorShift(lastValue ^ nanoTime()));
+				lastValue = Math.abs(MathUtil.xorShift(lastValue));
 				break;
 			case ASC:
 				if(lastValue < Long.MAX_VALUE) {

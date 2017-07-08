@@ -1,28 +1,87 @@
 package com.emc.mongoose.model;
 
 import com.emc.mongoose.common.concurrent.Daemon;
-
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import com.emc.mongoose.common.concurrent.SvcTask;
 import static com.emc.mongoose.common.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.common.concurrent.Daemon.State.INTERRUPTED;
 import static com.emc.mongoose.common.concurrent.Daemon.State.SHUTDOWN;
 import static com.emc.mongoose.common.concurrent.Daemon.State.STARTED;
+import static com.emc.mongoose.common.concurrent.ThreadUtil.getHardwareThreadCount;
+
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.List;
+import java.util.Map;
+import static java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created on 12.07.16.
  */
 public abstract class DaemonBase
 implements Daemon {
+
+	protected static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
+	
+	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
+		Math.max(1, getHardwareThreadCount() / 2), new NamingThreadFactory("svcTasksWorker", true)
+	);
+	
+	static {
+		for(int i = 0; i < getHardwareThreadCount(); i ++) {
+			SVC_TASKS_EXECUTOR.submit(
+				() -> {
+					Set<Entry<Daemon, List<SvcTask>>> svcTaskEntries;
+					List<SvcTask> nextSvcTasks;
+					while(true) {
+						svcTaskEntries = SVC_TASKS.entrySet();
+						if(svcTaskEntries.size() == 0) {
+							Thread.sleep(1);
+						} else {
+							for(final Entry<Daemon, List<SvcTask>> entry : svcTaskEntries) {
+								nextSvcTasks = entry.getValue();
+								for(final SvcTask nextSvcTask : nextSvcTasks) {
+									try {
+										nextSvcTask.run();
+									} catch(final Throwable t) {
+										System.err.println(
+											entry.getKey().toString() + ": service task \"" +
+												nextSvcTask + "\"  failed:"
+										);
+										t.printStackTrace(System.err);
+									}
+									LockSupport.parkNanos(1);
+								}
+							}
+						}
+					}
+				}
+			);
+		}
+	}
+	
+	protected final List<SvcTask> svcTasks = new CopyOnWriteArrayList<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
 	
-	protected abstract void doStart()
-	throws IllegalStateException;
+	@Override
+	public final State getState() {
+		return stateRef.get();
+	}
+	
+	protected void doStart()
+	throws IllegalStateException {
+		SVC_TASKS.put(this, svcTasks);
+	}
 
 	protected abstract void doShutdown()
 	throws IllegalStateException;
@@ -30,8 +89,19 @@ implements Daemon {
 	protected abstract void doInterrupt()
 	throws IllegalStateException;
 	
-	protected abstract void doClose()
-	throws IOException, IllegalStateException;
+	protected void doClose()
+	throws IOException, IllegalStateException {
+		SVC_TASKS.remove(this);
+		for(final SvcTask svcTask : svcTasks) {
+			svcTask.close();
+		}
+		svcTasks.clear();
+	}
+
+	@Override
+	public final List<SvcTask> getSvcTasks() {
+		return svcTasks;
+	}
 
 	@Override
 	public final void start()
@@ -52,7 +122,7 @@ implements Daemon {
 	}
 
 	@Override
-	public final void shutdown()
+	public final synchronized void shutdown()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(INITIAL, SHUTDOWN) || stateRef.compareAndSet(STARTED, SHUTDOWN)) {
 			synchronized(state) {
@@ -76,7 +146,7 @@ implements Daemon {
 	}
 	
 	@Override
-	public final void interrupt()
+	public final synchronized void interrupt()
 	throws IllegalStateException {
 		try {
 			shutdown();
@@ -98,7 +168,7 @@ implements Daemon {
 	}
 	
 	@Override
-	public void close()
+	public final synchronized void close()
 	throws IOException, IllegalStateException {
 		try {
 			interrupt();
@@ -118,5 +188,17 @@ implements Daemon {
 	@Override
 	public final boolean isClosed() {
 		return stateRef.get().equals(CLOSED);
+	}
+
+	public static void closeAll() {
+		synchronized(SVC_TASKS) {
+			for(final Daemon d : SVC_TASKS.keySet()) {
+				try {
+					d.close();
+				} catch(final Throwable t) {
+					t.printStackTrace(System.err);
+				}
+			}
+		}
 	}
 }

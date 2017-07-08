@@ -30,7 +30,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "for",
 			"value" : "i",
@@ -42,7 +42,7 @@
 					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load"
 				}

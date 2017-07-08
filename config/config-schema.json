@@ -45,21 +45,34 @@
 									"type": "string",
 									"pattern" : "[A-Fa-f0-9]+"
 								},
-								"ringSize": {
-									"oneOf" : [
-										{
-											"type": "integer",
+								"ring" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"required" : [
+										"cache", "size"
+									],
+									"properties" : {
+										"cache" : {
+											"type" : "integer",
 											"minimum" : 1
 										},
-										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										"size" : {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
 										}
-									]
+									}
 								}
 							},
 							"required": [
-								"file", "seed", "ringSize"
+								"file", "seed", "ring"
 							]
 						},
 						"ranges": {
@@ -217,12 +230,25 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
+				"batch" : {
+					"type" : "object",
+					"additionalProperties": false,
+					"properties" : {
+						"size" : {
+							"type" : "integer",
+							"minimum" : 1
+						}
+					},
+					"required" : [
+						"size"
+					]
+				},
 				"circular": {
 					"type": "boolean"
 				},
 				"generator" : {
 					"type" : "object",
-					"additionalProperties" : false,
+					"additionalProperties": false,
 					"properties" : {
 						"addrs": {
 							"type": "array",
@@ -243,7 +269,7 @@
 				},
 				"queue" : {
 					"type" : "object",
-					"additionalProperties" : false,
+					"additionalProperties": false,
 					"properties" : {
 						"size" : {
 							"type" : "integer",
@@ -262,7 +288,7 @@
 				}
 			},
 			"required": [
-				"circular", "generator", "type"
+				"batch", "circular", "generator", "queue", "type"
 			]
 		},
 		"storage": {
@@ -440,7 +466,7 @@
 								},
 								{
 									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+									"pattern" : "[\\d\\.]+[KMG]?B?"
 								}
 							]
 						},
@@ -455,7 +481,7 @@
 								},
 								{
 									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+									"pattern" : "[\\d\\.]+[KMG]?B?"
 								}
 							]
 						},
@@ -516,9 +542,9 @@
 						}
 					},
 					"required" : [
-						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger",
-						"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl",
-						"http", "node"
+						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger", "rcvBuf",
+						"reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl", "http",
+						"node"
 					]
 				}
 			},

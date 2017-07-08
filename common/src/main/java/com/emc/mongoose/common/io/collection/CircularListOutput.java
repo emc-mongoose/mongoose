@@ -71,14 +71,14 @@ extends ListOutput<T> {
 				// the buffer entirely
 				items.removeAll(items.subList(0, n - limit));
 			}
-			if(!items.addAll(0, buffer)) {
-				throw new IOException("Failed to put " + n + " items");
+			for(final T item : buffer) {
+				items.add(item);
 			}
 		} else {
 			// only a tail part of the buffer may be placed into the capacitor
 			items.clear(); // discard all the items in the capacitor
-			if(!items.addAll(buffer.subList(n - capacity, n))) {
-				throw new IOException("Failed to put " + n + " items");
+			for(final T item : buffer.subList(n - capacity, n)) {
+				items.add(item);
 			}
 		}
 		return n;

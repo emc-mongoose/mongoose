@@ -67,6 +67,10 @@ public final class ByteRange {
 		return end;
 	}
 
+	/**
+	 Note that this method may return -1 if begin and end are set (size is not -1 actually)
+	 @return the size of the range having no position
+	 */
 	public final long getSize() {
 		return size;
 	}

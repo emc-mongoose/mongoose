@@ -1,0 +1,56 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f weighted-load.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "weighted-load.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 10000,
+							"size" : "1GB",
+							"time" : 10
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "mixed",
+			"weights" : [
+				20, 80
+			],
+			"config" : [
+				{
+					"test" : {
+						"step" : {
+							"limit" : {
+								"time" : "90s"
+							}
+						}
+					}
+				},
+				{
+					"item" : {
+						"input" : {
+							"file" : "weighted-load.csv"
+						}
+					},
+					"load" : {
+						"circular" : true,
+						"type" : "read"
+					}
+				}
+			]
+		}
+	]
+}

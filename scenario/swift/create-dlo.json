@@ -9,11 +9,9 @@
 				"size" : "1GB"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 100
-				}
+		"load" : {
+			"batch" : {
+				"size" : 1
 			}
 		},
 		"storage" : {
@@ -24,6 +22,13 @@
 			"net" : {
 				"http" : {
 					"namespace" : "dlo"
+				}
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100
 				}
 			}
 		}

@@ -73,7 +73,8 @@ implements Serializable {
 	private long min, range = 0;
 	private double bias = 1;
 
-	public SizeInBytes(final String sizeInfo) {
+	public SizeInBytes(final String sizeInfo)
+	throws NumberFormatException, IllegalArgumentException {
 		final int
 			sep1pos = sizeInfo.indexOf(SEP1, 0),
 			sep2pos = sizeInfo.indexOf(SEP2, 0);
@@ -124,7 +125,7 @@ implements Serializable {
 		} else if(bias == 1) {
 			return min + ThreadLocalRandom.current().nextLong(range + 1);
 		} else {
-			return min + (long) Math.pow(ThreadLocalRandom.current().nextDouble(), bias) * range;
+			return min + (long) (Math.pow(ThreadLocalRandom.current().nextDouble(), bias) * range);
 		}
 	}
 	

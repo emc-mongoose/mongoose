@@ -2,12 +2,33 @@ description = "mongoose-tests-perf"
 
 dependencies {
 
+
+	compile(
+		project(":common"),
+		project(":model"),
+		project(":ui"),
+		project(":load:generator"),
+		project(":load:controller"),
+		project(":storage:driver"),
+		project(":storage:driver:builder"),
+		project(":storage:driver:net"),
+		project(":storage:driver:net:http"),
+		project(":storage:driver:net:http:atmos"),
+		project(":storage:driver:net:http:s3"),
+		project(":storage:driver:net:http:swift"),
+		project(":storage:driver:nio"),
+		project(":storage:driver:nio:fs"),
+		project(":storage:driver:service"),
+		project(":run"),
+		"junit:junit:4.12",
+	)
+
 	testCompile(
 		project(":common"),
 		project(":model"),
 		project(":ui"),
 		project(":load:generator"),
-		project(":load:monitor"),
+		project(":load:controller"),
 		project(":storage:driver"),
 		project(":storage:driver:builder"),
 		project(":storage:driver:net"),
@@ -29,5 +50,6 @@ jar {
 			"Class-Path": setClassPath(configurations),
 		)
 	}
+	from sourceSets.test.output
 }
 

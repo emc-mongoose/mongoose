@@ -26,7 +26,9 @@ public class ValidateScenariosTest {
 	public final void testAllScenarios()
 	throws Exception {
 
-		final ObjectMapper m = new ObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+		final ObjectMapper m = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		final JsonNode jsonSchema = m.readTree(
 			Paths.get(PathUtil.getBaseDir(), "scenario", "schema.json").toFile()
 		);

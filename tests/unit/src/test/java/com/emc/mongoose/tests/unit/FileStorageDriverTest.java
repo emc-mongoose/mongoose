@@ -81,35 +81,7 @@ public class FileStorageDriverTest {
 
 		List<DataItem> items = FileStorageDriver._list(
 			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10,
-			new BasicDataItem(
-				"yohoho0099", 0, 0,
-				new ContentSource() {
-					@Override
-					public int getSize() {
-						return 0;
-					}
-					
-					@Override
-					public ByteBuffer getLayer(final int layerIndex) {
-						return null;
-					}
-					
-					@Override
-					public void close()
-					throws IOException {
-					}
-					
-					@Override
-					public void writeExternal(final ObjectOutput out)
-					throws IOException {
-					}
-					
-					@Override
-					public void readExternal(final ObjectInput in)
-					throws IOException, ClassNotFoundException {
-					}
-				}
-			), count
+			new BasicDataItem("yohoho0099", 0, 0), count
 		);
 		assertEquals(Integer.toString(items.size()), 99, items.size());
 

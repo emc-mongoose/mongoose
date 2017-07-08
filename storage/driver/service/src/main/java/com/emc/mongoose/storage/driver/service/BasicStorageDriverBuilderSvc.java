@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.service;
 
+import com.emc.mongoose.common.concurrent.SvcTask;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.model.data.ContentSource;
@@ -9,17 +10,16 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
+import com.emc.mongoose.ui.log.Loggers;
+
 import static com.emc.mongoose.ui.config.Config.ItemConfig;
 import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,8 +30,6 @@ public class BasicStorageDriverBuilderSvc<
 >
 extends BasicStorageDriverBuilder<I, O, T>
 implements StorageDriverBuilderSvc<I, O, T> {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	private final int port;
 
@@ -77,9 +75,20 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
+	public final List<SvcTask> getSvcTasks() {
+		throw new AssertionError("Shouldn't be invoked");
+	}
+	
+	@Override
+	public final State getState()
+	throws RemoteException {
+		return State.INITIAL;
+	}
+	
+	@Override
 	public void start()
 	throws IllegalStateException, RemoteException {
-		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
+		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 
 	@Override
@@ -148,7 +157,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
+		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -156,7 +165,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	throws IOException, UserShootHisFootException {
 		final StorageDriver<I, O> driver = build();
 		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getContentSource(), getMetricsConfig().getPeriod()
+			port, driver, getMetricsConfig().getPeriod(), getStepName()
 		);
 		return wrapper.getName();
 	}

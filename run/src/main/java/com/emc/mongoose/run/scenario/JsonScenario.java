@@ -3,19 +3,20 @@ package com.emc.mongoose.run.scenario;
 import com.emc.mongoose.run.scenario.step.Step;
 import com.emc.mongoose.run.scenario.step.SequentialStep;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Loggers;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,8 +26,6 @@ import java.util.regex.Pattern;
 public class JsonScenario
 extends SequentialStep
 implements Scenario {
-	//
-	private static final Logger LOG = LogManager.getLogger();
 	//
 	public JsonScenario(final Config config, final File scenarioSrcFile)
 	throws IOException, ScenarioParseException {
@@ -69,7 +68,7 @@ implements Scenario {
 	//
 	public JsonScenario(final Config config, final Map<String, Object> tree)
 	throws IOException, ScenarioParseException {
-		super(config, overrideFromEnv(validateAgainstSchema(tree)));
+		super(config, overrideByEnv(validateAgainstSchema(tree)));
 	}
 	//
 	private static final Map<String, Object> validateAgainstSchema(final Map<String, Object> tree) {
@@ -82,15 +81,15 @@ implements Scenario {
 			final JsonNode jacksonTree = new ObjectMapper().valueToTree(tree);
 			scenarioSchema.validate(jacksonTree, true);
 		} catch(final ProcessingException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to load the scenario schema");
+			LogUtil.exception(Level.WARN, e, "Failed to load the scenario schema");
 		}*/
 		return tree;
 	}
 	//
 	private static final Pattern PATTERN_ENV_VAR = Pattern.compile(
-		".*\\$\\{([\\w\\-_\\.!@#%\\^&\\*=\\+\\(\\)\\[\\]~:;'\\\\\\|/<>,\\?]+)\\}.*"
+		"\\$\\{([\\w\\-_.!@#%\\^&*=+()\\[\\]~:;'\\\\|/<>,?]+)\\}"
 	);
-	private static Map<String, Object> overrideFromEnv(final Map<String, Object> tree) {
+	private static Map<String, Object> overrideByEnv(final Map<String, Object> tree) {
 
 		Object value;
 		String valueStr;
@@ -102,9 +101,9 @@ implements Scenario {
 		for(final String key : tree.keySet()) {
 			value = tree.get(key);
 			if(value instanceof Map) {
-				overrideFromEnv((Map<String, Object>) value);
+				overrideByEnv((Map<String, Object>) value);
 			} else if(value instanceof List) {
-				overrideFromEnv((List<Object>) value);
+				overrideByEnv((List<Object>) value);
 			} else if(value instanceof String) {
 				valueStr = (String) value;
 				m = PATTERN_ENV_VAR.matcher(valueStr);
@@ -116,8 +115,8 @@ implements Scenario {
 						if(newValue != null) {
 							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
 							alteredFlag = true;
-							LOG.info(
-								Markers.MSG, "Key \"{}\": replaced \"{}\" with new value \"{}\"",
+							Loggers.MSG.info(
+								"Key \"{}\": replaced \"{}\" with new value \"{}\"",
 								key, propertyName, newValue
 							);
 						}
@@ -132,7 +131,7 @@ implements Scenario {
 		return tree;
 	}
 	//
-	private static List<Object> overrideFromEnv(final List<Object> values) {
+	private static List<Object> overrideByEnv(final List<Object> values) {
 
 		Object value;
 		String valueStr;
@@ -144,9 +143,9 @@ implements Scenario {
 		for(int i = 0; i < values.size(); i ++) {
 			value = values.get(i);
 			if(value instanceof Map) {
-				overrideFromEnv((Map<String, Object>) value);
+				overrideByEnv((Map<String, Object>) value);
 			} else if(value instanceof List) {
-				overrideFromEnv((List) value);
+				overrideByEnv((List) value);
 			} else if(value instanceof String) {
 				valueStr = (String) value;
 				m = PATTERN_ENV_VAR.matcher(valueStr);
@@ -158,8 +157,8 @@ implements Scenario {
 						if(newValue != null) {
 							valueStr = valueStr.replace("${" + propertyName + "}", newValue);
 							alteredFlag = true;
-							LOG.info(
-								Markers.MSG, "Value #{}: replaced \"{}\" with new value \"{}\"",
+							Loggers.MSG.info(
+								"Value #{}: replaced \"{}\" with new value \"{}\"",
 								i, propertyName, newValue
 							);
 						}
@@ -181,7 +180,7 @@ implements Scenario {
 	//
 	@Override
 	protected final synchronized boolean append(final Step step) {
-		if(subSteps.size() == 0) {
+		if(childSteps.size() == 0) {
 			return super.append(step);
 		} else {
 			return false;
@@ -189,10 +188,16 @@ implements Scenario {
 	}
 	//
 	@Override
-	public final void run() {
-		LOG.info(Markers.MSG, "Scenario start");
-		super.run();
-		LOG.info(Markers.MSG, "Scenario end");
+	protected final void invoke() {
+		Loggers.MSG.info("Scenario start");
+		try {
+			super.invoke();
+		} catch(final CancellationException e) {
+			Loggers.MSG.info("Scenario interrupted");
+		} catch(final Throwable cause) {
+			LogUtil.exception(Level.ERROR, cause, "Scenario failure");
+		}
+		Loggers.MSG.info("Scenario end");
 	}
 	//
 	@Override

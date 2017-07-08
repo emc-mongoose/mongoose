@@ -2,7 +2,6 @@ package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.common.supply.BatchSupplier;
 import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -17,6 +16,7 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class RangePatternDefinedSupplierTest {
 
+	private static final int BATCH_SIZE = 0x1000;
 	private static final int TIME_LIMIT_SEC = 50;
 
 	@Test

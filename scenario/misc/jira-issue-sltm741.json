@@ -2,7 +2,7 @@
 	"type" : "for",
 	"value" : "i",
 	"in" : "1-4",
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "load",
 			"config" : {

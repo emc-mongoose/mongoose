@@ -12,7 +12,7 @@
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "parallel",
 			"config" : {
@@ -34,7 +34,7 @@
 					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load",
 					"config" : {

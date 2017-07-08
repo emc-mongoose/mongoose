@@ -4,7 +4,7 @@ import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.ui.config.Config;
-
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,16 +29,20 @@ public abstract class ConfigParser {
 
 	public static Config loadDefaultConfig()
 	throws IOException {
-		final String defaultConfigPath = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
-			File.separator + FNAME_CONFIG;
-		final ObjectMapper mapper = new ObjectMapper();
+		final String defaultConfigPath = PathUtil.getBaseDir() + DIR_CONFIG + File.separator +
+			FNAME_CONFIG;
+		final ObjectMapper mapper = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		return mapper.readValue(new File(defaultConfigPath), Config.class);
 	}
 
 	public static Config replace(
 		final Config config, final String replacePattern, final Object newValue
 	) throws OmgLookAtMyConsoleException, OmgDoesNotPerformException, IOException {
-		final ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		try {
 			final String configText = mapper.writeValueAsString(config);
 			final String newConfigText;

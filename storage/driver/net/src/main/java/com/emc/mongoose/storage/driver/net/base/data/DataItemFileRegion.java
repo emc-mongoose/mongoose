@@ -1,21 +1,22 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
 import com.emc.mongoose.model.item.DataItem;
+
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-public class DataItemFileRegion<I extends DataItem>
+public class DataItemFileRegion
 extends AbstractReferenceCounted
 implements FileRegion {
 	
-	protected final I dataItem;
+	protected final DataItem dataItem;
 	protected final long baseItemSize;
 	protected long doneByteCount = 0;
 
-	public DataItemFileRegion(final I dataItem)
+	public DataItemFileRegion(final DataItem dataItem)
 	throws IOException {
 		this.dataItem = dataItem;
 		this.baseItemSize = dataItem.size();

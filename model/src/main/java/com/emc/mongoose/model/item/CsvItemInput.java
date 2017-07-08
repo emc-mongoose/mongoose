@@ -16,10 +16,10 @@ import java.util.List;
  */
 public class CsvItemInput<I extends Item>
 implements Input<I> {
-	//
+	
 	protected BufferedReader itemsSrc;
 	protected final ItemFactory<I> itemFactory;
-	//
+	
 	/**
 	 @param in the input stream to get the data item records from
 	 @param itemFactory the concrete item factory used to parse the records
@@ -33,16 +33,16 @@ implements Input<I> {
 			itemFactory
 		);
 	}
-	//
+	
 	protected CsvItemInput(final BufferedReader itemsSrc, final ItemFactory<I> itemFactory) {
-		this.itemsSrc = itemsSrc;
+		setItemsSrc(itemsSrc);
 		this.itemFactory = itemFactory;
 	}
-	//
-	public void setItemsSrc(final BufferedReader itemsSrc) {
+	
+	protected final void setItemsSrc(final BufferedReader itemsSrc) {
 		this.itemsSrc = itemsSrc;
 	}
-	//
+	
 	@Override
 	public long skip(final long itemsCount)
 	throws IOException {
@@ -52,7 +52,7 @@ implements Input<I> {
 		}
 		return i;
 	}
-	//
+	
 	@Override
 	public I get()
 	throws IOException {
@@ -64,7 +64,7 @@ implements Input<I> {
 			return null;
 		}
 	}
-	//
+	
 	@Override
 	public int get(final List<I> buffer, final int limit)
 	throws IOException {
@@ -88,19 +88,23 @@ implements Input<I> {
 		}
 		return i;
 	}
-	//
+	
+	/**
+	 Most probably will cause an IOException due to missing mark
+	 @throws IOException
+	 */
 	@Override
 	public void reset()
 	throws IOException {
 		itemsSrc.reset();
 	}
-	//
+	
 	@Override
 	public void close()
 	throws IOException {
 		itemsSrc.close();
 	}
-	//
+	
 	@Override
 	public String toString() {
 		return "csvItemInput<" + itemsSrc.toString() + ">";

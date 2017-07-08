@@ -5,7 +5,6 @@ import com.emc.mongoose.common.io.Input;
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -15,8 +14,8 @@ public class BinInput<T>
 implements Input<T> {
 	
 	protected ObjectInputStream itemsSrc;
-	protected List<T> srcBuff = null;
-	protected int srcFrom = 0;
+	protected T[] srcBuff = null;
+	protected int srcBuffPos = 0;
 	private T lastItem = null;
 	
 	public BinInput(final ObjectInputStream itemsSrc) {
@@ -30,14 +29,14 @@ implements Input<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final T get()
 	throws IOException {
-		if(srcBuff != null && srcFrom < srcBuff.size()) {
-			return srcBuff.get(srcFrom ++);
+		if(srcBuff != null && srcBuffPos < srcBuff.length) {
+			return srcBuff[srcBuffPos ++];
 		} else {
 			try {
 				final Object o = itemsSrc.readUnshared();
 				if(o instanceof Object[]) {
-					srcBuff = Arrays.asList((T[]) o);
-					srcFrom = 0;
+					srcBuff = (T[]) o;
+					srcBuffPos = 0;
 					return get();
 				} else {
 					return (T) o;
@@ -53,13 +52,17 @@ implements Input<T> {
 	throws IOException {
 		
 		if(srcBuff != null) { // there are a buffered items in the source
-			final int srcCountLimit = srcBuff.size() - srcFrom;
+			final int srcCountLimit = srcBuff.length - srcBuffPos;
 			if(dstCountLimit < srcCountLimit) { // destination buffer has less free space than avail
-				dstBuff.addAll(srcBuff.subList(srcFrom, srcFrom + dstCountLimit));
-				srcFrom += dstCountLimit; // move cursor to the next position in the source buffer
+				for(int i = srcBuffPos; i < srcBuffPos + dstCountLimit; i ++) {
+					dstBuff.add(srcBuff[i]);
+				}
+				srcBuffPos += dstCountLimit; // move cursor to the next position in the source buffer
 				return dstCountLimit;
 			} else { // destination buffer has enough free space to put all available items
-				dstBuff.addAll(srcBuff.subList(srcFrom, srcFrom + srcCountLimit));
+				for(int i = srcBuffPos; i < srcBuffPos + srcCountLimit; i ++) {
+					dstBuff.add(srcBuff[i]);
+				}
 				srcBuff = null; // the buffer is sent to destination completely, dispose
 				return srcCountLimit;
 			}
@@ -68,8 +71,8 @@ implements Input<T> {
 		try {
 			final Object o = itemsSrc.readUnshared();
 			if(o instanceof Object[]) { // there are a list of items has been got
-				srcBuff = Arrays.asList((T[]) o);
-				srcFrom = 0;
+				srcBuff = (T[]) o;
+				srcBuffPos = 0;
 				return get(dstBuff, dstCountLimit);
 			} else { // there are single item has been got from the stream
 				if(dstCountLimit > 0) {
@@ -100,12 +103,12 @@ implements Input<T> {
 			while(i < itemsCount) {
 				o = itemsSrc.readUnshared();
 				if(o instanceof Object[]) {
-					srcBuff = Arrays.asList((T[]) o);
-					if(srcBuff.size() > itemsCount - i) {
-						srcFrom = (int) (itemsCount - i);
+					srcBuff = (T[]) o;
+					if(srcBuff.length > itemsCount - i) {
+						srcBuffPos = (int) (itemsCount - i);
 						break;
 					} else {
-						i += srcBuff.size();
+						i += srcBuff.length;
 						srcBuff = null;
 					}
 				} else {

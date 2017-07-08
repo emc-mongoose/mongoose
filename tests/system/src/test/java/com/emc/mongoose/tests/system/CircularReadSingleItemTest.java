@@ -1,8 +1,11 @@
 package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.common.env.PathUtil;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.run.scenario.JsonScenario;
+import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
 import org.apache.commons.csv.CSVFormat;
@@ -10,18 +13,15 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +30,7 @@ import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 /**
  Created by andrey on 06.02.17.
@@ -48,40 +49,54 @@ import static org.junit.Assert.assertTrue;
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
-public class CircularReadSingleItemTest
-extends HttpStorageDistributedScenarioTestBase {
 
-	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "circular", "read.json"
-	);
-	private static final SizeInBytes ITEM_DATA_SIZE = new SizeInBytes("100KB");
-	private static final int LOAD_CONCURRENCY = 10;
-	private static final String ITEM_OUTPUT_FILE = "circular-read.csv";
+public class CircularReadSingleItemTest
+extends EnvConfiguredScenarioTestBase {
+
+	static {
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
+		STEP_NAME = CircularReadSingleItemTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "CircularReadSingleItem.json"
+		);
+	}
+
+	private static final String ITEM_OUTPUT_FILE =
+		CircularReadSingleItemTest.class.getSimpleName() + ".csv";
 
 	private static String STD_OUTPUT;
 	private static boolean FINISHED_IN_TIME;
+	private static String ITEM_OUTPUT_PATH;
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		JOB_NAME = CircularReadSingleItemTest.class.getSimpleName();
-		try {
-			Files.delete(Paths.get("circular-read.csv"));
-		} catch(final Exception ignored) {
+		STEP_NAME = CircularReadSingleItemTest.class.getSimpleName();
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
+		EnvConfiguredScenarioTestBase.setUpClass();
+		if(SKIP_FLAG) {
+			return;
 		}
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
-		CONFIG_ARGS.add("--item-data-size=" + ITEM_DATA_SIZE.toString());
-		CONFIG_ARGS.add("--storage-driver-concurrency=" + LOAD_CONCURRENCY);
-		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
-		HttpStorageDistributedScenarioTestBase.setUpClass();
+		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
+			ITEM_OUTPUT_PATH = Paths.get(
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+			).toString();
+			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+		}
+		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		final Thread runner = new Thread(
 			() -> {
 				try {
 					STD_OUT_STREAM.startRecording();
 					SCENARIO.run();
-					STD_OUTPUT = STD_OUT_STREAM.stopRecording();
+					STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 				} catch(final Throwable t) {
-					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
+					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);
@@ -89,59 +104,76 @@ extends HttpStorageDistributedScenarioTestBase {
 		TimeUnit.MINUTES.timedJoin(runner, 65); // 1m + up to 5s for the precondition job
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		HttpStorageDistributedScenarioTestBase.tearDownClass();
+		if(! SKIP_FLAG) {
+			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
+				try {
+					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
+			}
+		}
+		EnvConfiguredScenarioTestBase.tearDownClass();
 	}
 
 	@Test
 	public void testFinishedInTime() {
+		assumeFalse(SKIP_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 	}
 
-	@Test public void testMetricsLogFile()
+	@Test
+	public void testMetricsLogFile()
 	throws Exception {
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
 			"There should be more than 2 metrics records in the log file",
 			metricsLogRecords.size() > 1
 		);
 		testMetricsLogRecords(
-			metricsLogRecords, IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
+			metricsLogRecords, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			0, 60, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
-	@Test @Ignore
+	@Test
 	public void testTotalMetricsLogFile()
 	throws Exception {
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
 			"There should be 1 total metrics records in the log file", 1,
 			totalMetrcisLogRecords.size()
 		);
-		testTotalMetricsLogRecords(
-			totalMetrcisLogRecords.get(0), IoType.READ, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT,
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(0), IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT,
 			ITEM_DATA_SIZE, 0, 60
 		);
 	}
 
-	@Test public void testMetricsStdout()
+	@Test
+	public void testMetricsStdout()
 	throws Exception {
+		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
 			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.CREATE, LOAD_CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
+			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
 			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
 		);
 	}
 
-	@Test public void testIoTraceLogFile()
+	@Test
+	public void testIoTraceLogFile()
 	throws Exception {
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(
 			"There should be more than 1 record in the I/O trace log file",
@@ -152,8 +184,10 @@ extends HttpStorageDistributedScenarioTestBase {
 		}
 	}
 
-	@Test public void testItemsOutputFile()
+	@Test
+	public void testItemsOutputFile()
 	throws Exception {
+		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);

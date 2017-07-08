@@ -29,7 +29,7 @@ ext {
 		slf4j : "1.7.24",
 		log4j : "2.8.1",
 		metrics : "3.2.2",
-		nagaina: "3.3.0",
+		nagaina : "3.4.1",
 		netty : "4.1.9.Final",
 	]
 
@@ -117,13 +117,11 @@ subprojects {
 
 	test {
 		maxHeapSize "2g"
-		/*
 		systemProperty "com.sun.management.jmxremote", "true"
 		systemProperty "com.sun.management.jmxremote.port", "9010"
 		systemProperty "com.sun.management.jmxremote.local.only", "false"
 		systemProperty "com.sun.management.jmxremote.authenticate", "false"
 		systemProperty "com.sun.management.jmxremote.ssl", "false"
-		*/
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
@@ -241,7 +239,7 @@ task printVersion {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "3.3"
+	gradleVersion = "3.5"
 }
 
 void collectName(Project p, LinkedList<String> names) {

@@ -1,8 +1,5 @@
 package com.emc.mongoose.ui.config.reader.jsr353;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 //import javax.json.Json;
 //import javax.json.JsonObject;
 //import javax.json.JsonReader;
@@ -12,14 +9,11 @@ import org.apache.logging.log4j.Logger;
  */
 public class Jsr353ConfigReader {
 
-	private static final Logger LOG = LogManager.getLogger();
-
-
 	/*private static JsonObject readJson(final ClassLoader classLoader, final String jsonFilePath) {
 		try(final InputStream fileAsInputStream = classLoader.getResourceAsStream(jsonFilePath)) {
 			return readJsonAsStream(fileAsInputStream);
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to open the configuration file");
+			LogUtil.exception(Level.ERROR, e, "Failed to open the configuration file");
 		}
 		return null;
 	}
@@ -41,7 +35,7 @@ public class Jsr353ConfigReader {
 			);
 			return decoder.decode(jsonConfig);
 		} catch(final DecodeException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read the configuration file");
+			LogUtil.exception(Level.ERROR, e, "Failed to read the configuration file");
 		}
 		return null;
 	}*/

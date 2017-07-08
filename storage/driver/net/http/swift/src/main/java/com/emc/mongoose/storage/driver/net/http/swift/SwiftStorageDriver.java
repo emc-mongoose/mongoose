@@ -2,8 +2,8 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.model.data.ContentSource;
 import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
 import static com.emc.mongoose.model.io.IoType.CREATE;
 import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
@@ -30,7 +30,7 @@ import static com.emc.mongoose.ui.config.Config.LoadConfig;
 import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import io.netty.buffer.ByteBuf;
@@ -52,8 +52,6 @@ import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -70,7 +68,6 @@ import java.util.concurrent.locks.LockSupport;
 public class SwiftStorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 
-	private static final Logger LOG = LogManager.getLogger();
 	private static final String PART_NUM_MASK = "0000000";
 	private static final ThreadLocal<StringBuilder>
 		CONTAINER_LIST_QUERY = new ThreadLocal<StringBuilder>() {
@@ -83,10 +80,10 @@ extends HttpStorageDriverBase<I, O> {
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
+		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
 		}
@@ -115,7 +112,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
 
@@ -125,7 +122,7 @@ extends HttpStorageDriverBase<I, O> {
 			containerExists = false;
 			versioningEnabled = false;
 		} else if(HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
-			LOG.info(Markers.MSG, "Container \"{}\" already exists", path);
+			Loggers.MSG.info("Container \"{}\" already exists", path);
 			containerExists = true;
 			final String versionsLocation = checkContainerResp
 				.headers()
@@ -136,9 +133,8 @@ extends HttpStorageDriverBase<I, O> {
 				versioningEnabled = true;
 			}
 		} else {
-			LOG.warn(
-				Markers.ERR, "Unexpected container checking response: {}",
-				checkContainerRespStatus.toString()
+			Loggers.ERR.warn(
+				"Unexpected container checking response: {}", checkContainerRespStatus.toString()
 			);
 			checkContainerResp.release();
 			return null;
@@ -167,17 +163,16 @@ extends HttpStorageDriverBase<I, O> {
 			} catch(final InterruptedException e) {
 				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
 
 			final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
 			if(HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
-				LOG.info(Markers.MSG, "Container \"{}\" created", path);
+				Loggers.MSG.info("Container \"{}\" created", path);
 			} else {
-				LOG.warn(
-					Markers.ERR, "Create/update container response: {}",
-					putContainerRespStatus.toString()
+				Loggers.ERR.warn(
+					"Create/update container response: {}", putContainerRespStatus.toString()
 				);
 				putContainerResp.release();
 				return null;
@@ -190,6 +185,7 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final String requestNewAuthToken(final Credential credential) {
+
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -210,17 +206,21 @@ extends HttpStorageDriverBase<I, O> {
 			HttpVersion.HTTP_1_1, HttpMethod.GET, AUTH_URI, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
+
 		final FullHttpResponse getAuthTokenResp;
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
 		} catch(final InterruptedException e) {
 			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
+
+		final String authTokenValue = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
+		getAuthTokenResp.release();
 		
-		return getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
+		return authTokenValue;
 	}
 	
 	@Override
@@ -259,7 +259,7 @@ extends HttpStorageDriverBase<I, O> {
 			EmptyHttpHeaders.INSTANCE
 		);
 		final List<I> buff = new ArrayList<>(countLimit);
-		final FullHttpResponse listResp;
+		FullHttpResponse listResp = null;
 		try {
 			listResp = executeHttpRequest(checkBucketReq);
 			final HttpResponseStatus respStatus = listResp.status();
@@ -270,16 +270,16 @@ extends HttpStorageDriverBase<I, O> {
 					final ByteBuf listRespContent = listResp.content();
 					try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
 						parseContainerListing(buff, contentStream, path, itemFactory, idRadix);
+					} finally {
+						listRespContent.release();
 					}
 				}
 			} else {
-				LOG.warn(
-					Markers.ERR, "Failed to get the container listing, response: \"{}\"", respStatus
-				);
+				Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
 			}
 		} catch(final InterruptedException ignored) {
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
 
 		return buff;

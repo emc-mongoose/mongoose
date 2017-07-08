@@ -43,12 +43,19 @@ implements Input<String> {
 		return i;
 	}
 	
+	/**
+	 Skips bytes instead of items
+	 */
 	@Override
 	public long skip(final long count)
 	throws IOException {
 		return reader.skip(count);
 	}
 	
+	/**
+	 Most probably will cause an IOException
+	 @throws IOException
+	 */
 	@Override
 	public void reset()
 	throws IOException {

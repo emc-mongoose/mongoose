@@ -7,7 +7,6 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.storage.Credential;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -129,19 +128,17 @@ implements IoTaskBuilder<I, O> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public List<O> getInstances(final List<I> items)
+	public void getInstances(final List<I> items, final List<O> buff)
 	throws IOException {
-		final List<O> tasks = new ArrayList<>(items.size());
 		String uid;
 		for(final I item : items) {
-			tasks.add(
+			buff.add(
 				(O) new BasicIoTask<>(
 					originCode, ioType, item, inputPath, getNextOutputPath(),
 					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);
 		}
-		return tasks;
 	}
 	
 	protected final String getNextOutputPath() {

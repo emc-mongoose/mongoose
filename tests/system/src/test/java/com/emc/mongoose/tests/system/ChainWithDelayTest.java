@@ -1,8 +1,10 @@
 package com.emc.mongoose.tests.system;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.net.NetUtil;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.tests.system.base.HttpStorageDistributedScenarioTestBase;
+import com.emc.mongoose.run.scenario.JsonScenario;
+import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
@@ -12,18 +14,21 @@ import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +38,10 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 28.03.17.
  */
 public class ChainWithDelayTest
-extends HttpStorageDistributedScenarioTestBase {
+extends EnvConfiguredScenarioTestBase {
 	
 	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "mixed", "chain-with-delay.json"
+		getBaseDir(), DIR_SCENARIO, "systest", "ChainWithDelay.json"
 	);
 	private static final int DELAY_SECONDS = 60;
 	private static final int TIME_LIMIT = 180;
@@ -48,58 +53,82 @@ extends HttpStorageDistributedScenarioTestBase {
 		} catch(final Exception e) {
 			throw new RuntimeException(e);
 		}
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList(STORAGE_TYPE_FS));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
+		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));
+		STEP_NAME = ChainWithDelayTest.class.getSimpleName();
 	}
 	
 	private static boolean FINISHED_IN_TIME;
+	private static String STD_OUTPUT;
 	
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		EnvUtil.set(
-			new HashMap<String, String>() {
-				{
-					put("ZONE1_ADDRS", ZONE1_ADDR);
-					put("ZONE2_ADDRS", ZONE2_ADDR);
-				}
-			}
-		);
-		JOB_NAME = ChainWithDelayTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, JOB_NAME);
-		CONFIG_ARGS.add("--storage-driver-concurrency=10");
-		CONFIG_ARGS.add("--test-scenario-file=" + SCENARIO_PATH.toString());
+		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
+		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
+		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
+		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
-		HttpStorageDistributedScenarioTestBase.setUpClass();
+		EnvConfiguredScenarioTestBase.setUpClass();
+		if(SKIP_FLAG) {
+			return;
+		}
+		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		final Thread runner = new Thread(
 			() -> {
 				try {
 					SCENARIO.run();
 				} catch(final Throwable t) {
-					LogUtil.exception(LOG, Level.ERROR, t, "Failed to run the scenario");
+					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
+				} finally {
+					try {
+						SCENARIO.close();
+					} catch(final Throwable tt) {
+						LogUtil.exception(Level.ERROR, tt, "Failed to close the scenario");
+					}
 				}
 			}
 		);
+		STD_OUT_STREAM.startRecording();
 		runner.start();
-		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 1);
+		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flush(JOB_NAME);
+		LoadJobLogFileManager.flushAll();
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
 	}
 	
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		HttpStorageDistributedScenarioTestBase.tearDownClass();
+		EnvConfiguredScenarioTestBase.tearDownClass();
 	}
 	
 	@Test
 	public void testFinishedInTime() {
+		assumeFalse(SKIP_FLAG);
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
+	}
+
+	@Test
+	public final void testStdOutput()
+	throws Exception {
+		assumeFalse(SKIP_FLAG);
+		testMetricsTableStdout(
+			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			new HashMap<IoType, Integer>() {{
+				put(IoType.CREATE, CONCURRENCY);
+				put(IoType.READ, CONCURRENCY);
+			}}
+		);
 	}
 	
 	@Test
 	public void testIoTraceFile()
 	throws Exception {
+		assumeFalse(SKIP_FLAG);
 		final Map<String, Long> timingMap = new HashMap<>();
 		String storageNode;
 		String itemPath;

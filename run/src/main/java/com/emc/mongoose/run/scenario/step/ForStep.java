@@ -4,11 +4,9 @@ import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
-import com.emc.mongoose.ui.log.Markers;
-import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
+import com.emc.mongoose.ui.log.Loggers;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,8 +22,6 @@ import java.util.regex.Pattern;
 public final class ForStep
 extends SequentialStep {
 
-	private static final Logger LOG = LogManager.getLogger();
-	
 	public static final String KEY_NODE_IN = "in";
 	public static final char REPLACE_MARKER_CHAR = '$';
 	public static final Pattern SEQ_SPEC_PATTERN = Pattern.compile(
@@ -119,8 +115,8 @@ extends SequentialStep {
 									throw new ScenarioParseException("Step value should be > 0");
 								}
 								if(start < end) {
-									LOG.info(
-										Markers.MSG, "Parsed loop range: {} = {}, {} <= {}, {} += {}",
+									Loggers.MSG.info(
+										"Parsed loop range: {} = {}, {} <= {}, {} += {}",
 										replaceMarkerName, start, replaceMarkerName, end,
 										replaceMarkerName, step
 									);
@@ -132,8 +128,8 @@ extends SequentialStep {
 										}
 									}
 								} else {
-									LOG.info(
-										Markers.MSG, "Parsed loop range: {} = {}, {} => {}, {} -= {}",
+									Loggers.MSG.info(
+										"Parsed loop range: {} = {}, {} => {}, {} -= {}",
 										replaceMarkerName, start, replaceMarkerName, end,
 										replaceMarkerName, step
 									);
@@ -225,9 +221,8 @@ extends SequentialStep {
 						}
 						append(
 							new BasicTaskStep(
-								() -> LOG.info(
-									Markers.MSG, "Use next value for \"{}\": {}", replaceMarkerName,
-									nextValue
+								() -> Loggers.MSG.info(
+									"Use next value for \"{}\": {}", replaceMarkerName, nextValue
 								)
 							)
 						);
@@ -427,19 +422,19 @@ extends SequentialStep {
 	}
 
 	@Override
-	public final void run() {
+	protected final void invoke() {
 		if(replaceMarkerName == null && valueSeq == null) { // infinite loop
 			while(true) {
-				super.run();
+				super.invoke();
 			}
 		} else {
-			super.run();
+			super.invoke();
 		}
 	}
 
 	@Override
 	public final String toString() {
-		return "forJob" + (replaceMarkerName == null ? "Infinite" : valueSeq.size()) + "#" +
+		return "forStep" + (replaceMarkerName == null ? "Infinite" : valueSeq.size()) + "#" +
 			hashCode();
 	}
 

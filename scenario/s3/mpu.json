@@ -9,16 +9,21 @@
 				"size" : "10GB"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 10
-				}
+		"load" : {
+			"batch" : {
+				"size" : 1
 			}
 		},
 		"storage" : {
 			"driver" : {
 				"concurrency" : 10
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
 			}
 		}
 	}

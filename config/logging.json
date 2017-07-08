@@ -1,31 +1,23 @@
 {
 	"configuration" : {
-		"status" : "off",
+		"status" : "fatal",
 		"name" : "mongoose",
 		"monitorInterval" : 1000,
 		"packages" : "com.emc.mongoose.ui.log.appenders",
 		"shutdownHook" : "enable",
-		"shutdownTimeout" : 100000,
+		"shutdownTimeout" : 10000,
 		"appenders" : {
 			"appender" : [
 				{
-					"name" : "WebUI",
-					"type" : "WebUI",
-					"enabled" : "true",
+					"name" : "stdout",
+					"type" : "Console",
+					"follow" : "true",
+					"PatternLayout" : {
+						"alwaysWriteExceptions" : false,
+						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class.name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
+					},
 					"Filters" : {
 						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "cfg",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "ioTrace",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
 							{
 								"type" : "ThresholdFilter",
 								"level" : "INFO",
@@ -36,75 +28,31 @@
 					}
 				},
 				{
-					"name" : "stdout",
+					"name" : "metricsStdout",
 					"type" : "Console",
 					"follow" : "true",
 					"PatternLayout" : {
 						"alwaysWriteExceptions" : false,
-						"pattern" : "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}"
+						"pattern" : "%highlight{%m}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+					}
+				},
+				{
+					"name" : "msgFile",
+					"type" : "loadJobFile",
+					"fileName" : "messages.log",
+					"PatternLayout" : {
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
+					}
+				},
+				{
+					"name" : "3rdPartyFile",
+					"type" : "loadJobFile",
+					"fileName" : "3rdparty.log",
+					"PatternLayout" : {
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
 					},
 					"Filters" : {
 						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "cfg",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsFile",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedFile",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsFileTotal",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedFileTotal",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "ioTrace",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "parts",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "extResultsFile",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "extMedResultsFile",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							},
 							{
 								"type" : "BurstFilter",
 								"rate" : 100,
@@ -114,156 +62,18 @@
 					}
 				},
 				{
-					"name" : "msgFile",
-					"type" : "loadJobFile",
-					"fileName" : "messages.log",
-					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "msg",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
-					}
-				},
-				{
-					"name" : "3rdPartyFile",
-					"type" : "loadJobFile",
-					"fileName" : "3rdparty.log",
-					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "cfg",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "msg",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "err",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsStdout",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedStdout",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsFile",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedFile",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsFileTotal",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedFileTotal",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "ioTrace",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "MarkerFilter",
-								"marker" : "parts",
-								"onMatch" : "DENY",
-								"onMismatch" : "NEUTRAL"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "BurstFilter",
-								"rate" : 10,
-								"maxBurst" : 100
-							}
-						]
-					}
-				},
-				{
 					"name" : "errFile",
 					"type" : "loadJobFile",
 					"fileName" : "errors.log",
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
 					},
 					"Filters" : {
 						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "err",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							},
 							{
 								"type" : "BurstFilter",
-								"rate" : 10,
-								"maxBurst" : 100
-							}
-						]
-					}
-				},
-				{
-					"name" : "metricsMedFile",
-					"type" : "loadJobFile",
-					"fileName" : "metrics.med.csv",
-					"PatternLayout" : {
-						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
-						"pattern" : "%m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedFile",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
+								"rate" : 1000,
+								"maxBurst" : 10000
 							}
 						]
 					}
@@ -275,22 +85,6 @@
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsMedFileTotal",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
 					}
 				},
 				{
@@ -300,22 +94,6 @@
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsFile",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
 					}
 				},
 				{
@@ -325,22 +103,6 @@
 					"PatternLayout" : {
 						"header" : "DateTimeISO8601,TypeLoad,Concurrency,DriverCount,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "metricsFileTotal",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
 					}
 				},
 				{
@@ -350,46 +112,14 @@
 					"PatternLayout" : {
 						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
 						"pattern" : "%m"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "ioTrace",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
 					}
 				},
 				{
 					"name" : "cfgFile",
 					"type" : "loadJobFile",
-					"fileName" : "effective-config.json",
+					"fileName" : "effective-config.log",
 					"PatternLayout" : {
-						"pattern" : "%m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "cfg",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
+						"pattern" : "%d{ISO8601}{GMT+0}:%n%m%n%n"
 					}
 				},
 				{
@@ -399,158 +129,164 @@
 					"PatternLayout" : {
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern" : "%m%n"
-					},
-					"Filters" : {
-						"Filter" : [
-							{
-								"type" : "MarkerFilter",
-								"marker" : "parts",
-								"onMatch" : "NEUTRAL",
-								"onMismatch" : "DENY"
-							},
-							{
-								"type" : "ThresholdFilter",
-								"level" : "INFO",
-								"onMatch" : "ACCEPT",
-								"onMismatch" : "DENY"
-							}
-						]
 					}
+//				},
+//				{
+//					"name" : "extResultsFile",
+//					"type" : "file",
+//					"fileName" : "result.xml",
+//					"bufferedIO" : false,
+//					"PatternLayout" : {
+//						"header" : "<result>\n",
+//						"footer" : "</result>\n",
+//						"pattern" : "%m",
+//						"noConsoleNoAnsi" : true
+//					}
+//				},
+//				{
+//					"name" : "extThresholdResultsFile",
+//					"type" : "file",
+//					"fileName" : "result-with-threshold.xml",
+//					"bufferedIO" : false,
+//					"PatternLayout" : {
+//						"header" : "<result-with-threshold>\n",
+//						"footer" : "</result-with-threshold>\n",
+//						"pattern" : "%m",
+//						"noConsoleNoAnsi" : true
+//					}
+				}
+			]
+		},
+		"loggers" : {
+			"root" : {
+				"level" : "INFO",
+				"AppenderRef" : {
+					"ref" : "3rdPartyFile"
 				},
-				//				{
-				//					"name" : "extResultsFile",
-				//					"type": "file",
-				//					"fileName": "result.xml",
-				//					"bufferedIO": false,
-				//					"PatternLayout": {
-				//						"header": "<result>\n",
-				//						"footer": "</result>\n",
-				//						"pattern": "%m",
-				//						"noConsoleNoAnsi": true
-				//					},
-				//					"Filters": {
-				//						"Filter": [
-				//							{
-				//								"type": "MarkerFilter",
-				//								"marker": "extResultsFile",
-				//								"onMatch": "ACCEPT",
-				//								"onMismatch": "DENY"
-				//							},
-				//							{
-				//								"type": "ThresholdFilter",
-				//								"level": "INFO",
-				//								"onMatch": "ACCEPT",
-				//								"onMismatch": "DENY"
-				//							}
-				//						]
-				//					}
-				//				},
-				//				{
-				//					"name" : "extMedResultsFile",
-				//					"type": "file",
-				//					"fileName": "intermediate-result.xml",
-				//					"bufferedIO": false,
-				//					"PatternLayout": {
-				//						"header": "<intermediate-result>\n",
-				//						"footer": "</intermediate-result>\n",
-				//						"pattern": "%m",
-				//						"noConsoleNoAnsi": true
-				//					},
-				//					"Filters": {
-				//						"Filter": [
-				//							{
-				//								"type": "MarkerFilter",
-				//								"marker": "extMedResultsFile",
-				//								"onMatch": "ACCEPT",
-				//								"onMismatch": "DENY"
-				//							},
-				//							{
-				//								"type": "ThresholdFilter",
-				//								"level": "INFO",
-				//								"onMatch": "ACCEPT",
-				//								"onMismatch": "DENY"
-				//							}
-				//						]
-				//					}
-				//				},
+				"additivity" : false
+			},
+			"logger" : [
 				{
-					"name" : "async",
-					"type" : "Async",
-					"blocking" : "false",
-					"bufferSize" : 100000,
-					"shutdownTimeout" : 10000,
+					"name" : "io.netty.util.concurrent.DefaultPromise.rejectedExecution",
+					"level" : "FATAL",
+					"AppenderRef" : {
+						"ref" : "3rdPartyFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "io.netty.channel.AbstractChannel",
+					"level" : "ERROR",
+					"AppenderRef" : {
+						"ref" : "3rdPartyFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Config",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "cfgFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Errors",
+					"level" : "DEBUG",
+					"AppenderRef" : [
+						{
+							"ref" : "stdout"
+						},
+						{
+							"ref" : "errFile"
+						}
+					],
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.IoTraces",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "ioTraceFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.ExtResultsFile",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "extResultsFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.File",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "metricsFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.FileTotal",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "metricsFileTotal"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.StdOut",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "metricsStdout"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.ExtResultsFile",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "extThresholdResultsFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.File",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "metricsMedFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.metrics.threshold.FileTotal",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "metricsMedFileTotal"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Messages",
+					"level" : "DEBUG",
 					"AppenderRef" : [
 						{
 							"ref" : "stdout"
 						},
 						{
 							"ref" : "msgFile"
-						},
-						{
-							"ref" : "3rdPartyFile"
-						},
-						{
-							"ref" : "errFile"
-						},
-						{
-							"ref" : "metricsFile"
-						},
-						{
-							"ref" : "metricsMedFile"
-						},
-						{
-							"ref" : "metricsFileTotal"
-						},
-						{
-							"ref" : "metricsMedFileTotal"
-						},
-						{
-							"ref" : "ioTraceFile"
-						},
-						{
-							"ref" : "WebUI"
-						},
-						{
-							"ref" : "cfgFile"
-						},
-						{
-							"ref" : "partsUploadFile"
-							//						}, {
-							//							"ref": "extResultsFile"
 						}
-					]
-				}
-			]
-		},
-		"loggers" : {
-			"root" : {
-				"level" : "DEBUG",
-				"additivity" : "false",
-				"AppenderRef" : {
-					"ref" : "async"
-				}
-			},
-			"logger" : [
-				{
-					"name" : "io.netty.util.concurrent.DefaultPromise.rejectedExecution",
-					"level" : "FATAL",
-					"additivity" : "false"
+					],
+					"additivity" : false
 				},
 				{
-					"name" : "io.netty.channel.AbstractChannel",
-					"level" : "ERROR",
-					"additivity" : "false",
-					"AppenderRef" : {
-						"ref" : "async"
-					}
-				},
-				{
-					"name" : "com.emc.mongoose",
+					"name" : "com.emc.mongoose.ui.log.Multipart",
 					"level" : "DEBUG",
-					"additivity" : "false",
 					"AppenderRef" : {
-						"ref" : "async"
-					}
+						"ref" : "partsUploadFile"
+					},
+					"additivity" : false
 				}
 			]
 		}

@@ -23,7 +23,7 @@ extends Daemon {
 
 	long getGeneratedIoTasksCount();
 
-	SizeInBytes getItemSizeEstimate();
+	long getTransferSizeEstimate();
 
 	IoType getIoType();
 }

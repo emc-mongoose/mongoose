@@ -16,9 +16,9 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
 import static java.io.File.separatorChar;
@@ -32,7 +32,7 @@ extends AbstractManager {
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
 	private final int buffSize;
-	private final Map<String, OutputStream> outStreamsMap = new HashMap<>();
+	private final Map<String, OutputStream> outStreamsMap = new ConcurrentHashMap<>();
 	private final Layout<? extends Serializable> layout;
 	//
 	protected LoadJobLogFileManager(
@@ -140,10 +140,10 @@ extends AbstractManager {
 	protected final void write(
 		final String jobName, final byte[] buff, final int offset, final int len
 	) {
-		final OutputStream outStream = getOutputStream(jobName);
+		final OutputStream outStream = outStreamsMap.computeIfAbsent(jobName, this::prepareNewFile);
 		try {
 			outStream.write(buff, offset, len);
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			throw new AppenderLoggingException(
 				"Failed to write to the stream \"" + getName() + "\" for job name \""+jobName+"\"",
 				e
@@ -160,8 +160,8 @@ extends AbstractManager {
 		final File
 			outPutFile = new File(
 				jobName == null ?
-					getBaseDir() + separatorChar + "log" + separatorChar + fileName :
-					getBaseDir() + separatorChar + "log" + separatorChar + jobName + separatorChar + fileName
+					getBaseDir() + "log" + separatorChar + fileName :
+					getBaseDir() + "log" + separatorChar + jobName + separatorChar + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();
@@ -173,7 +173,6 @@ extends AbstractManager {
 			newOutPutStream = new BufferedOutputStream(
 				new FileOutputStream(outPutFile.getPath(), flagAppend), this.buffSize
 			);
-			outStreamsMap.put(jobName, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
 				final byte header[] = layout.getHeader();
 				if(header != null) {
@@ -185,14 +184,6 @@ extends AbstractManager {
 		}
 		//
 		return newOutPutStream;
-	}
-	//
-	protected final OutputStream getOutputStream(final String currRunId) {
-		OutputStream currentOutPutStream = outStreamsMap.get(currRunId);
-		if(currentOutPutStream == null) {
-			currentOutPutStream = prepareNewFile(currRunId);
-		}
-		return currentOutPutStream;
 	}
 	//
 	@Override
@@ -213,16 +204,7 @@ extends AbstractManager {
 		}
 		outStreamsMap.clear();
 		INSTANCES.remove(this);
-	}
-	//
-	public static void closeAll(final String runId) {
-		final LoadJobLogFileManager[] managers = new LoadJobLogFileManager[INSTANCES.size()];
-		INSTANCES.toArray(managers);
-		for(final LoadJobLogFileManager manager : managers) {
-			if(manager.outStreamsMap.containsKey(runId)) {
-				manager.close();
-			}
-		}
+		super.close();
 	}
 	/** Flushes all available output streams */
 	public final void flush() {

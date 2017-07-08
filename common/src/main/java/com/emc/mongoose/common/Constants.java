@@ -14,6 +14,8 @@ public interface Constants {
 	String FNAME_LOG_CONFIG = "logging.json";
 
 	String KEY_STEP_NAME = "step.name";
+	
+	String KEY_CLASS_NAME = "class.name";
 
 	int MIB = 0x10_00_00;
 
@@ -21,6 +23,4 @@ public interface Constants {
 	double M = 1e6;
 
 	Locale LOCALE_DEFAULT = Locale.ROOT;
-
-	int BATCH_SIZE = 0x1000;
 }

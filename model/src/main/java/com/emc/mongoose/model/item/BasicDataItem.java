@@ -13,7 +13,6 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.Arrays;
 import java.util.BitSet;
 import static java.lang.Math.min;
 
@@ -21,6 +20,8 @@ import static java.lang.Math.min;
  Created by kurila on 09.05.14.
  A data item which may produce uniformly distributed non-compressible content.
  Uses UniformDataSource as a ring buffer. Not thread safe.
+ Note: the {@link java.nio.channels.ReadableByteChannel#read(java.nio.ByteBuffer)}
+ method implementation will not return 0 or -1 (endless)
  */
 public class BasicDataItem
 extends BasicItem
@@ -34,7 +35,7 @@ implements DataItem {
 	//
 	private static final char LAYER_MASK_SEP = '/';
 	//
-	private ContentSource contentSrc;
+	private volatile ContentSource contentSrc;
 	private int ringBuffSize;
 	//
 	protected int layerNum = 0;
@@ -49,86 +50,80 @@ implements DataItem {
 		super();
 	}
 	//
-	public BasicDataItem(final ContentSource contentSrc) {
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
-		//setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
+	public BasicDataItem(final String value) {
+		this(value, value.indexOf(','));
 	}
 	//
-	public BasicDataItem(final String value, final ContentSource contentSrc) {
-		this(value.split(",", 4), contentSrc);
-	}
-	//
-	private BasicDataItem(final String tokens[], final ContentSource contentSrc) {
-		super(tokens[0]);
-		if(tokens.length == 4) {
-			try {
-				offset(Long.parseLong(tokens[1], 0x10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
-			}
-			try {
-				truncate(Long.parseLong(tokens[2], 10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
-			}
-			final String rangesInfo = tokens[3];
-			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
-			try {
-				// extract hexadecimal layer number
-				layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
-				// extract hexadecimal mask, convert into bit set and add to the existing mask
-				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
-				final char rangesMaskChars[];
-				if(rangesMask.length() == 0) {
-					rangesMaskChars = ("00" + rangesMask).toCharArray();
-				} else if(rangesMask.length() % 2 == 1) {
-					rangesMaskChars = ("0" + rangesMask).toCharArray();
-				} else {
-					rangesMaskChars = rangesMask.toCharArray();
-				}
-				// method "or" to merge w/ the existing mask
-				modifiedRangesMask.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
-			} catch(final DecoderException | NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
-			}
-		} else {
-			throw new IllegalArgumentException(
-				"Invalid data item description: " + Arrays.toString(tokens)
-			);
+	private BasicDataItem(final String value, final int firstCommaPos) {
+
+		super(value.substring(0, firstCommaPos));
+
+		int prevCommaPos = firstCommaPos;
+		int nextCommaPos = value.indexOf(',', prevCommaPos + 1);
+		if(nextCommaPos < prevCommaPos) {
+			throw new IllegalArgumentException("Invalid data item description: " + value);
 		}
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
+		final String offsetInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+		try {
+			offset(Long.parseLong(offsetInfo, 0x10));
+		} catch(final NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, offsetInfo));
+		}
+
+		prevCommaPos = nextCommaPos;
+		nextCommaPos = value.indexOf(',', prevCommaPos + 1);
+		if(nextCommaPos < prevCommaPos) {
+			throw new IllegalArgumentException("Invalid data item description: " + value);
+		}
+		final String sizeInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+		try {
+			truncate(Long.parseLong(sizeInfo, 10));
+		} catch(final NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, sizeInfo));
+		}
+
+		prevCommaPos = nextCommaPos;
+		final String rangesInfo = value.substring(prevCommaPos + 1);
+		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
+		try {
+			// extract hexadecimal layer number
+			layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
+			// extract hexadecimal mask, convert into bit set and add to the existing mask
+			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+			final char rangesMaskChars[];
+			if(rangesMask.length() == 0) {
+				rangesMaskChars = ("00" + rangesMask).toCharArray();
+			} else if(rangesMask.length() % 2 == 1) {
+				rangesMaskChars = ("0" + rangesMask).toCharArray();
+			} else {
+				rangesMaskChars = rangesMask.toCharArray();
+			}
+			// method "or" to merge w/ the existing mask
+			modifiedRangesMask.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
+		} catch(final DecoderException | NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
+		}
 	}
 	//
-	public BasicDataItem(
-		final long offset, final long size, final ContentSource contentSrc
-	) {
-		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+	public BasicDataItem(final long offset, final long size) {
+		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0);
 	}
 	//
-	public BasicDataItem(
-		final String name, final long offset, final long size, final ContentSource contentSrc
-	) {
-		this(name, offset, size, 0, contentSrc);
+	public BasicDataItem(final String name, final long offset, final long size) {
+		this(name, offset, size, 0);
 	}
 	//
-	public BasicDataItem(
-		final long offset, final long size, final int layerNum, final ContentSource contentSrc
-	) {
-		this(contentSrc);
+	public BasicDataItem(final long offset, final long size, final int layerNum) {
+		this();
 		this.layerNum = layerNum;
 		this.offset = offset;
 		this.size = size;
 	}
 	//
 	public BasicDataItem(
-		final String name, final long offset, final long size, final int layerNum,
-		final ContentSource contentSrc
+		final String name, final long offset, final long size, final int layerNum
 	) {
 		super(name);
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
 		this.layerNum = layerNum;
 		this.offset = offset;
 		this.size = size;
@@ -236,10 +231,13 @@ implements DataItem {
 		if(partSize < 1) {
 			throw new IllegalArgumentException();
 		}
-		/*if(from + partSize > size) {
-			throw new IllegalArgumentException();
-		}*/
-		return new BasicDataItem(name, offset + from, partSize, layerNum, contentSrc);
+		final BasicDataItem dataItemSlice = new BasicDataItem(
+			name, offset + from, partSize, layerNum
+		);
+		if(contentSrc != null) {
+			dataItemSlice.setContentSrc(contentSrc);
+		}
+		return dataItemSlice;
 	}
 	//
 	public long position() {
@@ -386,9 +384,9 @@ implements DataItem {
 						final int wordPos = k << 3;
 						byte bs, bi;
 						for(int i = 0; i < 8; i ++) {
-							bs = (byte) (ws & 0xFF);
+							bs = (byte) ws;
 							ws >>= 8;
-							bi = (byte) (wi & 0xFF);
+							bi = (byte) wi;
 							wi >>= 8;
 							if(bs != bi) {
 								throw new DataCorruptionException(wordPos + i, bs, bi);
@@ -424,12 +422,12 @@ implements DataItem {
 			return false;
 		}
 		final BasicDataItem other = (BasicDataItem) o;
-		return (size == other.size) && (offset == other.offset);
+		return super.equals(other) && offset == other.offset;
 	}
 	//
 	@Override
 	public int hashCode() {
-		return (int) (offset ^ size);
+		return super.hashCode() ^ (int) offset;
 	}
 	
 	@Override

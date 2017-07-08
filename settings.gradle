@@ -1,5 +1,6 @@
 include "common", "model", "ui", "run"
 include "load:generator"
+include "load:controller"
 include "load:monitor"
 include "storage:driver"
 include "storage:driver:nio"
