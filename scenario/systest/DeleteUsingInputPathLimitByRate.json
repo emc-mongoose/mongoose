@@ -27,13 +27,9 @@
 					}
 				},
 				"load" : {
-					"type" : "delete"
-				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"rate" : 1234
-						}
+					"type" : "delete",
+					"rate" : {
+						"limit" : 1234
 					}
 				}
 			}

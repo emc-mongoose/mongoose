@@ -97,10 +97,7 @@ implements NioStorageDriver<I, O> {
 			O ioTask;
 			final List<O> ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
 
-			try(
-				final Instance logCtx = CloseableThreadContext
-					.put(KEY_CLASS_NAME, CLS_NAME)
-			) {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 
 				while(isStarted() || isShutdown()) {
 					if(ioTaskBuff.tryLock()) {
@@ -216,7 +213,6 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected final boolean submit(final O ioTask)
 	throws InterruptedException {
-		ioTask.reset();
 		OptLockBuffer<O> ioTaskBuff;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {

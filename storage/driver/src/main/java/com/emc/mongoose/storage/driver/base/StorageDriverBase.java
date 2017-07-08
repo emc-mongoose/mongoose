@@ -67,7 +67,7 @@ implements StorageDriver<I, O> {
 	
 	private final ConcurrentMap<String, String> pathMap = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewPath(final String path);
-	protected Function<String, String> requestPathFunc = this::requestNewPath;
+	protected Function<String, String> requestNewPathFunc = this::requestNewPath;
 	
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewAuthToken(final Credential credential);
@@ -244,11 +244,13 @@ implements StorageDriver<I, O> {
 				authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
 			}
 		}
-		if(requestPathFunc != null) {
+		if(requestNewPathFunc != null) {
 			final String dstPath = ioTask.getDstPath();
 			// NOTE: in the distributed mode null dstPath becomes empty one
 			if(dstPath != null && !dstPath.isEmpty()) {
-				pathMap.computeIfAbsent(dstPath, requestPathFunc);
+				if(null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
+					ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
+				}
 			}
 		}
 	}

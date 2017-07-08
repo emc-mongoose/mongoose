@@ -6,16 +6,14 @@
 				"size" : 0
 			}
 		},
+		"load" : {
+			"rate" : {
+				"limit" : 1234.5
+			}
+		},
 		"storage" : {
 			"driver" : {
 				"concurrency" : 1000
-			}
-		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"rate" : 1234.5
-				}
 			}
 		}
 	}

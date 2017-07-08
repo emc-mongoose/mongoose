@@ -32,6 +32,7 @@ import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.ui.config.test.step.limit.fail.FailConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -80,6 +81,8 @@ implements LoadController<I, O> {
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
 	private final long countLimit;
 	private final long sizeLimit;
+	private final long failCountLimit;
+	private final boolean failRateLimitFlag;
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
 	private final int batchSize;
 	private final boolean isAnyCircular;
@@ -109,8 +112,8 @@ implements LoadController<I, O> {
 		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
 		this.name = name;
-		final StepConfig anyStepConfig = stepConfigs.values().iterator().next();
-		final double rateLimit = anyStepConfig.getLimitConfig().getRate();
+		final LoadConfig anyLoadConfig = loadConfigs.values().iterator().next();
+		final double rateLimit = anyLoadConfig.getRateConfig().getLimit();
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
 		} else {
@@ -147,7 +150,6 @@ implements LoadController<I, O> {
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		circularityMap = new Int2BooleanArrayMap(driversMap.size());
 		recycleQueuesMap = new Int2ObjectOpenHashMap<>(driversMap.size());
-		final LoadConfig anyLoadConfig = loadConfigs.values().iterator().next();
 		this.batchSize = anyLoadConfig.getBatchConfig().getSize();
 		final int queueSizeLimit = anyLoadConfig.getQueueConfig().getSize();
 		boolean anyCircularFlag = false;
@@ -196,6 +198,8 @@ implements LoadController<I, O> {
 
 		long countLimitSum = 0;
 		long sizeLimitSum = 0;
+		long failCountLimitSum = 0;
+		boolean failRateLimitTmpFlag = false;
 		for(final LoadGenerator<I, O> nextLoadGenerator : loadConfigs.keySet()) {
 			final LimitConfig nextLimitConfig = stepConfigs.get(nextLoadGenerator).getLimitConfig();
 			if(nextLimitConfig.getCount() > 0 && countLimitSum < Long.MAX_VALUE) {
@@ -208,9 +212,16 @@ implements LoadController<I, O> {
 			} else {
 				sizeLimitSum = Long.MAX_VALUE;
 			}
+			final FailConfig nextFailConfig = nextLimitConfig.getFailConfig();
+			failCountLimitSum += nextFailConfig.getCount();
+			if(nextFailConfig.getRate()) {
+				failRateLimitTmpFlag = true;
+			}
 		}
 		this.countLimit = countLimitSum;
 		this.sizeLimit = sizeLimitSum;
+		this.failCountLimit = failCountLimitSum;
+		this.failRateLimitFlag = failRateLimitTmpFlag;
 	}
 
 	private boolean isDoneCountLimit() {
@@ -308,6 +319,39 @@ implements LoadController<I, O> {
 		}
 		if(isDoneSizeLimit()) {
 			Loggers.MSG.debug("{}: done due to max size done state", getName());
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 @return true if the configured failures threshold is reached and the step should be stopped,
+	 false otherwise
+	 */
+	private boolean isFailThresholdReached() {
+		long failCountSum = 0;
+		double failRateLast = 0;
+		double succRateLast = 0;
+		MetricsContext.Snapshot nextMetricsSnapshot;
+		for(final int ioTypeCode : ioStats.keySet()) {
+			nextMetricsSnapshot = ioStats.get(ioTypeCode).getLastSnapshot();
+			failCountSum += nextMetricsSnapshot.getFailCount();
+			failRateLast += nextMetricsSnapshot.getFailRateLast();
+			succRateLast += nextMetricsSnapshot.getSuccRateLast();
+		}
+		if(failCountSum > failCountLimit) {
+			Loggers.ERR.warn(
+				"{}: failure count ({}) is more than the configured limit ({}), stopping the step",
+				name, failCountSum, failCountLimit
+			);
+			return true;
+		}
+		if(failRateLimitFlag && failRateLast > succRateLast) {
+			Loggers.ERR.warn(
+				"{}: failures rate ({} failures/sec) is more than success rate ({} op/sec), " +
+					"stopping the step",
+				name, failRateLast, succRateLast
+			);
 			return true;
 		}
 		return false;
@@ -734,6 +778,10 @@ implements LoadController<I, O> {
 			}
 			if(isDone()) {
 				Loggers.MSG.debug("{}: await exit due to \"done\" state", getName());
+				return true;
+			}
+			if(isFailThresholdReached()) {
+				Loggers.MSG.debug("{}: await exit due to \"BAD\" state", getName());
 				return true;
 			}
 			synchronized(driversMap) {

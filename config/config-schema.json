@@ -267,6 +267,19 @@
 						"addrs", "remote", "shuffle"
 					]
 				},
+				"rate": {
+					"type" : "object",
+					"additionalProperties" : false,
+					"properties" : {
+						"limit" : {
+							"type": "number",
+							"minimum" : 0
+						}
+					},
+					"required" : [
+						"limit"
+					]
+				},
 				"queue" : {
 					"type" : "object",
 					"additionalProperties": false,
@@ -288,7 +301,7 @@
 				}
 			},
 			"required": [
-				"batch", "circular", "generator", "queue", "type"
+				"batch", "circular", "generator", "rate", "queue", "type"
 			]
 		},
 		"output" : {
@@ -690,9 +703,21 @@
 									"type": "integer",
 									"minimum" : 0
 								},
-								"rate": {
-									"type": "number",
-									"minimum" : 0
+								"fail" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"count" : {
+											"type": "integer",
+											"minimum" : 0
+										},
+										"rate" : {
+											"type": "boolean"
+										}
+									},
+									"required" : [
+										"count", "rate"
+									]
 								},
 								"size": {
 									"oneOf" : [
@@ -720,7 +745,7 @@
 								}
 							},
 							"required": [
-								"count", "rate", "size", "time"
+								"count", "fail", "size", "time"
 							]
 						},
 						"id" : {

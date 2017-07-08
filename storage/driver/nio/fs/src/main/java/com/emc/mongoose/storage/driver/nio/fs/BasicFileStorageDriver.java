@@ -30,8 +30,9 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
-
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.BitSet;
@@ -76,6 +77,7 @@ implements FileStorageDriver<I, O> {
 					Level.WARN, e, "Failed to open the source channel for the path @ \"{}\"",
 					srcFilePath
 				);
+				ioTask.setStatus(Status.FAIL_IO);
 				return null;
 			}
 		};
@@ -103,16 +105,42 @@ implements FileStorageDriver<I, O> {
 				} else {
 					dstParentDirs.computeIfAbsent(dstPath, createParentDirFunc);
 					itemPath = FS.getPath(dstPath, fileItemName);
-
 				}
 				if(IoType.CREATE.equals(ioType)) {
 					return FS_PROVIDER.newFileChannel(itemPath, CREATE_OPEN_OPT);
 				} else {
 					return FS_PROVIDER.newFileChannel(itemPath, WRITE_OPEN_OPT);
 				}
-			} catch(final IOException e) {
+			} catch(final AccessDeniedException e) {
+				ioTask.setStatus(Status.RESP_FAIL_AUTH);
 				LogUtil.exception(
-					Level.WARN, e, "Failed to open the output channel for the path \"{}\"", dstPath
+					Level.DEBUG, e, "Access denied to open the output channel for the path \"{}\"",
+					dstPath
+				);
+				return null;
+			} catch(final NoSuchFileException e) {
+				ioTask.setStatus(Status.FAIL_IO);
+				LogUtil.exception(
+					Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath
+				);
+				return null;
+			} catch(final FileSystemException e) {
+				final long freeSpace = (new File(e.getFile())).getFreeSpace();
+				if(freeSpace > 0) {
+					ioTask.setStatus(Status.FAIL_IO);
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"",
+						dstPath
+					);
+				} else {
+					ioTask.setStatus(Status.RESP_FAIL_SPACE);
+					LogUtil.exception(Level.DEBUG, e, "No free space for the path \"{}\"", dstPath);
+				}
+				return null;
+			} catch(final IOException e) {
+				ioTask.setStatus(Status.FAIL_IO);
+				LogUtil.exception(
+					Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath
 				);
 				return null;
 			}
@@ -162,9 +190,14 @@ implements FileStorageDriver<I, O> {
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.FAIL_IO);
-					} else if(srcChannel == null) {
-						invokeCreate(item, ioTask, dstChannel);
+						break;
+					}
+					if(srcChannel == null) {
+						if(ioTask.getStatus().equals(Status.FAIL_IO)) {
+							break;
+						} else {
+							invokeCreate(item, ioTask, dstChannel);
+						}
 					} else { // copy the data from the src channel to the dst channel
 						invokeCopy(item, ioTask, srcChannel, dstChannel);
 					}
@@ -173,58 +206,57 @@ implements FileStorageDriver<I, O> {
 				case READ:
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(srcChannel == null) {
-						ioTask.setStatus(Status.FAIL_IO);
-					} else {
-						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
-						if(verifyFlag) {
-							try {
-								if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-									if(ioTask.hasMarkedRanges()) {
-										invokeReadAndVerifyRandomRanges(
-											item, ioTask, srcChannel,
-											ioTask.getMarkedRangesMaskPair()
-										);
-									} else {
-										invokeReadAndVerify(item, ioTask, srcChannel);
-									}
-								} else {
-									invokeReadAndVerifyFixedRanges(
-										item, ioTask, srcChannel, fixedByteRanges
-									);
-								}
-							} catch(final DataSizeException e) {
-								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
-								final long
-									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-								ioTask.setCountBytesDone(countBytesDone);
-								Loggers.MSG.debug(
-									"{}: content size mismatch, expected: {}, actual: {}",
-									item.getName(), item.size(), countBytesDone
-								);
-							} catch(final DataCorruptionException e) {
-								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
-								final long
-									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-								ioTask.setCountBytesDone(countBytesDone);
-								Loggers.MSG.debug(
-									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-									item.getName(), countBytesDone,
-									String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
-									String.format("\"0x%X\"", (int) (e.actual & 0xFF))
-								);
-							}
-						} else {
-							if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+						break;
+					}
+					final List<ByteRange> fixedByteRangesToRead = ioTask.getFixedRanges();
+					if(verifyFlag) {
+						try {
+							if(fixedByteRangesToRead == null || fixedByteRangesToRead.isEmpty()) {
 								if(ioTask.hasMarkedRanges()) {
-									invokeReadRandomRanges(
-										item, ioTask, srcChannel, ioTask.getMarkedRangesMaskPair()
+									invokeReadAndVerifyRandomRanges(
+										item, ioTask, srcChannel,
+										ioTask.getMarkedRangesMaskPair()
 									);
 								} else {
-									invokeRead(item, ioTask, srcChannel);
+									invokeReadAndVerify(item, ioTask, srcChannel);
 								}
 							} else {
-								invokeReadFixedRanges(item, ioTask, srcChannel, fixedByteRanges);
+								invokeReadAndVerifyFixedRanges(
+									item, ioTask, srcChannel, fixedByteRangesToRead
+								);
 							}
+						} catch(final DataSizeException e) {
+							ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
+							final long
+								countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
+							ioTask.setCountBytesDone(countBytesDone);
+							Loggers.MSG.debug(
+								"{}: content size mismatch, expected: {}, actual: {}",
+								item.getName(), item.size(), countBytesDone
+							);
+						} catch(final DataCorruptionException e) {
+							ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
+							final long
+								countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
+							ioTask.setCountBytesDone(countBytesDone);
+							Loggers.MSG.debug(
+								"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+								item.getName(), countBytesDone,
+								String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
+								String.format("\"0x%X\"", (int) (e.actual & 0xFF))
+							);
+						}
+					} else {
+						if(fixedByteRangesToRead == null || fixedByteRangesToRead.isEmpty()) {
+							if(ioTask.hasMarkedRanges()) {
+								invokeReadRandomRanges(
+									item, ioTask, srcChannel, ioTask.getMarkedRangesMaskPair()
+								);
+							} else {
+								invokeRead(item, ioTask, srcChannel);
+							}
+						} else {
+							invokeReadFixedRanges(item, ioTask, srcChannel, fixedByteRangesToRead);
 						}
 					}
 					break;
@@ -232,18 +264,17 @@ implements FileStorageDriver<I, O> {
 				case UPDATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.FAIL_IO);
-					} else {
-						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
-						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-							if(ioTask.hasMarkedRanges()) {
-								invokeRandomRangesUpdate(item, ioTask, dstChannel);
-							} else {
-								throw new AssertionError("Not implemented");
-							}
+						break;
+					}
+					final List<ByteRange> fixedByteRangesToUpdate = ioTask.getFixedRanges();
+					if(fixedByteRangesToUpdate == null || fixedByteRangesToUpdate.isEmpty()) {
+						if(ioTask.hasMarkedRanges()) {
+							invokeRandomRangesUpdate(item, ioTask, dstChannel);
 						} else {
-							invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedByteRanges);
+							throw new AssertionError("Not implemented");
 						}
+					} else {
+						invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedByteRangesToUpdate);
 					}
 					break;
 				

@@ -349,6 +349,24 @@
 								}
 							}
 						},
+						"rate": {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"limit" : {
+									"oneOf" : [
+										{
+											"type": "number",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								}
+							}
+						},
 						"queue" : {
 							"type" : "object",
 							"additionalProperties" : false,
@@ -910,17 +928,34 @@
 												}
 											]
 										},
-										"rate": {
-											"oneOf" : [
-												{
-													"type": "number",
-													"minimum" : 0
+										"fail" : {
+											"type" : "object",
+											"additionalProperties" : false,
+											"properties" : {
+												"count" : {
+													"oneOf" : [
+														{
+															"type" : "integer",
+															"minimum" : 0
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
 												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+												"rate" : {
+													"oneOf" : [
+														{
+															"type" : "boolean"
+														},
+														{
+															"type" : "string",
+															"pattern" : "\\$\\{.+\\}"
+														}
+													]
 												}
-											]
+											}
 										},
 										"size": {
 											"oneOf" : [

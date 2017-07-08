@@ -1,6 +1,7 @@
 package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.tests.perf.util.mock.BasicMultiNodeConnPoolMock;
 import com.emc.mongoose.tests.perf.util.mock.DummyChannelPoolHandlerMock;
@@ -71,19 +72,22 @@ public class BasicMultiNodeConnPoolTest {
 						final List<Channel> connBuff = new ArrayList<>(BATCH_SIZE);
 						int j, k;
 						Channel c;
-						while(!currThread.isInterrupted()) {
-							for(j = 0; j < BATCH_SIZE; j ++) {
-								c = connPool.lease();
-								if(c == null) {
-									break;
+						try {
+							while(!currThread.isInterrupted()) {
+								for(j = 0; j < BATCH_SIZE; j ++) {
+									c = connPool.lease();
+									if(c == null) {
+										break;
+									}
+									connBuff.add(c);
 								}
-								connBuff.add(c);
+								for(k = 0; k < j; k ++) {
+									connPool.release(connBuff.get(k));
+									opCount.increment();
+								}
+								connBuff.clear();
 							}
-							for(k = 0; k < j; k ++) {
-								connPool.release(connBuff.get(k));
-								opCount.increment();
-							}
-							connBuff.clear();
+						} catch(final ConnLeaseException ignored) {
 						}
 					}
 				);

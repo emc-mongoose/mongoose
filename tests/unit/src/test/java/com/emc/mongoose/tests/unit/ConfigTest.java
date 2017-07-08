@@ -97,7 +97,7 @@ public class ConfigTest {
 		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
 		assertThat(limitConfig, notNullValue());
 		assertThat(limitConfig.getCount(), equalTo(0L, "load.limit.count"));
-		assertThat(limitConfig.getRate(), equalTo(0.0, "load.limit.rate"));
+		assertThat(loadConfig.getRateConfig().getLimit(), equalTo(0.0, "load.limit.rate"));
 		assertThat(limitConfig.getSize(), equalTo(new SizeInBytes(0), "load.limit.size"));
 		final String timeTestValue = "0s";
 		assertThat(
@@ -232,7 +232,7 @@ public class ConfigTest {
 		assertEquals(1, dataConfig.getRangesConfig().getRandom());
 		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
 		assertEquals(1000, limitConfig.getCount());
-		assertEquals(12.345, limitConfig.getRate());
+		assertEquals(12.345, config.getLoadConfig().getRateConfig().getLimit());
 		assertEquals("321KB", limitConfig.getSize().toString());
 		assertEquals(300, limitConfig.getTime());
 		assertEquals(4, netConfig.getNodeConfig().getAddrs().size());

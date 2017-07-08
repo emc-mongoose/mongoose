@@ -10,6 +10,7 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
 import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
+import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.model.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
@@ -237,7 +238,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(!isStarted()) {
 			throw new InterruptedException();
 		}
-		ioTask.reset();
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
@@ -266,6 +266,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
+		} catch(final ConnLeaseException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
+			ioTask.setStatus(IoTask.Status.FAIL_IO);
+			complete(null, ioTask);
 		}
 		return true;
 
@@ -283,7 +287,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		) {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
-				nextIoTask.reset();
 				if(IoType.NOOP.equals(nextIoTask.getIoType())) {
 					concurrencyThrottle.acquire();
 					nextIoTask.startRequest();
@@ -312,6 +315,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		} catch(final RejectedExecutionException e) {
 			if(!isInterrupted()) {
 				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
+			}
+		} catch(final ConnLeaseException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
+			for(int i = from; i < to; i ++) {
+				nextIoTask = ioTasks.get(i);
+				nextIoTask.setStatus(IoTask.Status.FAIL_IO);
+				complete(null, nextIoTask);
 			}
 		}
 		return to - from;
@@ -484,7 +494,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
 		}
-		if(!IoType.NOOP.equals(ioTask.getIoType())) {
+		if(channel != null) {
 			connPool.release(channel);
 		}
 		ioTaskCompleted(ioTask);

@@ -177,8 +177,8 @@ extends ConfiguredTestBase {
 						(int) CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod(),
 						failConfig.getConnections(), failConfig.getResponses(), contentSrc,
 						netConfig.getNodeConfig().getPort(), netConfig.getSsl(),
-						(float) stepConfig.getLimitConfig().getRate(), namingConfig.getPrefix(),
-						namingConfig.getRadix()
+						(float) CONFIG.getLoadConfig().getRateConfig().getLimit(),
+						namingConfig.getPrefix(), namingConfig.getRadix()
 					);
 					storageMock = storageMockFactory.newStorageMock();
 					nextNodeAddr = "127.0.0.1:" + (port + i);

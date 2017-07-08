@@ -98,7 +98,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
-		requestPathFunc = null; // do not use
+		requestNewPathFunc = null; // do not use
 	}
 
 	@Override

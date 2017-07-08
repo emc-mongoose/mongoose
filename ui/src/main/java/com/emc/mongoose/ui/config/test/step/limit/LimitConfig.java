@@ -4,6 +4,7 @@ import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.ui.config.SizeInBytesDeserializer;
 import com.emc.mongoose.ui.config.SizeInBytesSerializer;
 import com.emc.mongoose.ui.config.TimeStrToLongDeserializer;
+import com.emc.mongoose.ui.config.test.step.limit.fail.FailConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -17,7 +18,7 @@ public final class LimitConfig
 implements Serializable {
 
 	public static final String KEY_COUNT = "count";
-	public static final String KEY_RATE = "rate";
+	public static final String KEY_FAIL = "fail";
 	public static final String KEY_SIZE = "size";
 	public static final String KEY_TIME = "time";
 
@@ -25,8 +26,8 @@ implements Serializable {
 		this.count = count;
 	}
 
-	public final void setRate(final double rate) {
-		this.rate = rate;
+	public final void setFailConfig(final FailConfig failConfig) {
+		this.failConfig = failConfig;
 	}
 
 	public final void setSize(final SizeInBytes size) {
@@ -39,7 +40,7 @@ implements Serializable {
 
 	@JsonProperty(KEY_COUNT) private long count;
 
-	@JsonProperty(KEY_RATE) private double rate;
+	@JsonProperty(KEY_FAIL) private FailConfig failConfig;
 
 	@JsonDeserialize(using = SizeInBytesDeserializer.class)
 	@JsonSerialize(using = SizeInBytesSerializer.class)
@@ -55,7 +56,7 @@ implements Serializable {
 	public LimitConfig(final LimitConfig other) {
 		this.count = other.getCount();
 		this.time = other.getTime();
-		this.rate = other.getRate();
+		this.failConfig = other.getFailConfig();
 		this.size = new SizeInBytes(other.getSize());
 	}
 
@@ -63,8 +64,8 @@ implements Serializable {
 		return count;
 	}
 
-	public final double getRate() {
-		return rate;
+	public final FailConfig getFailConfig() {
+		return failConfig;
 	}
 
 	public final SizeInBytes getSize() {

@@ -86,6 +86,11 @@
 			// what should make the order of the I/O tasks execution randomized
 			"shuffle" : false
 		},
+		"rate" : {
+			// The maximum number of the operations per second (throughput limit) for the test step.
+			// 0 means no rate limit.
+			"limit" : 0
+		},
 		"queue" : {
 			// The maximum number of the unique items processed in the case of the circular load
 			"size" : 1000000
@@ -270,11 +275,15 @@
 			// Specifies also the logs sub directory path: log/<TEST_ID>/<STEP_ID>/
 			"id" : null,
 			"limit" : {
-				// The maximum number of the items to process for any load step. 0 means infinite
+				// The maximum number of the items to process for any load step. 0 means no limit
 				"count" : 0,
-				// The maximum number of the items to process per second (throughput limit).
-				// 0 means no rate limit.
-				"rate" : 0,
+				"fail" : {
+					// The maximum number of the failed I/O tasks before the step will be stopped,
+					// 0 means no limit
+					"count" : 100000,
+					// Stop the step if failures rate is more than success rate and if the flag is set to true
+					"rate" : false
+				},
 				// The maximum size of the data items to process. 0 means no size limit.
 				"size" : 0,
 				// The maximum time to perform a load step. 0 means no time limit
@@ -455,7 +464,7 @@
 		{
 			"name" : "load-limit-rate",
 			"deprecated" : true,
-			"target" : "test-step-limit-rate"
+			"target" : "load-rate-limit"
 		},
 		{
 			"name" : "load-limit-size",
@@ -515,6 +524,11 @@
 			"name" : "test-step-name",
 			"deprecated" : true,
 			"target" : "test-step-id"
+		},
+		{
+			"name" : "test-step-limit-rate",
+			"deprecated" : true,
+			"target" : "load-rate-limit"
 		}
 	]
 }

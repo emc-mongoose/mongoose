@@ -28,8 +28,7 @@ import java.util.concurrent.ThreadLocalRandom;
  The provided semaphore limits the count of the simultaneously used connections.
  Based on netty.
  */
-public class
-BasicMultiNodeConnPool
+public class BasicMultiNodeConnPool
 implements NonBlockingConnPool {
 
 	private final Semaphore concurrencyThrottle;
@@ -131,35 +130,47 @@ implements NonBlockingConnPool {
 				}
 			}
 
-			// connect to the selected endpoint node
-			Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
-			try {
-				conn = connect(selectedNodeAddr);
-				conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
-				connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
-				if(connAttemptsLimit > 0) {
-					// reset the connection failures counter if connected successfully
-					failedConnAttemptsCounts.put(selectedNodeAddr, 0);
-				}
-			} catch(final Exception e) {
-				LogUtil.exception(
-					Level.DEBUG, e, "Failed to create a new connection to {}", selectedNodeAddr
-				);
-				if(connAttemptsLimit > 0) {
-					final int selectedNodeFailedConnAttemptsCount = failedConnAttemptsCounts
-						.getInt(selectedNodeAddr) + 1;
-					failedConnAttemptsCounts.put(
-						selectedNodeAddr, selectedNodeFailedConnAttemptsCount
+			if(selectedNodeAddr != null) {
+				// connect to the selected endpoint node
+				Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
+				try {
+					conn = connect(selectedNodeAddr);
+					conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
+					connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
+					if(connAttemptsLimit > 0) {
+						// reset the connection failures counter if connected successfully
+						failedConnAttemptsCounts.put(selectedNodeAddr, 0);
+					}
+				} catch(final Exception e) {
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to create a new connection to {}", selectedNodeAddr
 					);
-					if(selectedNodeFailedConnAttemptsCount > connAttemptsLimit) {
-						Loggers.ERR.warn(
-							"Failed to connect to the node \"{}\" {} times successively, " +
-								"excluding from the node from the pool",
+					if(connAttemptsLimit > 0) {
+						final int selectedNodeFailedConnAttemptsCount = failedConnAttemptsCounts
+							.getInt(selectedNodeAddr) + 1;
+						failedConnAttemptsCounts.put(
 							selectedNodeAddr, selectedNodeFailedConnAttemptsCount
 						);
-						// the node having virtually Integer.MAX_VALUE established connections
-						// will never be selected by the algorithm
-						connsCountMap.put(selectedNodeAddr, Integer.MAX_VALUE);
+						if(selectedNodeFailedConnAttemptsCount > connAttemptsLimit) {
+							Loggers.ERR.error(
+								"Failed to connect to the node \"{}\" {} times successively, " +
+									"excluding the node from the connection pool forever",
+								selectedNodeAddr, selectedNodeFailedConnAttemptsCount
+							);
+							// the node having virtually Integer.MAX_VALUE established connections
+							// will never be selected by the algorithm
+							connsCountMap.put(selectedNodeAddr, Integer.MAX_VALUE);
+							boolean allNodesExcluded = true;
+							for(final String node : nodes) {
+								if(connsCountMap.getInt(node) < Integer.MAX_VALUE) {
+									allNodesExcluded = false;
+									break;
+								}
+							}
+							if(allNodesExcluded) {
+								Loggers.ERR.fatal("No storage nodes left in the connection pool!");
+							}
+						}
 					}
 				}
 			}
@@ -188,7 +199,8 @@ implements NonBlockingConnPool {
 	}
 
 	@Override
-	public final Channel lease() {
+	public final Channel lease()
+	throws ConnLeaseException {
 		Channel conn = null;
 		if(concurrencyThrottle.tryAcquire()) {
 			if(null == (conn = poll())) {
@@ -196,13 +208,15 @@ implements NonBlockingConnPool {
 			}
 			if(conn == null) {
 				concurrencyThrottle.release();
+				throw new ConnLeaseException();
 			}
 		}
 		return conn;
 	}
 	
 	@Override
-	public final int lease(final List<Channel> conns, final int maxCount) {
+	public final int lease(final List<Channel> conns, final int maxCount)
+	throws ConnLeaseException {
 		int availableCount = concurrencyThrottle.drainPermits();
 		if(availableCount == 0) {
 			return availableCount;
@@ -219,7 +233,7 @@ implements NonBlockingConnPool {
 			}
 			if(conn == null) {
 				concurrencyThrottle.release(availableCount - i);
-				return i;
+				throw new ConnLeaseException();
 			} else {
 				conns.add(conn);
 			}
