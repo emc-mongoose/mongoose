@@ -272,7 +272,7 @@
 		},
 		"step" : {
 			// The test step id. Generated automatically if not specified (null).
-			// Specifies also the logs sub directory path: log/<TEST_ID>/<STEP_ID>/
+			// Specifies also the logs sub directory path: log/<STEP_ID>/
 			"id" : null,
 			"limit" : {
 				// The maximum number of the items to process for any load step. 0 means no limit
