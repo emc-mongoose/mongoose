@@ -76,10 +76,10 @@ extends StepBase {
 	@Override
 	protected final void invoke() {
 
-		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
-		final String stepName = localStepConfig.getId();
-		Loggers.MSG.info("Run the mixed load step \"{}\"", stepName);
-		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
+		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
+		final String stepId = stepConfig.getId();
+		Loggers.MSG.info("Run the mixed load step \"{}\"", stepId);
+		final LimitConfig localLimitConfig = stepConfig.getLimitConfig();
 		
 		final long t = localLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
@@ -116,7 +116,6 @@ extends StepBase {
 				final OutputConfig outputConfig = config.getOutputConfig();
 				final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
-				final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 				final LimitConfig limitConfig = stepConfig.getLimitConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
@@ -151,7 +150,7 @@ extends StepBase {
 		
 		try(
 			final LoadController controller = new BasicLoadController(
-				stepName, driverMap, weightMap, loadConfigMap, stepConfigMap, outputConfigMap
+				stepId, driverMap, weightMap, loadConfigMap, stepConfig, outputConfigMap
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();

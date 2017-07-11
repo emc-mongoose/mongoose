@@ -148,12 +148,10 @@ extends StepBase {
 				driversMap.put(loadGenerator, drivers);
 				final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
 				loadConfigMap.put(loadGenerator, loadConfig);
-				final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
-				stepConfigMap.put(loadGenerator, stepConfig);
 				final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
 				outputConfigMap.put(loadGenerator, outputConfig);
 				final LoadController loadController = new BasicLoadController(
-					stepConfig.getId(), driversMap, null, loadConfigMap, stepConfigMap,
+					stepConfig.getId(), driversMap, null, loadConfigMap, stepConfig,
 					outputConfigMap
 				);
 				loadChain.add(loadController);

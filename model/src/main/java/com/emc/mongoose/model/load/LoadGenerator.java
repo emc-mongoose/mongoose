@@ -1,6 +1,5 @@
 package com.emc.mongoose.model.load;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.concurrent.Daemon;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.concurrent.WeightThrottle;
@@ -26,4 +25,6 @@ extends Daemon {
 	long getTransferSizeEstimate();
 
 	IoType getIoType();
+	
+	int getBatchSize();
 }

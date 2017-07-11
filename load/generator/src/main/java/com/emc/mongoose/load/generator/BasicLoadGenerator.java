@@ -123,7 +123,12 @@ implements LoadGenerator<I, O>, SvcTask {
 	public final IoType getIoType() {
 		return ioTaskBuilder.getIoType();
 	}
-
+	
+	@Override
+	public final int getBatchSize() {
+		return batchSize;
+	}
+	
 	@Override
 	public final void run() {
 

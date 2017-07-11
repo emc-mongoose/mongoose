@@ -108,12 +108,11 @@ implements LoadController<I, O> {
 	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs,
-		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
+		final StepConfig stepConfig, final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
 		this.name = name;
-		final LoadConfig anyLoadConfig = loadConfigs.values().iterator().next();
-		final double rateLimit = anyLoadConfig.getRateConfig().getLimit();
+		final LoadConfig firstLoadConfig = loadConfigs.values().iterator().next();
+		final double rateLimit = firstLoadConfig.getRateConfig().getLimit();
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
 		} else {
@@ -131,7 +130,7 @@ implements LoadController<I, O> {
 			try {
 				nextGeneratorOutput = new RoundRobinOutputsTransferSvcTask<>(
 					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(),
-					loadConfigs.get(nextGenerator).getBatchConfig().getSize()
+					nextGenerator.getBatchSize()
 				);
 			} catch(final RemoteException ignored) {
 			}
@@ -150,14 +149,14 @@ implements LoadController<I, O> {
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		circularityMap = new Int2BooleanArrayMap(driversMap.size());
 		recycleQueuesMap = new Int2ObjectOpenHashMap<>(driversMap.size());
-		this.batchSize = anyLoadConfig.getBatchConfig().getSize();
-		final int queueSizeLimit = anyLoadConfig.getQueueConfig().getSize();
+		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
+		final int queueSizeLimit = firstLoadConfig.getQueueConfig().getSize();
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
-			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
 			final MetricsConfig nextMetricsConfig = outputConfigs
 				.get(nextGenerator).getMetricsConfig();
+			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
 			final int nextOriginCode = nextGenerator.hashCode();
 			circularityMap.put(nextOriginCode, nextLoadConfig.getCircular());
 			if(circularityMap.get(nextOriginCode)) {
@@ -196,32 +195,13 @@ implements LoadController<I, O> {
 			latestIoResultsPerItem = null;
 		}
 
-		long countLimitSum = 0;
-		long sizeLimitSum = 0;
-		long failCountLimitSum = 0;
-		boolean failRateLimitTmpFlag = false;
-		for(final LoadGenerator<I, O> nextLoadGenerator : loadConfigs.keySet()) {
-			final LimitConfig nextLimitConfig = stepConfigs.get(nextLoadGenerator).getLimitConfig();
-			if(nextLimitConfig.getCount() > 0 && countLimitSum < Long.MAX_VALUE) {
-				countLimitSum += nextLimitConfig.getCount();
-			} else {
-				countLimitSum = Long.MAX_VALUE;
-			}
-			if(nextLimitConfig.getSize().get() > 0 && sizeLimitSum < Long.MAX_VALUE) {
-				sizeLimitSum += nextLimitConfig.getSize().get();
-			} else {
-				sizeLimitSum = Long.MAX_VALUE;
-			}
-			final FailConfig nextFailConfig = nextLimitConfig.getFailConfig();
-			failCountLimitSum += nextFailConfig.getCount();
-			if(nextFailConfig.getRate()) {
-				failRateLimitTmpFlag = true;
-			}
-		}
-		this.countLimit = countLimitSum;
-		this.sizeLimit = sizeLimitSum;
-		this.failCountLimit = failCountLimitSum;
-		this.failRateLimitFlag = failRateLimitTmpFlag;
+		final LimitConfig limitConfig = stepConfig.getLimitConfig();
+		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
+		this.sizeLimit = limitConfig.getSize().get() > 0 ?
+			limitConfig.getSize().get() : Long.MAX_VALUE;
+		final FailConfig failConfig = limitConfig.getFailConfig();
+		this.failCountLimit = failConfig.getCount() > 0 ? failConfig.getCount() : Long.MAX_VALUE;
+		this.failRateLimitFlag = failConfig.getRate();
 	}
 
 	private boolean isDoneCountLimit() {

@@ -13,16 +13,10 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +49,6 @@ implements SvcTask {
 	
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
-	private static final MBeanServer MBEAN_SRV;
 
 	static {
 
@@ -65,8 +58,6 @@ implements SvcTask {
 		} catch(final Throwable cause) {
 			throw new AssertionError(cause);
 		}
-
-		MBEAN_SRV = ManagementFactory.getPlatformMBeanServer();
 	}
 	
 	public static void register(final LoadController controller, final MetricsContext metricsCtx)

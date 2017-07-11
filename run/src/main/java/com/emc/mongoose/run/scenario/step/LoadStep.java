@@ -133,13 +133,11 @@ extends StepBase {
 		driversMap.put(loadGenerator, drivers);
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
 		loadConfigMap.put(loadGenerator, loadConfig);
-		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
-		stepConfigMap.put(loadGenerator, stepConfig);
 		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
 		outputConfigMap.put(loadGenerator, outputConfig);
 		try(
 			final LoadController controller = new BasicLoadController(
-				stepId, driversMap, null, loadConfigMap, stepConfigMap, outputConfigMap
+				stepId, driversMap, null, loadConfigMap, stepConfig, outputConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();
