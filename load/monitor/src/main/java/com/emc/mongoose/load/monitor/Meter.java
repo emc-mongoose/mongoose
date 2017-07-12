@@ -9,6 +9,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import java.io.IOException;
+import java.util.Hashtable;
 
 import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.common.net.ServiceUtil.MBEAN_SERVER;
@@ -25,7 +26,12 @@ implements MeterMBean {
 	public Meter(final MetricsContext metricsCtx)
 	throws MalformedObjectNameException {
 		this.metricsCtx = metricsCtx;
-		objectName = new ObjectName(METRICS_DOMAIN, KEY_TEST_STEP_ID, metricsCtx.getStepId());
+		final Hashtable<String, String> props = new Hashtable<>();
+		props.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
+		props.put(KEY_LOAD_TYPE, metricsCtx.getIoType().name());
+		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.getDriverCount()));
+		props.put(KEY_STORAGE_DRIVER_CONCURRENCY, Integer.toString(metricsCtx.getConcurrency()));
+		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.setMetricsListener(this);
 		try {
 			MBEAN_SERVER.registerMBean(this, objectName);

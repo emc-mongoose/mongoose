@@ -1,9 +1,0 @@
----
-ssl: false
-whitelistObjectNames: [ "com.emc.mongoose.model.metrics:*" ]
-rules:
-  - pattern: "com.emc.mongoose.model.metrics<stepId=(.+)><>(\\w+): (.+)"
-    name: mongoose
-    labels:
-      test_step_id: "$1"
-      "$2": "$3"
