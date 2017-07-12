@@ -10,5 +10,5 @@ import java.io.Closeable;
  */
 public interface MeterMBean
 extends Closeable, MetricsListener, MetricsContext.Snapshot {
-	String METRICS_DOMAIN = MeterMBean.class.getPackage().getName();
+	String METRICS_DOMAIN = MetricsContext.class.getPackage().getName();
 }

@@ -3,7 +3,6 @@ package com.emc.mongoose.ui.log;
 import com.emc.mongoose.model.DaemonBase;
 
 import static com.emc.mongoose.common.Constants.KEY_BASE_DIR;
-import static com.emc.mongoose.common.Constants.KEY_TEST_ID;
 import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.common.env.PathUtil.BASE_DIR;
@@ -55,7 +54,6 @@ implements ShutdownCallbackRegistry {
 	//
 	public static void init() {
 		ThreadContext.put(KEY_BASE_DIR, BASE_DIR);
-		ThreadContext.put(KEY_TEST_ID, getDateTimeStamp());
 		try {
 			Runtime.getRuntime().addShutdownHook(
 				new Thread("logCtxShutDownHook") {

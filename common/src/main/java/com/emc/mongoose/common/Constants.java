@@ -11,13 +11,11 @@ public interface Constants {
 
 	String FNAME_CONFIG = "defaults.json";
 
-	String KEY_BASE_DIR = "base.dir";
+	String KEY_BASE_DIR = "baseDir";
 
-	String KEY_TEST_ID = "test.id";
-
-	String KEY_TEST_STEP_ID = "test.step.id";
+	String KEY_TEST_STEP_ID = "stepId";
 	
-	String KEY_CLASS_NAME = "class.name";
+	String KEY_CLASS_NAME = "className";
 
 	int MIB = 0x10_00_00;
 
