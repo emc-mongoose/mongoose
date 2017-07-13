@@ -1,0 +1,7 @@
+FROM emcmongoose/mongoose
+
+RUN curl -o /opt/jmx_prometheus_exporter_standalone-0.9.jar https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.9/jmx_prometheus_httpserver-0.9-jar-with-dependencies.jar
+
+RUN java -jar /opt/jmx_prometheus_exporter_standalone-0.9.jar 9280 /opt/mongoose/config/jmx_exporter.yaml
+
+CMD ["java", "-jar", "/opt/mongoose/mongoose.jar"]

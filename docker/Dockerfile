@@ -1,6 +1,4 @@
-FROM java:8
-
-MAINTAINER EMC
+FROM openjdk:8-jre
 
 ADD build/dist/mongoose*.tgz /opt/
 
