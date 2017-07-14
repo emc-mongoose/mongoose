@@ -1,5 +1,0 @@
-FROM emcmongoose/mongoose:3.5.0
-
-ADD jmx_prometheus_exporter_standalone-0.9.jar /opt/jmx_prometheus_exporter_standalone-0.9.jar
-
-CMD ["java", "-jar", "/opt/mongoose/mongoose.jar"]

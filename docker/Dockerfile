@@ -1,4 +1,4 @@
-FROM openjdk:8-jre
+FROM openjdk:8-jre-alpine
 
 ADD build/dist/mongoose*.tgz /opt/
 
