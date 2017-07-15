@@ -116,9 +116,9 @@ public abstract class ServiceUtil {
 		try {
 			ensureRmiRegistryIsAvailableAt(port);
 			final RMIClientSocketFactory clientSocketFactory = RMI_CLIENT_SOCKET_FACTORY_MAP
-				.computeIfAbsent(port, FixedPortRmiClientSocketFactory::new);
+				.computeIfAbsent(port + 1, FixedPortRmiClientSocketFactory::new);
 			final RMIServerSocketFactory serverSocketFactory = RMI_SERVER_SOCKET_FACTORY_MAP
-				.computeIfAbsent(port, FixedPortRmiServerSocketFactory::new);
+				.computeIfAbsent(port + 1, FixedPortRmiServerSocketFactory::new);
 			UnicastRemoteObject.exportObject(svc, port, clientSocketFactory, serverSocketFactory);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
