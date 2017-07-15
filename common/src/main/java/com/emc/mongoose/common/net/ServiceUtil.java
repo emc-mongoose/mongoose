@@ -20,8 +20,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.RemoteObjectInvocationHandler;
 import java.rmi.server.UnicastRemoteObject;
@@ -36,10 +34,6 @@ import static java.lang.reflect.Proxy.getInvocationHandler;
 public abstract class ServiceUtil {
 
 	private static Int2ObjectMap<Registry> REGISTRY_MAP = new Int2ObjectOpenHashMap<>();
-	private static Int2ObjectMap<RMIClientSocketFactory>
-		RMI_CLIENT_SOCKET_FACTORY_MAP = new Int2ObjectOpenHashMap<>();
-	private static Int2ObjectMap<RMIServerSocketFactory>
-		RMI_SERVER_SOCKET_FACTORY_MAP = new Int2ObjectOpenHashMap<>();
 	private static final String RMI_SCHEME = "rmi";
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
 	private static final Map<String, Service> SVC_MAP = new HashMap<>();
@@ -52,6 +46,16 @@ public abstract class ServiceUtil {
 			} catch(final RemoteException e) {
 				REGISTRY_MAP.put(port, LocateRegistry.getRegistry(port));
 			}
+		}
+	}
+
+	private static void ensureRmiUseFixedPort(final int port)
+	throws IOException, IllegalStateException {
+		final RMISocketFactory prevSocketFactory = RMISocketFactory.getSocketFactory();
+		if(prevSocketFactory == null) {
+			RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
+		} else if(!(prevSocketFactory instanceof FixedPortRmiSocketFactory)) {
+			throw new IllegalStateException("Invalid RMI socket factory was set");
 		}
 	}
 
@@ -115,11 +119,8 @@ public abstract class ServiceUtil {
 	public static String create(final Service svc, final int port) {
 		try {
 			ensureRmiRegistryIsAvailableAt(port);
-			final RMIClientSocketFactory clientSocketFactory = RMI_CLIENT_SOCKET_FACTORY_MAP
-				.computeIfAbsent(port + 1, FixedPortRmiClientSocketFactory::new);
-			final RMIServerSocketFactory serverSocketFactory = RMI_SERVER_SOCKET_FACTORY_MAP
-				.computeIfAbsent(port + 1, FixedPortRmiServerSocketFactory::new);
-			UnicastRemoteObject.exportObject(svc, port, clientSocketFactory, serverSocketFactory);
+			ensureRmiUseFixedPort(port);
+			UnicastRemoteObject.exportObject(svc, port);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
 			synchronized(SVC_MAP) {
@@ -131,7 +132,7 @@ public abstract class ServiceUtil {
 				}
 			}
 			return svcUri;
-		} catch(final IOException | URISyntaxException | IllegalStateException e) {
+		} catch(final IOException | URISyntaxException e) {
 			e.printStackTrace(System.err);
 			return null;
 		}
