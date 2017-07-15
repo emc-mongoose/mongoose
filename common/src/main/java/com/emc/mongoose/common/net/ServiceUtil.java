@@ -51,6 +51,7 @@ public abstract class ServiceUtil {
 
 	private static void ensureRmiUseFixedPort(final int port)
 	throws IOException {
+		System.out.println("Set fixed port for RMI: " + port);
 		RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
 	}
 
