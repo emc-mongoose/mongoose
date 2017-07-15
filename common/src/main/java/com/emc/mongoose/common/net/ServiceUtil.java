@@ -23,6 +23,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMISocketFactory;
 import java.rmi.server.RemoteObjectInvocationHandler;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
@@ -50,6 +51,16 @@ public abstract class ServiceUtil {
 			} catch(final RemoteException e) {
 				REGISTRY_MAP.put(port, LocateRegistry.getRegistry(port));
 			}
+		}
+	}
+
+	private static void ensureRmiUseFixedPort(final int port)
+	throws IOException, IllegalStateException {
+		final RMISocketFactory prevSocketFactory = RMISocketFactory.getSocketFactory();
+		if(prevSocketFactory == null) {
+			RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
+		} else if(!(prevSocketFactory instanceof FixedPortRmiSocketFactory)) {
+			throw new IllegalStateException("Invalid RMI socket factory was set");
 		}
 	}
 
@@ -113,7 +124,8 @@ public abstract class ServiceUtil {
 	public static String create(final Service svc, final int port) {
 		try {
 			ensureRmiRegistryIsAvailableAt(port);
-			UnicastRemoteObject.exportObject(svc, 0);
+			ensureRmiUseFixedPort(port);
+			UnicastRemoteObject.exportObject(svc, port);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
 			synchronized(SVC_MAP) {
