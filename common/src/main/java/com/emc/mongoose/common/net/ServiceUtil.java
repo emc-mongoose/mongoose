@@ -20,6 +20,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMISocketFactory;
 import java.rmi.server.RemoteObjectInvocationHandler;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
@@ -46,6 +47,11 @@ public abstract class ServiceUtil {
 				REGISTRY_MAP.put(port, LocateRegistry.getRegistry(port));
 			}
 		}
+	}
+
+	private static void ensureRmiUseFixedPort(final int port)
+	throws IOException {
+		RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
 	}
 
 	public static URI getLocalSvcUri(final String svcName, final int port)
@@ -108,6 +114,7 @@ public abstract class ServiceUtil {
 	public static String create(final Service svc, final int port) {
 		try {
 			ensureRmiRegistryIsAvailableAt(port);
+			ensureRmiUseFixedPort(port);
 			UnicastRemoteObject.exportObject(svc, port);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
