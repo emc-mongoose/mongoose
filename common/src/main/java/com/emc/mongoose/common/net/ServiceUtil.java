@@ -108,7 +108,7 @@ public abstract class ServiceUtil {
 	public static String create(final Service svc, final int port) {
 		try {
 			ensureRmiRegistryIsAvailableAt(port);
-			UnicastRemoteObject.exportObject(svc, 0);
+			UnicastRemoteObject.exportObject(svc, port);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
 			synchronized(SVC_MAP) {

@@ -6,6 +6,6 @@ ADD build/dist/mongoose*.tgz /opt/
 
 RUN ln -s /opt/mongoose* /opt/mongoose
 
-EXPOSE 9010
+EXPOSE 1099
 
-ENTRYPOINT ["java", "-jar", "/opt/mongoose/mongoose.jar"]
+ENTRYPOINT ["java", "-jar", "/opt/mongoose/mongoose-storage-driver-service.jar"]
