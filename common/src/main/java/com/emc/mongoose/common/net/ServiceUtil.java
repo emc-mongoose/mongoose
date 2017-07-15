@@ -50,9 +50,13 @@ public abstract class ServiceUtil {
 	}
 
 	private static void ensureRmiUseFixedPort(final int port)
-	throws IOException {
-		System.out.println("Set fixed port for RMI: " + port);
-		RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
+	throws IOException, IllegalStateException {
+		final RMISocketFactory prevSocketFactory = RMISocketFactory.getSocketFactory();
+		if(prevSocketFactory == null) {
+			RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
+		} else if(!(prevSocketFactory instanceof FixedPortRmiSocketFactory)) {
+			throw new IllegalStateException("Invalid RMI socket factory was set");
+		}
 	}
 
 	public static URI getLocalSvcUri(final String svcName, final int port)
