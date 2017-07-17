@@ -13,9 +13,13 @@ public final class FixedPortRmiSocketFactory
 extends RMISocketFactory
 implements RMIServerSocketFactory {
 
-	public final int fixedPort;
+	public int fixedPort;
 
 	public FixedPortRmiSocketFactory(final int fixedPort) {
+		this.fixedPort = fixedPort;
+	}
+
+	public final void setFixedPort(final int fixedPort) {
 		this.fixedPort = fixedPort;
 	}
 
@@ -28,6 +32,7 @@ implements RMIServerSocketFactory {
 	@Override
 	public final ServerSocket createServerSocket(final int port)
 	throws IOException {
+		System.out.println("New server socket @ port # " + port);
 		return new ServerSocket(fixedPort);
 	}
 }
