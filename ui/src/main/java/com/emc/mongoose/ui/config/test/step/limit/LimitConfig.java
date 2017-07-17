@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.config.test.step.limit;
 
-import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.ui.config.SizeInBytesDeserializer;
 import com.emc.mongoose.ui.config.SizeInBytesSerializer;
 import com.emc.mongoose.ui.config.TimeStrToLongDeserializer;

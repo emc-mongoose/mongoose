@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.concurrent.RateThrottle;
+import com.emc.mongoose.api.common.concurrent.RateThrottle;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutorService;

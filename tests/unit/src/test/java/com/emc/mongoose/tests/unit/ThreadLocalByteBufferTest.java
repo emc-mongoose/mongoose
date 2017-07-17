@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
+import com.emc.mongoose.api.common.io.ThreadLocalByteBuffer;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;

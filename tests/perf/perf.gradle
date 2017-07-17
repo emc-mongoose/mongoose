@@ -4,11 +4,11 @@ dependencies {
 
 
 	compile(
-		project(":common"),
-		project(":model"),
-		project(":ui"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":load:generator"),
 		project(":load:controller"),
+		project(":run"),
 		project(":storage:driver"),
 		project(":storage:driver:builder"),
 		project(":storage:driver:net"),
@@ -19,16 +19,16 @@ dependencies {
 		project(":storage:driver:nio"),
 		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
-		project(":run"),
+		project(":ui"),
 		"junit:junit:4.12",
 	)
 
 	testCompile(
-		project(":common"),
-		project(":model"),
-		project(":ui"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":load:generator"),
 		project(":load:controller"),
+		project(":run"),
 		project(":storage:driver"),
 		project(":storage:driver:builder"),
 		project(":storage:driver:net"),
@@ -39,7 +39,7 @@ dependencies {
 		project(":storage:driver:nio"),
 		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
-		project(":run"),
+		project(":ui"),
 		"junit:junit:4.12",
 	)
 }

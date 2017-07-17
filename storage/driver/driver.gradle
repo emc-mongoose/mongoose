@@ -2,8 +2,8 @@ description = "mongoose-storage-driver"
 
 dependencies {
 	compile(
-		project(":common"),
-		project(":model"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":ui"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",

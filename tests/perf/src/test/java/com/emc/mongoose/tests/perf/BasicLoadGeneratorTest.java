@@ -1,22 +1,22 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.collection.CircularListInput;
-import com.emc.mongoose.common.supply.ConstantStringSupplier;
-import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.common.io.Output;
+import com.emc.mongoose.api.common.io.collection.CircularListInput;
+import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
+import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.load.generator.BasicLoadGenerator;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
-import com.emc.mongoose.model.item.BasicDataItem;
-import com.emc.mongoose.model.item.BasicDataItemFactory;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemNameSupplier;
-import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.item.NewDataItemInput;
-import com.emc.mongoose.model.load.LoadGenerator;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.api.model.item.BasicDataItem;
+import com.emc.mongoose.api.model.item.BasicDataItemFactory;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemNameSupplier;
+import com.emc.mongoose.api.model.item.ItemNamingType;
+import com.emc.mongoose.api.model.item.NewDataItemInput;
+import com.emc.mongoose.api.model.load.LoadGenerator;
 
 import org.junit.Test;
 

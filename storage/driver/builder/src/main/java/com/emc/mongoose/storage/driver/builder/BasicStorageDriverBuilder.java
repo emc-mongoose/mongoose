@@ -1,13 +1,13 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriver;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;

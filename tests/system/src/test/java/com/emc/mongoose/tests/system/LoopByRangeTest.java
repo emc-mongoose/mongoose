@@ -1,11 +1,11 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.LogPatterns;
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

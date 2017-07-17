@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.supply.BatchSupplier;
-import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
+import com.emc.mongoose.api.common.supply.BatchSupplier;
+import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;

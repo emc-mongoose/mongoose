@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.common.api.TimeUtil;
+import com.emc.mongoose.api.common.TimeUtil;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

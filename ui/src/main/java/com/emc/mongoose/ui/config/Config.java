@@ -1,14 +1,14 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
-import com.emc.mongoose.common.reflection.TypeUtil;
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.api.TimeUtil;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.api.common.exception.OmgLookAtMyConsoleException;
+import com.emc.mongoose.api.common.reflection.TypeUtil;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.TimeUtil;
 
-import static com.emc.mongoose.common.Constants.DIR_CONFIG;
-import static com.emc.mongoose.common.Constants.FNAME_CONFIG;
+import static com.emc.mongoose.api.common.Constants.DIR_CONFIG;
+import static com.emc.mongoose.api.common.Constants.FNAME_CONFIG;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;

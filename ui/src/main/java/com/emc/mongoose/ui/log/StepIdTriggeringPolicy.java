@@ -4,14 +4,11 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.rolling.AbstractTriggeringPolicy;
-import org.apache.logging.log4j.core.appender.rolling.DirectFileRolloverStrategy;
-import org.apache.logging.log4j.core.appender.rolling.DirectWriteRolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
-import org.apache.logging.log4j.core.appender.rolling.RolloverStrategy;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 /**
  Created by kurila on 30.06.17.

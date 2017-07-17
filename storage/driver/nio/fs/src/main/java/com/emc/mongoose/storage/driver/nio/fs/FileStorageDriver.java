@@ -1,9 +1,8 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.DataItemFactory;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriver;
 
 import java.io.File;

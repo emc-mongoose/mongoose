@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.model.NamingThreadFactory;
+import com.emc.mongoose.api.model.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.ui.log.LogUtil.BLUE;

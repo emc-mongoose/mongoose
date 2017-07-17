@@ -1,11 +1,11 @@
 package com.emc.mongoose.ui.log;
 
-import com.emc.mongoose.model.DaemonBase;
+import com.emc.mongoose.api.model.DaemonBase;
 
-import static com.emc.mongoose.common.Constants.KEY_BASE_DIR;
-import static com.emc.mongoose.common.Constants.LOCALE_DEFAULT;
-import static com.emc.mongoose.common.env.DateUtil.TZ_UTC;
-import static com.emc.mongoose.common.env.PathUtil.BASE_DIR;
+import static com.emc.mongoose.api.common.Constants.KEY_BASE_DIR;
+import static com.emc.mongoose.api.common.Constants.LOCALE_DEFAULT;
+import static com.emc.mongoose.api.common.env.DateUtil.TZ_UTC;
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

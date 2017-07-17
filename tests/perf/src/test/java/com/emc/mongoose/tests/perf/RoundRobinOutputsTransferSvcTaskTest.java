@@ -1,10 +1,10 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.svc.RoundRobinOutputsTransferSvcTask;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.common.io.Output;
+import com.emc.mongoose.api.model.svc.RoundRobinOutputsTransferSvcTask;
 
-import com.emc.mongoose.model.DaemonBase;
+import com.emc.mongoose.api.model.DaemonBase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

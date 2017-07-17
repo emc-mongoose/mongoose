@@ -1,10 +1,9 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.math.Random;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.item.BasicDataItem;
-import com.emc.mongoose.model.item.BasicItemFactory;
-import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.api.common.math.Random;
+import com.emc.mongoose.api.model.item.BasicDataItem;
+import com.emc.mongoose.api.model.item.BasicItemFactory;
+import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.storage.driver.nio.fs.FileStorageDriver;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
@@ -14,9 +13,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

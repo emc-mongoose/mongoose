@@ -3,8 +3,8 @@ description = "mongoose-tests-unit"
 dependencies {
 
 	testCompile(
-		project(":common"),
-		project(":model"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":ui"),
 		project(":load:generator"),
 		project(":load:controller"),

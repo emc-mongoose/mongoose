@@ -1,12 +1,12 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.common.io.collection.BufferingInputBase;
-import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.api.common.io.collection.BufferingInputBase;
+import com.emc.mongoose.api.model.io.task.IoTask;
 
-import com.emc.mongoose.model.item.DataItemFactory;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.item.DataItemFactory;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 
 import java.io.IOException;
 import java.util.List;

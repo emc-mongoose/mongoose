@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.config;
 
-import com.emc.mongoose.common.api.SizeInBytes;
+import com.emc.mongoose.api.common.SizeInBytes;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

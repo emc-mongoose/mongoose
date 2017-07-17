@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.concurrent.WeightThrottle;
-import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.api.common.concurrent.WeightThrottle;
+import com.emc.mongoose.api.model.io.IoType;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

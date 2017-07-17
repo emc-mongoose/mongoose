@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.api.TimeUtil;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.TimeUtil;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;

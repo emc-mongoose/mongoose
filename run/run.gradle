@@ -3,8 +3,8 @@ description = "mongoose-run"
 dependencies {
 
 	compile(
-		project(":common"),
-		project(":model"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":load:controller"),
 		project(":load:generator"),
 		project(":storage:driver:builder"),

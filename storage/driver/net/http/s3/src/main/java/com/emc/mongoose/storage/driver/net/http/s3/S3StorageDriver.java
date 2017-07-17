@@ -1,16 +1,16 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.Credential;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.api.model.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;

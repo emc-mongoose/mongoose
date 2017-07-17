@@ -1,19 +1,19 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.supply.ConstantStringSupplier;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.BasicChainTransferBuffer;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.ChainTransferBuffer;
-import com.emc.mongoose.model.item.ItemNameSupplier;
-import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.item.ItemType;
-import com.emc.mongoose.model.item.NewDataItemInput;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.BasicChainTransferBuffer;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.ChainTransferBuffer;
+import com.emc.mongoose.api.model.item.ItemNameSupplier;
+import com.emc.mongoose.api.model.item.ItemNamingType;
+import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.item.NewDataItemInput;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

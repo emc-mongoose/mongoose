@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.env.PathUtil;
+import com.emc.mongoose.api.common.env.PathUtil;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,12 +1,11 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
-import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
+import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.api.model.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.HttpResponseHandlerBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_ATTR_UPLOAD_ID;

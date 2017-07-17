@@ -1,16 +1,16 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.item.CsvFileItemInput;
-import com.emc.mongoose.model.item.CsvFileItemOutput;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemNameSupplier;
-import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.item.ItemType;
-import com.emc.mongoose.model.item.NewDataItemInput;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.common.io.Output;
+import com.emc.mongoose.api.model.item.CsvFileItemInput;
+import com.emc.mongoose.api.model.item.CsvFileItemOutput;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemNameSupplier;
+import com.emc.mongoose.api.model.item.ItemNamingType;
+import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.item.NewDataItemInput;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

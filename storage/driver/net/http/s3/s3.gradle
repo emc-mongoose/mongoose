@@ -2,8 +2,8 @@ description = "mongoose-storage-driver-net-http-s3"
 
 dependencies {
 	compile(
-		project(":common"),
-		project(":model"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":ui"),
 		project(":storage:driver:net:http"),
 

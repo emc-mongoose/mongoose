@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.tests.perf.util.mock.BasicMultiNodeConnPoolMock;

@@ -1,15 +1,15 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.data.DataCorruptionException;
-import com.emc.mongoose.model.data.DataSizeException;
-import com.emc.mongoose.model.data.DataVerificationException;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import static com.emc.mongoose.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
+import com.emc.mongoose.api.common.ByteRange;
+import com.emc.mongoose.api.common.io.ThreadLocalByteBuffer;
+import com.emc.mongoose.api.model.data.DataCorruptionException;
+import com.emc.mongoose.api.model.data.DataSizeException;
+import com.emc.mongoose.api.model.data.DataVerificationException;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 
 import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.ByteBuf;

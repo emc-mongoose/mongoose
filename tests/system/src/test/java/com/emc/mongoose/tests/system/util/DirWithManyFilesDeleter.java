@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system.util;
 
-import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.IOException;

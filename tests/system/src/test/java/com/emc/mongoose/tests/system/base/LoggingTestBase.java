@@ -1,20 +1,20 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.common.Constants.K;
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
-import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
-import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
-import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.api.common.Constants.K;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
+import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
+import static com.emc.mongoose.api.metrics.MetricsAsciiTableLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.api.metrics.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;

@@ -35,9 +35,8 @@ ext {
 	]
 
 	mutualProjects = subprojects.findAll {
-		it != project("load") &&
-		it != project("storage") &&
-		it != project("tests")
+		it != project("api") && it != project("load") && it != project("storage") &&
+			it != project("tests")
 	}
 
 	setClassPath = {
@@ -120,6 +119,7 @@ subprojects {
 		maxHeapSize "2g"
 		systemProperty "com.sun.management.jmxremote", "true"
 		systemProperty "com.sun.management.jmxremote.port", "9010"
+		systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
 		systemProperty "com.sun.management.jmxremote.local.only", "false"
 		systemProperty "com.sun.management.jmxremote.authenticate", "false"
 		systemProperty "com.sun.management.jmxremote.ssl", "false"

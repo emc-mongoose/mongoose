@@ -1,16 +1,16 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemInfoFileOutput;
-import com.emc.mongoose.model.item.ItemType;
-import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadController;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.ContentSourceUtil;
+import com.emc.mongoose.api.common.io.Output;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
+import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.load.LoadGenerator;
+import com.emc.mongoose.api.model.load.LoadController;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;

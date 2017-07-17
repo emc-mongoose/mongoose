@@ -1,16 +1,16 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.net.NetUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.net.NetUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.common.Constants.M;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.Constants.M;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;

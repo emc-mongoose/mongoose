@@ -1,9 +1,9 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.Daemon;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.concurrent.Daemon;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.ContentSourceUtil;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;

@@ -2,8 +2,8 @@ description = "mongoose-storage-driver-nio-fs"
 
 dependencies {
 	compile(
-		project(":common"),
-		project(":model"),
+		project(":api:common"),
+		project(":api:model"),
 		project(":ui"),
 		project(":storage:driver:nio"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",

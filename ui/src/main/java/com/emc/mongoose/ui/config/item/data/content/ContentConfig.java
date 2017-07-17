@@ -1,11 +1,7 @@
 package com.emc.mongoose.ui.config.item.data.content;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.data.content.ring.RingConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.io.Serializable;
 

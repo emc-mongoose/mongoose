@@ -2,7 +2,6 @@ package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -12,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 /**
  Created by andrey on 06.06.16.

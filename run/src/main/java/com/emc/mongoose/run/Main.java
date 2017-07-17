@@ -8,7 +8,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
 import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;

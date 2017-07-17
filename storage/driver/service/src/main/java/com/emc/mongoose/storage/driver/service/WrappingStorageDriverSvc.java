@@ -1,19 +1,19 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.common.concurrent.SvcTask;
-import com.emc.mongoose.common.concurrent.SvcTaskBase;
-import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.api.common.net.ServiceUtil;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;

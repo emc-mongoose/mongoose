@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.driver.net.http.atmos;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.IoType.CREATE;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import static com.emc.mongoose.api.model.io.IoType.CREATE;
+import com.emc.mongoose.api.model.item.Item;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.KEY_SUBTENANT_ID;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.NS_URI_BASE;
@@ -17,9 +17,9 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SIGNATURE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.Credential;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;

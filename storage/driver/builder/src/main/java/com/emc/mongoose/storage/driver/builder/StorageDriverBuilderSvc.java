@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.net.Service;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;

@@ -1,18 +1,16 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.Credential;
+import com.emc.mongoose.api.common.ByteRange;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 

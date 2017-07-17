@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system.base;
 
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
 
