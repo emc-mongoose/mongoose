@@ -59,7 +59,9 @@ public abstract class ServiceUtil {
 		final RMISocketFactory prevSocketFactory = RMISocketFactory.getSocketFactory();
 		if(prevSocketFactory == null) {
 			RMISocketFactory.setSocketFactory(new FixedPortRmiSocketFactory(port));
-		} else if(!(prevSocketFactory instanceof FixedPortRmiSocketFactory)) {
+		} else if(prevSocketFactory instanceof FixedPortRmiSocketFactory) {
+			((FixedPortRmiSocketFactory) prevSocketFactory).setFixedPort(port);
+		} else {
 			throw new IllegalStateException("Invalid RMI socket factory was set");
 		}
 	}
@@ -123,8 +125,8 @@ public abstract class ServiceUtil {
 
 	public static String create(final Service svc, final int port) {
 		try {
-			ensureRmiRegistryIsAvailableAt(port);
 			ensureRmiUseFixedPort(port);
+			ensureRmiRegistryIsAvailableAt(port);
 			UnicastRemoteObject.exportObject(svc, port);
 			final String svcName = svc.getName();
 			final String svcUri = getLocalSvcUri(svcName, port).toString();
