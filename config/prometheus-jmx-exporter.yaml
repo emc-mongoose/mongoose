@@ -1,7 +1,6 @@
 ---
-hostPort: 127.0.0.1:9010
 ssl: false
-whitelistObjectNames: [ "com.emc.mongoose.model.metrics:*" ]
+whitelistObjectNames: [ "com.emc.mongoose.api.model.metrics:*" ]
 rules:
   - pattern: "com.emc.mongoose.model.metrics<storageDriverConcurrency=(\\d+), storageDriverCount=(\\d+), loadType=(\\w+), stepId=(.+)><>(byte_count|duration_sum|elapsed_time_millis|fail_count|latency_sum|succ_count)"
     attrNameSnakeCase: true
