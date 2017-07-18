@@ -419,8 +419,8 @@ implements Serializable {
 
 	public static Config loadDefaults()
 	throws IOException {
-		final String defaultConfigPath = PathUtil.getBaseDir() + DIR_CONFIG + File.separator +
-			FNAME_CONFIG;
+		final String defaultConfigPath = PathUtil.getBasePathForClass(Config.class) + DIR_CONFIG +
+			File.separator + FNAME_CONFIG;
 		final ObjectMapper mapper = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
