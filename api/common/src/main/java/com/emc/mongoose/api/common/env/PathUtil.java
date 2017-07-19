@@ -63,7 +63,11 @@ public interface PathUtil {
 					.getParentFile();
 			}
 			// bandage for gradle
-			if(basePathStr.endsWith(File.separator + "build" + File.separator + "libs")) {
+			if(
+				basePathStr.endsWith(
+					File.separator + "build" + File.separator + "classes" + File.separator + "main"
+				)
+			) {
 				basePath = basePath
 					.getParentFile()
 					.getParentFile()
