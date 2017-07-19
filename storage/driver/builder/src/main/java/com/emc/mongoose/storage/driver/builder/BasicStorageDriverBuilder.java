@@ -126,7 +126,7 @@ public class BasicStorageDriverBuilder<
 				final String implFqcn = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN);
 
 				try {
-					final URL implUrl = new File(getBaseDir() + implFile)
+					final URL implUrl = new File(getBaseDir() + File.separator + implFile)
 						.toURI().toURL();
 					final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
 					final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);

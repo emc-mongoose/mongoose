@@ -26,9 +26,8 @@ public interface PathUtil {
 			File basePath;
 			final File clsFile = new File(getBaseUriForClass(cls).getPath());
 			if(
-				clsFile.isFile() ||
-				clsFile.getPath().endsWith(".jar") ||
-				clsFile.getPath().endsWith(".zip")
+				!clsFile.isDirectory() || clsFile.getPath().endsWith(".jar") ||
+					clsFile.getPath().endsWith(".zip")
 			) {
 				basePath = clsFile.getParentFile();
 			} else {
@@ -51,7 +50,12 @@ public interface PathUtil {
 					.getParentFile();
 			}
 			// bandage for idea
-			if(basePathStr.endsWith(File.separator + "build" + File.separator + "classes" + File.separator + "main")) {
+			if(
+				basePathStr.endsWith(
+					File.separator + "build" + File.separator + "classes" + File.separator +
+						"java" + File.separator + "main"
+				)
+			) {
 				basePath = basePath
 					.getParentFile()
 					.getParentFile()
@@ -65,12 +69,8 @@ public interface PathUtil {
 					.getParentFile()
 					.getParentFile();
 			}
-			// final fix
-			basePathStr = basePath.toString();
-			if(!basePathStr.endsWith(File.separator)) {
-				basePathStr = basePath + File.separator;
-			}
-			return basePathStr;
+
+			return basePath.toString();
 		} catch(final URISyntaxException e) {
 			throw new RuntimeException("Cannot figure out base path for class: " + cls.getName());
 		}
