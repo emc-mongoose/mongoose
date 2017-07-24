@@ -1,17 +1,17 @@
 {
 	"item" : {
 		"data" : {
-			"content" : {
+			"input" : {
 				// The source file for the content generation
 				"file" : null,
-				// The initial value for the random data generation
-				"seed" : "7a42d9c483244167",
-				"ring" : {
+				"layer" : {
 					// The maximum count of the data "layers" to be cached into the memory
 					"cache" : 25,
 					// The size of the content source ring buffer
 					"size" : "4MB"
-				}
+				},
+				// The initial value for the random data generation
+				"seed" : "7a42d9c483244167"
 			},
 			"ranges" : {
 				// The fixed byte ranges to update or read (depends on the specified op type)
@@ -506,7 +506,7 @@
 		{
 			"name" : "item-data-content-ringSize",
 			"deprecated" : true,
-			"target" : "item-data-content-ring-size"
+			"target" : "item-data-input-layer-size"
 		},
 
 		// v3.5.0
@@ -529,6 +529,26 @@
 			"name" : "test-step-limit-rate",
 			"deprecated" : true,
 			"target" : "load-rate-limit"
+		},
+		{
+			"name" : "item-data-content-file",
+			"deprecated" : true,
+			"target" : "item-data-input-file"
+		},
+		{
+			"name" : "item-data-content-seed",
+			"deprecated" : true,
+			"target" : "item-data-input-seed"
+		},
+		{
+			"name" : "item-data-content-ring-cache",
+			"deprecated" : true,
+			"target" : "item-data-input-layer-cache"
+		},
+		{
+			"name" : "item-data-content-ring-size",
+			"deprecated" : true,
+			"target" : "item-data-input-layer-size"
 		}
 	]
 }

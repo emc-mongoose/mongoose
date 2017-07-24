@@ -1,4 +1,4 @@
-package com.emc.mongoose.ui.config.item.data.content.ring;
+package com.emc.mongoose.ui.config.item.data.input.layer;
 
 import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.ui.config.SizeInBytesDeserializer;
@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.io.Serializable;
 
 /**
- Created by andrey on 05.07.17.
+ Created by andrey on 24.07.17.
  */
-public final class RingConfig
+public final class LayerConfig
 implements Serializable {
 
 	public static final String KEY_CACHE = "cache";
@@ -33,10 +33,10 @@ implements Serializable {
 		this.size = size;
 	}
 
-	public RingConfig() {
+	public LayerConfig() {
 	}
 
-	public RingConfig(final RingConfig other) {
+	public LayerConfig(final LayerConfig other) {
 		this.cache = other.getCache();
 		this.size = other.getSize();
 	}

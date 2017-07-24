@@ -6,7 +6,7 @@ import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
@@ -57,7 +57,7 @@ implements FileStorageDriver<I, O> {
 	private final Function<O, FileChannel> openDstFileFunc;
 	
 	public BasicFileStorageDriver(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);

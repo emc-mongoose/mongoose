@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.net.Service;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriverSvc;
@@ -28,7 +28,7 @@ public interface StorageDriverBuilderSvc<
 	throws RemoteException;
 	
 	@Override
-	StorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc)
+	StorageDriverBuilderSvc<I, O, T> setContentSource(final DataInput contentSrc)
 	throws RemoteException;
 
 	@Override

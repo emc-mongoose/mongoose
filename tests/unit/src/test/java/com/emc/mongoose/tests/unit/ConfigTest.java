@@ -7,7 +7,6 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.item.data.DataConfig;
-import com.emc.mongoose.ui.config.item.data.content.ContentConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
@@ -62,21 +61,22 @@ public class ConfigTest {
 		assertThat(itemConfig.getType(), equalTo("data", "item.type"));
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		assertThat(dataConfig, notNullValue());
-		final ContentConfig contentConfig = dataConfig.getContentConfig();
-		assertThat(contentConfig, notNullValue());
-		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
-		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
+		final com.emc.mongoose.ui.config.item.data.input.InputConfig
+			dataInputConfig = dataConfig.getInputConfig();
+		assertThat(dataInputConfig, notNullValue());
+		assertThat(dataInputConfig.getFile(), nullValue("item.data.content.file"));
+		assertThat(dataInputConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
 		assertThat(
-			contentConfig.getRingConfig().getSize(),
+			dataInputConfig.getLayerConfig().getSize(),
 			equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize")
 		);
 		assertThat(dataConfig.getRangesConfig().getRandom(), equalTo(0, "item.data.ranges.random"));
 		assertThat(dataConfig.getSize(), equalTo(new SizeInBytes("1MB"), "item.data.size"));
 		assertThat(dataConfig.getVerify(), equalTo(false, "item.data.verify"));
-		final InputConfig inputConfig = itemConfig.getInputConfig();
-		assertThat(inputConfig, notNullValue());
-		assertThat(inputConfig.getPath(), nullValue("item.input.path"));
-		assertThat(inputConfig.getFile(), nullValue("item.input.file"));
+		final InputConfig itemInputConfig = itemConfig.getInputConfig();
+		assertThat(itemInputConfig, notNullValue());
+		assertThat(itemInputConfig.getPath(), nullValue("item.input.path"));
+		assertThat(itemInputConfig.getFile(), nullValue("item.input.file"));
 		final com.emc.mongoose.ui.config.item.output.OutputConfig
 			outputConfig = itemConfig.getOutputConfig();
 		assertThat(outputConfig, notNullValue());
@@ -227,7 +227,7 @@ public class ConfigTest {
 		final DataConfig dataConfig = config.getItemConfig().getDataConfig();
 		assertEquals(
 			"16MB",
-			dataConfig.getContentConfig().getRingConfig().getSize().toString()
+			dataConfig.getInputConfig().getLayerConfig().getSize().toString()
 		);
 		assertEquals(1, dataConfig.getRangesConfig().getRandom());
 		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();

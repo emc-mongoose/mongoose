@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
 import com.emc.mongoose.api.model.data.DataSizeException;
 
@@ -23,9 +23,9 @@ extends Item, SeekableByteChannel {
 	
 	double LOG2 = Math.log(2);
 	
-	ContentSource getContentSrc();
+	DataInput getDataInput();
 	
-	void setContentSrc(final ContentSource contentSrc);
+	void setDataInput(final DataInput dataInput);
 	
 	void reset();
 	

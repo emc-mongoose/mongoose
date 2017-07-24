@@ -4,8 +4,7 @@ import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.io.Output;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.controller.BasicLoadController;
-import com.emc.mongoose.api.model.data.ContentSource;
-import com.emc.mongoose.api.model.data.ContentSourceUtil;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.BasicChainTransferBuffer;
 import com.emc.mongoose.api.model.item.ChainTransferBuffer;
 import com.emc.mongoose.api.model.item.ItemFactory;
@@ -19,8 +18,8 @@ import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.item.data.DataConfig;
-import com.emc.mongoose.ui.config.item.data.content.ContentConfig;
-import com.emc.mongoose.ui.config.item.data.content.ring.RingConfig;
+import com.emc.mongoose.ui.config.item.data.input.InputConfig;
+import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.load.queue.QueueConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
@@ -94,15 +93,15 @@ extends StepBase {
 				stepConfig = config.getTestConfig().getStepConfig();
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
-				final ContentConfig contentConfig = dataConfig.getContentConfig();
+				final InputConfig dataInputConfig = dataConfig.getInputConfig();
 				final com.emc.mongoose.ui.config.item.output.OutputConfig
 					itemOutputConfig = itemConfig.getOutputConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-				final RingConfig ringConfig = contentConfig.getRingConfig();
-				final ContentSource contentSrc = ContentSourceUtil.getInstance(
-					contentConfig.getFile(), contentConfig.getSeed(),
-					ringConfig.getSize(), ringConfig.getCache()
+				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
+				final DataInput dataInput = DataInput.getInstance(
+					dataInputConfig.getFile(), dataInputConfig.getSeed(),
+					dataLayerConfig.getSize(), dataLayerConfig.getCache()
 				);
 				
 				final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
@@ -117,7 +116,7 @@ extends StepBase {
 				final List<StorageDriver> drivers = new ArrayList<>();
 				StorageDriverUtil.init(
 					drivers, itemConfig, loadConfig, metricsConfig.getAverageConfig(),
-					storageConfig, stepConfig, contentSrc
+					storageConfig, stepConfig, dataInput
 				);
 				
 				final LoadGenerator loadGenerator;

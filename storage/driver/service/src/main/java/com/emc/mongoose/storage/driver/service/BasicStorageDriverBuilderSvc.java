@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.service;
 import com.emc.mongoose.api.common.concurrent.SvcTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.net.ServiceUtil;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriver;
@@ -43,7 +43,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 	
 	@Override
-	public BasicStorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc) {
+	public BasicStorageDriverBuilderSvc<I, O, T> setContentSource(final DataInput contentSrc) {
 		super.setContentSource(contentSrc);
 		return this;
 	}

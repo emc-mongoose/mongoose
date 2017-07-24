@@ -2,7 +2,7 @@ package com.emc.mongoose.run.scenario.util;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.net.ServiceUtil;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
@@ -31,7 +31,7 @@ public interface StorageDriverUtil {
 	static void init(
 		final List<StorageDriver> drivers, final ItemConfig itemConfig, final LoadConfig loadConfig,
 		final AverageConfig avgMetricsConfig, final StorageConfig storageConfig,
-		final StepConfig stepConfig, final ContentSource contentSrc
+		final StepConfig stepConfig, final DataInput contentSrc
 	) {
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final String testStepName = stepConfig.getId();

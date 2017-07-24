@@ -78,6 +78,15 @@ public abstract class PathUtil {
 					.getParentFile()
 					.getParentFile();
 			}
+			// another bandage for gradle
+			if(basePathStr.endsWith(File.separator + "build" + File.separator + "libs")) {
+				// 2 package dirs (api, common) + 2 dirs (build, libs)
+				basePath = basePath
+					.getParentFile()
+					.getParentFile()
+					.getParentFile()
+					.getParentFile();
+			}
 
 			return basePath.toString();
 		} catch(final URISyntaxException e) {

@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriver;
@@ -36,7 +36,7 @@ public class BasicStorageDriverBuilder<
 > implements StorageDriverBuilder<I, O, T> {
 	
 	private String stepName;
-	private ContentSource contentSrc;
+	private DataInput contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private AverageConfig avgMetricsConfig;
@@ -73,7 +73,7 @@ public class BasicStorageDriverBuilder<
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc) {
+	public BasicStorageDriverBuilder<I, O, T> setContentSource(final DataInput contentSrc) {
 		this.contentSrc = contentSrc;
 		return this;
 	}
@@ -157,7 +157,7 @@ public class BasicStorageDriverBuilder<
 
 			try {
 				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
-					String.class, ContentSource.class, LoadConfig.class, StorageConfig.class,
+					String.class, DataInput.class, LoadConfig.class, StorageConfig.class,
 					Boolean.TYPE
 				);
 				Loggers.MSG.info("New storage driver for type \"{}\"", driverType);

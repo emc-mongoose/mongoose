@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.io.task.data;
 
 import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.DataItem;
@@ -32,7 +32,7 @@ implements DataIoTask<T> {
 	private int randomRangesCount;
 	private List<ByteRange> fixedRanges;
 	
-	protected transient volatile ContentSource contentSrc;
+	protected transient volatile DataInput contentSrc;
 	protected transient volatile long countBytesDone;
 	protected transient volatile long respDataTimeStart;
 	private volatile DataItem currRange;
@@ -51,7 +51,7 @@ implements DataIoTask<T> {
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		reset();
-		contentSrc = item.getContentSrc();
+		contentSrc = item.getDataInput();
 	}
 
 	protected BasicDataIoTask(final BasicDataIoTask<T> other) {
@@ -337,7 +337,7 @@ implements DataIoTask<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		contentSrc = item.getContentSrc();
+		contentSrc = item.getDataInput();
 		contentSize = in.readLong();
 		final int fixedByteRangesCount = in.readInt();
 		if(fixedByteRangesCount == 0) {

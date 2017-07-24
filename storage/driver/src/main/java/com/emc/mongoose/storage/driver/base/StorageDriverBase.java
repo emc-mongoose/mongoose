@@ -9,7 +9,7 @@ import com.emc.mongoose.api.model.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -51,7 +51,7 @@ implements StorageDriver<I, O> {
 
 	private final static String CLS_NAME = StorageDriverBase.class.getSimpleName();
 
-	private final ContentSource contentSrc;
+	private final DataInput contentSrc;
 	private final int batchSize;
 	private final int queueCapacity;
 	protected final BlockingQueue<O> childTasksQueue;
@@ -75,7 +75,7 @@ implements StorageDriver<I, O> {
 	private final IoTasksDispatch ioTasksDispatchTask;
 	
 	protected StorageDriverBase(
-		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		this.contentSrc = contentSrc;
@@ -236,7 +236,7 @@ implements StorageDriver<I, O> {
 	throws ServerException {
 		ioTask.reset();
 		if(ioTask instanceof DataIoTask) {
-			((DataIoTask) ioTask).getItem().setContentSrc(contentSrc);
+			((DataIoTask) ioTask).getItem().setDataInput(contentSrc);
 		}
 		if(requestAuthTokenFunc != null) {
 			final Credential credential = ioTask.getCredential();

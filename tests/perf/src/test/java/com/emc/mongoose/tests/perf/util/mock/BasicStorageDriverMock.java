@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.perf.util.mock;
 
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -27,7 +27,7 @@ public final class BasicStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O> {
 
 	public BasicStorageDriverMock(
-		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(stepName, contentSrc, loadConfig, storageConfig, verifyFlag);

@@ -3,7 +3,7 @@ package com.emc.mongoose.tests.perf.util.mock;
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.model.DaemonBase;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -41,7 +41,7 @@ implements StorageDriver<I, O> {
 	private final LongAdder completedTaskCount = new LongAdder();
 
 	public DummyStorageDriverMock(
-		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) {
 		this.batchSize = loadConfig.getBatchConfig().getSize();

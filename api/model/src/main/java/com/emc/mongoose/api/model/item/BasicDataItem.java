@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
 import com.emc.mongoose.api.model.data.DataSizeException;
 import org.apache.commons.codec.DecoderException;
@@ -35,8 +35,8 @@ implements DataItem {
 	//
 	private static final char LAYER_MASK_SEP = '/';
 	//
-	private volatile ContentSource contentSrc;
-	private int ringBuffSize;
+	private volatile DataInput dataInput;
+	private int dataInputSize;
 	//
 	protected int layerNum = 0;
 	//
@@ -133,8 +133,8 @@ implements DataItem {
 		final BasicDataItem baseDataItem, final long internalOffset, final long size,
 		final boolean nextLayer
 	) {
-		this.contentSrc = baseDataItem.contentSrc;
-		this.ringBuffSize = baseDataItem.ringBuffSize;
+		this.dataInput = baseDataItem.dataInput;
+		this.dataInputSize = baseDataItem.dataInputSize;
 		this.offset = baseDataItem.offset + internalOffset;
 		this.size = size;
 		this.layerNum = nextLayer ? baseDataItem.layerNum : baseDataItem.layerNum;
@@ -181,14 +181,14 @@ implements DataItem {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final ContentSource getContentSrc() {
-		return contentSrc;
+	public final DataInput getDataInput() {
+		return dataInput;
 	}
 	//
 	@Override
-	public final void setContentSrc(final ContentSource contentSrc) {
-		this.contentSrc = contentSrc;
-		this.ringBuffSize = contentSrc.getSize();
+	public final void setDataInput(final DataInput dataInput) {
+		this.dataInput = dataInput;
+		this.dataInputSize = dataInput.getSize();
 	}
 	//
 	@Override
@@ -234,8 +234,8 @@ implements DataItem {
 		final BasicDataItem dataItemSlice = new BasicDataItem(
 			name, offset + from, partSize, layerNum
 		);
-		if(contentSrc != null) {
-			dataItemSlice.setContentSrc(contentSrc);
+		if(dataInput != null) {
+			dataItemSlice.setDataInput(dataInput);
 		}
 		return dataItemSlice;
 	}
@@ -309,8 +309,8 @@ implements DataItem {
 	@Override
 	public final int read(final ByteBuffer dst) {
 		final int n;
-		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) ((offset + position) % ringBuffSize));
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) ((offset + position) % dataInputSize));
 		// bytes count to transfer
 		n = Math.min(dst.remaining(), ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
@@ -327,8 +327,8 @@ implements DataItem {
 			return 0;
 		}
 		int m;
-		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) ((offset + position) % ringBuffSize));
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) ((offset + position) % dataInputSize));
 		final int n = Math.min(src.remaining(), ringBuff.remaining());
 		if(n > 0) {
 			byte bs, bi;
@@ -349,8 +349,8 @@ implements DataItem {
 	@Override
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
-		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) ((offset + position) % ringBuffSize));
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) ((offset + position) % dataInputSize));
 		int n = (int) Math.min(maxCount, ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
 		n = chanDst.write(ringBuff);
@@ -362,8 +362,8 @@ implements DataItem {
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {
 		int n;
-		final ByteBuffer ringBuff = contentSrc.getLayer(layerNum).asReadOnlyBuffer();
-		ringBuff.position((int) ((offset + position) % ringBuffSize));
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) ((offset + position) % dataInputSize));
 		n = ringBuff.remaining();
 		if(buff.limit() > n) {
 			buff.limit(n);

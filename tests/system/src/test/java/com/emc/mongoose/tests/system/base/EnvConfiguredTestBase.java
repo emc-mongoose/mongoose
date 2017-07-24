@@ -2,13 +2,12 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.concurrent.Daemon;
-import com.emc.mongoose.api.model.data.ContentSource;
-import com.emc.mongoose.api.model.data.ContentSourceUtil;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.item.data.content.ContentConfig;
+import com.emc.mongoose.ui.config.item.data.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
@@ -162,11 +161,11 @@ extends ConfiguredTestBase {
 				final ContainerConfig containerConfig = mockConfig.getContainerConfig();
 				final FailConfig failConfig = mockConfig.getFailConfig();
 				final NamingConfig namingConfig = itemConfig.getNamingConfig();
-				final ContentConfig contentConfig = itemConfig.getDataConfig().getContentConfig();
-				final ContentSource contentSrc = ContentSourceUtil.getInstance(
-					contentConfig.getFile(), contentConfig.getSeed(),
-					contentConfig.getRingConfig().getSize(),
-					contentConfig.getRingConfig().getCache()
+				final InputConfig dataInputConfig = itemConfig.getDataConfig().getInputConfig();
+				final DataInput dataInput = DataInput.getInstance(
+					dataInputConfig.getFile(), dataInputConfig.getSeed(),
+					dataInputConfig.getLayerConfig().getSize(),
+					dataInputConfig.getLayerConfig().getCache()
 				);
 				StorageMockFactory storageMockFactory;
 				for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
@@ -175,7 +174,7 @@ extends ConfiguredTestBase {
 						itemConfig.getInputConfig().getFile(), mockConfig.getCapacity(),
 						containerConfig.getCapacity(), containerConfig.getCountLimit(),
 						(int) CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod(),
-						failConfig.getConnections(), failConfig.getResponses(), contentSrc,
+						failConfig.getConnections(), failConfig.getResponses(), dataInput,
 						netConfig.getNodeConfig().getPort(), netConfig.getSsl(),
 						(float) CONFIG.getLoadConfig().getRateConfig().getLimit(),
 						namingConfig.getPrefix(), namingConfig.getRadix()

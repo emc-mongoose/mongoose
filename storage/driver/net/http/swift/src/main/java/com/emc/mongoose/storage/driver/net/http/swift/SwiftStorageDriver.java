@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
-import com.emc.mongoose.api.model.data.ContentSource;
+import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import static com.emc.mongoose.api.model.io.IoType.CREATE;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
@@ -80,7 +80,7 @@ extends HttpStorageDriverBase<I, O> {
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);

@@ -13,28 +13,16 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
-								"content": {
-									"type": "object",
-									"additionalProperties": false,
-									"properties": {
+								"input" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
 										"file": {
 											"type": [
 												"null", "string"
 											]
 										},
-										"seed": {
-											"oneOf" : [
-												{
-													"type": "string",
-													"pattern" : "[A-Fa-f0-9]+"
-												},
-												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
-												}
-											]
-										},
-										"ring" :{
+										"layer" : {
 											"type" : "object",
 											"additionalProperties" : false,
 											"properties" : {
@@ -67,6 +55,18 @@
 													]
 												}
 											}
+										},
+										"seed": {
+											"oneOf" : [
+												{
+													"type": "string",
+													"pattern" : "[A-Fa-f0-9]+"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
 										}
 									}
 								},

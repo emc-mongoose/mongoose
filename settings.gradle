@@ -16,7 +16,7 @@ include "storage:driver:net:http:swift"
 include "storage:driver:builder"
 include "storage:driver:service"
 include "tests:unit"
-include "tests:system"
+//include "tests:system"
 include "tests:perf"
 include "ui"
 
