@@ -46,7 +46,7 @@ extends EnvConfiguredScenarioTestBase {
 				new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = ReadVerificationAfterCircularUpdateTest.class.getSimpleName();
+		STEP_ID = ReadVerificationAfterCircularUpdateTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationAfterCircularUpdate.json"
 		);
@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -63,7 +63,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}
@@ -141,7 +141,7 @@ extends EnvConfiguredScenarioTestBase {
 			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, CONCURRENCY);
 				put(IoType.UPDATE, CONCURRENCY);

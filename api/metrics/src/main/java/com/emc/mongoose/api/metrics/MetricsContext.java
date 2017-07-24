@@ -1,4 +1,4 @@
-package com.emc.mongoose.api.model.metrics;
+package com.emc.mongoose.api.metrics;
 
 import com.emc.mongoose.api.model.io.IoType;
 

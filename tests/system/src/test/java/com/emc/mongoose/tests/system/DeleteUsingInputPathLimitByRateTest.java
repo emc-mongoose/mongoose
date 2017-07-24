@@ -54,7 +54,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = DeleteUsingInputPathLimitByRateTest.class.getSimpleName();
+		STEP_ID = DeleteUsingInputPathLimitByRateTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "DeleteUsingInputPathLimitByRate.json"
 		);
@@ -63,7 +63,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -71,14 +71,14 @@ extends EnvConfiguredScenarioTestBase {
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 				).toString();
 				EnvUtil.set("ITEMS_PATH", ITEM_OUTPUT_PATH);
 				break;
 			case STORAGE_TYPE_SWIFT:
 				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
 			default:
-				EnvUtil.set("ITEMS_PATH", "/" + STEP_NAME);
+				EnvUtil.set("ITEMS_PATH", "/" + STEP_ID);
 				break;
 		}
 		try {
@@ -149,7 +149,7 @@ extends EnvConfiguredScenarioTestBase {
 			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, EXPECTED_COUNT,
+			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, EXPECTED_COUNT,
 			new HashMap<IoType, Integer>() {{ put(IoType.DELETE, CONCURRENCY); }}
 		);
 	}

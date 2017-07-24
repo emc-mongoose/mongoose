@@ -31,7 +31,8 @@ extends LoggingTestBase {
 				"systest-" + LogUtil.getDateTimeStamp()
 			);
 		}
-		CONFIG.getTestConfig().getStepConfig().setId(STEP_NAME);
+		CONFIG.getTestConfig().getStepConfig().setId(STEP_ID);
+		CONFIG.getTestConfig().getStepConfig().setIdTmp(false);
 		CONFIG.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);
 	}
 

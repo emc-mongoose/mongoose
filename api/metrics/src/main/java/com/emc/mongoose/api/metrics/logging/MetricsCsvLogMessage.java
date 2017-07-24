@@ -1,6 +1,6 @@
-package com.emc.mongoose.api.metrics;
+package com.emc.mongoose.api.metrics.logging;
 
-import com.emc.mongoose.api.model.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;

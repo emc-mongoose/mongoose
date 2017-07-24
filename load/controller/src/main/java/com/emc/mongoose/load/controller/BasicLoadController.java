@@ -4,9 +4,8 @@ import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.concurrent.SvcTask;
 import com.emc.mongoose.api.common.net.Service;
 import com.emc.mongoose.api.common.net.ServiceUtil;
-import com.emc.mongoose.api.metrics.IoTraceCsvLogMessage;
+import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
 import com.emc.mongoose.api.model.load.LoadController;
-import com.emc.mongoose.api.model.svc.BlockingQueueTransferTask;
 import com.emc.mongoose.api.common.concurrent.RateThrottle;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
@@ -21,10 +20,10 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.model.NamingThreadFactory;
 import com.emc.mongoose.api.common.concurrent.Throttle;
-import com.emc.mongoose.api.metrics.IoTraceCsvBatchLogMessage;
+import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.common.io.Output;
-import com.emc.mongoose.api.model.metrics.BasicMetricsContext;
+import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.svc.TransferSvcTask;
 import com.emc.mongoose.ui.config.load.LoadConfig;
@@ -38,11 +37,8 @@ import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.load.LoadGenerator;
-import com.emc.mongoose.api.model.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
-
-import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -59,8 +55,6 @@ import java.rmi.RemoteException;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -78,6 +72,7 @@ extends DaemonBase
 implements LoadController<I, O> {
 	
 	private final String name;
+	private final Int2ObjectMap<LoadGenerator<I, O>> generatorsMap;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
 	private final long countLimit;
 	private final long sizeLimit;
@@ -86,20 +81,17 @@ implements LoadController<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
 	private final int batchSize;
 	private final boolean isAnyCircular;
-	private final Int2ObjectMap<BlockingQueue<O>> recycleQueuesMap;
 
 	private final Int2ObjectMap<MetricsContext> ioStats = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
 	private final Int2IntMap concurrencyMap;
 	private final Int2IntMap driversCountMap;
-	private final Int2BooleanMap circularityMap;
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
 	private final boolean tracePersistFlag;
 	
 	private volatile Output<O> ioResultsOutput;
-	private volatile boolean recycleQueueFullState = false;
 	
 	/**
 	 @param name test step name
@@ -125,8 +117,12 @@ implements LoadController<I, O> {
 			weightThrottle = new WeightThrottle(weightMap);
 		}
 
+		generatorsMap = new Int2ObjectOpenHashMap<>(driversMap.size());
 		Output<O> nextGeneratorOutput = null;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+			// hashCode() returns the origin code
+			generatorsMap.put(nextGenerator.hashCode(), nextGenerator);
+
 			try {
 				nextGeneratorOutput = new RoundRobinOutputsTransferSvcTask<>(
 					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(),
@@ -147,21 +143,17 @@ implements LoadController<I, O> {
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
-		circularityMap = new Int2BooleanArrayMap(driversMap.size());
-		recycleQueuesMap = new Int2ObjectOpenHashMap<>(driversMap.size());
 		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
 		final int queueSizeLimit = firstLoadConfig.getQueueConfig().getSize();
 		boolean anyCircularFlag = false;
-		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
 			final MetricsConfig nextMetricsConfig = outputConfigs
 				.get(nextGenerator).getMetricsConfig();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
 			final int nextOriginCode = nextGenerator.hashCode();
-			circularityMap.put(nextOriginCode, nextLoadConfig.getCircular());
-			if(circularityMap.get(nextOriginCode)) {
+			if(nextGenerator.isRecycling()) {
 				anyCircularFlag = true;
-				recycleQueuesMap.put(nextOriginCode, new ArrayBlockingQueue<O>(queueSizeLimit));
 			}
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final IoType ioType = IoType.valueOf(ioTypeName);
@@ -251,17 +243,17 @@ implements LoadController<I, O> {
 
 	private boolean allIoTasksCompleted() {
 		long generatedIoTasks = 0;
-		for(final LoadGenerator<I, O> nextLoadGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O> generator : generatorsMap.values()) {
 			try {
-				if(nextLoadGenerator.isInterrupted()) {
-					generatedIoTasks += nextLoadGenerator.getGeneratedIoTasksCount();
+				if(generator.isInterrupted()) {
+					generatedIoTasks += generator.getGeneratedTasksCount();
 				} else {
 					return false;
 				}
 			} catch(final RemoteException e) {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to communicate with load generator \"{}\"",
-					nextLoadGenerator
+					generator
 				);
 			}
 		}
@@ -270,8 +262,8 @@ implements LoadController<I, O> {
 
 	// issue SLTM-938 fix
 	private boolean nothingToRecycle() {
-		if(driversMap.size() == 1) {
-			final LoadGenerator<I, O> soleLoadGenerator = driversMap.keySet().iterator().next();
+		if(generatorsMap.size() == 1) {
+			final LoadGenerator<I, O> soleLoadGenerator = generatorsMap.values().iterator().next();
 			try {
 				if(soleLoadGenerator.isStarted()) {
 					return false;
@@ -280,9 +272,9 @@ implements LoadController<I, O> {
 				LogUtil.exception(Level.WARN, e, "Failed to check the load generator state");
 			}
 			// load generator has done its work
-			final long generatedIoTasks = soleLoadGenerator.getGeneratedIoTasksCount();
+			final long generatedIoTasks = soleLoadGenerator.getGeneratedTasksCount();
 			if(
-				circularityMap.get(soleLoadGenerator.hashCode()) && // circular load job
+				soleLoadGenerator.isRecycling() &&
 				counterResults.sum() >= generatedIoTasks && // all generated I/O tasks executed at least once
 				latestIoResultsPerItem.size() == 0 // no successful I/O results
 			) {
@@ -401,7 +393,7 @@ implements LoadController<I, O> {
 		if( // account only completed composite I/O tasks
 			ioTaskResult instanceof CompositeIoTask &&
 				!((CompositeIoTask) ioTaskResult).allSubTasksDone()
-			) {
+		) {
 			return true;
 		}
 		
@@ -425,30 +417,10 @@ implements LoadController<I, O> {
 				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
 				final int originCode = ioTaskResult.getOriginCode();
-				if(circularityMap.get(originCode)) {
+				final LoadGenerator<I, O> loadGenerator = generatorsMap.get(originCode);
+				if(loadGenerator.isRecycling()) {
 					latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
-					if(rateThrottle != null) {
-						if(!rateThrottle.tryAcquire(ioTaskResult)) {
-							return false;
-						}
-					}
-					if(weightThrottle != null) {
-						if(!weightThrottle.tryAcquire(originCode)) {
-							return false;
-						}
-					}
-					if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
-						if(
-							!recycleQueueFullState &&
-								0 == recycleQueuesMap.get(originCode).remainingCapacity()
-						) {
-							recycleQueueFullState = true;
-							Loggers.ERR.warn(
-								"{}: cannot recycle I/O tasks, recycling queue is full", name
-							);
-						}
-						return false;
-					}
+					loadGenerator.recycle(ioTaskResult);
 				} else if(ioResultsOutput != null) {
 					try {
 						if(!ioResultsOutput.put(ioTaskResult)) {
@@ -490,6 +462,7 @@ implements LoadController<I, O> {
 		}
 
 		int originCode;
+		LoadGenerator<I, O> loadGenerator;
 		O ioTaskResult;
 		int ioTypeCode;
 		Status status;
@@ -527,28 +500,10 @@ implements LoadController<I, O> {
 				if(ioTaskResult instanceof PartialIoTask) {
 					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 				} else {
-					if(circularityMap.get(originCode)) {
+					loadGenerator = generatorsMap.get(originCode);
+					if(loadGenerator.isRecycling()) {
 						latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
-						if(rateThrottle != null) {
-							if(!rateThrottle.tryAcquire(ioTaskResult)) {
-								break;
-							}
-						}
-						if(weightThrottle != null && !weightThrottle.tryAcquire(originCode)) {
-							break;
-						}
-						if(!recycleQueuesMap.get(originCode).add(ioTaskResult)) {
-							if(
-								!recycleQueueFullState &&
-									0 == recycleQueuesMap.get(originCode).remainingCapacity()
-							) {
-								recycleQueueFullState = true;
-								Loggers.ERR.warn(
-									"{}: cannot recycle I/O tasks, recycling queue is full", name
-								);
-							}
-							break;
-						}
+						loadGenerator.recycle(ioTaskResult);
 					} else if(ioResultsOutput != null){
 						try {
 							if(!ioResultsOutput.put(ioTaskResult)) {
@@ -639,17 +594,6 @@ implements LoadController<I, O> {
 				throw new CancellationException(e.getMessage());
 			} catch(final TimeoutException e) {
 				LogUtil.exception(Level.WARN, e, "{}: metrics context registering timeout", name);
-			}
-		}
-
-		for(final int originCode : recycleQueuesMap.keySet()) {
-			if(circularityMap.get(originCode)) {
-				svcTasks.add(
-					new BlockingQueueTransferTask<>(
-						recycleQueuesMap.get(originCode), ioTaskOutputs.get(originCode), batchSize,
-						svcTasks
-					)
-				);
 			}
 		}
 
@@ -794,7 +738,7 @@ implements LoadController<I, O> {
 		);
 
 		synchronized(driversMap) {
-			for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+			for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(nextGenerator)) {
 					interruptExecutor.submit(
 						() -> {
@@ -866,7 +810,7 @@ implements LoadController<I, O> {
 			ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("ioResultsWorker", true)
 		);
 		synchronized(driversMap) {
-			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
+			for(final LoadGenerator<I, O> generator : generatorsMap.values()) {
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
 					ioResultsExecutor.submit(
 						() -> {
@@ -946,16 +890,16 @@ implements LoadController<I, O> {
 					"{}: interrupted  while getting and processing the final I/O results", getName()
 				);
 			}
+
+			generatorsMap.clear();
 			driversMap.clear();
 		}
-		
-		ioTaskOutputs.clear();
-		circularityMap.clear();
-		for(final BlockingQueue<O> recycleQueue : recycleQueuesMap.values()) {
-			recycleQueue.clear();
+
+		for(final Output<O> nextIoTaskOutput : ioTaskOutputs.values()) {
+			nextIoTaskOutput.close();
 		}
-		recycleQueuesMap.clear();
-		
+		ioTaskOutputs.clear();
+
 		for(final MetricsContext nextStats : ioStats.values()) {
 			try {
 				MetricsManager.unregister(this, nextStats);

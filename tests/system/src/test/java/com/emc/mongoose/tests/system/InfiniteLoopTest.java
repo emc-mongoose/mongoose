@@ -42,7 +42,7 @@ extends EnvConfiguredScenarioTestBase {
 				new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = InfiniteLoopTest.class.getSimpleName();
+		STEP_ID = InfiniteLoopTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "InfiniteLoop.json"
 		);
@@ -51,7 +51,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--item-output-path=/default");
 		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		EnvConfiguredScenarioTestBase.setUpClass();

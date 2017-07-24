@@ -99,7 +99,7 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -131,7 +131,7 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -163,7 +163,7 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -195,7 +195,7 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -229,7 +229,7 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));
@@ -263,7 +263,7 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
 			loadGenerator.setOutput(new CountingOutput(counter));

@@ -45,7 +45,7 @@ extends EnvConfiguredScenarioTestBase {
 				new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = ChainLoadStepTest.class.getSimpleName();
+		STEP_ID = ChainLoadStepTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json"
 		);
@@ -54,7 +54,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--test-step-limit-count=" + COUNT_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -63,7 +63,7 @@ extends EnvConfiguredScenarioTestBase {
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 				).toString();
 				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 				break;
@@ -99,7 +99,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, COUNT_LIMIT,
+			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, COUNT_LIMIT,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, CONCURRENCY);
 				put(IoType.READ, CONCURRENCY);

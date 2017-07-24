@@ -1,4 +1,4 @@
-package com.emc.mongoose.api.model.metrics;
+package com.emc.mongoose.api.metrics;
 
 /**
  Created by kurila on 18.07.16.

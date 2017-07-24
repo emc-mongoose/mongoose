@@ -18,13 +18,37 @@ extends Daemon {
 
 	void setRateThrottle(final Throttle<Object> rateThrottle);
 
+	/**
+	 Set the generated tasks destination
+	 @param ioTaskOutput tasks destionation
+	 */
 	void setOutput(final Output<O> ioTaskOutput);
 
-	long getGeneratedIoTasksCount();
+	/**
+	 @return sum of the new tasks and recycled ones
+	 */
+	long getGeneratedTasksCount();
 
 	long getTransferSizeEstimate();
 
 	IoType getIoType();
 	
 	int getBatchSize();
+
+	/**
+	 @return the origin code shared by the generated tasks
+	 */
+	@Override
+	int hashCode();
+
+	/**
+	 @return true if the load generator is configured to recycle the tasks, false otherwise
+	 */
+	boolean isRecycling();
+
+	/**
+	 Enqueues the task for further recycling
+	 @param ioTask the task to recycle
+	 */
+	void recycle(final O ioTask);
 }

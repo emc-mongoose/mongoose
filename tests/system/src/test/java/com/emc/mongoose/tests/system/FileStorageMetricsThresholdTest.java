@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 				new SizeInBytes("10GB")
 			)
 		);
-		STEP_NAME = FileStorageMetricsThresholdTest.class.getSimpleName();
+		STEP_ID = FileStorageMetricsThresholdTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "FileStorageMetricsThreshold.json"
 		);
@@ -64,13 +64,13 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
 		}
 		ITEM_OUTPUT_PATH = Paths.get(
-			Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+			Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 		).toString();
 		CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());

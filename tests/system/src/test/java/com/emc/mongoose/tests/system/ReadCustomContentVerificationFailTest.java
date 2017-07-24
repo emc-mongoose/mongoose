@@ -40,7 +40,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = ReadCustomContentVerificationFailTest.class.getSimpleName();
+		STEP_ID = ReadCustomContentVerificationFailTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationFail.json"
 		);
@@ -49,7 +49,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add(
 			"--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/textexample"
 		);
@@ -60,7 +60,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}

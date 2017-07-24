@@ -38,13 +38,13 @@ extends EnvConfiguredScenarioTestBase {
 	static {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
-		STEP_NAME = CreateNoLimitTest.class.getSimpleName();
+		STEP_ID = CreateNoLimitTest.class.getSimpleName();
 	}
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -53,7 +53,7 @@ extends EnvConfiguredScenarioTestBase {
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 				).toString();
 				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 				break;
@@ -126,7 +126,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0,
 			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}
 		);
 	}

@@ -56,7 +56,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList(STORAGE_TYPE_FS));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
 		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));
-		STEP_NAME = ChainWithDelayTest.class.getSimpleName();
+		STEP_ID = ChainWithDelayTest.class.getSimpleName();
 	}
 	
 	private static boolean FINISHED_IN_TIME;
@@ -67,7 +67,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
 		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();
@@ -117,7 +117,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, CONCURRENCY);
 				put(IoType.READ, CONCURRENCY);

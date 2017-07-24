@@ -1,9 +1,12 @@
 package com.emc.mongoose.api.metrics;
 
 import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.metrics.logging.BasicMetricsLogMessage;
+import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
+import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
+import com.emc.mongoose.api.metrics.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.api.model.DaemonBase;
 import com.emc.mongoose.api.model.load.LoadController;
-import com.emc.mongoose.api.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;

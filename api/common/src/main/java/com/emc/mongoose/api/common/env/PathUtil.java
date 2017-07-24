@@ -7,21 +7,24 @@ import java.net.URISyntaxException;
 /**
  Created by kurila on 03.11.16.
  */
-public interface PathUtil {
+public abstract class PathUtil {
 
-	String BASE_DIR = getBaseDir();
+	private PathUtil() {
+	}
 
-	static String getBaseDir() {
+	public static final String BASE_DIR = getBaseDir();
+
+	public static String getBaseDir() {
 		return getBasePathForClass(PathUtil.class);
 	}
 
-	static URI getBaseUriForClass(final Class<?> cls)
+	private static URI getBaseUriForClass(final Class<?> cls)
 	throws URISyntaxException {
 		return cls.getProtectionDomain().getCodeSource().getLocation().toURI();
 	}
 
 	// http://stackoverflow.com/a/29665447
-	static String getBasePathForClass(final Class<?> cls) {
+	private static String getBasePathForClass(final Class<?> cls) {
 		try {
 			File basePath;
 			final File clsFile = new File(getBaseUriForClass(cls).getPath());
@@ -67,8 +70,10 @@ public interface PathUtil {
 				basePathStr.endsWith(
 					File.separator + "build" + File.separator + "classes" + File.separator + "main"
 				)
-			) {
+			) { // 2 package dirs (api, common) + 3 dirs (build, classes, main)
 				basePath = basePath
+					.getParentFile()
+					.getParentFile()
 					.getParentFile()
 					.getParentFile()
 					.getParentFile();

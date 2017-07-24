@@ -41,7 +41,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = ReadVerificationAfterUpdateTest.class.getSimpleName();
+		STEP_ID = ReadVerificationAfterUpdateTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationAfterUpdate.json"
 		);
@@ -50,7 +50,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add(
 			"--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"
 		);
@@ -61,7 +61,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}
@@ -139,7 +139,7 @@ extends EnvConfiguredScenarioTestBase {
 			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, CONCURRENCY);
 				put(IoType.UPDATE, CONCURRENCY);

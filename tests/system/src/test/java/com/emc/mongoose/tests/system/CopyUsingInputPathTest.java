@@ -41,7 +41,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = CopyUsingInputPathTest.class.getSimpleName();
+		STEP_ID = CopyUsingInputPathTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "CopyUsingInputPath.json"
 		);
@@ -56,17 +56,17 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_SRC_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
 		} else {
-			ITEM_SRC_PATH = '/' + STEP_NAME;
+			ITEM_SRC_PATH = '/' + STEP_ID;
 		}
 		ITEM_DST_PATH = ITEM_SRC_PATH + "Dst";
 		ITEM_SRC_PATH += "Src";

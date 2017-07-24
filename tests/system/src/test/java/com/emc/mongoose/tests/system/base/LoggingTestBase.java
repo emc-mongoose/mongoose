@@ -11,8 +11,8 @@ import static com.emc.mongoose.api.common.Constants.K;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
-import static com.emc.mongoose.api.metrics.MetricsAsciiTableLogMessage.TABLE_HEADER;
-import static com.emc.mongoose.api.metrics.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
+import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 public abstract class LoggingTestBase {
 	
 	protected static Logger LOG;
-	protected static String STEP_NAME;
+	protected static String STEP_ID;
 	protected static BufferingOutputStream STD_OUT_STREAM;
 	protected static int LOG_FILE_TIMEOUT_SEC = 50;
 
@@ -62,9 +62,9 @@ public abstract class LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		// remove previous logs if exist
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_ID).toFile());
 		LogUtil.init();
-		STEP_NAME = ThreadContext.get(KEY_TEST_STEP_ID);
+		STEP_ID = ThreadContext.get(KEY_TEST_STEP_ID);
 		STD_OUT_STREAM = new BufferingOutputStream(System.out);
 	}
 	
@@ -77,7 +77,7 @@ public abstract class LoggingTestBase {
 
 	private static List<String> getLogFileLines(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_ID, fileName).toFile();
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			return br.lines().collect(Collectors.toList());
 		}
@@ -105,7 +105,7 @@ public abstract class LoggingTestBase {
 
 	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_ID, fileName).toFile();
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {

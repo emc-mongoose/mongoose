@@ -1,7 +1,5 @@
 package com.emc.mongoose.api.metrics;
 
-import com.emc.mongoose.api.model.metrics.MetricsContext;
-
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;

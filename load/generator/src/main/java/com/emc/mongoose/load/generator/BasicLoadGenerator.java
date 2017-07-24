@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -46,10 +48,12 @@ implements LoadGenerator<I, O>, SvcTask {
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
 	private volatile Output<O> ioTaskOutput;
+	private volatile boolean recycleQueueFullState = false;
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean taskInputFinishFlag = false;
 	private volatile boolean outputFinishFlag = false;
 
+	private final BlockingQueue<O> recycleQueue;
 	private final int batchSize;
 	private final Input<I> itemInput;
 	private final Lock inputLock = new ReentrantLock();
@@ -61,6 +65,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final int originCode;
 
 	private final LongAdder builtTasksCounter = new LongAdder();
+	private final LongAdder recycledTasksCounter = new LongAdder();
 	private final LongAdder outputTaskCounter = new LongAdder();
 	private final String name;
 
@@ -70,7 +75,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final int batchSize, final long transferSizeEstimate,
 		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
-		final boolean shuffleFlag
+		final int recycleQueueSize, final boolean shuffleFlag
 	) throws UserShootHisFootException {
 		this.batchSize = batchSize;
 		this.itemInput = itemInput;
@@ -84,6 +89,8 @@ implements LoadGenerator<I, O>, SvcTask {
 		} else {
 			this.countLimit = Long.MAX_VALUE;
 		}
+		this.recycleQueue = recycleQueueSize > 0 ?
+			new ArrayBlockingQueue<O>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
 
@@ -110,8 +117,8 @@ implements LoadGenerator<I, O>, SvcTask {
 	}
 
 	@Override
-	public final long getGeneratedIoTasksCount() {
-		return builtTasksCounter.sum();
+	public final long getGeneratedTasksCount() {
+		return builtTasksCounter.sum() + recycledTasksCounter.sum();
 	}
 
 	@Override
@@ -128,7 +135,24 @@ implements LoadGenerator<I, O>, SvcTask {
 	public final int getBatchSize() {
 		return batchSize;
 	}
-	
+
+	@Override
+	public final boolean isRecycling() {
+		return recycleQueue != null;
+	}
+
+	@Override
+	public final void recycle(final O ioTask) {
+		if(recycleQueue != null) {
+			if(!recycleQueue.add(ioTask)) {
+				if(!recycleQueueFullState && 0 == recycleQueue.remainingCapacity()) {
+					recycleQueueFullState = true;
+					Loggers.ERR.error("{}: cannot recycle I/O tasks, queue is full", name);
+				}
+			}
+		}
+	}
+
 	@Override
 	public final void run() {
 
@@ -144,47 +168,66 @@ implements LoadGenerator<I, O>, SvcTask {
 			final CloseableThreadContext.Instance ctx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
-			if(n > 0 && !itemInputFinishFlag) {
-				if(inputLock.tryLock()) {
-					try {
-						// find the limits and prepare the items buffer
-						final long remainingTasksCount = countLimit - builtTasksCounter.sum();
-						if(remainingTasksCount > 0) {
-							n = (int) Math.min(remainingTasksCount, n);
-							final List<I> items = new ArrayList<>(n);
-							try {
-								// get the items from the input
-								itemInput.get(items, n);
-							} catch(final EOFException e) {
-								Loggers.MSG.debug(
-									"{}: end of items input @ the count {}",
-									BasicLoadGenerator.this.toString(), builtTasksCounter.sum()
-								);
-								itemInputFinishFlag = true;
-							}
-							
-							n = items.size();
-							if(n > 0) {
-								if(shuffleFlag) {
-									Collections.shuffle(items, rnd);
-								}
-								try {
-									ioTaskBuilder.getInstances(items, tasksBuff);
-									pendingTasksCount += n;
-									builtTasksCounter.add(n);
-								} catch(final IllegalArgumentException e) {
-									LogUtil.exception(
-										Level.ERROR, e, "Failed to generate the I/O task"
-									);
-								}
-							}
+			if(n > 0) { // the tasks buffer has free space for the new tasks
+				// find the remaining count of the tasks to generate
+				final long remainingTasksCount = countLimit - getGeneratedTasksCount();
+				if(remainingTasksCount > 0) {
+					// make the limit not more than batch size
+					n = (int) Math.min(remainingTasksCount, n);
 
-							if(itemInputFinishFlag) {
-								taskInputFinishFlag = true;
+					if(!itemInputFinishFlag) {
+
+						// try to produce new items from the items input
+						if(inputLock.tryLock()) {
+							try {
+								// prepare the items buffer
+								final List<I> items = new ArrayList<>(n);
+								try {
+									// get the items from the input
+									itemInput.get(items, n);
+								} catch(final EOFException e) {
+									Loggers.MSG.debug(
+										"{}: end of items input @ the count {}",
+										BasicLoadGenerator.this.toString(), builtTasksCounter.sum()
+									);
+									itemInputFinishFlag = true;
+								}
+
+								n = items.size();
+								if(n > 0) {
+									// build new tasks for the corresponding items
+									if(shuffleFlag) {
+										Collections.shuffle(items, rnd);
+									}
+									try {
+										ioTaskBuilder.getInstances(items, tasksBuff);
+										pendingTasksCount += n;
+										builtTasksCounter.add(n);
+									} catch(final IllegalArgumentException e) {
+										LogUtil.exception(
+											Level.ERROR, e, "Failed to generate the I/O task"
+										);
+									}
+								}
+
+							} finally {
+								inputLock.unlock();
 							}
 						}
-					} finally {
-						inputLock.unlock();
+
+					} else {
+						// items input was exhausted
+						if(recycleQueue == null) {
+							// recycling is disabled
+							taskInputFinishFlag = true; // allow shutdown
+						} else {
+							// recycle the tasks if any
+							n = recycleQueue.drainTo(tasksBuff, n);
+							if(n > 0) {
+								pendingTasksCount += n;
+								recycledTasksCounter.add(n);
+							}
+						}
 					}
 				}
 			}
@@ -269,9 +312,8 @@ implements LoadGenerator<I, O>, SvcTask {
 			if(
 				outputFinishFlag ||
 					(
-						itemInputFinishFlag &&
-							taskInputFinishFlag &&
-							builtTasksCounter.sum() == outputTaskCounter.sum()
+						itemInputFinishFlag && taskInputFinishFlag &&
+							getGeneratedTasksCount() == outputTaskCounter.sum()
 					)
 			) {
 				try {
@@ -291,8 +333,9 @@ implements LoadGenerator<I, O>, SvcTask {
 	protected final void doInterrupt() {
 		svcTasks.remove(this);
 		Loggers.MSG.debug(
-			"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
-			builtTasksCounter.sum(), outputTaskCounter.sum()
+			"{}: generated {}, recycled {}, output {} I/O tasks",
+			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
+			outputTaskCounter.sum()
 		);
 	}
 
@@ -320,6 +363,11 @@ implements LoadGenerator<I, O>, SvcTask {
 	protected final void doClose()
 	throws IOException {
 		super.doClose();
+		if(recycleQueue != null) {
+			recycleQueue.clear();
+		}
+		// the item input may be instantiated by the load generator builder which has no reference
+		// to it so the load generator builder should close it
 		if(itemInput != null) {
 			try {
 				inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -328,8 +376,9 @@ implements LoadGenerator<I, O>, SvcTask {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}
 		}
+		// I/O task builder is instantiated by the load generator builder which forgets it
+		// so the load generator should close it
 		ioTaskBuilder.close();
-		ioTaskOutput.close();
 	}
 	
 	@Override

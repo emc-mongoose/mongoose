@@ -1,4 +1,4 @@
-package com.emc.mongoose.api.model.metrics;
+package com.emc.mongoose.api.metrics;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;

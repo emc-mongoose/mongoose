@@ -41,7 +41,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
-		STEP_NAME = TlsAndNodeBalancingTest.class.getSimpleName();
+		STEP_ID = TlsAndNodeBalancingTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingInputPath.json");
 	}
 
@@ -53,7 +53,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		HTTP_STORAGE_NODE_COUNT = 4;
 		CONFIG_ARGS.add("--storage-mock-node=true");
 		CONFIG_ARGS.add("--storage-net-ssl=true");
@@ -153,7 +153,7 @@ extends EnvConfiguredScenarioTestBase {
 		final List<String> msgLogLines = getMessageLogLines();
 		int msgCount = 0;
 		for(final String msgLogLine : msgLogLines) {
-			if(msgLogLine.contains(STEP_NAME + ": SSL/TLS is enabled for the channel")) {
+			if(msgLogLine.contains(STEP_ID + ": SSL/TLS is enabled for the channel")) {
 				msgCount ++;
 			}
 		}

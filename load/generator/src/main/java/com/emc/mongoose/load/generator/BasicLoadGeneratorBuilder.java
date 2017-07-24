@@ -239,8 +239,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
+		final int recycleQueueSize = loadConfig.getCircular() ?
+			loadConfig.getQueueConfig().getSize() : 0;
+
 		return (T) new BasicLoadGenerator<>(
-			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit, shuffleFlag
+			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
+			recycleQueueSize, shuffleFlag
 		);
 	}
 	

@@ -1,7 +1,7 @@
-package com.emc.mongoose.api.metrics;
+package com.emc.mongoose.api.metrics.logging;
 
+import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.LogMessageBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;

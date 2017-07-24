@@ -38,7 +38,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = SingleRandomUpdateAndMultipleRandomReadTest.class.getSimpleName();
+		STEP_ID = SingleRandomUpdateAndMultipleRandomReadTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
 		);
@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -66,7 +66,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXPECTED_UPDATE_SIZE = new SizeInBytes(1, ITEM_DATA_SIZE.get(), 1);
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_OUTPUT_PATH = Paths
-				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME)
+				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID)
 				.toString();
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}

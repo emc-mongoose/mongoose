@@ -61,7 +61,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = MixedLoadTest.class.getSimpleName();
+		STEP_ID = MixedLoadTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "MixedLoad.json"
 		);
@@ -75,7 +75,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -83,7 +83,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}
@@ -160,6 +160,6 @@ extends EnvConfiguredScenarioTestBase {
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, CONCURRENCY);
 		concurrencyMap.put(IoType.READ, CONCURRENCY);
-		testMetricsTableStdout(STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
+		testMetricsTableStdout(STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
 	}
 }

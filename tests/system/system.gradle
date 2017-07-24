@@ -30,8 +30,11 @@ dependencies {
 
 	testCompile("com.github.emc-mongoose:nagaina:${depVersion.nagaina}") {
 		// debugging under IDEA
-		exclude group: "com.github.emc-mongoose", module: "common"
+		exclude group: "com.github.emc-mongoose", module: "mongoose-api-common"
+		exclude group: "com.github.emc-mongoose", module: "mongoose-api-model"
+		exclude group: "com.github.emc-mongoose", module: "mongoose-ui"
 	}
+
 
 	testRuntime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",

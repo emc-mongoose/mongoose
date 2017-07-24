@@ -57,7 +57,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = CircularAppendTest.class.getSimpleName();
+		STEP_ID = CircularAppendTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "CircularAppend.json");
 	}
 
@@ -71,8 +71,8 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		STEP_NAME = CircularAppendTest.class.getSimpleName();
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		STEP_ID = CircularAppendTest.class.getSimpleName();
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -80,7 +80,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
 			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		}
@@ -185,7 +185,9 @@ extends EnvConfiguredScenarioTestBase {
 		long itemOffset;
 		long itemSize;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			ITEM_DATA_SIZE.get(), 2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get(), 1
+			(long) (0.8 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get()),
+			(long) (1.2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get()),
+			1
 		);
 		final int n = items.size();
 		CSVRecord itemRec;
@@ -193,7 +195,9 @@ extends EnvConfiguredScenarioTestBase {
 			itemRec = items.get(i);
 			itemPath = itemRec.get(0);
 			for(int j = i; j < n; j ++) {
-				assertFalse(itemPath.equals(items.get(j).get(0)));
+				if(i != j) {
+					assertFalse(itemPath.equals(items.get(j).get(0)));
+				}
 			}
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
 			itemOffset = Long.parseLong(itemRec.get(1), 0x10);

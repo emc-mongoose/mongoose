@@ -41,7 +41,7 @@ extends EnvConfiguredScenarioTestBase {
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes("1MB"), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
-		STEP_NAME = ReadFilesWithVariablePathTest.class.getSimpleName();
+		STEP_ID = ReadFilesWithVariablePathTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadFilesWithVariablePath.json"
 		);
@@ -55,7 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--item-naming-radix=16");
 		CONFIG_ARGS.add("--item-naming-length=16");
 		EnvConfiguredScenarioTestBase.setUpClass();
@@ -64,7 +64,7 @@ extends EnvConfiguredScenarioTestBase {
 		}
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 			FILE_OUTPUT_PATH = Paths
-				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME)
+				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID)
 				.toString();
 			EnvUtil.set("FILE_OUTPUT_PATH", FILE_OUTPUT_PATH);
 		}
