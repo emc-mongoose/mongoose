@@ -28,7 +28,7 @@ jobs:
     # System tests
     # the list of the "System tests" stages below is intended to mimic the build matrix behavior
     # STORAGE_DRIVER_TYPE:        atmos, fs, s3, swift
-    # STORAGE_DRIVER_REMOTE:      false, true
+    # STORAGE_DRIVER_COUNT:       1, 2
     # STORAGE_DRIVER_CONCURRENCY: 1, 10, 100, 1000
     # ITEM_DATA_SIZE:             0, 10KB, 1MB, 100MB, 10GB
     #
