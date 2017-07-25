@@ -91,7 +91,7 @@ implements HttpStorageDriver<I, O> {
 	protected HttpStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws UserShootHisFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
@@ -117,12 +117,12 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel = getUnpooledConnection();
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
-				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepName,
+				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId,
 				channel.hashCode(), pipeline
 			);
 			pipeline.removeLast(); // remove the API specific handler

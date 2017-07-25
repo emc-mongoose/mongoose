@@ -48,7 +48,11 @@
 				},
 				"load" : {
 					"type" : "update",
-					"circular" : true
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					}
 				},
 				"test" : {
 					"step" : {

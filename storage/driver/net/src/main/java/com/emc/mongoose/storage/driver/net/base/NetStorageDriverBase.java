@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.concurrent.SvcTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
@@ -62,6 +63,8 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 30.09.16.
@@ -72,11 +75,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();
 
+	private static final Lock IO_EXECUTOR_LOCK = new ReentrantLock();
+	private static EventLoopGroup IO_EXECUTOR = null;
+	private static int IO_EXECUTOR_REF_COUNT = 0;
+
 	protected final String storageNodeAddrs[];
 	protected final Bootstrap bootstrap;
 	protected final int storageNodePort;
 	protected final int connAttemptsLimit;
-	private final EventLoopGroup workerGroup;
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
 	protected final boolean sslFlag;
@@ -84,7 +90,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected NetStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws UserShootHisFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
@@ -109,23 +115,39 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		
 		final int workerCount;
-		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
+		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount < 1) {
 			workerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
 		} else {
 			workerCount = confWorkerCount;
 		}
-		if(SystemUtils.IS_OS_LINUX) {
-			workerGroup = new EpollEventLoopGroup(
-				workerCount, new NamingThreadFactory(toString() + "/ioWorker", true)
-			);
+
+		if(IO_EXECUTOR_LOCK.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+			try {
+				if(IO_EXECUTOR == null) {
+					if(IO_EXECUTOR_REF_COUNT != 0) {
+						throw new AssertionError("I/O executor reference count should be 0");
+					}
+					if(SystemUtils.IS_OS_LINUX) {
+						IO_EXECUTOR = new EpollEventLoopGroup(
+							workerCount, new NamingThreadFactory("ioWorker", true)
+						);
+					} else {
+						IO_EXECUTOR = new NioEventLoopGroup(
+							workerCount, new NamingThreadFactory("ioWorker", true)
+						);
+					}
+				}
+				IO_EXECUTOR_REF_COUNT++;
+			} finally {
+				IO_EXECUTOR_LOCK.unlock();
+			}
 		} else {
-			workerGroup = new NioEventLoopGroup(
-				workerCount, new NamingThreadFactory(toString() + "/ioWorker", true)
-			);
+			Loggers.ERR.error("Failed to obtain the I/O executor lock in time");
 		}
+
 		bootstrap = new Bootstrap()
-			.group(workerGroup)
+			.group(IO_EXECUTOR)
 			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
@@ -148,7 +170,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			connPool = createConnectionPool();
@@ -167,7 +189,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		int size;
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(avgTransferSize < BUFF_SIZE_MIN) {
@@ -207,7 +229,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 
 		final Bootstrap bootstrap = new Bootstrap()
-			.group(workerGroup)
+			.group(IO_EXECUTOR)
 			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class)
 			.handler(
 				new ChannelInitializer<SocketChannel>() {
@@ -216,12 +238,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					throws Exception {
 						try(
 							final Instance logCtx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, stepName)
+								.put(KEY_TEST_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
 							appendHandlers(channel.pipeline());
 							Loggers.MSG.debug(
-								"{}: new unpooled channel {}, pipeline: {}", stepName,
+								"{}: new unpooled channel {}, pipeline: {}", stepId,
 								channel.hashCode(), channel.pipeline()
 							);
 						}
@@ -240,7 +262,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
@@ -282,7 +304,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		O nextIoTask;
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			for(int i = from; i < to && isStarted(); i ++) {
@@ -487,7 +509,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	public void complete(final Channel channel, final O ioTask) {
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			ioTask.finishResponse();
@@ -516,13 +538,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final ChannelPipeline pipeline = channel.pipeline();
 		appendHandlers(pipeline);
 		if(Loggers.MSG.isTraceEnabled()) {
-			Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepName, pipeline.toString());
+			Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepId, pipeline.toString());
 		}
 	}
 
 	protected void appendHandlers(final ChannelPipeline pipeline) {
 		if(sslFlag) {
-			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepName);
+			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
 			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setEnabledProtocols(
 				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
@@ -553,7 +575,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws IllegalStateException {
 		try(
 			final Instance ctx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			super.doInterrupt();
@@ -565,10 +587,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				);
 			}
 			try {
-				if(workerGroup.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
-					Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
+				if(IO_EXECUTOR_LOCK.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+					try {
+						IO_EXECUTOR_REF_COUNT--;
+						if(IO_EXECUTOR_REF_COUNT == 0) {
+							if(IO_EXECUTOR.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
+								Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
+							} else {
+								Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
+							}
+						}
+					} finally {
+						IO_EXECUTOR_LOCK.unlock();
+					}
 				} else {
-					Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
+					Loggers.ERR.error("Failed to obtain the I/O executor lock in time");
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");

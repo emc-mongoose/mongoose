@@ -4,10 +4,13 @@ import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 /**
  Created by andrey on 24.07.17.
  */
-public final class InputConfig {
+public final class InputConfig
+implements Serializable {
 
 	public static final String KEY_FILE = "file";
 	public static final String KEY_SEED = "seed";

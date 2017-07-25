@@ -1,12 +1,10 @@
 package com.emc.mongoose.ui.config.output.metrics;
 
-import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
-import com.emc.mongoose.ui.config.output.metrics.service.ServiceConfig;
 import com.emc.mongoose.ui.config.output.metrics.summary.SummaryConfig;
 import com.emc.mongoose.ui.config.output.metrics.trace.TraceConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.Serializable;
 

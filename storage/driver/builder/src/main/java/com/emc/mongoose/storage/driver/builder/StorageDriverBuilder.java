@@ -50,5 +50,5 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	T build()
-	throws RemoteException, UserShootHisFootException;
+	throws RemoteException, UserShootHisFootException, InterruptedException;
 }

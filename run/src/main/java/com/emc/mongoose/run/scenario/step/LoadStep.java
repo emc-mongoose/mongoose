@@ -96,9 +96,14 @@ extends StepBase {
 		}
 		
 		final List<StorageDriver> drivers = new ArrayList<>();
-		StorageDriverUtil.init(
-			drivers, itemConfig, loadConfig, avgMetricsConfig, storageConfig, stepConfig, dataInput
-		);
+		try {
+			StorageDriverUtil.init(
+				drivers, itemConfig, loadConfig, avgMetricsConfig, storageConfig, stepConfig,
+				dataInput
+			);
+		} catch(final InterruptedException e) {
+			return;
+		}
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final ItemFactory itemFactory = ItemType.getItemFactory(itemType);

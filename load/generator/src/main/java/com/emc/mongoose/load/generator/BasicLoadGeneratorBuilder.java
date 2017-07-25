@@ -24,6 +24,8 @@ import com.emc.mongoose.api.model.item.ItemNamingType;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.item.NewDataItemInput;
 import com.emc.mongoose.api.model.io.IoType;
+
+import static com.emc.mongoose.api.common.Constants.M;
 import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.api.model.storage.StorageDriver.BUFF_SIZE_MIN;
@@ -34,6 +36,8 @@ import com.emc.mongoose.ui.config.item.data.ranges.RangesConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.load.generator.GeneratorConfig;
+import com.emc.mongoose.ui.config.load.generator.recycle.RecycleConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -138,7 +142,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
-		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
+
+		final GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
+		final boolean shuffleFlag = generatorConfig.getShuffle();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 		
@@ -188,9 +194,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		final String authFile = authConfig.getFile();
 		if(authFile != null && !authFile.isEmpty()) {
-			final Map<String, String> credentials = loadCredentials(
-				authFile, loadConfig.getQueueConfig().getSize()
-			);
+			final Map<String, String> credentials = loadCredentials(authFile, (long) M);
 			ioTaskBuilder.setCredentialsMap(credentials);
 		} else {
 
@@ -239,12 +243,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
-		final int recycleQueueSize = loadConfig.getCircular() ?
-			loadConfig.getQueueConfig().getSize() : 0;
+		final RecycleConfig recycleConfig = generatorConfig.getRecycleConfig();
+		final int recycleLimit = recycleConfig.getEnabled() ? recycleConfig.getLimit() : 0;
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit,
-			recycleQueueSize, shuffleFlag
+			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit, recycleLimit,
+			shuffleFlag
 		);
 	}
 	

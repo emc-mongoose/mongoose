@@ -44,7 +44,11 @@
 					}
 				},
 				"load" : {
-					"circular" : true,
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					},
 					"type" : "read"
 				}
 			}

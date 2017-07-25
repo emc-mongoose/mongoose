@@ -55,7 +55,7 @@ implements NioStorageDriver<I, O> {
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
-		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
+		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount < 1) {
 			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
 		} else {

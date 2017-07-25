@@ -296,17 +296,6 @@
 								}
 							}
 						},
-						"circular": {
-							"oneOf" : [
-								{
-									"type": "boolean"
-								},
-								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
-								}
-							]
-						},
 						"generator" : {
 							"type" : "object",
 							"additionalProperties" : false,
@@ -324,6 +313,35 @@
 											"pattern" : "\\$\\{.+\\}"
 										}
 									]
+								},
+								"recycle": {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"enabled" : {
+											"oneOf" : [
+												{
+													"type": "boolean"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"limit" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										}
+									}
 								},
 								"remote" : {
 									"oneOf" : [
@@ -367,15 +385,16 @@
 								}
 							}
 						},
-						"queue" : {
+						"service" : {
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"size" : {
+								"threads" : {
 									"oneOf" : [
 										{
 											"type" : "integer",
-											"minimum" : 1
+											"minimum" : 0,
+											"maximum" : 2147483647
 										},
 										{
 											"type" : "string",
@@ -591,7 +610,8 @@
 									"oneOf" : [
 										{
 											"type" : "integer",
-											"minimum" : 1
+											"minimum" : 1,
+											"maximum" : 2147483647
 										},
 										{
 											"type" : "string",
@@ -623,15 +643,42 @@
 										]
 									}
 								},
-								"io" : {
+								"port" : {
+									"oneOf" : [
+										{
+											"type" : "number",
+											"minimum" : 1,
+											"maximum" : 65535
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"queue" : {
 									"type" : "object",
 									"additionalProperties" : false,
 									"properties" : {
-										"workers" : {
+										"input" : {
 											"oneOf" : [
 												{
 													"type" : "integer",
-													"minimum" : 0
+													"minimum" : 1,
+													"maximum" : 2147483647
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
+										"output" : {
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 1,
+													"maximum" : 2147483647
 												},
 												{
 													"type" : "string",
@@ -641,11 +688,10 @@
 										}
 									}
 								},
-								"port" : {
+								"remote" : {
 									"oneOf" : [
 										{
-											"type" : "number",
-											"minimum" : 1
+											"type" : "boolean"
 										},
 										{
 											"type" : "string",
@@ -653,10 +699,12 @@
 										}
 									]
 								},
-								"remote" : {
+								"threads" : {
 									"oneOf" : [
 										{
-											"type" : "boolean"
+											"type" : "integer",
+											"minimum" : 0,
+											"maximum" : 2147483647
 										},
 										{
 											"type" : "string",
@@ -873,7 +921,8 @@
 											"oneOf" : [
 												{
 													"type" : "number",
-													"minimum" : 1
+													"minimum" : 1,
+													"maximum" : 65535
 												},
 												{
 													"type" : "string",

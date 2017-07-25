@@ -73,13 +73,17 @@
 			// It may be useful to set to 1 for MPU or DLO tests
 			"size": 4096
 		},
-		// Specifies whether to process the items multiple times (again and again) or not
-		"circular" : false,
 		"generator" : {
 			// Reserved, not used
 			"addrs" : [
 				"127.0.0.1"
 			],
+			"recycle" : {
+				// Specifies whether to recycle the load tasks or not
+				"enabled" : false,
+				// The maximum number of the unique items processed in the case of the recycle mode
+				"limit" : 1000000
+			},
 			// Reserved, not used
 			"remote" : false,
 			// Defines whether to shuffle or not the items got from the item input,
@@ -91,9 +95,9 @@
 			// 0 means no rate limit.
 			"limit" : 0
 		},
-		"queue" : {
-			// The maximum number of the unique items processed in the case of the circular load
-			"size" : 1000000
+		// The count of the service threads. 0 means automatic value
+		"service" : {
+			"threads" : 0
 		},
 		// The operation to process the items, may be "noop", "create", "update", "read" or "delete"
 		"type" : "create"
@@ -193,15 +197,17 @@
 					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NioStorageDriverMock"
 				}
 			],
-			"io" : {
-				// The desired count of I/O threads per storage driver.
-				// Default value < 1 means that the count will be equal to the CPU cores count.
-				"workers" : 0
-			},
 			// Distributed mode: the common port number to start the storage driver services
 			"port" : 1099,
+			//
+			"queue" : {
+				"input" : 1000000,
+				"output" : 1000000
+			},
 			// Distributed mode: the flag to enable using remote storage drivers
-			"remote": false,
+			"remote" : false,
+			// The count of the shared/global I/O executor threads. 0 (default) is reserved to use the CPU cores/threads count
+			"threads" : 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
 			"type" : "s3"
 		},
@@ -549,6 +555,21 @@
 			"name" : "item-data-content-ring-size",
 			"deprecated" : true,
 			"target" : "item-data-input-layer-size"
+		},
+		{
+			"name" : "load-circular",
+			"deprecated" : true,
+			"target" : "load-generator-recycle-enabled"
+		},
+		{
+			"name" : "load-queue-size",
+			"deprecated" : true,
+			"target" : "load-generator-recycle-limit"
+		},
+		{
+			"name" : "storage-driver-io-workers",
+			"deprecated" : true,
+			"target" : "storage-driver-threads"
 		}
 	]
 }

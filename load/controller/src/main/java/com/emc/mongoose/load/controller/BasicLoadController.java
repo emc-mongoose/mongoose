@@ -144,7 +144,6 @@ implements LoadController<I, O> {
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
-		final int queueSizeLimit = firstLoadConfig.getQueueConfig().getSize();
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
@@ -182,7 +181,9 @@ implements LoadController<I, O> {
 		}
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
-			latestIoResultsPerItem = new ConcurrentHashMap<>(queueSizeLimit);
+			final int
+				recycleLimit = firstLoadConfig.getGeneratorConfig().getRecycleConfig().getLimit();
+			latestIoResultsPerItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
 			latestIoResultsPerItem = null;
 		}

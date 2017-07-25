@@ -244,9 +244,6 @@
 						"size"
 					]
 				},
-				"circular": {
-					"type": "boolean"
-				},
 				"generator" : {
 					"type" : "object",
 					"additionalProperties": false,
@@ -257,6 +254,23 @@
 								"type" : "string"
 							}
 						},
+						"recycle" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"enabled" : {
+									"type" : "boolean"
+								},
+								"limit" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 2147483647
+								}
+							},
+							"required" : [
+								"enabled", "limit"
+							]
+						},
 						"remote" : {
 							"type" : "boolean"
 						},
@@ -265,7 +279,7 @@
 						}
 					},
 					"required" : [
-						"addrs", "remote", "shuffle"
+						"addrs", "recycle", "remote", "shuffle"
 					]
 				},
 				"rate": {
@@ -281,17 +295,18 @@
 						"limit"
 					]
 				},
-				"queue" : {
+				"service" : {
 					"type" : "object",
-					"additionalProperties": false,
+					"additionalProperties" : false,
 					"properties" : {
-						"size" : {
+						"threads" : {
 							"type" : "integer",
-							"minimum" : 1
+							"minimum" : 0,
+							"maximum" : 2147483647
 						}
 					},
 					"required" : [
-						"size"
+						"threads"
 					]
 				},
 				"type": {
@@ -302,7 +317,7 @@
 				}
 			},
 			"required": [
-				"batch", "circular", "generator", "rate", "queue", "type"
+				"batch", "generator", "rate", "service", "type"
 			]
 		},
 		"output" : {
@@ -439,7 +454,7 @@
 				"driver" : {
 					"type": "object",
 					"required" : [
-						"addrs", "concurrency", "impl", "io", "port", "remote", "type"
+						"addrs", "concurrency", "impl", "port", "remote", "threads", "type"
 					],
 					"additionalProperties" : false,
 					"properties" : {
@@ -451,7 +466,8 @@
 						},
 						"concurrency": {
 							"type": "integer",
-							"minimum" : 1
+							"minimum" : 1,
+							"maximum" : 2147483647
 						},
 						"impl" : {
 							"type" : "array",
@@ -477,25 +493,37 @@
 								]
 							}
 						},
-						"io" : {
-							"type" : "object",
-							"required" : [
-								"workers"
-							],
-							"additionalProperties" : false,
-							"properties" : {
-								"workers" : {
-									"type" : "integer",
-									"minimum" : 0
-								}
-							}
-						},
 						"port" : {
 							"type" : "number",
-							"minimum" : 1
+							"minimum" : 1,
+							"maximum" : 65535
+						},
+						"queue" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"input" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 2147483647
+								},
+								"output" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 2147483647
+								}
+							},
+							"required" : [
+								"input", "output"
+							]
 						},
 						"remote" : {
 							"type" : "boolean"
+						},
+						"threads" : {
+							"type" : "integer",
+							"minimum" : 0,
+							"maximum" : 2147483647
 						},
 						"type" : {
 							"type" : "string",
@@ -509,18 +537,21 @@
 					"properties": {
 						"capacity": {
 							"type": "integer",
-							"minimum" : 0
+							"minimum" : 0,
+							"maximum" : 2147483647
 						},
 						"container": {
 							"type": "object",
 							"properties": {
 								"capacity": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum" : 0,
+									"maximum" : 2147483647
 								},
 								"countLimit": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum" : 0,
+									"maximum" : 2147483647
 								}
 							},
 							"required": [
@@ -645,7 +676,8 @@
 								},
 								"port" : {
 									"type" : "number",
-									"minimum" : 1
+									"minimum" : 1,
+									"maximum" : 65535
 								},
 								"connAttemptsLimit" : {
 									"type" : "integer",

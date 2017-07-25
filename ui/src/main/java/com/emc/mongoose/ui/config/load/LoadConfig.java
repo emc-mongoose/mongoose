@@ -2,8 +2,8 @@ package com.emc.mongoose.ui.config.load;
 
 import com.emc.mongoose.ui.config.load.batch.BatchConfig;
 import com.emc.mongoose.ui.config.load.generator.GeneratorConfig;
-import com.emc.mongoose.ui.config.load.queue.QueueConfig;
 import com.emc.mongoose.ui.config.load.rate.RateConfig;
+import com.emc.mongoose.ui.config.load.service.ServiceConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
@@ -15,18 +15,13 @@ public final class LoadConfig
 implements Serializable {
 
 	public static final String KEY_BATCH = "batch";
-	public static final String KEY_CIRCULAR = "circular";
 	public static final String KEY_GENERATOR = "generator";
 	public static final String KEY_RATE = "rate";
-	public static final String KEY_QUEUE = "queue";
+	public static final String KEY_SERVICE = "service";
 	public static final String KEY_TYPE = "type";
 
 	public final void setBatchConfig(final BatchConfig batchConfig) {
 		this.batchConfig = batchConfig;
-	}
-
-	public final void setCircular(final boolean circular) {
-		this.circular = circular;
 	}
 
 	public final void setGeneratorConfig(final GeneratorConfig generatorConfig) {
@@ -37,8 +32,8 @@ implements Serializable {
 		this.rateConfig = rateConfig;
 	}
 
-	public final void setQueueConfig(final QueueConfig queueConfig) {
-		this.queueConfig = queueConfig;
+	public final void setServiceConfig(final ServiceConfig serviceConfig) {
+		this.serviceConfig = serviceConfig;
 	}
 
 	public final void setType(final String type) {
@@ -46,10 +41,9 @@ implements Serializable {
 	}
 
 	@JsonProperty(KEY_BATCH) private BatchConfig batchConfig;
-	@JsonProperty(KEY_CIRCULAR) private boolean circular;
 	@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
 	@JsonProperty(KEY_RATE) private RateConfig rateConfig;
-	@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
+	@JsonProperty(KEY_SERVICE) private ServiceConfig serviceConfig;
 	@JsonProperty(KEY_TYPE) private String type;
 
 	public LoadConfig() {
@@ -57,10 +51,9 @@ implements Serializable {
 
 	public LoadConfig(final LoadConfig other) {
 		this.batchConfig = new BatchConfig(other.getBatchConfig());
-		this.circular = other.getCircular();
 		this.generatorConfig = new GeneratorConfig(other.getGeneratorConfig());
 		this.rateConfig = new RateConfig(other.getRateConfig());
-		this.queueConfig = new QueueConfig(other.getQueueConfig());
+		this.serviceConfig = new ServiceConfig(other.getServiceConfig());
 		this.type = other.getType();
 	}
 
@@ -72,10 +65,6 @@ implements Serializable {
 		return type;
 	}
 
-	public final boolean getCircular() {
-		return circular;
-	}
-
 	public final GeneratorConfig getGeneratorConfig() {
 		return generatorConfig;
 	}
@@ -84,7 +73,7 @@ implements Serializable {
 		return rateConfig;
 	}
 
-	public final QueueConfig getQueueConfig() {
-		return queueConfig;
+	public final ServiceConfig getServiceConfig() {
+		return serviceConfig;
 	}
 }

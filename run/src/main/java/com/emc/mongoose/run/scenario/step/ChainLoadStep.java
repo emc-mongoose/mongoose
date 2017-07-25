@@ -21,10 +21,10 @@ import com.emc.mongoose.ui.config.item.data.DataConfig;
 import com.emc.mongoose.ui.config.item.data.input.InputConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.load.queue.QueueConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -110,7 +110,7 @@ extends StepBase {
 				final LoadConfig loadConfig = config.getLoadConfig();
 				final OutputConfig outputConfig = config.getOutputConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
-				final QueueConfig queueConfig = loadConfig.getQueueConfig();
+				final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();
 				final MetricsConfig metricsConfig = config.getOutputConfig().getMetricsConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
@@ -157,7 +157,7 @@ extends StepBase {
 				
 				if(i < nodeConfigList.size() - 1) {
 					nextItemBuff = new BasicChainTransferBuffer<>(
-						queueConfig.getSize(), TimeUnit.SECONDS, itemOutputConfig.getDelay()
+						queueConfig.getOutput(), TimeUnit.SECONDS, itemOutputConfig.getDelay()
 					);
 					loadController.setIoResultsOutput(nextItemBuff);
 				} else {
@@ -182,6 +182,8 @@ extends StepBase {
 			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
 		} catch(final UserShootHisFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
+		} catch(final InterruptedException e) {
+			return;
 		}
 		
 		try {

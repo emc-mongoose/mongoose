@@ -82,7 +82,7 @@ extends HttpStorageDriverBase<I, O> {
 	public SwiftStorageDriver(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws UserShootHisFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");

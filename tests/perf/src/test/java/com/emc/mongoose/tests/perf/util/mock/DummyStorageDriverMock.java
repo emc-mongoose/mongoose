@@ -34,7 +34,7 @@ extends DaemonBase
 implements StorageDriver<I, O> {
 
 	private final int batchSize;
-	private final int queueCapacity;
+	private final int outputQueueCapacity;
 	private final int concurrencyLevel;
 	private final BlockingQueue<O> ioResultsQueue;
 	private final LongAdder scheduledTaskCount = new LongAdder();
@@ -45,9 +45,9 @@ implements StorageDriver<I, O> {
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) {
 		this.batchSize = loadConfig.getBatchConfig().getSize();
-		this.queueCapacity = loadConfig.getQueueConfig().getSize();
+		this.outputQueueCapacity = storageConfig.getDriverConfig().getQueueConfig().getOutput();
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
-		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
+		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 	}
 
 	@Override
@@ -163,8 +163,8 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final List<O> getAll() {
-		final List<O> ioTaskResults = new ArrayList<>(queueCapacity);
-		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
+		final List<O> ioTaskResults = new ArrayList<>(outputQueueCapacity);
+		ioResultsQueue.drainTo(ioTaskResults, outputQueueCapacity);
 		return ioTaskResults;
 	}
 

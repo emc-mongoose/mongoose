@@ -145,6 +145,8 @@ extends StepBase {
 			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
 		} catch(final UserShootHisFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
+		} catch(final InterruptedException e) {
+			return;
 		}
 		
 		try(

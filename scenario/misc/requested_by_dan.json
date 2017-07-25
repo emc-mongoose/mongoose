@@ -50,7 +50,11 @@
 					}
 				},
 				"load" : {
-					"circular" : true,
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					},
 					"type" : "read"
 				}
 			}
@@ -69,7 +73,11 @@
 					}
 				},
 				"load" : {
-					"circular" : true,
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					},
 					"type" : "update"
 				}
 			}

@@ -91,7 +91,7 @@ public class ConfigTest {
 		assertThat(namingConfig.getLength(), equalTo(13, "item.naming.length"));
 		final LoadConfig loadConfig = config.getLoadConfig();
 		assertThat(loadConfig, notNullValue());
-		assertThat(loadConfig.getCircular(), equalTo(false, "load.circular"));
+		assertThat(loadConfig.getGeneratorConfig().getRecycleConfig().getEnabled(), equalTo(false, "load.circular"));
 		assertThat(loadConfig.getType(), equalTo("create", "load.type"));
 		assertThat(config.getStorageConfig().getDriverConfig().getConcurrency(), equalTo(1, "load.concurrency"));
 		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();

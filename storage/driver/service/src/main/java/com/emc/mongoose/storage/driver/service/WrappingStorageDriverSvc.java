@@ -37,10 +37,10 @@ implements StorageDriverSvc<I, O> {
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final long metricsPeriodSec,
-		final String stepName
+		final String stepId
 	) throws RemoteException {
 		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			stateReportSvcTask = new StateReportingTask(driver, metricsPeriodSec, stepName);
+			stateReportSvcTask = new StateReportingTask(driver, metricsPeriodSec, stepId);
 		} else {
 			stateReportSvcTask = null;
 		}

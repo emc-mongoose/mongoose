@@ -32,7 +32,7 @@ public interface StorageDriverUtil {
 		final List<StorageDriver> drivers, final ItemConfig itemConfig, final LoadConfig loadConfig,
 		final AverageConfig avgMetricsConfig, final StorageConfig storageConfig,
 		final StepConfig stepConfig, final DataInput contentSrc
-	) {
+	) throws InterruptedException {
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final String testStepName = stepConfig.getId();
 		final int driverPort = driverConfig.getPort();

@@ -2,6 +2,8 @@ package com.emc.mongoose.api.model;
 
 import com.emc.mongoose.api.common.concurrent.Daemon;
 import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.model.svc.SvcWorkerTask;
+
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.INTERRUPTED;
@@ -13,15 +15,12 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
-import static java.util.Map.Entry;
-import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created on 12.07.16.
@@ -31,41 +30,20 @@ implements Daemon {
 
 	protected static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
 	
-	private static final ExecutorService SVC_TASKS_EXECUTOR = Executors.newFixedThreadPool(
-		//Math.max(1, getHardwareThreadCount() / 2), new NamingThreadFactory("svcTasksWorker", true)
-		getHardwareThreadCount(), new NamingThreadFactory("svcTasksWorker", true)
-	);
+	private static final ThreadPoolExecutor SVC_TASKS_EXECUTOR;
 	
 	static {
+
+		final int svcThreadCount = getHardwareThreadCount();
+
+		SVC_TASKS_EXECUTOR = new ThreadPoolExecutor(
+			svcThreadCount, svcThreadCount, 0, TimeUnit.DAYS,
+			new ArrayBlockingQueue<>(svcThreadCount),
+			new NamingThreadFactory("svcTasksWorker", true)
+		);
+
 		for(int i = 0; i < getHardwareThreadCount(); i ++) {
-			SVC_TASKS_EXECUTOR.submit(
-				() -> {
-					Set<Entry<Daemon, List<SvcTask>>> svcTaskEntries;
-					List<SvcTask> nextSvcTasks;
-					while(true) {
-						svcTaskEntries = SVC_TASKS.entrySet();
-						if(svcTaskEntries.size() == 0) {
-							Thread.sleep(1);
-						} else {
-							for(final Entry<Daemon, List<SvcTask>> entry : svcTaskEntries) {
-								nextSvcTasks = entry.getValue();
-								for(final SvcTask nextSvcTask : nextSvcTasks) {
-									try {
-										nextSvcTask.run();
-									} catch(final Throwable t) {
-										System.err.println(
-											entry.getKey().toString() + ": service task \"" +
-												nextSvcTask + "\" failed:"
-										);
-										t.printStackTrace(System.err);
-									}
-									LockSupport.parkNanos(1);
-								}
-							}
-						}
-					}
-				}
-			);
+			SVC_TASKS_EXECUTOR.submit(new SvcWorkerTask(SVC_TASKS));
 		}
 	}
 	

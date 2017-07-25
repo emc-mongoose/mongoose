@@ -42,7 +42,7 @@ public class BasicStorageDriverBuilder<
 	private AverageConfig avgMetricsConfig;
 	private StorageConfig storageConfig;
 
-	protected final String getStepName() {
+	protected final String getStepId() {
 		return stepName;
 	}
 	
@@ -106,7 +106,7 @@ public class BasicStorageDriverBuilder<
 	
 	@Override @SuppressWarnings("unchecked")
 	public T build()
-	throws UserShootHisFootException {
+	throws UserShootHisFootException, InterruptedException {
 
 		try(
 			final Instance ctx = CloseableThreadContext
@@ -169,10 +169,15 @@ public class BasicStorageDriverBuilder<
 					"No valid constructor to make the \"" + driverType +
 						"\" storage driver instance"
 				);
-			} catch(
-				final InstantiationException | IllegalAccessException | InvocationTargetException e
-			) {
-				throw new UserShootHisFootException(e.getCause());
+			} catch(final InvocationTargetException e) {
+				final Throwable cause = e.getCause();
+				if(cause instanceof InterruptedException) {
+					throw (InterruptedException) cause;
+				} else {
+					throw new UserShootHisFootException(e);
+				}
+			} catch(final InstantiationException | IllegalAccessException e) {
+				throw new UserShootHisFootException(e);
 			}
 		}
 	}

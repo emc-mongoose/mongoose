@@ -164,10 +164,14 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws IOException, UserShootHisFootException {
-		final StorageDriver<I, O> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getAverageConfig().getPeriod(), getStepName()
-		);
-		return wrapper.getName();
+		try {
+			final StorageDriver<I, O> driver = build();
+			final T wrapper = (T) new WrappingStorageDriverSvc<>(
+				port, driver, getAverageConfig().getPeriod(), getStepId()
+			);
+			return wrapper.getName();
+		} catch(final InterruptedException e) {
+			throw new UserShootHisFootException(e);
+		}
 	}
 }

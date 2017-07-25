@@ -20,6 +20,7 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
+import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -53,11 +54,11 @@ implements StorageDriver<I, O> {
 
 	private final DataInput contentSrc;
 	private final int batchSize;
-	private final int queueCapacity;
+	private final int outputQueueCapacity;
 	protected final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
 	private final BlockingQueue<O> ioResultsQueue;
-	protected final String stepName;
+	protected final String stepId;
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
 	protected final Credential credential;
@@ -75,16 +76,17 @@ implements StorageDriver<I, O> {
 	private final IoTasksDispatch ioTasksDispatchTask;
 	
 	protected StorageDriverBase(
-		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		this.contentSrc = contentSrc;
 		this.batchSize = loadConfig.getBatchConfig().getSize();
-		this.queueCapacity = loadConfig.getQueueConfig().getSize();
-		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.stepName = stepName;
+		final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();
+		this.outputQueueCapacity = queueConfig.getOutput();
+		this.childTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
+		this.inTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
+		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
+		this.stepId = stepId;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
 		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
 		final String authToken = authConfig.getToken();
@@ -118,7 +120,7 @@ implements StorageDriver<I, O> {
 			if(buff.tryLock()) {
 				try(
 					final Instance logCtx = CloseableThreadContext
-						.put(KEY_TEST_STEP_ID, stepName)
+						.put(KEY_TEST_STEP_ID, stepId)
 						.put(KEY_CLASS_NAME, CLS_NAME)
 				) {
 					if(n < batchSize) {
@@ -152,7 +154,7 @@ implements StorageDriver<I, O> {
 		protected final void doClose() {
 			try(
 				final Instance logCtx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, stepName)
+					.put(KEY_TEST_STEP_ID, stepId)
 					.put(KEY_CLASS_NAME, IoTasksDispatch.class.getSimpleName())
 			) {
 				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
@@ -291,8 +293,8 @@ implements StorageDriver<I, O> {
 		if(ioResultsQueue.isEmpty()) {
 			return Collections.emptyList();
 		}
-		final List<O> ioTaskResults = new ArrayList<>(queueCapacity);
-		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
+		final List<O> ioTaskResults = new ArrayList<>(outputQueueCapacity);
+		ioResultsQueue.drainTo(ioTaskResults, outputQueueCapacity);
 		return ioTaskResults;
 	}
 	
@@ -375,7 +377,7 @@ implements StorageDriver<I, O> {
 	protected void doInterrupt() {
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
@@ -394,7 +396,7 @@ implements StorageDriver<I, O> {
 		super.doClose();
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			contentSrc.close();
