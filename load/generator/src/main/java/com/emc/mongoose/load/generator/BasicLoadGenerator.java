@@ -83,24 +83,11 @@ implements LoadGenerator<I, O>, SvcTask {
 		this.ioTaskBuilder = ioTaskBuilder;
 		this.originCode = ioTaskBuilder.getOriginCode();
 		if(countLimit > 0) {
-			if(recycleQueueSize > 0) {
-				this.countLimit = Math.min(countLimit, recycleQueueSize);
-			} else {
-				this.countLimit = countLimit;
-			}
+			this.countLimit = countLimit;
 		} else if(sizeLimit.get() > 0 && this.transferSizeEstimate > 0) {
-			final long countLimitEstimate = sizeLimit.get() / this.transferSizeEstimate;
-			if(recycleQueueSize > 0) {
-				this.countLimit = Math.min(countLimitEstimate, recycleQueueSize);
-			} else {
-				this.countLimit = countLimitEstimate;
-			}
+			this.countLimit = sizeLimit.get() / this.transferSizeEstimate;
 		} else {
-			if(recycleQueueSize > 0) {
-				this.countLimit = recycleQueueSize;
-			} else {
-				this.countLimit = Long.MAX_VALUE;
-			}
+			this.countLimit = Long.MAX_VALUE;
 		}
 		this.recycleQueue = recycleQueueSize > 0 ?
 			new ArrayBlockingQueue<O>(recycleQueueSize) : null;
