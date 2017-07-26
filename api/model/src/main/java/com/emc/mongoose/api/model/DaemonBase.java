@@ -13,6 +13,7 @@ import static com.emc.mongoose.api.common.concurrent.ThreadUtil.getHardwareThrea
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -28,22 +29,47 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
-	protected static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
-	
 	private static final ThreadPoolExecutor SVC_TASKS_EXECUTOR;
-	
+	private static final List<SvcTask> SVC_WORKERS = new ArrayList<>();
+	private static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
+
 	static {
 
 		final int svcThreadCount = getHardwareThreadCount();
 
 		SVC_TASKS_EXECUTOR = new ThreadPoolExecutor(
-			svcThreadCount, svcThreadCount, 0, TimeUnit.DAYS,
-			new ArrayBlockingQueue<>(svcThreadCount),
-			new NamingThreadFactory("svcTasksWorker", true)
+			svcThreadCount, svcThreadCount, 0, TimeUnit.DAYS, new ArrayBlockingQueue<>(1),
+			new NamingThreadFactory("svcWorker", true)
 		);
 
 		for(int i = 0; i < getHardwareThreadCount(); i ++) {
-			SVC_TASKS_EXECUTOR.submit(new SvcWorkerTask(SVC_TASKS));
+			final SvcTask svcWorkerTask = new SvcWorkerTask(SVC_TASKS);
+			SVC_TASKS_EXECUTOR.submit(svcWorkerTask);
+			SVC_WORKERS.add(svcWorkerTask);
+		}
+	}
+
+	public static void setThreadCount(final int threadCount) {
+		final int newThreadCount = threadCount > 0 ? threadCount : getHardwareThreadCount();
+		final int oldThreadCount = SVC_TASKS_EXECUTOR.getCorePoolSize();
+		if(newThreadCount != oldThreadCount) {
+			SVC_TASKS_EXECUTOR.setCorePoolSize(newThreadCount);
+			SVC_TASKS_EXECUTOR.setMaximumPoolSize(newThreadCount);
+			if(newThreadCount > oldThreadCount) {
+				for(int i = oldThreadCount; i < newThreadCount; i ++) {
+					final SvcWorkerTask svcWorkerTask = new SvcWorkerTask(SVC_TASKS);
+					SVC_TASKS_EXECUTOR.submit(svcWorkerTask);
+					SVC_WORKERS.add(svcWorkerTask);
+				}
+			} else { // less, remove some active service worker tasks
+				try {
+					for(int i = oldThreadCount - 1; i >= newThreadCount; i --) {
+						SVC_WORKERS.remove(i).close();
+					}
+				} catch (final Exception e) {
+					e.printStackTrace(System.err);
+				}
+			}
 		}
 	}
 	

@@ -12,9 +12,11 @@ import java.util.concurrent.locks.LockSupport;
  Created by andrey on 25.07.17.
  */
 public final class SvcWorkerTask
-implements Runnable {
+implements SvcTask {
 
 	private final Map<Daemon, List<SvcTask>> allSvcTasks;
+
+	private volatile boolean closedFlag = false;
 
 	public SvcWorkerTask(final Map<Daemon, List<SvcTask>> allSvcTasks) {
 		this.allSvcTasks = allSvcTasks;
@@ -24,7 +26,7 @@ implements Runnable {
 	public final void run() {
 		Set<Map.Entry<Daemon, List<SvcTask>>> svcTaskEntries;
 		List<SvcTask> nextSvcTasks;
-		while(true) {
+		while(!closedFlag) {
 			svcTaskEntries = allSvcTasks.entrySet();
 			if(svcTaskEntries.size() == 0) {
 				try {
@@ -39,16 +41,28 @@ implements Runnable {
 						try {
 							nextSvcTask.run();
 						} catch(final Throwable t) {
-							System.err.println(
-								entry.getKey().toString() + ": service task \"" + nextSvcTask +
-									"\" failed:"
-							);
-							t.printStackTrace(System.err);
+							synchronized (System.err) {
+								System.err.println(
+									entry.getKey().toString() + ": service task \"" + nextSvcTask +
+										"\" failed:"
+								);
+								t.printStackTrace(System.err);
+							}
 						}
-						LockSupport.parkNanos(1);
+						//LockSupport.parkNanos(1);
 					}
 				}
 			}
 		}
+	}
+
+	@Override
+	public final boolean isClosed() {
+		return closedFlag;
+	}
+
+	@Override
+	public final void close() {
+		closedFlag = true;
 	}
 }

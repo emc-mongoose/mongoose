@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  */
 public interface Daemon
 extends Closeable {
-	
+
 	List<SvcTask> getSvcTasks()
 	throws RemoteException;
 	

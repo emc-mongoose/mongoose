@@ -25,7 +25,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
-
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
@@ -85,7 +84,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final int connAttemptsLimit;
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
-	protected final boolean sslFlag;
+	private final boolean sslFlag;
 
 	protected NetStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
@@ -117,7 +116,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final int workerCount;
 		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount < 1) {
-			workerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
+			workerCount = ThreadUtil.getHardwareThreadCount();
 		} else {
 			workerCount = confWorkerCount;
 		}
@@ -125,6 +124,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(IO_EXECUTOR_LOCK.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 			try {
 				if(IO_EXECUTOR == null) {
+					Loggers.MSG.info("{}: I/O executor doesn't exist yet", toString());
 					if(IO_EXECUTOR_REF_COUNT != 0) {
 						throw new AssertionError("I/O executor reference count should be 0");
 					}
@@ -138,7 +138,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						);
 					}
 				}
-				IO_EXECUTOR_REF_COUNT++;
+				IO_EXECUTOR_REF_COUNT ++;
+				Loggers.MSG.info(
+					"{}: increased the I/O executor ref count to {}", toString(),
+					IO_EXECUTOR_REF_COUNT
+				);
 			} finally {
 				IO_EXECUTOR_LOCK.unlock();
 			}
@@ -589,8 +593,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			try {
 				if(IO_EXECUTOR_LOCK.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					try {
-						IO_EXECUTOR_REF_COUNT--;
+						IO_EXECUTOR_REF_COUNT --;
+						Loggers.MSG.info(
+							"{}: decreased the I/O executor ref count to {}", toString(),
+							IO_EXECUTOR_REF_COUNT
+						);
 						if(IO_EXECUTOR_REF_COUNT == 0) {
+							Loggers.MSG.info("{}: shutdown the I/O executor", toString());
 							if(IO_EXECUTOR.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
 								Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
 							} else {

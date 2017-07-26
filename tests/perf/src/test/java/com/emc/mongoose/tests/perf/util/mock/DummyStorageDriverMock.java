@@ -163,8 +163,9 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final List<O> getAll() {
-		final List<O> ioTaskResults = new ArrayList<>(outputQueueCapacity);
-		ioResultsQueue.drainTo(ioTaskResults, outputQueueCapacity);
+		final int n = ioResultsQueue.size();
+		final List<O> ioTaskResults = new ArrayList<>(n);
+		ioResultsQueue.drainTo(ioTaskResults, n);
 		return ioTaskResults;
 	}
 

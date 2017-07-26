@@ -290,11 +290,12 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final List<O> getAll() {
-		if(ioResultsQueue.isEmpty()) {
+		final int n = ioResultsQueue.size();
+		if(n == 0) {
 			return Collections.emptyList();
 		}
-		final List<O> ioTaskResults = new ArrayList<>(outputQueueCapacity);
-		ioResultsQueue.drainTo(ioTaskResults, outputQueueCapacity);
+		final List<O> ioTaskResults = new ArrayList<>(n);
+		ioResultsQueue.drainTo(ioTaskResults, n);
 		return ioTaskResults;
 	}
 	

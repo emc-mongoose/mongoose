@@ -1,5 +1,7 @@
 package com.emc.mongoose.ui.config.load.service;
 
+import com.emc.mongoose.api.model.DaemonBase;
+import com.emc.mongoose.ui.log.Loggers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
@@ -14,6 +16,8 @@ implements Serializable {
 
 	public final void setThreads(final int count) {
 		this.threads = count;
+		Loggers.MSG.info("Set the service threads count to {}", count == 0 ? "<AUTO>" : count);
+		DaemonBase.setThreadCount(count);
 	}
 
 	@JsonProperty(KEY_THREADS) private int threads;
