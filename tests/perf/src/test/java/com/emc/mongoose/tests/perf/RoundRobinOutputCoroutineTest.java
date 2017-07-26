@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
-import com.emc.mongoose.api.model.svc.RoundRobinOutputsTransferSvcTask;
+import com.emc.mongoose.api.model.svc.RoundRobinOutputCoroutine;
 
 import com.emc.mongoose.api.model.DaemonBase;
 import org.junit.Test;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.LongAdder;
  Created by kurila on 29.03.17.
  */
 @RunWith(Parameterized.class)
-public class RoundRobinOutputsTransferSvcTaskTest {
+public class RoundRobinOutputCoroutineTest {
 	
 	private static final int BATCH_SIZE = 0x1000;
 	private static final int TEST_TIME_LIMIT_SEC = 30;
@@ -91,7 +91,7 @@ public class RoundRobinOutputsTransferSvcTaskTest {
 	private final Output rrcOutput;
 	private final int outputCount;
 	
-	public RoundRobinOutputsTransferSvcTaskTest(final int outputCount)
+	public RoundRobinOutputCoroutineTest(final int outputCount)
 	throws Exception {
 		this.outputCount = outputCount;
 		outputs = new ArrayList<>(outputCount);
@@ -99,7 +99,7 @@ public class RoundRobinOutputsTransferSvcTaskTest {
 			outputs.add(new CountingOutput());
 		}
 		try(final DaemonMock daemonMock = new DaemonMock()) {
-			rrcOutput = new RoundRobinOutputsTransferSvcTask(outputs, daemonMock.getSvcTasks(), BATCH_SIZE);
+			rrcOutput = new RoundRobinOutputCoroutine(outputs, daemonMock.getSvcCoroutines(), BATCH_SIZE);
 			final Thread t = new Thread(() -> {
 				final Thread currentThread = Thread.currentThread();
 				final List buff = new ArrayList(BATCH_SIZE);

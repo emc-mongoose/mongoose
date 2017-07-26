@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.common.concurrent.SvcTask;
-import com.emc.mongoose.api.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
 import com.emc.mongoose.api.common.net.ServiceUtil;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.model.io.IoType;
@@ -33,24 +34,25 @@ implements StorageDriverSvc<I, O> {
 	
 	private final int port;
 	private final StorageDriver<I, O> driver;
-	private final SvcTask stateReportSvcTask;
+	private final Coroutine stateReportCoroutine;
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final long metricsPeriodSec,
 		final String stepId
 	) throws RemoteException {
 		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			stateReportSvcTask = new StateReportingTask(driver, metricsPeriodSec, stepId);
+			stateReportCoroutine = new StateReportingCoroutine(driver, metricsPeriodSec, stepId);
 		} else {
-			stateReportSvcTask = null;
+			stateReportCoroutine = null;
 		}
 		this.port = port;
 		this.driver = driver;
 		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 	
-	private final static class StateReportingTask
-	extends SvcTaskBase {
+	private final static class StateReportingCoroutine
+	extends StopableTaskBase
+	implements Coroutine {
 
 		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
@@ -59,10 +61,10 @@ implements StorageDriverSvc<I, O> {
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
 		
-		public StateReportingTask(
+		public StateReportingCoroutine(
 			final StorageDriver driver, final long metricsPeriodSec, final String stepName
 		) throws RemoteException {
-			super(driver.getSvcTasks());
+			super(driver.getSvcCoroutines());
 			this.driver = driver;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
 			this.stepName = stepName;
@@ -110,7 +112,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final List<SvcTask> getSvcTasks() {
+	public final List<StopableTask> getSvcCoroutines() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 	
@@ -125,8 +127,8 @@ implements StorageDriverSvc<I, O> {
 	throws IllegalStateException {
 		try {
 			driver.start();
-			if(stateReportSvcTask != null) {
-				driver.getSvcTasks().add(stateReportSvcTask); // start
+			if(stateReportCoroutine != null) {
+				driver.getSvcCoroutines().add(stateReportCoroutine); // start
 			}
 		} catch(final RemoteException e) {
 			throw new AssertionError(e);
@@ -213,8 +215,8 @@ implements StorageDriverSvc<I, O> {
 	throws IllegalStateException {
 		try {
 			driver.interrupt();
-			if(stateReportSvcTask != null) {
-				stateReportSvcTask.close();
+			if(stateReportCoroutine != null) {
+				stateReportCoroutine.close();
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Storage driver wrapping service failed on interrupt");

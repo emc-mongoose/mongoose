@@ -2,8 +2,9 @@ package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
-import com.emc.mongoose.api.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -73,7 +74,7 @@ implements StorageDriver<I, O> {
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewAuthToken(final Credential credential);
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
-	private final IoTasksDispatch ioTasksDispatchTask;
+	private final IoTasksDispatchCoroutine ioTasksDispatchCoroutine;
 	
 	protected StorageDriverBase(
 		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
@@ -100,19 +101,20 @@ implements StorageDriver<I, O> {
 		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
 		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		this.verifyFlag = verifyFlag;
-		this.ioTasksDispatchTask = new IoTasksDispatch(svcTasks);
-		svcTasks.add(ioTasksDispatchTask);
+		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine(svcCoroutines);
+		svcCoroutines.add(ioTasksDispatchCoroutine);
 	}
 
-	private final class IoTasksDispatch
-	extends SvcTaskBase {
+	private final class IoTasksDispatchCoroutine
+	extends StopableTaskBase
+	implements Coroutine {
 
 		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
 		private int n = 0;
 		private int m;
 
-		public IoTasksDispatch(final List<SvcTask> svcTasks) {
-			super(svcTasks);
+		public IoTasksDispatchCoroutine(final List<Coroutine> svcCoroutines) {
+			super(svcCoroutines);
 		}
 
 		@Override
@@ -155,7 +157,7 @@ implements StorageDriver<I, O> {
 			try(
 				final Instance logCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, stepId)
-					.put(KEY_CLASS_NAME, IoTasksDispatch.class.getSimpleName())
+					.put(KEY_CLASS_NAME, IoTasksDispatchCoroutine.class.getSimpleName())
 			) {
 				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					buff.clear();
@@ -366,9 +368,9 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		svcTasks.remove(ioTasksDispatchTask);
+		svcCoroutines.remove(ioTasksDispatchCoroutine);
 		try {
-			ioTasksDispatchTask.close();
+			ioTasksDispatchCoroutine.close();
 		} catch(final IOException ignored) {
 		}
 		Loggers.MSG.debug("{}: shut down", toString());

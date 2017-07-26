@@ -2,8 +2,8 @@ package com.emc.mongoose.api.model.svc;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
-import com.emc.mongoose.api.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  to the deferred tasks buffer.
  */
 public class TransferSvcTask<T>
-extends SvcTaskBase {
+extends StopableTaskBase {
 
 	private final static String CLS_NAME = TransferSvcTask.class.getSimpleName();
 
@@ -38,7 +38,7 @@ extends SvcTaskBase {
 	private int n;
 
 	public TransferSvcTask(
-		final List<SvcTask> svcTasks, final String stepName, final Input<T> input,
+		final List<StopableTask> svcTasks, final String stepName, final Input<T> input,
 		final Output<T> output, final int batchSize
 	) {
 		super(svcTasks);

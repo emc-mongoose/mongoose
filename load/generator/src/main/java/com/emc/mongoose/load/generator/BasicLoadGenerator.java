@@ -3,7 +3,8 @@ package com.emc.mongoose.load.generator;
 import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.DaemonBase;
 import com.emc.mongoose.api.common.concurrent.Throttle;
@@ -41,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadGenerator<I, O>, SvcTask {
+implements LoadGenerator<I, O>, Coroutine {
 
 	private final static String CLS_NAME = BasicLoadGenerator.class.getSimpleName();
 
@@ -98,7 +99,7 @@ implements LoadGenerator<I, O>, SvcTask {
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-		svcTasks.add(this);
+		svcCoroutines.add(this);
 	}
 
 	@Override
@@ -331,7 +332,7 @@ implements LoadGenerator<I, O>, SvcTask {
 
 	@Override
 	protected final void doInterrupt() {
-		svcTasks.remove(this);
+		svcCoroutines.remove(this);
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} I/O tasks",
 			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
@@ -370,7 +371,7 @@ implements LoadGenerator<I, O>, SvcTask {
 		// to it so the load generator builder should close it
 		if(itemInput != null) {
 			try {
-				inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				inputLock.tryLock(StopableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 				itemInput.close();
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());

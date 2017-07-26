@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
@@ -121,7 +121,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			workerCount = confWorkerCount;
 		}
 
-		if(IO_EXECUTOR_LOCK.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+		if(IO_EXECUTOR_LOCK.tryLock(StopableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 			try {
 				if(IO_EXECUTOR == null) {
 					Loggers.MSG.info("{}: I/O executor doesn't exist yet", toString());
@@ -591,7 +591,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				);
 			}
 			try {
-				if(IO_EXECUTOR_LOCK.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(IO_EXECUTOR_LOCK.tryLock(StopableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					try {
 						IO_EXECUTOR_REF_COUNT --;
 						Loggers.MSG.info(

@@ -1,7 +1,8 @@
 package com.emc.mongoose.api.model;
 
+import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.concurrent.Daemon;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 import com.emc.mongoose.api.model.svc.SvcWorkerTask;
 
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.CLOSED;
@@ -29,36 +30,36 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final ThreadPoolExecutor SVC_TASKS_EXECUTOR;
-	private static final List<SvcTask> SVC_WORKERS = new ArrayList<>();
-	private static final Map<Daemon, List<SvcTask>> SVC_TASKS = new ConcurrentHashMap<>();
+	private static final ThreadPoolExecutor SVC_EXECUTOR;
+	private static final List<StopableTask> SVC_WORKERS = new ArrayList<>();
+	private static final Map<Daemon, List<Coroutine>> SVC_COROUTINES = new ConcurrentHashMap<>();
 
 	static {
 
 		final int svcThreadCount = getHardwareThreadCount();
 
-		SVC_TASKS_EXECUTOR = new ThreadPoolExecutor(
+		SVC_EXECUTOR = new ThreadPoolExecutor(
 			svcThreadCount, svcThreadCount, 0, TimeUnit.DAYS, new ArrayBlockingQueue<>(1),
 			new NamingThreadFactory("svcWorker", true)
 		);
 
 		for(int i = 0; i < getHardwareThreadCount(); i ++) {
-			final SvcTask svcWorkerTask = new SvcWorkerTask(SVC_TASKS);
-			SVC_TASKS_EXECUTOR.submit(svcWorkerTask);
+			final StopableTask svcWorkerTask = new SvcWorkerTask(SVC_COROUTINES);
+			SVC_EXECUTOR.submit(svcWorkerTask);
 			SVC_WORKERS.add(svcWorkerTask);
 		}
 	}
 
 	public static void setThreadCount(final int threadCount) {
 		final int newThreadCount = threadCount > 0 ? threadCount : getHardwareThreadCount();
-		final int oldThreadCount = SVC_TASKS_EXECUTOR.getCorePoolSize();
+		final int oldThreadCount = SVC_EXECUTOR.getCorePoolSize();
 		if(newThreadCount != oldThreadCount) {
-			SVC_TASKS_EXECUTOR.setCorePoolSize(newThreadCount);
-			SVC_TASKS_EXECUTOR.setMaximumPoolSize(newThreadCount);
+			SVC_EXECUTOR.setCorePoolSize(newThreadCount);
+			SVC_EXECUTOR.setMaximumPoolSize(newThreadCount);
 			if(newThreadCount > oldThreadCount) {
 				for(int i = oldThreadCount; i < newThreadCount; i ++) {
-					final SvcWorkerTask svcWorkerTask = new SvcWorkerTask(SVC_TASKS);
-					SVC_TASKS_EXECUTOR.submit(svcWorkerTask);
+					final SvcWorkerTask svcWorkerTask = new SvcWorkerTask(SVC_COROUTINES);
+					SVC_EXECUTOR.submit(svcWorkerTask);
 					SVC_WORKERS.add(svcWorkerTask);
 				}
 			} else { // less, remove some active service worker tasks
@@ -73,7 +74,7 @@ implements Daemon {
 		}
 	}
 	
-	protected final List<SvcTask> svcTasks = new CopyOnWriteArrayList<>();
+	protected final List<Coroutine> svcCoroutines = new CopyOnWriteArrayList<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -85,7 +86,7 @@ implements Daemon {
 	
 	protected void doStart()
 	throws IllegalStateException {
-		SVC_TASKS.put(this, svcTasks);
+		SVC_COROUTINES.put(this, svcCoroutines);
 	}
 
 	protected abstract void doShutdown()
@@ -96,16 +97,16 @@ implements Daemon {
 	
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		SVC_TASKS.remove(this);
-		for(final SvcTask svcTask : svcTasks) {
-			svcTask.close();
+		SVC_COROUTINES.remove(this);
+		for(final Coroutine svcCoroutine : svcCoroutines) {
+			svcCoroutine.close();
 		}
-		svcTasks.clear();
+		svcCoroutines.clear();
 	}
 
 	@Override
-	public final List<SvcTask> getSvcTasks() {
-		return svcTasks;
+	public final List<Coroutine> getSvcCoroutines() {
+		return svcCoroutines;
 	}
 
 	@Override
@@ -196,8 +197,8 @@ implements Daemon {
 	}
 
 	public static void closeAll() {
-		synchronized(SVC_TASKS) {
-			for(final Daemon d : SVC_TASKS.keySet()) {
+		synchronized(SVC_COROUTINES) {
+			for(final Daemon d : SVC_COROUTINES.keySet()) {
 				try {
 					d.close();
 				} catch(final Throwable t) {

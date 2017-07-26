@@ -2,8 +2,8 @@ package com.emc.mongoose.api.model.svc;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
-import com.emc.mongoose.api.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
 import com.emc.mongoose.api.common.io.Output;
 
 import java.io.EOFException;
@@ -15,8 +15,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 21.02.17.
  */
+@Deprecated
 public final class BlockingQueueTransferTask<T>
-extends SvcTaskBase {
+extends StopableTaskBase {
 	
 	private final BlockingQueue<T> queue;
 	private final Output<T> output;
@@ -27,7 +28,7 @@ extends SvcTaskBase {
 	
 	public BlockingQueueTransferTask(
 		final BlockingQueue<T> queue, final Output<T> output, final int batchSize,
-		final List<SvcTask> svcTasks
+		final List<StopableTask> svcTasks
 	) {
 		super(svcTasks);
 		this.queue = queue;

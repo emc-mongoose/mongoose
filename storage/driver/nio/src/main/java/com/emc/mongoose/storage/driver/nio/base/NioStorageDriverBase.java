@@ -6,7 +6,7 @@ import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.NamingThreadFactory;
@@ -75,6 +75,9 @@ implements NioStorageDriver<I, O> {
 		);
 	}
 
+	private final class NioCoroutine {
+
+	}
 
 	/**
 	 The class represents the non-blocking I/O task execution algorithm.
@@ -197,7 +200,7 @@ implements NioStorageDriver<I, O> {
 	protected final void doInterrupt()
 	throws IllegalStateException {
 		try {
-			if(!ioTaskExecutor.awaitTermination(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+			if(!ioTaskExecutor.awaitTermination(StopableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 				Loggers.ERR.error("Failed to stop the remaining I/O tasks in 0.25 second");
 			}
 		} catch(final InterruptedException e) {
@@ -290,7 +293,7 @@ implements NioStorageDriver<I, O> {
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioWorkerTasks[i] = null;
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(ioTaskBuffs[i].tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(ioTaskBuffs[i].tryLock(StopableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){
 					Loggers.ERR.debug(

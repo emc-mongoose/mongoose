@@ -2,8 +2,9 @@ package com.emc.mongoose.api.model.svc;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
-import com.emc.mongoose.api.common.concurrent.SvcTaskBase;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 
@@ -20,9 +21,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 06.11.16.
  */
-public final class RoundRobinOutputsTransferSvcTask<T, O extends Output<T>>
-extends SvcTaskBase
-implements Output<T> {
+public final class RoundRobinOutputCoroutine<T, O extends Output<T>>
+extends StopableTaskBase
+implements Coroutine, Output<T> {
 	
 	private final List<O> outputs;
 	private final int outputsCount;
@@ -31,8 +32,8 @@ implements Output<T> {
 	private final int buffCapacity;
 	private final Map<O, OptLockBuffer<T>> buffs;
 
-	public RoundRobinOutputsTransferSvcTask(
-		final List<O> outputs, final List<SvcTask> svcTasks, final int buffCapacity
+	public RoundRobinOutputCoroutine(
+		final List<O> outputs, final List<StopableTask> svcTasks, final int buffCapacity
 	) {
 		super(svcTasks);
 		this.outputs = outputs;

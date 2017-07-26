@@ -1,43 +1,43 @@
 package com.emc.mongoose.api.model.svc;
 
+import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.concurrent.Daemon;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by andrey on 25.07.17.
  */
 public final class SvcWorkerTask
-implements SvcTask {
+implements StopableTask {
 
-	private final Map<Daemon, List<SvcTask>> allSvcTasks;
+	private final Map<Daemon, List<Coroutine>> allSvcCoroutines;
 
 	private volatile boolean closedFlag = false;
 
-	public SvcWorkerTask(final Map<Daemon, List<SvcTask>> allSvcTasks) {
-		this.allSvcTasks = allSvcTasks;
+	public SvcWorkerTask(final Map<Daemon, List<Coroutine>> allSvcCoroutines) {
+		this.allSvcCoroutines = allSvcCoroutines;
 	}
 
 	@Override
 	public final void run() {
-		Set<Map.Entry<Daemon, List<SvcTask>>> svcTaskEntries;
-		List<SvcTask> nextSvcTasks;
+		Set<Map.Entry<Daemon, List<Coroutine>>> svcCoroutineEntries;
+		List<Coroutine> nextSvcCoroutines;
 		while(!closedFlag) {
-			svcTaskEntries = allSvcTasks.entrySet();
-			if(svcTaskEntries.size() == 0) {
+			svcCoroutineEntries = allSvcCoroutines.entrySet();
+			if(svcCoroutineEntries.size() == 0) {
 				try {
 					Thread.sleep(1);
 				} catch(final InterruptedException e) {
 					break;
 				}
 			} else {
-				for(final Map.Entry<Daemon, List<SvcTask>> entry : svcTaskEntries) {
-					nextSvcTasks = entry.getValue();
-					for(final SvcTask nextSvcTask : nextSvcTasks) {
+				for(final Map.Entry<Daemon, List<Coroutine>> entry : svcCoroutineEntries) {
+					nextSvcCoroutines = entry.getValue();
+					for(final Coroutine nextSvcTask : nextSvcCoroutines) {
 						try {
 							nextSvcTask.run();
 						} catch(final Throwable t) {

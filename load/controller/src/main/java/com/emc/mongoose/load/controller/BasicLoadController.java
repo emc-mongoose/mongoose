@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.controller;
 
 import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 import com.emc.mongoose.api.common.net.Service;
 import com.emc.mongoose.api.common.net.ServiceUtil;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
@@ -9,7 +9,7 @@ import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.common.concurrent.RateThrottle;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
-import com.emc.mongoose.api.model.svc.RoundRobinOutputsTransferSvcTask;
+import com.emc.mongoose.api.model.svc.RoundRobinOutputCoroutine;
 import com.emc.mongoose.api.model.DaemonBase;
 import com.emc.mongoose.api.model.io.task.IoTask.Status;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
@@ -124,8 +124,8 @@ implements LoadController<I, O> {
 			generatorsMap.put(nextGenerator.hashCode(), nextGenerator);
 
 			try {
-				nextGeneratorOutput = new RoundRobinOutputsTransferSvcTask<>(
-					driversMap.get(nextGenerator), nextGenerator.getSvcTasks(),
+				nextGeneratorOutput = new RoundRobinOutputCoroutine<>(
+					driversMap.get(nextGenerator), nextGenerator.getSvcCoroutines(),
 					nextGenerator.getBatchSize()
 				);
 			} catch(final RemoteException ignored) {
@@ -600,8 +600,8 @@ implements LoadController<I, O> {
 
 		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
 			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
-				svcTasks.add(
-					new TransferSvcTask<>(svcTasks, name, nextDriver, this, batchSize)
+				svcCoroutines.add(
+					new TransferSvcTask<>(svcCoroutines, name, nextDriver, this, batchSize)
 				);
 			}
 		}
@@ -784,9 +784,9 @@ implements LoadController<I, O> {
 			);
 		}
 		
-		synchronized(svcTasks) {
+		synchronized(svcCoroutines) {
 			// stop all service tasks
-			for(final SvcTask svcTask : svcTasks) {
+			for(final StopableTask svcTask : svcCoroutines) {
 				try {
 					svcTask.close();
 				} catch(final IOException e) {
@@ -795,7 +795,7 @@ implements LoadController<I, O> {
 					);
 				}
 			}
-			svcTasks.clear();
+			svcCoroutines.clear();
 		}
 
 		Loggers.MSG.debug("{}: interrupted the load controller", getName());

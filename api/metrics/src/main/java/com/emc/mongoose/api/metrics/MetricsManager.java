@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.metrics;
 
-import com.emc.mongoose.api.common.concurrent.SvcTask;
+import com.emc.mongoose.api.common.concurrent.StopableTask;
 import com.emc.mongoose.api.metrics.logging.BasicMetricsLogMessage;
 import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class MetricsManager
 extends DaemonBase
-implements SvcTask {
+implements StopableTask {
 	
 	private final Map<LoadController, Map<MetricsContext, Closeable>>
 		allMetrics = new HashMap<>();
@@ -46,7 +46,7 @@ implements SvcTask {
 	private long nextOutputTs;
 
 	private MetricsManager() {
-		svcTasks.add(this);
+		svcCoroutines.add(this);
 	}
 	
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
@@ -252,7 +252,7 @@ implements SvcTask {
 	
 	@Override
 	protected final void doInterrupt() {
-		svcTasks.remove(this);
+		svcCoroutines.remove(this);
 		try { // obtain the lock to prevent further execution
 			if(!allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 				Loggers.ERR.warn("Locking timeout at interrupt call");
