@@ -2,8 +2,8 @@ package com.emc.mongoose.api.model.svc;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
-import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.common.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -25,10 +25,11 @@ import java.util.concurrent.TimeUnit;
  The items got from the input which may not be transferred to the output w/o blocking are stored
  to the deferred tasks buffer.
  */
-public class TransferSvcTask<T>
-extends StopableTaskBase {
+public class TransferCoroutine<T>
+extends CoroutineBase
+implements Coroutine {
 
-	private final static String CLS_NAME = TransferSvcTask.class.getSimpleName();
+	private final static String CLS_NAME = TransferCoroutine.class.getSimpleName();
 
 	private final String stepName;
 	private final Input<T> input;
@@ -37,11 +38,11 @@ extends StopableTaskBase {
 
 	private int n;
 
-	public TransferSvcTask(
-		final List<StopableTask> svcTasks, final String stepName, final Input<T> input,
+	public TransferCoroutine(
+		final List<Coroutine> svcCoroutines, final String stepName, final Input<T> input,
 		final Output<T> output, final int batchSize
 	) {
-		super(svcTasks);
+		super(svcCoroutines);
 		this.stepName = stepName;
 		this.input = input;
 		this.output = output;

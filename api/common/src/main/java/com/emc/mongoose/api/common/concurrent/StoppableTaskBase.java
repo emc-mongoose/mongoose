@@ -1,27 +1,19 @@
 package com.emc.mongoose.api.common.concurrent;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  Created by andrey on 19.04.17.
  */
-public abstract class StopableTaskBase
-implements StopableTask {
-
-	private final List<? extends StopableTask> svcTasks;
+public abstract class StoppableTaskBase
+implements StoppableTask {
 
 	private volatile boolean isClosedFlag = false;
 
-	protected StopableTaskBase(final List<? extends StopableTask> svcTasks) {
-		this.svcTasks = svcTasks;
-	}
-
 	@Override
-	public final void close()
+	public void close()
 	throws IOException {
 		isClosedFlag = true;
-		svcTasks.remove(this);
 		doClose();
 	}
 

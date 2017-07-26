@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.net.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -76,7 +76,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
-	public final List<StopableTask> getSvcCoroutines() {
+	public final List<Coroutine> getSvcCoroutines() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 	

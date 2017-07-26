@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.metrics;
 
-import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.metrics.logging.BasicMetricsLogMessage;
 import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class MetricsManager
 extends DaemonBase
-implements StopableTask {
+implements Coroutine {
 	
 	private final Map<LoadController, Map<MetricsContext, Closeable>>
 		allMetrics = new HashMap<>();

@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.service;
 
 import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
-import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
+import com.emc.mongoose.api.common.concurrent.CoroutineBase;
+import com.emc.mongoose.api.common.concurrent.StoppableTaskBase;
 import com.emc.mongoose.api.common.net.ServiceUtil;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.model.io.IoType;
@@ -51,7 +51,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	private final static class StateReportingCoroutine
-	extends StopableTaskBase
+	extends CoroutineBase
 	implements Coroutine {
 
 		private final StorageDriver driver;
@@ -112,7 +112,7 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final List<StopableTask> getSvcCoroutines() {
+	public final List<Coroutine> getSvcCoroutines() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 	

@@ -2,7 +2,7 @@ package com.emc.mongoose.api.model.svc;
 
 import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.concurrent.Daemon;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StoppableTask;
 
 import java.util.List;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.Set;
  Created by andrey on 25.07.17.
  */
 public final class SvcWorkerTask
-implements StopableTask {
+implements StoppableTask {
 
 	private final Map<Daemon, List<Coroutine>> allSvcCoroutines;
 

@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.controller;
 
 import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.net.Service;
 import com.emc.mongoose.api.common.net.ServiceUtil;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
@@ -25,7 +25,7 @@ import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.common.io.Output;
 import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.svc.TransferSvcTask;
+import com.emc.mongoose.api.model.svc.TransferCoroutine;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
@@ -601,7 +601,7 @@ implements LoadController<I, O> {
 		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
 			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
 				svcCoroutines.add(
-					new TransferSvcTask<>(svcCoroutines, name, nextDriver, this, batchSize)
+					new TransferCoroutine<>(svcCoroutines, name, nextDriver, this, batchSize)
 				);
 			}
 		}
@@ -786,12 +786,12 @@ implements LoadController<I, O> {
 		
 		synchronized(svcCoroutines) {
 			// stop all service tasks
-			for(final StopableTask svcTask : svcCoroutines) {
+			for(final Coroutine svcCoroutine : svcCoroutines) {
 				try {
-					svcTask.close();
+					svcCoroutine.close();
 				} catch(final IOException e) {
 					LogUtil.exception(
-						Level.WARN, e, "{}: failed to stop the service task {}", svcTask
+						Level.WARN, e, "{}: failed to stop the service task {}", svcCoroutine
 					);
 				}
 			}

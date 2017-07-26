@@ -34,12 +34,6 @@ extends StorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException {
-		return true;
-	}
-
-	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count

@@ -2,7 +2,7 @@ package com.emc.mongoose.api.model;
 
 import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.concurrent.Daemon;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
+import com.emc.mongoose.api.common.concurrent.StoppableTask;
 import com.emc.mongoose.api.model.svc.SvcWorkerTask;
 
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.CLOSED;
@@ -31,7 +31,7 @@ public abstract class DaemonBase
 implements Daemon {
 
 	private static final ThreadPoolExecutor SVC_EXECUTOR;
-	private static final List<StopableTask> SVC_WORKERS = new ArrayList<>();
+	private static final List<StoppableTask> SVC_WORKERS = new ArrayList<>();
 	private static final Map<Daemon, List<Coroutine>> SVC_COROUTINES = new ConcurrentHashMap<>();
 
 	static {
@@ -44,7 +44,7 @@ implements Daemon {
 		);
 
 		for(int i = 0; i < getHardwareThreadCount(); i ++) {
-			final StopableTask svcWorkerTask = new SvcWorkerTask(SVC_COROUTINES);
+			final StoppableTask svcWorkerTask = new SvcWorkerTask(SVC_COROUTINES);
 			SVC_EXECUTOR.submit(svcWorkerTask);
 			SVC_WORKERS.add(svcWorkerTask);
 		}

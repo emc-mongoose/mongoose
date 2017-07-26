@@ -3,8 +3,8 @@ package com.emc.mongoose.storage.driver.base;
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
 import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
-import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
+import com.emc.mongoose.api.common.concurrent.CoroutineBase;
+import com.emc.mongoose.api.common.concurrent.StoppableTaskBase;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -106,8 +106,7 @@ implements StorageDriver<I, O> {
 	}
 
 	private final class IoTasksDispatchCoroutine
-	extends StopableTaskBase
-	implements Coroutine {
+	extends CoroutineBase {
 
 		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
 		private int n = 0;
@@ -374,6 +373,12 @@ implements StorageDriver<I, O> {
 		} catch(final IOException ignored) {
 		}
 		Loggers.MSG.debug("{}: shut down", toString());
+	}
+
+	@Override
+	public boolean await(final long timeout, final TimeUnit timeUnit)
+	throws InterruptedException {
+		return false;
 	}
 
 	@Override

@@ -15,8 +15,8 @@ implements OptLockBuffer<T> {
 
 	private final Lock lock = new ReentrantLock();
 
-	public OptLockArrayBuffer(final int initialCapacity) {
-		super(initialCapacity);
+	public OptLockArrayBuffer(final int capacity) {
+		super(capacity);
 	}
 
 	@Override

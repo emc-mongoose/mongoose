@@ -3,8 +3,7 @@ package com.emc.mongoose.api.model.svc;
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
 import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.StopableTask;
-import com.emc.mongoose.api.common.concurrent.StopableTaskBase;
+import com.emc.mongoose.api.common.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 
@@ -22,8 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
  Created by andrey on 06.11.16.
  */
 public final class RoundRobinOutputCoroutine<T, O extends Output<T>>
-extends StopableTaskBase
-implements Coroutine, Output<T> {
+extends CoroutineBase
+implements Output<T> {
 	
 	private final List<O> outputs;
 	private final int outputsCount;
@@ -33,9 +32,9 @@ implements Coroutine, Output<T> {
 	private final Map<O, OptLockBuffer<T>> buffs;
 
 	public RoundRobinOutputCoroutine(
-		final List<O> outputs, final List<StopableTask> svcTasks, final int buffCapacity
+		final List<O> outputs, final List<Coroutine> svcCoroutines, final int buffCapacity
 	) {
-		super(svcTasks);
+		super(svcCoroutines);
 		this.outputs = outputs;
 		this.outputsCount = outputs.size();
 		this.buffCapacity = buffCapacity;
@@ -43,7 +42,7 @@ implements Coroutine, Output<T> {
 		for(int i = 0; i < this.outputsCount; i ++) {
 			this.buffs.put(outputs.get(i), new OptLockArrayBuffer<>(buffCapacity));
 		}
-		svcTasks.add(this);
+		svcCoroutines.add(this);
 	}
 
 	private OptLockBuffer<T> selectBuff() {

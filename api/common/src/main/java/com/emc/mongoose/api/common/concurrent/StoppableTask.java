@@ -5,7 +5,7 @@ import java.io.Closeable;
 /**
  Created by andrey on 19.04.17.
  */
-public interface StopableTask
+public interface StoppableTask
 extends Closeable, Runnable {
 
 	int TIMEOUT_MILLIS = 250;
