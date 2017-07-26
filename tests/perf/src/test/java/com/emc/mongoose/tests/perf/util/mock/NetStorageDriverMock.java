@@ -29,10 +29,10 @@ public final class NetStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O> {
 
 	public NetStorageDriverMock(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+	) throws UserShootHisFootException, InterruptedException {
+		super(stepId, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 
 	@Override
