@@ -31,7 +31,16 @@ import java.util.List;
 public class SingleFixedUpdateAndSingleRandomReadTest
 extends EnvConfiguredScenarioTestBase {
 	
-	static {
+	private static String ITEM_OUTPUT_PATH;
+	private static String STD_OUTPUT;
+	private static SizeInBytes EXPECTED_UPDATE_SIZE;
+	private static SizeInBytes EXPECTED_READ_SIZE;
+	
+	private static final long EXPECTED_COUNT = 1000;
+	
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		/**
 		 https://github.com/emc-mongoose/nagaina/issues/3
@@ -46,18 +55,6 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "SingleFixedUpdateAndSingleRandomRead.json"
 		);
-	}
-	
-	private static String ITEM_OUTPUT_PATH;
-	private static String STD_OUTPUT;
-	private static SizeInBytes EXPECTED_UPDATE_SIZE;
-	private static SizeInBytes EXPECTED_READ_SIZE;
-	
-	private static final long EXPECTED_COUNT = 1000;
-	
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

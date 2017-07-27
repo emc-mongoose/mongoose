@@ -57,17 +57,6 @@ import java.util.concurrent.TimeUnit;
 
 public class WeightedLoadTest
 extends EnvConfiguredScenarioTestBase {
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_ID = WeightedLoadTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "WeightedLoad.json"
-		);
-	}
 
 	private static boolean FINISHED_IN_TIME;
 	private static String STD_OUTPUT;
@@ -77,6 +66,15 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
+		STEP_ID = WeightedLoadTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "WeightedLoad.json"
+		);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();

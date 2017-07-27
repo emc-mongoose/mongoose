@@ -35,7 +35,9 @@ extends EnvConfiguredScenarioTestBase {
 	private static long ACTUAL_TEST_TIME;
 	private static String ITEM_OUTPUT_PATH;
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
@@ -48,11 +50,6 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "LoopBySequence.json"
 		);
-	}
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		EnvConfiguredScenarioTestBase.setUpClass();

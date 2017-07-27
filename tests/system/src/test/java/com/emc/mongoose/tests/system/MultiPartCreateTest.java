@@ -45,7 +45,9 @@ extends EnvConfiguredScenarioTestBase {
 	private static final String ITEM_OUTPUT_FILE = MultiPartCreateTest.class.getSimpleName() +
 		"Items.csv";
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
@@ -58,11 +60,6 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "MultiPartCreate.json"
 		);
-	}
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

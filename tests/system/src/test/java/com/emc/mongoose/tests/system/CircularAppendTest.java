@@ -51,17 +51,6 @@ import java.util.concurrent.TimeUnit;
 public class CircularAppendTest
 extends EnvConfiguredScenarioTestBase {
 
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_ID = CircularAppendTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "CircularAppend.json");
-	}
-
 	private static final int EXPECTED_APPEND_COUNT = 100;
 	private static final long EXPECTED_COUNT = 100;
 	private static final String ITEM_OUTPUT_FILE_1 = "CircularAppendTest1.csv";
@@ -72,7 +61,14 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
 		STEP_ID = CircularAppendTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "CircularAppend.json");
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();

@@ -36,7 +36,9 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_OUTPUT_PATH;
 	private static String STD_OUTPUT;
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
 		EXCLUDE_PARAMS.put(
@@ -50,11 +52,6 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json"
 		);
-	}
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--test-step-limit-count=" + COUNT_LIMIT);
 		EnvConfiguredScenarioTestBase.setUpClass();

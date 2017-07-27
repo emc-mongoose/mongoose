@@ -35,16 +35,13 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_OUTPUT_PATH;
 	private static String STD_OUTPUT;
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("s3", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
 		STEP_ID = CreateNoLimitTest.class.getSimpleName();
-	}
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
@@ -82,7 +79,7 @@ extends EnvConfiguredScenarioTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		if(! SKIP_FLAG) {
+		if(!SKIP_FLAG) {
 			if(RUNNER != null) {
 				RUNNER.interrupt();
 			}

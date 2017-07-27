@@ -35,19 +35,6 @@ import java.util.List;
 public class CopyUsingInputPathTest
 extends EnvConfiguredScenarioTestBase {
 
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_ID = CopyUsingInputPathTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "CopyUsingInputPath.json"
-		);
-	}
-
 	private static String ITEM_SRC_PATH;
 	private static String ITEM_DST_PATH;
 	private static String STD_OUTPUT;
@@ -57,7 +44,16 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
+		STEP_ID = CopyUsingInputPathTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "CopyUsingInputPath.json"
+		);ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;

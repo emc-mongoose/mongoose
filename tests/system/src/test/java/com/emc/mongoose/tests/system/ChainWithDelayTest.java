@@ -46,8 +46,14 @@ extends EnvConfiguredScenarioTestBase {
 	private static final int DELAY_SECONDS = 60;
 	private static final int TIME_LIMIT = 180;
 	private static final String ZONE1_ADDR = "127.0.0.1";
-	private static final String ZONE2_ADDR;
-	static {
+	private static String ZONE2_ADDR;
+
+	private static boolean FINISHED_IN_TIME;
+	private static String STD_OUTPUT;
+	
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		try {
 			ZONE2_ADDR = NetUtil.getHostAddrString();
 		} catch(final Exception e) {
@@ -57,16 +63,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList(STORAGE_TYPE_FS));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
 		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));
-		STEP_ID = ChainWithDelayTest.class.getSimpleName();
-	}
-	
-	private static boolean FINISHED_IN_TIME;
-	private static String STD_OUTPUT;
-	
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
+		STEP_ID = ChainWithDelayTest.class.getSimpleName();EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
 		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");

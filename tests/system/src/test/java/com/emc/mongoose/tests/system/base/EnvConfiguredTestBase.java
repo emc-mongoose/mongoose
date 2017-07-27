@@ -62,6 +62,7 @@ extends ConfiguredTestBase {
 	public static void setUpClass()
 	throws Exception {
 
+		SKIP_FLAG = false;
 		ConfiguredTestBase.setUpClass();
 		final Map<String, String> env = System.getenv();
 
@@ -129,7 +130,6 @@ extends ConfiguredTestBase {
 
 	private static void checkExclusionAndSetFlag(final String name, final Object value) {
 		final List<Object> excludeParams = EXCLUDE_PARAMS.get(name);
-		SKIP_FLAG = false;
 		if(excludeParams != null && !excludeParams.isEmpty()) {
 			for(final Object nextExcludeParam : excludeParams) {
 				if(nextExcludeParam.equals(value)) {

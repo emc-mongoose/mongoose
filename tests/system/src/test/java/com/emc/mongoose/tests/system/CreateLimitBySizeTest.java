@@ -50,7 +50,9 @@ extends EnvConfiguredScenarioTestBase {
 	private static SizeInBytes SIZE_LIMIT;
 	private static long EXPECTED_COUNT;
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "atmos"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
@@ -59,11 +61,6 @@ extends EnvConfiguredScenarioTestBase {
 			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
 		);
 		STEP_ID = CreateLimitBySizeTest.class.getSimpleName();
-	}
-	
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

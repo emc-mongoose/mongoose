@@ -52,19 +52,6 @@ import static org.junit.Assume.assumeFalse;
 public class CircularReadSingleItemTest
 extends EnvConfiguredScenarioTestBase {
 
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_ID = CircularReadSingleItemTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "CircularReadSingleItem.json"
-		);
-	}
-
 	private static final String ITEM_OUTPUT_FILE =
 		CircularReadSingleItemTest.class.getSimpleName() + ".csv";
 
@@ -75,7 +62,16 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
 		STEP_ID = CircularReadSingleItemTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "CircularReadSingleItem.json"
+		);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();

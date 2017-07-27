@@ -39,7 +39,9 @@ extends EnvConfiguredScenarioTestBase {
 	private static String STD_OUTPUT = null;
 	private static String ITEM_OUTPUT_PATH = null;
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3"));
 		EXCLUDE_PARAMS.put(
@@ -49,13 +51,7 @@ extends EnvConfiguredScenarioTestBase {
 		STEP_ID = ReadUsingInputFileLimitByCountTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingInputFileLimitByCount.json"
-		);
-	}
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
+		);ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;

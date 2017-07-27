@@ -35,7 +35,9 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_OUTPUT_PATH;
 	private static String STD_OUTPUT;
 
-	static {
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
 		EXCLUDE_PARAMS.put(
@@ -46,11 +48,6 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationAfterUpdate.json"
 		);
-	}
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add(
 			"--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"

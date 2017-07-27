@@ -38,7 +38,11 @@ extends EnvConfiguredScenarioTestBase {
 	private static final double LOAD_THRESHOLD = 0.8;
 	private static final int RANDOM_RANGES_COUNT = 10;
 
-	static {
+	private static String STD_OUTPUT;
+
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
@@ -47,13 +51,6 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "HttpStorageMetricsThreshold.json"
 		);
-	}
-
-	private static String STD_OUTPUT;
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

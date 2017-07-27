@@ -8,9 +8,7 @@ import java.util.regex.Pattern;
 public interface LogPatterns {
 	
 	// common
-	Pattern WHITESPACES = Pattern.compile("\\s+");
-	Pattern CELL_BORDER = Pattern.compile("\\|");
-	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]+");
+	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]*");
 	
 	Pattern DATE_TIME_ISO8601 = Pattern.compile(
 		"(?<dateTime>[\\d]{4}-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
@@ -62,8 +60,8 @@ public interface LogPatterns {
 			"\\|\\s*(?<concurrency>[\\d]{1,7})x(?<driverCount>[\\d]{1,4})" +
 			"\\|\\s*(?<succCount>[\\d]{1,12})" +
 			"\\|\\s*" + ASCII_COLOR.pattern() + "\\s*(?<failCount>[\\d]{1,6})" + ASCII_COLOR.pattern() +
-			"\\|(?<stepTime>[\\d\\.]{1,7})\\s*" +
-			"\\|(?<tp>[\\d]+\\.?[\\d]?)\\.?\\s*\\|(?<bw>[\\d]+\\.?[\\d]?)\\.?\\s*" +
+			"\\|(?<stepTime>[\\d]+\\.?[\\d]*)\\s*" +
+			"\\|(?<tp>[\\d]+\\.?[\\d]*)\\.?\\s*\\|(?<bw>[\\d]+\\.?[\\d]*)\\.?\\s*" +
 			"\\|\\s*(?<lat>[\\d]{1,10})" +
 			"\\|\\s*(?<dur>[\\d]{1,11})"
 	);

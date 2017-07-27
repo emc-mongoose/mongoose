@@ -56,18 +56,6 @@ import java.util.concurrent.TimeUnit;
 public class MixedLoadTest
 extends EnvConfiguredScenarioTestBase {
 
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_ID = MixedLoadTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "MixedLoad.json"
-		);
-	}
-
 	private static boolean FINISHED_IN_TIME;
 	private static String STD_OUTPUT;
 	private static int ACTUAL_CONCURRENCY;
@@ -76,7 +64,15 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
+		STEP_ID = MixedLoadTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "MixedLoad.json"
+		);ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

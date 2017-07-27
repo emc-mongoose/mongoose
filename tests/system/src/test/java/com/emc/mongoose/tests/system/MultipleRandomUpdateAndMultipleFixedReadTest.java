@@ -32,20 +32,6 @@ import java.util.stream.LongStream;
 public class MultipleRandomUpdateAndMultipleFixedReadTest
 extends EnvConfiguredScenarioTestBase {
 	
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_ID = MultipleRandomUpdateAndMultipleFixedReadTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "MultipleRandomUpdateAndMultipleFixedRead.json"
-		);
-	}
-	
 	private static String ITEM_OUTPUT_PATH;
 	private static String STD_OUTPUT;
 	private static SizeInBytes EXPECTED_UPDATE_SIZE;
@@ -57,6 +43,17 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
+		);
+		STEP_ID = MultipleRandomUpdateAndMultipleFixedReadTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "MultipleRandomUpdateAndMultipleFixedRead.json"
+		);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {

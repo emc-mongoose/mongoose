@@ -584,6 +584,8 @@ public abstract class LoggingTestBase {
 		final int tableHeaderCount =
 			(stdOutContent.length() - stdOutContent.replaceAll(TABLE_HEADER, "").length())
 				/ TABLE_HEADER.length();
-		assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
+		if(tableHeaderCount > 0) {
+			assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
+		}
 	}
 }

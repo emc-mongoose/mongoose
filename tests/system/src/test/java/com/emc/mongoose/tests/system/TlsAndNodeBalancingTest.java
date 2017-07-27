@@ -37,15 +37,6 @@ import java.util.concurrent.TimeUnit;
 public class TlsAndNodeBalancingTest
 extends EnvConfiguredScenarioTestBase {
 
-	static {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
-		STEP_ID = TlsAndNodeBalancingTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingInputPath.json");
-	}
-
 	private static String STD_OUTPUT;
 	private static long ACTUAL_TEST_TIME_MILLISECONDS;
 
@@ -54,6 +45,12 @@ extends EnvConfiguredScenarioTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		EXCLUDE_PARAMS.clear();
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
+		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
+		STEP_ID = TlsAndNodeBalancingTest.class.getSimpleName();
+		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingInputPath.json");
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		HTTP_STORAGE_NODE_COUNT = 4;
 		CONFIG_ARGS.add("--storage-mock-node=true");
