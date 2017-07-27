@@ -36,6 +36,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static String STD_OUTPUT;
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		// exclude atmos as far as storage mock is unable to get the data item offset from its id
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));

@@ -35,6 +35,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_OUTPUT_PATH;
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10, 1000));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,

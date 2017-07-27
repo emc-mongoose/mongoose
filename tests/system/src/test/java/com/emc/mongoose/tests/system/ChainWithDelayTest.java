@@ -53,6 +53,7 @@ extends EnvConfiguredScenarioTestBase {
 		} catch(final Exception e) {
 			throw new RuntimeException(e);
 		}
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList(STORAGE_TYPE_FS));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
 		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));

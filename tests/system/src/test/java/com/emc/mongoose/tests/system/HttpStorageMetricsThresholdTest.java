@@ -39,6 +39,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static final int RANDOM_RANGES_COUNT = 10;
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
 		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes(0)));

@@ -51,6 +51,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static long EXPECTED_COUNT;
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "atmos"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
 		EXCLUDE_PARAMS.put(

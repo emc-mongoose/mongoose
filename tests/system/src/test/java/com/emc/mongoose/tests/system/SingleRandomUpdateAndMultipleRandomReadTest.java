@@ -32,6 +32,7 @@ public class SingleRandomUpdateAndMultipleRandomReadTest
 extends EnvConfiguredScenarioTestBase {
 	
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
 		EXCLUDE_PARAMS.put(

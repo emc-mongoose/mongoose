@@ -52,6 +52,7 @@ public class CircularAppendTest
 extends EnvConfiguredScenarioTestBase {
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,

@@ -32,6 +32,7 @@ public class SingleFixedUpdateAndSingleRandomReadTest
 extends EnvConfiguredScenarioTestBase {
 	
 	static {
+		EXCLUDE_PARAMS.clear();
 		/**
 		 https://github.com/emc-mongoose/nagaina/issues/3
 		 */

@@ -57,6 +57,7 @@ public class MixedLoadTest
 extends EnvConfiguredScenarioTestBase {
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,
 			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))

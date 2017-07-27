@@ -48,6 +48,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_OUTPUT_PATH = null;
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
 		EXCLUDE_PARAMS.put(

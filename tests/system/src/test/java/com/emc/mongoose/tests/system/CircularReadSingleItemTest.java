@@ -53,6 +53,7 @@ public class CircularReadSingleItemTest
 extends EnvConfiguredScenarioTestBase {
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
 		EXCLUDE_PARAMS.put(
 			KEY_ENV_ITEM_DATA_SIZE,

@@ -32,6 +32,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME;
 
 	static {
+		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs", "swift"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(1));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 10));
