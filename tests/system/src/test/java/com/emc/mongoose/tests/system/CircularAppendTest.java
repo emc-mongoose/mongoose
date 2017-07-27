@@ -197,9 +197,11 @@ extends EnvConfiguredScenarioTestBase {
 				}
 			}
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
-			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-			freq.addValue(itemOffset);
+			if(!STORAGE_DRIVER_TYPE.equals("atmos")) {
+				itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+				assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+				freq.addValue(itemOffset);
+			}
 			itemSize = Long.parseLong(itemRec.get(2));
 			assertTrue(
 				"Expected size: " + expectedFinalSize.toString() + ", actual: " + itemSize,
@@ -207,6 +209,8 @@ extends EnvConfiguredScenarioTestBase {
 			);
 			assertEquals("0/0", itemRec.get(3));
 		}
-		assertEquals(EXPECTED_COUNT, freq.getUniqueCount());
+		if(!STORAGE_DRIVER_TYPE.equals("atmos")) {
+			assertEquals(EXPECTED_COUNT, freq.getUniqueCount());
+		}
 	}
 }
