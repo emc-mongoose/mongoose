@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by andrey on 06.11.16.
- @deprecated Use RoundRobinOutputsTransferSvcTask instead
+ @deprecated Use RoundRobinOutputCoroutine instead
  */
 @Deprecated
 public final class RoundRobinOutput<T>

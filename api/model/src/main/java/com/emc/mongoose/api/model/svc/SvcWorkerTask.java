@@ -37,14 +37,14 @@ implements StoppableTask {
 			} else {
 				for(final Map.Entry<Daemon, List<Coroutine>> entry : svcCoroutineEntries) {
 					nextSvcCoroutines = entry.getValue();
-					for(final Coroutine nextSvcTask : nextSvcCoroutines) {
+					for(final Coroutine nextSvcCoroutine : nextSvcCoroutines) {
 						try {
-							nextSvcTask.run();
+							nextSvcCoroutine.run();
 						} catch(final Throwable t) {
 							synchronized (System.err) {
 								System.err.println(
-									entry.getKey().toString() + ": service task \"" + nextSvcTask +
-										"\" failed:"
+									entry.getKey().toString() + ": service coroutine \"" +
+										nextSvcCoroutine + "\" failed:"
 								);
 								t.printStackTrace(System.err);
 							}

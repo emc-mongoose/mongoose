@@ -785,13 +785,13 @@ implements LoadController<I, O> {
 		}
 		
 		synchronized(svcCoroutines) {
-			// stop all service tasks
+			// stop all service coroutines
 			for(final Coroutine svcCoroutine : svcCoroutines) {
 				try {
 					svcCoroutine.close();
 				} catch(final IOException e) {
 					LogUtil.exception(
-						Level.WARN, e, "{}: failed to stop the service task {}", svcCoroutine
+						Level.WARN, e, "{}: failed to stop the service coroutine {}", svcCoroutine
 					);
 				}
 			}

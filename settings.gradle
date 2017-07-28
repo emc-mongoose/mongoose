@@ -1,5 +1,4 @@
 include "api:common"
-include "api:manager"
 include "api:metrics"
 include "api:model"
 include "load:generator"
