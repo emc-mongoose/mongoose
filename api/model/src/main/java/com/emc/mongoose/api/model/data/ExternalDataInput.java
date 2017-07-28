@@ -10,6 +10,10 @@ import java.nio.channels.ReadableByteChannel;
 public final class ExternalDataInput
 extends CachedDataInput {
 
+	public ExternalDataInput() {
+		super();
+	}
+
 	public ExternalDataInput(
 		final ReadableByteChannel initialLayerInputChannel, final int layerSize,
 		final int layersCacheCountLimit
