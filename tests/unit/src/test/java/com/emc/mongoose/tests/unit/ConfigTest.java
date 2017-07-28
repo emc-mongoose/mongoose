@@ -184,12 +184,12 @@ public class ConfigTest {
 	throws Exception {
 		
 		final Map<String, String> argsMap = new HashMap<>();
-		argsMap.put("--test-step-name", "goose");
+		argsMap.put("--test-step-id", "goose");
 		argsMap.put("--version", "1.2.5.10");
-		argsMap.put("--item-data-content-ringSize", "16MB");
+		argsMap.put("--item-data-input-layer-size", "16MB");
 		argsMap.put("--item-data-ranges-random", "1");
 		argsMap.put("--test-step-limit-count", "1000");
-		argsMap.put("--test-step-limit-rate", "12.345");
+		argsMap.put("--load-rate-limit", "12.345");
 		argsMap.put("--test-step-limit-size", "321KB");
 		argsMap.put("--test-step-limit-time", "5m");
 		argsMap.put("--storage-net-timeoutMilliSec", "123456");
