@@ -120,6 +120,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		} else {
 			workerCount = confWorkerCount;
 		}
+		final int ioRatio = netConfig.getIoRatio();
 
 		if(IO_EXECUTOR_LOCK.tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 			try {
@@ -132,10 +133,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						IO_EXECUTOR = new EpollEventLoopGroup(
 							workerCount, new NamingThreadFactory("ioWorker", true)
 						);
+						((EpollEventLoopGroup) IO_EXECUTOR).setIoRatio(ioRatio);
 					} else {
 						IO_EXECUTOR = new NioEventLoopGroup(
 							workerCount, new NamingThreadFactory("ioWorker", true)
 						);
+						((NioEventLoopGroup) IO_EXECUTOR).setIoRatio(ioRatio);
 					}
 				}
 				IO_EXECUTOR_REF_COUNT ++;

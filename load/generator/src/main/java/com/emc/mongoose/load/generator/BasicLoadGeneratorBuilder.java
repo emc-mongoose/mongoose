@@ -311,7 +311,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				return Math.min(itemSize, sizeThreshold);
 			case READ:
 			case UPDATE:
-				if(randomRangesCount > 0) {
+				if(itemSize > 0 && randomRangesCount > 0) {
 					return itemSize * randomRangesCount / getRangeCount(itemSize);
 				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
 					long sizeSum = 0;

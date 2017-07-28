@@ -11,6 +11,7 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import com.emc.mongoose.ui.log.LogUtil;
@@ -88,6 +89,7 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
+		assertTrue("The count of the I/O trace records should be > 0", ioTraceRecords.size() > 0);
 		CSVRecord csvRecord;
 		for(int i = 0; i < ioTraceRecords.size(); i ++) {
 			csvRecord = ioTraceRecords.get(i);

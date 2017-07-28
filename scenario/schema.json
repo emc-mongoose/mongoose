@@ -810,6 +810,19 @@
 										}
 									]
 								},
+								"ioRatio" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1,
+											"maximum" : 99
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
 								"ssl" : {
 									"oneOf" : [
 										{

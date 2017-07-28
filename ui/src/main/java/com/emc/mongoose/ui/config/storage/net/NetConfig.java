@@ -27,6 +27,7 @@ implements Serializable {
 	public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
 	public static final String KEY_RCV_BUF = "rcvBuf";
 	public static final String KEY_SND_BUF = "sndBuf";
+	public static final String KEY_IO_RATIO = "ioRatio";
 	public static final String KEY_SSL = "ssl";
 	public static final String KEY_HTTP = "http";
 	public static final String KEY_NODE = "node";
@@ -65,6 +66,10 @@ implements Serializable {
 
 	public final SizeInBytes getSndBuf() {
 		return sndBuf;
+	}
+
+	public final int getIoRatio() {
+		return ioRatio;
 	}
 
 	public boolean getSsl() {
@@ -115,6 +120,10 @@ implements Serializable {
 		this.sndBuf = sndBuf;
 	}
 
+	public final void setIoRatio(final int ioRatio) {
+		this.ioRatio = ioRatio;
+	}
+
 	public final void setSsl(final boolean ssl) {
 		this.ssl = ssl;
 	}
@@ -151,6 +160,7 @@ implements Serializable {
 	@JsonSerialize(using = SizeInBytesSerializer.class)
 	private SizeInBytes sndBuf;
 
+	@JsonProperty(KEY_IO_RATIO) private int ioRatio;
 	@JsonProperty(KEY_SSL) private boolean ssl;
 	@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
 	@JsonProperty(KEY_NODE) private NodeConfig nodeConfig;
@@ -168,6 +178,7 @@ implements Serializable {
 		this.interestOpQueued = other.getInterestOpQueued();
 		this.rcvBuf = new SizeInBytes(other.getRcvBuf());
 		this.sndBuf = new SizeInBytes(other.getSndBuf());
+		this.ioRatio = other.getIoRatio();
 		this.ssl = other.getSsl();
 		this.httpConfig = new HttpConfig(other.getHttpConfig());
 		this.nodeConfig = new NodeConfig(other.getNodeConfig());

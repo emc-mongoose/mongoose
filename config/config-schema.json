@@ -628,12 +628,17 @@
 								}
 							]
 						},
-						"tcpNoDelay": {
+						"tcpNoDelay" : {
 							"type": "boolean"
 						},
-						"timeoutMilliSec": {
-							"type": "integer",
+						"timeoutMilliSec" : {
+							"type" : "integer",
 							"minimum" : 0
+						},
+						"ioRatio" : {
+							"type" : "integer",
+							"minimum" : 1,
+							"maximum" : 99
 						},
 						"ssl" : {
 							"type" : "boolean"
@@ -691,8 +696,8 @@
 					},
 					"required" : [
 						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger", "rcvBuf",
-						"reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl", "http",
-						"node"
+						"reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec","ioRatio", "ssl",
+						"http", "node"
 					]
 				}
 			},

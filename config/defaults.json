@@ -235,6 +235,10 @@
 			"sndBuf" : 0,
 			"tcpNoDelay" : true,
 			"timeoutMilliSec" : 0,
+			// Internal Netty's I/O ratio parameter:
+			// https://github.com/netty/netty/issues/1154#issuecomment-14870909
+			// it's recommended to make it higher for large request/response payload (>1MB)
+			"ioRatio" : 50,
 			// The flag to enable the load through SSL/TLS.
 			// Currently only HTTPS implementation is available.
 			// Have no effect if configured storage type is filesystem.
