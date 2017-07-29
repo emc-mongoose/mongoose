@@ -28,6 +28,7 @@ implements Serializable {
 	public static final String KEY_RCV_BUF = "rcvBuf";
 	public static final String KEY_SND_BUF = "sndBuf";
 	public static final String KEY_IO_RATIO = "ioRatio";
+	public static final String KEY_TRANSPORT = "transport";
 	public static final String KEY_SSL = "ssl";
 	public static final String KEY_HTTP = "http";
 	public static final String KEY_NODE = "node";
@@ -70,6 +71,10 @@ implements Serializable {
 
 	public final int getIoRatio() {
 		return ioRatio;
+	}
+
+	public final String getTransport() {
+		return transport;
 	}
 
 	public boolean getSsl() {
@@ -128,6 +133,10 @@ implements Serializable {
 		this.ssl = ssl;
 	}
 
+	public final void setTransport(final String transport) {
+		this.transport = transport;
+	}
+
 	public final void setHttpConfig(final HttpConfig httpConfig) {
 		this.httpConfig = httpConfig;
 	}
@@ -161,6 +170,7 @@ implements Serializable {
 	private SizeInBytes sndBuf;
 
 	@JsonProperty(KEY_IO_RATIO) private int ioRatio;
+	@JsonProperty(KEY_TRANSPORT) private String transport;
 	@JsonProperty(KEY_SSL) private boolean ssl;
 	@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
 	@JsonProperty(KEY_NODE) private NodeConfig nodeConfig;
@@ -179,6 +189,7 @@ implements Serializable {
 		this.rcvBuf = new SizeInBytes(other.getRcvBuf());
 		this.sndBuf = new SizeInBytes(other.getSndBuf());
 		this.ioRatio = other.getIoRatio();
+		this.transport = other.getTransport();
 		this.ssl = other.getSsl();
 		this.httpConfig = new HttpConfig(other.getHttpConfig());
 		this.nodeConfig = new NodeConfig(other.getNodeConfig());

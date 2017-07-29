@@ -39,16 +39,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
-
-import org.apache.commons.lang.SystemUtils;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -56,11 +50,13 @@ import org.apache.logging.log4j.Level;
 
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -82,10 +78,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final Bootstrap bootstrap;
 	protected final int storageNodePort;
 	protected final int connAttemptsLimit;
+	private final Class<SocketChannel> socketChannelCls;
 	private final NonBlockingConnPool connPool;
 	private final int socketTimeout;
 	private final boolean sslFlag;
 
+	@SuppressWarnings("unchecked")
 	protected NetStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
@@ -121,6 +119,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			workerCount = confWorkerCount;
 		}
 		final int ioRatio = netConfig.getIoRatio();
+		final Transport transportKey = Transport.valueOf(netConfig.getTransport().toUpperCase());
 
 		if(IO_EXECUTOR_LOCK.tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 			try {
@@ -129,16 +128,23 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					if(IO_EXECUTOR_REF_COUNT != 0) {
 						throw new AssertionError("I/O executor reference count should be 0");
 					}
-					if(SystemUtils.IS_OS_LINUX) {
-						IO_EXECUTOR = new EpollEventLoopGroup(
-							workerCount, new NamingThreadFactory("ioWorker", true)
-						);
-						((EpollEventLoopGroup) IO_EXECUTOR).setIoRatio(ioRatio);
-					} else {
-						IO_EXECUTOR = new NioEventLoopGroup(
-							workerCount, new NamingThreadFactory("ioWorker", true)
-						);
-						((NioEventLoopGroup) IO_EXECUTOR).setIoRatio(ioRatio);
+					try {
+						final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
+						final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
+							.forName(ioExecutorClsName);
+						IO_EXECUTOR = transportCls
+							.getConstructor(Integer.TYPE, ThreadFactory.class)
+							.newInstance(workerCount, new NamingThreadFactory("ioWorker", true));
+						try {
+							final Method setIoRatioMethod = transportCls.getMethod(
+								"setIoRatio", Integer.TYPE
+							);
+							setIoRatioMethod.invoke(IO_EXECUTOR, ioRatio);
+						} catch(final ReflectiveOperationException e) {
+							LogUtil.exception(Level.ERROR, e, "Failed to set the I/O ratio");
+						}
+					} catch(final ReflectiveOperationException e) {
+						throw new AssertionError(e);
 					}
 				}
 				IO_EXECUTOR_REF_COUNT ++;
@@ -153,15 +159,23 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			Loggers.ERR.error("Failed to obtain the I/O executor lock in time");
 		}
 
+		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
+		try {
+			socketChannelCls = (Class<SocketChannel>) Class.forName(socketChannelClsName);
+		} catch(final ReflectiveOperationException e) {
+			throw new AssertionError(e);
+		}
+
 		bootstrap = new Bootstrap()
 			.group(IO_EXECUTOR)
-			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class);
+			.channel(socketChannelCls);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
 		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
 		//bootstrap.option(ChannelOption.AUTO_READ)
 		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.getTimeoutMilliSec());
+		//bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, 32);
 		int size = (int) netConfig.getRcvBuf().get();
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
@@ -237,7 +251,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 		final Bootstrap bootstrap = new Bootstrap()
 			.group(IO_EXECUTOR)
-			.channel(SystemUtils.IS_OS_LINUX ? EpollSocketChannel.class : NioSocketChannel.class)
+			.channel(socketChannelCls)
 			.handler(
 				new ChannelInitializer<SocketChannel>() {
 					@Override

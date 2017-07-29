@@ -16,7 +16,8 @@ dependencies {
 		"io.netty:netty-buffer:${depVersion.netty}",
 		"io.netty:netty-transport:${depVersion.netty}",
 		"io.netty:netty-handler:${depVersion.netty}",
-		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}"
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:${osdetector.classifier}",
+		//"io.netty:netty-transport-native-kqueue:${depVersion.netty}:${osdetector.classifier}",
 	)
 
 	runtime(

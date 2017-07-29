@@ -23,7 +23,7 @@ public final class Main {
 	}
 
 	public static void main(final String... args)
-	throws InterruptedException, IOException {
+	throws Exception {
 
 		final Config config = Config.loadDefaults();
 		if(config == null) {

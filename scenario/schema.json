@@ -823,6 +823,20 @@
 										}
 									]
 								},
+								"transport" : {
+									"oneOf" : [
+										{
+											"type" : "string",
+											"enum" : [
+												"nio", "epoll", "kqueue"
+											]
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
 								"ssl" : {
 									"oneOf" : [
 										{

@@ -2,9 +2,11 @@ package com.emc.mongoose.ui.cli;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
+import org.apache.commons.lang.WordUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -119,7 +121,8 @@ public final class CliArgParser {
 		return strb.toString();
 	}
 	
-	public static Map<String, Class> getAllCliArgs(final Config config) {
+	public static Map<String, Class> getAllCliArgs(final Config config)
+	throws ReflectiveOperationException {
 		final Map<String, Class> argsWithTypes = new TreeMap<>();
 		dumpCliArgsRecursively(argsWithTypes, ARG_PREFIX, config.getClass());
 		return argsWithTypes;
@@ -127,21 +130,29 @@ public final class CliArgParser {
 	
 	private static void dumpCliArgsRecursively(
 		final Map<String, Class> argsWithTypes, final String prefix, final Class configCls
-	) {
-		
-		final Class[] innerClasses = configCls.getClasses();
-		for(final Class innerCls : innerClasses) {
-			final String configClsName = innerCls.getSimpleName();
-			if(configClsName.endsWith(CONFIG_CLS_SUFFIX)) {
-				final String subPrefix = innerCls
-					.getSimpleName()
-					.substring(0, configClsName.length() - CONFIG_CLS_SUFFIX.length())
-					.toLowerCase();
+	) throws ReflectiveOperationException {
+
+		System.out.println(prefix + ", " + configCls.getSimpleName());
+
+		final List<Class> subConfigClasses = new ArrayList<>();
+
+		for(final Package subPackage : Package.getPackages()) {
+			final String subPackageName = subPackage.getName();
+			if(subPackageName.startsWith(configCls.getPackage().getName())) {
+				final String subPackageShortName = subPackageName.substring(
+					subPackageName.lastIndexOf('.') + 1
+				);
+				final String configClsName = WordUtils.capitalize(subPackageShortName) +
+					CONFIG_CLS_SUFFIX;
+				final Class subConfigCls = Class.forName(subPackageName + '.' + configClsName);
+				subConfigClasses.add(subConfigCls);
 				if(prefix.equals(ARG_PREFIX)) {
-					dumpCliArgsRecursively(argsWithTypes, ARG_PREFIX + subPrefix, innerCls);
+					dumpCliArgsRecursively(
+						argsWithTypes, ARG_PREFIX + subPackageShortName, subConfigCls
+					);
 				} else {
 					dumpCliArgsRecursively(
-						argsWithTypes, prefix + Config.PATH_SEP + subPrefix, innerCls
+						argsWithTypes, prefix + Config.PATH_SEP + subPackageShortName, subConfigCls
 					);
 				}
 			}
@@ -156,8 +167,12 @@ public final class CliArgParser {
 						.substring(FIELD_PREFIX.length())
 						.toLowerCase();
 					boolean configLeaf = true;
-					for(final Class innerCls : innerClasses) {
-						if(innerCls.getSimpleName().equalsIgnoreCase(rawArgName + CONFIG_CLS_SUFFIX)) {
+					for(final Class subConfigCls : subConfigClasses) {
+						if(
+							subConfigCls
+								.getSimpleName()
+								.equalsIgnoreCase(rawArgName + CONFIG_CLS_SUFFIX)
+						) {
 							configLeaf = false;
 							break;
 						}

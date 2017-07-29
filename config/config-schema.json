@@ -640,6 +640,12 @@
 							"minimum" : 1,
 							"maximum" : 99
 						},
+						"transport" : {
+							"type" : "string",
+							"enum" : [
+								"nio", "epoll", "kqueue"
+							]
+						},
 						"ssl" : {
 							"type" : "boolean"
 						},
@@ -696,8 +702,8 @@
 					},
 					"required" : [
 						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger", "rcvBuf",
-						"reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec","ioRatio", "ssl",
-						"http", "node"
+						"reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec","ioRatio",
+						"transport", "ssl", "http", "node"
 					]
 				}
 			},
