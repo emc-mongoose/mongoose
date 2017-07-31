@@ -100,7 +100,7 @@ implements HttpStorageDriver<I, O> {
 		fsAccess = httpConfig.getFsAccess();
 		versioning = httpConfig.getVersioning();
 		
-		final Map<String, String> headersMap = httpConfig.getHeadersConfig();
+		final Map<String, String> headersMap = httpConfig.getHeaders();
 		String headerValue;
 		for(final String headerName : headersMap.keySet()) {
 			headerValue = headersMap.get(headerName);

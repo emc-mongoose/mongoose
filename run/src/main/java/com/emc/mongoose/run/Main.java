@@ -42,7 +42,7 @@ public class Main {
 		} catch(final IllegalArgumentNameException e) {
 			Loggers.ERR.fatal(
 				"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
-				formatCliArgsList(getAllCliArgs(config))
+				formatCliArgsList(getAllCliArgs())
 			);
 			return;
 		}

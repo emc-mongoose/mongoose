@@ -56,8 +56,8 @@ implements Serializable {
 		this.type = type;
 	}
 
-	public final void setImplConfig(final List<Map<String, Object>> implConfig) {
-		this.implConfig = implConfig;
+	public final void setImpl(final List<Map<String, Object>> impl) {
+		this.impl = impl;
 	}
 
 	@JsonProperty(KEY_ADDRS) private List<String> addrs;
@@ -67,7 +67,7 @@ implements Serializable {
 	@JsonProperty(KEY_REMOTE) private boolean remote;
 	@JsonProperty(KEY_THREADS) private int threads;
 	@JsonProperty(KEY_TYPE) private String type;
-	@JsonProperty(KEY_IMPL) private List<Map<String, Object>> implConfig;
+	@JsonProperty(KEY_IMPL) private List<Map<String, Object>> impl;
 
 	public DriverConfig() {
 	}
@@ -80,7 +80,7 @@ implements Serializable {
 		this.remote = other.getRemote();
 		this.threads = other.getThreads();
 		this.type = other.getType();
-		this.implConfig = other == null ? null : new ArrayList<>(other.getImplConfig());
+		this.impl = other == null ? null : new ArrayList<>(other.getImpl());
 	}
 
 	public final List<String> getAddrs() {
@@ -111,7 +111,7 @@ implements Serializable {
 		return type;
 	}
 
-	public final List<Map<String, Object>> getImplConfig() {
-		return implConfig;
+	public final List<Map<String, Object>> getImpl() {
+		return impl;
 	}
 }

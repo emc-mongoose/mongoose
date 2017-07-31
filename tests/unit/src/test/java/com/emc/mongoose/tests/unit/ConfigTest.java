@@ -140,7 +140,7 @@ public class ConfigTest {
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		assertThat(httpConfig, notNullValue());
 		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.net.http.fsAccess"));
-		final Map<String, String> headers = httpConfig.getHeadersConfig();
+		final Map<String, String> headers = httpConfig.getHeaders();
 		assertThat(headers, notNullValue());
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_CONNECTION),
 			equalTo(true, "storage.net.http.headers[Connection]"));
@@ -239,7 +239,7 @@ public class ConfigTest {
 		assertEquals(true, netConfig.getHttpConfig().getFsAccess());
 		assertEquals(
 			"customHeaderValue",
-			netConfig.getHttpConfig().getHeadersConfig().get("customHeaderName")
+			netConfig.getHttpConfig().getHeaders().get("customHeaderName")
 		);
 	}
 	

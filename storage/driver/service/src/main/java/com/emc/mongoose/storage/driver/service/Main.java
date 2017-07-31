@@ -11,8 +11,6 @@ import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
 
 import org.apache.logging.log4j.Level;
 
-import java.io.IOException;
-
 /**
  Created by andrey on 05.10.16.
  */
@@ -38,7 +36,7 @@ public final class Main {
 		} catch(final IllegalArgumentNameException e) {
 			Loggers.ERR.fatal(
 				"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
-				formatCliArgsList(getAllCliArgs(config))
+				formatCliArgsList(getAllCliArgs())
 			);
 			return;
 		}

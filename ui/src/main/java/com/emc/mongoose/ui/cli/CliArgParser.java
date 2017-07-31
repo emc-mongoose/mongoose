@@ -4,6 +4,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 import org.apache.commons.lang.WordUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -123,45 +124,34 @@ public final class CliArgParser {
 		return strb.toString();
 	}
 	
-	public static Map<String, Class> getAllCliArgs(final Config config)
-	throws ReflectiveOperationException {
-		final Map<String, Class> argsWithTypes = new TreeMap<>();
-		dumpCliArgsRecursively(argsWithTypes);
-		return argsWithTypes;
-	}
-	
-	private static void dumpCliArgsRecursively(final Map<String, Class> argsWithTypes)
+	public static Map<String, Class> getAllCliArgs()
 	throws ReflectiveOperationException {
 
-		final String configPkgName = Config.class.getPackage().getName() + ".";
+		final Map<String, Class> argsWithTypes = new TreeMap<>();
+		final Package configRootPkg = Config.class.getPackage();
+		final String configRootPkgName = configRootPkg.getName();
 		final Package[] allPkgs = Package.getPackages();
 
 		for(final Package subPkg : allPkgs) {
 			final String subPkgName = subPkg.getName();
-			if(subPkgName.startsWith(configPkgName)) {
+			if(subPkgName.startsWith(configRootPkgName)) {
 
-				final String configBranchPrefix = (
-					ARG_PREFIX + subPkgName.substring(configPkgName.length())
-				).replace(Pattern.quote("."), Config.PATH_SEP) + Config.PATH_SEP;
-				final String configBranchClsNamePrefix = WordUtils.capitalize(
-					subPkgName.substring(subPkgName.lastIndexOf(".") + 1)
-				);
-
-				boolean configLeaf = true;
-				for(final Package otherPkg : allPkgs) {
-					if(!subPkg.equals(otherPkg)) {
-						final String otherPkgName = otherPkg.getName();
-						if(subPkgName.startsWith(otherPkgName)) {
-							configLeaf = false;
-							break;
-						}
-					}
+				final String configBranchPrefix = subPkgName
+					.substring(configRootPkgName.length())
+					.replaceAll(Pattern.quote("."), Config.PATH_SEP);
+				final String configBranchClsNamePrefix;
+				if(subPkg.equals(configRootPkg)) {
+					configBranchClsNamePrefix = "";
+				} else {
+					configBranchClsNamePrefix = WordUtils.capitalize(
+						subPkgName.substring(subPkgName.lastIndexOf('.') + 1)
+					);
 				}
 
 				try {
 
-					final Class configBranchCls = Class.forName(
-						configBranchClsNamePrefix + CONFIG_CLS_SUFFIX
+					final Class<Serializable> configBranchCls = (Class<Serializable>) Class.forName(
+						subPkgName + '.' + configBranchClsNamePrefix + CONFIG_CLS_SUFFIX
 					);
 
 					final Field[] fields = configBranchCls.getFields();
@@ -174,27 +164,25 @@ public final class CliArgParser {
 									.substring(FIELD_PREFIX.length())
 									.toLowerCase();
 
-								if(configLeaf) {
-									try {
-										final String[] argNameParts = rawArgName.split("_");
-										final StringBuilder argNameBuilder = new StringBuilder();
-										for(final String argNamePart : argNameParts) {
-											argNameBuilder
-												.append(toUpperCase(argNamePart.charAt(0)))
-												.append(argNamePart.substring(1));
-										}
-										final Method m = configBranchCls.getMethod(
-											"get" + argNameBuilder.toString()
-										);
-										final Class type = m.getReturnType();
-										final String argName =
-											toLowerCase(argNameBuilder.charAt(0)) +
-												argNameBuilder.substring(1);
-										argsWithTypes.put(
-											configBranchClsNamePrefix + argName, type
-										);
-									} catch(final Exception ignored) {
+								try {
+									final String[] argNameParts = rawArgName.split("_");
+									final StringBuilder argNameBuilder = new StringBuilder();
+									for(final String argNamePart : argNameParts) {
+										argNameBuilder
+											.append(toUpperCase(argNamePart.charAt(0)))
+											.append(argNamePart.substring(1));
 									}
+									final Method m = configBranchCls.getMethod(
+										"get" + argNameBuilder.toString()
+									);
+									final Class type = m.getReturnType();
+									final String argName = toLowerCase(argNameBuilder.charAt(0)) +
+											argNameBuilder.substring(1);
+									argsWithTypes.put(
+										ARG_PREFIX + configBranchPrefix + Config.PATH_SEP + argName,
+										type
+									);
+								} catch(final Exception ignored) {
 								}
 							}
 						}
@@ -203,5 +191,7 @@ public final class CliArgParser {
 				}
 			}
 		}
+
+		return argsWithTypes;
 	}
 }

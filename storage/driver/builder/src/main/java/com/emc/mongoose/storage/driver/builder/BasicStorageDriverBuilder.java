@@ -115,7 +115,7 @@ public class BasicStorageDriverBuilder<
 		) {
 
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();
-			final List<Map<String, Object>> implConfig = driverConfig.getImplConfig();
+			final List<Map<String, Object>> implConfig = driverConfig.getImpl();
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 			final Map<String, Class<T>> availableImpls = new HashMap<>();
 
