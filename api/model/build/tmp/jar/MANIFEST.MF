@@ -3,5 +3,5 @@ Implementation-Title: mongoose-api-model
 Implementation-Version: 3.5.0
 Class-Path: mongoose-api-common.jar lib/commons-collections4-4.1.jar l
  ib/commons-codec-1.10.jar lib/slf4j-api-1.7.24.jar lib/log4j-api-2.8.
- 2.jar lib/metrics-core-3.2.2.jar lib/commons-lang-2.6.jar
+ 2.jar lib/metrics-core-3.2.3.jar lib/commons-lang-2.6.jar
 
