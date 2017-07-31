@@ -46,10 +46,8 @@ implements FileRegion {
 	@Override
 	public long transferTo(final WritableByteChannel target, final long position)
 	throws IOException {
-		System.out.print("Write starting from " + position + "... ");
 		dataItem.position(position);
 		doneByteCount += dataItem.write(target, baseItemSize - position);
-		System.out.println("done");
 		return doneByteCount;
 	}
 
