@@ -1,11 +1,6 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"output" : {
-			"metrics" : {
-				"threshold" : 0.8
-			}
-		},
 		"storage" : {
 			"net" : {
 				"http" : {
@@ -28,6 +23,11 @@
 						"path" : "/default"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"threshold" : 0.8
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
@@ -45,6 +45,11 @@
 				"item" : {
 					"input" : {
 						"file" : "HttpStorageMetricsThresholdTest.csv"
+					}
+				},
+				"output" : {
+					"metrics" : {
+						"threshold" : 0.8
 					}
 				},
 				"load" : {
@@ -65,6 +70,11 @@
 						"file" : "HttpStorageMetricsThresholdTest.csv"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"threshold" : 0.8
+					}
+				},
 				"load" : {
 					"type" : "update"
 				}
@@ -80,6 +90,19 @@
 				},
 				"load" : {
 					"type" : "delete"
+				},
+				"output" : {
+					"metrics" : {
+						"average" : {
+							"persist" : false
+						},
+						"summary" : {
+							"persist" : false
+						},
+						"trace" : {
+							"persist" : false
+						}
+					}
 				},
 				"storage" : {
 					"driver" : {

@@ -142,7 +142,7 @@ implements Coroutine {
 	@Override
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
-			try(final Instance clsNameCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				int controllerActiveTaskCount;
 				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {
@@ -152,8 +152,9 @@ implements Coroutine {
 					controllerActiveTaskCount = controller.getActiveTaskCount();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller).keySet()) {
 						try(
-							final Instance stepIdCtx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
+							final Instance stepIdCtx = CloseableThreadContext.put(
+								KEY_TEST_STEP_ID, metricsCtx.getStepId()
+							)
 						) {
 							metricsCtx.refreshLastSnapshot();
 

@@ -22,7 +22,6 @@ import org.apache.commons.csv.CSVRecord;
 
 import org.apache.commons.io.FileUtils;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
@@ -53,10 +52,9 @@ import java.util.stream.Collectors;
  */
 public abstract class LoggingTestBase {
 	
-	protected static Logger LOG;
 	protected static String STEP_ID;
 	protected static BufferingOutputStream STD_OUT_STREAM;
-	protected static int LOG_FILE_TIMEOUT_SEC = 50;
+	protected static int LOG_FILE_TIMEOUT_SEC = 15;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -134,12 +132,12 @@ public abstract class LoggingTestBase {
 
 	protected static List<CSVRecord> getMetricsMedLogRecords()
 	throws IOException {
-		return getLogFileCsvRecords("metrics.med.csv");
+		return getLogFileCsvRecords("metrics.threshold.csv");
 	}
 
 	protected static List<CSVRecord> getMetricsMedTotalLogRecords()
 	throws IOException {
-		return getLogFileCsvRecords("metrics.med.total.csv");
+		return getLogFileCsvRecords("metrics.threshold.total.csv");
 	}
 
 	protected static List<CSVRecord> getMetricsLogRecords()
@@ -330,15 +328,17 @@ public abstract class LoggingTestBase {
 		}
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		assertTrue(Long.toString(countFail), countFail < 1);
-		final long avgItemSize = totalBytes / countSucc;
-		if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
-			assertTrue(avgItemSize >= expectedItemDataSize.getMin());
-			assertTrue(avgItemSize <= expectedItemDataSize.getMax());
-		} else {
-			assertEquals(
-				Long.toString(avgItemSize), expectedItemDataSize.get(), avgItemSize,
-				expectedItemDataSize.getAvg() / 100
-			);
+		if(countSucc > 0) {
+			final long avgItemSize = totalBytes / countSucc;
+			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
+				assertTrue(avgItemSize >= expectedItemDataSize.getMin());
+				assertTrue(avgItemSize <= expectedItemDataSize.getMax());
+			} else {
+				assertEquals(
+					Long.toString(avgItemSize), expectedItemDataSize.get(), avgItemSize,
+					expectedItemDataSize.getAvg() / 100
+				);
+			}
 		}
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
 		if(expectedLoadJobTime > 0) {
@@ -346,7 +346,9 @@ public abstract class LoggingTestBase {
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
 		final double effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
-		assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate > 0);
+		if(countSucc > 0) {
+			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
+		}
 		final double tpAvg = Double.parseDouble(metrics.get("TPAvg[op/s]"));
 		final double tpLast = Double.parseDouble(metrics.get("TPLast[op/s]"));
 		final double bwAvg = Double.parseDouble(metrics.get("BWAvg[MB/s]"));

@@ -46,7 +46,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
-		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes(0)));
+		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes(0), new SizeInBytes("10KB")));
 		STEP_ID = HttpStorageMetricsThresholdTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "HttpStorageMetricsThreshold.json"
@@ -56,12 +56,12 @@ extends EnvConfiguredScenarioTestBase {
 		if(SKIP_FLAG) {
 			return;
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
+		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		SCENARIO.run();
 		LogUtil.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
+		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
 	}
 
 	@AfterClass
@@ -196,7 +196,10 @@ extends EnvConfiguredScenarioTestBase {
 			);
 			assertTrue(m.find());
 			final Date dtExit = FMT_DATE_ISO8601.parse(m.group("dateTime"));
-			assertTrue(dtEnter.before(dtExit));
+			assertTrue(
+				"Enter date (" + dtEnter + ") should be before exit date (" + dtExit + ")",
+				dtEnter.before(dtExit)
+			);
 			STD_OUTPUT = m.replaceFirst("");
 			n ++;
 		}
