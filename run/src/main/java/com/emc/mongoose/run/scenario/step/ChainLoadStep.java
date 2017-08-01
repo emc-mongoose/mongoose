@@ -197,18 +197,24 @@ extends StepBase {
 		
 		long timeRemainSec = timeLimitSec;
 		long tsStart;
-		for(final LoadController nextController : loadChain) {
+		final int controllersCount = loadChain.size();
+		for(int i = 0; i < controllersCount; i ++) {
+			final LoadController controller = loadChain.get(i);
 			if(timeRemainSec > 0) {
 				tsStart = System.currentTimeMillis();
 				try {
-					if(nextController.await(timeRemainSec, TimeUnit.SECONDS)) {
-						Loggers.MSG.info("Load step \"{}\" done", nextController.getName());
-					} else {
-						Loggers.MSG.info("Load step \"{}\" timeout", nextController.getName());
+					try {
+						if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
+							Loggers.MSG.info("Load step \"{}\" done", controller.getName());
+						} else {
+							Loggers.MSG.info("Load step \"{}\" timeout", controller.getName());
+						}
+					} catch(final InterruptedException e) {
+						Loggers.MSG.debug("Load step interrupted");
+						break;
+					} finally {
+						controller.interrupt();
 					}
-				} catch(final InterruptedException e) {
-					Loggers.MSG.debug("Load step interrupted");
-					break;
 				} catch(final RemoteException e) {
 					throw new AssertionError(e);
 				}

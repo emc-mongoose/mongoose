@@ -798,15 +798,6 @@ implements LoadController<I, O> {
 			svcCoroutines.clear();
 		}
 
-		Loggers.MSG.debug("{}: interrupted the load controller", getName());
-	}
-
-	@Override
-	protected final void doClose()
-	throws IOException {
-
-		super.doClose();
-
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("ioResultsWorker", true)
 		);
@@ -840,41 +831,14 @@ implements LoadController<I, O> {
 										getName(), driver.toString()
 									);
 								}
-								try {
-									driver.close();
-									Loggers.MSG.debug("{}: next storage driver {} closed", getName(),
-										((driver instanceof Service) ?
-											((Service) driver).getName() + " @ " +
-												ServiceUtil.getAddress((Service) driver) :
-											driver.toString())
-									);
-								} catch(final NoSuchObjectException ignored) {
-									// closing causes this normally
-								} catch(final IOException e) {
-									LogUtil.exception(
-										Level.WARN, e, "{}: failed to close the driver {}",
-										getName(), driver.toString()
-									);
-								}
 							}
 						}
-					);
-				}
-
-				try {
-					generator.close();
-					Loggers.MSG.debug(
-						"{}: the load generator \"{}\" has been closed", getName(), generator
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
 					);
 				}
 			}
 
 			ioResultsExecutor.shutdown();
-			
+
 			try {
 				if(ioResultsExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
 					Loggers.MSG.debug(
@@ -891,6 +855,105 @@ implements LoadController<I, O> {
 					"{}: interrupted  while getting and processing the final I/O results", getName()
 				);
 			}
+		}
+
+		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
+			try {
+				final int ioResultCount = latestIoResultsPerItem.size();
+				Loggers.MSG.info(
+					"{}: please wait while performing {} I/O results output...", name, ioResultCount
+				);
+				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {
+					try {
+						if(!ioResultsOutput.put(latestItemIoResult)) {
+							Loggers.ERR.debug(
+								"{}: item info output fails to ingest, blocking the closing method",
+								getName()
+							);
+							while(!ioResultsOutput.put(latestItemIoResult)) {
+								Thread.sleep(1);
+							}
+							Loggers.MSG.debug("{}: closing method unblocked", getName());
+						}
+					} catch (final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to output the latest results", getName()
+						);
+					}
+				}
+			} catch(final InterruptedException ignored) {
+			} finally {
+				Loggers.MSG.info("{}: I/O results output done", name);
+			}
+			latestIoResultsPerItem.clear();
+		}
+		if(ioResultsOutput != null) {
+			try {
+				ioResultsOutput.put((O) null);
+				Loggers.MSG.debug("{}: poisoned the items output", getName());
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to poison the results output", getName()
+				);
+			} catch(final NullPointerException e) {
+				LogUtil.exception(
+					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", getName(),
+					ioResultsOutput
+				);
+			}
+		}
+
+		for(final MetricsContext nextStats : ioStats.values()) {
+			try {
+				MetricsManager.unregister(this, nextStats);
+			} catch(final InterruptedException | TimeoutException e) {
+				LogUtil.exception(Level.WARN, e, "{}: metrics context unregister failure", name);
+			}
+		}
+
+		Loggers.MSG.debug("{}: interrupted the load controller", getName());
+	}
+
+	@Override
+	protected final void doClose()
+	throws IOException {
+
+		super.doClose();
+
+		synchronized (driversMap) {
+
+			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
+
+				try {
+					generator.close();
+					Loggers.MSG.debug(
+						"{}: the load generator \"{}\" has been closed", getName(), generator
+					);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
+					);
+				}
+
+				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
+					try {
+						driver.close();
+						Loggers.MSG.debug("{}: next storage driver {} closed", getName(),
+							((driver instanceof Service) ?
+								((Service) driver).getName() + " @ " +
+									ServiceUtil.getAddress((Service) driver) :
+								driver.toString())
+						);
+					} catch(final NoSuchObjectException ignored) {
+						// closing causes this normally
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the driver {}",
+							getName(), driver.toString()
+						);
+					}
+				}
+			}
 
 			generatorsMap.clear();
 			driversMap.clear();
@@ -902,43 +965,9 @@ implements LoadController<I, O> {
 		ioTaskOutputs.clear();
 
 		for(final MetricsContext nextStats : ioStats.values()) {
-			try {
-				MetricsManager.unregister(this, nextStats);
-			} catch(final InterruptedException | TimeoutException e) {
-				LogUtil.exception(Level.WARN, e, "{}: metrics context unregister failure", name);
-			}
 			nextStats.close();
 		}
 		ioStats.clear();
-
-		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
-			try {
-				final int ioResultCount = latestIoResultsPerItem.size();
-				Loggers.MSG.info(
-					"{}: please wait while performing {} I/O results output...", name, ioResultCount
-				);
-				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {
-					if(!ioResultsOutput.put(latestItemIoResult)) {
-						Loggers.ERR.debug(
-							"{}: item info output fails to ingest, blocking the closing method",
-							getName()
-						);
-						while(!ioResultsOutput.put(latestItemIoResult)) {
-							Thread.sleep(1);
-						}
-						Loggers.MSG.debug("{}: closing method unblocked", getName());
-					}
-				}
-			} catch(final InterruptedException ignored) {
-			} finally {
-				Loggers.MSG.info("{}: I/O results output done", name);
-			}
-			latestIoResultsPerItem.clear();
-		}
-		if(ioResultsOutput != null) {
-			ioResultsOutput.put((O) null);
-			Loggers.MSG.debug("{}: poisoned the items output", getName());
-		}
 
 		Loggers.MSG.debug("{}: closed the load controller", getName());
 	}
