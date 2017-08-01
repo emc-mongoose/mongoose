@@ -33,7 +33,7 @@
 						"limit" : {
 							"count" : 1000000,
 							"size" : "1TB",
-							"time" : "50s"
+							"time" : "100s"
 						}
 					}
 				}

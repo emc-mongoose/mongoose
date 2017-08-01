@@ -46,7 +46,10 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
-		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes(0), new SizeInBytes("10KB")));
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("10GB"))
+		);
 		STEP_ID = HttpStorageMetricsThresholdTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "HttpStorageMetricsThreshold.json"
