@@ -250,17 +250,10 @@ implements Coroutine {
 	@Override
 	protected final void doShutdown() {
 	}
-	
+
 	@Override
 	protected final void doInterrupt() {
 		svcCoroutines.remove(this);
-		try { // obtain the lock to prevent further execution
-			if(!allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-				Loggers.ERR.warn("Locking timeout at interrupt call");
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to interrupt");
-		}
 	}
 	
 	@Override
