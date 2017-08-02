@@ -127,7 +127,7 @@ public abstract class ServiceUtil {
 		String svcUri = null;
 		try {
 			synchronized(SVC_MAP) {
-				ensureRmiUseFixedPort(port);
+				//ensureRmiUseFixedPort(port);
 				ensureRmiRegistryIsAvailableAt(port);
 				UnicastRemoteObject.exportObject(svc, port);
 				final String svcName = svc.getName();
