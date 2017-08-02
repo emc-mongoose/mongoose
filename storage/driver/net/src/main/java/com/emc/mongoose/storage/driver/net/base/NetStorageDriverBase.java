@@ -595,13 +595,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		) {
 			super.doInterrupt();
 			try {
-				connPool.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to close the connection pool", toString()
-				);
-			}
-			try {
 				if(IO_EXECUTOR_LOCK.tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					try {
 						IO_EXECUTOR_REF_COUNT --;
@@ -627,6 +620,19 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
 			}
+		}
+	}
+
+	@Override
+	protected final void doClose()
+	throws IllegalStateException, IOException {
+		super.doClose();
+		try {
+			connPool.close();
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.WARN, e, "{}: failed to close the connection pool", toString()
+			);
 		}
 	}
 }
