@@ -535,7 +535,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		) {
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
+			if(isInterrupted()) {
+				ioTask.setStatus(IoTask.Status.INTERRUPTED);
+			} else {
+				LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
+			}
 		}
 		if(channel != null) {
 			connPool.release(channel);
