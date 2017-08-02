@@ -111,7 +111,6 @@ implements StorageDriver<I, O> {
 		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
 		private int n = 0;
 		private int m;
-		private long t;
 
 		public IoTasksDispatchCoroutine(final List<Coroutine> svcCoroutines) {
 			super(svcCoroutines);
@@ -119,8 +118,8 @@ implements StorageDriver<I, O> {
 
 		@Override
 		protected final void invoke() {
-			t = System.currentTimeMillis();
 			if(buff.tryLock()) {
+				long t = System.currentTimeMillis();
 				try(
 					final Instance logCtx = CloseableThreadContext
 						.put(KEY_TEST_STEP_ID, stepId)
