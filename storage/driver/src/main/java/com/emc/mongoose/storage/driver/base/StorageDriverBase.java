@@ -158,10 +158,7 @@ implements StorageDriver<I, O> {
 					.put(KEY_TEST_STEP_ID, stepId)
 					.put(KEY_CLASS_NAME, IoTasksDispatchCoroutine.class.getSimpleName())
 			) {
-				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-					buff.clear();
-					buff.unlock();
-				} else {
+				if(!buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					Loggers.ERR.warn(
 						"{}: failed to obtain the I/O tasks buffer lock in time",
 						StorageDriverBase.this.toString()

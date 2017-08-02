@@ -782,7 +782,6 @@ implements LoadController<I, O> {
 			LogUtil.exception(
 				Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
 			);
-			e.printStackTrace();
 		}
 		
 		synchronized(svcCoroutines) {
