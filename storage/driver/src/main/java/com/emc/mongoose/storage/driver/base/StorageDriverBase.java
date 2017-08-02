@@ -160,6 +160,7 @@ implements StorageDriver<I, O> {
 			) {
 				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
 					buff.clear();
+					buff.unlock();
 				} else {
 					Loggers.ERR.warn(
 						"{}: failed to obtain the I/O tasks buffer lock in time",

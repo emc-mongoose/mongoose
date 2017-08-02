@@ -62,8 +62,12 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.clear();
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList(STORAGE_TYPE_FS));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
-		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));
-		STEP_ID = ChainWithDelayTest.class.getSimpleName();EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
+		EXCLUDE_PARAMS.put(
+			KEY_ENV_ITEM_DATA_SIZE,
+			Arrays.asList(new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("10GB"))
+		);
+		STEP_ID = ChainWithDelayTest.class.getSimpleName();
+		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
 		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");

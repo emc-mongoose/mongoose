@@ -50,7 +50,7 @@ extends EnvConfiguredScenarioTestBase {
 		);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add(
-			"--item-data-content-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"
+			"--item-data-input-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"
 		);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
 		EnvConfiguredScenarioTestBase.setUpClass();
