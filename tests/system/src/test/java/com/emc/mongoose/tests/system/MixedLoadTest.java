@@ -115,7 +115,6 @@ extends EnvConfiguredScenarioTestBase {
 		}
 
 		TimeUnit.SECONDS.timedJoin(runner, 50);
-		Thread.sleep(1000000000000000000L);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
