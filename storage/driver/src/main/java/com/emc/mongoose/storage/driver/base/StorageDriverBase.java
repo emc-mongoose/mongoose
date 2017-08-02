@@ -119,7 +119,6 @@ implements StorageDriver<I, O> {
 		@Override
 		protected final void invoke() {
 			if(buff.tryLock()) {
-				long t = System.currentTimeMillis();
 				try(
 					final Instance logCtx = CloseableThreadContext
 						.put(KEY_TEST_STEP_ID, stepId)
@@ -148,10 +147,6 @@ implements StorageDriver<I, O> {
 				} catch(final InterruptedException ignored) {
 				} finally {
 					buff.unlock();
-					t = System.currentTimeMillis() - t;
-					if(t > TIMEOUT_MILLIS) {
-						Loggers.ERR.error("I/O tasks dispatcher coroutine invocation took " + t + "ms");
-					}
 				}
 			}
 		}
