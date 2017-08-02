@@ -3,7 +3,7 @@ package com.emc.mongoose.api.model;
 import com.emc.mongoose.api.common.concurrent.Coroutine;
 import com.emc.mongoose.api.common.concurrent.Daemon;
 import com.emc.mongoose.api.common.concurrent.StoppableTask;
-import com.emc.mongoose.api.model.svc.CoroutineWorkerTask;
+import com.emc.mongoose.api.model.svc.CoroutinesProcessorTask;
 
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.api.common.concurrent.Daemon.State.INITIAL;
@@ -44,7 +44,7 @@ implements Daemon {
 		);
 
 		for(int i = 0; i < getHardwareThreadCount(); i ++) {
-			final StoppableTask svcWorkerTask = new CoroutineWorkerTask(SVC_COROUTINES);
+			final StoppableTask svcWorkerTask = new CoroutinesProcessorTask(SVC_COROUTINES);
 			SVC_EXECUTOR.submit(svcWorkerTask);
 			SVC_WORKERS.add(svcWorkerTask);
 		}
@@ -58,9 +58,11 @@ implements Daemon {
 			SVC_EXECUTOR.setMaximumPoolSize(newThreadCount);
 			if(newThreadCount > oldThreadCount) {
 				for(int i = oldThreadCount; i < newThreadCount; i ++) {
-					final CoroutineWorkerTask workerTask = new CoroutineWorkerTask(SVC_COROUTINES);
-					SVC_EXECUTOR.submit(workerTask);
-					SVC_WORKERS.add(workerTask);
+					final CoroutinesProcessorTask procTask = new CoroutinesProcessorTask(
+						SVC_COROUTINES
+					);
+					SVC_EXECUTOR.submit(procTask);
+					SVC_WORKERS.add(procTask);
 				}
 			} else { // less, remove some active service worker tasks
 				try {

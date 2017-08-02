@@ -11,15 +11,14 @@ import java.util.Set;
 /**
  Created by andrey on 25.07.17.
  */
-public final class CoroutineWorkerTask
+public final class CoroutinesProcessorTask
 implements StoppableTask {
 
 	private final Map<Daemon, List<Coroutine>> coroutines;
 
 	private volatile boolean closedFlag = false;
-	private long invokeTimeMillis;
 
-	public CoroutineWorkerTask(final Map<Daemon, List<Coroutine>> coroutines) {
+	public CoroutinesProcessorTask(final Map<Daemon, List<Coroutine>> coroutines) {
 		this.coroutines = coroutines;
 	}
 
@@ -27,6 +26,7 @@ implements StoppableTask {
 	public final void run() {
 		Set<Map.Entry<Daemon, List<Coroutine>>> coroutineEntries;
 		List<Coroutine> nextCoroutines;
+		long invokeTimeMillis;
 		while(!closedFlag) {
 			coroutineEntries = coroutines.entrySet();
 			if(coroutineEntries.size() == 0) {
