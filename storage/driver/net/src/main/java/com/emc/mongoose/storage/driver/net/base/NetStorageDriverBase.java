@@ -592,7 +592,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
-		super.doInterrupt();
 		try(
 			final Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
