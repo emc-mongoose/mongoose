@@ -115,6 +115,7 @@ subprojects {
 	}
 
 	test {
+		jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 		maxHeapSize "2g"
 		systemProperty "com.sun.management.jmxremote", "true"
 		systemProperty "com.sun.management.jmxremote.port", "9010"
