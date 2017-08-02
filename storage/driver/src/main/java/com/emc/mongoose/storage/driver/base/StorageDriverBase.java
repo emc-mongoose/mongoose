@@ -167,8 +167,7 @@ implements StorageDriver<I, O> {
 				buff.clear();
 			} catch(final InterruptedException e) {
 				LogUtil.exception(
-					Level.WARN, e, "{}: interrupted on close",
-					StorageDriverBase.this.toString()
+					Level.WARN, e, "{}: interrupted on close", StorageDriverBase.this.toString()
 				);
 			}
 		}
