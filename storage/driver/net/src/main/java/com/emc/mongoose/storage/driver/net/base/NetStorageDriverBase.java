@@ -624,7 +624,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 
 	@Override
-	protected final void doClose()
+	protected void doClose()
 	throws IllegalStateException, IOException {
 		super.doClose();
 		try {

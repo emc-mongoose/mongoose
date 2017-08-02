@@ -677,10 +677,4 @@ extends HttpStorageDriverBase<I, O> {
 	public final String toString() {
 		return String.format(super.toString(), "s3");
 	}
-	
-	@Override
-	protected final void doClose()
-	throws IOException {
-		super.doClose();
-	}
 }
