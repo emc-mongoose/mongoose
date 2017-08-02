@@ -26,13 +26,14 @@ implements RMIServerSocketFactory {
 	@Override
 	public final Socket createSocket(final String host, final int port)
 	throws IOException {
-		return new Socket(host, fixedPort);
+		System.out.println("New socket @ port # " + port);
+		return new Socket(host, port);
 	}
 
 	@Override
 	public final ServerSocket createServerSocket(final int port)
 	throws IOException {
 		System.out.println("New server socket @ port # " + port);
-		return new ServerSocket(fixedPort);
+		return new ServerSocket(port);
 	}
 }
