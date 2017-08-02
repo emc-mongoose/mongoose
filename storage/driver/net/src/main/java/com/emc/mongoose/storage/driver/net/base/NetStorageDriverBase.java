@@ -604,7 +604,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						);
 						if(IO_EXECUTOR_REF_COUNT == 0) {
 							Loggers.MSG.info("{}: shutdown the I/O executor", toString());
-							if(IO_EXECUTOR.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS).await(10)) {
+							if(
+								IO_EXECUTOR
+									.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS)
+									.await(10)
+							) {
 								Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
 							} else {
 								Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
