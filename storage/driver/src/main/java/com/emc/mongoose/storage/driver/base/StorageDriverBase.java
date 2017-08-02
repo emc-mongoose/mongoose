@@ -111,6 +111,7 @@ implements StorageDriver<I, O> {
 		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
 		private int n = 0;
 		private int m;
+		private long t;
 
 		public IoTasksDispatchCoroutine(final List<Coroutine> svcCoroutines) {
 			super(svcCoroutines);
@@ -118,6 +119,7 @@ implements StorageDriver<I, O> {
 
 		@Override
 		protected final void invoke() {
+			t = System.currentTimeMillis();
 			if(buff.tryLock()) {
 				try(
 					final Instance logCtx = CloseableThreadContext
@@ -147,6 +149,10 @@ implements StorageDriver<I, O> {
 				} catch(final InterruptedException ignored) {
 				} finally {
 					buff.unlock();
+					t = System.currentTimeMillis() - t;
+					if(t > TIMEOUT_MILLIS) {
+						Loggers.ERR.error("I/O tasks dispatcher coroutine invocation took more than 250ms");
+					}
 				}
 			}
 		}
@@ -164,6 +170,7 @@ implements StorageDriver<I, O> {
 						StorageDriverBase.this.toString()
 					);
 				}
+				buff.clear();
 			} catch(final InterruptedException e) {
 				LogUtil.exception(
 					Level.WARN, e, "{}: interrupted on close",
