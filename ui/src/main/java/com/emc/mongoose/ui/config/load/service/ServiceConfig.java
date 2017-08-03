@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.config.load.service;
 
-import com.emc.mongoose.api.model.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.ui.log.Loggers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.net.ServiceUtil;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;

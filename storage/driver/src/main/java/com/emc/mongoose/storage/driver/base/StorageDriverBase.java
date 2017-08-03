@@ -2,11 +2,10 @@ package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.CoroutineBase;
-import com.emc.mongoose.api.common.concurrent.StoppableTaskBase;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.model.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.common.io.Input;
@@ -117,7 +116,7 @@ implements StorageDriver<I, O> {
 		}
 
 		@Override
-		protected final void invoke() {
+		protected final void invokeTimed() {
 			if(buff.tryLock()) {
 				try(
 					final Instance logCtx = CloseableThreadContext

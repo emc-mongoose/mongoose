@@ -1,4 +1,4 @@
-package com.emc.mongoose.api.model;
+package com.emc.mongoose.api.model.concurrent;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;

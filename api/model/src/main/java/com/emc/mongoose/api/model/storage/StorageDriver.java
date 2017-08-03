@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.storage;
 
-import com.emc.mongoose.api.common.concurrent.Daemon;
+import com.emc.mongoose.api.model.concurrent.Daemon;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 import com.emc.mongoose.api.model.io.IoType;

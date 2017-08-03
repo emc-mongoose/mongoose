@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.storage;
 
-import com.emc.mongoose.api.common.net.Service;
+import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 

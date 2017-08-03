@@ -1,9 +1,7 @@
-package com.emc.mongoose.api.model.svc;
+package com.emc.mongoose.api.model.concurrent;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -50,7 +48,7 @@ implements Coroutine {
 	}
 
 	@Override
-	protected final void invoke() {
+	protected final void invokeTimed() {
 		if(deferredItems.tryLock()) { // works like exclusive invocation lock
 			try(
 				final Instance ctx = CloseableThreadContext

@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
-import com.emc.mongoose.api.model.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 

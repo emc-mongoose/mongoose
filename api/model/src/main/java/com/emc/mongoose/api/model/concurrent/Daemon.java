@@ -1,4 +1,4 @@
-package com.emc.mongoose.api.common.concurrent;
+package com.emc.mongoose.api.model.concurrent;
 
 import java.io.Closeable;
 import java.rmi.RemoteException;

@@ -1,9 +1,8 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.CoroutineBase;
-import com.emc.mongoose.api.common.concurrent.StoppableTaskBase;
-import com.emc.mongoose.api.common.net.ServiceUtil;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.CoroutineBase;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -24,6 +23,9 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import static java.lang.System.nanoTime;
 
 /**
@@ -57,6 +59,7 @@ implements StorageDriverSvc<I, O> {
 		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
 		private final String stepName;
+		private final Lock invocationLock = new ReentrantLock();
 		
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
@@ -72,23 +75,27 @@ implements StorageDriverSvc<I, O> {
 		}
 		
 		@Override
-		protected final void invoke() {
-			try(
-				final Instance ctx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, stepName)
-					.put(KEY_CLASS_NAME, getClass().getSimpleName())
-			) {
-				nextNanoTimeStamp = nanoTime();
-				if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
-					prevNanoTimeStamp = nextNanoTimeStamp;
-					try {
-						Loggers.MSG.info(
-							"{} I/O tasks: scheduled={}, active={}, completed={}",
-							driver.toString(), driver.getScheduledTaskCount(),
-							driver.getActiveTaskCount(), driver.getCompletedTaskCount()
-						);
-					} catch(final RemoteException ignored) {
+		protected final void invokeTimed() {
+			if(invocationLock.tryLock()) {
+				try(
+					final Instance ctx = CloseableThreadContext
+						.put(KEY_TEST_STEP_ID, stepName)
+						.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				) {
+					nextNanoTimeStamp = nanoTime();
+					if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+						prevNanoTimeStamp = nextNanoTimeStamp;
+						try {
+							Loggers.MSG.info(
+								"{} I/O tasks: scheduled={}, active={}, completed={}",
+								driver.toString(), driver.getScheduledTaskCount(),
+								driver.getActiveTaskCount(), driver.getCompletedTaskCount()
+							);
+						} catch(final RemoteException ignored) {
+						}
 					}
+				} finally {
+					invocationLock.unlock();
 				}
 			}
 		}
@@ -96,6 +103,7 @@ implements StorageDriverSvc<I, O> {
 		@Override
 		protected final void doClose() {
 			prevNanoTimeStamp = Long.MAX_VALUE;
+			invocationLock.tryLock();
 		}
 	}
 

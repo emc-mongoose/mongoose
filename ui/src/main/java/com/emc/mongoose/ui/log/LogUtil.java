@@ -1,6 +1,6 @@
 package com.emc.mongoose.ui.log;
 
-import com.emc.mongoose.api.model.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 
 import static com.emc.mongoose.api.common.Constants.KEY_BASE_DIR;
 import static com.emc.mongoose.api.common.Constants.LOCALE_DEFAULT;

@@ -1,9 +1,7 @@
-package com.emc.mongoose.api.model.svc;
+package com.emc.mongoose.api.model.concurrent;
 
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.common.io.Output;
 
@@ -139,7 +137,7 @@ implements Output<T> {
 	}
 
 	@Override
-	protected final void invoke() {
+	protected final void invokeTimed() {
 		final O output = outputs.get(
 			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
 		);

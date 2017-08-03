@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.api.common.net.ServiceUtil.MBEAN_SERVER;
+import static com.emc.mongoose.api.model.svc.ServiceUtil.MBEAN_SERVER;
 
 /**
  Created by andrey on 05.07.17.

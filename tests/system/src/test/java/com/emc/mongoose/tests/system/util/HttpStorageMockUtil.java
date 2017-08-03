@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.system.util;
 
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
-import com.emc.mongoose.api.model.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

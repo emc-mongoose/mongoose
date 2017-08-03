@@ -1,6 +1,6 @@
-package com.emc.mongoose.api.common.net;
+package com.emc.mongoose.api.model.svc;
 
-import com.emc.mongoose.api.common.concurrent.Daemon;
+import com.emc.mongoose.api.model.concurrent.Daemon;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

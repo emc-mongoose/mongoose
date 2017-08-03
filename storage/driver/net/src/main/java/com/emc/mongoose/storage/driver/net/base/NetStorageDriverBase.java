@@ -13,7 +13,7 @@ import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedN
 import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
 import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
-import com.emc.mongoose.api.model.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.common.net.ssl.SslContext;
 import com.emc.mongoose.api.model.io.IoType;

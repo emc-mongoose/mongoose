@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.perf.util.mock;
 
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.model.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;

@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.load;
 
-import com.emc.mongoose.api.common.concurrent.Daemon;
+import com.emc.mongoose.api.model.concurrent.Daemon;
 import com.emc.mongoose.api.common.concurrent.Throttle;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.common.io.Output;

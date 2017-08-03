@@ -6,8 +6,8 @@ import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.CoroutineBase;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.concurrent.StoppableTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
@@ -93,7 +93,7 @@ implements NioStorageDriver<I, O> {
 		}
 
 		@Override
-		protected final void invoke() {
+		protected final void invokeTimed() {
 			if(ioTaskBuff.tryLock()) {
 				ioTaskBuffSize = ioTaskBuff.size();
 				if(ioTaskBuffSize > 0) {

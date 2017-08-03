@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.concurrent.Daemon;
+import com.emc.mongoose.api.model.concurrent.Daemon;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;

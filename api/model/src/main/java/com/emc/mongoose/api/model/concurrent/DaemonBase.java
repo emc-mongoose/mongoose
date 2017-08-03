@@ -1,15 +1,12 @@
-package com.emc.mongoose.api.model;
+package com.emc.mongoose.api.model.concurrent;
 
-import com.emc.mongoose.api.common.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.Daemon;
 import com.emc.mongoose.api.common.concurrent.StoppableTask;
-import com.emc.mongoose.api.model.svc.CoroutinesProcessorTask;
 
-import static com.emc.mongoose.api.common.concurrent.Daemon.State.CLOSED;
-import static com.emc.mongoose.api.common.concurrent.Daemon.State.INITIAL;
-import static com.emc.mongoose.api.common.concurrent.Daemon.State.INTERRUPTED;
-import static com.emc.mongoose.api.common.concurrent.Daemon.State.SHUTDOWN;
-import static com.emc.mongoose.api.common.concurrent.Daemon.State.STARTED;
+import static com.emc.mongoose.api.model.concurrent.Daemon.State.CLOSED;
+import static com.emc.mongoose.api.model.concurrent.Daemon.State.INITIAL;
+import static com.emc.mongoose.api.model.concurrent.Daemon.State.INTERRUPTED;
+import static com.emc.mongoose.api.model.concurrent.Daemon.State.SHUTDOWN;
+import static com.emc.mongoose.api.model.concurrent.Daemon.State.STARTED;
 import static com.emc.mongoose.api.common.concurrent.ThreadUtil.getHardwareThreadCount;
 
 import java.io.IOException;

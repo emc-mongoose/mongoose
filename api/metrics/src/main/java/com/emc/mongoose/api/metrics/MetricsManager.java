@@ -1,11 +1,11 @@
 package com.emc.mongoose.api.metrics;
 
-import com.emc.mongoose.api.common.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
 import com.emc.mongoose.api.metrics.logging.BasicMetricsLogMessage;
 import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsCsvLogMessage;
-import com.emc.mongoose.api.model.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;

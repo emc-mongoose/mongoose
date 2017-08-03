@@ -1,5 +1,6 @@
-package com.emc.mongoose.api.common.net;
+package com.emc.mongoose.api.model.svc;
 
+import com.emc.mongoose.api.common.net.FixedPortRmiSocketFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 

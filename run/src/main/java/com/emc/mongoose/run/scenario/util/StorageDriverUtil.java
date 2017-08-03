@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.util;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.net.ServiceUtil;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.storage.StorageDriverSvc;
