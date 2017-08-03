@@ -1,14 +1,23 @@
 # Mongoose
 
+[![master](https://img.shields.io/travis/emc-mongoose/mongoose/master.svg)](https://travis-ci.org/emcmongoose/mongoose)
+[![downloads](https://img.shields.io/github/downloads/emc-mongoose/mongoose/total.svg)](https://github.com/emc-mongoose/mongoose/releases)
+[![release](https://img.shields.io/github/release/emc-mongoose/mongoose.svg)]()
+[![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
+
 ## Description
-Mongoose is a high-load storage performance testing automation tool.
 
-The Mongoose Load Engine is capable to work with:
+Mongoose is a storage performance testing tool.
 
-* A million of concurrent connections
-* A million of operations per second
-* A million of items which may be processed multiple times in the circular load mode
-* A million of items which may be stored in the storage mock
+It is designed to be used for:
+* [Load Testing](https://en.wikipedia.org/wiki/Load_testing)
+* [Stress Testing](https://en.wikipedia.org/wiki/Stress_testing)
+* [Soak/Longevity/Endurance Testing](https://en.wikipedia.org/wiki/Soak_testing)
+* [Volume Testing](https://en.wikipedia.org/wiki/Volume_testing)
+* [Smoke](https://en.wikipedia.org/wiki/Smoke_testing_(software))/[Sanity](https://en.wikipedia.org/wiki/Sanity_check) Testing]
+
+Mongoose is able to sustain millions of concurrent connections and
+millions of operations per second.
 
 Basically, Mongoose may be started very simply:
 ```bash
