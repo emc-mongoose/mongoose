@@ -83,7 +83,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(!SKIP_FLAG) {
 			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 				try {
-					//DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
