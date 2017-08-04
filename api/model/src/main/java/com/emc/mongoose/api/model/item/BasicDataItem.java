@@ -345,7 +345,7 @@ implements DataItem {
 		}
 		return m;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+
 	@Override
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
@@ -364,13 +364,15 @@ implements DataItem {
 		int n;
 		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
+		final int ringBuffPosition = ringBuff.position();
 		n = ringBuff.remaining();
 		if(buff.limit() > n) {
 			buff.limit(n);
 		}
-		//
+
 		n = chanSrc.read(buff);
-		//
+		position += n;
+
 		if(n > 0) {
 			buff.flip();
 			
@@ -389,6 +391,7 @@ implements DataItem {
 							bi = (byte) wi;
 							wi >>= 8;
 							if(bs != bi) {
+								System.out.println(ringBuffPosition);
 								throw new DataCorruptionException(wordPos + i, bs, bi);
 							}
 						}
@@ -407,12 +410,10 @@ implements DataItem {
 					}
 				}
 			}
-
-			position += n;
 		}
 		return n;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+
 	@Override
 	public boolean equals(final Object o) {
 		if(o == this) {
