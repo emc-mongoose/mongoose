@@ -39,7 +39,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static String ITEM_DST_PATH;
 	private static String STD_OUTPUT;
 
-	private static final int COUNT_LIMIT = 1_000_000;
+	private static final int COUNT_LIMIT = 500_000;
 
 	@BeforeClass
 	public static void setUpClass()

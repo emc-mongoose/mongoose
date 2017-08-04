@@ -182,8 +182,8 @@ extends EnvConfiguredScenarioTestBase {
 		long itemOffset;
 		long itemSize;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			(long) (0.8 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get()),
-			(long) (1.2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get()),
+			(long) (0.8 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get() / 2),
+			(long) (2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get()),
 			1
 		);
 		final int n = items.size();
