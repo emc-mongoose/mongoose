@@ -7,6 +7,7 @@ import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static org.junit.Assert.assertEquals;
@@ -37,7 +38,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static SizeInBytes EXPECTED_READ_SIZE;
 	
 	private static final long EXPECTED_COUNT = 1000;
-	private static final int READ_RANDOM_RANGES_COUNT = 7;
+	private static final int READ_RANDOM_RANGES_COUNT = 12;
 	
 	@BeforeClass
 	public static void setUpClass()
@@ -54,6 +55,7 @@ extends EnvConfiguredScenarioTestBase {
 			getBaseDir(), DIR_SCENARIO, "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
 		);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
+		CONFIG_ARGS.add("--item-data-input-file=" + BASE_DIR + "/config/content/textexample");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -81,7 +83,7 @@ extends EnvConfiguredScenarioTestBase {
 		if(!SKIP_FLAG) {
 			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
 				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+					//DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

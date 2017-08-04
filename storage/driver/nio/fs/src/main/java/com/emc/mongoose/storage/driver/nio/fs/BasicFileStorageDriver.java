@@ -7,6 +7,7 @@ import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.data.DataVerificationException;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
@@ -446,10 +447,19 @@ implements FileStorageDriver<I, O> {
 			}
 
 			final long currRangeSize = range2read.size();
-			srcChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += range2read.readAndVerify(
-				srcChannel, ThreadLocalByteBuffer.get(currRangeSize - countBytesDone)
-			);
+			final long currPos = getRangeOffset(currRangeIdx) + countBytesDone;
+			srcChannel.position(currPos);
+
+			try {
+				countBytesDone += range2read.readAndVerify(
+					srcChannel, ThreadLocalByteBuffer.get(currRangeSize - countBytesDone)
+				);
+			} catch(final DataCorruptionException e) {
+				throw new DataCorruptionException(
+					currPos + e.getOffset() - countBytesDone, e.expected, e.actual
+				);
+			}
+
 			if(countBytesDone == currRangeSize) {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
@@ -513,14 +523,22 @@ implements FileStorageDriver<I, O> {
 				// set the cell data item internal position to (current offset - cell's offset)
 				currRange.position(currOffset - cellOffset);
 				srcChannel.position(currOffset);
-				rangeBytesDone += currRange.readAndVerify(
-					srcChannel,
-					ThreadLocalByteBuffer.get(
-						Math.min(
-							fixedRangeSize - countBytesDone, currRange.size() - currRange.position()
+
+				try {
+					rangeBytesDone += currRange.readAndVerify(
+						srcChannel,
+						ThreadLocalByteBuffer.get(
+							Math.min(
+								fixedRangeSize - countBytesDone,
+								currRange.size() - currRange.position()
+							)
 						)
-					)
-				);
+					);
+				} catch(final DataCorruptionException e) {
+					throw new DataCorruptionException(
+						currOffset + e.getOffset() - countBytesDone, e.expected, e.actual
+					);
+				}
 
 				if(rangeBytesDone == fixedRangeSize) {
 					// current byte range verification is finished

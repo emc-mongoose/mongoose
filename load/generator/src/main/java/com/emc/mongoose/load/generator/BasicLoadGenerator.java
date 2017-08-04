@@ -170,17 +170,16 @@ implements LoadGenerator<I, O>, Coroutine {
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(n > 0) { // the tasks buffer has free space for the new tasks
-				// find the remaining count of the tasks to generate
-				final long remainingTasksCount = countLimit - getGeneratedTasksCount();
-				if(remainingTasksCount > 0) {
-					// make the limit not more than batch size
-					n = (int) Math.min(remainingTasksCount, n);
 
-					if(!itemInputFinishFlag) {
-
-						// try to produce new items from the items input
-						if(inputLock.tryLock()) {
-							try {
+				if(!itemInputFinishFlag) {
+					// try to produce new items from the items input
+					if(inputLock.tryLock()) {
+						try {
+							// find the remaining count of the tasks to generate
+							final long remainingTasksCount = countLimit - getGeneratedTasksCount();
+							if(remainingTasksCount > 0) {
+								// make the limit not more than batch size
+								n = (int) Math.min(remainingTasksCount, n);
 								// prepare the items buffer
 								final List<I> items = new ArrayList<>(n);
 								try {
@@ -210,24 +209,23 @@ implements LoadGenerator<I, O>, Coroutine {
 										);
 									}
 								}
-
-							} finally {
-								inputLock.unlock();
 							}
+						} finally {
+							inputLock.unlock();
 						}
+					}
 
+				} else {
+					// items input was exhausted
+					if(recycleQueue == null) {
+						// recycling is disabled
+						taskInputFinishFlag = true; // allow shutdown
 					} else {
-						// items input was exhausted
-						if(recycleQueue == null) {
-							// recycling is disabled
-							taskInputFinishFlag = true; // allow shutdown
-						} else {
-							// recycle the tasks if any
-							n = recycleQueue.drainTo(tasksBuff, n);
-							if(n > 0) {
-								pendingTasksCount += n;
-								recycledTasksCounter.add(n);
-							}
+						// recycle the tasks if any
+						n = recycleQueue.drainTo(tasksBuff, n);
+						if(n > 0) {
+							pendingTasksCount += n;
+							recycledTasksCounter.add(n);
 						}
 					}
 				}
