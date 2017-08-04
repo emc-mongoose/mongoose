@@ -364,7 +364,6 @@ implements DataItem {
 		int n;
 		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
-		final int ringBuffPosition = ringBuff.position();
 		n = ringBuff.remaining();
 		if(buff.limit() > n) {
 			buff.limit(n);
@@ -391,7 +390,6 @@ implements DataItem {
 							bi = (byte) wi;
 							wi >>= 8;
 							if(bs != bi) {
-								System.out.println(ringBuffPosition);
 								throw new DataCorruptionException(wordPos + i, bs, bi);
 							}
 						}

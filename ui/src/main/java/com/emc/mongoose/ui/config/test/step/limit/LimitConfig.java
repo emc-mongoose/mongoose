@@ -5,6 +5,7 @@ import com.emc.mongoose.ui.config.SizeInBytesDeserializer;
 import com.emc.mongoose.ui.config.SizeInBytesSerializer;
 import com.emc.mongoose.ui.config.TimeStrToLongDeserializer;
 import com.emc.mongoose.ui.config.test.step.limit.fail.FailConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

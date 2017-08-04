@@ -436,6 +436,14 @@ implements FileStorageDriver<I, O> {
 				if(currRangeIdx < getRangeCount(fileItem.size())) {
 					if(maskRangesPair[0].get(currRangeIdx) || maskRangesPair[1].get(currRangeIdx)) {
 						range2read = ioTask.getCurrRange();
+						if(Loggers.MSG.isTraceEnabled()) {
+							Loggers.MSG.trace(
+								"I/O task: {}, Range index: {}, size: {}, internal position: {}, " +
+									"Done byte count: {}",
+								ioTask.toString(), currRangeIdx, range2read.size(),
+								range2read.position(), countBytesDone
+							);
+						}
 						break;
 					} else {
 						ioTask.setCurrRangeIdx(++ currRangeIdx);
@@ -460,9 +468,18 @@ implements FileStorageDriver<I, O> {
 				);
 			}
 
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"I/O task: {}, Done bytes count: {}, Curr range size: {}",
+					ioTask.toString(), countBytesDone, range2read.size()
+				);
+			}
+
 			if(countBytesDone == currRangeSize) {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
+			} else {
+				ioTask.setCountBytesDone(countBytesDone);
 			}
 		} else {
 			finishIoTask(ioTask);
