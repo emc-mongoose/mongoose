@@ -565,7 +565,7 @@ public abstract class LoggingTestBase {
 				}
 			}
 			assertTrue(
-				"I/O type \"" + actualIoType + "\" not found, expected one of: " +
+				"I/O type \"" + actualIoType + "\" was found but expected one of: " +
 					Arrays.toString(concurrencyMap.keySet().toArray()), ioTypeFoundFlag
 			);
 			assertEquals((int) concurrencyMap.get(actualIoType), actualConcurrency);

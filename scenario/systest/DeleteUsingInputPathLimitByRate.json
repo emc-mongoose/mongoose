@@ -9,6 +9,13 @@
 						"path" : "${ITEMS_PATH}"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"average" : {
+							"period" : 0
+						}
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
