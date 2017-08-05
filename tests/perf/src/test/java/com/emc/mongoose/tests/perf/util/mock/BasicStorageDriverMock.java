@@ -58,7 +58,7 @@ extends StorageDriverBase<I, O> {
 
 	@Override
 	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
+	throws IllegalStateException {
 		ioTask.reset();
 		ioTask.startRequest();
 		ioTask.finishRequest();
@@ -103,7 +103,7 @@ extends StorageDriverBase<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		O ioTask;
 		for(int i = from; i < to; i ++) {
 			ioTask = ioTasks.get(i);
@@ -152,7 +152,7 @@ extends StorageDriverBase<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks)
-	throws InterruptedException {
+	throws IllegalStateException {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 
