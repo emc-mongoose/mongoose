@@ -1,7 +1,5 @@
 package com.emc.mongoose.api.model.concurrent;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 import com.emc.mongoose.api.common.concurrent.StoppableTask;
 
 /**
@@ -9,4 +7,10 @@ import com.emc.mongoose.api.common.concurrent.StoppableTask;
  */
 public interface Coroutine
 extends StoppableTask {
+
+	/**
+	 The soft limit for the coroutine invocation duration.
+	 The coroutine implementation should care about its own invocation duration.
+	 */
+	int TIMEOUT_NANOS = 100_000_000;
 }

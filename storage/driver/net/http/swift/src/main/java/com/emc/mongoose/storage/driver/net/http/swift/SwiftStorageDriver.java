@@ -287,9 +287,9 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override @SuppressWarnings("unchecked")
 	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
+	throws IllegalStateException {
 		if(isClosed() || isInterrupted()) {
-			throw new InterruptedException();
+			throw new IllegalStateException();
 		}
 		ioTask.reset();
 		if(ioTask instanceof CompositeDataIoTask) {
@@ -311,9 +311,9 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		if(isClosed() || isInterrupted()) {
-			throw new InterruptedException();
+			throw new IllegalStateException();
 		}
 		O nextIoTask;
 		for(int i = from; i < to; i ++) {
@@ -329,11 +329,21 @@ extends HttpStorageDriverBase<I, O> {
 					final List<O> subTasks = compositeTask.getSubTasks();
 					final int n = subTasks.size();
 					if(n > 0) {
+						// NOTE: blocking subtasks submission
 						while(!super.submit(subTasks.get(0))) {
 							LockSupport.parkNanos(1);
 						}
-						for(int j = 1; j < n; j ++) {
-							childTasksQueue.put(subTasks.get(j));
+						try {
+							for(int j = 1; j < n; j ++) {
+								childTasksQueue.put(subTasks.get(j));
+							}
+						} catch(final InterruptedException e) {
+							LogUtil.exception(
+								Level.DEBUG, e,
+								"{}: interrupted while enqueueing the child subtasks",
+								toString()
+							);
+							return i - from;
 						}
 					} else {
 						throw new AssertionError("Composite I/O task yields 0 sub-tasks");

@@ -29,8 +29,15 @@ implements StoppableTask {
 		return isClosedFlag;
 	}
 
+	/**
+	 The task invocation method. Will not run if the task is stopped (closed).
+	 */
 	protected abstract void invoke();
 
+	/**
+	 Implement this method for the cleanup purposes.
+	 @throws IOException
+	 */
 	protected abstract void doClose()
 	throws IOException;
 }

@@ -13,6 +13,7 @@ import java.util.List;
 
 /**
  Created by andrey on 26.07.17.
+ The base class for all coroutines.
  */
 public abstract class CoroutineBase
 extends StoppableTaskBase
@@ -38,16 +39,30 @@ implements Coroutine {
 		this.durationsSum = METRIC_REGISTRY.counter(getClass().getSimpleName() + "-durationsSum");
 	}
 
+	/**
+	 Decorates the invocation method with timing.
+	 */
 	@Override
 	protected final void invoke() {
 		long t = System.nanoTime();
-		invokeTimed();
+		invokeTimed(t);
 		t = System.nanoTime() - t;
+		if(t > TIMEOUT_NANOS) {
+			System.err.println(
+				"Coroutine \"" + toString() + "\" invocation duration exceeded the limit: " +
+					TIMEOUT_NANOS + "[ns]"
+			);
+		}
 		durations.update(t);
 		durationsSum.inc();
 	}
 
-	protected abstract void invokeTimed();
+	/**
+	 The method implementation should use the start time to check its own duration in order to not
+	 to exceed the invocation time limit (250ms)
+	 @param startTimeNanos the time when the invocation started
+	 */
+	protected abstract void invokeTimed(final long startTimeNanos);
 
 	@Override
 	public final void close()

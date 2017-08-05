@@ -4,7 +4,6 @@ import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
 import com.emc.mongoose.api.model.concurrent.Coroutine;
-import com.emc.mongoose.api.common.concurrent.StoppableTask;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.common.concurrent.Throttle;
@@ -369,7 +368,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		// to it so the load generator builder should close it
 		if(itemInput != null) {
 			try {
-				inputLock.tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				inputLock.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
 				itemInput.close();
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());

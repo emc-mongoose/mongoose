@@ -75,7 +75,7 @@ implements StorageDriverSvc<I, O> {
 		}
 		
 		@Override
-		protected final void invokeTimed() {
+		protected final void invokeTimed(final long startTimeNanos) {
 			if(invocationLock.tryLock()) {
 				try(
 					final Instance ctx = CloseableThreadContext

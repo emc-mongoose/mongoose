@@ -8,7 +8,6 @@ import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
 import com.emc.mongoose.api.common.collection.OptLockBuffer;
 import com.emc.mongoose.api.model.concurrent.Coroutine;
 import com.emc.mongoose.api.model.concurrent.CoroutineBase;
-import com.emc.mongoose.api.common.concurrent.StoppableTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -93,13 +92,18 @@ implements NioStorageDriver<I, O> {
 		}
 
 		@Override
-		protected final void invokeTimed() {
+		protected final void invokeTimed(final long startTimeNanos) {
 			if(ioTaskBuff.tryLock()) {
 				ioTaskBuffSize = ioTaskBuff.size();
 				if(ioTaskBuffSize > 0) {
 					try {
 						for(int i = 0; i < ioTaskBuffSize; i ++) {
 							ioTask = ioTaskBuff.get(i);
+							// if timeout, put the task into the temporary buffer
+							if(System.nanoTime() - startTimeNanos >= TIMEOUT_NANOS) {
+								ioTaskLocalBuff.add(ioTask);
+								continue;
+							}
 							// check if the task is invoked 1st time
 							if(PENDING.equals(ioTask.getStatus())) {
 								// do not start the new task if the state is not more active
@@ -142,7 +146,6 @@ implements NioStorageDriver<I, O> {
 					}
 				} else {
 					ioTaskBuff.unlock();
-					LockSupport.parkNanos(1);
 				}
 			}
 		}
@@ -150,7 +153,7 @@ implements NioStorageDriver<I, O> {
 		@Override
 		protected final void doClose() {
 			try {
-				if(ioTaskBuff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(ioTaskBuff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					ioTaskBuffSize = ioTaskBuff.size();
 					Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
 					for(int i = 0; i < ioTaskBuffSize; i ++) {
@@ -198,11 +201,11 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
+	throws IllegalStateException {
 		OptLockBuffer<O> ioTaskBuff;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
-				throw new InterruptedException();
+				throw new IllegalStateException();
 			}
 			ioTaskBuff = ioTaskBuffs[(int) (rrc.getAndIncrement() % ioWorkerCount)];
 			if(ioTaskBuff.tryLock()) {
@@ -220,12 +223,12 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		OptLockBuffer<O> ioTaskBuff;
 		int j = from, k, n;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
-				throw new InterruptedException();
+				throw new IllegalStateException();
 			}
 			ioTaskBuff = ioTaskBuffs[(int) (rrc.getAndIncrement() % ioWorkerCount)];
 			if(ioTaskBuff.tryLock()) {
@@ -245,7 +248,7 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks)
-	throws InterruptedException {
+	throws IllegalStateException {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 	
@@ -269,7 +272,7 @@ implements NioStorageDriver<I, O> {
 		super.doClose();
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(ioTaskBuffs[i].tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(ioTaskBuffs[i].tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){
 					Loggers.ERR.debug(

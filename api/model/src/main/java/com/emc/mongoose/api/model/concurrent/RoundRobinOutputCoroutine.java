@@ -137,10 +137,12 @@ implements Output<T> {
 	}
 
 	@Override
-	protected final void invokeTimed() {
+	protected final void invokeTimed(final long startTimeNanos) {
+		// select the output
 		final O output = outputs.get(
 			outputsCount > 1 ? (int) (getCounter.getAndIncrement() % outputsCount) : 0
 		);
+		// select the corresponding buffer
 		final OptLockBuffer<T> buff = buffs.get(output);
 		if(buff != null && buff.tryLock()) {
 			try {
@@ -180,7 +182,7 @@ implements Output<T> {
 		for(final O output : outputs) {
 			final OptLockBuffer<T> buff = buffs.get(output);
 			try {
-				if(buff != null && buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(buff != null && buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {
 						buff.clear();
 					} finally {

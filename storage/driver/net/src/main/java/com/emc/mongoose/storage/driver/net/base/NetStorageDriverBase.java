@@ -2,8 +2,8 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.concurrent.StoppableTask;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -121,7 +121,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final int ioRatio = netConfig.getIoRatio();
 		final Transport transportKey = Transport.valueOf(netConfig.getTransport().toUpperCase());
 
-		if(IO_EXECUTOR_LOCK.tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+		if(IO_EXECUTOR_LOCK.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try {
 				if(IO_EXECUTOR == null) {
 					Loggers.MSG.info("{}: I/O executor doesn't exist yet", toString());
@@ -277,9 +277,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected boolean submit(final O ioTask)
-	throws InterruptedException {
+	throws IllegalStateException {
 		if(!isStarted()) {
-			throw new InterruptedException();
+			throw new IllegalStateException();
 		}
 		try(
 			final Instance logCtx = CloseableThreadContext
@@ -287,14 +287,17 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
-				concurrencyThrottle.acquire();
-				ioTask.startRequest();
-				sendRequest(null, null, ioTask);
-				ioTask.finishRequest();
-				concurrencyThrottle.release();
-				ioTask.setStatus(SUCC);
-				ioTask.startResponse();
-				complete(null, ioTask);
+				if(concurrencyThrottle.tryAcquire()) {
+					ioTask.startRequest();
+					sendRequest(null, null, ioTask);
+					ioTask.finishRequest();
+					concurrencyThrottle.release();
+					ioTask.setStatus(SUCC);
+					ioTask.startResponse();
+					complete(null, ioTask);
+				} else {
+					return false;
+				}
 			} else {
 				final Channel conn = connPool.lease();
 				if(conn == null) {
@@ -320,7 +323,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		Channel conn;
 		O nextIoTask;
 		try(
@@ -331,14 +334,17 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
 				if(IoType.NOOP.equals(nextIoTask.getIoType())) {
-					concurrencyThrottle.acquire();
-					nextIoTask.startRequest();
-					sendRequest(null, null, nextIoTask);
-					nextIoTask.finishRequest();
-					concurrencyThrottle.release();
-					nextIoTask.setStatus(SUCC);
-					nextIoTask.startResponse();
-					complete(null, nextIoTask);
+					if(concurrencyThrottle.tryAcquire()) {
+						nextIoTask.startRequest();
+						sendRequest(null, null, nextIoTask);
+						nextIoTask.finishRequest();
+						concurrencyThrottle.release();
+						nextIoTask.setStatus(SUCC);
+						nextIoTask.startResponse();
+						complete(null, nextIoTask);
+					} else {
+						return i - from;
+					}
 				} else {
 					conn = connPool.lease();
 					if(conn == null) {
@@ -372,7 +378,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected final int submit(final List<O> ioTasks)
-	throws InterruptedException {
+	throws IllegalStateException {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 	
@@ -595,7 +601,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		) {
 			super.doInterrupt();
 			try {
-				if(IO_EXECUTOR_LOCK.tryLock(StoppableTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(IO_EXECUTOR_LOCK.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {
 						IO_EXECUTOR_REF_COUNT --;
 						Loggers.MSG.debug(

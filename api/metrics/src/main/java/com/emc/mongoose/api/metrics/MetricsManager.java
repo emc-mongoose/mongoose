@@ -64,7 +64,7 @@ implements Coroutine {
 	
 	public static void register(final LoadController controller, final MetricsContext metricsCtx)
 	throws InterruptedException, TimeoutException {
-		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try(
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
@@ -91,7 +91,7 @@ implements Coroutine {
 	
 	public static void unregister(final LoadController controller, final MetricsContext metricsCtx)
 	throws InterruptedException, TimeoutException {
-		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try(
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())

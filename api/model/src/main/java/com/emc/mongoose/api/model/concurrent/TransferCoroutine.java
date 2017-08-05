@@ -48,7 +48,7 @@ implements Coroutine {
 	}
 
 	@Override
-	protected final void invokeTimed() {
+	protected final void invokeTimed(final long startTimeNanos) {
 		if(deferredItems.tryLock()) { // works like exclusive invocation lock
 			try(
 				final Instance ctx = CloseableThreadContext
@@ -81,7 +81,12 @@ implements Coroutine {
 								deferredItems.add(item);
 							}
 						} else {
-							final int m = output.put(items);
+							final int m;
+							if(TIMEOUT_NANOS > System.nanoTime() - startTimeNanos) {
+								m = output.put(items);
+							} else { // timeout, move all items to the deferred items buffer
+								m = 0;
+							}
 							if(m < n) {
 								// not all items was transferred w/o blocking
 								// defer the remaining items for a future try
@@ -123,7 +128,7 @@ implements Coroutine {
 	protected final void doClose()
 	throws IOException {
 		try {
-			deferredItems.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			deferredItems.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
 			deferredItems.clear();
 		} catch(final InterruptedException e) {
 			e.printStackTrace(System.err);

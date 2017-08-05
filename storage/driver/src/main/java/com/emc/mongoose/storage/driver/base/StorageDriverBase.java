@@ -108,7 +108,7 @@ implements StorageDriver<I, O> {
 	extends CoroutineBase {
 
 		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
-		private int n = 0;
+		private int n = 0; // the current count of the I/O tasks in the buffer
 		private int m;
 
 		public IoTasksDispatchCoroutine(final List<Coroutine> svcCoroutines) {
@@ -116,26 +116,37 @@ implements StorageDriver<I, O> {
 		}
 
 		@Override
-		protected final void invokeTimed() {
+		protected final void invokeTimed(final long startTimeNanos) {
 			if(buff.tryLock()) {
 				try(
 					final Instance logCtx = CloseableThreadContext
 						.put(KEY_TEST_STEP_ID, stepId)
 						.put(KEY_CLASS_NAME, CLS_NAME)
 				) {
+					// child tasks go first
 					if(n < batchSize) {
 						n += childTasksQueue.drainTo(buff, batchSize - n);
 					}
+					// check for the coroutine invocation timeout
+					if(TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
+						return;
+					}
+					// new tasks
 					if(n < batchSize) {
 						n += inTasksQueue.drainTo(buff, batchSize - n);
 					}
+					// check for the coroutine invocation timeout
+					if(TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
+						return;
+					}
+					// submit the tasks if any
 					if(n > 0) {
-						if(n == 1) {
+						if(n == 1) { // non-batch mode
 							if(submit(buff.get(0))) {
 								buff.clear();
 								n --;
 							}
-						} else {
+						} else { // batch mode
 							m = submit(buff, 0, n);
 							if(m > 0) {
 								buff.removeRange(0, m);
@@ -143,7 +154,12 @@ implements StorageDriver<I, O> {
 							}
 						}
 					}
-				} catch(final InterruptedException ignored) {
+				} catch(final IllegalStateException e) {
+					LogUtil.exception(
+						Level.DEBUG, e, "{}: failed to submit some I/O tasks due to the illegal " +
+							"storage driver state ({})",
+						StorageDriverBase.this.toString(), getState()
+					);
 				} finally {
 					buff.unlock();
 				}
@@ -157,7 +173,7 @@ implements StorageDriver<I, O> {
 					.put(KEY_TEST_STEP_ID, stepId)
 					.put(KEY_CLASS_NAME, IoTasksDispatchCoroutine.class.getSimpleName())
 			) {
-				if(!buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(!buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					Loggers.ERR.warn(
 						"{}: failed to obtain the I/O tasks buffer lock in time",
 						StorageDriverBase.this.toString()
@@ -349,13 +365,13 @@ implements StorageDriver<I, O> {
 	}
 
 	protected abstract boolean submit(final O ioTask)
-	throws InterruptedException;
+	throws IllegalStateException;
 
 	protected abstract int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException;
+	throws IllegalStateException;
 
 	protected abstract int submit(final List<O> ioTasks)
-	throws InterruptedException;
+	throws IllegalStateException;
 
 	@Override
 	public Input<O> getInput() {

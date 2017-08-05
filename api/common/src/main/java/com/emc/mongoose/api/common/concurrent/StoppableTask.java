@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.common.concurrent;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  Created by andrey on 19.04.17.
@@ -8,7 +9,13 @@ import java.io.Closeable;
 public interface StoppableTask
 extends Closeable, Runnable {
 
-	int TIMEOUT_MILLIS = 250;
+	/**
+	 Stops the task
+	 @throws IOException if some kind of failure occured
+	 */
+	@Override
+	public void close()
+	throws IOException;
 
 	boolean isClosed();
 }

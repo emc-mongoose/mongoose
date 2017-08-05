@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  Created on 21.07.16.
+ A stateful execution entity. Usually contains the list of the concurrent service tasks implemented
+ as coroutines.
  */
 public interface Daemon
 extends Closeable {
