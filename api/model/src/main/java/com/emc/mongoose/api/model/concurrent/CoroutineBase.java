@@ -46,13 +46,13 @@ implements Coroutine {
 	protected final void invoke() {
 		long t = System.nanoTime();
 		invokeTimed(t);
-		t = System.nanoTime() - t;
-		if(t > TIMEOUT_NANOS) {
-			System.err.println(
-				"Coroutine \"" + toString() + "\" invocation duration exceeded the limit: " + t +
-					"[ns]"
-			);
-		}
+		//t = System.nanoTime() - t;
+		//if(t > TIMEOUT_NANOS) {
+		//	System.err.println(
+		//		"Coroutine \"" + toString() + "\" invocation duration exceeded the limit: " + t +
+		//			"[ns]"
+		//	);
+		//}
 		//durations.update(t);
 		//durationsSum.inc();
 	}

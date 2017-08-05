@@ -823,7 +823,7 @@ implements FileStorageDriver<I, O> {
 	throws IOException {
 		final String dstPath = ioTask.getDstPath();
 		final I fileItem = ioTask.getItem();
-		Files.delete(
+		FS_PROVIDER.delete(
 			dstPath == null ? Paths.get(fileItem.getName()) : Paths.get(dstPath, fileItem.getName())
 		);
 		finishIoTask(ioTask);
