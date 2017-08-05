@@ -21,7 +21,6 @@ implements StoppableTask {
 
 	@Override
 	public final void run() {
-
 		Set<Map.Entry<Daemon, List<Coroutine>>> coroutineEntries;
 		List<Coroutine> nextCoroutines;
 		while(!closedFlag) {
