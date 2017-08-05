@@ -60,7 +60,7 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		EXPECTED_UPDATE_SIZE = new SizeInBytes(
-			(2 << (UPDATE_RANDOM_RANGES_COUNT - 1)) - 1, ITEM_DATA_SIZE.get(), 1
+			2 << (UPDATE_RANDOM_RANGES_COUNT - 2), ITEM_DATA_SIZE.get(), 1
 		);
 		EXPECTED_READ_SIZE = new SizeInBytes(
 			-LongStream.of(1-2,5-10,20-50,100-200,500-1000,2000-5000).sum()

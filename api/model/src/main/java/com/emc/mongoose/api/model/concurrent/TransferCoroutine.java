@@ -12,6 +12,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.ConnectException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.List;
@@ -98,7 +99,7 @@ implements Coroutine {
 					}
 				}
 
-			} catch(final NoSuchObjectException ignored) {
+			} catch(final NoSuchObjectException | ConnectException ignored) {
 			} catch(final EOFException e) {
 				try {
 					close();
