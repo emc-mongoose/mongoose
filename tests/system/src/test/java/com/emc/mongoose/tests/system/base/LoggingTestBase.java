@@ -573,7 +573,7 @@ public abstract class LoggingTestBase {
 			assertEquals((int) concurrencyMap.get(actualIoType), actualConcurrency);
 			assertEquals(driverCount, actualDriverCount);
 			if(countLimit > 0) {
-				assertTrue(countLimit > succCount); // count succ
+				assertTrue(countLimit >= succCount); // count succ
 			}
 			assertTrue(failCount == 0);
 			assertTrue(stepTimeSec >= 0);
