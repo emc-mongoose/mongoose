@@ -25,10 +25,6 @@ jobs:
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
 
-    - stage: "System tests"
-      env:
-      
-
     # System tests
     # the list of the "System tests" stages below is intended to mimic the build matrix behavior
     # STORAGE_DRIVER_TYPE:        atmos, fs, s3, swift
@@ -1274,9 +1270,13 @@ jobs:
           tags: true
       after_deploy:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose
       - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
+      - export REPO=emcmongoose/mongoose
       - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push $REPO
+      - export REPO=emcmongoose/mongoose-storage-driver-service
       - docker build -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
