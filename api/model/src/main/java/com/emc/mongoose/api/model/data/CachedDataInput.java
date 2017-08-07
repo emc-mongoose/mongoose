@@ -55,24 +55,16 @@ extends DataInputBase {
 
 		Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache == null) {
-			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit);
+			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		ByteBuffer layer = layersCache.get(layerIndex);
+		ByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
-			// else generate
-			final int size = inputBuff.capacity();
-			layer = allocateDirect(size);
-			final long layerSeed = Long.reverseBytes(
-				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
-			);
-			generateData(layer, layerSeed);
-			layersCache.put(layerIndex, layer);
-			if(layersCache.size() > layersCacheCountLimit) {
-				// do not remove the initial layer (#0), start from the layer #1
-				for(int i = 0; i < layerIndex; i ++) {
+			// check if it's necessary to free the space first
+			if(layersCache.size() == layersCacheCountLimit - 1) {
+				for(int i = 0; i < layerIndex - 1; i ++) {
 					if(null != layersCache.remove(i)) {
 						// stop if some lowest index layer was removed
 						break;
@@ -80,6 +72,14 @@ extends DataInputBase {
 				}
 				layersCache.trim();
 			}
+			// generate the layer
+			final int size = inputBuff.capacity();
+			layer = allocateDirect(size);
+			final long layerSeed = Long.reverseBytes(
+				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
+			);
+			generateData(layer, layerSeed);
+			layersCache.put(layerIndex - 1, layer);
 		}
 		return layer;
 	}
