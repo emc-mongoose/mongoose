@@ -169,7 +169,7 @@ public abstract class LoggingTestBase {
 	) throws Exception {
 		final int countRecords = metrics.size();
 		if(expectedLoadJobTime > 0) {
-			assertEquals(
+			assertTrue(
 				"Count of the metrics records: " + countRecords,
 				expectedLoadJobTime >= metricsPeriodSec * countRecords
 			);
