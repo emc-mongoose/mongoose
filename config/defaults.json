@@ -6,7 +6,7 @@
 				"file" : null,
 				"layer" : {
 					// The maximum count of the data "layers" to be cached into the memory
-					"cache" : 4,
+					"cache" : 16,
 					// The size of the content source ring buffer
 					"size" : "4MB"
 				},

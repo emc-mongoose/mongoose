@@ -46,7 +46,8 @@ extends DataInputBase {
 	}
 
 	@Override
-	public final ByteBuffer getLayer(final int layerIndex) {
+	public final ByteBuffer getLayer(final int layerIndex)
+	throws OutOfMemoryError {
 
 		if(layerIndex == 0) {
 			return inputBuff;
@@ -63,7 +64,11 @@ extends DataInputBase {
 		if(layer == null) {
 			// else generate
 			final int size = inputBuff.capacity();
-			layer = allocateDirect(size);
+			try {
+				layer = allocateDirect(size);
+			} catch(final OutOfMemoryError e) {
+				e.printStackTrace();
+			}
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
