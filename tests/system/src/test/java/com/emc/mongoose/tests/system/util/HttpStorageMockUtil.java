@@ -50,7 +50,10 @@ public interface HttpStorageMockUtil {
 				return (long) itemUrl.openConnection().getContentLength();
 			}
 		);
-		final long actualSize = futureContentLen.get().longValue();
+		final long actualSize = futureContentLen.get();
+		if(actualSize != expectedSize) {
+			System.err.println(itemPath);
+		}
 		assertEquals(
 			"Invalid size returned for the \"" + itemPath + "\"", expectedSize, actualSize
 		);
