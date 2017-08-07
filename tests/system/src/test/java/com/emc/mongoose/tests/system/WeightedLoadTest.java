@@ -115,7 +115,7 @@ extends EnvConfiguredScenarioTestBase {
 				}
 				break;
 		}
-		TimeUnit.SECONDS.timedJoin(runner, 100);
+		TimeUnit.SECONDS.timedJoin(runner, 40);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LogUtil.flushAll();

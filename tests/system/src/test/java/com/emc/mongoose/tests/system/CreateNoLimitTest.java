@@ -123,9 +123,11 @@ extends EnvConfiguredScenarioTestBase {
 	public final void testStdOutput()
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
-		testMetricsTableStdout(
-			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0,
-			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}
-		);
+		if(!STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) { // issue SLTM-1064 workaround
+			testMetricsTableStdout(
+				STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, 0,
+				new HashMap<IoType, Integer>() {{ put(IoType.CREATE, CONCURRENCY); }}
+			);
+		}
 	}
 }

@@ -34,7 +34,7 @@
 					"test" : {
 						"step" : {
 							"limit" : {
-								"time" : "90s"
+								"time" : 50
 							}
 						}
 					}
