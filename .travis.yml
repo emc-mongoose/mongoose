@@ -37,8 +37,9 @@ jobs:
 
     - stage: "System tests"
       script: "./gradlew :tests:system:test"
-      env: STORAGE_DRIVER_TYPE=atmos
-      env: STORAGE_DRIVER_COUNT=2
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
 
     - stage: "Component performance tests"
       script: "./gradlew :tests:perf:test"
