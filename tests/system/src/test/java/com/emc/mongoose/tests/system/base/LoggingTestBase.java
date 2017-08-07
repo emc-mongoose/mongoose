@@ -27,6 +27,8 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import static com.emc.mongoose.tests.system.base.EnvConfiguredTestBase.STORAGE_DRIVER_TYPE;
+import static com.emc.mongoose.tests.system.base.EnvConfiguredTestBase.STORAGE_TYPE_FS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -578,7 +580,9 @@ public abstract class LoggingTestBase {
 			assertTrue(tp >= 0);
 			assertTrue(bw >= 0);
 			assertTrue(lat >= 0);
-			assertTrue(lat <= dur);
+			if(!STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) { // issue SLTM-1064 workaround
+				assertTrue(lat <= dur);
+			}
 		}
 
 		assertTrue(rowCount > 0);

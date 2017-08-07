@@ -132,7 +132,7 @@ extends EnvConfiguredScenarioTestBase {
 			IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, new SizeInBytes(0), EXPECTED_COUNT, 0
 		);
 		assertEquals(
-			EXPECTED_RATE, Double.parseDouble(totalRec.get("TPAvg[op/s]")), EXPECTED_RATE / 10
+			EXPECTED_RATE, Double.parseDouble(totalRec.get("TPAvg[op/s]")), EXPECTED_RATE
 		);
 	}
 
