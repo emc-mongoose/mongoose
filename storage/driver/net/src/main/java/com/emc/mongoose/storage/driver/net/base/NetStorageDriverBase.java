@@ -4,6 +4,7 @@ import com.emc.mongoose.api.common.ByteRange;
 import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -156,7 +157,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				IO_EXECUTOR_LOCK.unlock();
 			}
 		} else {
-			Loggers.ERR.error("Failed to obtain the I/O executor lock in time");
+			Loggers.ERR.error(
+				"Failed to obtain the I/O executor lock in time, thread dump:\n{}",
+				new ThreadDump().toString()
+			);
 		}
 
 		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
@@ -625,7 +629,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						IO_EXECUTOR_LOCK.unlock();
 					}
 				} else {
-					Loggers.ERR.error("Failed to obtain the I/O executor lock in time");
+					Loggers.ERR.error(
+						"Failed to obtain the I/O executor lock in time, thread dump:\n{}",
+						new ThreadDump().toString()
+					);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");

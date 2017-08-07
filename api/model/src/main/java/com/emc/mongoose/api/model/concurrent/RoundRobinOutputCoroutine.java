@@ -182,15 +182,12 @@ implements Output<T> {
 	throws IOException {
 		for(final O output : outputs) {
 			final OptLockBuffer<T> buff = buffs.get(output);
-			try {
-				if(buff != null && buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-					try {
-						buff.clear();
-					} finally {
-						buff.unlock();
-					}
+			if(buff != null) {
+				try {
+					buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
+				} catch(final InterruptedException ignored) {
 				}
-			} catch(final InterruptedException ignored) {
+				buff.clear();
 			}
 		}
 		buffs.clear();

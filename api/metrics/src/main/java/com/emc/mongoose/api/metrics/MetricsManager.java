@@ -6,6 +6,7 @@ import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -25,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -63,8 +63,8 @@ implements Coroutine {
 	}
 	
 	public static void register(final LoadController controller, final MetricsContext metricsCtx)
-	throws InterruptedException, TimeoutException {
-		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+	throws InterruptedException {
+		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			try(
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
@@ -85,13 +85,15 @@ implements Coroutine {
 				INSTANCE.allMetricsLock.unlock();
 			}
 		} else {
-			throw new TimeoutException("Locking timeout at register call");
+			Loggers.ERR.warn(
+				"Locking timeout at register call, thread dump:\n{}", new ThreadDump().toString()
+			);
 		}
 	}
 	
 	public static void unregister(final LoadController controller, final MetricsContext metricsCtx)
-	throws InterruptedException, TimeoutException {
-		if(INSTANCE.allMetricsLock.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+	throws InterruptedException {
+		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			try(
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
@@ -135,7 +137,9 @@ implements Coroutine {
 				Loggers.MSG.info("Metrics context \"{}\" unregistered", metricsCtx);
 			}
 		} else {
-			throw new TimeoutException("Locking timeout at unregister call");
+			Loggers.ERR.warn(
+				"Locking timeout at unregister call, thread dump:\n{}", new ThreadDump().toString()
+			);
 		}
 	}
 	
@@ -258,9 +262,19 @@ implements Coroutine {
 	
 	@Override
 	protected final void doClose() {
-		for(final LoadController controller : allMetrics.keySet()) {
-			allMetrics.get(controller).clear();
+		try {
+			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
+				for(final LoadController controller : allMetrics.keySet()) {
+					allMetrics.get(controller).clear();
+				}
+				allMetrics.clear();
+			} else {
+				Loggers.ERR.warn(
+					"Locking timeout at closing, thread dump:\n{}", new ThreadDump().toString()
+				);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
 		}
-		allMetrics.clear();
 	}
 }

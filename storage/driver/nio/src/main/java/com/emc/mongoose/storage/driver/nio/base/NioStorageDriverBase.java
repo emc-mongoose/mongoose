@@ -10,6 +10,7 @@ import com.emc.mongoose.api.model.concurrent.Coroutine;
 import com.emc.mongoose.api.model.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
+import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -165,6 +166,11 @@ implements NioStorageDriver<I, O> {
 						}
 					}
 					Loggers.MSG.debug("Finish the remaining active tasks done");
+				} else {
+					Loggers.ERR.debug(
+						"Failed to obtain the I/O tasks buff lock in time, thread dump:\n{}",
+						new ThreadDump().toString()
+					);
 				}
 			} catch(final InterruptedException ignored) {
 			}
@@ -276,7 +282,8 @@ implements NioStorageDriver<I, O> {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){
 					Loggers.ERR.debug(
-						"Failed to obtain the lock, I/O tasks buff remains uncleared"
+						"Failed to obtain the I/O tasks buff lock in time, thread dump:\n{}",
+						new ThreadDump().toString()
 					);
 				}
 			} catch(final InterruptedException e) {

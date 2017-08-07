@@ -9,6 +9,7 @@ import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -25,6 +26,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
@@ -175,8 +177,8 @@ implements StorageDriver<I, O> {
 			) {
 				if(!buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					Loggers.ERR.warn(
-						"{}: failed to obtain the I/O tasks buffer lock in time",
-						StorageDriverBase.this.toString()
+						"{}: failed to obtain the I/O tasks buffer lock in time, thread dump:\n",
+						StorageDriverBase.this.toString(), new ThreadDump().toString()
 					);
 				}
 				buff.clear();

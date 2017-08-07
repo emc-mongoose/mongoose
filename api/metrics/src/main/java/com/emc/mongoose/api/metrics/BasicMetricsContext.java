@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.metrics;
 
 import com.codahale.metrics.Clock;
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
@@ -9,6 +10,8 @@ import com.emc.mongoose.api.model.io.IoType;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+
+import static java.lang.Math.exp;
 
 /**
  Created by kurila on 15.09.15.
@@ -61,10 +64,11 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.sumPersistFlag = sumPersistFlag;
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
-		respLatency = new Histogram(new SlidingWindowReservoir(0x1_00_00));
+
+		respLatency = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new SlidingWindowReservoir(0x1_00_00));
+		reqDuration = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
@@ -266,7 +270,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
-			reqDurationSum.sum(), respLatencySum.sum(), reqDurSnapshot, respLatSnapshot
+			lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);

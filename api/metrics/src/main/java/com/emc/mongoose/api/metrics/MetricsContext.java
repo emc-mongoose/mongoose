@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public interface MetricsContext
 extends Closeable {
+
+	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
 	
 	void start();
 	boolean isStarted();

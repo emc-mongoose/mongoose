@@ -593,8 +593,6 @@ implements LoadController<I, O> {
 				MetricsManager.register(this, ioStats.get(ioTypeCode));
 			} catch(final InterruptedException e) {
 				throw new CancellationException(e.getMessage());
-			} catch(final TimeoutException e) {
-				LogUtil.exception(Level.WARN, e, "{}: metrics context registering timeout", name);
 			}
 		}
 
@@ -906,7 +904,7 @@ implements LoadController<I, O> {
 		for(final MetricsContext nextStats : ioStats.values()) {
 			try {
 				MetricsManager.unregister(this, nextStats);
-			} catch(final InterruptedException | TimeoutException e) {
+			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "{}: metrics context unregister failure", name);
 			}
 		}

@@ -35,10 +35,6 @@ implements Metric {
 		lastTick.set(startTime);
 	}
 	//
-	public CustomMeter(final int periodSec) {
-		this(Clock.defaultClock(), periodSec);
-	}
-	//
 	/**
 	 * Mark the occurrence of an event.
 	 */
