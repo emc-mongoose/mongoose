@@ -19,6 +19,10 @@ env:
 - STORAGE_DRIVER_TYPE=swift
 
 env:
+- STORAGE_DRIVER_COUNT=1
+- STORAGE_DRIVER_COUNT=2
+
+env:
   global:
   - COMMIT=${TRAVIS_COMMIT::8}
   - secure: Awm5ZsL8OJZTu6laZWGgm0kixqCQaAWnR7du+tMphQEra62axza+M5Dtj6OqmLXygtjirKUawEODN9oW64YAUqvWBy3ZV6b+x43Ixbh3dTTTGCkk9o0AbguGN3mcVyASf/FhXHsCR209dEmBN7rOxv1H/FXOsTBL7FrkrjB25SwRouiJa5q3ji2HsZXEIV8kpZ+l8eb8X4zuMpWfUJtqtzZ5Ozbr2UrL3EadImhfFzDqNggDZBZIYL5bsZk/7dJ2ATpHznqaWfRWw7KxKjZ/QCdjoquVQEnWt6Mg2dUh3eDzoynnDor7TTUrekSsJLFecfyRL6+1Y3KrgPxj1eiRqllCKbVNLzQltU5lrM5vMA3SzAJ/5HoRbqRiksKJrw+e/sE0WKeh48O+qMkdmOpLtdrdZMq9cguSmFUFTwOfh3X02z7KcdGixYNcu2jrwuPxt02hc0NxF2viv5vriagtFredTcGIT8hDUNh4ARCFsm2JH5TXkgdovTUYNfd1EFMVKsPp7WC73cRv+Hreex1MmkEbQkP9iHRwxVf7du3gWhJOvtiaXrZIk1Hi9lEiMjuqTrBFh5wpsOWM6Zhj1JCrdgH9OqmeatOrstZbjJu3U/ZEIsCsxFvI37+wpa2cgtGVUVgMxFQm2XEPzUM3QdU/1rsDVXIW6oylTlCM85qPy2Q=
@@ -34,6 +38,7 @@ jobs:
     - stage: "System tests"
       script: "./gradlew :tests:system:test"
       env: STORAGE_DRIVER_TYPE=atmos
+      env: STORAGE_DRIVER_COUNT=2
 
     - stage: "Component performance tests"
       script: "./gradlew :tests:perf:test"
