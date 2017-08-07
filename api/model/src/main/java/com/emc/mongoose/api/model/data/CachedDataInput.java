@@ -64,11 +64,7 @@ extends DataInputBase {
 		if(layer == null) {
 			// else generate
 			final int size = inputBuff.capacity();
-			try {
-				layer = allocateDirect(size);
-			} catch(final OutOfMemoryError e) {
-				e.printStackTrace();
-			}
+			layer = allocateDirect(size);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
@@ -86,6 +82,15 @@ extends DataInputBase {
 			}
 		}
 		return layer;
+	}
+
+	public void close()
+	throws IOException {
+		final Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
+		if(layersCache != null) {
+			layersCache.clear();
+			thrLocLayersCache.set(null);
+		}
 	}
 
 	@Override
