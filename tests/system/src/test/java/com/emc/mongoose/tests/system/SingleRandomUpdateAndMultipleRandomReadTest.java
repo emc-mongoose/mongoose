@@ -61,7 +61,7 @@ extends EnvConfiguredScenarioTestBase {
 			return;
 		}
 		EXPECTED_READ_SIZE = new SizeInBytes(
-			(2 << (READ_RANDOM_RANGES_COUNT - 1)) - 1, ITEM_DATA_SIZE.get(), 1
+			2 << (READ_RANDOM_RANGES_COUNT - 2), ITEM_DATA_SIZE.get(), 1
 		);
 		EXPECTED_UPDATE_SIZE = new SizeInBytes(1, ITEM_DATA_SIZE.get(), 1);
 		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
