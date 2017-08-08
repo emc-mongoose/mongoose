@@ -1,5 +1,6 @@
 package com.emc.mongoose.tests.system;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
@@ -49,6 +50,7 @@ extends EnvConfiguredScenarioTestBase {
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs"));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
 		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(100, 1000));
+		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));
 		STEP_ID = TlsAndNodeBalancingTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ReadUsingInputPath.json");
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
