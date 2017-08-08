@@ -19,8 +19,6 @@ import org.junit.runners.Suite;
 	CircularReadSingleItemTest.class,
 	// atmos, 2, 1000, 100MB
 	HttpStorageMetricsThresholdTest.class,
-	// s3, 1, 1, 1MB
-	MultiPartCreateTest.class,
 	//
 	TlsAndNodeBalancingTest.class,
 })

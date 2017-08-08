@@ -165,6 +165,10 @@ extends EnvConfiguredScenarioTestBase {
 			sizeSum += nextItemSize;
 		}
 		final long expectedAvgSize = ITEM_DATA_SIZE.getAvg();
-		assertTrue(expectedAvgSize >= sizeSum / n);
+		assertTrue(
+			"Expected average item size (" + expectedAvgSize +
+				") should not be less then actual (" + sizeSum / n + ")",
+			expectedAvgSize >= sizeSum / n
+		);
 	}
 }
