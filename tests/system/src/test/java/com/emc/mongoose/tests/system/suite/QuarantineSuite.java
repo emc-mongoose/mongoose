@@ -1,5 +1,6 @@
 package com.emc.mongoose.tests.system.suite;
 
+import com.emc.mongoose.tests.system.HttpStorageMetricsThresholdTest;
 import com.emc.mongoose.tests.system.TlsAndNodeBalancingTest;
 
 import org.junit.runner.RunWith;
@@ -12,6 +13,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
+	// atmos, 2, 1000, 100MB
+	HttpStorageMetricsThresholdTest.class,
 	TlsAndNodeBalancingTest.class,
 })
 
