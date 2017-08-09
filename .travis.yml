@@ -1273,7 +1273,6 @@ jobs:
       - export REPO=emcmongoose/mongoose
       - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
       - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
-      - docker build -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push $REPO

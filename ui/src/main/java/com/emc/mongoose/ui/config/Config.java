@@ -1690,7 +1690,7 @@ implements Serializable {
 						throw new IllegalArgumentNameException(key + PATH_SEP + e.getMessage());
 					}
 				} catch(final NoSuchMethodException e) {
-					throw new IllegalArgumentNameException(key);
+					applyField(config, key, node);
 				}
 			} else if(config instanceof Map) {
 				((Map<String, Object>) config).put(key, node);
@@ -1713,6 +1713,8 @@ implements Serializable {
 			} else {
 				final Class valueType = value.getClass();
 				if(TypeUtil.typeEquals(fieldType, valueType)) {
+					configCls.getMethod("set" + capitalize(key), fieldType).invoke(config, value);
+				} else if(value instanceof Map && TypeUtil.typeEquals(fieldType, Map.class)) {
 					configCls.getMethod("set" + capitalize(key), fieldType).invoke(config, value);
 				} else if(value instanceof List && TypeUtil.typeEquals(fieldType, List.class)) {
 					configCls.getMethod("set" + capitalize(key), fieldType).invoke(config, value);
