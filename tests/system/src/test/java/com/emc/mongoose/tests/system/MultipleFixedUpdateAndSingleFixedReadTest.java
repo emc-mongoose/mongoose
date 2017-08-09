@@ -38,7 +38,7 @@ extends EnvConfiguredScenarioTestBase {
 	private static SizeInBytes EXPECTED_UPDATE_SIZE;
 	private static SizeInBytes EXPECTED_READ_SIZE;
 	
-	private static final long EXPECTED_COUNT = 1000;
+	private static final long EXPECTED_COUNT = 10000;
 	
 	@BeforeClass
 	public static void setUpClass()
