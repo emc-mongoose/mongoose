@@ -164,7 +164,8 @@ extends EnvConfiguredScenarioTestBase {
 			assertTrue(ITEM_DATA_SIZE.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
+		assertEquals(SIZE_LIMIT.get(), sizeSum, SIZE_LIMIT.get() / 100);
 		final long expectedAvgSize = ITEM_DATA_SIZE.getAvg();
-		assertEquals(expectedAvgSize, sizeSum / n, expectedAvgSize / 3);
+		assertEquals(expectedAvgSize, sizeSum / n, expectedAvgSize / 2);
 	}
 }
