@@ -102,7 +102,7 @@ extends EnvConfiguredScenarioTestBase {
 			}
 		);
 		runner.start();
-		TimeUnit.SECONDS.sleep(30); // warmup
+		TimeUnit.SECONDS.sleep(20); // warmup
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ACTUAL_CONCURRENCY = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
