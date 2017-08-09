@@ -43,7 +43,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -51,7 +51,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -59,7 +59,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -67,7 +67,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -75,7 +75,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -83,7 +83,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -91,7 +91,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -99,7 +99,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -107,7 +107,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -115,7 +115,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -123,7 +123,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -131,7 +131,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -139,7 +139,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -147,7 +147,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -155,7 +155,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -163,7 +163,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -171,7 +171,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -179,7 +179,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -187,7 +187,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -195,7 +195,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -203,7 +203,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -211,7 +211,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -219,7 +219,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -227,7 +227,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -235,7 +235,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -243,7 +243,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -251,7 +251,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -259,7 +259,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -267,7 +267,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -275,7 +275,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -283,7 +283,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -291,7 +291,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -299,7 +299,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -307,7 +307,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -315,7 +315,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -323,7 +323,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -331,7 +331,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -339,7 +339,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -347,7 +347,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -355,7 +355,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -363,7 +363,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -371,7 +371,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -379,7 +379,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -387,7 +387,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -395,7 +395,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -403,7 +403,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -411,7 +411,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -419,7 +419,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -427,7 +427,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -435,7 +435,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -443,7 +443,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -451,7 +451,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -459,7 +459,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -467,7 +467,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -475,7 +475,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -483,7 +483,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -491,7 +491,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -499,7 +499,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -507,7 +507,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -515,7 +515,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -523,7 +523,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -531,7 +531,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -539,7 +539,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -547,7 +547,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -555,7 +555,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -563,7 +563,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -571,7 +571,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -579,7 +579,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -587,7 +587,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -595,7 +595,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -603,7 +603,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -611,7 +611,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -619,7 +619,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -627,7 +627,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -635,7 +635,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -643,7 +643,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -651,7 +651,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -659,7 +659,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -667,7 +667,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -675,7 +675,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -683,7 +683,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -691,7 +691,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -699,7 +699,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -707,7 +707,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -715,7 +715,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -723,7 +723,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -731,7 +731,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -739,7 +739,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -747,7 +747,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -755,7 +755,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -763,7 +763,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -771,7 +771,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -779,7 +779,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -787,7 +787,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -795,7 +795,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -803,7 +803,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -811,7 +811,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -819,7 +819,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -827,7 +827,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -835,7 +835,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -843,7 +843,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -851,7 +851,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -859,7 +859,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -867,7 +867,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -875,7 +875,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -883,7 +883,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -891,7 +891,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -899,7 +899,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -907,7 +907,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -915,7 +915,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -923,7 +923,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -931,7 +931,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -939,7 +939,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -947,7 +947,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -955,7 +955,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -963,7 +963,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -971,7 +971,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -979,7 +979,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -987,7 +987,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -995,7 +995,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1003,7 +1003,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1011,7 +1011,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1019,7 +1019,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1027,7 +1027,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1035,7 +1035,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1043,7 +1043,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1051,7 +1051,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1059,7 +1059,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1067,7 +1067,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1075,7 +1075,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1083,7 +1083,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1091,7 +1091,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=1
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1099,7 +1099,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1107,7 +1107,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1115,7 +1115,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1123,7 +1123,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1131,7 +1131,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1139,7 +1139,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1147,7 +1147,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1155,7 +1155,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1163,7 +1163,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1171,7 +1171,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=10
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1179,7 +1179,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1187,7 +1187,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1195,7 +1195,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1203,7 +1203,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1211,7 +1211,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=100
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1219,7 +1219,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=0
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1227,7 +1227,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10KB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1235,7 +1235,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=1MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1243,7 +1243,7 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=100MB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "System tests"
       env:
@@ -1251,13 +1251,13 @@ jobs:
       - STORAGE_DRIVER_COUNT=2
       - STORAGE_DRIVER_CONCURRENCY=1000
       - ITEM_DATA_SIZE=10GB
-      script: "gradle wrapper; /gradlew :tests:system:test"
+      script: "gradle wrapper; ./gradlew :tests:system:test"
 
     - stage: "Component performance tests"
-      script: "gradle wrapper; /gradlew :tests:perf:test"
+      script: "gradle wrapper; ./gradlew :tests:perf:test"
 
     - stage: "Deploy"
-      script: "gradle wrapper; /gradlew clean dist"
+      script: "gradle wrapper; ./gradlew clean dist"
       deploy:
         skip_cleanup: true
         provider: releases
