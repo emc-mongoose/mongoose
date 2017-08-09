@@ -190,7 +190,7 @@ extends EnvConfiguredScenarioTestBase {
 			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
 				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
 				nextItemPath = ioTraceRecord.get("ItemPath");
-				//HttpStorageMockUtil.assertItemExists(node, nextItemPath, ITEM_DATA_SIZE.get());
+				HttpStorageMockUtil.assertItemExists(node, nextItemPath, ITEM_DATA_SIZE.get());
 				nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf(File.separatorChar) + 1);
 				HttpStorageMockUtil.assertItemExists(
 					node, ITEM_SRC_PATH + '/' + nextItemId, ITEM_DATA_SIZE.get()
