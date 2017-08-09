@@ -85,8 +85,10 @@ extends EnvConfiguredScenarioTestBase {
 			ITEM_OUTPUT_PATH = Paths.get(
 				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
-			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+		} else {
+			ITEM_OUTPUT_PATH = "/default";
 		}
+		CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		final Thread runner = new Thread(
 			() -> {
