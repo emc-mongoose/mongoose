@@ -5,6 +5,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 /**
  Created by kurila on 02.02.16.
@@ -24,7 +25,8 @@ extends CompositeStepBase {
 	
 	//
 	@Override
-	protected void invoke() {
+	protected void invoke()
+	throws CancellationException {
 		synchronized(this) {
 			Loggers.MSG.info(
 				"{}: execute {} child steps sequentially", toString(), childSteps.size()

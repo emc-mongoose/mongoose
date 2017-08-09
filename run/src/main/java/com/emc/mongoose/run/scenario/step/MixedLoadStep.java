@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,7 +74,8 @@ extends StepBase {
 	}
 
 	@Override
-	protected final void invoke() {
+	protected final void invoke()
+	throws CancellationException {
 
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
 		final String stepId = stepConfig.getId();
@@ -146,7 +148,7 @@ extends StepBase {
 		} catch(final UserShootHisFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		} catch(final InterruptedException e) {
-			return;
+			throw new CancellationException();
 		}
 		
 		try(
@@ -177,6 +179,7 @@ extends StepBase {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
 			Loggers.MSG.debug("Load step interrupted");
+			throw new CancellationException();
 		}
 	}
 

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -419,7 +420,8 @@ extends SequentialStep {
 	}
 
 	@Override
-	protected final void invoke() {
+	protected final void invoke()
+	throws CancellationException {
 		if(replaceMarkerName == null && valueSeq == null) { // infinite loop
 			while(true) {
 				super.invoke();

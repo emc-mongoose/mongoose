@@ -6,6 +6,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,8 @@ extends CompositeStepBase {
 	}
 	//
 	@Override
-	protected final synchronized void invoke() {
+	protected final synchronized void invoke()
+	throws CancellationException {
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
 			childSteps.size(), new NamingThreadFactory("stepWorker" + hashCode(), true)
@@ -43,6 +45,7 @@ extends CompositeStepBase {
 			}
 		} catch(final InterruptedException e) {
 			Loggers.MSG.debug("{}: interrupted the child steps execution", toString());
+			throw new CancellationException();
 		} finally {
 			parallelJobsExecutor.shutdownNow();
 		}

@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -44,7 +45,8 @@ extends StepBase {
 	}
 	//
 	@Override
-	protected final void invoke() {
+	protected final void invoke()
+	throws CancellationException {
 		try {
 			Loggers.MSG.info(
 				"Invoking the shell command:\n{}{}{}",
@@ -105,14 +107,14 @@ extends StepBase {
 							"Shell command \"{}\" finished with exit code {}", cmdLine, exitCode
 						);
 					}
-				} catch(final InterruptedException e) {
-					Loggers.MSG.info("Shell command \"{}\" interrupted", cmdLine);
 				} finally {
 					processStdInReader.interrupt();
 					processStdErrReader.interrupt();
 					process.destroy();
 				}
 			}
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
 		} catch(final Exception e) {
 			LogUtil.exception(Level.WARN, e, "Shell command \"{}\" failed", cmdLine);
 		}
