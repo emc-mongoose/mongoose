@@ -862,14 +862,14 @@ implements Serializable {
 					this.versioning = versioning;
 				}
 				
-				public final void setHeadersConfig(final Map<String, String> headers) {
-					this.headersConfig = headers;
+				public final void setHeaders(final Map<String, String> headers) {
+					this.headers = headers;
 				}
 				
 				@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
 				@JsonProperty(KEY_NAMESPACE) private String namespace;
 				@JsonProperty(KEY_VERSIONING) private boolean versioning;
-				@JsonProperty(KEY_HEADERS) private Map<String, String> headersConfig;
+				@JsonProperty(KEY_HEADERS) private Map<String, String> headers;
 				
 				public HttpConfig() {
 				}
@@ -878,7 +878,7 @@ implements Serializable {
 					this.fsAccess = other.getFsAccess();
 					this.namespace = other.getNamespace();
 					this.versioning = other.getVersioning();
-					this.headersConfig = new HashMap<>(other.getHeadersConfig());
+					this.headers = new HashMap<>(other.getHeaders());
 				}
 				
 				public boolean getFsAccess() {
@@ -893,8 +893,8 @@ implements Serializable {
 					return versioning;
 				}
 				
-				public Map<String, String> getHeadersConfig() {
-					return headersConfig;
+				public Map<String, String> getHeaders() {
+					return headers;
 				}
 			}
 			
