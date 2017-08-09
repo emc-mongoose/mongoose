@@ -19,10 +19,6 @@ MANIFEST.MF
 hs_err_pid*
 
 # Gradle #
-.gradle
-
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
-# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
-gradle/wrapper/gradle-wrapper.properties
+gradle/wrapper/*
+gradlew
+gradlew.bat
