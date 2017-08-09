@@ -82,7 +82,7 @@ extends EnvConfiguredScenarioTestBase {
 		SCENARIO.run();
 		LogUtil.flushAll();
 		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-		TimeUnit.SECONDS.sleep(5);
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	@AfterClass
