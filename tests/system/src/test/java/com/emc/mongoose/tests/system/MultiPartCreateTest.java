@@ -73,7 +73,7 @@ extends EnvConfiguredScenarioTestBase {
 		EnvUtil.set("PART_SIZE", PART_SIZE.toString());
 		EnvUtil.set("ITEM_OUTPUT_FILE", ITEM_OUTPUT_FILE);
 		SIZE_LIMIT = new SizeInBytes(
-			Math.min(SizeInBytes.toFixedSize("100GB"), 1000 * CONCURRENCY * PART_SIZE.get())
+			Math.min(SizeInBytes.toFixedSize("1TB"), 10 * CONCURRENCY * ITEM_DATA_SIZE.getMax())
 		);
 		EnvUtil.set("SIZE_LIMIT", SIZE_LIMIT.toString());
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
@@ -157,15 +157,14 @@ extends EnvConfiguredScenarioTestBase {
 		long nextItemSize;
 		long sizeSum = 0;
 		final int n = itemRecs.size();
+		assertTrue(n > 0);
 		assertTrue(EXPECTED_COUNT >= n);
-		for(int i = 0; i < n; i ++) {
-			nextItemSize = Long.parseLong(itemRecs.get(i).get(2));
+		for(final CSVRecord itemRec : itemRecs) {
+			nextItemSize = Long.parseLong(itemRec.get(2));
 			assertTrue(ITEM_DATA_SIZE.getMin() <= nextItemSize);
 			assertTrue(ITEM_DATA_SIZE.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
 		assertEquals(SIZE_LIMIT.get(), sizeSum, SIZE_LIMIT.get() / 100);
-		final long expectedAvgSize = ITEM_DATA_SIZE.getAvg();
-		assertEquals(expectedAvgSize, sizeSum / n, expectedAvgSize / 2);
 	}
 }
