@@ -61,6 +61,7 @@ extends EnvConfiguredScenarioTestBase {
 		runner.start();
 		TimeUnit.SECONDS.timedJoin(runner, SCENARIO_TIMEOUT);
 		runner.interrupt();
+		runner.join();
 		TimeUnit.SECONDS.sleep(10);
 		LogUtil.flushAll();
 	}
