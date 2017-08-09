@@ -3,6 +3,7 @@ package com.emc.mongoose.tests.system.suite;
 import com.emc.mongoose.tests.system.CircularReadSingleItemTest;
 import com.emc.mongoose.tests.system.CreateLimitBySizeTest;
 import com.emc.mongoose.tests.system.HttpStorageMetricsThresholdTest;
+import com.emc.mongoose.tests.system.ReadVerificationAfterCircularUpdateTest;
 import com.emc.mongoose.tests.system.TlsAndNodeBalancingTest;
 
 import org.junit.Ignore;
@@ -22,6 +23,8 @@ import org.junit.runners.Suite;
 	CreateLimitBySizeTest.class,
 	// atmos, 2, 1000, 100MB
 	HttpStorageMetricsThresholdTest.class,
+	// s3, 1, 100, 10KB
+	ReadVerificationAfterCircularUpdateTest.class,
 	//
 	TlsAndNodeBalancingTest.class,
 })
