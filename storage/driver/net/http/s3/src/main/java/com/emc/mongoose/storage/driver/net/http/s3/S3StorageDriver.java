@@ -1,15 +1,16 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.AsyncCurrentDateInput;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
-import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.api.model.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.EmcConstants;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_NAMESPACE;
@@ -24,16 +25,18 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.HEADERS_CANONICA
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_ATTR_UPLOAD_ID;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_UPLOAD_ID;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.KEY_X_AMZ_COPY_SOURCE;
+import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.MAX_KEYS_LIMIT;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.PREFIX_KEY_X_AMZ;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.URL_ARG_VERSIONING;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_ENABLE_CONTENT;
 import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.VERSIONING_DISABLE_CONTENT;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -56,9 +59,6 @@ import io.netty.util.AsciiString;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.xml.sax.SAXException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -71,14 +71,16 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
+import org.xml.sax.SAXException;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -87,52 +89,46 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class S3StorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private static final Logger LOG = LogManager.getLogger();
-	private static final ThreadLocal<StringBuilder>
-		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		},
-		BUCKET_LIST_QUERY = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
-	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
-
-	private final SecretKeySpec secretKey;
+	private static final ThreadLocal<StringBuilder>
+		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new),
+		BUCKET_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
+	
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
+		HashMap::new
+	);
+	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
+		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
+		try {
+			final Mac mac = Mac.getInstance(SIGN_METHOD);
+			mac.init(secretKey);
+			return mac;
+		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
+			throw new AssertionError(e);
+		}
+	};
 	
 	public S3StorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
-	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
-		if(secret != null) {
-			secretKey = new SecretKeySpec(secret.getBytes(UTF_8), SIGN_METHOD);
-		} else {
-			secretKey = null;
-		}
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
+	) throws UserShootHisFootException, InterruptedException {
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+		requestAuthTokenFunc = null; // do not use
 	}
 	
 	@Override
-	public final boolean createPath(final String path)
-	throws RemoteException {
+	protected final String requestNewPath(final String path) {
 
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		applyAuthHeaders(HttpMethod.HEAD, path, reqHeaders);
-
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
@@ -141,10 +137,10 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch(final InterruptedException e) {
-			return false;
+			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-			return false;
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+			return null;
 		}
 
 		boolean bucketExistedBefore = true;
@@ -152,12 +148,9 @@ extends HttpStorageDriverBase<I, O> {
 			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
 				bucketExistedBefore = false;
 			} else if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
-				LOG.warn(
-					Markers.ERR, "The bucket checking response is: {}",
-					checkBucketResp.status().toString()
+				Loggers.ERR.warn(
+					"The bucket checking response is: {}", checkBucketResp.status().toString()
 				);
-			} else {
-				LOG.info(Markers.MSG, "Bucket \"{}\" already exists", path);
 			}
 			checkBucketResp.release();
 		}
@@ -170,7 +163,7 @@ extends HttpStorageDriverBase<I, O> {
 				);
 			}
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(HttpMethod.PUT, path, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
@@ -179,20 +172,17 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketResp = executeHttpRequest(putBucketReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
-				LOG.warn(
-					Markers.ERR, "The bucket creating response is: {}",
-					putBucketResp.status().toString()
+				Loggers.ERR.warn(
+					"The bucket creating response is: {}", putBucketResp.status().toString()
 				);
-				return false;
-			} else {
-				LOG.info(Markers.MSG, "Bucket \"{}\" created", path);
+				return null;
 			}
 			putBucketResp.release();
 			if(fsAccess) {
@@ -202,7 +192,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		// check the bucket versioning state
 		final String bucketVersioningReqUri = path + "?" + URL_ARG_VERSIONING;
-		applyAuthHeaders(HttpMethod.GET, bucketVersioningReqUri, reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
 			reqHeaders, EmptyHttpHeaders.INSTANCE
@@ -211,19 +201,19 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
 		} catch(final InterruptedException e) {
-			return false;
+			return null;
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-			return false;
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+			return null;
 		}
 
 		final boolean versioningEnabled;
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
-			LOG.warn(
-				Markers.ERR, "The bucket versioning checking response is: {}",
+			Loggers.ERR.warn(
+				"The bucket versioning checking response is: {}",
 				getBucketVersioningResp.status().toString()
 			);
-			return false;
+			return null;
 		} else {
 			final String content = getBucketVersioningResp
 				.content()
@@ -240,7 +230,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(!versioning && versioningEnabled) {
 			// disable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_DISABLE_CONTENT.length);
-			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
@@ -250,24 +240,24 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
-				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
+				Loggers.ERR.warn("The bucket versioning setting response is: {}",
 					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
-				return false;
+				return null;
 			}
 			putBucketVersioningResp.release();
 		} else if(versioning && !versioningEnabled) {
 			// enable bucket versioning
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_ENABLE_CONTENT.length);
-			applyAuthHeaders(HttpMethod.PUT, bucketVersioningReqUri, reqHeaders);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
@@ -277,37 +267,43 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				return false;
+				return null;
 			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return false;
+				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+				return null;
 			}
 
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
-				LOG.warn(Markers.ERR, "The bucket versioning setting response is: {}",
+				Loggers.ERR.warn("The bucket versioning setting response is: {}",
 					putBucketVersioningResp.status().toString()
 				);
 				putBucketVersioningResp.release();
-				return false;
+				return null;
 			}
 			putBucketVersioningResp.release();
 		}
 
-		return true;
+		return path;
 	}
-
+	
+	@Override
+	protected final String requestNewAuthToken(final Credential credential) {
+		throw new AssertionError("Should not be invoked");
+	}
+	
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws IOException {
 
+		final int countLimit = count < 1 || count > MAX_KEYS_LIMIT ? MAX_KEYS_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
@@ -324,21 +320,19 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			queryBuilder.append("marker=").append(lastPrevItem.getName());
 		}
-		if(count > 0) {
-			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
-				queryBuilder.append('&');
-			}
-			queryBuilder.append("max-keys=").append(count);
+		if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
+			queryBuilder.append('&');
 		}
+		queryBuilder.append("max-keys=").append(countLimit);
 		final String query = queryBuilder.toString();
 
-		applyAuthHeaders(HttpMethod.GET, path, reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, credential);
 
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
-		final List<I> buff = new ArrayList<>(count > 0 ? count : BATCH_SIZE);
+		final List<I> buff = new ArrayList<>(countLimit);
 		final FullHttpResponse listResp;
 		try {
 			listResp = executeHttpRequest(checkBucketReq);
@@ -362,9 +356,9 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		} catch(final InterruptedException ignored) {
 		} catch(final SAXException | ParserConfigurationException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to init the XML response parser");
+			LogUtil.exception(Level.WARN, e, "Failed to init the XML response parser");
 		} catch(final ConnectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
 
 		return buff;
@@ -457,7 +451,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
@@ -466,7 +460,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
 		return httpRequest;
 	}
 
@@ -484,7 +478,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
@@ -496,7 +490,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
 		return httpRequest;
 	}
 
@@ -538,7 +532,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final String contentStr = content.toString();
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
@@ -549,7 +543,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpMethod, uriPath, httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.getCredential());
 
 		return httpRequest;
 	}
@@ -559,9 +553,9 @@ extends HttpStorageDriverBase<I, O> {
 		if(channel != null && ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
 			if(compositeIoTask.allSubTasksDone()) {
-				LOG.info(
-					Markers.MPU, "{},{}", compositeIoTask.getItem().getName(),
-					compositeIoTask.get(KEY_UPLOAD_ID)
+				Loggers.MULTIPART.info(
+					"{},{},{}", compositeIoTask.getItem().getName(),
+					compositeIoTask.get(KEY_UPLOAD_ID), compositeIoTask.getLatency()
 				);
 			} else {
 				final String uploadId = channel.attr(KEY_ATTR_UPLOAD_ID).get();
@@ -597,23 +591,35 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+		final Credential credential
 	) {
-		final String signature;
-		if(secretKey == null) {
-			signature = null;
+		final String uid;
+		final String secret;
+		if(credential != null) {
+			uid = credential.getUid();
+			secret = credential.getSecret();
+		} else if(this.credential != null) {
+			uid = this.credential.getUid();
+			secret = this.credential.getSecret();
 		} else {
-			signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders), secretKey);
+			return;
 		}
-		if(signature != null) {
-			httpHeaders.set(
-				HttpHeaderNames.AUTHORIZATION, AUTH_PREFIX + userName + ":" + signature
-			);
+		
+		if(uid == null || secret == null) {
+			return;
 		}
+		final Mac mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
+		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+		httpHeaders.set(
+			HttpHeaderNames.AUTHORIZATION,
+			AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
+		);
 	}
 	
 	private String getCanonical(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
 	) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
@@ -651,39 +657,20 @@ extends HttpStorageDriverBase<I, O> {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final String k : sortedHeaders.keySet()) {
-			buffCanonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
+		for(final Map.Entry<String, String> sortedHeader : sortedHeaders.entrySet()) {
+			buffCanonical
+				.append('\n').append(sortedHeader.getKey())
+				.append(':').append(sortedHeader.getValue());
 		}
 		
 		buffCanonical.append('\n');
 		buffCanonical.append(dstUriPath);
 		
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffCanonical);
+		if(Loggers.MSG.isTraceEnabled()) {
+			Loggers.MSG.trace("Canonical representation:\n{}", buffCanonical);
 		}
 		
 		return buffCanonical.toString();
-	}
-	
-	private String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
-		
-		if(secretKey == null) {
-			return null;
-		}
-		
-		final byte sigData[];
-		Mac mac = THREAD_LOCAL_MAC.get();
-		if(mac == null) {
-			try {
-				mac = Mac.getInstance(SIGN_METHOD);
-				mac.init(secretKey);
-			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				throw new AssertionError("Failed to init MAC cypher instance", e);
-			}
-			THREAD_LOCAL_MAC.set(mac);
-		}
-		sigData = mac.doFinal(canonicalForm.getBytes());
-		return BASE64_ENCODER.encodeToString(sigData);
 	}
 	
 	@Override

@@ -1,15 +1,15 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.common.io.collection.BufferingInputBase;
-import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.common.Constants.BATCH_SIZE;
+import com.emc.mongoose.api.common.io.collection.BufferingInputBase;
+import com.emc.mongoose.api.model.io.task.IoTask;
 
-import com.emc.mongoose.model.item.DataItemFactory;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.item.DataItemFactory;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  Created by andrey on 02.12.16.
@@ -24,10 +24,10 @@ extends BufferingInputBase<I> {
 	private final int idRadix;
 
 	public StorageItemInput(
-		final StorageDriver<I, ? extends IoTask<I>> storageDriver,
+		final StorageDriver<I, ? extends IoTask<I>> storageDriver, final int batchSize,
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix
 	) {
-		super(BATCH_SIZE);
+		super(batchSize);
 		this.storageDriver = storageDriver;
 		this.itemFactory = itemFactory;
 		this.path = path;
@@ -38,7 +38,11 @@ extends BufferingInputBase<I> {
 	@Override
 	protected final int loadMoreItems(final I lastItem)
 	throws IOException {
-		items.addAll(storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, BATCH_SIZE));
+		final List<I>
+			newItems = storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, capacity);
+		for(final I item : newItems) {
+			items.add(item);
+		}
 		return items.size();
 	}
 

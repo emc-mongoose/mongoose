@@ -1,24 +1,28 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 1000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
 			}
 		},
 		"storage" : {
 			"auth" : {
 				"token" : "e3f86c95e6af49099aa1e6de386dbe54"
 			},
+			"driver" : {
+				"type" : "atmos"
+			},
 			"net" : {
 				"http" : {
-					"api" : "atmos",
 					"fsAccess" : true
 				}
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition",
 			"config" : {

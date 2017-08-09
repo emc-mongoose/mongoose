@@ -3,34 +3,36 @@
 	"config" : {
 		"item" : {
 			"data" : {
-				"size" : "4KB"
+				"size" : "10KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10000
-			},
-			"concurrency" : 4
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10000
+				}
+			}
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"concurrency" : 10,
+				"type" : "fs"
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"output" : {
-						"path" : "/tmp/read-files-from-variable-path/%p{16;2}",
+						"path" : "/var/tmp/read-files-from-variable-path/%p{16;2}",
 						"file" : "read-files-from-variable-path.csv"
-					},
-					"data" : {
-						"size" : "4KB"
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "load",
 			"config" : {
 				"item" : {

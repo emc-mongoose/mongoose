@@ -6,11 +6,13 @@
 				"size" : "1KB"
 			}
 		},
-		"load" : {
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {
@@ -19,9 +21,11 @@
 						"file" : "circular-update-0.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
 					}
 				}
 			}
@@ -44,9 +48,17 @@
 				},
 				"load" : {
 					"type" : "update",
-					"circular" : true,
-					"limit" : {
-						"time" : "1m"
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "1m"
+						}
 					}
 				}
 			}

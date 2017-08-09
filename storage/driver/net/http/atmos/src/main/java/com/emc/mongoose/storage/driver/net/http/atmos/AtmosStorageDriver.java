@@ -1,10 +1,11 @@
 package com.emc.mongoose.storage.driver.net.http.atmos;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.AsyncCurrentDateInput;
-import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.IoType.CREATE;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import static com.emc.mongoose.api.model.io.IoType.CREATE;
+import com.emc.mongoose.api.model.item.Item;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.KEY_SUBTENANT_ID;
 import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.NS_URI_BASE;
@@ -16,14 +17,14 @@ import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_SIGNATURE;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.PREFIX_KEY_X_EMC;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
-import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
-
+import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -37,22 +38,23 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -61,56 +63,94 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class AtmosStorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private static final Logger LOG = LogManager.getLogger();
-	
 	private static final ThreadLocal<StringBuilder>
-		BUFF_CANONICAL = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
-	
-	private static final ThreadLocal<Mac> THREAD_LOCAL_MAC = new ThreadLocal<>();
+		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 	
-	private final SecretKeySpec secretKey;
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
+		HashMap::new
+	);
+	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
+		try {
+			final SecretKeySpec secretKey = new SecretKeySpec(
+				BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD
+			);
+			final Mac mac = Mac.getInstance(SIGN_METHOD);
+			mac.init(secretKey);
+			return mac;
+		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
+			LogUtil.exception(Level.ERROR, e, "Failed to init MAC for the given secret key");
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to perform the secret key Base-64 decoding"
+			);
+		}
+		return null;
+	};
 	
 	public AtmosStorageDriver(
-		final String jobName, final LoadConfig loadConfig, final StorageConfig storageConfig,
-		final boolean verifyFlag
-	) throws UserShootHisFootException {
-		super(jobName, loadConfig, storageConfig, verifyFlag);
-		if(secret != null) {
-			secretKey = new SecretKeySpec(
-				Base64.getDecoder().decode(secret.getBytes(UTF_8)), SIGN_METHOD
-			);
-		} else {
-			secretKey = null;
-		}
-		refreshUidHeader();
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
+	) throws UserShootHisFootException, InterruptedException {
+		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
+		requestNewPathFunc = null; // do not use
 	}
 
-	private void refreshUidHeader() {
-		if(userName != null && !userName.isEmpty()) {
-			if(authToken != null && !authToken.isEmpty()) {
-				sharedHeaders.set(KEY_X_EMC_UID, authToken + "/" + userName);
-			} else {
-				sharedHeaders.set(KEY_X_EMC_UID, userName);
-			}
-		}
+	@Override
+	protected final String requestNewPath(final String path) {
+		throw new AssertionError("Should not be invoked");
 	}
 	
 	@Override
-	public final boolean createPath(final String path)
-	throws RemoteException {
-		return true;
+	protected final String requestNewAuthToken(final Credential credential) {
+		
+		final String nodeAddr = storageNodeAddrs[0];
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
+		if(fsAccess) {
+			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
+		}
+		applyDynamicHeaders(reqHeaders);
+		applySharedHeaders(reqHeaders);
+		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
+		
+		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
+			reqHeaders, EmptyHttpHeaders.INSTANCE
+		);
+		
+		final FullHttpResponse getSubtenantResp;
+		try {
+			getSubtenantResp = executeHttpRequest(getSubtenantReq);
+		} catch(final InterruptedException e) {
+			return null;
+		} catch(final ConnectException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
+			return null;
+		}
+		
+		final String subtenantId;
+		if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
+			subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
+		} else {
+			Loggers.ERR.warn("Creating the subtenant: got response {}",
+				getSubtenantResp.status().toString()
+			);
+			return null;
+		}
+		getSubtenantResp.release();
+		
+		return subtenantId;
 	}
-
+	
 	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
@@ -118,66 +158,7 @@ extends HttpStorageDriverBase<I, O> {
 	) throws IOException {
 		return null;
 	}
-
-	@Override
-	public final String getAuthToken()
-	throws RemoteException {
-		
-		if(authToken == null || authToken.isEmpty()) {
-			final String nodeAddr = storageNodeAddrs[0];
-			final HttpHeaders reqHeaders = new DefaultHttpHeaders();
-			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateInput.INSTANCE.get());
-			//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
-			if(fsAccess) {
-				reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
-			}
-			applyDynamicHeaders(reqHeaders);
-			applySharedHeaders(reqHeaders);
-			applyAuthHeaders(HttpMethod.PUT, SUBTENANT_URI_BASE, reqHeaders);
-			
-			final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
-				reqHeaders, EmptyHttpHeaders.INSTANCE
-			);
-			
-			final FullHttpResponse getSubtenantResp;
-			try {
-				getSubtenantResp = executeHttpRequest(getSubtenantReq);
-			} catch(final InterruptedException e) {
-				return null;
-			} catch(final ConnectException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to connect to the storage node");
-				return null;
-			}
-			
-			if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
-				final String subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
-				if(subtenantId != null && !subtenantId.isEmpty()) {
-					LOG.info(Markers.MSG, "Using the subtenant id: \"{}\"", subtenantId);
-					setAuthToken(subtenantId);
-				} else {
-					LOG.warn(Markers.ERR, "Creating the subtenant: got empty subtenantID");
-				}
-			} else {
-				LOG.warn(Markers.ERR, "Creating the subtenant: got response {}",
-					getSubtenantResp.status().toString()
-				);
-			}
-			
-			getSubtenantResp.release();
-		}
-
-		return authToken;
-	}
-
-	@Override
-	public final void setAuthToken(final String authToken) {
-		super.setAuthToken(authToken);
-		refreshUidHeader();
-	}
-
+	
 	@Override
 	protected final void appendHandlers(final ChannelPipeline pipeline) {
 		super.appendHandlers(pipeline);
@@ -240,7 +221,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(CREATE.equals(ioType)) {
 			return SUBTENANT_URI_BASE;
 		} else {
-			return SUBTENANT_URI_BASE + "/" + item.getName();
+			return SUBTENANT_URI_BASE + '/' + item.getName();
 		}
 	}
 
@@ -257,21 +238,44 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+		final Credential credential
 	) {
-		final String signature;
-		if(secretKey == null) {
-			signature = null;
+		final String authToken;
+		final String uid;
+		final String secret;
+		if(credential != null) {
+			authToken = authTokens.get(credential);
+			uid = credential.getUid();
+			secret = credential.getSecret();
+		} else if(this.credential != null) {
+			authToken = authTokens.get(this.credential);
+			uid = this.credential.getUid();
+			secret = this.credential.getSecret();
 		} else {
-			signature = getSignature(getCanonical(httpMethod, dstUriPath, httpHeaders), secretKey);
+			authToken = null;
+			uid = null;
+			secret = null;
 		}
-		if(signature != null) {
-			httpHeaders.set(KEY_X_EMC_SIGNATURE, signature);
+		
+		if(uid != null && !uid.isEmpty()) {
+			if(authToken != null && !authToken.isEmpty()) {
+				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
+			} else {
+				httpHeaders.set(KEY_X_EMC_UID, uid);
+			}
+		}
+		
+		if(secret != null && !secret.isEmpty()) {
+			final Mac mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
+			final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+			final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+			httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
 		}
 	}
 
 	private String getCanonical(
-		final HttpMethod httpMethod, final String dstUriPath, final HttpHeaders httpHeaders
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
 	) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
@@ -308,38 +312,19 @@ extends HttpStorageDriverBase<I, O> {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final String k : sortedHeaders.keySet()) {
-			buffCanonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
+		for(final Map.Entry<String, String> sortedHeader : sortedHeaders.entrySet()) {
+			buffCanonical
+				.append('\n').append(sortedHeader.getKey())
+				.append(':').append(sortedHeader.getValue());
 		}
 
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffCanonical);
+		if(Loggers.MSG.isTraceEnabled()) {
+			Loggers.MSG.trace("Canonical representation:\n{}", buffCanonical);
 		}
 
 		return buffCanonical.toString();
 	}
 
-	private String getSignature(final String canonicalForm, final SecretKeySpec secretKey) {
-
-		if(secretKey == null) {
-			return null;
-		}
-
-		final byte sigData[];
-		Mac mac = THREAD_LOCAL_MAC.get();
-		if(mac == null) {
-			try {
-				mac = Mac.getInstance(SIGN_METHOD);
-				mac.init(secretKey);
-			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				throw new AssertionError("Failed to init MAC cypher instance", e);
-			}
-			THREAD_LOCAL_MAC.set(mac);
-		}
-		sigData = mac.doFinal(canonicalForm.getBytes());
-		return BASE64_ENCODER.encodeToString(sigData);
-	}
-	
 	@Override
 	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {

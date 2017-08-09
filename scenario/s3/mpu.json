@@ -4,15 +4,26 @@
 		"item" : {
 			"data" : {
 				"ranges" : {
-					"threshold" : "16MB"
+					"threshold" : "1GB"
 				},
-				"size" : "100MB"
+				"size" : "10GB"
 			}
 		},
 		"load" : {
-			"concurrency" : 10,
-			"limit" : {
-				"count" : 10000
+			"batch" : {
+				"size" : 1
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
 			}
 		}
 	}

@@ -4,22 +4,31 @@
 		"item" : {
 			"data" : {
 				"ranges" : {
-					"threshold" : "16MB"
+					"threshold" : "64MB"
 				},
-				"size" : "100MB"
+				"size" : "1GB"
 			}
 		},
 		"load" : {
-			"concurrency" : 10,
-			"limit" : {
-				"count" : 10000
+			"batch" : {
+				"size" : 1
 			}
 		},
 		"storage" : {
+			"driver" : {
+				"concurrency" : 10,
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "swift",
 					"namespace" : "dlo"
+				}
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100
 				}
 			}
 		}

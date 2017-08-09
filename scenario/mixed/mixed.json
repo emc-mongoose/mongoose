@@ -1,6 +1,6 @@
 {
 	"type" : "sequential",
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {
@@ -8,6 +8,13 @@
 					"output" : {
 						"file" : "items2read.csv",
 						"path" : "items2read"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
 					}
 				}
 			}
@@ -21,18 +28,21 @@
 							"path" : "default"
 						}
 					},
-					"load" : {
-						"concurrency" : 20,
-						"limit" : {
-							"count" : 0
+					"storage" : {
+						"driver" : {
+							"concurrency" : 20
+						}
+					},
+					"test" : {
+						"step" : {
+							"limit" : {
+								"time" : 60
+							}
 						}
 					}
 				},
 				{
 					"item" : {
-						"data" : {
-							"verify" : true
-						},
 						"input" : {
 							"file" : "items2read.csv"
 						},
@@ -40,11 +50,16 @@
 							"path" : "items2read"
 						}
 					},
+					"storage" : {
+						"driver" : {
+							"concurrency" : 50
+						}
+					},
 					"load" : {
-						"concurrency" : 50,
-						"circular" : true,
-						"limit" : {
-							"count" : 0
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
 						},
 						"type" : "read"
 					}

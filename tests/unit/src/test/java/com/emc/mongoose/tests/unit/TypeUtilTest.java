@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import static com.emc.mongoose.common.reflection.TypeUtil.typeEquals;
+import static com.emc.mongoose.api.common.reflection.TypeUtil.typeEquals;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

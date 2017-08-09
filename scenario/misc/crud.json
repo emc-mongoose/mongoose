@@ -9,17 +9,23 @@
 				"size" : "8KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 100000
-			},
-			"concurrency" : 20
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 20
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "parallel",
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "precondition",
 					"config" : {
@@ -54,7 +60,7 @@
 			"value" : "sleep 5s"
 		}, {
 			"type" : "parallel",
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load"
 				}, {

@@ -1,0 +1,79 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f ReadVerificationAfterCircularUpdateTest0.csv ReadVerificationAfterCircularUpdateTest1.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "ReadVerificationAfterCircularUpdateTest0.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 10
+						}
+					},
+					"input" : {
+						"file" : "ReadVerificationAfterCircularUpdateTest0.csv"
+					},
+					"output" : {
+						"file" : "ReadVerificationAfterCircularUpdateTest1.csv"
+					}
+				},
+				"load" : {
+					"type" : "update",
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "1m"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "command",
+			"value" : "sleep 5"
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"verify" : true
+					},
+					"input" : {
+						"file" : "ReadVerificationAfterCircularUpdateTest1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

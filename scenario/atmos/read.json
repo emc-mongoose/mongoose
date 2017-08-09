@@ -1,20 +1,20 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 1000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
 			}
 		},
 		"storage" : {
-			"net" : {
-				"http" : {
-					"api" : "atmos"
-				}
+			"driver" : {
+				"type" : "atmos"
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition",
 			"config" : {

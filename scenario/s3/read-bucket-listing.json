@@ -6,14 +6,20 @@
 				"path" : "read-bucket-listing"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 100000
-			},
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000
+				}
+			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition"
 		},

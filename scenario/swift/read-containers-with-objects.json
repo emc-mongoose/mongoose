@@ -4,22 +4,26 @@
 		"item" : {
 			"type" : "path"
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10
-			},
-			"concurrency" : 10
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
+			}
 		},
 		"storage" : {
+			"driver" : {
+				"concurrency" : 10,
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "swift",
 					"namespace" : "test"
 				}
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			// create 10 directories
 			"type" : "precondition",
@@ -42,14 +46,20 @@
 				"item" : {
 					"type" : "data"
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100000
-					},
-					"concurrency" : 10
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100000
+						}
+					}
+				},
+				"storage" : {
+					"driver" : {
+						"concurrency" : 10
+					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "precondition",
 					"config" : {

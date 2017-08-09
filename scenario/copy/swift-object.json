@@ -9,22 +9,26 @@
 				"size" : "1KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1000
-			},
-			"concurrency" : 10
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
 		},
 		"storage" : {
+			"driver" : {
+				"concurrency" : 10,
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "swift",
 					"namespace" : "examplens"
 				}
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {

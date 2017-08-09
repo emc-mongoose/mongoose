@@ -6,17 +6,21 @@
 				"size" : "4KB"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1000
-			},
-			"concurrency" : 5
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"concurrency" : 5,
+				"type" : "fs"
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {

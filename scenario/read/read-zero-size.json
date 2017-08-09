@@ -9,13 +9,15 @@
 				"size" : 0
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 100000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000
+				}
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition",
 			"config" : {

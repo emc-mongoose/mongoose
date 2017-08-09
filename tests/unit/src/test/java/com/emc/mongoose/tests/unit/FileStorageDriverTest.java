@@ -1,10 +1,9 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.math.Random;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.item.BasicDataItem;
-import com.emc.mongoose.model.item.BasicItemFactory;
-import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.api.common.math.Random;
+import com.emc.mongoose.api.model.item.BasicDataItem;
+import com.emc.mongoose.api.model.item.BasicItemFactory;
+import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.storage.driver.nio.fs.FileStorageDriver;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
@@ -14,9 +13,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -81,35 +77,7 @@ public class FileStorageDriverTest {
 
 		List<DataItem> items = FileStorageDriver._list(
 			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10,
-			new BasicDataItem(
-				"yohoho0099", 0, 0,
-				new ContentSource() {
-					@Override
-					public int getSize() {
-						return 0;
-					}
-					
-					@Override
-					public ByteBuffer getLayer(final int layerIndex) {
-						return null;
-					}
-					
-					@Override
-					public void close()
-					throws IOException {
-					}
-					
-					@Override
-					public void writeExternal(final ObjectOutput out)
-					throws IOException {
-					}
-					
-					@Override
-					public void readExternal(final ObjectInput in)
-					throws IOException, ClassNotFoundException {
-					}
-				}
-			), count
+			new BasicDataItem("yohoho0099", 0, 0), count
 		);
 		assertEquals(Integer.toString(items.size()), 99, items.size());
 

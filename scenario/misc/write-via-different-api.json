@@ -3,16 +3,16 @@
 	"config" : {
 		"storage" : {
 			"auth" : {
-				"id" : "wuser1@sanity.local"
+				"uid" : "wuser1@sanity.local"
 			},
 			"net" : {
 				"http" : {
-					"namespace" : "s3"
+					"namespace" : "ns1"
 				}
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "parallel",
 			"config" : {
@@ -21,24 +21,26 @@
 						"size" : "10KB"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
-					},
-					"concurrency" : 5
+				"storage" : {
+					"driver" : {
+						"concurrency" : 5
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
-					"type" : "load"
-				}, {
 					"type" : "load",
 					"config" : {
 						"storage" : {
-							"net" : {
-								"http" : {
-									"api" : "atmos"
-								}
+							"driver" : {
+								"type" : "s3"
 							}
 						}
 					}
@@ -46,10 +48,17 @@
 					"type" : "load",
 					"config" : {
 						"storage" : {
-							"net" : {
-								"http" : {
-									"api" : "swift"
-								}
+							"driver" : {
+								"type" : "atmos"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"storage" : {
+							"driver" : {
+								"type" : "swift"
 							}
 						}
 					}

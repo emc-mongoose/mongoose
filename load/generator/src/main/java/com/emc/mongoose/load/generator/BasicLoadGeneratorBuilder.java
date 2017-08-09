@@ -1,48 +1,62 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.ConstantStringInput;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.pattern.RangePatternDefinedInput;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
-import com.emc.mongoose.model.io.task.path.BasicPathIoTaskBuilder;
-import com.emc.mongoose.model.io.task.token.BasicTokenIoTaskBuilder;
-import com.emc.mongoose.model.item.BasicDataItemFactory;
-import com.emc.mongoose.model.item.BasicItemNameInput;
-import com.emc.mongoose.model.item.CsvFileItemInput;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.IoResultsItemInput;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.item.ItemType;
-import com.emc.mongoose.model.item.NewDataItemInput;
-import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.InputConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.NamingConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig.LimitConfig;
-import com.emc.mongoose.model.item.NewItemInput;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.RangesConfig;
+import com.emc.mongoose.api.common.ByteRange;
+import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.supply.BatchSupplier;
+import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.DataIoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.path.BasicPathIoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.token.BasicTokenIoTaskBuilder;
+import com.emc.mongoose.api.model.item.BasicDataItemFactory;
+import com.emc.mongoose.api.model.item.ItemNameSupplier;
+import com.emc.mongoose.api.model.item.CsvFileItemInput;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.ChainTransferBuffer;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemNamingType;
+import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.item.NewDataItemInput;
+import com.emc.mongoose.api.model.io.IoType;
+
+import static com.emc.mongoose.api.common.Constants.M;
+import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.api.model.storage.StorageDriver.BUFF_SIZE_MIN;
+import com.emc.mongoose.api.model.item.NewItemInput;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.ranges.RangesConfig;
+import com.emc.mongoose.ui.config.item.input.InputConfig;
+import com.emc.mongoose.ui.config.item.naming.NamingConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.load.generator.GeneratorConfig;
+import com.emc.mongoose.ui.config.load.generator.recycle.RecycleConfig;
+import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  Created by andrey on 12.11.16.
@@ -51,16 +65,17 @@ public class BasicLoadGeneratorBuilder<
 	I extends Item, O extends IoTask<I>, T extends BasicLoadGenerator<I, O>
 >
 implements LoadGeneratorBuilder<I, O, T> {
-
-	private final static Logger LOG = LogManager.getLogger();
-
+	
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
+	private LimitConfig limitConfig;
 	private ItemType itemType;
 	private ItemFactory<I> itemFactory;
+	private AuthConfig authConfig;
 	private List<StorageDriver<I, O>> storageDrivers;
 	private Input<I> itemInput = null;
-	private SizeInBytes itemSizeEstimate = null;
+	private long sizeEstimate = 0;
+	private int batchSize;
 	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
@@ -71,6 +86,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
+		this.batchSize = loadConfig.getBatchConfig().getSize();
+		return this;
+	}
+
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> setLimitConfig(final LimitConfig limitConfig) {
+		this.limitConfig = limitConfig;
 		return this;
 	}
 
@@ -85,7 +107,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		this.itemFactory = itemFactory;
 		return this;
 	}
-
+	
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> setAuthConfig(final AuthConfig authConfig) {
+		this.authConfig = authConfig;
+		return this;
+	}
+	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> setStorageDrivers(
 		final List<StorageDriver<I, O>> storageDrivers
@@ -97,8 +125,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
-		if(!(itemInput instanceof IoResultsItemInput)) {
-			this.itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
+		// chain transfer buffer is not resettable
+		if(!(itemInput instanceof ChainTransferBuffer)) {
+			sizeEstimate = estimateTransferSize(
+				null, IoType.valueOf(loadConfig.getType().toUpperCase()), (Input<DataItem>) itemInput
+			);
 		}
 		return this;
 	}
@@ -106,26 +137,35 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
-
+		
 		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
-		final LimitConfig limitConfig = loadConfig.getLimitConfig();
-
-		final Input<String> dstPathInput;
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
-		final boolean shuffleFlag = loadConfig.getGeneratorConfig().getShuffle();
+
+		final GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
+		final boolean shuffleFlag = generatorConfig.getShuffle();
 
 		final InputConfig inputConfig = itemConfig.getInputConfig();
-
+		
+		final BatchSupplier<String> outputPathSupplier;
+		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
+			outputPathSupplier = getOutputPathSupplier();
+		} else {
+			outputPathSupplier = null;
+		}
+		
 		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
-			final List<ByteRange> fixedRanges = new ArrayList<>();
+			final List<ByteRange> fixedRanges;
 			if(fixedRangesConfig != null) {
-				for(final String fixedRangeConfig : fixedRangesConfig) {
-					fixedRanges.add(new ByteRange(fixedRangeConfig));
-				}
+				fixedRanges = fixedRangesConfig
+					.stream()
+					.map(ByteRange::new)
+					.collect(Collectors.toList());
+			} else {
+				fixedRanges = Collections.EMPTY_LIST;
 			}
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder()
 				.setFixedRanges(fixedRanges)
@@ -138,79 +178,94 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 		
 		String itemInputPath = inputConfig.getPath();
-		if(itemInputPath != null && !itemInputPath.startsWith("/")) {
-			itemInputPath = "/" + itemInputPath;
+		if(itemInputPath != null && itemInputPath.indexOf('/') != 0) {
+			itemInputPath = '/' + itemInputPath;
 		}
-		ioTaskBuilder.setSrcPath(itemInputPath);
-		ioTaskBuilder.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()));
+		
+		final BatchSupplier<String> uidSupplier;
+		final String uid = authConfig.getUid();
+		if(uid == null) {
+			uidSupplier = null;
+		} else if(-1 != uid.indexOf(PATTERN_CHAR)) {
+			uidSupplier = new RangePatternDefinedSupplier(uid);
+		} else {
+			uidSupplier = new ConstantStringSupplier(uid);
+		}
 
-		// prevent the storage connections if noop
-		// also don't create tocken if token load is configured
-		if(!IoType.NOOP.equals(ioType) && !ItemType.TOKEN.equals(itemType)) {
-			String authToken = null;
-			try {
-				for(final StorageDriver<I, O> nextDriver : storageDrivers) {
-					if(authToken == null) {
-						authToken = nextDriver.getAuthToken();
-					} else {
-						// distribute the auth token among the storage drivers
-						nextDriver.setAuthToken(authToken);
-					}
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to communicate with remote storage driver");
+		final String authFile = authConfig.getFile();
+		if(authFile != null && !authFile.isEmpty()) {
+			final Map<String, String> credentials = loadCredentials(authFile, (long) M);
+			ioTaskBuilder.setCredentialsMap(credentials);
+		} else {
+
+			final BatchSupplier<String> secretSupplier;
+			final String secret = authConfig.getSecret();
+			if(secret == null) {
+				secretSupplier = null;
+			} else {
+				secretSupplier = new ConstantStringSupplier(secret);
 			}
+			
+			ioTaskBuilder.setSecretSupplier(secretSupplier);
 		}
+		
+		ioTaskBuilder
+			.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()))
+			.setInputPath(itemInputPath)
+			.setOutputPathSupplier(outputPathSupplier)
+			.setUidSupplier(uidSupplier);
 
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+			if(itemInput == null) {
+				throw new UserShootHisFootException("No item input available");
+			}
 			if(ItemType.DATA.equals(itemType)) {
-				itemSizeEstimate = estimateDataItemSize((Input<DataItem>) itemInput);
-			} else {
-				itemSizeEstimate = new SizeInBytes(BUFF_SIZE_MIN);
-			}
-		}
-
-		if(itemSizeEstimate != null && ItemType.DATA.equals(itemType)) {
-			try {
-				for(final StorageDriver<I, O> storageDriver : storageDrivers) {
-					try {
-						storageDriver.adjustIoBuffers(itemSizeEstimate, ioType);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to adjust the storage driver buffer sizes"
-						);
-					}
-				}
-			} catch(final Exception e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to estimate the average data item size"
+				sizeEstimate = estimateTransferSize(
+					(DataIoTaskBuilder) ioTaskBuilder, ioTaskBuilder.getIoType(),
+					(Input<DataItem>) itemInput
 				);
-			} finally {
+			} else {
+				sizeEstimate = BUFF_SIZE_MIN;
+			}
+		}
+
+		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
+			for(final StorageDriver<I, O> storageDriver : storageDrivers) {
 				try {
-					itemInput.reset();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to reset the item input");
+					storageDriver.adjustIoBuffers(sizeEstimate, ioType);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
+					);
 				}
 			}
 		}
 
-		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
-			dstPathInput = getDstPathInput();
-		} else {
-			dstPathInput = null;
-		}
+		final RecycleConfig recycleConfig = generatorConfig.getRecycleConfig();
+		final int recycleLimit = recycleConfig.getEnabled() ? recycleConfig.getLimit() : 0;
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, itemSizeEstimate, dstPathInput, ioTaskBuilder, countLimit, sizeLimit,
+			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit, recycleLimit,
 			shuffleFlag
 		);
 	}
 	
-	private SizeInBytes estimateDataItemSize(final Input<DataItem> itemInput) {
+	private static long estimateTransferSize(
+		final DataIoTaskBuilder dataIoTaskBuilder, final IoType ioType,
+		final Input<DataItem> itemInput
+	) {
+		long sizeThreshold = 0;
+		int randomRangesCount = 0;
+		List<ByteRange> fixedRanges = null;
+		if(dataIoTaskBuilder != null) {
+			sizeThreshold = dataIoTaskBuilder.getSizeThreshold();
+			randomRangesCount = dataIoTaskBuilder.getRandomRangesCount();
+			fixedRanges = dataIoTaskBuilder.getFixedRanges();
+		}
+		
+		long itemSize = 0;
 		final int maxCount = 0x100;
 		final List<DataItem> items = new ArrayList<>(maxCount);
 		int n = 0;
@@ -220,7 +275,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		} catch(final EOFException ignored) {
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to estimate the average data item size");
+			LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+		} finally {
+			try {
+				itemInput.reset();
+			} catch(final IOException e) {
+				LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+			}
 		}
 		
 		long sumSize = 0;
@@ -242,49 +303,53 @@ implements LoadGeneratorBuilder<I, O, T> {
 			} catch(final IOException e) {
 				throw new AssertionError(e);
 			}
-			return minSize == maxSize ?
-				new SizeInBytes(sumSize / n) : new SizeInBytes(minSize, maxSize, 1);
+			itemSize = minSize == maxSize ? sumSize / n : (minSize + maxSize) / 2;
 		}
-		return null;
+		
+		switch(ioType) {
+			case CREATE:
+				return Math.min(itemSize, sizeThreshold);
+			case READ:
+			case UPDATE:
+				if(itemSize > 0 && randomRangesCount > 0) {
+					return itemSize * randomRangesCount / getRangeCount(itemSize);
+				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
+					long sizeSum = 0;
+					long rangeSize;
+					for(final ByteRange byteRange : fixedRanges) {
+						rangeSize = byteRange.getSize();
+						if(rangeSize == -1) {
+							rangeSize = byteRange.getEnd() - byteRange.getBeg() + 1;
+						}
+						if(rangeSize > 0) {
+							sizeSum += rangeSize;
+						}
+					}
+					return sizeSum;
+				} else {
+					return itemSize;
+				}
+			default:
+				return 0;
+		}
 	}
 
-	private Input<String> getDstPathInput()
+	private BatchSupplier<String> getOutputPathSupplier()
 	throws UserShootHisFootException {
-		final Input<String> dstPathInput;
-		final String t = itemConfig.getOutputConfig().getPath();
-		if(t == null || t.isEmpty()) {
-			final String dstPath = "/" + LogUtil.getDateTimeStamp();
-			dstPathInput = new ConstantStringInput(dstPath);
-			try {
-				storageDrivers.get(0).createPath(dstPath);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
-					dstPath
-				);
-			}
-		} else { // copy mode
-			dstPathInput = new RangePatternDefinedInput(t.startsWith("/") ? t : "/" + t);
-			String dstPath = null;
-			try {
-				dstPath = dstPathInput.get();
-				dstPathInput.reset();
-				if(dstPath != null) {
-					final int sepPos = dstPath.indexOf('/', 1);
-					if(sepPos > 1) {
-						// create only 1st level path
-						dstPath = dstPath.substring(0, sepPos);
-					}
-					storageDrivers.get(0).createPath(dstPath);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to create the items output path \"{}\"",
-					dstPath
-				);
-			}
+		final BatchSupplier<String> pathSupplier;
+		String path = itemConfig.getOutputConfig().getPath();
+		if(path == null || path.isEmpty()) {
+			path = LogUtil.getDateTimeStamp();
 		}
-		return dstPathInput;
+		if(!path.startsWith("/")) {
+			path = "/" + path;
+		}
+		if(-1 == path.indexOf(PATTERN_CHAR)) {
+			pathSupplier = new ConstantStringSupplier(path);
+		} else {
+			pathSupplier = new RangePatternDefinedSupplier(path);
+		}
+		return pathSupplier;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -305,7 +370,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
 				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
-					final BasicItemNameInput itemNameInput = new BasicItemNameInput(
+					final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 						namingType, namingPrefix, namingLength, namingRadix, namingOffset
 					);
 					if(itemFactory instanceof BasicDataItemFactory) {
@@ -323,7 +388,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 				}
 			} else {
 				itemInput = new StorageItemInput<>(
-					storageDrivers.get(0), itemFactory, itemInputPath, namingPrefix, namingRadix
+					storageDrivers.get(0), batchSize, itemFactory, itemInputPath, namingPrefix,
+					namingRadix
 				);
 			}
 		} else {
@@ -333,11 +399,40 @@ implements LoadGeneratorBuilder<I, O, T> {
 				throw new RuntimeException(e);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
+					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
 				);
 			}
 		}
 
 		return itemInput;
+	}
+	
+	private static Map<String, String> loadCredentials(final String file, final long countLimit)
+	throws UserShootHisFootException {
+		final Map<String, String> credentials = new HashMap<>();
+		try(final BufferedReader br = Files.newBufferedReader(Paths.get(file))) {
+			String line;
+			String parts[];
+			int firstCommaPos;
+			long count = 0;
+			while(null != (line = br.readLine()) && count < countLimit) {
+				firstCommaPos = line.indexOf(',');
+				if(-1 == firstCommaPos) {
+					Loggers.ERR.warn("Invalid credentials line: \"{}\"", line);
+				} else {
+					parts = line.split(",", 2);
+					credentials.put(parts[0], parts[1]);
+					count ++;
+				}
+			}
+			Loggers.MSG.info(
+				"Loaded {} credential pairs from the file \"{}\"", credentials.size(), file
+			);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file
+			);
+		}
+		return credentials;
 	}
 }

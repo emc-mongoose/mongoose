@@ -1,0 +1,30 @@
+{
+	"type" : "precondition",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "100KB"
+			}
+		},
+		"output" : {
+			"metrics" : {
+				"average" : {
+					"period" : 1
+				}
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100000,
+					"time" : "10m"
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 40
+			}
+		}
+	}
+}

@@ -1,0 +1,55 @@
+{
+	"type" : "sequential",
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f items2read.csv"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "items2read.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "mixed",
+			"config" : [
+				{
+					"test" : {
+						"step" : {
+							"limit" : {
+								"time" : 60
+							}
+						}
+					}
+				},
+				{
+					"item" : {
+						"input" : {
+							"file" : "items2read.csv"
+						}
+					},
+					"load" : {
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
+						"type" : "read"
+					}
+				}
+			]
+		}
+	]
+}

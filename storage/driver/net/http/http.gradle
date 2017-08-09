@@ -1,0 +1,35 @@
+description = "mongoose-storage-driver-net-http"
+
+dependencies {
+
+	compile(
+		project(":api:common"),
+		project(":api:model"),
+		project(":ui"),
+		project(":storage:driver:net"),
+
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+
+		"io.netty:netty-common:${depVersion.netty}",
+		"io.netty:netty-buffer:${depVersion.netty}",
+		"io.netty:netty-transport:${depVersion.netty}",
+		"io.netty:netty-handler:${depVersion.netty}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+	)
+
+	runtime(
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+		"org.javassist:javassist:${depVersion.javassist}",
+	)
+}
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
+}

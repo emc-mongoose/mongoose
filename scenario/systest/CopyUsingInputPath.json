@@ -1,0 +1,46 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"storage" : {
+			"net" : {
+				"http" : {
+					"namespace" : "ns1"
+				}
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"path" : "${ITEM_SRC_PATH}"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 500000,
+							"size" : "500MB",
+							"time" : 50
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"input" : {
+						"path" : "${ITEM_SRC_PATH}"
+					},
+					"output" : {
+						"path" : "${ITEM_DST_PATH}"
+					}
+				}
+			}
+		}
+	]
+}

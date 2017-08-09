@@ -1,10 +1,13 @@
 package com.emc.mongoose.storage.driver.net.http.atmos;
 
-import com.emc.mongoose.model.io.task.IoTask;
-
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.storage.driver.net.http.base.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
+import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.NS_URI_BASE;
+import static com.emc.mongoose.storage.driver.net.http.atmos.AtmosApi.OBJ_URI_BASE;
+import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 
@@ -29,7 +32,14 @@ extends HttpResponseHandlerBase<I, O> {
 		if(!fsAccess) {
 			final String location = respHeaders.get(HttpHeaderNames.LOCATION);
 			if(location != null && !location.isEmpty()) {
-				ioTask.getItem().setName(location);
+				if(location.startsWith(NS_URI_BASE)) {
+					ioTask.getItem().setName(location.substring(NS_URI_BASE.length()));
+				} else if(location.startsWith(OBJ_URI_BASE)) {
+					ioTask.getItem().setName(location.substring(OBJ_URI_BASE.length()));
+				} else {
+					ioTask.getItem().setName(location);
+					Loggers.ERR.warn("Unexpected location value: \"{}\"", location);
+				}
 				// set the paths to null to avoid the path calculation in the ioTaskCallback call
 				ioTask.setSrcPath(null);
 				ioTask.setDstPath(null);

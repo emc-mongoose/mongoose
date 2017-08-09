@@ -2,10 +2,10 @@
 	"type": "load",
 	"config" : {
 		"storage" : {
+			"driver" : {
+				"type" : "s3"
+			},
 			"net" : {
-				"http" : {
-					"api" : "s3"
-				},
 				"node" : {
 					"addrs" : [
 						"10.77.33.100",
@@ -18,7 +18,7 @@
 				}
 			},
 			"auth" : {
-				"id" : "wuser1@sanity.local",
+				"uid" : "wuser1@sanity.local",
 				"secret" : "WQmcQh5UYRAWYqJGCVEueihGBZ7h6nI2vHHwYmPg"
 			}
 		}

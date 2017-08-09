@@ -3,23 +3,24 @@ description = "mongoose-tests-system"
 dependencies {
 
 	testCompile(
-		project(':common'),
-		project(':model'),
+		project(":api:common"),
+		project(":api:model"),
 		project(":ui"),
 		project(":load:generator"),
-		project(":load:monitor"),
-		project(":storage:driver:base"),
+		project(":load:controller"),
+		project(":storage:driver"),
 		project(":storage:driver:builder"),
-		project(":storage:driver:net:base"),
-		project(":storage:driver:net:http:base"),
+		project(":storage:driver:net"),
+		project(":storage:driver:net:http"),
 		project(":storage:driver:net:http:atmos"),
 		project(":storage:driver:net:http:s3"),
 		project(":storage:driver:net:http:swift"),
-		project(":storage:driver:nio:base"),
+		project(":storage:driver:nio"),
 		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
-		project(":storage:mock"),
 		project(":run"),
+		"com.github.emc-mongoose:nagaina:${depVersion.nagaina}",
+		"junit:junit:4.12",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.apache.commons:commons-csv:1.1",
@@ -27,12 +28,20 @@ dependencies {
 		"org.apache.commons:commons-math3:3.6.1",
 	)
 
+	testCompile("com.github.emc-mongoose:nagaina:${depVersion.nagaina}") {
+		// debugging under IDEA
+		exclude group: "com.github.emc-mongoose", module: "mongoose-api-common"
+		exclude group: "com.github.emc-mongoose", module: "mongoose-api-model"
+		exclude group: "com.github.emc-mongoose", module: "mongoose-ui"
+	}
+
+
 	testRuntime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {
@@ -40,4 +49,5 @@ jar {
 			"Class-Path": setClassPath(configurations),
 		)
 	}
+	from sourceSets.test.output
 }

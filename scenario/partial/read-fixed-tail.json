@@ -9,13 +9,15 @@
 				"path" : "linear-read-partial"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition",
 			"config" : {

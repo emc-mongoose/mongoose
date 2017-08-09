@@ -1,28 +1,31 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.emc.mongoose.api.model.concurrent.CoroutineBase;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
+import com.emc.mongoose.api.common.io.Input;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.DataItemFactory;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.Level;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import static java.lang.System.nanoTime;
 
 /**
@@ -30,59 +33,77 @@ import static java.lang.System.nanoTime;
  */
 public final class WrappingStorageDriverSvc<I extends Item, O extends IoTask<I>>
 implements StorageDriverSvc<I, O> {
-
-	private static final Logger LOG = LogManager.getLogger();
-
+	
 	private final int port;
 	private final StorageDriver<I, O> driver;
-	private final ContentSource contentSrc;
+	private final Coroutine stateReportCoroutine;
 
 	public WrappingStorageDriverSvc(
-		final int port, final StorageDriver<I, O> driver, final ContentSource contentSrc,
-		final long metricsPeriodSec
-	) {
+		final int port, final StorageDriver<I, O> driver, final long metricsPeriodSec,
+		final String stepId
+	) throws RemoteException {
+		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			stateReportCoroutine = new StateReportingCoroutine(driver, metricsPeriodSec, stepId);
+		} else {
+			stateReportCoroutine = null;
+		}
 		this.port = port;
 		this.driver = driver;
-		this.contentSrc = contentSrc;
-		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
-		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			SVC_TASKS.put(this, new StateReportingTask(this, metricsPeriodSec));
-		}
+		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 	
-	private final static class StateReportingTask
-	implements Runnable {
-		
-		private final StorageDriverSvc storageDriver;
+	private final static class StateReportingCoroutine
+	extends CoroutineBase
+	implements Coroutine {
+
+		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
+		private final String stepName;
+		private final Lock invocationLock = new ReentrantLock();
 		
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
 		
-		public StateReportingTask(
-			final StorageDriverSvc storageDriver, final long metricsPeriodSec
-		) {
-			this.storageDriver = storageDriver;
+		public StateReportingCoroutine(
+			final StorageDriver driver, final long metricsPeriodSec, final String stepName
+		) throws RemoteException {
+			super(driver.getSvcCoroutines());
+			this.driver = driver;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
+			this.stepName = stepName;
 			this.prevNanoTimeStamp = 0;
 		}
 		
 		@Override
-		public final void run() {
-			nextNanoTimeStamp = nanoTime();
-			if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
-				prevNanoTimeStamp = nextNanoTimeStamp;
-				try {
-					LOG.info(
-						Markers.MSG,
-						"{} I/O tasks: scheduled={}, active={}, completed={}, recycled={}",
-						storageDriver.getName(), storageDriver.getScheduledTaskCount(),
-						storageDriver.getActiveTaskCount(), storageDriver.getCompletedTaskCount(),
-						storageDriver.getRecycledTaskCount()
-					);
-				} catch(final RemoteException ignored) {
+		protected final void invokeTimed(final long startTimeNanos) {
+			if(invocationLock.tryLock()) {
+				try(
+					final Instance ctx = CloseableThreadContext
+						.put(KEY_TEST_STEP_ID, stepName)
+						.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				) {
+					nextNanoTimeStamp = nanoTime();
+					if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+						prevNanoTimeStamp = nextNanoTimeStamp;
+						try {
+							Loggers.MSG.info(
+								"{} I/O tasks: scheduled={}, active={}, completed={}",
+								driver.toString(), driver.getScheduledTaskCount(),
+								driver.getActiveTaskCount(), driver.getCompletedTaskCount()
+							);
+						} catch(final RemoteException ignored) {
+						}
+					}
+				} finally {
+					invocationLock.unlock();
 				}
 			}
+		}
+		
+		@Override
+		protected final void doClose() {
+			prevNanoTimeStamp = Long.MAX_VALUE;
+			invocationLock.tryLock();
 		}
 	}
 
@@ -91,62 +112,77 @@ implements StorageDriverSvc<I, O> {
 	throws RemoteException {
 		return port;
 	}
-
+	
 	@Override
 	public final String getName()
 	throws RemoteException {
 		return driver.toString();
 	}
-
+	
+	@Override
+	public final List<Coroutine> getSvcCoroutines() {
+		throw new AssertionError("Shouldn't be invoked");
+	}
+	
+	@Override
+	public final State getState()
+	throws RemoteException {
+		return driver.getState();
+	}
+	
 	@Override
 	public final void start()
-	throws IllegalStateException, RemoteException {
-		driver.start();
+	throws IllegalStateException {
+		try {
+			driver.start();
+			if(stateReportCoroutine != null) {
+				driver.getSvcCoroutines().add(stateReportCoroutine); // start
+			}
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
+	}
+	
+	@Override
+	public final O get()
+	throws IOException {
+		return driver.get();
 	}
 
 	@Override
-	public final List<O> getResults()
+	public final List<O> getAll()
 	throws IOException {
-		return driver.getResults();
+		return driver.getAll();
 	}
-
+	
+	@Override
+	public final long skip(final long count)
+	throws IOException {
+		return driver.skip(count);
+	}
+	
 	@Override
 	public final void close()
 	throws IOException {
-		SVC_TASKS.remove(this);
 		driver.close();
-		contentSrc.close();
-		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
+		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
 	}
 
 	@Override
 	public final boolean put(final O ioTask)
 	throws IOException {
-		if(ioTask instanceof DataIoTask) {
-			((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
-		}
 		return driver.put(ioTask);
 	}
 
 	@Override
 	public final int put(final List<O> buffer, final int from, final int to)
 	throws IOException {
-		if(buffer.get(from) instanceof DataIoTask) {
-			for(int i = from; i < to; i ++) {
-				((DataItem) buffer.get(i).getItem()).setContentSrc(contentSrc);
-			}
-		}
 		return driver.put(buffer, from, to);
 	}
 
 	@Override
 	public final int put(final List<O> buffer)
 	throws IOException {
-		if(buffer.get(0) instanceof DataItem) {
-			for(final O ioTask : buffer) {
-				((DataItem) ioTask.getItem()).setContentSrc(contentSrc);
-			}
-		}
 		return driver.put(buffer);
 	}
 
@@ -184,14 +220,24 @@ implements StorageDriverSvc<I, O> {
 
 	@Override
 	public final void interrupt()
-	throws IllegalStateException, RemoteException {
-		driver.interrupt();
+	throws IllegalStateException {
+		try {
+			driver.interrupt();
+			if(stateReportCoroutine != null) {
+				stateReportCoroutine.close();
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "Storage driver wrapping service failed on interrupt");
+		}
 	}
 
 	@Override
-	public final boolean isInterrupted()
-	throws RemoteException {
-		return driver.isInterrupted();
+	public final boolean isInterrupted() {
+		try {
+			return driver.isInterrupted();
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override
@@ -207,32 +253,17 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final boolean createPath(final String path)
-	throws RemoteException {
-		return driver.createPath(path);
-	}
-
-	@Override
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws IOException {
-		if(itemFactory instanceof DataItemFactory) {
-			((DataItemFactory) itemFactory).setContentSource(contentSrc);
-		}
 		return driver.list(itemFactory, path, prefix, idRadix, lastPrevItem, count);
 	}
 
 	@Override
-	public final String getAuthToken()
+	public final int getConcurrencyLevel()
 	throws RemoteException {
-		return driver.getAuthToken();
-	}
-
-	@Override
-	public final void setAuthToken(final String authToken)
-	throws RemoteException {
-		driver.setAuthToken(authToken);
+		return driver.getConcurrencyLevel();
 	}
 
 	@Override
@@ -252,11 +283,7 @@ implements StorageDriverSvc<I, O> {
 	throws RemoteException {
 		return driver.getCompletedTaskCount();
 	}
-	@Override
-	public final long getRecycledTaskCount()
-	throws RemoteException {
-		return driver.getRecycledTaskCount();
-	}
+	
 	@Override
 	public final boolean isIdle()
 	throws RemoteException {
@@ -264,8 +291,8 @@ implements StorageDriverSvc<I, O> {
 	}
 
 	@Override
-	public final void adjustIoBuffers(final SizeInBytes avgDataItemSize, final IoType ioType)
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
 	throws RemoteException {
-		driver.adjustIoBuffers(avgDataItemSize, ioType);
+		driver.adjustIoBuffers(avgTransferSize, ioType);
 	}
 }

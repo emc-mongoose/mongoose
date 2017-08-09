@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.env.PathUtil;
+import com.emc.mongoose.api.common.env.PathUtil;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +26,9 @@ public class ValidateScenariosTest {
 	public final void testAllScenarios()
 	throws Exception {
 
-		final ObjectMapper m = new ObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+		final ObjectMapper m = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		final JsonNode jsonSchema = m.readTree(
 			Paths.get(PathUtil.getBaseDir(), "scenario", "schema.json").toFile()
 		);
@@ -41,10 +43,12 @@ public class ValidateScenariosTest {
 		JsonNode nextScenario;
 		ProcessingReport report;
 		for(final Path nextScenarioPath : scenarioPaths) {
-			System.out.println("Validating the scenario file: " + nextScenarioPath.toString());
-			nextScenario = m.readTree(nextScenarioPath.toFile());
-			report = validator.validate(jsonSchema, nextScenario);
-			assertTrue(report.toString(), report.isSuccess());
+			if(!nextScenarioPath.toString().contains("compat")) {
+				System.out.println("Validating the scenario file: " + nextScenarioPath.toString());
+				nextScenario = m.readTree(nextScenarioPath.toFile());
+				report = validator.validate(jsonSchema, nextScenario);
+				assertTrue(report.toString(), report.isSuccess());
+			}
 		}
 	}
 }

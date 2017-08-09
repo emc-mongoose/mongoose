@@ -6,14 +6,20 @@
 				"path" : "partial-update-multiple-random-ranges"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 100
-			},
-			"concurrency" : 2
+		"storage" : {
+			"driver" : {
+				"concurrency" : 2
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 100
+				}
+			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			// write new data
 			"type" : "precondition",

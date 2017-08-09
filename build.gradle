@@ -1,4 +1,7 @@
 import groovy.json.JsonSlurper
+import groovy.json.JsonParserType
+
+description = "Mongoose is a high-load storage performance testing tool"
 
 buildscript {
 	dependencies {
@@ -9,51 +12,54 @@ buildscript {
 	}
 }
 
-description = "Mongoose - high-load storage performance testing automation tool"
-
 allprojects {
-	version = defineVersion()
 	apply plugin: "java"
+	group = "com.github.emc-mongoose"
+	version = defineVersion()
 }
 
 ext {
+
 	depVersion = [
 		commonsCodec : "1.10",
 		commonsCollections : "4.1",
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
-		jackson : "2.8.4",
+		jackson : "2.8.9",
 		javassist : "3.21.0-GA",
-		log4j : "2.7",
-		metrics : "3.1.2",
-		netty : "4.1.6.Final",
+		slf4j : "1.7.24",
+		log4j : "2.8.2",
+		metrics : "3.2.3",
+		nagaina : "[3.5.5,)",
+		netty : "4.1.13.Final",
 	]
+
+	mutualProjects = subprojects.findAll {
+		it != project("api") && it != project("load") && it != project("storage") &&
+			it != project("tests")
+	}
+
 	setClassPath = {
 		configurations -> [
-			configurations.runtime.collect {
-				file -> [
-					"lib", file.name
-				].join(File.separator)
-			}.join(" "),
-			(configurations.compileOnly - configurations.runtime).collect {
-				file -> file.name
-			}.join(" ")
-		].join(" ")
-	}
-	mutualProjects = subprojects.findAll {
-		it != project("load") &&
-		it != project("storage") &&
-		it != project("storage:driver") &&
-		it != project("storage:driver:net") &&
-		it != project("storage:driver:net:http") &&
-		it != project("storage:driver:nio")
+			configurations.runtime
+				.collect { file ->
+					// it's 3rd party if jar file name doesn't contain the root project name
+					if(-1 == file.name.indexOf(rootProject.name)) {
+						["lib", file.name].join(File.separator)
+					} else {
+						file.name
+					}
+				}
+				.join(" "),
+		]
+			.join(" ")
 	}
 }
 
 subprojects {
+
 	apply plugin: "maven"
 	apply plugin: "signing"
-	apply plugin: "com.google.osdetector"
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -71,10 +77,6 @@ subprojects {
 		mavenCentral()
 	}
 
-	dependencies {
-		testCompile "junit:junit:4.12"
-	}
-
 	jar {
 		LinkedList names = new LinkedList()
 		collectName(project, names)
@@ -88,8 +90,40 @@ subprojects {
 		}
 	}
 
+	task sourcesJar(type: Jar, dependsOn: classes) {
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join("-")
+		classifier = "sources"
+		archiveName "$name-$classifier.$extension"
+		from sourceSets.main.allSource
+	}
+
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		LinkedList names = new LinkedList()
+		collectName(project, names)
+		def name = names.join("-")
+		classifier = "javadoc"
+		archiveName "$name-$classifier.$extension"
+		from javadoc.destinationDir
+	}
+
+	artifacts {
+		archives jar
+		archives sourcesJar
+		archives javadocJar
+	}
+
 	test {
-		maxHeapSize "2560m"
+		jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+		jvmArgs "-XX:MaxDirectMemorySize=4g"
+		maxHeapSize "2g"
+		systemProperty "com.sun.management.jmxremote", "true"
+		systemProperty "com.sun.management.jmxremote.port", "9010"
+		systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
+		systemProperty "com.sun.management.jmxremote.local.only", "false"
+		systemProperty "com.sun.management.jmxremote.authenticate", "false"
+		systemProperty "com.sun.management.jmxremote.ssl", "false"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
@@ -97,19 +131,34 @@ subprojects {
 		}
 	}
 
-	artifacts {
-		archives jar
+	signing {
+		required {
+			gradle.taskGraph.hasTask("uploadArchives")
+		}
+		sign configurations.archives
 	}
 
-	/*signing {
-		sign configurations.archives
-	}*/
-
-	/* see http://central.sonatype.org/pages/gradle.html for details
+	// see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
+
+		// prevent the execution for empty (not leaf) subprojects and tests packages
+		if(project.name.contains("tests") || !(project in mutualProjects)) {
+			return
+		}
+
+		LinkedList nameParts = new LinkedList()
+		collectName(project, nameParts)
+
+		def ossrhUsername = project.hasProperty("ossrhUsername") ?
+			project.property("ossrhUsername") : null
+		def ossrhPassword = project.hasProperty("ossrhPassword") ?
+			project.property("ossrhPassword") : null
+
 		repositories {
 			mavenDeployer {
-				beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+				beforeDeployment {
+					MavenDeployment deployment -> signing.signPom(deployment)
+				}
 
 				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
 					authentication(userName: ossrhUsername, password: ossrhPassword)
@@ -119,37 +168,46 @@ subprojects {
 					authentication(userName: ossrhUsername, password: ossrhPassword)
 				}
 
-				pom.project {
-					name "mongoose"
-					packaging "jar"
-					// optionally artifactId can be defined here
-					description ""
-					url "https://github.com/emc-mongoose/mongoose/wiki"
+				pom {
 
-					scm {
-						connection "scm:svn:http://foo.googlecode.com/svn/trunk/"
-						developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-						url 'http://foo.googlecode.com/svn/trunk/'
-					}
+					groupId = rootProject.group
+					name = nameParts.join("-")
+					artifactId = name
 
-					licenses {
-						license {
-							name 'The Apache License, Version 2.0'
-							url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+					project {
+						description = rootProject.description
+
+						url "https://github.com/emc-mongoose/mongoose/wiki"
+
+						scm {
+							connection "https://github.com/emc-mongoose/mongoose.git"
+							developerConnection "https://github.com/emc-mongoose/mongoose.git"
+							url "https://github.com/emc-mongoose/mongoose.git"
 						}
-					}
 
-					developers {
-						developer {
-							id 'manfred'
-							name 'Manfred Moser'
-							email 'manfred@sonatype.com'
+						licenses {
+							license {
+								name "The MIT License (MIT)"
+								url "https://github.com/emc-mongoose/mongoose/wiki/License"
+							}
+						}
+
+						developers {
+							developer {
+								id "akurilov"
+								name "Andrey Kurilov"
+								email "akurilov123@gmail.com"
+							}
 						}
 					}
 				}
 			}
 		}
-	}*/
+	}
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = "3.5"
 }
 
 task dist(type: Tar) {
@@ -166,7 +224,9 @@ task dist(type: Tar) {
 		}
 		into("lib") {
 			for(Project p: mutualProjects) {
-				from p.configurations.runtime
+				from p.configurations.runtime {
+					exclude "${rootProject.name}*.jar"
+				}
 			}
 		}
 		for(Project p: mutualProjects) {
@@ -178,15 +238,10 @@ task dist(type: Tar) {
 	}
 }
 
-
 task printVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
 	doLast { logger.quiet "Mongoose version: $version" }
-}
-
-task wrapper(type: Wrapper) {
-	gradleVersion = "3.3"
 }
 
 void collectName(Project p, LinkedList<String> names) {
@@ -199,6 +254,6 @@ void collectName(Project p, LinkedList<String> names) {
 String defineVersion() {
 	def configFilePath = [rootDir, "config", "defaults.json"].join(File.separator);
 	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().parseText(inputFile.text)
+	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
 	json.version
 }

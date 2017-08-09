@@ -1,0 +1,29 @@
+{
+	"type" : "for",
+	"value" : "i",
+	"in" : "1-4",
+	"steps" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : 1
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"time" : "15s"
+						}
+					}
+				},
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${i}"
+					}
+				}
+			}
+		}
+	]
+}

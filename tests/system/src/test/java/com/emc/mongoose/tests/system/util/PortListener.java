@@ -8,18 +8,18 @@ import java.util.regex.Pattern;
 /**
  * Created by olga on 08.07.15.
  */
-public final class PortListener {
+public interface PortListener {
 
-	private final static String FMT_PATTERN_CONN = "\\s+ESTABLISHED";
+	String FMT_PATTERN_CONN = "\\s+ESTABLISHED";
 	
-	public static Scanner getNetstatOutput()
+	static Scanner getNetstatOutput()
 	throws IOException {
 		final String[] netstatCommand = { "netstat", "-an" };
 		final Process netstatProcess = Runtime.getRuntime().exec(netstatCommand);
 		return new Scanner(netstatProcess.getInputStream(), "IBM850").useDelimiter("\\n");
 	}
 	
-	public static int getCountConnectionsOnPort(final String nodeAddrWithPort)
+	static int getCountConnectionsOnPort(final String nodeAddrWithPort)
 	throws IOException {
 		int countConnections = 0;
 		final Pattern patternConn = Pattern.compile(nodeAddrWithPort + FMT_PATTERN_CONN);

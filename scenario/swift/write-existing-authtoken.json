@@ -5,9 +5,11 @@
 			"auth" : {
 				"token" : "existingAuthToken"
 			},
+			"driver" : {
+				"type" : "swift"
+			},
 			"net" : {
 				"http" : {
-					"api" : "Swift",
 					"namespace" : "test"
 				}
 			}

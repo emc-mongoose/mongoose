@@ -2,28 +2,47 @@ description = "mongoose-tests-perf"
 
 dependencies {
 
-	testCompile(
-		project(':common'),
-		project(':model'),
-		project(":ui"),
+
+	compile(
+		project(":api:common"),
+		project(":api:model"),
 		project(":load:generator"),
-		project(":load:monitor"),
-		project(":storage:driver:base"),
+		project(":load:controller"),
+		project(":run"),
+		project(":storage:driver"),
 		project(":storage:driver:builder"),
-		project(":storage:driver:net:base"),
-		project(":storage:driver:net:http:base"),
+		project(":storage:driver:net"),
+		project(":storage:driver:net:http"),
 		project(":storage:driver:net:http:atmos"),
 		project(":storage:driver:net:http:s3"),
 		project(":storage:driver:net:http:swift"),
-		project(":storage:driver:nio:base"),
+		project(":storage:driver:nio"),
 		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
-		project(":storage:mock"),
+		project(":ui"),
+		"junit:junit:4.12",
+	)
+
+	testCompile(
+		project(":api:common"),
+		project(":api:model"),
+		project(":load:generator"),
+		project(":load:controller"),
 		project(":run"),
+		project(":storage:driver"),
+		project(":storage:driver:builder"),
+		project(":storage:driver:net"),
+		project(":storage:driver:net:http"),
+		project(":storage:driver:net:http:atmos"),
+		project(":storage:driver:net:http:s3"),
+		project(":storage:driver:net:http:swift"),
+		project(":storage:driver:nio"),
+		project(":storage:driver:nio:fs"),
+		project(":storage:driver:service"),
+		project(":ui"),
+		"junit:junit:4.12",
 	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {
@@ -31,5 +50,6 @@ jar {
 			"Class-Path": setClassPath(configurations),
 		)
 	}
+	from sourceSets.test.output
 }
 

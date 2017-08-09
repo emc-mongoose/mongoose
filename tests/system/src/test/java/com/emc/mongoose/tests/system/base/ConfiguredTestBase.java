@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.base;
 
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
+import com.emc.mongoose.ui.log.LogUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -22,15 +22,18 @@ extends LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		LoggingTestBase.setUpClass();
-		CONFIG = ConfigParser.loadDefaultConfig();
+		CONFIG = Config.loadDefaults();
 		if(CONFIG_ARGS != null) {
 			CONFIG.apply(
 				CliArgParser.parseArgs(
 					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
-				)
+				),
+				"systest-" + LogUtil.getDateTimeStamp()
 			);
 		}
-		CONFIG.getLoadConfig().getJobConfig().setName(JOB_NAME);
+		CONFIG.getTestConfig().getStepConfig().setId(STEP_ID);
+		CONFIG.getTestConfig().getStepConfig().setIdTmp(false);
+		CONFIG.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);
 	}
 
 	@AfterClass

@@ -10,7 +10,7 @@
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition",
 			"config" : {
@@ -19,9 +19,11 @@
 						"file" : "read-no-verify.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100
+						}
 					}
 				}
 			}

@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.driver.net.http.s3;
 
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
+
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -22,8 +22,6 @@ import static com.emc.mongoose.storage.driver.net.http.s3.S3Api.QNAME_ITEM_SIZE;
  */
 public final class BucketXmlListingHandler<I extends Item>
 extends DefaultHandler {
-
-	private static final Logger LOG = LogManager.getLogger();
 
 	private int count = 0;
 	private boolean isInsideItem = false;
@@ -80,11 +78,11 @@ extends DefaultHandler {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e, "Data object size should be a 64 bit number"
+						Level.WARN, e, "Data object size should be a 64 bit number"
 					);
 				}
 			} else {
-				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
+				Loggers.ERR.trace("No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			
 			if(oid != null && oid.length() > 0 && size > -1) {
@@ -92,7 +90,7 @@ extends DefaultHandler {
 					offset = Long.parseLong(oid, idRadix);
 				} catch(final NumberFormatException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to parse the item id \"{}\"", oid
+						Level.WARN, e, "Failed to parse the item id \"{}\"", oid
 					);
 					offset = 0;
 				}
@@ -100,7 +98,7 @@ extends DefaultHandler {
 				itemsBuffer.add(nextItem);
 				count ++;
 			} else {
-				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", oid, strSize);
+				Loggers.ERR.trace("Invalid object id ({}) or size ({})", oid, strSize);
 			}
 		}
 		

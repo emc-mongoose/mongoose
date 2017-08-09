@@ -10,17 +10,23 @@
 				"size" : "${size}"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 1000000,
-				"time" : "10s"
-			},
+		"output" : {
 			"metrics" : {
-				"period" : 0
+				"average" : {
+					"period" : 0
+				}
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000000,
+					"time" : "10s"
+				}
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "for",
 			"value" : "threads",
@@ -33,11 +39,13 @@
 						"path" : "${size}_${threads}threads"
 					}
 				},
-				"load" : {
-					"concurrency" : "${threads}"
+				"storage" : {
+					"driver" : {
+						"concurrency" : "${threads}"
+					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load",
 					"config" : {
@@ -47,10 +55,12 @@
 							}
 						},
 						"load" : {
-							"job" : {
-								"name" : "C${threads}_${size}"
-							},
 							"type" : "create"
+						},
+						"test" : {
+							"step" : {
+								"id" : "C${threads}_${size}"
+							}
 						}
 					}
 				}, {
@@ -62,10 +72,12 @@
 							}
 						},
 						"load" : {
-							"job" : {
-								"name" : "R${threads}_${size}"
-							},
 							"type" : "read"
+						},
+						"test" : {
+							"step" : {
+								"id" : "R${threads}_${size}"
+							}
 						}
 					}
 				}, {
@@ -77,10 +89,12 @@
 							}
 						},
 						"load" : {
-							"job" : {
-								"name" : "D${threads}_${size}"
-							},
 							"type" : "delete"
+						},
+						"test" : {
+							"step" : {
+								"id" : "D${threads}_${size}"
+							}
 						}
 					}
 				}

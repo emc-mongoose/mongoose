@@ -50,6 +50,7 @@ public interface S3Api {
 	String COMPLETE_MPU_PART_ETAG_END = "</ETag>\n\t</Part>\n";
 	String COMPLETE_MPU_FOOTER = "</CompleteMultipartUpload>";
 
+	int MAX_KEYS_LIMIT = 1000;
 	String QNAME_ITEM = "Contents";
 	String QNAME_ITEM_ID = "Key";
 	String QNAME_ITEM_SIZE = "Size";

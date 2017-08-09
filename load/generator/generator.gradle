@@ -1,24 +1,21 @@
-description = 'mongoose-load-generator'
+description = "mongoose-load-generator"
 
 dependencies {
 
 	compile(
+		project(":api:common"),
+		project(":api:model"),
+		project(":ui"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
-	compileOnly(
-		project(':common'),
-		project(':model'),
-		project(':ui')
-	)
-
 	runtime(
-		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}"
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {

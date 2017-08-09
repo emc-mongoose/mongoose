@@ -1,13 +1,15 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 1000
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
+				}
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {
@@ -20,13 +22,13 @@
 			}
 		}, {
 			"type" : "parallel",
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "load",
 					"config" : {
 						"storage" : {
 							"auth" : {
-								"id" : "user1",
+								"uid" : "user1",
 								"secret" : "secret1"
 							}
 						},
@@ -45,7 +47,7 @@
 					"config" : {
 						"storage" : {
 							"auth" : {
-								"id" : "user2",
+								"uid" : "user2",
 								"secret" : "secret2"
 							}
 						},
@@ -63,7 +65,7 @@
 					"config" : {
 						"storage" : {
 							"auth" : {
-								"id" : "user3",
+								"uid" : "user3",
 								"secret" : "secret3"
 							}
 						},

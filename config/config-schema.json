@@ -32,34 +32,48 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"content": {
-							"type": "object",
-							"additionalProperties": false,
-							"properties": {
-								"file": {
-									"type": [
-										"null", "string"
+						"input" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"file" : {
+									"type" : [
+										"null",
+										"string"
 									]
 								},
-								"seed": {
-									"type": "string",
-									"pattern" : "[A-Fa-f0-9]+"
-								},
-								"ringSize": {
-									"oneOf" : [
-										{
-											"type": "integer",
+								"layer" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"cache" : {
+											"type" : "integer",
 											"minimum" : 1
 										},
-										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										"size" : {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												},
+												{
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
 										}
+									},
+									"required" : [
+										"cache", "size"
 									]
+								},
+								"seed" : {
+									"type" : "string",
+									"pattern" : "[A-Fa-f0-9]+"
 								}
 							},
 							"required": [
-								"file", "seed", "ringSize"
+								"file", "layer", "seed"
 							]
 						},
 						"ranges": {
@@ -117,7 +131,7 @@
 						}
 					},
 					"required": [
-						"content", "ranges", "size", "verify"
+						"input", "ranges", "size", "verify"
 					]
 				},
 				"input": {
@@ -217,120 +231,9 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"circular": {
-					"type": "boolean"
-				},
-				"concurrency": {
-					"type": "integer",
-					"minimum" : 1
-				},
-				"generator" : {
+				"batch" : {
 					"type" : "object",
-					"additionalProperties" : false,
-					"properties" : {
-						"addrs": {
-							"type": "array",
-							"items": {
-								"type" : "string"
-							}
-						},
-						"remote" : {
-							"type" : "boolean"
-						},
-						"shuffle" : {
-							"type" : "boolean"
-						}
-					},
-					"required" : [
-						"addrs", "remote", "shuffle"
-					]
-				},
-				"job" : {
-					"type" : "object",
-					"additionalProperties" : false,
-					"properties" : {
-						"name" : {
-							"type" : [
-								"null", "string"
-							]
-						}
-					},
-					"required" : [
-						"name"
-					]
-				},
-				"limit": {
-					"type": "object",
 					"additionalProperties": false,
-					"properties": {
-						"count": {
-							"type": "integer",
-							"minimum" : 0
-						},
-						"rate": {
-							"type": "number",
-							"minimum" : 0
-						},
-						"size": {
-							"oneOf" : [
-								{
-									"type": "integer",
-									"minimum" : 0
-								},
-								{
-									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
-								}
-							]
-						},
-						"time": {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								},
-								{
-									"type" : "string",
-									"pattern" : "[\\d]+[SsMmHhDd]?"
-								}
-							]
-						}
-					},
-					"required": [
-						"count", "rate", "size", "time"
-					]
-				},
-				"metrics" : {
-					"type" : "object",
-					"additionalProperties" : false,
-					"properties" : {
-						"period" : {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								}, {
-									"type" : "string",
-									"pattern" : "[\\d]+[SsMmHhDd]?"
-								}
-							]
-						},
-						"precondition" : {
-							"type" : "boolean"
-						},
-						"threshold" : {
-							"type" : "number",
-							"minimum" : 0,
-							"maximum" : 1
-						}
-					},
-					"required" : [
-						"period", "precondition", "threshold"
-					]
-				},
-				"queue" : {
-					"type" : "object",
-					"additionalProperties" : false,
 					"properties" : {
 						"size" : {
 							"type" : "integer",
@@ -341,6 +244,71 @@
 						"size"
 					]
 				},
+				"generator" : {
+					"type" : "object",
+					"additionalProperties": false,
+					"properties" : {
+						"addrs": {
+							"type": "array",
+							"items": {
+								"type" : "string"
+							}
+						},
+						"recycle" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"enabled" : {
+									"type" : "boolean"
+								},
+								"limit" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 2147483647
+								}
+							},
+							"required" : [
+								"enabled", "limit"
+							]
+						},
+						"remote" : {
+							"type" : "boolean"
+						},
+						"shuffle" : {
+							"type" : "boolean"
+						}
+					},
+					"required" : [
+						"addrs", "recycle", "remote", "shuffle"
+					]
+				},
+				"rate": {
+					"type" : "object",
+					"additionalProperties" : false,
+					"properties" : {
+						"limit" : {
+							"type": "number",
+							"minimum" : 0
+						}
+					},
+					"required" : [
+						"limit"
+					]
+				},
+				"service" : {
+					"type" : "object",
+					"additionalProperties" : false,
+					"properties" : {
+						"threads" : {
+							"type" : "integer",
+							"minimum" : 0,
+							"maximum" : 2147483647
+						}
+					},
+					"required" : [
+						"threads"
+					]
+				},
 				"type": {
 					"type": "string",
 					"pattern" : "[NnOoPpCcRrEeAaTtDdUuLl]+=?[\\d]?%?",
@@ -349,22 +317,106 @@
 				}
 			},
 			"required": [
-				"circular", "concurrency", "generator", "job", "limit", "metrics", "type"
+				"batch", "generator", "rate", "service", "type"
 			]
 		},
-		"scenario" : {
+		"output" : {
 			"type" : "object",
+			"required" : [
+				"color", "metrics"
+			],
 			"additionalProperties" : false,
 			"properties" : {
-				"file" : {
-					"type" : [
-						"null", "string"
-					]
+				"color" : {
+					"type" : "boolean"
+				},
+				"metrics" : {
+					"type" : "object",
+					"required" : [
+						"average", "summary", "trace", "threshold"
+					],
+					"additionalProperties" : false,
+					"properties" : {
+						"average" : {
+							"type" : "object",
+							"required" : [
+								"period", "persist", "table"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								},
+								"persist" : {
+									"type" : "boolean"
+								},
+								"table" : {
+									"type" : "object",
+									"required" : [
+										"header"
+									],
+									"additionalProperties" : false,
+									"properties" : {
+										"header" : {
+											"type" : "object",
+											"required" : [
+												"period"
+											],
+											"additionalProperties" : false,
+											"properties" : {
+												"period" : {
+													"type" : "integer",
+													"minimum" : 1
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"summary" : {
+							"type" : "object",
+							"required" : [
+								"perfDbResultsFile", "persist"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"perfDbResultsFile" : {
+									"type" : "boolean"
+								},
+								"persist" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"trace" : {
+							"type" : "object",
+							"required" : [
+								"persist"
+							],
+							"additionalProperties" : false,
+							"properties" : {
+								"persist" : {
+									"type" : "boolean"
+								}
+							}
+						},
+						"threshold" : {
+							"type" : "number",
+							"minimum" : 0,
+							"maximum" : 1
+						}
+					}
 				}
-			},
-			"required" : [
-				"file"
-			]
+			}
 		},
 		"storage": {
 			"type": "object",
@@ -374,8 +426,8 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"id": {
-							"type": [
+						"file": {
+							"type" : [
 								"null", "string"
 							]
 						},
@@ -388,33 +440,96 @@
 							"type": [
 								"null", "string"
 							]
+						},
+						"uid": {
+							"type" : [
+								"null", "string"
+							]
 						}
 					},
 					"required": [
-						"id", "secret", "token"
+						"file", "secret", "token", "uid"
 					]
 				},
 				"driver" : {
 					"type": "object",
-					"additionalProperties": false,
-					"properties": {
-						"addrs": {
-							"type": "array",
-							"items": {
+					"required" : [
+						"addrs", "concurrency", "impl", "port", "remote", "threads", "type"
+					],
+					"additionalProperties" : false,
+					"properties" : {
+						"addrs" : {
+							"type" : "array",
+							"items" : {
 								"type" : "string"
+							}
+						},
+						"concurrency": {
+							"type": "integer",
+							"minimum" : 1,
+							"maximum" : 2147483647
+						},
+						"impl" : {
+							"type" : "array",
+							"items" : {
+								"type" : "object",
+								"additionalProperties" : false,
+								"properties" : {
+									"type" : {
+										"type" : "string",
+										"pattern" : "[\\w\\d]+"
+									},
+									"file" : {
+										"type" : "string",
+										"pattern" : "[\\-_\\.\\w\\d]+"
+									},
+									"fqcn" : {
+										"type" : "string",
+										"pattern" : "([a-z][a-z_0-9]*\\.)*[A-Z_]($[A-Z_]|[\\w_])*"
+									}
+								},
+								"required" : [
+									"type", "file", "fqcn"
+								]
 							}
 						},
 						"port" : {
 							"type" : "number",
-							"minimum" : 1
+							"minimum" : 1,
+							"maximum" : 65535
+						},
+						"queue" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"input" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 2147483647
+								},
+								"output" : {
+									"type" : "integer",
+									"minimum" : 1,
+									"maximum" : 2147483647
+								}
+							},
+							"required" : [
+								"input", "output"
+							]
 						},
 						"remote" : {
 							"type" : "boolean"
+						},
+						"threads" : {
+							"type" : "integer",
+							"minimum" : 0,
+							"maximum" : 2147483647
+						},
+						"type" : {
+							"type" : "string",
+							"pattern" : "[\\w\\d]+"
 						}
-					},
-					"required" : [
-						"addrs", "port", "remote"
-					]
+					}
 				},
 				"mock": {
 					"type": "object",
@@ -422,18 +537,21 @@
 					"properties": {
 						"capacity": {
 							"type": "integer",
-							"minimum" : 0
+							"minimum" : 0,
+							"maximum" : 2147483647
 						},
 						"container": {
 							"type": "object",
 							"properties": {
 								"capacity": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum" : 0,
+									"maximum" : 2147483647
 								},
 								"countLimit": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum" : 0,
+									"maximum" : 2147483647
 								}
 							},
 							"required": [
@@ -491,7 +609,7 @@
 								},
 								{
 									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+									"pattern" : "[\\d\\.]+[KMG]?B?"
 								}
 							]
 						},
@@ -506,16 +624,27 @@
 								},
 								{
 									"type" : "string",
-									"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+									"pattern" : "[\\d\\.]+[KMG]?B?"
 								}
 							]
 						},
-						"tcpNoDelay": {
+						"tcpNoDelay" : {
 							"type": "boolean"
 						},
-						"timeoutMilliSec": {
-							"type": "integer",
+						"timeoutMilliSec" : {
+							"type" : "integer",
 							"minimum" : 0
+						},
+						"ioRatio" : {
+							"type" : "integer",
+							"minimum" : 1,
+							"maximum" : 99
+						},
+						"transport" : {
+							"type" : "string",
+							"enum" : [
+								"nio", "epoll", "kqueue"
+							]
 						},
 						"ssl" : {
 							"type" : "boolean"
@@ -524,10 +653,6 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
-								"api": {
-									"type": "string",
-									"pattern" : "[\\w\\d]+"
-								},
 								"fsAccess": {
 									"type": "boolean"
 								},
@@ -547,7 +672,7 @@
 								}
 							},
 							"required": [
-								"api", "fsAccess", "headers", "namespace", "versioning"
+								"fsAccess", "headers", "namespace", "versioning"
 							]
 						},
 						"node" : {
@@ -562,30 +687,119 @@
 								},
 								"port" : {
 									"type" : "number",
-									"minimum" : 1
+									"minimum" : 1,
+									"maximum" : 65535
+								},
+								"connAttemptsLimit" : {
+									"type" : "integer",
+									"minimum" : 0
 								}
 							},
 							"required" : [
-								"addrs", "port"
+								"addrs", "port", "connAttemptsLimit"
 							]
 						}
 					},
 					"required" : [
-						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger",
-						"rcvBuf", "reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec", "ssl",
-						"http", "node"
-					]
-				},
-				"type": {
-					"type": "string",
-					"enum" : [
-						"fs", "http"
+						"bindBacklogSize", "interestOpQueued", "keepAlive", "linger", "rcvBuf",
+						"reuseAddr", "sndBuf", "tcpNoDelay", "timeoutMilliSec","ioRatio",
+						"transport", "ssl", "http", "node"
 					]
 				}
 			},
 			"required": [
-				"auth", "driver", "mock", "type"
+				"auth", "driver", "mock"
 			]
+		},
+		"test" : {
+			"type" : "object",
+			"required" : [
+				"scenario", "step"
+			],
+			"additionalProperties" : false,
+			"properties" : {
+				"scenario" : {
+					"type" : "object",
+					"required" : [
+						"file"
+					],
+					"additionalProperties" : false,
+					"properties" : {
+						"file" : {
+							"type" : [
+								"null", "string"
+							]
+						}
+					}
+				},
+				"step" : {
+					"type" : "object",
+					"required" : [
+						"id", "limit"
+					],
+					"additionalProperties" : false,
+					"properties" : {
+						"limit" : {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"count": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"fail" : {
+									"type" : "object",
+									"additionalProperties" : false,
+									"properties" : {
+										"count" : {
+											"type": "integer",
+											"minimum" : 0
+										},
+										"rate" : {
+											"type": "boolean"
+										}
+									},
+									"required" : [
+										"count", "rate"
+									]
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										}
+									]
+								},
+								"time": {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										},
+										{
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								}
+							},
+							"required": [
+								"count", "fail", "size", "time"
+							]
+						},
+						"id" : {
+							"type" : [
+								"null", "string"
+							]
+						}
+					}
+				}
+			}
 		},
 		"version" : {
 			"type" : "string"
@@ -594,8 +808,9 @@
 	"required": [
 		"item",
 		"load",
-		"scenario",
+		"output",
 		"storage",
+		"test",
 		"version"
 	]
 }

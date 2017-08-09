@@ -4,14 +4,20 @@
 		"item" : {
 			"type" : "path"
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10
-			},
-			"concurrency" : 10
+		"storage" : {
+			"driver" : {
+				"concurrency" : 10
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			// create 10 containers
 			"type" : "precondition",
@@ -35,14 +41,20 @@
 				"item" : {
 					"type" : "data"
 				},
-				"load" : {
-					"limit" : {
-						"count" : 10000
-					},
-					"concurrency" : 10
+				"storage" : {
+					"driver" : {
+						"concurrency" : 10
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 10000
+						}
+					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "precondition",
 					"config" : {

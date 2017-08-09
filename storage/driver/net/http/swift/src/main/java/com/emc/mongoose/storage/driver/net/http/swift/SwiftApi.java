@@ -1,17 +1,15 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.ui.log.Loggers;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +34,7 @@ public interface SwiftApi {
 	String KEY_SIZE = "bytes";
 	String KEY_ID = "name";
 
-	Logger LOG = LogManager.getLogger();
+	int MAX_LIST_LIMIT = 10_000;
 
 	static <I extends Item> int parseContainerListing(
 		final List<I> buff, final InputStream inStream, final String path,
@@ -61,7 +59,7 @@ public interface SwiftApi {
 					switch(nextToken) {
 						case START_OBJECT:
 							if(isInsideObjectToken) {
-								LOG.debug(Markers.ERR, "Looks like the json response is not plain");
+								Loggers.ERR.debug("Looks like the json response is not plain");
 							}
 							isInsideObjectToken = true;
 							break;
@@ -83,18 +81,17 @@ public interface SwiftApi {
 										}
 									} catch(final IllegalStateException e) {
 										LogUtil.exception(
-											LOG, Level.WARN, e,
+											Level.WARN, e,
 											"Failed to create data item descriptor"
 										);
 									}
 								} else {
-									LOG.trace(
-										Markers.ERR, "Invalid object id ({}) or size ({})",
-										lastItemId, lastSize
+									Loggers.ERR.trace(
+										"Invalid object id ({}) or size ({})", lastItemId, lastSize
 									);
 								}
 							} else {
-								LOG.debug(Markers.ERR, "End of json object is not inside object");
+								Loggers.ERR.debug("End of json object is not inside object");
 							}
 							isInsideObjectToken = false;
 							break;
@@ -119,8 +116,7 @@ public interface SwiftApi {
 					}
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
 			} else {
-				LOG.warn(
-					Markers.ERR,
+				Loggers.ERR.warn(
 					"Response contains root JSON token \"{}\", but array token was expected"
 				);
 			}

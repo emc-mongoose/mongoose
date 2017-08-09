@@ -1,23 +1,24 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
-import com.emc.mongoose.ui.config.Config.ItemConfig;
-import com.emc.mongoose.ui.config.Config.LoadConfig;
-import com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.log.Markers;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,8 +30,6 @@ public class BasicStorageDriverBuilderSvc<
 extends BasicStorageDriverBuilder<I, O, T>
 implements StorageDriverBuilderSvc<I, O, T> {
 
-	private static final Logger LOG = LogManager.getLogger();
-
 	private final int port;
 
 	public BasicStorageDriverBuilderSvc(final int port) {
@@ -38,8 +37,14 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, O, T> setJobName(final String jobName) {
-		super.setJobName(jobName);
+	public BasicStorageDriverBuilderSvc<I, O, T> setTestStepName(final String jobName) {
+		super.setTestStepName(jobName);
+		return this;
+	}
+	
+	@Override
+	public BasicStorageDriverBuilderSvc<I, O, T> setContentSource(final DataInput contentSrc) {
+		super.setContentSource(contentSrc);
 		return this;
 	}
 
@@ -56,15 +61,35 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
+	public BasicStorageDriverBuilderSvc<I, O, T> setAverageConfig(
+		final AverageConfig avgMetricsConfig
+	) {
+		super.setAverageConfig(avgMetricsConfig);
+		return this;
+	}
+
+
+	@Override
 	public BasicStorageDriverBuilderSvc<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
 		super.setStorageConfig(storageConfig);
 		return this;
 	}
 
 	@Override
+	public final List<Coroutine> getSvcCoroutines() {
+		throw new AssertionError("Shouldn't be invoked");
+	}
+	
+	@Override
+	public final State getState()
+	throws RemoteException {
+		return State.INITIAL;
+	}
+	
+	@Override
 	public void start()
 	throws IllegalStateException, RemoteException {
-		LOG.info(Markers.MSG, "Service started: " + ServiceUtil.create(this, port));
+		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 
 	@Override
@@ -133,16 +158,20 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.info(Markers.MSG, "Service closed: " + ServiceUtil.close(this));
+		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws IOException, UserShootHisFootException {
-		final StorageDriver<I, O> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getContentSource(), getLoadConfig().getMetricsConfig().getPeriod()
-		);
-		return wrapper.getName();
+		try {
+			final StorageDriver<I, O> driver = build();
+			final T wrapper = (T) new WrappingStorageDriverSvc<>(
+				port, driver, getAverageConfig().getPeriod(), getStepId()
+			);
+			return wrapper.getName();
+		} catch(final InterruptedException e) {
+			throw new UserShootHisFootException(e);
+		}
 	}
 }

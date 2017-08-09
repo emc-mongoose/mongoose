@@ -1,0 +1,47 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10000
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"type" : "fs"
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -rf ReadFilesWithVariablePath.csv ${FILE_OUTPUT_PATH}"
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"output" : {
+						"path" : "${FILE_OUTPUT_PATH}/%p{16;2}",
+						"file" : "ReadFilesWithVariablePath.csv"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "ReadFilesWithVariablePath.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

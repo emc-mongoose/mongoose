@@ -38,4 +38,13 @@ implements Message, StringBuilderFormattable {
 	public final Throwable getThrowable() {
 		return null;
 	}
+	
+	protected static String formatFixedWidth(final double value, final int count) {
+		final String valueStr = Double.toString(value);
+		if(valueStr.length() > count) {
+			return valueStr.substring(0, count);
+		} else {
+			return valueStr;
+		}
+	}
 }

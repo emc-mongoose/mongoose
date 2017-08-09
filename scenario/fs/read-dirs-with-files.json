@@ -4,17 +4,21 @@
 		"item" : {
 			"type" : "path"
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10
-			},
-			"concurrency" : 10
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10
+				}
+			}
 		},
 		"storage" : {
-			"type" : "fs"
+			"driver" : {
+				"concurrency" : 10,
+				"type" : "fs"
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			// create 10 directories
 			"type" : "precondition",
@@ -38,14 +42,20 @@
 				"item" : {
 					"type" : "data"
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100
-					},
-					"concurrency" : 1
+				"storage" : {
+					"driver" : {
+						"concurrency" : 1
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100
+						}
+					}
 				}
 			},
-			"jobs" : [
+			"steps" : [
 				{
 					"type" : "precondition",
 					"config" : {

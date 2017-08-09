@@ -1,19 +1,11 @@
-description = 'mongoose-storage-driver-net-http-atmos'
+description = "mongoose-storage-driver-net-http-atmos"
 
 dependencies {
-	compileOnly(
-		project(':common'),
-		project(':model'),
-		project(':ui'),
-		project(':storage:driver:base'),
-		project(':storage:driver:net:base'),
-		project(':storage:driver:net:http:base'),
-	)
-
 	compile(
-
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		project(":api:common"),
+		project(":api:model"),
+		project(":ui"),
+		project(":storage:driver:net:http"),
 
 		"io.netty:netty-common:${depVersion.netty}",
 		"io.netty:netty-buffer:${depVersion.netty}",
@@ -24,11 +16,11 @@ dependencies {
 
 	runtime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 		"org.javassist:javassist:${depVersion.javassist}",
 	)
 }
-
-configurations.compileOnly.dependencies.each { it.transitive = false }
 
 jar {
 	manifest {

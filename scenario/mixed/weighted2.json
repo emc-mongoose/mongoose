@@ -10,17 +10,33 @@
 				"file" : "weighted2-read-input.csv"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"count" : 10000
-			},
+		"output" : {
 			"metrics" : {
-				"period" : 0
-			},
-			"concurrency" : 100
+				"average" : {
+					"persist" : false
+				},
+				"summary" : {
+					"persist" : false
+				},
+				"trace" : {
+					"persist" : false
+				}
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 10000
+				}
+			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "precondition",
 			"config" : {
@@ -33,7 +49,8 @@
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
@@ -44,13 +61,19 @@
 						"file" : "weighted2-delete-input.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 0,
-						"time" : "5m"
-					},
+				"output" : {
 					"metrics": {
-						"period" : 10
+						"average" : {
+							"period" : 10
+						}
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 0,
+							"time" : "5m"
+						}
 					}
 				}
 			}
@@ -74,7 +97,11 @@
 						}
 					},
 					"load" : {
-						"circular" : true,
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
 						"type" : "read"
 					}
 				},
@@ -85,7 +112,11 @@
 						}
 					},
 					"load" : {
-						"circular" : true,
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
 						"type" : "delete"
 					}
 				}

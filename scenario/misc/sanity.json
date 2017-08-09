@@ -1,91 +1,74 @@
 {
-	"type" : "parallel",
+	"type" : "for",
 	"config" : {
 		"item" : {
 			"output" : {
 				"path" : "/default"
 			}
-		}
-	},
-	"jobs" : [
-		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "10KB"
-					}
-				},
-				"load" : {
-					"concurrency" : 100
-				}
+		},
+		"storage" : {
+			"driver" : {
+				"concurrency" : 100
 			}
 		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000000,
+					"time" : "10m"
+				}
+			}
+		}
+	},
+	"steps" : [
 		{
 			"type" : "for",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "1KB"
-					}
-				},
-				"load" : {
-					"concurrency" : 10,
-					"limit" : {
-						"time" : 10
-					}
-				}
-			},
-			"jobs" : [
+			"value" : "itemSize",
+			"in" : [
+				"10KB", "100KB", "1MB", "10MB", "100MB", "1GB"
+			],
+			"steps" : [
 				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"output" : {
-								"file" : "items.csv"
-							}
-						}
-					}
-				},
-				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"data" : {
-								"verify" : true
-							},
-							"input" : {
-								"file" : "items.csv"
-							}
-						},
-						"load" : {
-							"circular" : true,
-							"type" : "read"
-						}
-					}
-				},
-				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"data" : {
-								"ranges" : {
-									"random" : 1
+					"type" : "chain",
+					"config" : [
+						{
+							"item" : {
+								"data" : {
+									"size" : "${itemSize}"
 								}
 							},
-							"input" : {
-								"file" : "items.csv"
+							"load" : {
+								"type" : "create"
 							}
 						},
-						"load" : {
-							"circular" : true,
-							"type" : "update"
+						{
+							"item" : {
+								"data" : {
+									"ranges" : {
+										"random" : 4
+									}
+								}
+							},
+							"load" : {
+								"type" : "update"
+							}
+						},
+						{
+							"item" : {
+								"data" : {
+									"verify" : true
+								}
+							},
+							"load" : {
+								"type" : "read"
+							}
+						},
+						{
+							"load" : {
+								"type" : "delete"
+							}
 						}
-					}
-				},
-				{
-					"type" : "command",
-					"value" : "rm -f items.csv"
+					]
 				}
 			]
 		}

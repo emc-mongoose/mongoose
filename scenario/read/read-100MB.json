@@ -9,16 +9,16 @@
 				"size" : "100MB"
 			}
 		},
-		"load" : {
-			"concurrency" : 10
-		},
 		"storage" : {
 			"auth" : {
-				"id" : "wuser1@sanity.local"
+				"uid" : "wuser1@sanity.local"
+			},
+			"driver" : {
+				"concurrency" : 10
 			}
 		}
 	},
-	"jobs": [
+	"steps": [
 		{
 			"type": "precondition",
 			"config" : {
@@ -27,9 +27,11 @@
 						"file" : "linear-read-100MB.csv"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"count" : 100
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 100
+						}
 					}
 				}
 			}
@@ -42,7 +44,11 @@
 					}
 				},
 				"load" : {
-					"circular" : true,
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					},
 					"type" : "read"
 				}
 			}

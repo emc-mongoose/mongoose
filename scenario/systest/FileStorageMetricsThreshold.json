@@ -1,0 +1,92 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"output" : {
+			"metrics" : {
+				"threshold" : 0.1
+			}
+		},
+		"storage" : {
+			"driver" : {
+				"type" : "fs"
+			}
+		}
+	},
+	"steps" : [
+		{
+			"type" : "command",
+			"value" : "rm -f FileStorageMetricsThresholdTest.csv"
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"output" : {
+						"file" : "FileStorageMetricsThresholdTest.csv"
+					}
+				},
+				"test" : {
+					"step" : {
+						"limit" : {
+							"count" : 1000000,
+							"size" : "1GB",
+							"time" : "50s"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"verify" : true
+					},
+					"input" : {
+						"file" : "FileStorageMetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : {
+							"random" : 10
+						}
+					},
+					"input" : {
+						"file" : "FileStorageMetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "update"
+				}
+			}
+		},
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"input" : {
+						"file" : "FileStorageMetricsThresholdTest.csv"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				},
+				"storage" : {
+					"driver" : {
+						"concurrency" : 50
+					}
+				}
+			}
+		}
+	]
+}

@@ -1,13 +1,15 @@
 {
 	"type" : "for",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"time" : 5
+		"test" : {
+			"step" : {
+				"limit" : {
+					"time" : 5
+				}
 			}
 		}
 	},
-	"jobs" : [
+	"steps" : [
 		{
 			"type" : "command",
 			"value" : "echo \"Hi there!\""

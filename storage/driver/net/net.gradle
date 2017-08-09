@@ -1,0 +1,37 @@
+description = "mongoose-storage-driver-net"
+
+dependencies {
+
+	compile(
+		project(":api:common"),
+		project(":api:model"),
+		project(":ui"),
+		project(":storage:driver"),
+
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+
+		"io.netty:netty-common:${depVersion.netty}",
+		"io.netty:netty-buffer:${depVersion.netty}",
+		"io.netty:netty-transport:${depVersion.netty}",
+		"io.netty:netty-handler:${depVersion.netty}",
+	)
+
+	runtime(
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+		"org.javassist:javassist:${depVersion.javassist}",
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
+		"io.netty:netty-transport-native-kqueue:${depVersion.netty}:osx-x86_64",
+	)
+}
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
+}
