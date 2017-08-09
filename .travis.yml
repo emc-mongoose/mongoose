@@ -23,7 +23,7 @@ jobs:
   include:
 
     - stage: "Unit tests"
-      script: "./gradlew :tests:unit:test"
+      script: "gradle wrapper; ./gradlew :tests:unit:test"
 
     # System tests
     # the list of the "System tests" stages below is intended to mimic the build matrix behavior
