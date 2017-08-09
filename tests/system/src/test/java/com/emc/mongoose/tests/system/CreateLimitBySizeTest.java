@@ -19,6 +19,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,6 +40,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 06.06.17.
  */
+
+@Ignore
 public class CreateLimitBySizeTest
 extends EnvConfiguredScenarioTestBase {
 	

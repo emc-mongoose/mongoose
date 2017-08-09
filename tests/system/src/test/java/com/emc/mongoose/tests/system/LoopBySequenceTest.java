@@ -56,17 +56,18 @@ extends EnvConfiguredScenarioTestBase {
 		if(SKIP_FLAG) {
 			return;
 		}
+		ITEM_OUTPUT_PATH = "/default";
 		switch(STORAGE_DRIVER_TYPE) {
 			case STORAGE_TYPE_FS:
 				ITEM_OUTPUT_PATH = Paths.get(
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 				).toString();
-				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 				break;
 			case STORAGE_TYPE_SWIFT:
 				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
 				break;
 		}
+		CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		ACTUAL_TEST_TIME = System.currentTimeMillis();
 		SCENARIO.run();

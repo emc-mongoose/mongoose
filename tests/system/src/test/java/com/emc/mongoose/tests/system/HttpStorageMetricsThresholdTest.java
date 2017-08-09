@@ -33,6 +33,8 @@ import static org.junit.Assume.assumeFalse;
 /**
  Created by andrey on 10.06.17.
  */
+
+@Ignore
 public class HttpStorageMetricsThresholdTest
 extends EnvConfiguredScenarioTestBase {
 

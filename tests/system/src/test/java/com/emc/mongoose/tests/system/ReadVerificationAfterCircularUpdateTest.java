@@ -12,6 +12,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -29,6 +30,8 @@ import static org.junit.Assume.assumeFalse;
 /**
  Created by andrey on 12.06.17.
  */
+
+@Ignore
 public class ReadVerificationAfterCircularUpdateTest
 extends EnvConfiguredScenarioTestBase {
 

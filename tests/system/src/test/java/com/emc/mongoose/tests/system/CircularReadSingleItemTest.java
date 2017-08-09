@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -49,6 +50,7 @@ import static org.junit.Assume.assumeFalse;
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
 
+@Ignore
 public class CircularReadSingleItemTest
 extends EnvConfiguredScenarioTestBase {
 
