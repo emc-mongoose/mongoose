@@ -165,6 +165,6 @@ extends EnvConfiguredScenarioTestBase {
 			assertTrue(ITEM_DATA_SIZE.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		assertEquals(SIZE_LIMIT.get(), sizeSum, SIZE_LIMIT.get() / 25);
+		assertEquals(SIZE_LIMIT.get(), sizeSum, SIZE_LIMIT.get() / 10);
 	}
 }
