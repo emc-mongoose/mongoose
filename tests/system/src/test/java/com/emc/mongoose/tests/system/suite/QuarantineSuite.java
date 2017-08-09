@@ -5,6 +5,7 @@ import com.emc.mongoose.tests.system.CreateLimitBySizeTest;
 import com.emc.mongoose.tests.system.HttpStorageMetricsThresholdTest;
 import com.emc.mongoose.tests.system.TlsAndNodeBalancingTest;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -24,6 +25,8 @@ import org.junit.runners.Suite;
 	//
 	TlsAndNodeBalancingTest.class,
 })
+
+@Ignore
 
 public class QuarantineSuite {
 }
