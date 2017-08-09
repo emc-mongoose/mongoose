@@ -1,0 +1,1539 @@
+language: java
+
+sudo: required
+
+addons:
+  ulimit:
+    nofile: 1048576
+
+services:
+- docker
+
+jdk:
+- oraclejdk8
+
+env:
+  global:
+  - COMMIT=${TRAVIS_COMMIT::8}
+  - secure: Awm5ZsL8OJZTu6laZWGgm0kixqCQaAWnR7du+tMphQEra62axza+M5Dtj6OqmLXygtjirKUawEODN9oW64YAUqvWBy3ZV6b+x43Ixbh3dTTTGCkk9o0AbguGN3mcVyASf/FhXHsCR209dEmBN7rOxv1H/FXOsTBL7FrkrjB25SwRouiJa5q3ji2HsZXEIV8kpZ+l8eb8X4zuMpWfUJtqtzZ5Ozbr2UrL3EadImhfFzDqNggDZBZIYL5bsZk/7dJ2ATpHznqaWfRWw7KxKjZ/QCdjoquVQEnWt6Mg2dUh3eDzoynnDor7TTUrekSsJLFecfyRL6+1Y3KrgPxj1eiRqllCKbVNLzQltU5lrM5vMA3SzAJ/5HoRbqRiksKJrw+e/sE0WKeh48O+qMkdmOpLtdrdZMq9cguSmFUFTwOfh3X02z7KcdGixYNcu2jrwuPxt02hc0NxF2viv5vriagtFredTcGIT8hDUNh4ARCFsm2JH5TXkgdovTUYNfd1EFMVKsPp7WC73cRv+Hreex1MmkEbQkP9iHRwxVf7du3gWhJOvtiaXrZIk1Hi9lEiMjuqTrBFh5wpsOWM6Zhj1JCrdgH9OqmeatOrstZbjJu3U/ZEIsCsxFvI37+wpa2cgtGVUVgMxFQm2XEPzUM3QdU/1rsDVXIW6oylTlCM85qPy2Q=
+  - secure: rqGxUKnBladWD+2SuRBit/eLnJD/nZNoT0Gl1HW0GiQaI+OL38PDtIrEiQJBI8yBjj70SGGIMCaGhXifpQLUIBcnBLjtFj4ztvhIG9ooDQZcf6jVu0BgpfNzXgHKKJN4uM1bQb2upljmVaIrSDfrYitVHtPoxgp0JWESym/a2ITwhZ863OgmqKsVJm3uFhHJC1qle6OUTcgT0fI+o/XVATuqu6WbxH6YdUgIEwCjiaA8xcCY0TXt89R2cu7Tq9GbdNQVzTxwWpBRP7/JC9pzwQTsCNsAA++rkvMkNb2StPK5xDmqDNf91hfjv0ZNIxhIRRBKRr8V7p9sb4dPOxjdZkcKFzGWaNxFMqa3cMts1BYki/ZeRDEJmmRk/Z2ocKfHh0C0MLfL9JGkeG355oEFclKDZbpLzMUlg/B+oxzht6NnXCmOw0LzJxcxq9m9zEbWCaXmPCRvdkGOG0Bj+MvEFgxfyXRPhOSJayggIXx02YZN1HfUiKUZg8p1M54HyOEpaQEzSfjMRaGXhCOW6kHbYpJFeJYI+4weEDaivTfts1RvnB/84ZGl4hY5faTUnV56KzKOreh8V6UfQiriMr5h5qdBnK1J7Olz0Bc+T2q33zL5rqgeMiEMq2+YDqsBfC/UwE/lO5S6PHyONKm16+lqrZY3ay/cvXrhb/Rll2gPxgk=
+  - secure: JT3awhA8DPSKDmBv0ByCX1ri23rPDl5gKQr0XlR683L3pxjafyto3hHop0UDkztweQuFrXka+NnI3VJhEnfmccoK91v7C17SlfamqHGvp562AIXOBrSVKUgDdq8nDtPMvIcVj1SW/hyKlkLrTmPJYBjwpGN6moS67kN09S6p9RIDG3FqNSzmHmzqyGfFM41mY3gAXQLibjE5RLYiA+E4MMxww+O2ngln1eVRs0p025xPqFlW4n3z3DevhEmAv4jJ72lyNnDfb4SCm1Y41EIMrGE9wdspcSI3VNuB3lFpKobr5ynPH6kYZLgefJS5wcvqu1SgM6i45OyXCIOvpq94nf/PssvrSwk3aGNGTZLhdQ8brhSzbLS1tKJ2Ts4nCUAiq+OQx/jyOG7+xJTSQpZWG9QH8dHsNZnHmGFo48nrZifvMzjAln1jAhPdu97A2aV2atvUoPR+8HogvrDpdRjKRCkjicimQk0a2y4Ij30KwUfPD4ubpRTteTYUW2C4RVznCWzZrhPFQ2XYDxpPHgwG71UUwzGvEW83DEFSKOI7ohaBj2pksnJ429QHlGlb8HiQrbEP3tfutIVXY6teGYpZnZ2dDlgREzxdDHuzU8m/w19YUQUiyUrHdLEc5vSUOBclG59afeIHSgdXKtHLffv+7dvT1SZlYcmukTMeuvwLnKk=
+
+jobs:
+  include:
+
+    - stage: "Unit tests"
+      script: "./gradlew :tests:unit:test"
+
+    # System tests
+    # the list of the "System tests" stages below is intended to mimic the build matrix behavior
+    # STORAGE_DRIVER_TYPE:        atmos, fs, s3, swift
+    # STORAGE_DRIVER_COUNT:       1, 2
+    # STORAGE_DRIVER_CONCURRENCY: 1, 10, 100, 1000
+    # ITEM_DATA_SIZE:             0, 10KB, 1MB, 100MB, 10GB
+    #
+    # NOTE that there's no system tests for STORAGE_DRIVER_TYPE=fs & ITEM_DATA_SIZE=10GB
+    # (by intention) in order to not to exhaust the disk space
+    #
+    # Each particular system test may have its own exclusion map of the parameters
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=atmos
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=1
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=10
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=100
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=0
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=10KB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=1MB
+#      script: "./gradlew :tests:system:test"
+#
+#    - stage: "System tests"
+#      env:
+#      - STORAGE_DRIVER_TYPE=fs
+#      - STORAGE_DRIVER_COUNT=2
+#      - STORAGE_DRIVER_CONCURRENCY=1000
+#      - ITEM_DATA_SIZE=100MB
+#      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=fs
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=s3
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=1
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=10
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=100
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=0
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10KB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=1MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=100MB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "System tests"
+      env:
+      - STORAGE_DRIVER_TYPE=swift
+      - STORAGE_DRIVER_COUNT=2
+      - STORAGE_DRIVER_CONCURRENCY=1000
+      - ITEM_DATA_SIZE=10GB
+      script: "./gradlew :tests:system:test"
+
+    - stage: "Component performance tests"
+      script: "./gradlew :tests:perf:test"
+
+    - stage: "Deploy"
+      script: "./gradlew clean dist"
+      deploy:
+        skip_cleanup: true
+        provider: releases
+        api_key:
+          secure: ciLar6EGDY+CVwcmdSAI98DiPHG0Sy0nCOrSpGhOuoaZR/AMIN4IIZE3fOzh8U0Y+p/9IlPkSg7QQFkRmfUgw3nXQJ5CjniMQyK1yeQxOBHVyl9p8HHLvSjU7EC4Ec3JmrA/jgZD0uASgLYaBrAHDgIS97/wgSF8TUJbTfq20VEq7PmFpO+YX0fCi0gGz/S9ts/cQ76pIS0ADlQfrZ44Qa4mNRxG22dN7HtmhxSFe9qmDUdehPX+I4Gaf2/MwhrTeMADArQihTR/1CeS9v84gyD3ODOiLCKJClmGtdpBCD7WXEM2GytxNNPDwKmdm2ly88H7T5xW4toNXHh4uTtfsBd/Wf6nmDrM/TreMhTsMQlVaEA17dh3pXkiHTvL0MemldJVmqNUgsN2f/8shAsyQrY5Cr8HTAsW1r05IIS/9a8xiOVy7CNz61WiNB9oH9+xpYfUKqQxzjFPqFcFkTrc1IvGHM/5YqNw7TK826gk3xBAclGxlQ7ZZXyHVrIN8EYfLSVZFsaplTiQyJFLJ0kpnjB+npvLCTXhEcClJNFQVBvAi8joJufCHvnfjRnKR9CHoS5JghfxNBBdRM9yahggTgpgUselOEUAAd6R9Sf9b3ihI5nFEdejc9GB9zCE8cRBpPp69dMagZ7wZnQHXDg4VlEsE7m3tohn8shaIzYJXfc=
+        file_glob: true
+        file:
+        - "./build/dist/mongoose-*.tgz"
+        on:
+          tags: true
+      after_deploy:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
+      - export REPO=emcmongoose/mongoose
+      - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push $REPO
+      - export REPO=emcmongoose/mongoose-storage-driver-service
+      - docker build -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push $REPO

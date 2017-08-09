@@ -206,6 +206,10 @@ subprojects {
 	}
 }
 
+task wrapper(type: Wrapper) {
+	gradleVersion = "3.5"
+}
+
 task dist(type: Tar) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
@@ -238,10 +242,6 @@ task printVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
 	doLast { logger.quiet "Mongoose version: $version" }
-}
-
-task wrapper(type: Wrapper) {
-	gradleVersion = "3.5"
 }
 
 void collectName(Project p, LinkedList<String> names) {
