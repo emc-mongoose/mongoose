@@ -29,6 +29,7 @@
 					"test" : {
 						"step" : {
 							"limit" : {
+								"count" : 999000,
 								"time" : 60
 							}
 						}
