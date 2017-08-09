@@ -31,10 +31,14 @@
 			],
 			"config" : [
 				{
+					"item" : {
+						"output" : {
+							"path" : "${ITEM_OUTPUT_PATH}"
+						}
+					},
 					"test" : {
 						"step" : {
 							"limit" : {
-								"count" : 990000,
 								"time" : 50
 							}
 						}

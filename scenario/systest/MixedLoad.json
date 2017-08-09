@@ -16,7 +16,9 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 1000
+							"count" : 10000,
+							"size" : "1GB",
+							"time" : 10
 						}
 					}
 				}
@@ -26,10 +28,14 @@
 			"type" : "mixed",
 			"config" : [
 				{
+					"item" : {
+						"output" : {
+							"path" : "${ITEM_OUTPUT_PATH}"
+						}
+					},
 					"test" : {
 						"step" : {
 							"limit" : {
-								"count" : 999000,
 								"time" : 50
 							}
 						}

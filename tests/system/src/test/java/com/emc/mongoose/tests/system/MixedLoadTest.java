@@ -6,6 +6,7 @@ import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
 import com.emc.mongoose.tests.system.util.PortListener;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -72,8 +73,10 @@ extends EnvConfiguredScenarioTestBase {
 		STEP_ID = MixedLoadTest.class.getSimpleName();
 		SCENARIO_PATH = Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "MixedLoad.json"
-		);ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
+		);
+		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
+		CONFIG_ARGS.add("--storage-mock-container-capacity=100000");
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
@@ -82,8 +85,10 @@ extends EnvConfiguredScenarioTestBase {
 			ITEM_OUTPUT_PATH = Paths.get(
 				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
 			).toString();
+			EnvUtil.set("ITEM_OUTPUT_PATH", ITEM_OUTPUT_PATH);
 		} else {
 			ITEM_OUTPUT_PATH = "/default";
+			EnvUtil.set("ITEM_OUTPUT_PATH", STEP_ID);
 		}
 		CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
