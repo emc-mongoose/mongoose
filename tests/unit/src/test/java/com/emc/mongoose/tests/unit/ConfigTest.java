@@ -80,7 +80,7 @@ public class ConfigTest {
 		assertEquals(true, netConfig.getHttpConfig().getFsAccess());
 		assertEquals(
 			"customHeaderValue",
-			netConfig.getHttpConfig().getHeadersConfig().get("customHeaderName")
+			netConfig.getHttpConfig().getHeaders().get("customHeaderName")
 		);
 	}
 	

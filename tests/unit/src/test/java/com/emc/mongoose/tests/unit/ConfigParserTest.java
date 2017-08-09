@@ -41,7 +41,7 @@ public class ConfigParserTest {
 	throws IOException {
 		final Config config = ConfigParser.loadDefaultConfig();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("3.4.0", "version"));
+		assertThat(config.getVersion(), equalTo("3.4.1", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertThat(netConfig, notNullValue());
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
@@ -134,7 +134,7 @@ public class ConfigParserTest {
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		assertThat(httpConfig, notNullValue());
 		assertThat(httpConfig.getFsAccess(), equalTo(false, "storage.net.http.fsAccess"));
-		final Map<String, String> headers = httpConfig.getHeadersConfig();
+		final Map<String, String> headers = httpConfig.getHeaders();
 		assertThat(headers, notNullValue());
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_CONNECTION),
 			equalTo(true, "storage.net.http.headers[Connection]"));
@@ -143,7 +143,7 @@ public class ConfigParserTest {
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_USER_AGENT),
 			equalTo(true, "storage.net.http.headers[User-Agent]"));
 		assertThat(headers.get(HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo("mongoose/3.4.0", "storage.net.http.headers[User-Agent]"));
+			equalTo("mongoose/3.4.1", "storage.net.http.headers[User-Agent]"));
 		assertThat(httpConfig.getNamespace(), nullValue("storage.net.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.net.http.versioning"));
 		assertThat(
