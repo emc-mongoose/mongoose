@@ -16,7 +16,9 @@ public final class ThreadDump {
 		for(final Thread thread : threadDumpData.keySet()) {
 			threadDumpStr
 				.append(thread.getName())
-				.append(':')
+				.append(" (state: ")
+				.append(thread.getState())
+				.append("):")
 				.append(lineSep);
 			final StackTraceElement[] threadStackTrace = threadDumpData.get(thread);
 			for(final StackTraceElement ste : threadStackTrace) {

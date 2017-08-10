@@ -264,10 +264,14 @@ implements Coroutine {
 	protected final void doClose() {
 		try {
 			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
-				for(final LoadController controller : allMetrics.keySet()) {
-					allMetrics.get(controller).clear();
+				try {
+					for(final LoadController controller : allMetrics.keySet()) {
+						allMetrics.get(controller).clear();
+					}
+					allMetrics.clear();
+				} finally {
+					allMetricsLock.unlock();
 				}
-				allMetrics.clear();
 			} else {
 				Loggers.ERR.warn(
 					"Locking timeout at closing, thread dump:\n{}", new ThreadDump().toString()
