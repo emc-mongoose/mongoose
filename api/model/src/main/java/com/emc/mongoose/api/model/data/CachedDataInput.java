@@ -64,29 +64,21 @@ extends DataInputBase {
 		ByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
-			if(layersCache.size() >= layersCacheCountLimit - 1) {
-				for(int i = 0; i < layerIndex - 1; i ++) {
+			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			if(layersCountToFree > 0) {
+				for(final int i : layersCache.keySet()) {
 					if(null != layersCache.remove(i)) {
-						if(null != layersCache.get(i)) {
-							throw new AssertionError();
+						layersCountToFree --;
+						if(layersCountToFree == 0) {
+							break;
 						}
-						// some lowest index layer was removed, stop the loop
-						break;
 					}
 				}
 				layersCache.trim();
 			}
 			// generate the layer
 			final int size = inputBuff.capacity();
-			try {
-				layer = allocateDirect(size);
-			} catch(final OutOfMemoryError e) {
-				synchronized(System.err) {
-					System.err.print("Thread: " + Thread.currentThread().getName());
-					System.err.println(", layers cache size: " + layersCache.size());
-				}
-				throw e;
-			}
+			layer = allocateDirect(size);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
