@@ -3,6 +3,7 @@ package com.emc.mongoose.api.model.data;
 import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
@@ -81,7 +82,12 @@ extends DataInputBase {
 			try {
 				layer = allocateDirect(size);
 			} catch(final OutOfMemoryError e) {
-				System.err.println("Thread: " + Thread.currentThread().getName() + ", layers cache size: " + layersCache.size());
+				final Runtime rt = Runtime.getRuntime();
+				System.err.println(
+					"Memory info: " + SizeInBytes.formatFixedSize(rt.freeMemory()) + ", " +
+						SizeInBytes.formatFixedSize(rt.maxMemory()) + ", " +
+						SizeInBytes.formatFixedSize(rt.totalMemory())
+				);
 				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
