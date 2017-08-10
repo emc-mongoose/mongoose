@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.LongAdder;
 
 import static java.nio.ByteBuffer.allocateDirect;
 
@@ -21,8 +20,6 @@ import static java.nio.ByteBuffer.allocateDirect;
  */
 public class CachedDataInput
 extends DataInputBase {
-
-	private static final LongAdder LAYERS_COUNTER = new LongAdder();
 
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
@@ -72,7 +69,6 @@ extends DataInputBase {
 				for(final int i : layersCache.keySet()) {
 					if(null != layersCache.remove(i)) {
 						layersCountToFree --;
-						LAYERS_COUNTER.decrement();
 						if(layersCountToFree == 0) {
 							break;
 						}
@@ -82,18 +78,12 @@ extends DataInputBase {
 			}
 			// generate the layer
 			final int size = inputBuff.capacity();
-			try {
-				layer = allocateDirect(size);
-			} catch(final OutOfMemoryError e) {
-				System.err.println("Total cached layers count: " + LAYERS_COUNTER.sum());
-				throw e;
-			}
+			layer = allocateDirect(size);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
 			generateData(layer, layerSeed);
 			layersCache.put(layerIndex - 1, layer);
-			LAYERS_COUNTER.increment();
 		}
 		return layer;
 	}
@@ -103,7 +93,6 @@ extends DataInputBase {
 		super.close();
 		final Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
-			LAYERS_COUNTER.add(-layersCache.size());
 			layersCache.clear();
 			thrLocLayersCache.set(null);
 		}
