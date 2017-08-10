@@ -81,6 +81,10 @@ extends DataInputBase {
 			try {
 				layer = allocateDirect(size);
 			} catch(final OutOfMemoryError e) {
+				synchronized(System.err) {
+					System.err.print("Thread: " + Thread.currentThread().getName());
+					System.err.println(", layers cache size: " + layersCache.size());
+				}
 				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
