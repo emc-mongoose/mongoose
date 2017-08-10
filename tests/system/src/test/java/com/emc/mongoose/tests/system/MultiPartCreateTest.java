@@ -74,7 +74,7 @@ extends EnvConfiguredScenarioTestBase {
 		EnvUtil.set("PART_SIZE", PART_SIZE.toString());
 		EnvUtil.set("ITEM_OUTPUT_FILE", ITEM_OUTPUT_FILE);
 		SIZE_LIMIT = new SizeInBytes(
-			Math.min(SizeInBytes.toFixedSize("200GB"), 100 * CONCURRENCY * ITEM_DATA_SIZE.getMax())
+			Math.min(SizeInBytes.toFixedSize("1TB"), 100 * CONCURRENCY * ITEM_DATA_SIZE.getMax())
 		);
 		EnvUtil.set("SIZE_LIMIT", SIZE_LIMIT.toString());
 		EXPECTED_COUNT_MIN = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getMax();
