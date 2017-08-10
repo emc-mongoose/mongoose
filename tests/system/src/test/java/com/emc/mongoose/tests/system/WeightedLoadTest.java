@@ -78,7 +78,9 @@ extends EnvConfiguredScenarioTestBase {
 		);
 		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
 		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
-		CONFIG_ARGS.add("--storage-mock-container-capacity=100000");
+		if(!STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_ATMOS)) {
+			CONFIG_ARGS.add("--storage-mock-container-capacity=100000");
+		}
 		EnvConfiguredScenarioTestBase.setUpClass();
 		if(SKIP_FLAG) {
 			return;
