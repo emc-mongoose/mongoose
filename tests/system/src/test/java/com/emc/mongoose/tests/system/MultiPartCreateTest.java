@@ -73,7 +73,7 @@ extends EnvConfiguredScenarioTestBase {
 		EnvUtil.set("PART_SIZE", PART_SIZE.toString());
 		EnvUtil.set("ITEM_OUTPUT_FILE", ITEM_OUTPUT_FILE);
 		SIZE_LIMIT = new SizeInBytes(
-			Math.min(SizeInBytes.toFixedSize("200GB"), CONCURRENCY * ITEM_DATA_SIZE.getMax())
+			Math.min(SizeInBytes.toFixedSize("200GB"), 100 * CONCURRENCY * ITEM_DATA_SIZE.getMax())
 		);
 		EnvUtil.set("SIZE_LIMIT", SIZE_LIMIT.toString());
 		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
@@ -158,7 +158,9 @@ extends EnvConfiguredScenarioTestBase {
 		long sizeSum = 0;
 		final int n = itemRecs.size();
 		assertTrue(n > 0);
-		assertTrue(EXPECTED_COUNT >= n);
+		assertTrue(
+			"Expected no more than " + EXPECTED_COUNT + " items, but got " + n, EXPECTED_COUNT >= n
+		);
 		for(final CSVRecord itemRec : itemRecs) {
 			nextItemSize = Long.parseLong(itemRec.get(2));
 			assertTrue(ITEM_DATA_SIZE.getMin() <= nextItemSize);
