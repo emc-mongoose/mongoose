@@ -39,7 +39,8 @@ public class MultiPartCreateTest
 extends EnvConfiguredScenarioTestBase {
 
 	private static String STD_OUTPUT;
-	private static long EXPECTED_COUNT;
+	private static long EXPECTED_COUNT_MIN;
+	private static long EXPECTED_COUNT_MAX;
 	private static SizeInBytes PART_SIZE;
 	private static SizeInBytes SIZE_LIMIT;
 	
@@ -76,7 +77,8 @@ extends EnvConfiguredScenarioTestBase {
 			Math.min(SizeInBytes.toFixedSize("200GB"), 100 * CONCURRENCY * ITEM_DATA_SIZE.getMax())
 		);
 		EnvUtil.set("SIZE_LIMIT", SIZE_LIMIT.toString());
-		EXPECTED_COUNT = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getAvg();
+		EXPECTED_COUNT_MIN = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getMax();
+		EXPECTED_COUNT_MAX = SIZE_LIMIT.get() / ITEM_DATA_SIZE.getMin();
 		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
 		STD_OUT_STREAM.startRecording();
 		SCENARIO.run();
@@ -123,9 +125,9 @@ extends EnvConfiguredScenarioTestBase {
 		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
 		assertTrue(
-			"There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file, " +
-				"but got: " + ioTraceRecords.size(),
-			EXPECTED_COUNT < ioTraceRecords.size()
+			"There should be more than " + EXPECTED_COUNT_MIN +
+				" records in the I/O trace log file, " + "but got: " + ioTraceRecords.size(),
+			EXPECTED_COUNT_MIN < ioTraceRecords.size()
 		);
 		final SizeInBytes ZERO_SIZE = new SizeInBytes(0);
 		final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, PART_SIZE.get(), 1);
@@ -159,7 +161,8 @@ extends EnvConfiguredScenarioTestBase {
 		final int n = itemRecs.size();
 		assertTrue(n > 0);
 		assertTrue(
-			"Expected no more than " + EXPECTED_COUNT + " items, but got " + n, EXPECTED_COUNT >= n
+			"Expected no more than " + EXPECTED_COUNT_MAX + " items, but got " + n,
+			EXPECTED_COUNT_MAX >= n
 		);
 		for(final CSVRecord itemRec : itemRecs) {
 			nextItemSize = Long.parseLong(itemRec.get(2));
