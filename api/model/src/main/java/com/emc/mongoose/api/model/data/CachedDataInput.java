@@ -76,17 +76,17 @@ extends DataInputBase {
 				}
 				layersCache.trim();
 			}
-			synchronized(System.out) {
-				System.out.print("Thread name: " + Thread.currentThread().getName() + ", ");
-				System.out.print("layers cache size before: " + layersCache.size() + ", ");
-				// generate the layer
-				final int size = inputBuff.capacity();
-				try {
-					layer = allocateDirect(size);
-				} catch(final OutOfMemoryError e) {
-					System.out.print("layers cache size after: " + layersCache.size());
-					throw e;
-				}
+			final StringBuilder strb = new StringBuilder();
+			strb.append("Thread name: ").append(Thread.currentThread().getName());
+			strb.append(", layers cache size before: ").append(layersCache.size());
+			// generate the layer
+			final int size = inputBuff.capacity();
+			try {
+				layer = allocateDirect(size);
+			} catch(final OutOfMemoryError e) {
+				strb.append(", layers cache size after: ").append(layersCache.size());
+				System.err.println(strb.toString());
+				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
