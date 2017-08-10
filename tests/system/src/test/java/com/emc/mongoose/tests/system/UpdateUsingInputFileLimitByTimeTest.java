@@ -108,10 +108,13 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
 		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
+		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
+		final long metricsPeriod = CONFIG
+			.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod();
+		assertTrue(metricsLogRecords.size() <= EXPECTED_TIME / metricsPeriod + 1);
 		testMetricsLogRecords(
-			getMetricsLogRecords(),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, updateSize, 0, EXPECTED_TIME,
-			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
+			metricsLogRecords, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, updateSize, 0, 0,
+			metricsPeriod
 		);
 	}
 
