@@ -45,7 +45,7 @@ public final class ThreadLocalByteBuffer {
 		
 		if(buff == null) {
 			buff = ByteBuffer.allocateDirect((int) currBuffSize);
-			long buffSizeSum = 0;
+			/*long buffSizeSum = 0;
 			for(final ByteBuffer ioBuff : ioBuffers) {
 				if(ioBuff != null) {
 					buffSizeSum += ioBuff.capacity();
@@ -54,7 +54,7 @@ public final class ThreadLocalByteBuffer {
 			System.out.println(
 				Thread.currentThread().getName() + ": allocated " + formatFixedSize(currBuffSize) +
 				" of direct memory, total used by the thread: " + formatFixedSize(buffSizeSum)
-			);
+			);*/
 			ioBuffers[i] = buff;
 		}
 		
