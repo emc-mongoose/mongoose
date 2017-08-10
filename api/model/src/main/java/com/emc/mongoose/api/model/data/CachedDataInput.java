@@ -3,13 +3,13 @@ package com.emc.mongoose.api.model.data;
 import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
-import com.emc.mongoose.api.common.SizeInBytes;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.LongAdder;
 
 import static java.nio.ByteBuffer.allocateDirect;
 
@@ -21,6 +21,8 @@ import static java.nio.ByteBuffer.allocateDirect;
  */
 public class CachedDataInput
 extends DataInputBase {
+
+	private static final LongAdder LAYERS_COUNTER = new LongAdder();
 
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
@@ -70,6 +72,7 @@ extends DataInputBase {
 				for(final int i : layersCache.keySet()) {
 					if(null != layersCache.remove(i)) {
 						layersCountToFree --;
+						LAYERS_COUNTER.decrement();
 						if(layersCountToFree == 0) {
 							break;
 						}
@@ -82,12 +85,6 @@ extends DataInputBase {
 			try {
 				layer = allocateDirect(size);
 			} catch(final OutOfMemoryError e) {
-				final Runtime rt = Runtime.getRuntime();
-				System.err.println(
-					"Memory info: " + SizeInBytes.formatFixedSize(rt.freeMemory()) + ", " +
-						SizeInBytes.formatFixedSize(rt.maxMemory()) + ", " +
-						SizeInBytes.formatFixedSize(rt.totalMemory())
-				);
 				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
@@ -95,6 +92,7 @@ extends DataInputBase {
 			);
 			generateData(layer, layerSeed);
 			layersCache.put(layerIndex - 1, layer);
+			LAYERS_COUNTER.increment();
 		}
 		return layer;
 	}
@@ -104,6 +102,7 @@ extends DataInputBase {
 		super.close();
 		final Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
+			LAYERS_COUNTER.add(-layersCache.size());
 			layersCache.clear();
 			thrLocLayersCache.set(null);
 		}
