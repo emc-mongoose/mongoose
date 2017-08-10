@@ -85,6 +85,7 @@ extends DataInputBase {
 			try {
 				layer = allocateDirect(size);
 			} catch(final OutOfMemoryError e) {
+				System.err.println("Total cached layers count: " + LAYERS_COUNTER.sum());
 				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
