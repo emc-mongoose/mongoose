@@ -29,7 +29,7 @@ extends EnvConfiguredScenarioTestBase {
 
 	private static final int SCENARIO_TIMEOUT = 50;
 	private static final int EXPECTED_STEP_TIME = 5;
-	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME;
+	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME - 1;
 
 	@BeforeClass
 	public static void setUpClass()
