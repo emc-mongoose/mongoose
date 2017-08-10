@@ -47,7 +47,7 @@ extends DataInputBase {
 	}
 
 	@Override
-	public synchronized final ByteBuffer getLayer(final int layerIndex)
+	public final ByteBuffer getLayer(final int layerIndex)
 	throws OutOfMemoryError {
 
 		if(layerIndex == 0) {
