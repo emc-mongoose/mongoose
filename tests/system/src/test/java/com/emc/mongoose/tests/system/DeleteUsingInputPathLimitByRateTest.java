@@ -114,12 +114,12 @@ extends EnvConfiguredScenarioTestBase {
 			metricsLogRecs, IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, new SizeInBytes(0),
 			EXPECTED_COUNT, 0, CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-		for(final CSVRecord metricsLogRec : metricsLogRecs) {
+		/*for(final CSVRecord metricsLogRec : metricsLogRecs) {
 			assertEquals(
 				EXPECTED_RATE, Double.parseDouble(metricsLogRec.get("TPAvg[op/s]")),
 				EXPECTED_RATE
 			);
-		}
+		}*/
 	}
 
 	@Test
