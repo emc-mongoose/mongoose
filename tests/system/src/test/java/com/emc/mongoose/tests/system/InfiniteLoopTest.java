@@ -71,6 +71,9 @@ extends EnvConfiguredScenarioTestBase {
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
-		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size(), 1);
+		assertEquals(
+			"Expected steps count: " + EXPECTED_LOOP_COUNT + ", but was: " + totalRecs.size(),
+			EXPECTED_LOOP_COUNT, totalRecs.size(), 1
+		);
 	}
 }
