@@ -9,6 +9,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.junit.After;
+import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
 public abstract class ConfiguredTestBase
 extends LoggingTestBase {
 
-	protected final Config config;
+	protected Config config;
 	protected final List<String> configArgs = new ArrayList<>();
 
 	protected ConfiguredTestBase(
@@ -27,6 +28,12 @@ extends LoggingTestBase {
 		final ItemSize itemSize
 	) throws Exception {
 		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
+	throws Exception {
+		super.setUp();
 		config = Config.loadDefaults();
 		if(configArgs != null) {
 			config.apply(

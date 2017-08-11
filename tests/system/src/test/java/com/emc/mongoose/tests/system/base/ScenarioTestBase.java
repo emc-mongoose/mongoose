@@ -5,14 +5,15 @@ import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
-import org.junit.After;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
+
+import org.junit.After;
+import org.junit.Before;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  Created by andrey on 11.08.17.
@@ -31,6 +32,12 @@ extends StorageTestBase {
 		final ItemSize itemSize
 	) throws Exception {
 		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
+	throws Exception {
+		super.setUp();
 		scenarioPath = makeScenarioPath();
 		if(scenarioPath == null) {
 			final String scenarioValue = config.getTestConfig().getScenarioConfig().getFile();
@@ -42,8 +49,6 @@ extends StorageTestBase {
 		}
 	}
 
-	protected abstract Path makeScenarioPath();
-
 	@After
 	public void tearDown()
 	throws Exception {
@@ -53,4 +58,6 @@ extends StorageTestBase {
 		}
 		super.tearDown();
 	}
+
+	protected abstract Path makeScenarioPath();
 }

@@ -22,6 +22,7 @@ import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 
 import org.junit.After;
+import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +44,12 @@ extends ConfiguredTestBase {
 		final ItemSize itemSize
 	) throws Exception {
 		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
+	throws Exception {
+		super.setUp();
 		setUpHttpStorageMockIfNeeded();
 		setUpDistributedModeIfNeeded();
 	}

@@ -19,4 +19,9 @@ public enum Concurrency {
 	public final int getValue() {
 		return value;
 	}
+
+	@Override
+	public final String toString() {
+		return getClass().getSimpleName().toUpperCase() + '_' + value;
+	}
 }

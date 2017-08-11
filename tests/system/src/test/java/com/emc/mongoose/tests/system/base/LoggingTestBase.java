@@ -25,6 +25,8 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
+import org.junit.Before;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -53,14 +55,19 @@ extends ParameterizedSysTestBase {
 
 	protected static int LOG_FILE_TIMEOUT_SEC = 15;
 	
-	protected final String stepId;
-	protected final BufferingOutputStream stdOutStream;
+	protected String stepId;
+	protected BufferingOutputStream stdOutStream;
 
 	protected LoggingTestBase(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
 		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
+	throws Exception {
 		stepId = makeStepId();
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
@@ -73,14 +80,14 @@ extends ParameterizedSysTestBase {
 		stdOutStream = new BufferingOutputStream(System.out);
 	}
 
-	protected abstract String makeStepId();
-	
 	@After
 	public void tearDown()
 	throws Exception {
 		stdOutStream.close();
 		//LogUtil.shutdown();
 	}
+
+	protected abstract String makeStepId();
 
 	private List<String> getLogFileLines(final String fileName)
 	throws IOException {

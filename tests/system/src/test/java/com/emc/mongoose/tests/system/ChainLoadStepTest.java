@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeThat;
 import org.junit.After;
+import org.junit.Before;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,15 +39,18 @@ extends ScenarioTestBase {
 	private String itemOutputPath;
 	private String stdOutput;
 
-	{
-		configArgs.add("--test-step-limit-count=" + COUNT_LIMIT);
-	}
-
 	public ChainLoadStepTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
 		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
+	throws Exception {
+		configArgs.add("--test-step-limit-count=" + COUNT_LIMIT);
+		super.setUp();
 	}
 
 	@Override
