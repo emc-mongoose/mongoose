@@ -72,7 +72,7 @@ extends DataInputBase {
 				for(int i = 0; i < layerIndex - 1; i ++) {
 					if(null != layersCache.remove(i)) {
 						ALLOCATED_DIRECT_MEM.add(-inputBuff.capacity());
-						// stop if some lowest index layer was removed
+						// some lowest index layer was removed, stop the loop
 						break;
 					}
 				}
@@ -86,8 +86,10 @@ extends DataInputBase {
 			} catch (final OutOfMemoryError e) {
 				System.err.println(
 					"Allocated direct memory: " +
-						SizeInBytes.formatFixedSize(ALLOCATED_DIRECT_MEM.sum())
+						SizeInBytes.formatFixedSize(ALLOCATED_DIRECT_MEM.sum()) +
+						", layers cache size: " + layersCache.size()
 				);
+				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
