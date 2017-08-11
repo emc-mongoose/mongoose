@@ -3,12 +3,15 @@ package com.emc.mongoose.api.model.data;
 import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.LongAdder;
+
 import static java.nio.ByteBuffer.allocateDirect;
 
 /**
@@ -19,6 +22,8 @@ import static java.nio.ByteBuffer.allocateDirect;
  */
 public class CachedDataInput
 extends DataInputBase {
+
+	private static final LongAdder ALLOCATED_DIRECT_MEM = new LongAdder();
 
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
@@ -66,6 +71,7 @@ extends DataInputBase {
 			if(layersCache.size() == layersCacheCountLimit - 1) {
 				for(int i = 0; i < layerIndex - 1; i ++) {
 					if(null != layersCache.remove(i)) {
+						ALLOCATED_DIRECT_MEM.add(-inputBuff.capacity());
 						// stop if some lowest index layer was removed
 						break;
 					}
@@ -74,7 +80,15 @@ extends DataInputBase {
 			}
 			// generate the layer
 			final int size = inputBuff.capacity();
-			layer = allocateDirect(size);
+			try {
+				layer = allocateDirect(size);
+				ALLOCATED_DIRECT_MEM.add(size);
+			} catch (final OutOfMemoryError e) {
+				System.err.println(
+					"Allocated direct memory: " +
+						SizeInBytes.formatFixedSize(ALLOCATED_DIRECT_MEM.sum())
+				);
+			}
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
@@ -88,6 +102,11 @@ extends DataInputBase {
 	throws IOException {
 		final Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
+			for(final ByteBuffer layer : layersCache.values()) {
+				if(layer != null) {
+					ALLOCATED_DIRECT_MEM.add(-layer.capacity());
+				}
+			}
 			layersCache.clear();
 			thrLocLayersCache.set(null);
 		}
