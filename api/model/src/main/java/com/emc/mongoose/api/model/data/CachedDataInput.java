@@ -25,6 +25,7 @@ extends DataInputBase {
 
 	private static final LongAdder ALLOCATED_DIRECT_MEM = new LongAdder();
 
+	private final LongAdder allocatedByTheCache = new LongAdder();
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
 		thrLocLayersCache = new ThreadLocal<>();
@@ -72,6 +73,7 @@ extends DataInputBase {
 				for(int i = 0; i < layerIndex - 1; i ++) {
 					if(null != layersCache.remove(i)) {
 						ALLOCATED_DIRECT_MEM.add(-inputBuff.capacity());
+						allocatedByTheCache.add(-inputBuff.capacity());
 						// some lowest index layer was removed, stop the loop
 						break;
 					}
@@ -83,11 +85,13 @@ extends DataInputBase {
 			try {
 				layer = allocateDirect(size);
 				ALLOCATED_DIRECT_MEM.add(size);
+				allocatedByTheCache.add(size);
 			} catch (final OutOfMemoryError e) {
 				System.err.println(
 					"Allocated direct memory: " +
 						SizeInBytes.formatFixedSize(ALLOCATED_DIRECT_MEM.sum()) +
-						", layers cache size: " + layersCache.size()
+						", layers cache size: " + layersCache.size() + ", current cache size: " +
+						SizeInBytes.formatFixedSize(allocatedByTheCache.sum())
 				);
 				throw e;
 			}
