@@ -59,15 +59,6 @@ extends ScenarioTestBase {
 	}
 
 	@Override
-	protected void assumeApplicable() {
-		assumeThat(
-			storageType, anyOf(is(StorageType.FS), is(StorageType.S3), is(StorageType.SWIFT))
-		);
-		assumeThat(concurrency, anyOf(is(Concurrency.LOW), is(Concurrency.MEDIUM)));
-		assumeThat(itemSize, is(ItemSize.SMALL));
-	}
-
-	@Override
 	protected String makeStepId() {
 		return ChainLoadStepTest.class.getSimpleName();
 	}

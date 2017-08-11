@@ -8,5 +8,7 @@ public enum StorageType {
 	ATMOS,
 	FS,
 	S3,
-	SWIFT
+	SWIFT;
+
+	public static final String KEY_ENV = "STORAGE_TYPE";
 }

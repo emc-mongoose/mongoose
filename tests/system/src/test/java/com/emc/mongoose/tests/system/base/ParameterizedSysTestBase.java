@@ -10,6 +10,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.runners.Parameterized.Parameters;
 
@@ -22,11 +23,38 @@ public abstract class ParameterizedSysTestBase {
 
 	@Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> data() {
+
+		final Map<String, String> env = System.getenv();
+
+		final List<StorageType> includedStorageTypes = new ArrayList<>();
+		final String storageTypeValues = env.get(StorageType.KEY_ENV);
+		for(final String storageTypeValue : storageTypeValues.split(",")) {
+			includedStorageTypes.add(StorageType.valueOf(storageTypeValue));
+		}
+
+		final List<DriverCount> includedDriverCounts = new ArrayList<>();
+		final String driverCountValues = env.get(DriverCount.KEY_ENV);
+		for(final String driverCountValue : driverCountValues.split(",")) {
+			includedDriverCounts.add(DriverCount.valueOf(driverCountValue));
+		}
+
+		final List<Concurrency> includedConcurrencies = new ArrayList<>();
+		final String concurrencyValues = env.get(Concurrency.KEY_ENV);
+		for(final String concurrencyValue : concurrencyValues.split(",")) {
+			includedConcurrencies.add(Concurrency.valueOf(concurrencyValue));
+		}
+
+		final List<ItemSize> includedItemSizes = new ArrayList<>();
+		final String itemSizeValues = env.get(ItemSize.KEY_ENV);
+		for(final String itemSizeValue : itemSizeValues.split(",")) {
+			includedItemSizes.add(ItemSize.valueOf(itemSizeValue));
+		}
+
 		final List<Object[]> data = new ArrayList<>();
-		for(final StorageType storageType : StorageType.values()) {
-			for(final DriverCount driverCount : DriverCount.values()) {
-				for(final Concurrency concurrency : Concurrency.values()) {
-					for(final ItemSize itemSize : ItemSize.values()) {
+		for(final StorageType storageType : includedStorageTypes) {
+			for(final DriverCount driverCount : includedDriverCounts) {
+				for(final Concurrency concurrency : includedConcurrencies) {
+					for(final ItemSize itemSize : includedItemSizes) {
 						data.add(
 							new Object[] {
 								storageType, driverCount, concurrency, itemSize
@@ -52,10 +80,7 @@ public abstract class ParameterizedSysTestBase {
 		this.driverCount = driverCount;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		assumeApplicable();
 	}
-
-	protected abstract void assumeApplicable();
 
 	@Test
 	public abstract void test()

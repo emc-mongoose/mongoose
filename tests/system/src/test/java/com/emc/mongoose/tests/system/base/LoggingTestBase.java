@@ -73,9 +73,12 @@ extends ParameterizedSysTestBase {
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
 		LogUtil.init();
 		Loggers.MSG.info(
-			"{} params: storage type = {}, driver count = {}, concurrency = {}, item size = {}",
-			getClass().getSimpleName(), storageType.toString(), driverCount.getValue(),
-			concurrency.getValue(), itemSize.getValue()
+			"{} params: {} = {}, {} = {}, {} = {}, {} = {}",
+			getClass().getSimpleName(),
+			StorageType.KEY_ENV, storageType.name(),
+			DriverCount.KEY_ENV, driverCount.name(),
+			Concurrency.KEY_ENV, concurrency.name(),
+			ItemSize.KEY_ENV, itemSize.name()
 		);
 		stdOutStream = new BufferingOutputStream(System.out);
 	}
