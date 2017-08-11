@@ -3,14 +3,12 @@ package com.emc.mongoose.api.model.data;
 import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
-import com.emc.mongoose.api.common.SizeInBytes;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.LongAdder;
 
 import static java.nio.ByteBuffer.allocateDirect;
 
