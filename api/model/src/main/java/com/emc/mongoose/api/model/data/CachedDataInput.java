@@ -72,6 +72,9 @@ extends DataInputBase {
 			if(layersCache.size() == layersCacheCountLimit - 1) {
 				for(int i = 0; i < layerIndex - 1; i ++) {
 					if(null != layersCache.remove(i)) {
+						if(null != layersCache.get(i)) {
+							throw new AssertionError();
+						}
 						ALLOCATED_DIRECT_MEM.add(-inputBuff.capacity());
 						allocatedByTheCache.add(-inputBuff.capacity());
 						// some lowest index layer was removed, stop the loop
