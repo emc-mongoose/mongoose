@@ -1,10 +1,10 @@
 package com.emc.mongoose.tests.system.suite;
 
-import com.emc.mongoose.tests.system.CircularReadSingleItemTest;
-import com.emc.mongoose.tests.system.CreateLimitBySizeTest;
-import com.emc.mongoose.tests.system.HttpStorageMetricsThresholdTest;
-import com.emc.mongoose.tests.system.ReadVerificationAfterCircularUpdateTest;
-import com.emc.mongoose.tests.system.TlsAndNodeBalancingTest;
+import com.emc.mongoose.tests.system.deprecated.CircularReadSingleItemTest;
+import com.emc.mongoose.tests.system.deprecated.CreateLimitBySizeTest;
+import com.emc.mongoose.tests.system.deprecated.HttpStorageMetricsThresholdTest;
+import com.emc.mongoose.tests.system.deprecated.ReadVerificationAfterCircularUpdateTest;
+import com.emc.mongoose.tests.system.deprecated.TlsAndNodeBalancingTest;
 
 import org.junit.Ignore;
 import org.junit.runner.RunWith;

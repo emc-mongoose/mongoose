@@ -1,10 +1,14 @@
 package com.emc.mongoose.tests.system.base;
 
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+
+import org.junit.After;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,31 +19,34 @@ import java.util.List;
 public abstract class ConfiguredTestBase
 extends LoggingTestBase {
 
-	protected static Config CONFIG;
-	protected static List<String> CONFIG_ARGS = new ArrayList<>();
+	protected final Config config;
+	protected final List<String> configArgs = new ArrayList<>();
 
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		LoggingTestBase.setUpClass();
-		CONFIG = Config.loadDefaults();
-		if(CONFIG_ARGS != null) {
-			CONFIG.apply(
+	protected ConfiguredTestBase(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+		config = Config.loadDefaults();
+		if(configArgs != null) {
+			config.apply(
 				CliArgParser.parseArgs(
-					CONFIG.getAliasingConfig(), CONFIG_ARGS.toArray(new String[CONFIG_ARGS.size()])
+					config.getAliasingConfig(), configArgs.toArray(new String[configArgs.size()])
 				),
 				"systest-" + LogUtil.getDateTimeStamp()
 			);
 		}
-		CONFIG.getTestConfig().getStepConfig().setId(STEP_ID);
-		CONFIG.getTestConfig().getStepConfig().setIdTmp(false);
-		CONFIG.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);
+		config.getTestConfig().getStepConfig().setId(stepId);
+		config.getTestConfig().getStepConfig().setIdTmp(false);
+		config.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);
+		config.getItemConfig().getDataConfig().setSize(itemSize.getValue());
+		config.getStorageConfig().getDriverConfig().setConcurrency(concurrency.getValue());
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		LoggingTestBase.tearDownClass();
-		CONFIG_ARGS.clear();
+		configArgs.clear();
+		super.tearDown();
 	}
 }

@@ -1,17 +1,14 @@
-package com.emc.mongoose.tests.system.base;
+package com.emc.mongoose.tests.system.base.deprecated;
 
 import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.tests.system.base.params.Concurrency;
-import com.emc.mongoose.tests.system.base.params.DriverCount;
-import com.emc.mongoose.tests.system.base.params.ItemSize;
-import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
@@ -19,12 +16,17 @@ import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.T
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 
-import com.emc.mongoose.ui.log.Loggers;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
+
+import org.apache.logging.log4j.ThreadContext;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -48,71 +50,60 @@ import java.util.stream.Collectors;
 /**
  Created by andrey on 19.01.17.
  */
-public abstract class LoggingTestBase
-extends ParameterizedSysTestBase {
-
+public abstract class LoggingTestBase {
+	
+	protected static String STEP_ID;
+	protected static BufferingOutputStream STD_OUT_STREAM;
 	protected static int LOG_FILE_TIMEOUT_SEC = 15;
-	
-	protected final String stepId;
-	protected final BufferingOutputStream stdOutStream;
 
-	protected LoggingTestBase(
-		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
-		final ItemSize itemSize
-	) throws Exception {
-		super(storageType, driverCount, concurrency, itemSize);
-		stepId = makeStepId();
-		// remove previous logs if exist
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
-		LogUtil.init();
-		Loggers.MSG.info(
-			"{} params: storage type = {}, driver count = {}, concurrency = {}, item size = {}",
-			getClass().getSimpleName(), storageType.toString(), driverCount.getValue(),
-			concurrency.getValue(), itemSize.getValue()
-		);
-		stdOutStream = new BufferingOutputStream(System.out);
-	}
-
-	protected abstract String makeStepId();
-	
-	@After
-	public void tearDown()
+	@BeforeClass
+	public static void setUpClass()
 	throws Exception {
-		stdOutStream.close();
+		// remove previous logs if exist
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_ID).toFile());
+		LogUtil.init();
+		STEP_ID = ThreadContext.get(KEY_TEST_STEP_ID);
+		STD_OUT_STREAM = new BufferingOutputStream(System.out);
+	}
+	
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		STD_OUT_STREAM.close();
 		//LogUtil.shutdown();
 	}
 
-	private List<String> getLogFileLines(final String fileName)
+	private static List<String> getLogFileLines(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_ID, fileName).toFile();
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			return br.lines().collect(Collectors.toList());
 		}
 	}
 
-	protected List<String> getMessageLogLines()
+	protected static List<String> getMessageLogLines()
 	throws IOException {
 		return getLogFileLines("messages.log");
 	}
 
-	protected List<String> getErrorsLogLines()
+	protected static List<String> getErrorsLogLines()
 	throws IOException {
 		return getLogFileLines("errors.log");
 	}
 
-	protected List<String> getConfigLogLines()
+	protected static List<String> getConfigLogLines()
 	throws IOException {
 		return getLogFileLines("config.log");
 	}
 
-	protected List<String> getPartsUploadLogLines()
+	protected static List<String> getPartsUploadLogLines()
 	throws IOException {
 		return getLogFileLines("parts.upload.csv");
 	}
 
-	protected List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_ID, fileName).toFile();
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
@@ -139,32 +130,32 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
-	protected List<CSVRecord> getMetricsMedLogRecords()
+	protected static List<CSVRecord> getMetricsMedLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.threshold.csv");
 	}
 
-	protected List<CSVRecord> getMetricsMedTotalLogRecords()
+	protected static List<CSVRecord> getMetricsMedTotalLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.threshold.total.csv");
 	}
 
-	protected List<CSVRecord> getMetricsLogRecords()
+	protected static List<CSVRecord> getMetricsLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.csv");
 	}
 
-	protected List<CSVRecord> getMetricsTotalLogRecords()
+	protected static List<CSVRecord> getMetricsTotalLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.total.csv");
 	}
 
-	protected List<CSVRecord> getIoTraceLogRecords()
+	protected static List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("io.trace.csv");
 	}
 
-	protected List<CSVRecord> getPartsUploadRecords()
+	protected static List<CSVRecord> getPartsUploadRecords()
 	throws IOException {
 		return getLogFileCsvRecords("parts.upload.csv");
 	}
@@ -538,7 +529,7 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
-	protected void testMetricsTableStdout(
+	protected static void testMetricsTableStdout(
 		final String stdOutContent, final String stepName, final int driverCount,
 		final long countLimit, final Map<IoType, Integer> concurrencyMap
 	) throws Exception {
@@ -588,7 +579,8 @@ extends ParameterizedSysTestBase {
 			assertTrue(tp >= 0);
 			assertTrue(bw >= 0);
 			assertTrue(lat >= 0);
-			if(!storageType.equals(StorageType.FS)) {
+			if(! EnvConfiguredTestBase.STORAGE_TYPE_FS.equals(
+				EnvConfiguredTestBase.STORAGE_DRIVER_TYPE)) { // issue SLTM-1064 workaround
 				assertTrue(lat <= dur);
 			}
 		}

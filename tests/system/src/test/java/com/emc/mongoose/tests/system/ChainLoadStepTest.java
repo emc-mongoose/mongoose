@@ -4,23 +4,25 @@ import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static org.junit.Assume.assumeFalse;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assume.assumeThat;
+import org.junit.After;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -29,114 +31,105 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 09.06.17.
  */
 public class ChainLoadStepTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 
 	private static final long COUNT_LIMIT = 100_000;
 
-	private static String ITEM_OUTPUT_PATH;
-	private static String STD_OUTPUT;
+	private String itemOutputPath;
+	private String stdOutput;
 
-	@BeforeClass
-	public static void setUpClass()
+	public ChainLoadStepTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json");
+	}
+
+	@Override
+	protected void assumeApplicable() {
+		assumeThat(
+			storageType, anyOf(is(StorageType.FS), is(StorageType.S3), is(StorageType.SWIFT))
+		);
+		assumeThat(concurrency, anyOf(is(Concurrency.LOW), is(Concurrency.MEDIUM)));
+		assumeThat(itemSize, is(ItemSize.SMALL));
+	}
+
+	@Override
+	protected String makeStepId() {
+		return ChainLoadStepTest.class.getSimpleName();
+	}
+
+	public final void test()
 	throws Exception {
-		EXCLUDE_PARAMS.clear();
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("1MB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_ID = ChainLoadStepTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json"
-		);
-		ThreadContext.put(KEY_TEST_STEP_ID, STEP_ID);
-		CONFIG_ARGS.add("--test-step-limit-count=" + COUNT_LIMIT);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		switch(STORAGE_DRIVER_TYPE) {
-			case STORAGE_TYPE_FS:
-				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_ID
+		switch(storageType) {
+			case FS:
+				itemOutputPath = Paths.get(
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 				).toString();
-				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 				break;
-			case STORAGE_TYPE_SWIFT:
-				CONFIG.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
+			case SWIFT:
+				config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
 				break;
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
 		TimeUnit.SECONDS.sleep(10);
 		LogUtil.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-	}
-
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		if(! SKIP_FLAG) {
-			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
-			}
-		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
-	}
-
-	@Test
-	public final void testStdOutput()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testMetricsTableStdout(
-			STD_OUTPUT, STEP_ID, STORAGE_DRIVERS_COUNT, COUNT_LIMIT,
+		stdOutput = stdOutStream.stopRecordingAndGet();
+		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), COUNT_LIMIT,
 			new HashMap<IoType, Integer>() {{
-				put(IoType.CREATE, CONCURRENCY);
-				put(IoType.READ, CONCURRENCY);
-				put(IoType.UPDATE, CONCURRENCY);
-				put(IoType.DELETE, CONCURRENCY);
-				put(IoType.NOOP, CONCURRENCY);
+				put(IoType.CREATE, concurrency.getValue());
+				put(IoType.READ, concurrency.getValue());
+				put(IoType.UPDATE, concurrency.getValue());
+				put(IoType.DELETE, concurrency.getValue());
+				put(IoType.NOOP, concurrency.getValue());
 			}}
 		);
-	}
-
-	@Test
-	public final void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
-			totalRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			COUNT_LIMIT, 0
+			totalRecs.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), COUNT_LIMIT, 0
 		);
 		testTotalMetricsLogRecord(
-			totalRecs.get(1), IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			COUNT_LIMIT, 0
+			totalRecs.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), COUNT_LIMIT, 0
 		);
 		testTotalMetricsLogRecord(
-			totalRecs.get(2), IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			new SizeInBytes(1, ITEM_DATA_SIZE.get(), 1), COUNT_LIMIT, 0
+			totalRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(1, itemSize.getValue().get(), 1), COUNT_LIMIT, 0
 		);
 		// looks like nagaina is not fast enough to reflect the immediate data changes...
 		testTotalMetricsLogRecord(
-			totalRecs.get(3), IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0
+			totalRecs.get(3), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0
 		);
 		testTotalMetricsLogRecord(
-			totalRecs.get(4), IoType.DELETE, CONCURRENCY, STORAGE_DRIVERS_COUNT, new SizeInBytes(0),
-			0, 0
+			totalRecs.get(4), IoType.DELETE, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(0), 0, 0
 		);
 		testTotalMetricsLogRecord(
-			totalRecs.get(5), IoType.NOOP, CONCURRENCY, STORAGE_DRIVERS_COUNT, new SizeInBytes(0),
-			0, 0
+			totalRecs.get(5), IoType.NOOP, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(0), 0, 0
 		);
+	}
+
+	@After
+	public void tearDown()
+	throws Exception {
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
+			}
+		}
+		super.tearDown();
 	}
 }
