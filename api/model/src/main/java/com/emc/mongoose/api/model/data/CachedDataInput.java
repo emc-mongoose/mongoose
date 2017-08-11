@@ -23,9 +23,6 @@ import static java.nio.ByteBuffer.allocateDirect;
 public class CachedDataInput
 extends DataInputBase {
 
-	private static final LongAdder ALLOCATED_DIRECT_MEM = new LongAdder();
-
-	private final LongAdder allocatedByTheCache = new LongAdder();
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
 		thrLocLayersCache = new ThreadLocal<>();
@@ -69,14 +66,12 @@ extends DataInputBase {
 		ByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
-			if(layersCache.size() == layersCacheCountLimit - 1) {
+			if(layersCache.size() >= layersCacheCountLimit - 1) {
 				for(int i = 0; i < layerIndex - 1; i ++) {
 					if(null != layersCache.remove(i)) {
 						if(null != layersCache.get(i)) {
 							throw new AssertionError();
 						}
-						ALLOCATED_DIRECT_MEM.add(-inputBuff.capacity());
-						allocatedByTheCache.add(-inputBuff.capacity());
 						// some lowest index layer was removed, stop the loop
 						break;
 					}
@@ -85,29 +80,7 @@ extends DataInputBase {
 			}
 			// generate the layer
 			final int size = inputBuff.capacity();
-			try {
-				layer = allocateDirect(size);
-				ALLOCATED_DIRECT_MEM.add(size);
-				allocatedByTheCache.add(size);
-			} catch (final OutOfMemoryError e) {
-				System.err.println(
-					"Allocated direct memory: " +
-						SizeInBytes.formatFixedSize(ALLOCATED_DIRECT_MEM.sum()) +
-						", layers cache size: " + layersCache.size() + ", current cache size: " +
-						SizeInBytes.formatFixedSize(allocatedByTheCache.sum())
-				);
-				for(final int i : layersCache.keySet()) {
-					final ByteBuffer cachedLayer = layersCache.get(i);
-					if(cachedLayer != null) {
-						System.err.println(
-							"Layer #" + i + ":\t" +
-								SizeInBytes.formatFixedSize(cachedLayer.capacity())
-						);
-					}
-				}
-				System.exit(1);
-				throw e;
-			}
+			layer = allocateDirect(size);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
@@ -121,11 +94,6 @@ extends DataInputBase {
 	throws IOException {
 		final Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
-			for(final ByteBuffer layer : layersCache.values()) {
-				if(layer != null) {
-					ALLOCATED_DIRECT_MEM.add(-layer.capacity());
-				}
-			}
 			layersCache.clear();
 			thrLocLayersCache.set(null);
 		}
