@@ -41,8 +41,8 @@ import java.util.concurrent.TimeUnit;
 public class DeleteUsingInputPathLimitByRateTest
 extends EnvConfiguredScenarioTestBase {
 
-	private static final int EXPECTED_COUNT = 100_000;
-	private static final int EXPECTED_RATE = 1234;
+	private static final int EXPECTED_COUNT = 10_000;
+	private static final double EXPECTED_RATE = 123.4;
 	private static String STD_OUTPUT = null;
 	private static String ITEM_OUTPUT_PATH = null;
 

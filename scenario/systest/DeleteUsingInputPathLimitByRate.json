@@ -19,7 +19,7 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 100000
+							"count" : 10000
 						}
 					}
 				}
@@ -36,7 +36,7 @@
 				"load" : {
 					"type" : "delete",
 					"rate" : {
-						"limit" : 1234
+						"limit" : 123.4
 					}
 				}
 			}
