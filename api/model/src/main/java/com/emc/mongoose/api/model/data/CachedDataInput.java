@@ -93,6 +93,16 @@ extends DataInputBase {
 						", layers cache size: " + layersCache.size() + ", current cache size: " +
 						SizeInBytes.formatFixedSize(allocatedByTheCache.sum())
 				);
+				for(final int i : layersCache.keySet()) {
+					final ByteBuffer cachedLayer = layersCache.get(i);
+					if(cachedLayer != null) {
+						System.err.println(
+							"Layer #" + i + ":\t" +
+								SizeInBytes.formatFixedSize(cachedLayer.capacity())
+						);
+					}
+				}
+				System.exit(1);
 				throw e;
 			}
 			final long layerSeed = Long.reverseBytes(
