@@ -20,7 +20,7 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public abstract class ParameterizedSysTestBase {
 
-	@Parameters
+	@Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> data() {
 		final List<Object[]> data = new ArrayList<>();
 		for(final StorageType storageType : StorageType.values()) {

@@ -142,7 +142,7 @@ extends ConfiguredTestBase {
 
 	private void tearDownDistributedModeIfNeeded()
 	throws Exception {
-		if(driverCount.equals(DriverCount.MANY) && storageDriverBuilderSvcs != null) {
+		if(driverCount.equals(DriverCount.DISTRIBUTED) && storageDriverBuilderSvcs != null) {
 			for(final StorageDriverBuilderSvc svc : storageDriverBuilderSvcs) {
 				svc.close();
 			}

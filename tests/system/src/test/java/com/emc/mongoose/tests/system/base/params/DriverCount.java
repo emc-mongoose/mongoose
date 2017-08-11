@@ -5,8 +5,8 @@ package com.emc.mongoose.tests.system.base.params;
  */
 public enum DriverCount {
 
-	SINGLE(1),
-	MANY(2);
+	LOCAL(1),
+	DISTRIBUTED(2);
 
 	private final int value;
 
