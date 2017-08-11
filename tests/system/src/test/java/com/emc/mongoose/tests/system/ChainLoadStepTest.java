@@ -38,6 +38,10 @@ extends ScenarioTestBase {
 	private String itemOutputPath;
 	private String stdOutput;
 
+	{
+		configArgs.add("--test-step-limit-count=" + COUNT_LIMIT);
+	}
+
 	public ChainLoadStepTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
