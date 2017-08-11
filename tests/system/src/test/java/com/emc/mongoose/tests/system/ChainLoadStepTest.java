@@ -51,20 +51,6 @@ extends ScenarioTestBase {
 	throws Exception {
 		configArgs.add("--test-step-limit-count=" + COUNT_LIMIT);
 		super.setUp();
-	}
-
-	@Override
-	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json");
-	}
-
-	@Override
-	protected String makeStepId() {
-		return ChainLoadStepTest.class.getSimpleName();
-	}
-
-	public final void test()
-	throws Exception {
 		switch(storageType) {
 			case FS:
 				itemOutputPath = Paths.get(
@@ -82,6 +68,20 @@ extends ScenarioTestBase {
 		TimeUnit.SECONDS.sleep(10);
 		LogUtil.flushAll();
 		stdOutput = stdOutStream.stopRecordingAndGet();
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json");
+	}
+
+	@Override
+	protected String makeStepId() {
+		return ChainLoadStepTest.class.getSimpleName();
+	}
+
+	public final void test()
+	throws Exception {
 		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), COUNT_LIMIT,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, concurrency.getValue());

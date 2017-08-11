@@ -37,8 +37,9 @@ extends ScenarioTestBase {
 	private static final int EXPECTED_COUNT = 10000;
 
 	private String fileOutputPath;
+	private String stdOutput;
 
-	protected ReadFilesWithVariablePathTest(
+	public ReadFilesWithVariablePathTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -56,6 +57,11 @@ extends ScenarioTestBase {
 			.toString();
 		EnvUtil.set("FILE_OUTPUT_PATH", fileOutputPath);
 		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
+		TimeUnit.SECONDS.sleep(5);
 	}
 
 	@After
@@ -82,12 +88,6 @@ extends ScenarioTestBase {
 	@Override
 	public void test()
 	throws Exception {
-
-		stdOutStream.startRecording();
-		scenario.run();
-		LogUtil.flushAll();
-		final String stdOutput = stdOutStream.stopRecordingAndGet();
-		TimeUnit.SECONDS.sleep(5);
 
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
