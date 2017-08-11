@@ -107,9 +107,10 @@ extends EnvConfiguredScenarioTestBase {
 	public void testMetricsLogFile()
 	throws Exception {
 		assumeFalse(SKIP_FLAG);
+		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, EXPECTED_TIME,
+			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, updateSize, 0, EXPECTED_TIME,
 			CONFIG.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}

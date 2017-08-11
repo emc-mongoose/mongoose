@@ -65,6 +65,19 @@ public abstract class PathUtil {
 					.getParentFile()
 					.getParentFile();
 			}
+			// another bandage for idea (2017.2)
+			if(
+				basePathStr.endsWith(
+					File.separator + "out" + File.separator + "production" + File.separator + "classes"
+				)
+			) {
+				basePath = basePath
+					.getParentFile()
+					.getParentFile()
+					.getParentFile()
+					.getParentFile()
+					.getParentFile();
+			}
 			// bandage for gradle
 			if(
 				basePathStr.endsWith(
