@@ -177,7 +177,7 @@ implements IoTask<I> {
 	@Override
 	public final void startResponse() {
 		respTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
-		if(reqTimeDone == 0) {
+		if(reqTimeDone > respTimeStart) {
 			throw new IllegalStateException(
 				"Response is started (" + respTimeStart + ") before the request is finished (" +
 				reqTimeDone + ")"
