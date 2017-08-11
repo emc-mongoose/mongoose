@@ -25,7 +25,7 @@ jobs:
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
 
-    - stage: "System tests"
+    - stage: "System test: ChainLoadStepTest"
       env:
         - STORAGE_TYPE=FS,S3,SWIFT
         - DRIVER_COUNT=LOCAL,DISTRIBUTED
@@ -33,7 +33,7 @@ jobs:
         - ITEM_SIZE=SMALL
       script: "./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test"
 
-    - stage: "System tests"
+    - stage: "System test: ReadFilesWithVariablePathTest"
       env:
         - STORAGE_TYPE=FS
         - DRIVER_COUNT=LOCAL,DISTRIBUTED
