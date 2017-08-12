@@ -10,6 +10,7 @@ import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -85,6 +86,7 @@ extends ScenarioTestBase {
 			).toString();
 			config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 		}
+		EnvUtil.set("ITEM_DATA_SIZE", itemSize.toString());
 		scenario = new JsonScenario(config, scenarioPath.toFile());
 		stdOutStream.startRecording();
 		scenario.run();
