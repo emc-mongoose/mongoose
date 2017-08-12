@@ -25,6 +25,7 @@ jobs:
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
 
+    # STORAGE_TYPE=FS,S3,SWIFT DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=LOW,MEDIUM ITEM_SIZE=SMALL ./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test
     - stage: "System tests"
       env:
         - STORAGE_TYPE=FS,S3,SWIFT
@@ -33,6 +34,7 @@ jobs:
         - ITEM_SIZE=SMALL
       script: "./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test"
 
+    # STORAGE_TYPE=ATMOS,FS,S3,SWIFT DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM ITEM_SIZE=SMALL,MEDIUM ./gradlew -Dtest.single=CircularAppendTest :tests:system:test
     - stage: "System tests"
       env:
         - STORAGE_TYPE=ATMOS,FS,S3,SWIFT
@@ -41,14 +43,16 @@ jobs:
         - ITEM_SIZE=SMALL,MEDIUM
       script: "./gradlew -Dtest.single=CircularAppendTest :tests:system:test"
 
+    # STORAGE_TYPE=FS,S3 DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH ITEM_SIZE=EMPTY,SMALL,MEDIUM ./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test
     - stage: "System tests"
       env:
-        - STORAGE_DRIVER_TYPE=FS,S3
+        - STORAGE_TYPE=FS,S3
         - DRIVER_COUNT=LOCAL,DISTRIBUTED
         - CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH
         - ITEM_SIZE=EMPTY,SMALL,MEDIUM
       script: "./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test"
 
+    # STORAGE_TYPE=FS DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH ITEM_SIZE=EMPTY,SMALL ./gradlew -Dtest.single=ReadFilesWithVariablePathTest :tests:system:test
     - stage: "System tests"
       env:
         - STORAGE_TYPE=FS
@@ -57,6 +61,7 @@ jobs:
         - ITEM_SIZE=EMPTY,SMALL
       script: "./gradlew -Dtest.single=ReadFilesWithVariablePathTest :tests:system:test"
 
+    # STORAGE_TYPE=FS,S3 DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH ITEM_SIZE=SMALL,MEDIUM ./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test
     - stage: "System tests"
       env:
         - STORAGE_TYPE=FS,S3
