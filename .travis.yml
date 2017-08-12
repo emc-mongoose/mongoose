@@ -25,49 +25,76 @@ jobs:
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
 
-    # STORAGE_TYPE=FS,S3,SWIFT DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=LOW,MEDIUM ITEM_SIZE=SMALL ./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test
     - stage: "System tests"
       env:
-        - STORAGE_TYPE=FS,S3,SWIFT
-        - DRIVER_COUNT=LOCAL,DISTRIBUTED
-        - CONCURRENCY=LOW,MEDIUM
-        - ITEM_SIZE=SMALL
+        - STORAGE_TYPE=fs,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium
+        - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test"
 
-    # STORAGE_TYPE=ATMOS,FS,S3,SWIFT DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM ITEM_SIZE=SMALL,MEDIUM ./gradlew -Dtest.single=CircularAppendTest :tests:system:test
+    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
     - stage: "System tests"
       env:
-        - STORAGE_TYPE=ATMOS,FS,S3,SWIFT
-        - DRIVER_COUNT=LOCAL,DISTRIBUTED
-        - CONCURRENCY=SINGLE,LOW,MEDIUM
-        - ITEM_SIZE=SMALL,MEDIUM
+        - STORAGE_TYPE=atmos,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,low,medium
+        - ITEM_SIZE=medium,large
+      script: "./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test"
+
+    # STORAGE_TYPE=atmos,fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=CircularAppendTest :tests:system:test
+    - stage: "System tests"
+      env:
+        - STORAGE_TYPE=atmos,fs,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium
+        - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=CircularAppendTest :tests:system:test"
 
-    # STORAGE_TYPE=FS,S3 DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH ITEM_SIZE=EMPTY,SMALL,MEDIUM ./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small,medium ./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test
     - stage: "System tests"
       env:
-        - STORAGE_TYPE=FS,S3
-        - DRIVER_COUNT=LOCAL,DISTRIBUTED
-        - CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH
-        - ITEM_SIZE=EMPTY,SMALL,MEDIUM
+        - STORAGE_TYPE=fs,s3
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,low,medium,high
+        - ITEM_SIZE=empty,small,medium
       script: "./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test"
 
-    # STORAGE_TYPE=FS DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH ITEM_SIZE=EMPTY,SMALL ./gradlew -Dtest.single=ReadFilesWithVariablePathTest :tests:system:test
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small,medium ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
     - stage: "System tests"
       env:
-        - STORAGE_TYPE=FS
-        - DRIVER_COUNT=LOCAL,DISTRIBUTED
-        - CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH
-        - ITEM_SIZE=EMPTY,SMALL
+        - STORAGE_TYPE=fs,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,low,medium,high
+        - ITEM_SIZE=empty,small,medium
+      script: "./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test"
+
+    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=MultiPartTest :tests:system:test
+    - stage: "System tests"
+      env:
+        - STORAGE_TYPE=s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,low,medium
+        - ITEM_SIZE=medium,large
+      script: "./gradlew -Dtest.single=MultiPartCreateTest :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=ReadFilesWithVariablePathTest :tests:system:test
+    - stage: "System tests"
+      env:
+        - STORAGE_TYPE=fs
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,low,medium,high
+        - ITEM_SIZE=empty,small
       script: "./gradlew -Dtest.single=ReadFilesWithVariablePathTest :tests:system:test"
 
-    # STORAGE_TYPE=FS,S3 DRIVER_COUNT=LOCAL,DISTRIBUTED CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH ITEM_SIZE=SMALL,MEDIUM ./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test
     - stage: "System tests"
       env:
-        - STORAGE_TYPE=FS,S3
-        - DRIVER_COUNT=LOCAL,DISTRIBUTED
-        - CONCURRENCY=SINGLE,LOW,MEDIUM,HIGH
-        - ITEM_SIZE=SMALL,MEDIUM
+        - STORAGE_TYPE=fs,s3
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,low,medium,high
+        - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test"
 
     - stage: "Component performance tests"

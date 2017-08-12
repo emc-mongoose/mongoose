@@ -29,25 +29,25 @@ public abstract class ParameterizedSysTestBase {
 		final List<StorageType> includedStorageTypes = new ArrayList<>();
 		final String storageTypeValues = env.get(StorageType.KEY_ENV);
 		for(final String storageTypeValue : storageTypeValues.split(",")) {
-			includedStorageTypes.add(StorageType.valueOf(storageTypeValue));
+			includedStorageTypes.add(StorageType.valueOf(storageTypeValue.toUpperCase()));
 		}
 
 		final List<DriverCount> includedDriverCounts = new ArrayList<>();
 		final String driverCountValues = env.get(DriverCount.KEY_ENV);
 		for(final String driverCountValue : driverCountValues.split(",")) {
-			includedDriverCounts.add(DriverCount.valueOf(driverCountValue));
+			includedDriverCounts.add(DriverCount.valueOf(driverCountValue.toUpperCase()));
 		}
 
 		final List<Concurrency> includedConcurrencies = new ArrayList<>();
 		final String concurrencyValues = env.get(Concurrency.KEY_ENV);
 		for(final String concurrencyValue : concurrencyValues.split(",")) {
-			includedConcurrencies.add(Concurrency.valueOf(concurrencyValue));
+			includedConcurrencies.add(Concurrency.valueOf(concurrencyValue.toUpperCase()));
 		}
 
 		final List<ItemSize> includedItemSizes = new ArrayList<>();
 		final String itemSizeValues = env.get(ItemSize.KEY_ENV);
 		for(final String itemSizeValue : itemSizeValues.split(",")) {
-			includedItemSizes.add(ItemSize.valueOf(itemSizeValue));
+			includedItemSizes.add(ItemSize.valueOf(itemSizeValue.toUpperCase()));
 		}
 
 		final List<Object[]> data = new ArrayList<>();

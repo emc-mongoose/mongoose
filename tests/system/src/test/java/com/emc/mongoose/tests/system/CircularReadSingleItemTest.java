@@ -1,44 +1,35 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.ScenarioTestBase;
-import com.emc.mongoose.tests.system.base.deprecated.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.ThreadContext;
+
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static com.emc.mongoose.tests.system.base.deprecated.EnvConfiguredTestBase.KEY_ENV_ITEM_DATA_SIZE;
-import static com.emc.mongoose.tests.system.base.deprecated.EnvConfiguredTestBase.KEY_ENV_STORAGE_DRIVER_TYPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
 /**
  Created by andrey on 06.02.17.
