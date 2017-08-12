@@ -70,7 +70,8 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return CircularAppendTest.class.getSimpleName();
+		return CircularAppendTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Before

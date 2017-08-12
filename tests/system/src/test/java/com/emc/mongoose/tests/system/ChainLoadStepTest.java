@@ -77,7 +77,8 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return ChainLoadStepTest.class.getSimpleName();
+		return ChainLoadStepTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	public final void test()

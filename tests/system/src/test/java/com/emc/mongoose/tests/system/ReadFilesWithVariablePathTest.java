@@ -82,7 +82,9 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return ReadFilesWithVariablePathTest.class.getSimpleName();
+		return ReadFilesWithVariablePathTest.class.getSimpleName() + '-' +
+			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
+			itemSize.name();
 	}
 
 	@Override

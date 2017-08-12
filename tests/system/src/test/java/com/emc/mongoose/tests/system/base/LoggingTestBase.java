@@ -12,6 +12,7 @@ import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
@@ -24,6 +25,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.After;
 import org.junit.Before;
 
@@ -72,6 +74,7 @@ extends ParameterizedSysTestBase {
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
 		LogUtil.init();
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
 		Loggers.MSG.info(
 			"{} params: {} = {}, {} = {}, {} = {}, {} = {}",
 			getClass().getSimpleName(),
@@ -87,6 +90,7 @@ extends ParameterizedSysTestBase {
 	public void tearDown()
 	throws Exception {
 		stdOutStream.close();
+		ThreadContext.remove(KEY_TEST_STEP_ID);
 		//LogUtil.shutdown();
 	}
 

@@ -49,7 +49,8 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return ReadVerificationAfterUpdateTest.class.getSimpleName();
+		return ReadVerificationAfterUpdateTest.class.getSimpleName() + '-' + storageType.name() +
+			'-' + driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Before
