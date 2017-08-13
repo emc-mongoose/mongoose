@@ -74,7 +74,8 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return MixedLoadTest.class.getSimpleName();
+		return MixedLoadTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 	
 	@Before
