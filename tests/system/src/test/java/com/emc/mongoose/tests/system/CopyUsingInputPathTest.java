@@ -172,14 +172,15 @@ extends ScenarioTestBase {
 		);
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
-			testMetricsLogRecords(metricsLogRecords, IoType.CREATE, concurrency.getValue(),
-				driverCount.getValue(),
+			testMetricsLogRecords(
+				metricsLogRecords, IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
 				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1),
 				0, 0, config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		} else {
-			testMetricsLogRecords(metricsLogRecords, IoType.CREATE, concurrency.getValue(),
-				driverCount.getValue(), itemSize.getValue(), 0, 0,
+			testMetricsLogRecords(
+				metricsLogRecords, IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				itemSize.getValue(), 0, 0,
 				config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		}
