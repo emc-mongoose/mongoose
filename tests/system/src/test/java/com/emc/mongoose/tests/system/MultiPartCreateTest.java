@@ -76,7 +76,7 @@ extends ScenarioTestBase {
 		EnvUtil.set("ITEM_OUTPUT_FILE", ITEM_OUTPUT_FILE);
 		sizeLimit = new SizeInBytes(
 			Math.min(
-				SizeInBytes.toFixedSize("1TB"), 100 * concurrency.getValue() * fullItemSize.getMax()
+				SizeInBytes.toFixedSize("100GB"), 5 * concurrency.getValue() * fullItemSize.getMax()
 			)
 		);
 		EnvUtil.set("SIZE_LIMIT", sizeLimit.toString());

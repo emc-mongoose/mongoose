@@ -73,16 +73,17 @@ extends ScenarioTestBase {
 	throws Exception {
 		super.setUp();
 		final SizeInBytes envItemSize = itemSize.getValue();
-		if(envItemSize.get() > SizeInBytes.toFixedSize("1GB")) {
-			sizeLimit = new SizeInBytes(100 * envItemSize.get());
-		} else if(envItemSize.get() > SizeInBytes.toFixedSize("1MB")) {
-			sizeLimit = new SizeInBytes(1_000 * envItemSize.get());
-		} else if(envItemSize.get() > SizeInBytes.toFixedSize("10KB")){
-			sizeLimit = new SizeInBytes(10_000 * envItemSize.get());
+		final long envItemSizeValue = envItemSize.get();
+		if(envItemSizeValue > SizeInBytes.toFixedSize("1GB")) {
+			sizeLimit = new SizeInBytes(100 * envItemSizeValue);
+		} else if(envItemSizeValue > SizeInBytes.toFixedSize("1MB")) {
+			sizeLimit = new SizeInBytes(1_000 * envItemSizeValue);
+		} else if(envItemSizeValue > SizeInBytes.toFixedSize("10KB")){
+			sizeLimit = new SizeInBytes(10_000 * envItemSizeValue);
 		} else {
-			sizeLimit = new SizeInBytes(100_000 * envItemSize.get());
+			sizeLimit = new SizeInBytes(100_000 * envItemSizeValue);
 		}
-		expectedCount = sizeLimit.get() / envItemSize.get();
+		expectedCount = sizeLimit.get() / envItemSizeValue;
 		try {
 			Files.delete(Paths.get(itemOutputFile));
 		} catch(final Exception ignored) {
