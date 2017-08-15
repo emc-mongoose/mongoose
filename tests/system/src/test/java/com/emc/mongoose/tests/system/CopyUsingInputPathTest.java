@@ -127,7 +127,12 @@ extends ScenarioTestBase {
 				Assert.assertTrue(
 					"File \"" + nextDstFile.getPath() + "\" doesn't exist", nextDstFile.exists()
 				);
-				Assert.assertEquals(nextSrcFile.length(), nextDstFile.length());
+				Assert.assertEquals(
+					"Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
+						" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
+						") size (" + nextDstFile.length(),
+					nextSrcFile.length(), nextDstFile.length()
+				);
 				testIoTraceRecord(
 					ioTraceRecord, IoType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
 				);
