@@ -77,7 +77,8 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return WeightedLoadTest.class.getSimpleName();
+		return WeightedLoadTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Before
