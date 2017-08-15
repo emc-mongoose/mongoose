@@ -20,11 +20,6 @@ public enum ItemSize {
 		this.value = value;
 	}
 
-	@Override
-	public final String toString() {
-		return name();
-	}
-
 	public final SizeInBytes getValue() {
 		return value;
 	}
