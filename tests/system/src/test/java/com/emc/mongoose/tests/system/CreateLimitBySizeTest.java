@@ -5,7 +5,6 @@ import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.ScenarioTestBase;
-import com.emc.mongoose.tests.system.base.deprecated.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -131,7 +130,7 @@ extends ScenarioTestBase {
 				e.printStackTrace(System.err);
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
 	@Override

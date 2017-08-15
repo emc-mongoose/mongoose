@@ -39,7 +39,7 @@ jobs:
     - stage: "System tests"
       env:
         - TEST=ChainWithDelayTest
-        - STORAGE_TYPE=atmos,s3,swift
+        - STORAGE_TYPE=atmos,s3
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=single,medium
         - ITEM_SIZE=medium
@@ -49,7 +49,7 @@ jobs:
     - stage: "System tests"
       env:
         - TEST=CircularAppendTest
-        - STORAGE_TYPE=atmos,fs,s3,swift
+        - STORAGE_TYPE=atmos,fs,swift
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=low,medium
         - ITEM_SIZE=small,medium
@@ -90,9 +90,9 @@ jobs:
       env:
         - TEST=MultiPartCreateTest
         - STORAGE_TYPE=s3,swift
-        - DRIVER_COUNT=distributed
+        - DRIVER_COUNT=local,distributed
         - CONCURRENCY=low,medium
-        - ITEM_SIZE=large
+        - ITEM_SIZE=medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleRandomUpdateAndMultipleFixedReadTest :tests:system:test
@@ -101,7 +101,7 @@ jobs:
         - TEST=MultipleRandomUpdateAndMultipleFixedReadTest
         - STORAGE_TYPE=fs,s3
         - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,medium
+        - CONCURRENCY=medium
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
@@ -126,14 +126,15 @@ jobs:
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest :tests:system:test
-    - stage: "System tests"
-      env:
-        - TEST=ReadVerificationAfterCircularUpdateTest
-        - STORAGE_TYPE=fs,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+# Commented due to the issue SLTM-1065
+#    - stage: "System tests"
+#      env:
+#        - TEST=ReadVerificationAfterCircularUpdateTest
+#        - STORAGE_TYPE=fs,swift
+#        - DRIVER_COUNT=local,distributed
+#        - CONCURRENCY=low,medium
+#        - ITEM_SIZE=small
+#      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test
     - stage: "System tests"
