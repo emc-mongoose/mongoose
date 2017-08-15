@@ -158,6 +158,6 @@ extends ScenarioTestBase {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 
 		assumeThat(storageType, not(equalTo(StorageType.FS)));
-		assertEquals(driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
+		assertEquals(2 * driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
 	}
 }
