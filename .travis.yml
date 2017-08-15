@@ -95,11 +95,11 @@ jobs:
         - ITEM_SIZE=empty,small,medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MixedLoadTest :tests:system:test
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MixedLoadTest :tests:system:test
     - stage: "System tests"
       env:
         - TEST=MixedLoadTest
-        - STORAGE_TYPE=atmos,fs,s3
+        - STORAGE_TYPE=fs,s3,swift
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=single,medium
         - ITEM_SIZE=small,medium
@@ -166,11 +166,21 @@ jobs:
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=WeightedLoadTest :tests:system:test
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=UpdateUsingInputFileLimitByTimeTest :tests:system:test
+    - stage: "System tests"
+      env:
+        - TEST=UpdateUsingInputFileLimitByTimeTest
+        - STORAGE_TYPE=fs,s3
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium,high
+        - ITEM_SIZE=medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=WeightedLoadTest :tests:system:test
     - stage: "System tests"
       env:
         - TEST=WeightedLoadTest
-        - STORAGE_TYPE=atmos,fs,s3,swift
+        - STORAGE_TYPE=fs,s3,swift
         - DRIVER_COUNT=distributed
         - CONCURRENCY=single,medium
         - ITEM_SIZE=empty,small
