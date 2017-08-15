@@ -22,7 +22,7 @@ public enum ItemSize {
 
 	@Override
 	public final String toString() {
-		return value.toString();
+		return name();
 	}
 
 	public final SizeInBytes getValue() {

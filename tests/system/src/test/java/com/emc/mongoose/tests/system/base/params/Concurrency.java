@@ -23,6 +23,6 @@ public enum Concurrency {
 
 	@Override
 	public final String toString() {
-		return getClass().getSimpleName().toUpperCase() + '_' + value;
+		return name();
 	}
 }

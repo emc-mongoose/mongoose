@@ -64,7 +64,8 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return CreateLimitBySizeTest.class.getSimpleName();
+		return CreateLimitBySizeTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Before
