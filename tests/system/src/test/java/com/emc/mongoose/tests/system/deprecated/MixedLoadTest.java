@@ -8,7 +8,7 @@ import com.emc.mongoose.tests.system.base.deprecated.EnvConfiguredScenarioTestBa
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
-import com.emc.mongoose.tests.system.util.PortListener;
+import com.emc.mongoose.tests.system.util.PortTools;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
@@ -116,7 +116,7 @@ extends EnvConfiguredScenarioTestBase {
 			case STORAGE_TYPE_SWIFT:
 				final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
-					ACTUAL_CONCURRENCY += PortListener
+					ACTUAL_CONCURRENCY += PortTools
 						.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
 				}
 				break;

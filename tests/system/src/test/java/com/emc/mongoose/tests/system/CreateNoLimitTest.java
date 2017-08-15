@@ -10,7 +10,7 @@ import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
-import com.emc.mongoose.tests.system.util.PortListener;
+import com.emc.mongoose.tests.system.util.PortTools;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.apache.logging.log4j.Level;
@@ -97,6 +97,11 @@ extends ScenarioTestBase {
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}
+		} else {
+			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+			for(int i = 0; i < httpStorageNodeCount; i ++) {
+				PortTools.killConnectionsOnPort(startPort + i);
+			}
 		}
 		super.tearDown();
 	}
@@ -121,7 +126,7 @@ extends ScenarioTestBase {
 			int actualConcurrency = 0;
 			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 			for(int j = 0; j < httpStorageNodeCount; j ++) {
-				actualConcurrency += PortListener
+				actualConcurrency += PortTools
 					.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
 			}
 			assertEquals(

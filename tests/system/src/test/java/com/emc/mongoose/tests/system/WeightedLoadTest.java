@@ -11,7 +11,7 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
-import com.emc.mongoose.tests.system.util.PortListener;
+import com.emc.mongoose.tests.system.util.PortTools;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
@@ -120,7 +120,7 @@ extends ScenarioTestBase {
 			case SWIFT:
 				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {
-					ACTUAL_CONCURRENCY += PortListener
+					ACTUAL_CONCURRENCY += PortTools
 						.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
 				}
 				break;
@@ -141,6 +141,11 @@ extends ScenarioTestBase {
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}
+		} else {
+			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+			for(int i = 0; i < httpStorageNodeCount; i ++) {
+				PortTools.killConnectionsOnPort(startPort + i);
+			}
 		}
 		super.tearDown();
 	}
@@ -158,6 +163,6 @@ extends ScenarioTestBase {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 
 		assumeThat(storageType, not(equalTo(StorageType.FS)));
-		assertEquals(2 * driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
+		assertEquals(driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
 	}
 }

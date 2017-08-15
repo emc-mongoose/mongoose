@@ -6,7 +6,7 @@ import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.deprecated.EnvConfiguredScenarioTestBase;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
-import com.emc.mongoose.tests.system.util.PortListener;
+import com.emc.mongoose.tests.system.util.PortTools;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
@@ -110,7 +110,7 @@ extends EnvConfiguredScenarioTestBase {
 			int actualConcurrency = 0;
 			final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 			for(int j = 0; j < HTTP_STORAGE_NODE_COUNT; j ++) {
-				actualConcurrency += PortListener
+				actualConcurrency += PortTools
 					.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
 			}
 			assertEquals(

@@ -55,7 +55,7 @@ jobs:
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small,medium ./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test
     - stage: "System tests"
       env:
         - TEST=CircularReadSingleItemTest
