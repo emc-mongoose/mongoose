@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by kurila on 06.06.17.
@@ -138,16 +140,18 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(expectedCount, ioTraceRecords.size());
+		final LongAdder ioTraceRecCount = new LongAdder();
 		final String nodeAddr = httpStorageMocks.keySet().iterator().next();
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), itemSize.getValue());
+		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
 			HttpStorageMockUtil.assertItemExists(
-				nodeAddr, ioTraceRecord.get("ItemPath"),
-				Long.parseLong(ioTraceRecord.get("TransferSize"))
+				nodeAddr, ioTraceRec.get("ItemPath"),
+				Long.parseLong(ioTraceRec.get("TransferSize"))
 			);
-		}
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceRecFunc);
+		assertEquals(expectedCount, ioTraceRecCount.sum());
 
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {

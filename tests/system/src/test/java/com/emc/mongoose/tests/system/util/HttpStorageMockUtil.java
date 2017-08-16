@@ -3,9 +3,7 @@ package com.emc.mongoose.tests.system.util;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -23,8 +21,7 @@ public interface HttpStorageMockUtil {
 		ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("testHttpReqExecutor", true)
 	);
 
-	static void assertItemNotExists(final String nodeAddr, final String itemPath)
-	throws MalformedURLException, IOException, InterruptedException, ExecutionException {
+	static void assertItemNotExists(final String nodeAddr, final String itemPath) {
 		final Future<Integer> futureRespCode = REQ_EXECUTOR.submit(
 			() -> {
 				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
@@ -38,21 +35,29 @@ public interface HttpStorageMockUtil {
 				}
 			}
 		);
-		assertEquals(404, futureRespCode.get().intValue());
+		try {
+			assertEquals(404, futureRespCode.get().intValue());
+		} catch(final InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	static void assertItemExists(
 		final String nodeAddr, final String itemPath, final long expectedSize
-	) throws MalformedURLException, IOException, InterruptedException, ExecutionException {
+	) {
 		final Future<Long> futureContentLen = REQ_EXECUTOR.submit(
 			() -> {
 				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
 				return (long) itemUrl.openConnection().getContentLength();
 			}
 		);
-		final long actualSize = futureContentLen.get();
-		assertEquals(
-			"Invalid size returned for the \"" + itemPath + "\"", expectedSize, actualSize
-		);
+		try {
+			final long actualSize = futureContentLen.get();
+			assertEquals(
+				"Invalid size returned for the \"" + itemPath + "\"", expectedSize, actualSize
+			);
+		} catch(final InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

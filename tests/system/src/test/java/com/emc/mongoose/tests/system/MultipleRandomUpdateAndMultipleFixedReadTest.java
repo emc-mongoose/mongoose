@@ -24,6 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.stream.LongStream;
 
 /**
@@ -101,20 +103,22 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(
-			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
-			2 * EXPECTED_COUNT, ioTraceRecords.size()
-		);
-		for(int i = 0; i < 2 * EXPECTED_COUNT; i ++) {
-			if(i < EXPECTED_COUNT) {
-				testIoTraceRecord(ioTraceRecords.get(i), IoType.UPDATE.ordinal(),
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
+			if(ioTraceRecCount.sum() < EXPECTED_COUNT) {
+				testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(),
 					expectedUpdateSize
 				);
 			} else {
-				testIoTraceRecord(ioTraceRecords.get(i), IoType.READ.ordinal(), expectedReadSize);
+				testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
 			}
-		}
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceRecFunc);
+		assertEquals(
+			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
+			2 * EXPECTED_COUNT, ioTraceRecCount.sum()
+		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(

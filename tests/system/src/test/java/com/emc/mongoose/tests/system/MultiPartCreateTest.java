@@ -29,6 +29,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 13.06.17.
@@ -94,25 +96,22 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertTrue(
-			"There should be more than " + expectedCountMin +
-				" records in the I/O trace log file, " + "but got: " + ioTraceRecords.size(),
-			expectedCountMin < ioTraceRecords.size()
-		);
+		final LongAdder ioTraceRecCount = new LongAdder();
 		final SizeInBytes ZERO_SIZE = new SizeInBytes(0);
 		final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, partSize.get(), 1);
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
+		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
 			try {
-				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ZERO_SIZE);
+				testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), ZERO_SIZE);
 			} catch(final AssertionError e) {
 				try {
-					testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), partSize);
+					testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), partSize);
 				} catch(final AssertionError ee) {
-					testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), TAIL_PART_SIZE);
+					testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), TAIL_PART_SIZE);
 				}
 			}
-		}
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceRecFunc);
 
 		final List<CSVRecord> itemRecs = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {

@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,6 +93,27 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final int baseOutputPathLen = fileOutputPath.length();
+		// Item path should look like:
+		// ${FILE_OUTPUT_PATH}/1/b/0123456789abcdef
+		// ${FILE_OUTPUT_PATH}/b/fedcba9876543210
+		final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
+			String nextFilePath = ioTraceRec.get("ItemPath");
+			assertTrue(nextFilePath.startsWith(fileOutputPath));
+			nextFilePath = nextFilePath.substring(baseOutputPathLen);
+			final Matcher m = subPathPtrn.matcher(nextFilePath);
+			assertTrue(m.matches());
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
+		assertEquals(
+			"There should be more than 1 record in the I/O trace log file",
+			EXPECTED_COUNT, ioTraceRecCount.sum()
+		);
+
 		testMetricsLogRecords(
 			getMetricsLogRecords(),
 			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
@@ -108,25 +131,5 @@ extends ScenarioTestBase {
 			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(EXPECTED_COUNT, ioTraceRecords.size());
-
-		// Item path should look like:
-		// ${FILE_OUTPUT_PATH}/1/b/0123456789abcdef
-		// ${FILE_OUTPUT_PATH}/b/fedcba9876543210
-		final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
-
-		String nextFilePath;
-		Matcher m;
-		final int baseOutputPathLen = fileOutputPath.length();
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), itemSize.getValue());
-			nextFilePath = ioTraceRecord.get("ItemPath");
-			assertTrue(nextFilePath.startsWith(fileOutputPath));
-			nextFilePath = nextFilePath.substring(baseOutputPathLen);
-			m = subPathPtrn.matcher(nextFilePath);
-			assertTrue(m.matches());
-		}
 	}
 }

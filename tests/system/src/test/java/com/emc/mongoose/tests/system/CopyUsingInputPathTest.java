@@ -28,6 +28,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 12.06.17.
@@ -105,19 +107,15 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertTrue(
-			"There should be " + COUNT_LIMIT + " records in the I/O trace log file",
-			ioTraceRecords.size() <= COUNT_LIMIT
-		);
-		String nextItemPath, nextItemId;
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecTestFunc;
 		if(storageType.equals(StorageType.FS)) {
-			File nextSrcFile;
-			File nextDstFile;
-			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-				nextItemPath = ioTraceRecord.get("ItemPath");
+			ioTraceRecTestFunc = ioTraceRecord -> {
+				File nextSrcFile;
+				File nextDstFile;
+				final String nextItemPath = ioTraceRecord.get("ItemPath");
 				nextSrcFile = new File(nextItemPath);
-				nextItemId = nextItemPath.substring(
+				final String nextItemId = nextItemPath.substring(
 					nextItemPath.lastIndexOf(File.separatorChar) + 1
 				);
 				nextDstFile = Paths.get(itemSrcPath, nextItemId).toFile();
@@ -136,21 +134,29 @@ extends ScenarioTestBase {
 				testIoTraceRecord(
 					ioTraceRecord, IoType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
 				);
-			}
+				ioTraceRecCount.increment();
+			};
 		} else {
 			final String node = httpStorageMocks.keySet().iterator().next();
-			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
+			ioTraceRecTestFunc = ioTraceRecord -> {
 				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), itemSize.getValue());
-				nextItemPath = ioTraceRecord.get("ItemPath");
+				final String nextItemPath = ioTraceRecord.get("ItemPath");
 				HttpStorageMockUtil.assertItemExists(node, nextItemPath, 0);
-				nextItemId = nextItemPath.substring(
+				final String nextItemId = nextItemPath.substring(
 					nextItemPath.lastIndexOf(File.separatorChar) + 1
 				);
 				HttpStorageMockUtil.assertItemExists(
 					node, itemSrcPath + '/' + nextItemId, itemSize.getValue().get()
 				);
-			}
+				ioTraceRecCount.increment();
+			};
 		}
+		testIoTraceLogRecords(ioTraceRecTestFunc);
+
+		assertTrue(
+			"There should be " + COUNT_LIMIT + " records in the I/O trace log file",
+			ioTraceRecCount.sum() <= COUNT_LIMIT
+		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

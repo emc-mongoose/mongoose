@@ -25,6 +25,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 12.06.17.
@@ -92,20 +94,21 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		CSVRecord csvRecord;
-		for(int i = 0; i < ioTraceRecords.size(); i ++) {
-			csvRecord = ioTraceRecords.get(i);
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			assertEquals(
-				"Record #" + i + ": unexpected operation type " + csvRecord.get("IoTypeCode"),
-				IoType.READ, IoType.values()[Integer.parseInt(csvRecord.get("IoTypeCode"))]
+				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " +
+					ioTraceRec.get("IoTypeCode"),
+				IoType.READ, IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))]
 			);
 			assertEquals(
-				"Record #" + i + ": unexpected status code " + csvRecord.get("StatusCode"),
+				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " +
+					ioTraceRec.get("StatusCode"),
 				IoTask.Status.SUCC,
-				IoTask.Status.values()[Integer.parseInt(csvRecord.get("StatusCode"))]
+				IoTask.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
 			);
-		}
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
 
 		testMetricsLogRecords(
 			getMetricsLogRecords(),

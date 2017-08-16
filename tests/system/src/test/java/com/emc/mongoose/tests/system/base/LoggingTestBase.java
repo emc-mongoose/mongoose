@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -176,6 +177,33 @@ extends ParameterizedSysTestBase {
 	protected List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("io.trace.csv");
+	}
+
+	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
+		final File logFile = Paths
+			.get(PathUtil.getBaseDir(), "log", stepId, "io.trace.csv")
+			.toFile();
+		long prevSize = 1, nextSize;
+		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
+			if(logFile.exists()) {
+				nextSize = logFile.length();
+				if(prevSize == nextSize) {
+					break;
+				}
+				prevSize = nextSize;
+			}
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch(final InterruptedException e) {
+				return;
+			}
+		}
+		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+			try(final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br)) {
+				csvParser.forEach(csvRecordTestFunc);
+			}
+		}
 	}
 
 	protected List<CSVRecord> getPartsUploadRecords()
@@ -410,7 +438,7 @@ extends ParameterizedSysTestBase {
 
 	protected static void testIoTraceRecord(
 		final CSVRecord ioTraceRecord, final int ioTypeCodeExpected, final SizeInBytes sizeExpected
-	) throws Exception {
+	) {
 		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
 		if(INTERRUPTED.ordinal() == actualStatusCode) {

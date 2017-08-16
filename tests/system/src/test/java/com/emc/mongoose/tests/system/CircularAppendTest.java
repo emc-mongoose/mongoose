@@ -27,6 +27,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
@@ -143,15 +145,18 @@ extends ScenarioTestBase {
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), itemSize.getValue());
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
 		assertTrue(
 			"There should be more than " + EXPECTED_COUNT +
-				" records in the I/O trace log file, but got: " + ioTraceRecords.size(),
-			EXPECTED_COUNT < ioTraceRecords.size()
+				" records in the I/O trace log file, but got: " + ioTraceRecCount.sum(),
+			EXPECTED_COUNT < ioTraceRecCount.sum()
 		);
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.UPDATE.ordinal(), itemSize.getValue());
-		}
+
 
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE_1))) {

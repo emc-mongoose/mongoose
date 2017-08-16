@@ -36,6 +36,8 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 07.06.17.
@@ -151,14 +153,14 @@ extends ScenarioTestBase {
 			);
 		}
 
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertTrue(ioTraceRecords.size() > 0);
-
 		final SizeInBytes updateSize = new SizeInBytes(1, itemSize.getValue().get() / 2 + 1, 1);
-
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.UPDATE.ordinal(), updateSize);
-		}
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), updateSize);
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
+		assertTrue(ioTraceRecCount.sum() > 0);
 
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),

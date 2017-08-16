@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  Created by kurila on 28.03.17.
@@ -107,7 +108,8 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
-		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0,
+		testMetricsTableStdout(
+			stdOutput, stepId, driverCount.getValue(), 0,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, concurrency.getValue());
 				put(IoType.READ, concurrency.getValue());
@@ -115,37 +117,42 @@ extends ScenarioTestBase {
 		);
 
 		final Map<String, Long> timingMap = new HashMap<>();
-		String storageNode;
-		String itemPath;
-		IoType ioType;
-		long reqTimeStart;
-		long duration;
-		Long prevOpFinishTime;
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		for(final CSVRecord ioTraceRec : ioTraceRecords) {
-			storageNode = ioTraceRec.get("StorageNode");
-			itemPath = ioTraceRec.get("ItemPath");
-			ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
-			reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
-			duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
-			switch(ioType) {
-				case CREATE:
-					assertTrue(storageNode.startsWith(zone1Addr));
-					timingMap.put(itemPath, reqTimeStart + duration);
-					break;
-				case READ:
-					assertTrue(storageNode.startsWith(zone2Addr));
-					prevOpFinishTime = timingMap.get(itemPath);
-					if(prevOpFinishTime == null) {
-						fail("No create I/O trace record for \"" + itemPath + "\"");
-					} else {
-						assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
-					}
-					break;
-				default:
-					fail("Unexpected I/O type: " + ioType);
+		final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
+
+			String storageNode;
+			String itemPath;
+			IoType ioType;
+			long reqTimeStart;
+			long duration;
+			Long prevOpFinishTime;
+
+			@Override
+			public final void accept(final CSVRecord ioTraceRec) {
+				storageNode = ioTraceRec.get("StorageNode");
+				itemPath = ioTraceRec.get("ItemPath");
+				ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
+				reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
+				duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+				switch(ioType) {
+					case CREATE:
+						assertTrue(storageNode.startsWith(zone1Addr));
+						timingMap.put(itemPath, reqTimeStart + duration);
+						break;
+					case READ:
+						assertTrue(storageNode.startsWith(zone2Addr));
+						prevOpFinishTime = timingMap.get(itemPath);
+						if(prevOpFinishTime == null) {
+							fail("No create I/O trace record for \"" + itemPath + "\"");
+						} else {
+							assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
+						}
+						break;
+					default:
+						fail("Unexpected I/O type: " + ioType);
+				}
 			}
-		}
+		};
+		testIoTraceLogRecords(ioTraceRecTestFunc);
 
 		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
