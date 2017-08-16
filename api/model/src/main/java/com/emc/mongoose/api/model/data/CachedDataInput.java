@@ -89,10 +89,12 @@ extends DataInputBase {
 			try {
 				layer = allocateDirect(size);
 			} catch(final OutOfMemoryError e) {
-				for(final Thread t : cacheSizeMap.keySet()) {
-					System.out.println(
-						"Thread \"" + t.getName() + "\" cache size: " + cacheSizeMap.getInt(t)
-					);
+				synchronized(System.out) {
+					for(final Thread t : cacheSizeMap.keySet()) {
+						System.out.println(
+							"Thread \"" + t.getName() + "\" cache size: " + cacheSizeMap.getInt(t)
+						);
+					}
 				}
 				System.exit(1);
 				throw e;
