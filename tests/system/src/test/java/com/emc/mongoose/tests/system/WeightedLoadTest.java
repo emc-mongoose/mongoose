@@ -61,7 +61,7 @@ extends ScenarioTestBase {
 	private static boolean FINISHED_IN_TIME;
 	private static String STD_OUTPUT;
 	private static int ACTUAL_CONCURRENCY;
-	private static String ITEM_OUTPUT_PATH;
+	private static String itemOutputPath;
 
 	public WeightedLoadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
@@ -88,15 +88,15 @@ extends ScenarioTestBase {
 		configArgs.add("--storage-mock-capacity=10000000");
 		super.setUp();
 		if(storageType.equals(StorageType.FS)) {
-			ITEM_OUTPUT_PATH = Paths.get(
+			itemOutputPath = Paths.get(
 				Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 			).toString();
-			EnvUtil.set("ITEM_OUTPUT_PATH", ITEM_OUTPUT_PATH);
+			EnvUtil.set("ITEM_OUTPUT_PATH", itemOutputPath);
 		} else {
-			ITEM_OUTPUT_PATH = "/default";
+			itemOutputPath = "/default";
 			EnvUtil.set("ITEM_OUTPUT_PATH", stepId);
 		}
-		config.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+		config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 		scenario = new JsonScenario(config, scenarioPath.toFile());
 		final Thread runner = new Thread(
 			() -> {
@@ -113,7 +113,7 @@ extends ScenarioTestBase {
 		TimeUnit.SECONDS.sleep(20); // warmup
 		switch(storageType) {
 			case FS:
-				ACTUAL_CONCURRENCY = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
+				ACTUAL_CONCURRENCY = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
 				break;
 			case ATMOS:
 			case S3:
@@ -137,7 +137,7 @@ extends ScenarioTestBase {
 	throws Exception {
 		if(storageType.equals(StorageType.FS)) {
 			try {
-				DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}

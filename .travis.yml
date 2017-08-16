@@ -35,7 +35,7 @@ jobs:
         - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
+    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
     - stage: "System tests"
       env:
         - TEST=ChainWithDelayTest
@@ -45,7 +45,7 @@ jobs:
         - ITEM_SIZE=medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=CircularAppendTest :tests:system:test
+    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=CircularAppendTest :tests:system:test
     - stage: "System tests"
       env:
         - TEST=CircularAppendTest

@@ -86,7 +86,7 @@ extends ScenarioTestBase {
 			).toString();
 			config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 		}
-		EnvUtil.set("ITEM_DATA_SIZE", itemSize.toString());
+		EnvUtil.set("ITEM_DATA_SIZE", itemSize.getValue().toString());
 		scenario = new JsonScenario(config, scenarioPath.toFile());
 		stdOutStream.startRecording();
 		scenario.run();

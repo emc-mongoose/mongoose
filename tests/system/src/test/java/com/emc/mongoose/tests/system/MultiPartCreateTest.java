@@ -43,8 +43,7 @@ extends ScenarioTestBase {
 	private SizeInBytes fullItemSize;
 	private SizeInBytes sizeLimit;
 	
-	private String ITEM_OUTPUT_FILE = MultiPartCreateTest.class.getSimpleName() +
-		"Items.csv";
+	private String itemOutputFile = MultiPartCreateTest.class.getSimpleName() + "Items.csv";
 
 	public MultiPartCreateTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
@@ -73,7 +72,7 @@ extends ScenarioTestBase {
 		config.getItemConfig().getDataConfig().setSize(fullItemSize);
 		Loggers.MSG.info("Item size: {}, part size: {}", fullItemSize, partSize);
 		EnvUtil.set("PART_SIZE", partSize.toString());
-		EnvUtil.set("ITEM_OUTPUT_FILE", ITEM_OUTPUT_FILE);
+		EnvUtil.set("ITEM_OUTPUT_FILE", itemOutputFile);
 		sizeLimit = new SizeInBytes(
 			Math.min(
 				SizeInBytes.toFixedSize("200GB"),
@@ -116,7 +115,7 @@ extends ScenarioTestBase {
 		}
 
 		final List<CSVRecord> itemRecs = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
 			try(final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
 				for(final CSVRecord csvRecord : csvParser) {
 					itemRecs.add(csvRecord);
