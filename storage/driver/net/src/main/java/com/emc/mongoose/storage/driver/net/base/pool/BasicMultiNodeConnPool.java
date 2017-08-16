@@ -285,7 +285,7 @@ implements NonBlockingConnPool {
 		for(final String nodeAddr : nodes) {
 			connQueue = connsMap.get(nodeAddr);
 			while(null != (nextConn = connQueue.poll())) {
-				Loggers.MSG.debug("Closing the connection: {}", nextConn);
+				Loggers.MSG.fatal("Closing the connection: {}", nextConn);
 				nextConn.close();
 			}
 		}
