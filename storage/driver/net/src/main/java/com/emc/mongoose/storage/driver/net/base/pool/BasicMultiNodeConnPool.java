@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,10 +36,11 @@ implements NonBlockingConnPool {
 	private final String nodes[];
 	private final int n;
 	private final int connAttemptsLimit;
-	private final Map<String, Bootstrap> bootstrapMap;
-	private final Map<String, Queue<Channel>> connsMap;
-	private final Object2IntMap<String> connsCountMap;
-	private final Object2IntMap<String> failedConnAttemptsCounts;
+	private final Map<String, Bootstrap> bootstraps;
+	private final Map<String, List<Channel>> allConns;
+	private final Map<String, Queue<Channel>> availableConns;
+	private final Object2IntMap<String> connCounts;
+	private final Object2IntMap<String> failedConnAttemptCounts;
 
 	public BasicMultiNodeConnPool(
 		final int concurrencyLevel, final Semaphore concurrencyThrottle,  final String nodes[],
@@ -52,10 +54,11 @@ implements NonBlockingConnPool {
 		this.nodes = nodes;
 		this.connAttemptsLimit = connAttemptsLimit;
 		this.n = nodes.length;
-		bootstrapMap = new HashMap<>(n);
-		connsMap = new HashMap<>(n);
-		connsCountMap = new Object2IntOpenHashMap<>(n);
-		failedConnAttemptsCounts = new Object2IntOpenHashMap<>(n);
+		bootstraps = new HashMap<>(n);
+		allConns = new HashMap<>(n);
+		availableConns = new HashMap<>(n);
+		connCounts = new Object2IntOpenHashMap<>(n);
+		failedConnAttemptCounts = new Object2IntOpenHashMap<>(n);
 
 		for(final String node : nodes) {
 			final InetSocketAddress nodeAddr;
@@ -65,7 +68,7 @@ implements NonBlockingConnPool {
 			} else {
 				nodeAddr = new InetSocketAddress(node, defaultPort);
 			}
-			bootstrapMap.put(
+			bootstraps.put(
 				node,
 				bootstrap
 					.clone()
@@ -81,9 +84,9 @@ implements NonBlockingConnPool {
 						}
 					)
 			);
-			connsMap.put(node, new ConcurrentLinkedQueue<>());
-			connsCountMap.put(node, 0);
-			failedConnAttemptsCounts.put(node, 0);
+			availableConns.put(node, new ConcurrentLinkedQueue<>());
+			connCounts.put(node, 0);
+			failedConnAttemptCounts.put(node, 0);
 		}
 
 		// pre-create the connections
@@ -95,15 +98,12 @@ implements NonBlockingConnPool {
 			}
 			final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
 			if(conn.isActive()) {
-				final Queue<Channel> connQueue = connsMap.get(nodeAddr);
+				final Queue<Channel> connQueue = availableConns.get(nodeAddr);
 				if(connQueue != null) {
 					connQueue.add(conn);
 				}
 			} else {
-				synchronized(connsCountMap) {
-					connsCountMap.put(nodeAddr, connsCountMap.getInt(nodeAddr) - 1);
-				}
-				conn.close();
+				disconnect(nodeAddr, conn);
 			}
 		}
 	}
@@ -113,14 +113,14 @@ implements NonBlockingConnPool {
 		Channel conn = null;
 		String selectedNodeAddr = null;
 
-		synchronized(connsCountMap) {
+		synchronized(connCounts) {
 
 			// select the endpoint node having the minimum count of established connections
 			int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
 			String nextNodeAddr;
 			for(int i = 0; i < n; i ++) {
 				nextNodeAddr = nodes[i];
-				nextConnsCount = connsCountMap.getInt(nextNodeAddr);
+				nextConnsCount = connCounts.getInt(nextNodeAddr);
 				if(nextConnsCount == 0) {
 					selectedNodeAddr = nextNodeAddr;
 					break;
@@ -136,19 +136,20 @@ implements NonBlockingConnPool {
 				try {
 					conn = connect(selectedNodeAddr);
 					conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
-					connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
+					allConns.computeIfAbsent(selectedNodeAddr, sna -> new ArrayList<>()).add(conn);
+					connCounts.put(selectedNodeAddr, nextConnsCount + 1);
 					if(connAttemptsLimit > 0) {
 						// reset the connection failures counter if connected successfully
-						failedConnAttemptsCounts.put(selectedNodeAddr, 0);
+						failedConnAttemptCounts.put(selectedNodeAddr, 0);
 					}
 				} catch(final Exception e) {
 					LogUtil.exception(
 						Level.DEBUG, e, "Failed to create a new connection to {}", selectedNodeAddr
 					);
 					if(connAttemptsLimit > 0) {
-						final int selectedNodeFailedConnAttemptsCount = failedConnAttemptsCounts
+						final int selectedNodeFailedConnAttemptsCount = failedConnAttemptCounts
 							.getInt(selectedNodeAddr) + 1;
-						failedConnAttemptsCounts.put(
+						failedConnAttemptCounts.put(
 							selectedNodeAddr, selectedNodeFailedConnAttemptsCount
 						);
 						if(selectedNodeFailedConnAttemptsCount > connAttemptsLimit) {
@@ -159,10 +160,10 @@ implements NonBlockingConnPool {
 							);
 							// the node having virtually Integer.MAX_VALUE established connections
 							// will never be selected by the algorithm
-							connsCountMap.put(selectedNodeAddr, Integer.MAX_VALUE);
+							connCounts.put(selectedNodeAddr, Integer.MAX_VALUE);
 							boolean allNodesExcluded = true;
 							for(final String node : nodes) {
-								if(connsCountMap.getInt(node) < Integer.MAX_VALUE) {
+								if(connCounts.getInt(node) < Integer.MAX_VALUE) {
 									allNodesExcluded = false;
 									break;
 								}
@@ -181,7 +182,17 @@ implements NonBlockingConnPool {
 
 	protected Channel connect(final String addr)
 	throws Exception {
-		return bootstrapMap.get(addr).connect().sync().channel();
+		return bootstraps.get(addr).connect().sync().channel();
+	}
+
+	private void disconnect(final String addr, final Channel conn) {
+		synchronized(connCounts) {
+			connCounts.put(addr, connCounts.getInt(addr) - 1);
+		}
+		synchronized(allConns) {
+			allConns.get(addr).remove(conn);
+		}
+		conn.close();
 	}
 	
 	protected Channel poll() {
@@ -189,7 +200,7 @@ implements NonBlockingConnPool {
 		Queue<Channel> connQueue;
 		Channel conn;
 		for(int j = i; j < i + n; j ++) {
-			connQueue = connsMap.get(nodes[j % n]);
+			connQueue = availableConns.get(nodes[j % n]);
 			conn = connQueue.poll();
 			if(conn != null) {
 				return conn;
@@ -245,15 +256,12 @@ implements NonBlockingConnPool {
 	public final void release(final Channel conn) {
 		final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
 		if(conn.isActive()) {
-			final Queue<Channel> connQueue = connsMap.get(nodeAddr);
+			final Queue<Channel> connQueue = availableConns.get(nodeAddr);
 			if(connQueue != null) {
 				connQueue.add(conn);
 			}
 		} else {
-			synchronized(connsCountMap) {
-				connsCountMap.put(nodeAddr, connsCountMap.getInt(nodeAddr) - 1);
-			}
-			conn.close();
+			disconnect(nodeAddr, conn);
 		}
 		concurrencyThrottle.release();
 	}
@@ -265,13 +273,10 @@ implements NonBlockingConnPool {
 		for(final Channel conn : conns) {
 			nodeAddr = conn.attr(ATTR_KEY_NODE).get();
 			if(conn.isActive()) {
-				connQueue = connsMap.get(nodeAddr);
+				connQueue = availableConns.get(nodeAddr);
 				connQueue.add(conn);
 			} else {
-				synchronized(connsCountMap) {
-					connsCountMap.put(nodeAddr, connsCountMap.getInt(nodeAddr) - 1);
-				}
-				conn.close();
+				disconnect(nodeAddr, conn);
 			}
 			concurrencyThrottle.release();
 		}
@@ -280,19 +285,18 @@ implements NonBlockingConnPool {
 	@Override
 	public void close()
 	throws IOException {
-		Queue<Channel> connQueue;
-		Channel nextConn;
-		for(final String nodeAddr : nodes) {
-			connQueue = connsMap.get(nodeAddr);
-			while(null != (nextConn = connQueue.poll())) {
-				Loggers.MSG.fatal("Closing the connection: {}", nextConn);
-				nextConn.close();
+		availableConns.clear();
+		bootstraps.clear();
+		synchronized(connCounts) {
+			connCounts.clear();
+		}
+		synchronized(allConns) {
+			for(final String nodeAddr : allConns.keySet()) {
+				for(final Channel conn : allConns.get(nodeAddr)) {
+					conn.close();
+				}
 			}
+			allConns.clear();
 		}
-		connsMap.clear();
-		synchronized(connsCountMap) {
-			connsCountMap.clear();
-		}
-		bootstrapMap.clear();
 	}
 }

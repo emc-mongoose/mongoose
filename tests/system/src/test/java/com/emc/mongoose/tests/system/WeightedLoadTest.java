@@ -141,8 +141,6 @@ extends ScenarioTestBase {
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}
-		} else {
-			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		}
 		super.tearDown();
 	}
