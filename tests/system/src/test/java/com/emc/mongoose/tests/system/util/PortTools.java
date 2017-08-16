@@ -19,7 +19,7 @@ public interface PortTools {
 		return new Scanner(netstatProcess.getInputStream(), "IBM850").useDelimiter("\\n");
 	}
 	
-	static int getCountConnectionsOnPort(final String nodeAddrWithPort)
+	static int getConnectionCount(final String nodeAddrWithPort)
 	throws IOException {
 		int countConnections = 0;
 		final Pattern patternConn = Pattern.compile(nodeAddrWithPort + FMT_PATTERN_CONN);
