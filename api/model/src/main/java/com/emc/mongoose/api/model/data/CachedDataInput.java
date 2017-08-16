@@ -62,29 +62,27 @@ extends DataInputBase {
 		// check if layer exists
 		ByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
-			synchronized(this) {
-				// check if it's necessary to free the space first
-				int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-				if(layersCountToFree > 0) {
-					for(final int i : layersCache.keySet()) {
-						if(null != layersCache.remove(i)) {
-							layersCountToFree --;
-							if(layersCountToFree == 0) {
-								break;
-							}
+			// check if it's necessary to free the space first
+			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			if(layersCountToFree > 0) {
+				for(final int i : layersCache.keySet()) {
+					if(null != layersCache.remove(i)) {
+						layersCountToFree --;
+						if(layersCountToFree == 0) {
+							break;
 						}
 					}
-					layersCache.trim();
 				}
-				// generate the layer
-				final int size = inputBuff.capacity();
-				layer = allocateDirect(size);
-				final long layerSeed = Long.reverseBytes(
-					(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
-				);
-				generateData(layer, layerSeed);
-				layersCache.put(layerIndex - 1, layer);
+				layersCache.trim();
 			}
+			// generate the layer
+			final int size = inputBuff.capacity();
+			layer = allocateDirect(size);
+			final long layerSeed = Long.reverseBytes(
+				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
+			);
+			generateData(layer, layerSeed);
+			layersCache.put(layerIndex - 1, layer);
 		}
 		return layer;
 	}
