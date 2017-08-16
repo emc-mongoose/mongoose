@@ -6,15 +6,16 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- Created by kurila on 18.06.15.
- Writable collection of the data items.
+ Created by andrey on 17.08.17.
+ Not thread safe.
  */
-public class ListOutput<T>
+public class ArrayOutput<T>
 implements Output<T> {
-	
-	protected final List<T> items;
-	
-	public ListOutput(final List<T> items) {
+
+	protected final T[] items;
+	protected int i = 0;
+
+	public ArrayOutput(final T[] items) {
 		this.items = items;
 	}
 
@@ -26,7 +27,12 @@ implements Output<T> {
 	@Override
 	public boolean put(final T item)
 	throws IOException {
-		return items.add(item);
+		if(i < items.length) {
+			items[i ++] = item;
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -38,13 +44,14 @@ implements Output<T> {
 	@Override
 	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		for(int i = from; i < to; i ++) {
-			items.add(buffer.get(i));
+		final int n = Math.min(items.length - i, to - from);
+		for(int j = 0; j < n; j ++) {
+			items[i + j] = buffer.get(from + j);
 		}
-		return to - from;
+		return n;
 	}
 
-	
+
 	@Override
 	public final int put(final List<T> items)
 	throws IOException {
@@ -56,9 +63,9 @@ implements Output<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public ListInput<T> getInput()
+	public ArrayInput<T> getInput()
 	throws IOException {
-		return new ListInput<>(items);
+		return new ArrayInput<>(items);
 	}
 
 	/**
@@ -70,9 +77,9 @@ implements Output<T> {
 	throws IOException {
 	}
 
-	
+
 	@Override
 	public String toString() {
-		return "listOutput<" + items.hashCode() + ">";
+		return "arrayOutput<" + items.hashCode() + ">";
 	}
 }

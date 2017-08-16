@@ -147,11 +147,11 @@ extends ScenarioTestBase {
 	@Override
 	public void test()
 	throws Exception {
+
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, concurrency.getValue());
 		concurrencyMap.put(IoType.READ, concurrency.getValue());
 		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0, concurrencyMap);
-		assertTrue("Scenario didn't finished in time", finishedInTime);
 		if(!StorageType.FS.equals(storageType)) {
 			assertEquals(driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
 		}
@@ -174,5 +174,7 @@ extends ScenarioTestBase {
 		assertEquals(
 			"Expected no open channels after the test but got " + openChannels, 0, openChannels
 		);
+
+		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }

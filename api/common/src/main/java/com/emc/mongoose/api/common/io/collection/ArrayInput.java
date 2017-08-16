@@ -7,18 +7,19 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- Readable collection of the data items. Not thread safe.
+ Created by andrey on 17.08.17.
+ Not thread safe.
  */
-public class ListInput<T>
+public class ArrayInput<T>
 implements Input<T> {
-	
-	protected final List<T> items;
+
+	protected final T[] items;
 	protected int size;
 	protected int i = 0;
-	
-	public ListInput(final List<T> items) {
+
+	public ArrayInput(final T[] items) {
 		this.items = items;
-		this.size = items == null ? 0 : items.size();
+		this.size = items.length;
 	}
 
 	/**
@@ -29,7 +30,7 @@ implements Input<T> {
 	public T get()
 	throws EOFException, IOException {
 		if(i < size) {
-			return items.get(i++);
+			return items[i ++];
 		} else {
 			throw new EOFException();
 		}
@@ -48,23 +49,14 @@ implements Input<T> {
 		int n = size - i;
 		if(n > 0) {
 			n = Math.min(n, maxCount);
-			for(final T item : items.subList(i, i + n)) {
-				buffer.add(item);
+			for(int j = i; j < i + n; j ++) {
+				buffer.add(items[j]);
 			}
 		} else {
 			throw new EOFException();
 		}
 		i += n;
 		return n;
-	}
-
-	/**
-	 @throws IOException doesn't throw
-	 */
-	@Override
-	public void reset()
-	throws IOException {
-		i = 0;
 	}
 
 	@Override
@@ -81,6 +73,15 @@ implements Input<T> {
 	}
 
 	/**
+	 @throws IOException doesn't throw
+	 */
+	@Override
+	public void reset()
+	throws IOException {
+		i = 0;
+	}
+
+	/**
 	 Does nothing
 	 @throws IOException doesn't throw
 	 */
@@ -91,6 +92,6 @@ implements Input<T> {
 
 	@Override
 	public String toString() {
-		return "listInput<" + items.hashCode() + ">";
+		return "arrayInput<" + items.hashCode() + ">";
 	}
 }

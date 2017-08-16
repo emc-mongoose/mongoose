@@ -56,8 +56,8 @@ extends ListInput<T> {
 			}
 		}
 		n = Math.min(size - i, maxCount);
-		for(final T item : items.subList(i, i + n)) {
-			buffer.add(item);
+		for(int j = i; j < i + n; j ++) {
+			buffer.add(items.get(j));
 		}
 		i += n;
 		return n;
