@@ -143,9 +143,6 @@ extends ScenarioTestBase {
 			}
 		} else {
 			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
-			for(int i = 0; i < httpStorageNodeCount; i ++) {
-				PortTools.killConnectionsOnPort(startPort + i);
-			}
 		}
 		super.tearDown();
 	}

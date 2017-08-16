@@ -36,11 +36,4 @@ public interface PortTools {
 		}
 		return countConnections;
 	}
-
-	static void killConnectionsOnPort(final int port)
-	throws IOException, InterruptedException {
-		final String[] cmd = { "fuser", "-k", Integer.toString(port) + "/tcp" };
-		final Process process = Runtime.getRuntime().exec(cmd);
-		process.waitFor();
-	}
 }

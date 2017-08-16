@@ -56,61 +56,50 @@ extends ScenarioTestBase {
 	@Before
 	public void setUp()
 	throws Exception {
-		try {
-			super.setUp();
-			switch(storageType) {
-				case FS:
-					itemOutputPath = Paths.get(
-						Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
-					).toString();
-					config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
-					break;
-				case SWIFT:
-					config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
-					break;
-			}
-			scenario = new JsonScenario(config, scenarioPath.toFile());
-
-			runner = new Thread(
-				() -> {
-					try {
-						scenario.run();
-					} catch(final Throwable t) {
-						LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
-					}
-				}
-			);
-			stdOutStream.startRecording();
-			runner.start();
-			TimeUnit.SECONDS.sleep(25);
-			stdOutput = stdOutStream.stopRecordingAndGet();
-		} catch(final Throwable cause) {
-			cause.printStackTrace();
+		super.setUp();
+		switch(storageType) {
+			case FS:
+				itemOutputPath = Paths.get(
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
+				).toString();
+				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+				break;
+			case SWIFT:
+				config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
+				break;
 		}
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+
+		runner = new Thread(
+			() -> {
+				try {
+					scenario.run();
+				} catch(final Throwable t) {
+					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
+				}
+			}
+		);
+		stdOutStream.startRecording();
+		runner.start();
+		TimeUnit.SECONDS.sleep(25);
+		stdOutput = stdOutStream.stopRecordingAndGet();
 	}
 
 	@After
 	public void tearDown()
 	throws Exception {
-		try {
-			if(runner != null) {
-				runner.interrupt();
+		if(runner != null) {
+			runner.interrupt();
+		}
+		super.tearDown();
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
 			}
-			if(storageType.equals(StorageType.FS)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
-			} else {
-				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
-				for(int i = 0; i < httpStorageNodeCount; i ++) {
-					PortTools.killConnectionsOnPort(startPort + i);
-				}
-			}
-			super.tearDown();
-		} catch(final Throwable cause) {
-			cause.printStackTrace();
+		} else {
+			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 		}
 	}
 
