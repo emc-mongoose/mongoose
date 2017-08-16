@@ -7,11 +7,6 @@ import java.nio.MappedByteBuffer;
 
 public interface DirectMemUtil {
 
-	static MappedByteBuffer allocate(final int size)
-	throws OutOfMemoryError {
-		return (MappedByteBuffer) ByteBuffer.allocateDirect(size);
-	}
-
 	static boolean free(final MappedByteBuffer buff) {
 		if(buff == null) {
 			return false;
