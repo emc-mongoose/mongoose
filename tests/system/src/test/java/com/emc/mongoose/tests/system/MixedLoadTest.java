@@ -148,15 +148,13 @@ extends ScenarioTestBase {
 	@Override
 	public void test()
 	throws Exception {
-
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, concurrency.getValue());
 		concurrencyMap.put(IoType.READ, concurrency.getValue());
 		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0, concurrencyMap);
-
 		assertTrue("Scenario didn't finished in time", finishedInTime);
-
-		assumeThat(storageType, not(equalTo(StorageType.FS)));
-		assertEquals(driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
+		if(!StorageType.FS.equals(storageType)) {
+			assertEquals(driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
+		}
 	}
 }
