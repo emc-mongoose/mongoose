@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
 import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.common.io.ThreadLocalByteBuffer;
+import com.emc.mongoose.api.common.env.DirectMemUtil;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
 import com.emc.mongoose.api.model.data.DataSizeException;
 import com.emc.mongoose.api.model.data.DataVerificationException;
@@ -265,7 +265,7 @@ public abstract class ResponseContentUtil {
 	) throws DataCorruptionException, IOException {
 
 		// fill the expected data buffer to compare with a chunk
-		final ByteBuffer bb = ThreadLocalByteBuffer.get(remainingSize);
+		final ByteBuffer bb = DirectMemUtil.getThreadLocalReusableBuff(remainingSize);
 		bb.limit(remainingSize);
 		int n = 0;
 		while(n < remainingSize) {

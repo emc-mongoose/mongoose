@@ -4,10 +4,9 @@ import static com.emc.mongoose.api.model.io.task.IoTask.Status;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.api.common.ByteRange;
+import com.emc.mongoose.api.common.env.DirectMemUtil;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.io.ThreadLocalByteBuffer;
 import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.data.DataVerificationException;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
@@ -32,7 +31,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -380,7 +378,10 @@ implements FileStorageDriver<I, O> {
 					final long nextRangeOffset = getRangeOffset(nextRangeIdx);
 					if(currRange != null) {
 						final int n = currRange.readAndVerify(
-							srcChannel, ThreadLocalByteBuffer.get(nextRangeOffset - countBytesDone)
+							srcChannel,
+							DirectMemUtil.getThreadLocalReusableBuff(
+								nextRangeOffset - countBytesDone
+							)
 						);
 						if(n < 0) {
 							throw new DataSizeException(contentSize, countBytesDone);
@@ -395,7 +396,10 @@ implements FileStorageDriver<I, O> {
 					}
 				} else {
 					final int n = fileItem.readAndVerify(
-						srcChannel, ThreadLocalByteBuffer.get(contentSize - countBytesDone)
+						srcChannel,
+						DirectMemUtil.getThreadLocalReusableBuff(
+							contentSize - countBytesDone
+						)
 					);
 					if(n < 0) {
 						throw new DataSizeException(contentSize, countBytesDone);
@@ -460,7 +464,8 @@ implements FileStorageDriver<I, O> {
 
 			try {
 				countBytesDone += range2read.readAndVerify(
-					srcChannel, ThreadLocalByteBuffer.get(currRangeSize - countBytesDone)
+					srcChannel,
+					DirectMemUtil.getThreadLocalReusableBuff(currRangeSize - countBytesDone)
 				);
 			} catch(final DataCorruptionException e) {
 				throw new DataCorruptionException(
@@ -544,7 +549,7 @@ implements FileStorageDriver<I, O> {
 				try {
 					rangeBytesDone += currRange.readAndVerify(
 						srcChannel,
-						ThreadLocalByteBuffer.get(
+						DirectMemUtil.getThreadLocalReusableBuff(
 							Math.min(
 								fixedRangeSize - countBytesDone,
 								currRange.size() - currRange.position()
@@ -584,7 +589,9 @@ implements FileStorageDriver<I, O> {
 		final long contentSize = fileItem.size();
 		int n;
 		if(countBytesDone < contentSize) {
-			n = srcChannel.read(ThreadLocalByteBuffer.get(contentSize - countBytesDone));
+			n = srcChannel.read(
+				DirectMemUtil.getThreadLocalReusableBuff(contentSize - countBytesDone)
+			);
 			if(n < 0) {
 				finishIoTask(ioTask);
 				ioTask.setCountBytesDone(countBytesDone);
@@ -629,7 +636,7 @@ implements FileStorageDriver<I, O> {
 			
 			final long currRangeSize = range2read.size();
 			n = srcChannel.read(
-				ThreadLocalByteBuffer.get(currRangeSize - countBytesDone),
+				DirectMemUtil.getThreadLocalReusableBuff(currRangeSize - countBytesDone),
 				getRangeOffset(currRangeIdx) + countBytesDone
 			);
 			if(n < 0) {
@@ -681,7 +688,8 @@ implements FileStorageDriver<I, O> {
 					rangeSize = rangeEnd - rangeBeg + 1;
 				}
 				n = srcChannel.read(
-					ThreadLocalByteBuffer.get(rangeSize - countBytesDone), rangeBeg + countBytesDone
+					DirectMemUtil.getThreadLocalReusableBuff(rangeSize - countBytesDone),
+					rangeBeg + countBytesDone
 				);
 				if(n < 0) {
 					finishIoTask(ioTask);
