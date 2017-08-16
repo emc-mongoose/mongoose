@@ -92,22 +92,26 @@ extends ScenarioTestBase {
 	@After
 	public void tearDown()
 	throws Exception {
-		if(runner != null) {
-			runner.interrupt();
-		}
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
+		try {
+			if(runner != null) {
+				runner.interrupt();
 			}
-		} else {
-			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
-			for(int i = 0; i < httpStorageNodeCount; i ++) {
-				PortTools.killConnectionsOnPort(startPort + i);
+			if(storageType.equals(StorageType.FS)) {
+				try {
+					DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
+			} else {
+				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+				for(int i = 0; i < httpStorageNodeCount; i ++) {
+					PortTools.killConnectionsOnPort(startPort + i);
+				}
 			}
+			super.tearDown();
+		} catch(final Throwable cause) {
+			cause.printStackTrace();
 		}
-		super.tearDown();
 	}
 
 	@Override
