@@ -1,8 +1,10 @@
 package com.emc.mongoose.api.common.io;
 
+import com.emc.mongoose.api.common.env.DirectMemUtil;
+
 import static com.emc.mongoose.api.common.SizeInBytes.formatFixedSize;
 
-import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 /**
  Created by kurila on 13.10.16.
@@ -12,23 +14,23 @@ public final class ThreadLocalByteBuffer {
 	public static final int SIZE_MIN = 1;
 	public static final int SIZE_MAX = 0x1000000; // 16MB
 	
-	private static final ThreadLocal<ByteBuffer[]> BUFFERS = ThreadLocal.withInitial(
+	private static final ThreadLocal<MappedByteBuffer[]> BUFFERS = ThreadLocal.withInitial(
 		() -> {
 			final int buffCount = (int) (
 				Math.log(SIZE_MAX / SIZE_MIN) / Math.log(2) + 1
 			);
-			return new ByteBuffer[buffCount];
+			return new MappedByteBuffer[buffCount];
 		}
 	);
 	
-	public static ByteBuffer get(final long size)
+	public static MappedByteBuffer get(final long size)
 	throws IllegalArgumentException {
 		
 		if(size < 0) {
 			throw new IllegalArgumentException("Requested negative buffer size: " + size);
 		}
 		
-		final ByteBuffer[] ioBuffers = BUFFERS.get();
+		final MappedByteBuffer[] ioBuffers = BUFFERS.get();
 		long currBuffSize = Long.highestOneBit(size);
 		if(currBuffSize > SIZE_MAX) {
 			currBuffSize = SIZE_MAX;
@@ -40,10 +42,10 @@ public final class ThreadLocalByteBuffer {
 			}
 		}
 		final int i = Long.numberOfTrailingZeros(currBuffSize);
-		ByteBuffer buff = ioBuffers[i];
+		MappedByteBuffer buff = ioBuffers[i];
 		
 		if(buff == null) {
-			buff = ByteBuffer.allocateDirect((int) currBuffSize);
+			buff = DirectMemUtil.allocate((int) currBuffSize);
 			/*long buffSizeSum = 0;
 			for(final ByteBuffer ioBuff : ioBuffers) {
 				if(ioBuff != null) {

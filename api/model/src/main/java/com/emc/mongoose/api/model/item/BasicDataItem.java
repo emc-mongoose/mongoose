@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
@@ -309,7 +310,9 @@ implements DataItem {
 	@Override
 	public final int read(final ByteBuffer dst) {
 		final int n;
-		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
 		// bytes count to transfer
 		n = Math.min(dst.remaining(), ringBuff.remaining());
@@ -327,7 +330,9 @@ implements DataItem {
 			return 0;
 		}
 		int m;
-		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
 		final int n = Math.min(src.remaining(), ringBuff.remaining());
 		if(n > 0) {
@@ -349,7 +354,9 @@ implements DataItem {
 	@Override
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
-		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
 		int n = (int) Math.min(maxCount, ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
@@ -359,10 +366,12 @@ implements DataItem {
 	}
 	
 	@Override
-	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
+	public final int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)
 	throws DataCorruptionException, IOException {
 		int n;
-		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
 		n = ringBuff.remaining();
 		if(buff.limit() > n) {

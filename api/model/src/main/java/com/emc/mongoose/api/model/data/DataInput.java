@@ -1,13 +1,14 @@
 package com.emc.mongoose.api.model.data;
 
 import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.env.DirectMemUtil;
 import com.emc.mongoose.api.common.math.MathUtil;
 
 import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,7 @@ extends Closeable, Externalizable {
 
 	int getSize();
 
-	ByteBuffer getLayer(final int layerIndex);
+	MappedByteBuffer getLayer(final int layerIndex);
 
 	static DataInput getInstance(
 		final String inputFilePath, final String seed, final SizeInBytes layerSize,
@@ -73,7 +74,7 @@ extends Closeable, Externalizable {
 		return instance;
 	}
 
-	static void generateData(final ByteBuffer byteLayer, final long seed) {
+	static void generateData(final MappedByteBuffer byteLayer, final long seed) {
 		final int
 			ringBuffSize = byteLayer.capacity(),
 			countWordBytes = Long.SIZE / Byte.SIZE,
@@ -88,10 +89,11 @@ extends Closeable, Externalizable {
 			word = MathUtil.xorShift(word);
 		}
 		// tail bytes
-		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
+		final MappedByteBuffer tailBytes = DirectMemUtil.allocate(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
+		DirectMemUtil.deallocate(tailBytes);
 	}
 }

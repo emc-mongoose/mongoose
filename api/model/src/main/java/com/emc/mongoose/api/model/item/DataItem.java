@@ -5,7 +5,7 @@ import com.emc.mongoose.api.model.data.DataCorruptionException;
 import com.emc.mongoose.api.model.data.DataSizeException;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
@@ -61,7 +61,7 @@ extends Item, SeekableByteChannel {
 	int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;
 	
-	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
+	int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)
 	throws DataSizeException, DataCorruptionException, IOException;
 	
 	static int getRangeCount(final long size) {

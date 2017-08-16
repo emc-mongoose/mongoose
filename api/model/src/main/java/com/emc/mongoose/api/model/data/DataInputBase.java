@@ -1,9 +1,11 @@
 package com.emc.mongoose.api.model.data;
 
+import com.emc.mongoose.api.common.env.DirectMemUtil;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 /**
  Created by andrey on 24.07.17.
@@ -11,13 +13,13 @@ import java.nio.ByteBuffer;
 public abstract class DataInputBase
 implements DataInput {
 
-	protected ByteBuffer inputBuff;
+	protected MappedByteBuffer inputBuff;
 
 	protected DataInputBase() {
 		inputBuff = null;
 	}
 
-	protected DataInputBase(final ByteBuffer inputBuff) {
+	protected DataInputBase(final MappedByteBuffer inputBuff) {
 		this.inputBuff = inputBuff;
 		this.inputBuff.clear();
 	}
@@ -33,11 +35,12 @@ implements DataInput {
 	}
 
 	@Override
-	public abstract ByteBuffer getLayer(final int layerIndex);
+	public abstract MappedByteBuffer getLayer(final int layerIndex);
 
 	@Override
 	public void close()
 	throws IOException {
+		DirectMemUtil.deallocate(inputBuff);
 		inputBuff = null;
 	}
 
@@ -66,6 +69,6 @@ implements DataInput {
 				j += i;
 			}
 		}
-		inputBuff = ByteBuffer.allocateDirect(size).put(buff);
+		inputBuff = (MappedByteBuffer) DirectMemUtil.allocate(size).put(buff);
 	}
 }

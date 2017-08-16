@@ -2,17 +2,13 @@ package com.emc.mongoose.api.model.data;
 
 import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
-
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.emc.mongoose.api.common.env.DirectMemUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.LongAdder;
-
-import static java.nio.ByteBuffer.allocateDirect;
+import java.nio.MappedByteBuffer;
 
 /**
  Created by andrey on 24.07.17.
@@ -23,17 +19,15 @@ import static java.nio.ByteBuffer.allocateDirect;
 public class CachedDataInput
 extends DataInputBase {
 
-	private static final LongAdder CONSUMED_DIRECT_MEMORY = new LongAdder();
-
 	private int layersCacheCountLimit;
-	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
+	private transient final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>>
 		thrLocLayersCache = new ThreadLocal<>();
 
 	public CachedDataInput() {
 		super();
 	}
 
-	public CachedDataInput(final ByteBuffer initialLayer, final int layersCacheCountLimit) {
+	public CachedDataInput(final MappedByteBuffer initialLayer, final int layersCacheCountLimit) {
 		super(initialLayer);
 		if(layersCacheCountLimit < 1) {
 			throw new IllegalArgumentException("Cache limit value should be more than 1");
@@ -51,29 +45,28 @@ extends DataInputBase {
 	}
 
 	@Override
-	public final ByteBuffer getLayer(final int layerIndex)
+	public final MappedByteBuffer getLayer(final int layerIndex)
 	throws OutOfMemoryError {
 
 		if(layerIndex == 0) {
 			return inputBuff;
 		}
 
-		Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
+		Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		ByteBuffer layer = layersCache.get(layerIndex - 1);
+		MappedByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
 			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
 			final int layerSize = inputBuff.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
-					if(null != layersCache.remove(i)) {
-						CONSUMED_DIRECT_MEMORY.add(-layerSize);
+					if(DirectMemUtil.deallocate(layersCache.remove(i))) {
 						layersCountToFree --;
 						if(layersCountToFree == 0) {
 							break;
@@ -83,13 +76,7 @@ extends DataInputBase {
 				layersCache.trim();
 			}
 			// generate the layer
-			try {
-				layer = allocateDirect(layerSize);
-			} catch(final OutOfMemoryError e) {
-				System.err.println(SizeInBytes.formatFixedSize(CONSUMED_DIRECT_MEMORY.sum()));
-				System.exit(1);
-			}
-			CONSUMED_DIRECT_MEMORY.add(layerSize);
+			layer = DirectMemUtil.allocate(layerSize);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
@@ -102,8 +89,11 @@ extends DataInputBase {
 	public void close()
 	throws IOException {
 		super.close();
-		final Int2ObjectOpenHashMap<ByteBuffer> layersCache = thrLocLayersCache.get();
+		final Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
+			for(final MappedByteBuffer layer : layersCache.values()) {
+				DirectMemUtil.deallocate(layer);
+			}
 			layersCache.clear();
 			thrLocLayersCache.set(null);
 		}

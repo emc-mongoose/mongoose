@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.data;
 
-import java.nio.ByteBuffer;
+import com.emc.mongoose.api.common.env.DirectMemUtil;
 
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
@@ -17,7 +17,7 @@ extends CachedDataInput {
 	}
 
 	public SeedDataInput(final long seed, final long size, final int cacheLimit) {
-		super(ByteBuffer.allocateDirect((int) size), cacheLimit);
+		super(DirectMemUtil.allocate((int) size), cacheLimit);
 		generateData(inputBuff, seed);
 	}
 
