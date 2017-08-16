@@ -46,7 +46,7 @@ extends DataInputBase {
 	}
 
 	@Override
-	public synchronized final ByteBuffer getLayer(final int layerIndex)
+	public final ByteBuffer getLayer(final int layerIndex)
 	throws OutOfMemoryError {
 
 		if(layerIndex == 0) {
@@ -62,27 +62,29 @@ extends DataInputBase {
 		// check if layer exists
 		ByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
-			// check if it's necessary to free the space first
-			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-			if(layersCountToFree > 0) {
-				for(final int i : layersCache.keySet()) {
-					if(null != layersCache.remove(i)) {
-						layersCountToFree --;
-						if(layersCountToFree == 0) {
-							break;
+			synchronized(this) {
+				// check if it's necessary to free the space first
+				int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+				if(layersCountToFree > 0) {
+					for(final int i : layersCache.keySet()) {
+						if(null != layersCache.remove(i)) {
+							layersCountToFree --;
+							if(layersCountToFree == 0) {
+								break;
+							}
 						}
 					}
+					layersCache.trim();
 				}
-				layersCache.trim();
+				// generate the layer
+				final int size = inputBuff.capacity();
+				layer = allocateDirect(size);
+				final long layerSeed = Long.reverseBytes(
+					(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
+				);
+				generateData(layer, layerSeed);
+				layersCache.put(layerIndex - 1, layer);
 			}
-			// generate the layer
-			final int size = inputBuff.capacity();
-			layer = allocateDirect(size);
-			final long layerSeed = Long.reverseBytes(
-				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
-			);
-			generateData(layer, layerSeed);
-			layersCache.put(layerIndex - 1, layer);
 		}
 		return layer;
 	}
