@@ -3,12 +3,15 @@ package com.emc.mongoose.api.model.data;
 import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.LongAdder;
+
 import static java.nio.ByteBuffer.allocateDirect;
 
 /**
@@ -19,6 +22,8 @@ import static java.nio.ByteBuffer.allocateDirect;
  */
 public class CachedDataInput
 extends DataInputBase {
+
+	private static final LongAdder CONSUMED_DIRECT_MEMORY = new LongAdder();
 
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
@@ -64,9 +69,11 @@ extends DataInputBase {
 		if(layer == null) {
 			// check if it's necessary to free the space first
 			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			final int layerSize = inputBuff.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
 					if(null != layersCache.remove(i)) {
+						CONSUMED_DIRECT_MEMORY.add(-layerSize);
 						layersCountToFree --;
 						if(layersCountToFree == 0) {
 							break;
@@ -76,8 +83,13 @@ extends DataInputBase {
 				layersCache.trim();
 			}
 			// generate the layer
-			final int size = inputBuff.capacity();
-			layer = allocateDirect(size);
+			try {
+				layer = allocateDirect(layerSize);
+			} catch(final OutOfMemoryError e) {
+				System.err.println(SizeInBytes.formatFixedSize(CONSUMED_DIRECT_MEMORY.sum()));
+				System.exit(1);
+			}
+			CONSUMED_DIRECT_MEMORY.add(layerSize);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
