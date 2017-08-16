@@ -5,6 +5,7 @@ import com.emc.mongoose.api.common.env.DirectMemUtil;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 /**
@@ -40,7 +41,7 @@ implements DataInput {
 	@Override
 	public void close()
 	throws IOException {
-		DirectMemUtil.deallocate(inputBuff);
+		DirectMemUtil.free(inputBuff);
 		inputBuff = null;
 	}
 
@@ -69,6 +70,6 @@ implements DataInput {
 				j += i;
 			}
 		}
-		inputBuff = (MappedByteBuffer) DirectMemUtil.allocate(size).put(buff);
+		inputBuff = (MappedByteBuffer) ByteBuffer.allocateDirect(size).put(buff);
 	}
 }

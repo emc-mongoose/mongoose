@@ -1,8 +1,8 @@
 package com.emc.mongoose.api.model.data;
 
-import com.emc.mongoose.api.common.env.DirectMemUtil;
-
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
 /**
@@ -19,7 +19,7 @@ extends CachedDataInput {
 		final ReadableByteChannel initialLayerInputChannel, final int layerSize,
 		final int layersCacheCountLimit
 	) throws IOException {
-		super(DirectMemUtil.allocate(layerSize), layersCacheCountLimit);
+		super((MappedByteBuffer) ByteBuffer.allocateDirect(layerSize), layersCacheCountLimit);
 		// read the data from the channel to the inputBuff which is already initialized with the
 		// parent constructor invocation
 		int n = 0, m;

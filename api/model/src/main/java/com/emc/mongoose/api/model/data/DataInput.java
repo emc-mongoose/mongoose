@@ -1,13 +1,13 @@
 package com.emc.mongoose.api.model.data;
 
 import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.env.DirectMemUtil;
 import com.emc.mongoose.api.common.math.MathUtil;
 
 import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
@@ -89,11 +89,10 @@ extends Closeable, Externalizable {
 			word = MathUtil.xorShift(word);
 		}
 		// tail bytes
-		final MappedByteBuffer tailBytes = DirectMemUtil.allocate(countWordBytes);
+		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
-		DirectMemUtil.deallocate(tailBytes);
 	}
 }

@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 /**
@@ -66,7 +67,7 @@ extends DataInputBase {
 			final int layerSize = inputBuff.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
-					if(DirectMemUtil.deallocate(layersCache.remove(i))) {
+					if(DirectMemUtil.free(layersCache.remove(i))) {
 						layersCountToFree --;
 						if(layersCountToFree == 0) {
 							break;
@@ -76,7 +77,7 @@ extends DataInputBase {
 				layersCache.trim();
 			}
 			// generate the layer
-			layer = DirectMemUtil.allocate(layerSize);
+			layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
@@ -92,7 +93,7 @@ extends DataInputBase {
 		final Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
 			for(final MappedByteBuffer layer : layersCache.values()) {
-				DirectMemUtil.deallocate(layer);
+				DirectMemUtil.free(layer);
 			}
 			layersCache.clear();
 			thrLocLayersCache.set(null);

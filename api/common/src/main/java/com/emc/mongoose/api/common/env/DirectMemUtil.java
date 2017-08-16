@@ -1,36 +1,22 @@
 package com.emc.mongoose.api.common.env;
 
-import com.emc.mongoose.api.common.SizeInBytes;
 import sun.nio.ch.DirectBuffer;
 
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.util.concurrent.atomic.LongAdder;
 
 public interface DirectMemUtil {
 
-	LongAdder CONSUMED_TOTAL = new LongAdder();
-
 	static MappedByteBuffer allocate(final int size)
 	throws OutOfMemoryError {
-		CONSUMED_TOTAL.add(size);
-		try {
-			return (MappedByteBuffer) ByteBuffer.allocateDirect(size);
-		} catch(final OutOfMemoryError e) {
-			System.err.println(
-				"Out of direct memory. Total consumed direct memory: " +
-					SizeInBytes.formatFixedSize(CONSUMED_TOTAL.sum())
-			);
-			throw e;
-		}
+		return (MappedByteBuffer) ByteBuffer.allocateDirect(size);
 	}
 
-	static boolean deallocate(final MappedByteBuffer buff) {
+	static boolean free(final MappedByteBuffer buff) {
 		if(buff == null) {
 			return false;
 		}
 		((DirectBuffer) buff).cleaner().clean();
-		CONSUMED_TOTAL.add(-buff.capacity());
 		return true;
 	}
 
@@ -68,7 +54,7 @@ public interface DirectMemUtil {
 		MappedByteBuffer buff = threadLocalReusableBuffers[i];
 
 		if(buff == null) {
-			buff = DirectMemUtil.allocate((int) currBuffSize);
+			buff = (MappedByteBuffer) ByteBuffer.allocateDirect((int) currBuffSize);
 			/*long buffSizeSum = 0;
 			for(final ByteBuffer ioBuff : ioBuffers) {
 				if(ioBuff != null) {
