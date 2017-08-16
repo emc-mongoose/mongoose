@@ -247,7 +247,10 @@ extends ParameterizedSysTestBase {
 				assertTrue(Long.toString(countSucc), countSucc >= prevCountSucc);
 			}
 			if(expectedMaxCount > 0) {
-				assertTrue(Long.toString(countSucc), countSucc <= expectedMaxCount);
+				assertTrue(
+					"Expected no more than " + expectedMaxCount + " results, bot got " + countSucc,
+					countSucc <= expectedMaxCount
+				);
 			}
 			prevCountSucc = countSucc;
 			countFail = Long.parseLong(nextRecord.get("CountFail"));
@@ -351,7 +354,7 @@ extends ParameterizedSysTestBase {
 			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
-		assertTrue(Long.toString(countFail), countFail < 1);
+		assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
 		if(countSucc > 0) {
 			final long avgItemSize = totalBytes / countSucc;
 			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {

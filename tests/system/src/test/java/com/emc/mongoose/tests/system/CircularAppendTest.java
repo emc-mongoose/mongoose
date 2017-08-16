@@ -120,8 +120,8 @@ extends ScenarioTestBase {
 			);
 			testMetricsLogRecords(
 				metricsLogRecords, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
-				itemSize.getValue(), EXPECTED_APPEND_COUNT * EXPECTED_COUNT, 0,
-				config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
+				itemSize.getValue(), (long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT),
+				0, config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		} catch(final FileNotFoundException ignored) {
 			// there may be no metrics file if append step duration is less than 10s
@@ -194,7 +194,7 @@ extends ScenarioTestBase {
 			assertEquals("0/0", itemRec.get(3));
 		}
 		if(!storageType.equals(StorageType.ATMOS)) {
-			assertEquals(EXPECTED_COUNT, freq.getUniqueCount());
+			assertEquals(EXPECTED_COUNT, freq.getUniqueCount(), EXPECTED_COUNT / 20);
 		}
 	}
 }

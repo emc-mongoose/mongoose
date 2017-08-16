@@ -65,7 +65,7 @@ jobs:
         - ITEM_SIZE=empty,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
+    # STORAGE_TYPE=fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
     - stage: "System tests"
       env:
         - TEST=CopyUsingInputPathTest
