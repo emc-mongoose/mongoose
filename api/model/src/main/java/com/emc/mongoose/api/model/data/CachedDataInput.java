@@ -4,6 +4,8 @@ import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,6 +26,7 @@ extends DataInputBase {
 	private int layersCacheCountLimit;
 	private transient final ThreadLocal<Int2ObjectOpenHashMap<ByteBuffer>>
 		thrLocLayersCache = new ThreadLocal<>();
+	private static final Object2IntMap<Thread> cacheSizeMap = new Object2IntOpenHashMap<>();
 
 	public CachedDataInput() {
 		super();
@@ -58,6 +61,7 @@ extends DataInputBase {
 		if(layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
+			cacheSizeMap.put(Thread.currentThread(), 0);
 		}
 
 		// check if layer exists
@@ -68,6 +72,10 @@ extends DataInputBase {
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
 					if(null != layersCache.remove(i)) {
+						cacheSizeMap.put(
+							Thread.currentThread(),
+							cacheSizeMap.getInt(Thread.currentThread()) - 1
+						);
 						layersCountToFree --;
 						if(layersCountToFree == 0) {
 							break;
@@ -78,12 +86,25 @@ extends DataInputBase {
 			}
 			// generate the layer
 			final int size = inputBuff.capacity();
-			layer = allocateDirect(size);
+			try {
+				layer = allocateDirect(size);
+			} catch(final OutOfMemoryError e) {
+				for(final Thread t : cacheSizeMap.keySet()) {
+					System.out.println(
+						"Thread \"" + t.getName() + "\" cache size: " + cacheSizeMap.getInt(t)
+					);
+				}
+				System.exit(1);
+				throw e;
+			}
 			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
 			generateData(layer, layerSeed);
 			layersCache.put(layerIndex - 1, layer);
+			cacheSizeMap.put(
+				Thread.currentThread(), cacheSizeMap.getInt(Thread.currentThread()) + 1
+			);
 		}
 		return layer;
 	}

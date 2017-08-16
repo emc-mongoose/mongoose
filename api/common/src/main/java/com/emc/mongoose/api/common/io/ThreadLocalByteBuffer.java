@@ -12,15 +12,14 @@ public final class ThreadLocalByteBuffer {
 	public static final int SIZE_MIN = 1;
 	public static final int SIZE_MAX = 0x1000000; // 16MB
 	
-	private static final ThreadLocal<ByteBuffer[]> BUFFERS = new ThreadLocal<ByteBuffer[]>() {
-		@Override
-		protected final ByteBuffer[] initialValue() {
+	private static final ThreadLocal<ByteBuffer[]> BUFFERS = ThreadLocal.withInitial(
+		() -> {
 			final int buffCount = (int) (
 				Math.log(SIZE_MAX / SIZE_MIN) / Math.log(2) + 1
 			);
 			return new ByteBuffer[buffCount];
 		}
-	};
+	);
 	
 	public static ByteBuffer get(final long size)
 	throws IllegalArgumentException {
