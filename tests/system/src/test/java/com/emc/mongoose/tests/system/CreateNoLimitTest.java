@@ -56,33 +56,37 @@ extends ScenarioTestBase {
 	@Before
 	public void setUp()
 	throws Exception {
-		super.setUp();
-		switch(storageType) {
-			case FS:
-				itemOutputPath = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
-				).toString();
-				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
-				break;
-			case SWIFT:
-				config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
-				break;
-		}
-		scenario = new JsonScenario(config, scenarioPath.toFile());
-
-		runner = new Thread(
-			() -> {
-				try {
-					scenario.run();
-				} catch(final Throwable t) {
-					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
-				}
+		try {
+			super.setUp();
+			switch(storageType) {
+				case FS:
+					itemOutputPath = Paths.get(
+						Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
+					).toString();
+					config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+					break;
+				case SWIFT:
+					config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
+					break;
 			}
-		);
-		stdOutStream.startRecording();
-		runner.start();
-		TimeUnit.SECONDS.sleep(25);
-		stdOutput = stdOutStream.stopRecordingAndGet();
+			scenario = new JsonScenario(config, scenarioPath.toFile());
+
+			runner = new Thread(
+				() -> {
+					try {
+						scenario.run();
+					} catch(final Throwable t) {
+						LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
+					}
+				}
+			);
+			stdOutStream.startRecording();
+			runner.start();
+			TimeUnit.SECONDS.sleep(25);
+			stdOutput = stdOutStream.stopRecordingAndGet();
+		} catch(final Throwable cause) {
+			cause.printStackTrace();
+		}
 	}
 
 	@After
