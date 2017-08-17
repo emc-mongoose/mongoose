@@ -137,6 +137,6 @@ implements IoBuffer<T> {
 	
 	@Override
 	public String toString() {
-		return "itemsQueue#" + hashCode() + "";
+		return "queueBuffer#" + hashCode() + "";
 	}
 }

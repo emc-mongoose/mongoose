@@ -5,16 +5,13 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- The data items input which may be get infinitely (if underlying collection allows).
+ Created by andrey on 17.08.17.
  */
-public class CircularListInput<T>
-extends ListInput<T> {
+public class CircularArrayInput<T>
+extends ArrayInput<T> {
 
-	/**
-	 @param dataItems the source data items collection
-	 */
-	public CircularListInput(final List<T> dataItems) {
-		super(dataItems);
+	public CircularArrayInput(final T[] items) {
+		super(items);
 	}
 
 	/**
@@ -26,9 +23,9 @@ extends ListInput<T> {
 		if(i >= size) {
 			reset();
 		}
-		return items.get(i ++);
+		return items[i ++];
 	}
-	
+
 	/**
 	 @param buffer buffer for the data items
 	 @param maxCount the count limit
@@ -50,6 +47,6 @@ extends ListInput<T> {
 
 	@Override
 	public String toString() {
-		return "circularListInput<" + items.hashCode() + ">";
+		return "circularArrayInput<" + items.hashCode() + ">";
 	}
 }

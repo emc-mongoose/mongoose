@@ -117,7 +117,7 @@ extends EnvConfiguredScenarioTestBase {
 				final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
 					ACTUAL_CONCURRENCY += PortTools
-						.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
+						.getConnectionCount("127.0.0.1:" + (startPort + i));
 				}
 				break;
 		}

@@ -121,8 +121,7 @@ extends ScenarioTestBase {
 			int actualConcurrency = 0;
 			final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 			for(int j = 0; j < httpStorageNodeCount; j ++) {
-				actualConcurrency += PortTools
-					.getCountConnectionsOnPort("127.0.0.1:" + (startPort + j));
+				actualConcurrency += PortTools.getConnectionCount("127.0.0.1:" + (startPort + j));
 			}
 			assertEquals(
 				"Expected concurrency: " + actualConcurrency + ", actual: " + actualConcurrency,

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
-import static org.hamcrest.core.IsEqual.equalTo;
+
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -120,8 +120,7 @@ extends ScenarioTestBase {
 			case SWIFT:
 				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {
-					ACTUAL_CONCURRENCY += PortTools
-						.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
+					ACTUAL_CONCURRENCY += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
 				}
 				break;
 		}
@@ -160,5 +159,24 @@ extends ScenarioTestBase {
 		if(!StorageType.FS.equals(storageType)) {
 			assertEquals(driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
 		}
+
+		// check if all files/connections are closed after the test
+		int openChannels = 0;
+		switch(storageType) {
+			case FS:
+				openChannels = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
+				break;
+			case ATMOS:
+			case S3:
+			case SWIFT:
+				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+				for(int i = 0; i < httpStorageNodeCount; i ++) {
+					openChannels += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
+				}
+				break;
+		}
+		assertEquals(
+			"Expected no open channels after the test but got " + openChannels, 0, openChannels
+		);
 	}
 }

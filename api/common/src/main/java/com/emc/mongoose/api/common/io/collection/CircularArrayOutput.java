@@ -1,29 +1,16 @@
 package com.emc.mongoose.api.common.io.collection;
 
-import org.apache.commons.collections4.list.UnmodifiableList;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- The data items input which may be written infinitely (if underlying collection allows that).
+ Created by andrey on 17.08.17.
  */
-public class CircularListOutput<T>
-extends ListOutput<T> {
+public class CircularArrayOutput<T>
+extends ArrayOutput<T> {
 
-	protected int capacity, i = 0;
-
-	public CircularListOutput(final List<T> itemList, final int capacity)
-	throws IllegalArgumentException {
-		super(itemList);
-		if(ArrayList.class.isInstance(itemList)) {
-			ArrayList.class.cast(itemList).ensureCapacity(capacity);
-		}
-		if(capacity < 1) {
-			throw new IllegalArgumentException("Capacity should be > 0");
-		}
-		this.capacity = capacity;
+	public CircularArrayOutput(final T[] items) {
+		super(items);
 	}
 
 	/**
@@ -33,7 +20,7 @@ extends ListOutput<T> {
 	@Override
 	public boolean put(final T item)
 	throws IOException {
-		if(i >= capacity) {
+		if(i >= items.length) {
 			i = 0;
 		}
 		return super.put(item);
@@ -55,22 +42,22 @@ extends ListOutput<T> {
 		}
 		//
 		n = buffer.size();
-		if(n < capacity) {
+		if(n < items.length) {
 			// buffer may be placed entirely into the capacitor
-			final int limit = capacity - items.size(); // how many free space is in the capacitor;
+			final int limit = items.length - i; // how many free space is in the capacitor;
 			if(n > limit) {
 				// should remove some items from the beginning of the capacitor in order to place
 				// the buffer entirely
-				items.removeAll(items.subList(0, n - limit));
+				i = n - limit;
 			}
 			for(int j = from; j < to; j ++) {
-				items.add(buffer.get(j));
+				items[i ++] = buffer.get(j);
 			}
 		} else {
 			// only a tail part of the buffer may be placed into the capacitor
-			items.clear(); // discard all the items in the capacitor
-			for(final T item : buffer.subList(n - capacity, n)) {
-				items.add(item);
+			i = 0; // discard all the items in the capacitor
+			for(int j = n - items.length; j < n; j ++) {
+				items[i ++] = buffer.get(j);
 			}
 		}
 		return n;
@@ -81,13 +68,13 @@ extends ListOutput<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public CircularListInput<T> getInput()
+	public CircularArrayInput<T> getInput()
 	throws IOException {
-		return new CircularListInput<>(new UnmodifiableList<>(items));
+		return new CircularArrayInput<>(items);
 	}
 
 	@Override
 	public final String toString() {
-		return "circularListOutput<" + items.hashCode() + ">";
+		return "circularArrayOutput<" + items.hashCode() + ">";
 	}
 }
