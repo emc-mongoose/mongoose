@@ -49,6 +49,9 @@ extends ListInput<T> {
 	@Override
 	public final int get(final List<T> buffer, final int maxCount)
 	throws IOException {
+		if(maxCount <= 0) {
+			throw new IllegalArgumentException();
+		}
 		int n = size - i;
 		if(n == 0) {
 			if(loadMore() <= 0) {

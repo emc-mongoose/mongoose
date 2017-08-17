@@ -157,7 +157,7 @@ extends ScenarioTestBase {
 		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
 
 		if(!StorageType.FS.equals(storageType)) {
-			assertEquals(driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
+			assertEquals(2 * driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
 		}
 
 		// check if all files/connections are closed after the test

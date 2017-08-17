@@ -153,7 +153,7 @@ extends ScenarioTestBase {
 		concurrencyMap.put(IoType.READ, concurrency.getValue());
 		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0, concurrencyMap);
 		if(!StorageType.FS.equals(storageType)) {
-			assertEquals(driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
+			assertEquals(2 * driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
 		}
 
 		// check if all files/connections are closed after the test
