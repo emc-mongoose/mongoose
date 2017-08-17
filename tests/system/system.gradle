@@ -1,5 +1,14 @@
 description = "mongoose-tests-system"
 
+sourceSets {
+	test {
+		java {
+			srcDir "src"
+			exclude '**/_2refactor/**'
+		}
+	}
+}
+
 dependencies {
 
 	testCompile(

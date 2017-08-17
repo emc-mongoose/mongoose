@@ -89,6 +89,42 @@ jobs:
         - ITEM_SIZE=empty,small,medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=DeleteUsingInputPathLimitByRateTest :tests:system:test
+    - env:
+        - TEST=DeleteUsingInputPathLimitByRateTest
+        - STORAGE_TYPE=fs,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,high
+        - ITEM_SIZE=empty,small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium ./gradlew -Dtest.single=FileStorageMetricsThresholdTest :tests:system:test
+    - env:
+        - TEST=FileStorageMetricsThresholdTest
+        - STORAGE_TYPE=fs
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium
+        - ITEM_SIZE=medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium,large ./gradlew -Dtest.single=HttpStorageMetricsThresholdTest :tests:system:test
+    - env:
+        - TEST=HttpStorageMetricsThresholdTest
+        - STORAGE_TYPE=atmos,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium,high
+        - ITEM_SIZE=medium,large
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=s3 DRIVER_COUNT=distributed CONCURRENCY=medium,high ITEM_SIZE=small ./gradlew -Dtest.single=InfiniteLoopTest :tests:system:test
+    - env:
+        - TEST=InfiniteLoopTest
+        - STORAGE_TYPE=s3
+        - DRIVER_COUNT=distributed
+        - CONCURRENCY=medium,high
+        - ITEM_SIZE=small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MixedLoadTest :tests:system:test
     - env:
         - TEST=MixedLoadTest

@@ -80,7 +80,8 @@ extends ScenarioTestBase {
 
 	public final void test()
 	throws Exception {
-		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), COUNT_LIMIT,
+		testMetricsTableStdout(
+			stdOutput, stepId, driverCount.getValue(), COUNT_LIMIT,
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, concurrency.getValue());
 				put(IoType.READ, concurrency.getValue());
