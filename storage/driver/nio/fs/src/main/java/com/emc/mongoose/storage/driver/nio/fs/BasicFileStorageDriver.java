@@ -301,6 +301,8 @@ implements FileStorageDriver<I, O> {
 			if(!isClosed()) { // shared content source may be already closed from the load generator
 				e.printStackTrace(System.out);
 				ioTask.setStatus(Status.FAIL_UNKNOWN);
+			} else {
+				Loggers.ERR.debug("I/O task caused NPE while being interrupted: {}", ioTask);
 			}
 		} catch(final Throwable e) {
 			// should be Throwable here in order to make the closing block further always reachable

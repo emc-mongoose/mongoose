@@ -267,6 +267,9 @@ implements StorageDriver<I, O> {
 			// NOTE: in the distributed mode null dstPath becomes empty one
 			if(dstPath != null && !dstPath.isEmpty()) {
 				if(null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
+					Loggers.ERR.debug(
+						"Failed to compute the destination path for the I/O task {}", ioTask
+					);
 					ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
 				}
 			}
