@@ -76,11 +76,9 @@ extends ScenarioTestBase {
 		EnvUtil.set("PART_SIZE", partSize.toString());
 		EnvUtil.set("ITEM_OUTPUT_FILE", itemOutputFile);
 		sizeLimit = new SizeInBytes(
-			Math.min(
-				SizeInBytes.toFixedSize("200GB"),
-				10 * concurrency.getValue() * fullItemSize.getMax()
-			)
+			(driverCount.getValue() + 1) * concurrency.getValue() * fullItemSize.getAvg()
 		);
+		Loggers.MSG.info("Use the size limit: {}", sizeLimit);
 		EnvUtil.set("SIZE_LIMIT", sizeLimit.toString());
 		expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
 		expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
