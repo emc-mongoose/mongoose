@@ -124,6 +124,10 @@ extends ScenarioTestBase {
 		final int n = itemRecs.size();
 		assertTrue(n > 0);
 		assertTrue(
+			"Expected no less than " + expectedCountMin + " items, but got " + n,
+			expectedCountMin <= n
+		);
+		assertTrue(
 			"Expected no more than " + expectedCountMax + " items, but got " + n,
 			expectedCountMax >= n
 		);
