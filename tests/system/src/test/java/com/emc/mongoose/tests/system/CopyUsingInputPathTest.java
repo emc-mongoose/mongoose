@@ -88,7 +88,7 @@ extends ScenarioTestBase {
 	@After
 	public void tearDown()
 	throws Exception {
-		if(storageType.equals(StorageType.FS)) {
+		/*if(storageType.equals(StorageType.FS)) {
 			try {
 				DirWithManyFilesDeleter.deleteExternal(itemSrcPath);
 			} catch(final Exception e) {
@@ -99,7 +99,7 @@ extends ScenarioTestBase {
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}
-		}
+		}*/
 		super.tearDown();
 	}
 	

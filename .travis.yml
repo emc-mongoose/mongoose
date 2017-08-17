@@ -142,7 +142,6 @@ jobs:
         - CONCURRENCY=low,medium
         - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-      allow_failures: true
 
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test
     - env:
