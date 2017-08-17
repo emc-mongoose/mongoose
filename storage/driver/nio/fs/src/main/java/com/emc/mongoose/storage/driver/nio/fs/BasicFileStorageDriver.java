@@ -116,13 +116,11 @@ implements FileStorageDriver<I, O> {
 					Level.DEBUG, e, "Access denied to open the output channel for the path \"{}\"",
 					dstPath
 				);
-				return null;
 			} catch(final NoSuchFileException e) {
 				ioTask.setStatus(Status.FAIL_IO);
 				LogUtil.exception(
 					Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath
 				);
-				return null;
 			} catch(final FileSystemException e) {
 				final long freeSpace = (new File(e.getFile())).getFreeSpace();
 				if(freeSpace > 0) {
@@ -135,14 +133,19 @@ implements FileStorageDriver<I, O> {
 					ioTask.setStatus(Status.RESP_FAIL_SPACE);
 					LogUtil.exception(Level.DEBUG, e, "No free space for the path \"{}\"", dstPath);
 				}
-				return null;
 			} catch(final IOException e) {
 				ioTask.setStatus(Status.FAIL_IO);
 				LogUtil.exception(
 					Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath
 				);
-				return null;
+			} catch(final Throwable cause) {
+				ioTask.setStatus(Status.FAIL_UNKNOWN);
+				LogUtil.exception(
+					Level.WARN, cause, "Failed to open the output channel for the path \"{}\"",
+					dstPath
+				);
 			}
+			return null;
 		};
 		
 		requestAuthTokenFunc = null; // do not use
@@ -152,9 +155,7 @@ implements FileStorageDriver<I, O> {
 	protected final String requestNewPath(final String path) {
 		final File pathFile = FS.getPath(path).toFile();
 		if(!pathFile.exists()) {
-			if(!pathFile.mkdirs()) {
-				return null;
-			}
+			pathFile.mkdirs();
 		}
 		return path;
 	}

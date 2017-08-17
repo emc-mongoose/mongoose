@@ -74,8 +74,8 @@ extends ScenarioTestBase {
 		} else {
 			itemSrcPath = '/' + stepId;
 		}
-		itemDstPath = itemSrcPath + "Dst";
-		itemSrcPath += "Src";
+		itemDstPath = itemSrcPath + "-Dst";
+		itemSrcPath += "-Src";
 		EnvUtil.set("ITEM_SRC_PATH", itemSrcPath);
 		EnvUtil.set("ITEM_DST_PATH", itemDstPath);
 		scenario = new JsonScenario(config, scenarioPath.toFile());
@@ -158,20 +158,20 @@ extends ScenarioTestBase {
 			ioTraceRecCount.sum() <= COUNT_LIMIT
 		);
 
-		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
+		final List<CSVRecord> totalMetricsLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
 			"There should be 1 total metrics records in the log file", 1,
-			totalMetrcisLogRecords.size()
+			totalMetricsLogRecords.size()
 		);
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
 			testTotalMetricsLogRecord(
-				totalMetrcisLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				totalMetricsLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
 				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0
 			);
 		} else {
 			testTotalMetricsLogRecord(
-				totalMetrcisLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				totalMetricsLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
 				itemSize.getValue(), 0, 0
 			);
 		}
