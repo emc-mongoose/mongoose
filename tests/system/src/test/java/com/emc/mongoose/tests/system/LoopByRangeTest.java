@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system._2refactor;
+package com.emc.mongoose.tests.system;
 
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.ScenarioTestBase;
