@@ -61,7 +61,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -99,9 +98,9 @@ implements LoadController<I, O> {
 	 **/
 	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Int2IntMap weightMap, final SizeInBytes> itemDataSizes,
-		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
+		final Int2IntMap weightMap, final Map<LoadController<I, O>, SizeInBytes> itemDataSizes,
+		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final StepConfig stepConfig,
+		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
 		this.name = name;
 		final LoadConfig firstLoadConfig = loadConfigs.values().iterator().next();

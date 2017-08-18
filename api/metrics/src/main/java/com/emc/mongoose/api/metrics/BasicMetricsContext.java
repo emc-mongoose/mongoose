@@ -1,17 +1,16 @@
 package com.emc.mongoose.api.metrics;
 
 import com.codahale.metrics.Clock;
-import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
+
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-
-import static java.lang.Math.exp;
 
 /**
  Created by kurila on 15.09.15.

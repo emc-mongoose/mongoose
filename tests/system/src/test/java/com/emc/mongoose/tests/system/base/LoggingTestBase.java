@@ -229,11 +229,11 @@ extends ParameterizedSysTestBase {
 		String ioTypeStr;
 		int concurrencyLevel;
 		int driverCount;
-		long prevTotalBytes = Long.MIN_VALUE, totalBytes;
+		long totalBytes;
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
 		long avgItemSize;
-		double prevJobDuration = Double.NaN, jobDuration;
+		double jobDuration;
 		double prevDurationSum = Double.NaN, durationSum;
 		double tpAvg, tpLast;
 		double bwAvg, bwLast;
@@ -262,12 +262,7 @@ extends ParameterizedSysTestBase {
 			driverCount = Integer.parseInt(nextRecord.get("DriverCount"));
 			assertEquals("Expected driver count: " + driverCount, expectedDriverCount, driverCount);
 			totalBytes = SizeInBytes.toFixedSize(nextRecord.get("Size"));
-			if(prevTotalBytes == Long.MIN_VALUE) {
-				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
-			} else {
-				assertTrue(Long.toString(totalBytes), totalBytes >= prevTotalBytes);
-			}
-			prevTotalBytes = totalBytes;
+			assertTrue(totalBytes >= 0);
 			countSucc = Long.parseLong(nextRecord.get("CountSucc"));
 			if(prevCountSucc == Long.MIN_VALUE) {
 				assertTrue(Long.toString(countSucc), countSucc >= 0);
@@ -296,14 +291,10 @@ extends ParameterizedSysTestBase {
 				}
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
-			if(Double.isNaN(prevJobDuration)) {
-				assertEquals(Double.toString(jobDuration), 0, jobDuration, 15);
-			} else {
-				assertEquals(
-					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 2
-				);
-			}
-			prevJobDuration = jobDuration;
+			assertTrue(
+				"Step duration limit (" + expectedLoadJobTime + ") is breaked: " + jobDuration,
+				jobDuration <= expectedLoadJobTime + 1
+			);
 			durationSum = Double.parseDouble(nextRecord.get("DurationSum[s]"));
 			if(Double.isNaN(prevDurationSum)) {
 				assertTrue(durationSum >= 0);
