@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
+import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.model.data.ContentSource;
@@ -123,13 +124,15 @@ extends StepBase {
 		
 		final Map<LoadGenerator, List<StorageDriver>> driversMap = new HashMap<>();
 		driversMap.put(loadGenerator, drivers);
+		final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>();
+		itemDataSizes.put(loadGenerator, dataConfig.getSize());
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
 		loadConfigMap.put(loadGenerator, loadConfig);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
 		stepConfigMap.put(loadGenerator, stepConfig);
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driversMap, null, loadConfigMap, stepConfigMap
+				jobName, driversMap, null, itemDataSizes, loadConfigMap, stepConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();

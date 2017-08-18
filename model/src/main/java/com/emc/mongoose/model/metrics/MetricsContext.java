@@ -32,7 +32,7 @@ extends Closeable {
 	int getDriverCount();
 	int getConcurrency();
 	int getConcurrencyThreshold();
-	long getTransferSizeEstimate();
+	SizeInBytes getItemDataSize();
 	boolean getVolatileOutputFlag();
 	long getOutputPeriodMillis();
 	long getLastOutputTs();

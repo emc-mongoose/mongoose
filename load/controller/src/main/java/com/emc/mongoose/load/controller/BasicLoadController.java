@@ -104,7 +104,8 @@ implements LoadController<I, O> {
 	 **/
 	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
+		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, SizeInBytes> itemDataSizes,
+		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
 		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
 	) {
 		this.name = name;
@@ -175,7 +176,7 @@ implements LoadController<I, O> {
 				new BasicMetricsContext(
 					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * metricsConfig.getThreshold()),
-					nextGenerator.getTransferSizeEstimate(), preconditionJobFlag, metricsPeriodSec
+					itemDataSizes.get(nextGenerator), preconditionJobFlag, metricsPeriodSec
 				)
 			);
 		}
