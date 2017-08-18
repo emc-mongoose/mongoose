@@ -290,13 +290,16 @@ implements NonBlockingConnPool {
 		synchronized(connCounts) {
 			connCounts.clear();
 		}
+		int closedConnCount = 0;
 		synchronized(allConns) {
 			for(final String nodeAddr : allConns.keySet()) {
 				for(final Channel conn : allConns.get(nodeAddr)) {
 					conn.close();
+					closedConnCount ++;
 				}
 			}
 			allConns.clear();
 		}
+		Loggers.MSG.debug("Closed all {} connections", closedConnCount);
 	}
 }

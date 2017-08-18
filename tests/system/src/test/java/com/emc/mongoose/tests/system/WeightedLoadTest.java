@@ -124,7 +124,7 @@ extends ScenarioTestBase {
 				}
 				break;
 		}
-		TimeUnit.SECONDS.timedJoin(runner, 50);
+		TimeUnit.SECONDS.timedJoin(runner, 60);
 		FINISHED_IN_TIME = !runner.isAlive();
 		runner.interrupt();
 		LogUtil.flushAll();
