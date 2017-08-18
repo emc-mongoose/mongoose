@@ -291,10 +291,12 @@ extends ParameterizedSysTestBase {
 				}
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
-			assertTrue(
-				"Step duration limit (" + expectedLoadJobTime + ") is breaked: " + jobDuration,
-				jobDuration <= expectedLoadJobTime + 1
-			);
+			if(expectedLoadJobTime > 0) {
+				assertTrue(
+					"Step duration limit (" + expectedLoadJobTime + ") is breaked: " + jobDuration,
+					jobDuration <= expectedLoadJobTime + 1
+				);
+			}
 			durationSum = Double.parseDouble(nextRecord.get("DurationSum[s]"));
 			if(Double.isNaN(prevDurationSum)) {
 				assertTrue(durationSum >= 0);

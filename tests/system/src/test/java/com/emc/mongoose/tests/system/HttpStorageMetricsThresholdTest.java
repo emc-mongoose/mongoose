@@ -38,6 +38,7 @@ extends ScenarioTestBase {
 
 	private static final double LOAD_THRESHOLD = 0.8;
 	private static final int RANDOM_RANGES_COUNT = 10;
+	private static final int EXPECTED_STEP_TIME_SECONDS = 100;
 
 	private String stdOutput;
 
@@ -122,7 +123,7 @@ extends ScenarioTestBase {
 		final List<CSVRecord> totalThresholdMetricsRecs = getMetricsMedTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalThresholdMetricsRecs.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
-			itemSize.getValue(), 0, 0
+			itemSize.getValue(), 0, EXPECTED_STEP_TIME_SECONDS
 		);
 		testTotalMetricsLogRecord(
 			totalThresholdMetricsRecs.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),

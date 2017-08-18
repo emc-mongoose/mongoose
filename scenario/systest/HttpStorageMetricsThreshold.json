@@ -32,7 +32,7 @@
 					"step" : {
 						"limit" : {
 							"count" : 100000,
-							"size" : "250GB",
+							"size" : "100GB",
 							"time" : "100s"
 						}
 					}
