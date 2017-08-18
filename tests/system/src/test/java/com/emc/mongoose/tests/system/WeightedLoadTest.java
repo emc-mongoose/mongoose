@@ -109,6 +109,15 @@ extends ScenarioTestBase {
 				}
 			}
 		);
+
+		// make sure that there are no unclosed connections
+		final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+		for(int i = 0; i < httpStorageNodeCount; i ++) {
+			ACTUAL_CONCURRENCY += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
+		}
+		assertEquals(ACTUAL_CONCURRENCY, 0);
+		ACTUAL_CONCURRENCY = 0;
+
 		runner.start();
 		TimeUnit.SECONDS.sleep(20); // warmup
 		switch(storageType) {
@@ -118,7 +127,6 @@ extends ScenarioTestBase {
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {
 					ACTUAL_CONCURRENCY += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
 				}
