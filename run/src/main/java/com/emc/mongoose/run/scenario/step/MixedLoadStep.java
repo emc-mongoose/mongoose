@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -89,6 +90,7 @@ extends StepBase {
 		final Map<LoadGenerator, List<StorageDriver>> driverMap = new HashMap<>(loadGeneratorCount);
 		final Int2IntMap weightMap = weights == null ?
 			null : new Int2IntOpenHashMap(loadGeneratorCount);
+		final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>(loadGeneratorCount);
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>(loadGeneratorCount);
 		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>(loadGeneratorCount);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>(loadGeneratorCount);
@@ -139,6 +141,7 @@ extends StepBase {
 				if(weightMap != null) {
 					weightMap.put(loadGenerator.hashCode(), (int) weights.get(i));
 				}
+				itemDataSizes.put(loadGenerator, dataConfig.getSize());
 				loadConfigMap.put(loadGenerator, loadConfig);
 				outputConfigMap.put(loadGenerator, outputConfig);
 				stepConfigMap.put(loadGenerator, stepConfig);
@@ -153,7 +156,8 @@ extends StepBase {
 		
 		try(
 			final LoadController controller = new BasicLoadController(
-				stepId, driverMap, weightMap, loadConfigMap, stepConfig, outputConfigMap
+				stepId, driverMap, weightMap, loadConfigMap, itemDataSizes, stepConfig,
+				outputConfigMap
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();

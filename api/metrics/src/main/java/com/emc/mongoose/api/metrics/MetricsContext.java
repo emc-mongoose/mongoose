@@ -1,5 +1,6 @@
 package com.emc.mongoose.api.metrics;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 
 import java.io.Closeable;
@@ -12,7 +13,7 @@ public interface MetricsContext
 extends Closeable {
 
 	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
-	
+
 	void start();
 	boolean isStarted();
 
@@ -33,7 +34,7 @@ extends Closeable {
 	int getDriverCount();
 	int getConcurrency();
 	int getConcurrencyThreshold();
-	long getTransferSizeEstimate();
+	SizeInBytes getItemDataSize();
 
 	boolean getStdOutColorFlag();
 	boolean getAvgPersistFlag();
@@ -46,7 +47,7 @@ extends Closeable {
 	void refreshLastSnapshot();
 	Snapshot getLastSnapshot();
 	void setMetricsListener(final MetricsListener metricsListener);
-	
+
 	boolean isThresholdStateEntered();
 	
 	void enterThresholdState()

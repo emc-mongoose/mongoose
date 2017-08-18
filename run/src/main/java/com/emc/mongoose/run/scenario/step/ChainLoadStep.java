@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
+import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.io.Output;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
@@ -49,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ChainLoadStep
 extends StepBase {
-	
+
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<LoadController> loadChain;
 	
@@ -147,12 +148,14 @@ extends StepBase {
 				
 				final Map<LoadGenerator, List<StorageDriver>> driversMap = new HashMap<>();
 				driversMap.put(loadGenerator, drivers);
+				final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>();
+				itemDataSizes.put(loadGenerator, dataConfig.getSize());
 				final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
 				loadConfigMap.put(loadGenerator, loadConfig);
 				final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
 				outputConfigMap.put(loadGenerator, outputConfig);
 				final LoadController loadController = new BasicLoadController(
-					stepConfig.getId(), driversMap, null, loadConfigMap, stepConfig,
+					stepConfig.getId(), driversMap, null, itemDataSizes, loadConfigMap, stepConfig,
 					outputConfigMap
 				);
 				loadChain.add(loadController);

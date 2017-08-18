@@ -34,7 +34,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final int driverCount;
 	private final int concurrency;
 	private final int thresholdConcurrency;
-	private final long transferSizeEstimate;
+	private final SizeInBytes itemDataSize;
 	private final boolean stdOutColorFlag;
 	private final boolean avgPersistFlag;
 	private final boolean sumPersistFlag;
@@ -48,7 +48,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 
 	public BasicMetricsContext(
 		final String stepId, final IoType ioType, final int driverCount, final int concurrency,
-		final int thresholdConcurrency, final long transferSizeEstimate,
+		final int thresholdConcurrency, final SizeInBytes itemDataSize,
 		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
 		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
 	) {
@@ -58,7 +58,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.concurrency = concurrency;
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
 			thresholdConcurrency : Integer.MAX_VALUE;
-		this.transferSizeEstimate = transferSizeEstimate;
+		this.itemDataSize = itemDataSize;
+
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.avgPersistFlag = avgPersistFlag;
 		this.sumPersistFlag = sumPersistFlag;
@@ -215,10 +216,9 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final long getTransferSizeEstimate() {
-		return transferSizeEstimate;
+	public final SizeInBytes getItemDataSize() {
+		return itemDataSize;
 	}
-	//
 	//
 	@Override
 	public final boolean getStdOutColorFlag() {
@@ -304,7 +304,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new BasicMetricsContext(stepId, ioType, driverCount, concurrency, 0, transferSizeEstimate,
+		thresholdMetricsCtx = new BasicMetricsContext(
+			stepId, ioType, driverCount, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);

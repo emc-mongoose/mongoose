@@ -90,7 +90,7 @@ implements LoadController<I, O> {
 	private final WeightThrottle weightThrottle;
 	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
 	private final boolean tracePersistFlag;
-	
+
 	private volatile Output<O> ioResultsOutput;
 	
 	/**
@@ -99,8 +99,9 @@ implements LoadController<I, O> {
 	 **/
 	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
-		final StepConfig stepConfig, final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
+		final Int2IntMap weightMap, final SizeInBytes> itemDataSizes,
+		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs,
+		final Map<LoadGenerator<I, O>, StepConfig> stepConfigs
 	) {
 		this.name = name;
 		final LoadConfig firstLoadConfig = loadConfigs.values().iterator().next();
@@ -170,7 +171,7 @@ implements LoadController<I, O> {
 				new BasicMetricsContext(
 					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
-					nextGenerator.getTransferSizeEstimate(),
+					itemDataSizes.get(nextGenerator),
 					(int) nextMetricsConfig.getAverageConfig().getPeriod(),
 					outputConfigs.get(nextGenerator).getColor(),
 					nextMetricsConfig.getAverageConfig().getPersist(),
