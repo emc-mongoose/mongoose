@@ -58,10 +58,10 @@ import static org.junit.Assume.assumeThat;
 public class WeightedLoadTest
 extends ScenarioTestBase {
 
-	private static boolean FINISHED_IN_TIME;
-	private static String STD_OUTPUT;
-	private static int ACTUAL_CONCURRENCY;
-	private static String itemOutputPath;
+	private boolean finishedInTime;
+	private String stdOutput;
+	private int actualConcurrency;
+	private String itemOutputPath;
 
 	public WeightedLoadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
@@ -103,37 +103,30 @@ extends ScenarioTestBase {
 				try {
 					stdOutStream.startRecording();
 					scenario.run();
-					STD_OUTPUT = stdOutStream.stopRecordingAndGet();
+					stdOutput = stdOutStream.stopRecordingAndGet();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);
 
-		// make sure that there are no unclosed connections
-		final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
-		for(int i = 0; i < httpStorageNodeCount; i ++) {
-			ACTUAL_CONCURRENCY += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
-		}
-		assertEquals(ACTUAL_CONCURRENCY, 0);
-		ACTUAL_CONCURRENCY = 0;
-
 		runner.start();
 		TimeUnit.SECONDS.sleep(20); // warmup
 		switch(storageType) {
 			case FS:
-				ACTUAL_CONCURRENCY = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
+				actualConcurrency = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
 				break;
 			case ATMOS:
 			case S3:
 			case SWIFT:
+				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {
-					ACTUAL_CONCURRENCY += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
+					actualConcurrency += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
 				}
 				break;
 		}
 		TimeUnit.SECONDS.timedJoin(runner, 60);
-		FINISHED_IN_TIME = !runner.isAlive();
+		finishedInTime = !runner.isAlive();
 		runner.interrupt();
 		LogUtil.flushAll();
 		TimeUnit.SECONDS.sleep(10);
@@ -160,12 +153,12 @@ extends ScenarioTestBase {
 		concurrencyMap.put(IoType.CREATE, concurrency.getValue());
 		concurrencyMap.put(IoType.READ, concurrency.getValue());
 		final Map<IoType, Integer> weightsMap = new HashMap<>();
-		testMetricsTableStdout(STD_OUTPUT, stepId, driverCount.getValue(), 0, concurrencyMap);
+		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0, concurrencyMap);
 
-		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
+		assertTrue("Scenario didn't finished in time", finishedInTime);
 
 		if(!StorageType.FS.equals(storageType)) {
-			assertEquals(2 * driverCount.getValue() * concurrency.getValue(), ACTUAL_CONCURRENCY, 5);
+			assertEquals(2 * driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
 		}
 
 		// check if all files/connections are closed after the test
