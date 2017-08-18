@@ -156,7 +156,7 @@ extends StepBase {
 		
 		try(
 			final LoadController controller = new BasicLoadController(
-				stepId, driverMap, weightMap, loadConfigMap, itemDataSizes, stepConfig,
+				stepId, driverMap, weightMap, itemDataSizes, loadConfigMap, stepConfig,
 				outputConfigMap
 			)
 		) {
