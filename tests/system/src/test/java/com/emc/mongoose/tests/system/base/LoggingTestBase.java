@@ -390,7 +390,10 @@ extends ParameterizedSysTestBase {
 		}
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
 		if(expectedLoadJobTime > 0) {
-			assertTrue(Double.toString(jobDuration), jobDuration <= expectedLoadJobTime + 5);
+			assertTrue(
+				"Step duration was " + jobDuration + ", but expected not more than" +
+					expectedLoadJobTime + 5, jobDuration <= expectedLoadJobTime + 5
+			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
 		final double effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
