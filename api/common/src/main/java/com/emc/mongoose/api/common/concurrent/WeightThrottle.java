@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  Created by kurila on 29.03.16.
- An I/O task throttle which uses the map of weights.
+ An throttle which uses the map of weights.
  The throttle determines the weight for each I/O task and makes the decision.
  The weight is used to pass the I/O task with specific ratio for the different keys.
  */

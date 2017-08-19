@@ -95,7 +95,7 @@ jobs:
     # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=HttpStorageMetricsThresholdTest :tests:system:test
     - env:
         - TEST=HttpStorageMetricsThresholdTest
-        - STORAGE_TYPE=atmos,s3,swift
+        - STORAGE_TYPE=atmos,s3
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=low,medium
         - ITEM_SIZE=medium,large
