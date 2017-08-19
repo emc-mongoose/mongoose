@@ -155,12 +155,12 @@ jobs:
         - ITEM_SIZE=medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
     - env:
         - TEST=MultipleFixedUpdateAndSingleFixedReadTest
         - STORAGE_TYPE=fs,s3
         - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium
+        - CONCURRENCY=low,medium
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 

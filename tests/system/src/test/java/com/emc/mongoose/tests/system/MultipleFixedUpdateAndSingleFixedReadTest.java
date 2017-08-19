@@ -39,7 +39,7 @@ extends ScenarioTestBase {
 	private SizeInBytes expectedUpdateSize;
 	private SizeInBytes expectedReadSize;
 	
-	private static final long EXPECTED_COUNT = 10000;
+	private static final long EXPECTED_COUNT = 2000;
 
 	public MultipleFixedUpdateAndSingleFixedReadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
