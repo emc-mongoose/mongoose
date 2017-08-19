@@ -21,6 +21,7 @@ allprojects {
 ext {
 
 	depVersion = [
+		javaCommons : "1.0.0",
 		commonsCodec : "1.10",
 		commonsCollections : "4.1",
 		commonsLang : "2.6",

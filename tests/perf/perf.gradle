@@ -2,7 +2,6 @@ description = "mongoose-tests-perf"
 
 dependencies {
 
-
 	compile(
 		project(":api:common"),
 		project(":api:model"),

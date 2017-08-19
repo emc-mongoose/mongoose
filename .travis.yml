@@ -178,7 +178,7 @@ jobs:
         - TEST=ReadCustomContentVerificationFailTest
         - STORAGE_TYPE=fs,s3,swift
         - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,medium
+        - CONCURRENCY=low,medium
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
@@ -205,7 +205,7 @@ jobs:
         - TEST=ReadVerificationAfterUpdateTest
         - STORAGE_TYPE=fs,s3
         - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium,high
+        - CONCURRENCY=low,medium,high
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
