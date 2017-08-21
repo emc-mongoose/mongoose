@@ -2,7 +2,6 @@ package com.emc.mongoose.api.metrics.logging;
 
 import static com.emc.mongoose.api.common.Constants.MIB;
 import static com.emc.mongoose.api.metrics.MetricsContext.Snapshot;
-import com.emc.mongoose.api.common.SizeInBytes;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogMessageBase;

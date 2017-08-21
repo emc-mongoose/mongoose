@@ -55,10 +55,10 @@ extends Closeable {
 
 	boolean isThresholdStateExited();
 
+	MetricsContext getThresholdMetrics();
+
 	void exitThresholdState()
 	throws IllegalStateException;
-	
-	MetricsContext getThresholdMetrics();
 	
 	interface Snapshot
 	extends Serializable {
@@ -80,6 +80,8 @@ extends Closeable {
 		
 		/** @return value in milliseconds */
 		long getElapsedTimeMillis();
+
+		int getActualConcurrency();
 
 		/** @return value in microseconds */
 		long getDurationSum();

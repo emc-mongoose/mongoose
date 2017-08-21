@@ -367,11 +367,24 @@
 								}
 							}
 						},
-						"rate": {
+						"limit": {
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"limit" : {
+								"concurrency": {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0,
+											"maximum" : 2147483647
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\$\\{.+\\}"
+										}
+									]
+								},
+								"rate" : {
 									"oneOf" : [
 										{
 											"type": "number",
@@ -599,19 +612,6 @@
 											"items": {
 												"type" : "string"
 											}
-										},
-										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
-										}
-									]
-								},
-								"concurrency": {
-									"oneOf" : [
-										{
-											"type" : "integer",
-											"minimum" : 1,
-											"maximum" : 2147483647
 										},
 										{
 											"type" : "string",

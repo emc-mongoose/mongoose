@@ -99,8 +99,12 @@ implements StorageDriver<I, O> {
 				this.authTokens.put(credential, authToken);
 			}
 		}
-		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
-		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
+		if(concurrencyLevel == 0) {
+			this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		} else {
+			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
+		}
 		this.verifyFlag = verifyFlag;
 		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine(svcCoroutines);
 		svcCoroutines.add(ioTasksDispatchCoroutine);
@@ -298,8 +302,12 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean isIdle() {
-		return !concurrencyThrottle.hasQueuedThreads() &&
-			concurrencyThrottle.availablePermits() >= concurrencyLevel;
+		if(concurrencyLevel == 0) {
+			return concurrencyThrottle.availablePermits() == Integer.MAX_VALUE;
+		} else {
+			return !concurrencyThrottle.hasQueuedThreads() &&
+				concurrencyThrottle.availablePermits() >= concurrencyLevel;
+		}
 	}
 	
 	@Override
@@ -406,7 +414,12 @@ implements StorageDriver<I, O> {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
-			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
+			if(
+				!concurrencyThrottle.tryAcquire(
+					concurrencyLevel == 0 ? Integer.MAX_VALUE : concurrencyLevel,
+					10, TimeUnit.MILLISECONDS
+				)
+			) {
 				Loggers.MSG.debug("{}: interrupting while not in the idle state", toString());
 			}
 		} catch(final InterruptedException e) {

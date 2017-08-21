@@ -35,8 +35,8 @@
 				},
 				"load" : {
 					"type" : "delete",
-					"rate" : {
-						"limit" : 234.5
+					"limit" : {
+						"rate" : 234.5
 					}
 				}
 			}

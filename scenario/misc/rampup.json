@@ -39,8 +39,8 @@
 						"path" : "${size}_${threads}threads"
 					}
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : "${threads}"
 					}
 				}

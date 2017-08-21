@@ -15,6 +15,11 @@
 				"path" : "bucket-%d(314159265){00}[0-99]"
 			}
 		},
+		"load" : {
+			"limit" : {
+				"concurrency" : 10
+			}
+		},
 		"storage" : {
 			"auth" : {
 				/* The file "credentials.csv" should be prepared manually. Contents:
@@ -32,7 +37,6 @@
 				"uid" : "user-%d(314159265){00}[0-99]"
 			},
 			"driver" : {
-				"concurrency" : 10,
 				"type" : "s3"
 			}
 		},

@@ -9,8 +9,8 @@
 				"size" : 0
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		},

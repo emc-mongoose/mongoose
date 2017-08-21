@@ -282,17 +282,22 @@
 						"addrs", "recycle", "remote", "shuffle"
 					]
 				},
-				"rate": {
+				"limit": {
 					"type" : "object",
 					"additionalProperties" : false,
 					"properties" : {
-						"limit" : {
+						"concurrency": {
+							"type": "integer",
+							"minimum" : 0,
+							"maximum" : 2147483647
+						},
+						"rate" : {
 							"type": "number",
 							"minimum" : 0
 						}
 					},
 					"required" : [
-						"limit"
+						"concurrency", "rate"
 					]
 				},
 				"service" : {
@@ -317,7 +322,7 @@
 				}
 			},
 			"required": [
-				"batch", "generator", "rate", "service", "type"
+				"batch", "generator", "limit", "service", "type"
 			]
 		},
 		"output" : {
@@ -454,7 +459,7 @@
 				"driver" : {
 					"type": "object",
 					"required" : [
-						"addrs", "concurrency", "impl", "port", "remote", "threads", "type"
+						"addrs", "impl", "port", "remote", "threads", "type"
 					],
 					"additionalProperties" : false,
 					"properties" : {
@@ -463,11 +468,6 @@
 							"items" : {
 								"type" : "string"
 							}
-						},
-						"concurrency": {
-							"type": "integer",
-							"minimum" : 1,
-							"maximum" : 2147483647
 						},
 						"impl" : {
 							"type" : "array",

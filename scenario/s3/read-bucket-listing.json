@@ -6,8 +6,8 @@
 				"path" : "read-bucket-listing"
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		},

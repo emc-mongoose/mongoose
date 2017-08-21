@@ -66,6 +66,7 @@ implements MeterMBean {
 	private double byteRateMean;
 	private double byteRateLast;
 	private long elapsedTimeMillis;
+	private int actualConcurrency;
 	private long durationSum;
 	private long latencySum;
 	private long durationMin;
@@ -94,6 +95,7 @@ implements MeterMBean {
 		this.byteRateMean = snapshot.getByteRateMean();
 		this.byteRateLast = snapshot.getByteRateLast();
 		this.elapsedTimeMillis = snapshot.getElapsedTimeMillis();
+		this.actualConcurrency = snapshot.getActualConcurrency();
 		this.durationSum = snapshot.getDurationSum();
 		this.latencySum = snapshot.getLatencySum();
 		this.durationMin = snapshot.getDurationMin();
@@ -163,6 +165,11 @@ implements MeterMBean {
 	@Override
 	public final long getElapsedTimeMillis() {
 		return elapsedTimeMillis;
+	}
+
+	@Override
+	public int getActualConcurrency() {
+		return actualConcurrency;
 	}
 
 	@Override

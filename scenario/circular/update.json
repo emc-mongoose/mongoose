@@ -6,8 +6,8 @@
 				"size" : "1KB"
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		}

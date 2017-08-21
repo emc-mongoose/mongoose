@@ -104,7 +104,7 @@ implements LoadController<I, O> {
 	) {
 		this.name = name;
 		final LoadConfig firstLoadConfig = loadConfigs.values().iterator().next();
-		final double rateLimit = firstLoadConfig.getRateConfig().getLimit();
+		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
 		} else {
@@ -168,7 +168,8 @@ implements LoadController<I, O> {
 			ioStats.put(
 				ioTypeCode,
 				new BasicMetricsContext(
-					name, ioType, nextDrivers.size(), ioTypeSpecificConcurrency,
+					name, ioType, () -> getActiveTaskCount(),
+					nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
 					itemDataSizes.get(nextGenerator),
 					(int) nextMetricsConfig.getAverageConfig().getPeriod(),

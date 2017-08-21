@@ -1,8 +1,8 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		}

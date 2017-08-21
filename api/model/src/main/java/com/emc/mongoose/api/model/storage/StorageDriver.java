@@ -39,6 +39,10 @@ extends Daemon, Input<O>, Output<O>, Remote {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 
+	/**
+	 * @return 0 if the concurrency is not limited
+	 * @throws RemoteException
+	 */
 	int getConcurrencyLevel()
 	throws RemoteException;
 

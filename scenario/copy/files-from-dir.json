@@ -1,9 +1,13 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"load" : {
+			"limit": {
+				"concurrency": 10
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10,
 				"type" : "fs"
 			}
 		}
@@ -28,7 +32,8 @@
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "load",
 			"config" : {
 				"item" : {

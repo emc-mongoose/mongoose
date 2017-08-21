@@ -13,9 +13,13 @@
 				}
 			}
 		},
+		"load" : {
+			"limit": {
+				"concurrency": 10
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10,
 				"remote" : true,
 				"addrs": [
 					"10.249.237.71",

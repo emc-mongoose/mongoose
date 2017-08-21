@@ -47,7 +47,7 @@ extends LoggingTestBase {
 		config.getTestConfig().getStepConfig().setIdTmp(false);
 		config.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);
 		config.getItemConfig().getDataConfig().setSize(itemSize.getValue());
-		config.getStorageConfig().getDriverConfig().setConcurrency(concurrency.getValue());
+		config.getLoadConfig().getLimitConfig().setConcurrency(concurrency.getValue());
 	}
 
 	@After

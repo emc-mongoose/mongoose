@@ -18,9 +18,13 @@
 				"path" : "issue-745"
 			}
 		},
+		"load" : {
+			"limit": {
+				"concurrency": 1000
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 1000,
 				"type" : "s3"
 			},
 			"net" : {

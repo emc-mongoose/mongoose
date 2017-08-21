@@ -89,7 +89,10 @@
 					}
 				},
 				"load" : {
-					"type" : "delete"
+					"type" : "delete",
+					"limit" : {
+						"concurrency" : 50
+					}
 				},
 				"output" : {
 					"metrics" : {
@@ -102,11 +105,6 @@
 						"trace" : {
 							"persist" : false
 						}
-					}
-				},
-				"storage" : {
-					"driver" : {
-						"concurrency" : 50
 					}
 				}
 			}

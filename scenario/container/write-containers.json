@@ -4,8 +4,8 @@
 		"item" : {
 			"type" : "path"
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 100
 			}
 		},

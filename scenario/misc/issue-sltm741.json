@@ -18,8 +18,8 @@
 						}
 					}
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : "${i}"
 					}
 				}

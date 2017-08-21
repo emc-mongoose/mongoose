@@ -57,8 +57,10 @@ implements NioStorageDriver<I, O> {
 		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
-		} else {
+		} else if(concurrencyLevel > 0) {
 			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
+		} else {
+			ioWorkerCount = ThreadUtil.getHardwareThreadCount();
 		}
 		ioCoroutines = new ArrayList<>(ioWorkerCount);
 		ioTaskBuffs = new OptLockBuffer[ioWorkerCount];

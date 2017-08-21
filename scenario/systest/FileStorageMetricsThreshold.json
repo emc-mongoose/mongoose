@@ -79,10 +79,8 @@
 					}
 				},
 				"load" : {
-					"type" : "delete"
-				},
-				"storage" : {
-					"driver" : {
+					"type" : "delete",
+					"limit" : {
 						"concurrency" : 50
 					}
 				}

@@ -28,8 +28,8 @@
 							"path" : "default"
 						}
 					},
-					"storage" : {
-						"driver" : {
+					"load" : {
+						"limit" : {
 							"concurrency" : 20
 						}
 					},
@@ -50,16 +50,14 @@
 							"path" : "items2read"
 						}
 					},
-					"storage" : {
-						"driver" : {
-							"concurrency" : 50
-						}
-					},
 					"load" : {
 						"generator" : {
 							"recycle" : {
 								"enabled" : true
 							}
+						},
+						"limit" : {
+							"concurrency" : 50
 						},
 						"type" : "read"
 					}

@@ -46,7 +46,7 @@ implements StorageDriver<I, O> {
 	) {
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		this.outputQueueCapacity = storageConfig.getDriverConfig().getQueueConfig().getOutput();
-		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
+		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
 		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 	}
 

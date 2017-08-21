@@ -2,7 +2,7 @@ package com.emc.mongoose.ui.config.load;
 
 import com.emc.mongoose.ui.config.load.batch.BatchConfig;
 import com.emc.mongoose.ui.config.load.generator.GeneratorConfig;
-import com.emc.mongoose.ui.config.load.rate.RateConfig;
+import com.emc.mongoose.ui.config.load.rate.LimitConfig;
 import com.emc.mongoose.ui.config.load.service.ServiceConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,7 +16,7 @@ implements Serializable {
 
 	public static final String KEY_BATCH = "batch";
 	public static final String KEY_GENERATOR = "generator";
-	public static final String KEY_RATE = "rate";
+	public static final String KEY_LIMIT = "limit";
 	public static final String KEY_SERVICE = "service";
 	public static final String KEY_TYPE = "type";
 
@@ -28,8 +28,8 @@ implements Serializable {
 		this.generatorConfig = generatorConfig;
 	}
 
-	public final void setRateConfig(final RateConfig rateConfig) {
-		this.rateConfig = rateConfig;
+	public final void setLimitConfig(final LimitConfig limitConfig) {
+		this.limitConfig = limitConfig;
 	}
 
 	public final void setServiceConfig(final ServiceConfig serviceConfig) {
@@ -42,7 +42,7 @@ implements Serializable {
 
 	@JsonProperty(KEY_BATCH) private BatchConfig batchConfig;
 	@JsonProperty(KEY_GENERATOR) private GeneratorConfig generatorConfig;
-	@JsonProperty(KEY_RATE) private RateConfig rateConfig;
+	@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
 	@JsonProperty(KEY_SERVICE) private ServiceConfig serviceConfig;
 	@JsonProperty(KEY_TYPE) private String type;
 
@@ -52,7 +52,7 @@ implements Serializable {
 	public LoadConfig(final LoadConfig other) {
 		this.batchConfig = new BatchConfig(other.getBatchConfig());
 		this.generatorConfig = new GeneratorConfig(other.getGeneratorConfig());
-		this.rateConfig = new RateConfig(other.getRateConfig());
+		this.limitConfig = new LimitConfig(other.getLimitConfig());
 		this.serviceConfig = new ServiceConfig(other.getServiceConfig());
 		this.type = other.getType();
 	}
@@ -69,8 +69,8 @@ implements Serializable {
 		return generatorConfig;
 	}
 
-	public final RateConfig getRateConfig() {
-		return rateConfig;
+	public final LimitConfig getLimitConfig() {
+		return limitConfig;
 	}
 
 	public final ServiceConfig getServiceConfig() {

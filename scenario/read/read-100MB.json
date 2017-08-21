@@ -10,10 +10,12 @@
 			}
 		},
 		"storage" : {
-			"auth" : {
-				"uid" : "wuser1@sanity.local"
-			},
-			"driver" : {
+			"auth": {
+				"uid": "wuser1@sanity.local"
+			}
+		},
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		}

@@ -16,7 +16,6 @@ public final class DriverConfig
 implements Serializable {
 
 	public static final String KEY_ADDRS = "addrs";
-	public static final String KEY_CONCURRENCY = "concurrency";
 	public static final String KEY_PORT = "port";
 	public static final String KEY_QUEUE = "queue";
 	public static final String KEY_REMOTE = "remote";
@@ -30,10 +29,6 @@ implements Serializable {
 
 	public final void setAddrs(final List<String> addrs) {
 		this.addrs = addrs;
-	}
-
-	public final void setConcurrency(final int concurrency) {
-		this.concurrency = concurrency;
 	}
 
 	public final void setPort(final int port) {
@@ -61,7 +56,6 @@ implements Serializable {
 	}
 
 	@JsonProperty(KEY_ADDRS) private List<String> addrs;
-	@JsonProperty(KEY_CONCURRENCY) private int concurrency;
 	@JsonProperty(KEY_PORT) private int port;
 	@JsonProperty(KEY_QUEUE) private QueueConfig queueConfig;
 	@JsonProperty(KEY_REMOTE) private boolean remote;
@@ -74,7 +68,6 @@ implements Serializable {
 
 	public DriverConfig(final DriverConfig other) {
 		this.addrs = new ArrayList<>(other.getAddrs());
-		this.concurrency = other.getConcurrency();
 		this.port = other.getPort();
 		this.queueConfig = new QueueConfig(other.getQueueConfig());
 		this.remote = other.getRemote();
@@ -85,10 +78,6 @@ implements Serializable {
 
 	public final List<String> getAddrs() {
 		return addrs;
-	}
-
-	public final int getConcurrency() {
-		return concurrency;
 	}
 
 	public final int getPort() {

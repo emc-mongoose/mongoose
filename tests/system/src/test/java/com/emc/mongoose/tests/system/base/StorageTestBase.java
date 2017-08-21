@@ -98,7 +98,7 @@ extends ConfiguredTestBase {
 						(int) config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod(),
 						failConfig.getConnections(), failConfig.getResponses(), dataInput,
 						netConfig.getNodeConfig().getPort(), netConfig.getSsl(),
-						(float) config.getLoadConfig().getRateConfig().getLimit(),
+						(float) config.getLoadConfig().getLimitConfig().getRate(),
 						namingConfig.getPrefix(), namingConfig.getRadix()
 					);
 					storageMock = storageMockFactory.newStorageMock();

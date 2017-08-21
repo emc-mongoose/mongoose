@@ -90,20 +90,22 @@ implements NonBlockingConnPool {
 		}
 
 		// pre-create the connections
-		for(int i = 0; i < concurrencyLevel; i ++) {
-			final Channel conn = connect();
-			if(conn == null) {
-				Loggers.ERR.warn("Failed to pre-create the connections to the target nodes");
-				break;
-			}
-			final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
-			if(conn.isActive()) {
-				final Queue<Channel> connQueue = availableConns.get(nodeAddr);
-				if(connQueue != null) {
-					connQueue.add(conn);
+		if(concurrencyLevel > 0) {
+			for(int i = 0; i < concurrencyLevel; i ++) {
+				final Channel conn = connect();
+				if(conn == null) {
+					Loggers.ERR.warn("Failed to pre-create the connections to the target nodes");
+					break;
 				}
-			} else {
-				disconnect(nodeAddr, conn);
+				final String nodeAddr = conn.attr(ATTR_KEY_NODE).get();
+				if(conn.isActive()) {
+					final Queue<Channel> connQueue = availableConns.get(nodeAddr);
+					if(connQueue != null) {
+						connQueue.add(conn);
+					}
+				} else {
+					disconnect(nodeAddr, conn);
+				}
 			}
 		}
 	}

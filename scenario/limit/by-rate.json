@@ -7,13 +7,9 @@
 			}
 		},
 		"load" : {
-			"rate" : {
-				"limit" : 1234.5
-			}
-		},
-		"storage" : {
-			"driver" : {
-				"concurrency" : 1000
+			"limit" : {
+				"concurrency" : 0,
+				"rate"  : 1234.5
 			}
 		}
 	}

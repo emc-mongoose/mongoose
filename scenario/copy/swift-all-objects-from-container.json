@@ -9,21 +9,25 @@
 				"path" : "copy-swift-object"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
-				}
+		"load" : {
+			"limit": {
+				"concurrency": 10
 			}
 		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10,
-				"type" : "swift"
+				"type": "swift"
 			},
 			"net" : {
 				"http" : {
 					"namespace" : "examplens"
+				}
+			}
+		},
+		"test" : {
+			"step" : {
+				"limit" : {
+					"count" : 1000
 				}
 			}
 		}
@@ -31,7 +35,8 @@
 	"steps" : [
 		{
 			"type" : "precondition"
-		}, {
+		},
+		{
 			"type" : "load",
 			"config" : {
 				"item" : {

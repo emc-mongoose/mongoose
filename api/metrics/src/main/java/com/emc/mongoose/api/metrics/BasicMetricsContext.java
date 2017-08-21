@@ -11,6 +11,7 @@ import com.emc.mongoose.api.model.io.IoType;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.IntSupplier;
 
 /**
  Created by kurila on 15.09.15.
@@ -27,9 +28,10 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	private final long ts;
 	private volatile long tsStart = -1, prevElapsedTime = 0;
-	
+
 	private final String stepId;
 	private final IoType ioType;
+	private final IntSupplier actualConcurrencyGauge;
 	private final int driverCount;
 	private final int concurrency;
 	private final int thresholdConcurrency;
@@ -46,13 +48,15 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public BasicMetricsContext(
-		final String stepId, final IoType ioType, final int driverCount, final int concurrency,
-		final int thresholdConcurrency, final SizeInBytes itemDataSize,
-		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
-		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
+		final String stepId, final IoType ioType, final IntSupplier actualConcurrencyGauge,
+		final int driverCount, final int concurrency, final int thresholdConcurrency,
+		final SizeInBytes itemDataSize, final int updateIntervalSec, final boolean stdOutColorFlag,
+		final boolean avgPersistFlag, final boolean sumPersistFlag,
+		final boolean perfDbResultsFileFlag
 	) {
 		this.stepId = stepId;
 		this.ioType = ioType;
+		this.actualConcurrencyGauge = actualConcurrencyGauge;
 		this.driverCount = driverCount;
 		this.concurrency = concurrency;
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
@@ -269,6 +273,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
+			actualConcurrencyGauge.getAsInt(),
 			lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
 		);
 		if(metricsListener != null) {
@@ -304,7 +309,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new BasicMetricsContext(
-			stepId, ioType, driverCount, concurrency, 0, itemDataSize,
+			stepId, ioType, actualConcurrencyGauge, driverCount, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);
@@ -367,12 +372,13 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		private final long sumLat;
 		private final long startTime;
 		private final long elapsedTime;
+		private final int actualConcurrency;
 		//
 		public BasicSnapshot(
 			final long countSucc, final double succRateLast, final long countFail,
 			final double failRateLast, final long countByte, final double byteRateLast,
-			final long startTime, final long elapsedTime, final long sumDur,
-			final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
+			final long startTime, final long elapsedTime, final int actualConcurrency,
+			final long sumDur, final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
 		) {
 			this.countSucc = countSucc;
@@ -385,6 +391,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			this.sumLat = sumLat;
 			this.startTime = startTime;
 			this.elapsedTime = elapsedTime;
+			this.actualConcurrency = actualConcurrency;
 			this.durSnapshot = durSnapshot;
 			this.durValues = durSnapshot.getValues();
 			this.latSnapshot = latSnapshot;
@@ -549,6 +556,11 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		@Override
 		public final long getElapsedTimeMillis() {
 			return elapsedTime;
+		}
+
+		@Override
+		public final int getActualConcurrency() {
+			return actualConcurrency;
 		}
 	}
 }

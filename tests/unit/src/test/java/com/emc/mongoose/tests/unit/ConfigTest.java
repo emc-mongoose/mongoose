@@ -93,11 +93,11 @@ public class ConfigTest {
 		assertThat(loadConfig, notNullValue());
 		assertThat(loadConfig.getGeneratorConfig().getRecycleConfig().getEnabled(), equalTo(false, "load.circular"));
 		assertThat(loadConfig.getType(), equalTo("create", "load.type"));
-		assertThat(config.getStorageConfig().getDriverConfig().getConcurrency(), equalTo(1, "load.concurrency"));
+		assertThat(config.getLoadConfig().getLimitConfig().getConcurrency(), equalTo(1, "load.concurrency"));
 		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
 		assertThat(limitConfig, notNullValue());
 		assertThat(limitConfig.getCount(), equalTo(0L, "load.limit.count"));
-		assertThat(loadConfig.getRateConfig().getLimit(), equalTo(0.0, "load.limit.rate"));
+		assertThat(loadConfig.getLimitConfig().getRate(), equalTo(0.0, "load.limit.rate"));
 		assertThat(limitConfig.getSize(), equalTo(new SizeInBytes(0), "load.limit.size"));
 		final String timeTestValue = "0s";
 		assertThat(
@@ -232,7 +232,7 @@ public class ConfigTest {
 		assertEquals(1, dataConfig.getRangesConfig().getRandom());
 		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
 		assertEquals(1000, limitConfig.getCount());
-		assertEquals(12.345, config.getLoadConfig().getRateConfig().getLimit());
+		assertEquals(12.345, config.getLoadConfig().getLimitConfig().getRate());
 		assertEquals("321KB", limitConfig.getSize().toString());
 		assertEquals(300, limitConfig.getTime());
 		assertEquals(4, netConfig.getNodeConfig().getAddrs().size());

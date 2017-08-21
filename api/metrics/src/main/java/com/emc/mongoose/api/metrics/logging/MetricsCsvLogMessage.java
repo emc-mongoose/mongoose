@@ -22,6 +22,7 @@ import java.util.Date;
  Size,
  JobDuration[s],
  DurationSum[s],
+ ActualConcurrency,
  TPAvg[op/s],
  TPLast[op/s],
  BWAvg[MB/s],
@@ -62,6 +63,7 @@ extends LogMessageBase {
 			.append(snapshot.getByteCount()).append(',')
 			.append(snapshot.getElapsedTimeMillis() / K).append(',')
 			.append(snapshot.getDurationSum() / M).append(',')
+			.append(snapshot.getActualConcurrency()).append(',')
 			.append(snapshot.getSuccRateMean()).append(',')
 			.append(snapshot.getSuccRateLast()).append(',')
 			.append(snapshot.getByteRateMean()).append(',')
