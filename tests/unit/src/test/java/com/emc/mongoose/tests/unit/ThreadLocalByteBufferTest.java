@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.api.common.env.DirectMemUtil;
+import com.github.akurilov.commons.system.DirectMemUtil;
 
 import org.junit.Test;
 

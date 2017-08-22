@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
 import com.emc.mongoose.tests.system.base.ScenarioTestBase;

@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.data;
 
-import com.emc.mongoose.api.common.env.DirectMemUtil;
+import com.github.akurilov.commons.system.DirectMemUtil;
 
 import java.io.IOException;
 import java.io.ObjectInput;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTaskBuilder;

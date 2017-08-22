@@ -1,11 +1,11 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
@@ -158,11 +158,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(ItemType.DATA.equals(itemType)) {
 			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
-			final List<ByteRange> fixedRanges;
+			final List<Range> fixedRanges;
 			if(fixedRangesConfig != null) {
 				fixedRanges = fixedRangesConfig
 					.stream()
-					.map(ByteRange::new)
+					.map(Range::new)
 					.collect(Collectors.toList());
 			} else {
 				fixedRanges = Collections.EMPTY_LIST;
@@ -258,7 +258,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	) {
 		long sizeThreshold = 0;
 		int randomRangesCount = 0;
-		List<ByteRange> fixedRanges = null;
+		List<Range> fixedRanges = null;
 		if(dataIoTaskBuilder != null) {
 			sizeThreshold = dataIoTaskBuilder.getSizeThreshold();
 			randomRangesCount = dataIoTaskBuilder.getRandomRangesCount();
@@ -316,7 +316,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
 					long sizeSum = 0;
 					long rangeSize;
-					for(final ByteRange byteRange : fixedRanges) {
+					for(final Range byteRange : fixedRanges) {
 						rangeSize = byteRange.getSize();
 						if(rangeSize == -1) {
 							rangeSize = byteRange.getEnd() - byteRange.getBeg() + 1;

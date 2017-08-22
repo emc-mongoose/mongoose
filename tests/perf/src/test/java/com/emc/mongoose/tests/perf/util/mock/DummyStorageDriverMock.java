@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
-import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
@@ -129,8 +129,8 @@ implements StorageDriver<I, O> {
 				case READ:
 					dataIoTask.startDataResponse();
 				case UPDATE:
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+					final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(dataIoTask.hasMarkedRanges()) {
 							dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 						} else {
@@ -223,6 +223,12 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		Loggers.MSG.debug("{}: started", toString());
+	}
+
+	@Override
 	protected final void doShutdown()
 	throws IllegalStateException {
 		Loggers.MSG.debug("{}: shut down", toString());
@@ -243,7 +249,6 @@ implements StorageDriver<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		super.doClose();
 		ioResultsQueue.clear();
 		Loggers.MSG.debug("{}: closed", toString());
 	}

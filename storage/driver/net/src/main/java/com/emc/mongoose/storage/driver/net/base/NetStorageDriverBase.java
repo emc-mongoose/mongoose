@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.driver.net.base;
 
-import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.github.akurilov.coroutines.Coroutine;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
@@ -426,8 +426,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				final DataItem dataItem = (DataItem) item;
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				
-				final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-				if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+				final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+				if(fixedRanges == null || fixedRanges.isEmpty()) {
 					// random ranges update case
 					final BitSet updRangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
 					final int rangeCount = getRangeCount(dataItem.size());
@@ -478,10 +478,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					long end;
 					long size;
 					if(sslFlag) {
-						for(final ByteRange fixedByteRange : fixedByteRanges) {
-							beg = fixedByteRange.getBeg();
-							end = fixedByteRange.getEnd();
-							size = fixedByteRange.getSize();
+						for(final Range fixedRange : fixedRanges) {
+							beg = fixedRange.getBeg();
+							end = fixedRange.getEnd();
+							size = fixedRange.getSize();
 							if(size == -1) {
 								if(beg == -1) {
 									beg = baseItemSize - end;
@@ -506,10 +506,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							);
 						}
 					} else {
-						for(final ByteRange fixedByteRange : fixedByteRanges) {
-							beg = fixedByteRange.getBeg();
-							end = fixedByteRange.getEnd();
-							size = fixedByteRange.getSize();
+						for(final Range fixedRange : fixedRanges) {
+							beg = fixedRange.getBeg();
+							end = fixedRange.getEnd();
+							size = fixedRange.getSize();
 							if(size == -1) {
 								if(beg == -1) {
 									beg = baseItemSize - end;

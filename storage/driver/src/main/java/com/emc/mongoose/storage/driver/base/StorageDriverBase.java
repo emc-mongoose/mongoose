@@ -1,14 +1,16 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.model.concurrent.Coroutine;
-import com.emc.mongoose.api.model.concurrent.CoroutineBase;
+import com.github.akurilov.coroutines.CoroutinesProcessor;
+import com.github.akurilov.commons.collection.OptLockArrayBuffer;
+import com.github.akurilov.commons.collection.OptLockBuffer;
+
+import com.github.akurilov.coroutines.CoroutineBase;
+
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
@@ -106,8 +108,7 @@ implements StorageDriver<I, O> {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
 		this.verifyFlag = verifyFlag;
-		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine(svcCoroutines);
-		svcCoroutines.add(ioTasksDispatchCoroutine);
+		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine(SVC_EXECUTOR);
 	}
 
 	private final class IoTasksDispatchCoroutine
@@ -117,8 +118,8 @@ implements StorageDriver<I, O> {
 		private int n = 0; // the current count of the I/O tasks in the buffer
 		private int m;
 
-		public IoTasksDispatchCoroutine(final List<Coroutine> svcCoroutines) {
-			super(svcCoroutines);
+		public IoTasksDispatchCoroutine(final CoroutinesProcessor coroutinesProcessor) {
+			super(coroutinesProcessor);
 		}
 
 		@Override
@@ -192,6 +193,12 @@ implements StorageDriver<I, O> {
 				);
 			}
 		}
+	}
+
+	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		ioTasksDispatchCoroutine.start();
 	}
 
 	@Override
@@ -287,7 +294,11 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final int getActiveTaskCount() {
-		return concurrencyLevel - concurrencyThrottle.availablePermits();
+		if(concurrencyLevel > 0) {
+			return concurrencyLevel - concurrencyThrottle.availablePermits();
+		} else {
+			return Integer.MAX_VALUE - concurrencyThrottle.availablePermits();
+		}
 	}
 	
 	@Override
@@ -302,11 +313,11 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean isIdle() {
-		if(concurrencyLevel == 0) {
-			return concurrencyThrottle.availablePermits() == Integer.MAX_VALUE;
-		} else {
+		if(concurrencyLevel > 0) {
 			return !concurrencyThrottle.hasQueuedThreads() &&
 				concurrencyThrottle.availablePermits() >= concurrencyLevel;
+		} else {
+			return concurrencyThrottle.availablePermits() == Integer.MAX_VALUE;
 		}
 	}
 	
@@ -393,7 +404,7 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		svcCoroutines.remove(ioTasksDispatchCoroutine);
+		SVC_EXECUTOR.stop(ioTasksDispatchCoroutine);
 		try {
 			ioTasksDispatchCoroutine.close();
 		} catch(final IOException ignored) {
@@ -432,7 +443,6 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		super.doClose();
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)

@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.metrics;
 
-import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.github.akurilov.coroutines.Coroutine;
+
 import com.emc.mongoose.api.metrics.logging.BasicMetricsLogMessage;
 import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
@@ -14,6 +15,7 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
@@ -46,7 +48,7 @@ implements Coroutine {
 	private long nextOutputTs;
 
 	private MetricsManager() {
-		svcCoroutines.add(this);
+		SVC_EXECUTOR.start(this);
 	}
 	
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
@@ -153,7 +155,7 @@ implements Coroutine {
 					if(controller.isInterrupted() || controller.isClosed()) {
 						continue;
 					}
-					controllerActiveTaskCount = controller.getActiveTaskCount();
+					controllerActiveTaskCount = controller.getActualConcurrency();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller).keySet()) {
 						try(
 							final Instance stepIdCtx = CloseableThreadContext.put(
@@ -250,14 +252,18 @@ implements Coroutine {
 		}
 		return !(isStarted() || isShutdown());
 	}
-	
+
+	@Override
+	protected final void doStart() {
+	}
+
 	@Override
 	protected final void doShutdown() {
 	}
 
 	@Override
 	protected final void doInterrupt() {
-		svcCoroutines.remove(this);
+		SVC_EXECUTOR.stop(this);
 	}
 	
 	@Override

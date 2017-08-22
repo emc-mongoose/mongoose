@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.metrics;
 
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 
 import java.io.Closeable;

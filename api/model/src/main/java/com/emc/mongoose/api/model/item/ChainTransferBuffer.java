@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.model.io.task.IoTask;
 
 /**

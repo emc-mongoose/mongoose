@@ -3,8 +3,8 @@ package com.emc.mongoose.storage.driver.nio.fs;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
-import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.common.env.DirectMemUtil;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.DirectMemUtil;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -208,10 +208,10 @@ implements FileStorageDriver<I, O> {
 					if(srcChannel == null) {
 						break;
 					}
-					final List<ByteRange> fixedByteRangesToRead = ioTask.getFixedRanges();
+					final List<Range> fixedRangesToRead = ioTask.getFixedRanges();
 					if(verifyFlag) {
 						try {
-							if(fixedByteRangesToRead == null || fixedByteRangesToRead.isEmpty()) {
+							if(fixedRangesToRead == null || fixedRangesToRead.isEmpty()) {
 								if(ioTask.hasMarkedRanges()) {
 									invokeReadAndVerifyRandomRanges(
 										item, ioTask, srcChannel,
@@ -222,7 +222,7 @@ implements FileStorageDriver<I, O> {
 								}
 							} else {
 								invokeReadAndVerifyFixedRanges(
-									item, ioTask, srcChannel, fixedByteRangesToRead
+									item, ioTask, srcChannel, fixedRangesToRead
 								);
 							}
 						} catch(final DataSizeException e) {
@@ -247,7 +247,7 @@ implements FileStorageDriver<I, O> {
 							);
 						}
 					} else {
-						if(fixedByteRangesToRead == null || fixedByteRangesToRead.isEmpty()) {
+						if(fixedRangesToRead == null || fixedRangesToRead.isEmpty()) {
 							if(ioTask.hasMarkedRanges()) {
 								invokeReadRandomRanges(
 									item, ioTask, srcChannel, ioTask.getMarkedRangesMaskPair()
@@ -256,7 +256,7 @@ implements FileStorageDriver<I, O> {
 								invokeRead(item, ioTask, srcChannel);
 							}
 						} else {
-							invokeReadFixedRanges(item, ioTask, srcChannel, fixedByteRangesToRead);
+							invokeReadFixedRanges(item, ioTask, srcChannel, fixedRangesToRead);
 						}
 					}
 					break;
@@ -266,15 +266,15 @@ implements FileStorageDriver<I, O> {
 					if(dstChannel == null) {
 						break;
 					}
-					final List<ByteRange> fixedByteRangesToUpdate = ioTask.getFixedRanges();
-					if(fixedByteRangesToUpdate == null || fixedByteRangesToUpdate.isEmpty()) {
+					final List<Range> fixedRangesToUpdate = ioTask.getFixedRanges();
+					if(fixedRangesToUpdate == null || fixedRangesToUpdate.isEmpty()) {
 						if(ioTask.hasMarkedRanges()) {
 							invokeRandomRangesUpdate(item, ioTask, dstChannel);
 						} else {
 							throw new AssertionError("Not implemented");
 						}
 					} else {
-						invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedByteRangesToUpdate);
+						invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedRangesToUpdate);
 					}
 					break;
 				
@@ -496,7 +496,7 @@ implements FileStorageDriver<I, O> {
 
 	private void invokeReadAndVerifyFixedRanges(
 		final I fileItem, final O ioTask, final SeekableByteChannel srcChannel,
-		final List<ByteRange> fixedRanges
+		final List<Range> fixedRanges
 	) throws DataSizeException, DataCorruptionException, IOException {
 		
 		final long baseItemSize = fileItem.size();
@@ -512,7 +512,7 @@ implements FileStorageDriver<I, O> {
 		
 		if(fixedRangesSizeSum > 0 && fixedRangesSizeSum > countBytesDone) {
 
-			ByteRange fixedRange;
+			Range fixedRange;
 			DataItem currRange;
 			int currFixedRangeIdx = ioTask.getCurrRangeIdx();
 			long fixedRangeEnd;
@@ -660,7 +660,7 @@ implements FileStorageDriver<I, O> {
 
 	private void invokeReadFixedRanges(
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
-		final List<ByteRange> byteRanges
+		final List<Range> byteRanges
 	) throws IOException {
 		
 		int n;
@@ -670,7 +670,7 @@ implements FileStorageDriver<I, O> {
 		
 		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
 			
-			ByteRange byteRange;
+			Range byteRange;
 			int currRangeIdx = ioTask.getCurrRangeIdx();
 			long rangeBeg;
 			long rangeEnd;
@@ -772,7 +772,7 @@ implements FileStorageDriver<I, O> {
 
 	private void invokeFixedRangesUpdate(
 		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel,
-		final List<ByteRange> byteRanges
+		final List<Range> byteRanges
 	) throws IOException {
 
 		long countBytesDone = ioTask.getCountBytesDone();
@@ -781,7 +781,7 @@ implements FileStorageDriver<I, O> {
 
 		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
 
-			ByteRange byteRange;
+			Range byteRange;
 			DataItem updatingRange;
 			int currRangeIdx = ioTask.getCurrRangeIdx();
 			long rangeBeg;

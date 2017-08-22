@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;

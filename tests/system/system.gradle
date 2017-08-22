@@ -12,7 +12,7 @@ sourceSets {
 dependencies {
 
 	testCompile(
-		project(":api:common"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		project(":api:model"),
 		project(":ui"),
 		project(":load:generator"),
@@ -28,7 +28,6 @@ dependencies {
 		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
 		project(":run"),
-		"com.github.emc-mongoose:nagaina:${depVersion.nagaina}",
 		"junit:junit:4.12",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
@@ -38,12 +37,12 @@ dependencies {
 	)
 
 	testCompile("com.github.emc-mongoose:nagaina:${depVersion.nagaina}") {
+		transitive = false
 		// debugging under IDEA
-		exclude group: "com.github.emc-mongoose", module: "mongoose-api-common"
-		exclude group: "com.github.emc-mongoose", module: "mongoose-api-model"
-		exclude group: "com.github.emc-mongoose", module: "mongoose-ui"
+		//exclude group: "com.github.emc-mongoose", module: "mongoose-api-common"
+		//exclude group: "com.github.emc-mongoose", module: "mongoose-api-model"
+		//exclude group: "com.github.emc-mongoose", module: "mongoose-ui"
 	}
-
 
 	testRuntime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",

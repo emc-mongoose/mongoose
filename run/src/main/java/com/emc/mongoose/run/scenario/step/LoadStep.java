@@ -1,10 +1,10 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;

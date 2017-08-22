@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.io.bin.file.FileItemInput;
+import com.github.akurilov.commons.io.bin.file.FileItemInput;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

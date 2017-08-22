@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.api.common.math.Random;
+import com.github.akurilov.commons.math.Random;
 import com.emc.mongoose.api.model.item.BasicDataItem;
 import com.emc.mongoose.api.model.item.BasicItemFactory;
 import com.emc.mongoose.api.model.item.DataItem;

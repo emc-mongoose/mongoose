@@ -1,8 +1,16 @@
 description = "mongoose-api-common"
 
 dependencies {
-	compile "org.apache.commons:commons-collections4:${depVersion.commonsCollections}"
-	compile "commons-lang:commons-lang:${depVersion.commonsLang}"
+	compile(
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
+	)
+}
+
+task printClasspath {
+	doLast {
+		configurations.compile.each { println it }
+	}
 }
 
 jar {

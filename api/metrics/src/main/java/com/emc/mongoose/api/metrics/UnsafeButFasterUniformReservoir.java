@@ -8,7 +8,7 @@ import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformSnapshot;
 
-import com.emc.mongoose.api.common.math.Random;
+import com.github.akurilov.commons.math.Random;
 
 import java.util.ArrayList;
 import java.util.List;

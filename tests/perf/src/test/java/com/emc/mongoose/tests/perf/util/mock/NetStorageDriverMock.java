@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
-import com.emc.mongoose.api.common.ByteRange;
+import com.github.akurilov.commons.collection.Range;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -86,8 +86,8 @@ extends NetStorageDriverBase<I, O> {
 				case READ:
 					dataIoTask.startDataResponse();
 				case UPDATE:
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+					final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(dataIoTask.hasMarkedRanges()) {
 							dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 						} else {

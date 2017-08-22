@@ -1,15 +1,19 @@
 package com.emc.mongoose.load.controller;
 
-import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.concurrent.RateThrottle;
+import com.github.akurilov.commons.concurrent.Throttle;
+
+import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.TransferCoroutine;
+import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
+
 import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
 import com.emc.mongoose.api.model.load.LoadController;
-import com.emc.mongoose.api.common.concurrent.RateThrottle;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
-import com.emc.mongoose.api.model.concurrent.RoundRobinOutputCoroutine;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.io.task.IoTask.Status;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
@@ -19,13 +23,11 @@ import com.emc.mongoose.api.model.io.task.path.PathIoTask;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
-import com.emc.mongoose.api.common.concurrent.Throttle;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.api.metrics.MetricsManager;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.concurrent.TransferCoroutine;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
@@ -52,6 +54,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +83,8 @@ implements LoadController<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
 	private final int batchSize;
 	private final boolean isAnyCircular;
+	private final GetActualConcurrencySumCoroutine getActualConcurrencySumCoroutine;
+	private final List<Coroutine> transferCoroutines = new ArrayList<>();
 
 	private final Int2ObjectMap<MetricsContext> ioStats = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
@@ -87,7 +92,8 @@ implements LoadController<I, O> {
 	private final Int2IntMap driversCountMap;
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
-	private final Int2ObjectMap<Output<O>> ioTaskOutputs = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<RoundRobinOutputCoroutine<O, StorageDriver<I, O>>>
+		ioTaskOutputs = new Int2ObjectOpenHashMap<>();
 	private final boolean tracePersistFlag;
 
 	private volatile Output<O> ioResultsOutput;
@@ -118,18 +124,13 @@ implements LoadController<I, O> {
 		}
 
 		generatorsMap = new Int2ObjectOpenHashMap<>(driversMap.size());
-		Output<O> nextGeneratorOutput = null;
+		RoundRobinOutputCoroutine<O, StorageDriver<I, O>> nextGeneratorOutput = null;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			// hashCode() returns the origin code
 			generatorsMap.put(nextGenerator.hashCode(), nextGenerator);
-
-			try {
-				nextGeneratorOutput = new RoundRobinOutputCoroutine<>(
-					driversMap.get(nextGenerator), nextGenerator.getSvcCoroutines(),
-					nextGenerator.getBatchSize()
-				);
-			} catch(final RemoteException ignored) {
-			}
+			nextGeneratorOutput = new RoundRobinOutputCoroutine<>(
+				SVC_EXECUTOR, driversMap.get(nextGenerator), nextGenerator.getBatchSize()
+			);
 			ioTaskOutputs.put(nextGenerator.hashCode(), nextGeneratorOutput);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
@@ -145,8 +146,10 @@ implements LoadController<I, O> {
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
 		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
 		boolean anyCircularFlag = false;
+		final List<StorageDriver> drivers = new ArrayList<>();
 		for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
+			drivers.addAll(nextDrivers);
 			final MetricsConfig nextMetricsConfig = outputConfigs
 				.get(nextGenerator).getMetricsConfig();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
@@ -168,7 +171,7 @@ implements LoadController<I, O> {
 			ioStats.put(
 				ioTypeCode,
 				new BasicMetricsContext(
-					name, ioType, () -> getActiveTaskCount(),
+					name, ioType, () -> getActualConcurrency(),
 					nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
 					itemDataSizes.get(nextGenerator),
@@ -179,7 +182,15 @@ implements LoadController<I, O> {
 					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFileFlag()
 				)
 			);
+
+			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
+				final Coroutine transferCoroutine = new TransferCoroutine<>(
+					SVC_EXECUTOR, nextDriver, this, batchSize
+				);
+				transferCoroutines.add(transferCoroutine);
+			}
 		}
+
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
 			final int
@@ -188,6 +199,10 @@ implements LoadController<I, O> {
 		} else {
 			latestIoResultsPerItem = null;
 		}
+
+		this.getActualConcurrencySumCoroutine = new GetActualConcurrencySumCoroutine(
+			SVC_EXECUTOR, drivers
+		);
 
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
@@ -546,29 +561,16 @@ implements LoadController<I, O> {
 	}
 	
 	@Override
-	public final int getActiveTaskCount() {
-		int totalActiveTaskCount = 0;
-		synchronized(driversMap) {
-			for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-				final List<StorageDriver<I, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
-				for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
-					try {
-						totalActiveTaskCount += nextDriver.getActiveTaskCount();
-					} catch(final RemoteException e) {
-						LogUtil.exception(Level.WARN, e, "Failed to invoke the remote method");
-					}
-				}
-			}
-		}
-		return totalActiveTaskCount;
+	public final int getActualConcurrency() {
+		return getActualConcurrencySumCoroutine.getActualConcurrencySum();
 	}
 	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		super.doStart();
 
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+
 			final List<StorageDriver<I, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
 			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
 				try {
@@ -579,6 +581,9 @@ implements LoadController<I, O> {
 					);
 				}
 			}
+
+			ioTaskOutputs.get(nextGenerator.hashCode()).start();
+
 			try {
 				nextGenerator.start();
 			} catch(final IllegalStateException | RemoteException e) {
@@ -597,13 +602,11 @@ implements LoadController<I, O> {
 			}
 		}
 
-		for(final List<StorageDriver<I, O>> nextGeneratorDrivers : driversMap.values()) {
-			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
-				svcCoroutines.add(
-					new TransferCoroutine<>(svcCoroutines, name, nextDriver, this, batchSize)
-				);
-			}
+		for(final Coroutine transferCoroutine : transferCoroutines) {
+			transferCoroutine.start();
 		}
+
+		getActualConcurrencySumCoroutine.start();
 	}
 
 	@Override
@@ -783,18 +786,23 @@ implements LoadController<I, O> {
 			);
 		}
 		
-		synchronized(svcCoroutines) {
-			// stop all service coroutines
-			for(final Coroutine svcCoroutine : svcCoroutines) {
-				try {
-					svcCoroutine.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to stop the service coroutine {}", svcCoroutine
-					);
-				}
+		for(final Coroutine transferCoroutine : transferCoroutines) {
+			try {
+				transferCoroutine.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to stop the service coroutine {}", transferCoroutine
+				);
 			}
-			svcCoroutines.clear();
+		}
+		transferCoroutines.clear();
+		try {
+			getActualConcurrencySumCoroutine.close();
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.WARN, e, "{}: failed to stop the service coroutine {}",
+				getActualConcurrencySumCoroutine
+			);
 		}
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
@@ -916,8 +924,6 @@ implements LoadController<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-
-		super.doClose();
 
 		synchronized (driversMap) {
 

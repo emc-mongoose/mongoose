@@ -2,8 +2,9 @@ description = "mongoose-api-model"
 
 dependencies {
 	compile(
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:java-coroutines:${depVersion.javaCoroutines}",
 		project(":api:common"),
-		"org.apache.commons:commons-collections4:${depVersion.commonsCollections}",
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",

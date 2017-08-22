@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.io.task.data;
 
-import com.emc.mongoose.api.common.ByteRange;
+import com.github.akurilov.commons.collection.Range;
 import com.emc.mongoose.api.model.io.task.composite.data.BasicCompositeDataIoTask;
 import com.emc.mongoose.api.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.api.model.item.DataItem;
@@ -9,7 +9,7 @@ import com.emc.mongoose.api.model.storage.Credential;
 import java.io.IOException;
 import java.util.List;
 
-import static com.emc.mongoose.api.common.SizeInBytes.formatFixedSize;
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 
 /**
@@ -19,12 +19,12 @@ public class BasicDataIoTaskBuilder<I extends DataItem, O extends DataIoTask<I>>
 extends BasicIoTaskBuilder<I, O>
 implements DataIoTaskBuilder<I, O> {
 
-	protected volatile List<ByteRange> fixedRanges = null;
+	protected volatile List<Range> fixedRanges = null;
 	protected volatile int randomRangesCount = 0;
 	protected volatile long sizeThreshold = 0;
 	
 	@Override
-	public BasicDataIoTaskBuilder<I, O> setFixedRanges(final List<ByteRange> fixedRanges) {
+	public BasicDataIoTaskBuilder<I, O> setFixedRanges(final List<Range> fixedRanges) {
 		this.fixedRanges = fixedRanges;
 		return this;
 	}
@@ -42,7 +42,7 @@ implements DataIoTaskBuilder<I, O> {
 	}
 	
 	@Override
-	public List<ByteRange> getFixedRanges() {
+	public List<Range> getFixedRanges() {
 		return fixedRanges;
 	}
 	

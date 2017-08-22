@@ -1,8 +1,8 @@
 package com.emc.mongoose.api.model.load;
 
 import com.emc.mongoose.api.model.concurrent.Daemon;
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 
@@ -16,7 +16,7 @@ extends Daemon, Output<O> {
 	
 	void setIoResultsOutput(final Output<O> ioTaskResultsOutput);
 
-	int getActiveTaskCount();
+	int getActualConcurrency();
 	
 	default Input<O> getInput() {
 		throw new AssertionError("Shouldn't be invoked");

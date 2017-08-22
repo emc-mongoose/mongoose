@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
-import com.emc.mongoose.api.common.ByteRange;
-import com.emc.mongoose.api.common.env.DirectMemUtil;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.DirectMemUtil;
 import com.emc.mongoose.api.model.data.DataCorruptionException;
 import com.emc.mongoose.api.model.data.DataSizeException;
 import com.emc.mongoose.api.model.data.DataVerificationException;
@@ -29,7 +29,7 @@ public abstract class ResponseContentUtil {
 		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf contentChunk,
 		final int chunkSize
 	) throws IOException {
-		final List<ByteRange> byteRanges = dataIoTask.getFixedRanges();
+		final List<Range> byteRanges = dataIoTask.getFixedRanges();
 		final DataItem item = dataIoTask.getItem();
 		try {
 			if(byteRanges != null && !byteRanges.isEmpty()) {
@@ -80,7 +80,7 @@ public abstract class ResponseContentUtil {
 
 	private static void verifyChunkDataAndSize(
 		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
-		final ByteBuf chunkData, final int chunkSize, final List<ByteRange> byteRanges
+		final ByteBuf chunkData, final int chunkSize, final List<Range> byteRanges
 	) throws DataCorruptionException, IOException {
 
 		final long rangesSizeSum = dataIoTask.getMarkedRangesSize();
@@ -91,7 +91,7 @@ public abstract class ResponseContentUtil {
 		}
 		final long baseItemSize = dataItem.size();
 
-		ByteRange byteRange;
+		Range byteRange;
 		DataItem currRange;
 		// "countBytesDone" is the current range done bytes counter here
 		long rangeBytesDone = countBytesDone;

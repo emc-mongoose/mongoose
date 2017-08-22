@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.item;
 
 import com.emc.mongoose.api.common.Constants;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.io.Output;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

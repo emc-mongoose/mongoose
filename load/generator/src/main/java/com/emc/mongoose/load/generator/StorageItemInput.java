@@ -1,6 +1,6 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.api.common.io.collection.BufferingInputBase;
+import com.github.akurilov.commons.io.collection.BufferingInputBase;
 import com.emc.mongoose.api.model.io.task.IoTask;
 
 import com.emc.mongoose.api.model.item.DataItemFactory;

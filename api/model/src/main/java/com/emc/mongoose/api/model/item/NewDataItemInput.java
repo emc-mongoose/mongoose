@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
 import java.util.List;

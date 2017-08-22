@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.data;
 
-import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.math.MathUtil;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.math.MathUtil;
 
 import java.io.Closeable;
 import java.io.Externalizable;

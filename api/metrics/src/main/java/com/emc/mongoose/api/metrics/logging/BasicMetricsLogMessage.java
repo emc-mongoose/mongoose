@@ -7,12 +7,13 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;
 import static com.emc.mongoose.api.common.Constants.M;
 import static com.emc.mongoose.api.common.Constants.MIB;
-import static com.emc.mongoose.api.common.SizeInBytes.formatFixedSize;
 import static com.emc.mongoose.ui.log.LogUtil.RESET;
 import static com.emc.mongoose.ui.log.LogUtil.WHITE;
 import static com.emc.mongoose.ui.log.LogUtil.getFailureRatioAnsiColorCode;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 
 /**
  Created by kurila on 18.05.17.

@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
-import com.emc.mongoose.api.common.ByteRange;
+import com.github.akurilov.commons.collection.Range;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.async.AsyncPatternDefinedSupplier;
@@ -206,13 +206,13 @@ implements HttpStorageDriver<I, O> {
 			case READ:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				if(ioTask instanceof DataIoTask) {
-					applyByteRangesHeaders(httpHeaders, (DataIoTask) ioTask);
+					applyRangesHeaders(httpHeaders, (DataIoTask) ioTask);
 				}
 				break;
 			case UPDATE:
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.getMarkedRangesSize());
-				applyByteRangesHeaders(httpHeaders, dataIoTask);
+				applyRangesHeaders(httpHeaders, dataIoTask);
 				break;
 			case DELETE:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -281,7 +281,7 @@ implements HttpStorageDriver<I, O> {
 			}
 		};
 	
-	protected void applyByteRangesHeaders(
+	protected void applyRangesHeaders(
 		final HttpHeaders httpHeaders, final DataIoTask dataIoTask
 	) {
 		final long baseItemSize;
@@ -290,11 +290,11 @@ implements HttpStorageDriver<I, O> {
 		} catch(final IOException e) {
 			throw new AssertionError(e);
 		}
-		final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
+		final List<Range> fixedRanges = dataIoTask.getFixedRanges();
 		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
 		strb.setLength(0);
 
-		if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+		if(fixedRanges == null || fixedRanges.isEmpty()) {
 			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
 			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
@@ -325,16 +325,16 @@ implements HttpStorageDriver<I, O> {
 			}
 
 		} else { // fixed byte ranges
-			ByteRange nextFixedByteRange;
+			Range nextFixedRange;
 			long nextRangeSize;
-			for(int i = 0; i < fixedByteRanges.size(); i ++) {
-				nextFixedByteRange = fixedByteRanges.get(i);
-				nextRangeSize = nextFixedByteRange.getSize();
+			for(int i = 0; i < fixedRanges.size(); i ++) {
+				nextFixedRange = fixedRanges.get(i);
+				nextRangeSize = nextFixedRange.getSize();
 				if(i > 0) {
 					strb.append(',');
 				}
 				if(nextRangeSize == -1) {
-					strb.append(nextFixedByteRange.toString());
+					strb.append(nextFixedRange.toString());
 				} else {
 					strb.append(baseItemSize).append("-");
 				}

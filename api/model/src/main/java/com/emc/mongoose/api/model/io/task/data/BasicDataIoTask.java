@@ -1,14 +1,14 @@
 package com.emc.mongoose.api.model.io.task.data;
 
-import com.emc.mongoose.api.common.ByteRange;
+import com.github.akurilov.commons.collection.Range;
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
+
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.api.model.io.task.BasicIoTask;
-
-import static com.emc.mongoose.api.common.SizeInBytes.formatFixedSize;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,7 +30,7 @@ implements DataIoTask<T> {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
 	private int randomRangesCount;
-	private List<ByteRange> fixedRanges;
+	private List<Range> fixedRanges;
 	
 	protected transient volatile DataInput contentSrc;
 	protected transient volatile long countBytesDone;
@@ -45,7 +45,7 @@ implements DataIoTask<T> {
 	public BasicDataIoTask(
 		final int originCode, final IoType ioType, final T item, final String srcPath,
 		final String dstPath, final Credential credential,
-		final List<ByteRange> fixedRanges, final int randomRangesCount
+		final List<Range> fixedRanges, final int randomRangesCount
 	) throws IllegalArgumentException {
 		super(originCode, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
@@ -112,7 +112,7 @@ implements DataIoTask<T> {
 						} else {
 							// overwrite the entire data item
 							fixedRanges = new ArrayList<>(1);
-							fixedRanges.add(new ByteRange(0L, item.size() - 1, -1));
+							fixedRanges.add(new Range(0L, item.size() - 1, -1));
 						}
 					}
 					contentSize = getMarkedRangesSize();
@@ -197,10 +197,10 @@ implements DataIoTask<T> {
 			}
 		} else {
 			long nextBeg, nextEnd, nextSize;
-			for(final ByteRange nextByteRange : fixedRanges) {
-				nextBeg = nextByteRange.getBeg();
-				nextEnd = nextByteRange.getEnd();
-				nextSize = nextByteRange.getSize();
+			for(final Range nextRange : fixedRanges) {
+				nextBeg = nextRange.getBeg();
+				nextEnd = nextRange.getEnd();
+				nextSize = nextRange.getSize();
 				if(nextSize == -1) {
 					if(nextBeg == -1) {
 						sumSize += nextEnd;
@@ -222,7 +222,7 @@ implements DataIoTask<T> {
 	}
 	
 	@Override
-	public final List<ByteRange> getFixedRanges() {
+	public final List<Range> getFixedRanges() {
 		return fixedRanges;
 	}
 	
@@ -316,7 +316,7 @@ implements DataIoTask<T> {
 			out.writeInt(0);
 		} else {
 			out.writeInt(fixedRanges.size());
-			for(final ByteRange br : fixedRanges) {
+			for(final Range br : fixedRanges) {
 				out.writeLong(br.getBeg());
 				out.writeLong(br.getEnd());
 				out.writeLong(br.getSize());
@@ -339,13 +339,13 @@ implements DataIoTask<T> {
 		super.readExternal(in);
 		contentSrc = item.getDataInput();
 		contentSize = in.readLong();
-		final int fixedByteRangesCount = in.readInt();
-		if(fixedByteRangesCount == 0) {
+		final int fixedRangesCount = in.readInt();
+		if(fixedRangesCount == 0) {
 			fixedRanges = null;
 		} else {
-			fixedRanges = new ArrayList<>(fixedByteRangesCount);
-			for(int i = 0; i < fixedByteRangesCount; i ++) {
-				fixedRanges.add(new ByteRange(in.readLong(), in.readLong(), in.readLong()));
+			fixedRanges = new ArrayList<>(fixedRangesCount);
+			for(int i = 0; i < fixedRangesCount; i ++) {
+				fixedRanges.add(new Range(in.readLong(), in.readLong(), in.readLong()));
 			}
 		}
 		randomRangesCount = in.readInt();

@@ -1,8 +1,8 @@
 package com.emc.mongoose.api.model.storage;
 
 import com.emc.mongoose.api.model.concurrent.Daemon;
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;

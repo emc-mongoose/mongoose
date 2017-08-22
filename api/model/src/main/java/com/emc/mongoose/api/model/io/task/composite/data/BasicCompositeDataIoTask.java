@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.io.task.composite.data;
 
-import com.emc.mongoose.api.common.ByteRange;
+import com.github.akurilov.commons.collection.Range;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.data.BasicDataIoTask;
 import com.emc.mongoose.api.model.io.task.partial.data.BasicPartialDataIoTask;
@@ -36,7 +36,7 @@ implements CompositeDataIoTask<I> {
 
 	public BasicCompositeDataIoTask(
 		final int originCode, final IoType ioType, final I item, final String srcPath,
-		final String dstPath, final Credential credential, final List<ByteRange> fixedRanges,
+		final String dstPath, final Credential credential, final List<Range> fixedRanges,
 		final int randomRangesCount, final long sizeThreshold
 	) {
 		super(

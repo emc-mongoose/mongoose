@@ -13,9 +13,6 @@ import java.util.concurrent.TimeUnit;
 public interface Daemon
 extends Closeable {
 
-	List<Coroutine> getSvcCoroutines()
-	throws RemoteException;
-	
 	enum State {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
 	}

@@ -1,9 +1,10 @@
 package com.emc.mongoose.api.common.supply.async;
 
-import com.emc.mongoose.api.common.concurrent.InitCallable;
-import com.emc.mongoose.api.common.concurrent.Initializable;
+import com.github.akurilov.commons.concurrent.InitCallable;
+import com.github.akurilov.commons.concurrent.Initializable;
+import com.github.akurilov.commons.math.Random;
+
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.api.common.math.Random;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.RangeDefinedSupplier;
 

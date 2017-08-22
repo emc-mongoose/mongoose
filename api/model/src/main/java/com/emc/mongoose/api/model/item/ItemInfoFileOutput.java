@@ -1,8 +1,9 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.io.Output;
-import com.emc.mongoose.api.common.io.TextFileOutput;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.io.text.TextFileOutput;
+
 import com.emc.mongoose.api.model.io.task.IoTask;
 
 import java.io.IOException;

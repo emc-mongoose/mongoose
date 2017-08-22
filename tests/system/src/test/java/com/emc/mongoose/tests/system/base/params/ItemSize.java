@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system.base.params;
 
-import com.emc.mongoose.api.common.SizeInBytes;
+import com.github.akurilov.commons.system.SizeInBytes;
 
 /**
  Created by andrey on 11.08.17.

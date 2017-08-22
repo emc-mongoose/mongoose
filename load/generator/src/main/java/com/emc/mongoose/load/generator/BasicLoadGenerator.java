@@ -1,17 +1,18 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.collection.OptLockArrayBuffer;
+import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.commons.concurrent.Throttle;
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.io.Input;
+
+import com.github.akurilov.coroutines.Coroutine;
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.common.concurrent.Throttle;
-import com.emc.mongoose.api.common.io.Output;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.api.common.io.Input;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.api.model.item.Item;
@@ -98,7 +99,6 @@ implements LoadGenerator<I, O>, Coroutine {
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-		svcCoroutines.add(this);
 	}
 
 	@Override
@@ -323,13 +323,19 @@ implements LoadGenerator<I, O>, Coroutine {
 	}
 
 	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		SVC_EXECUTOR.start(this);
+	}
+
+	@Override
 	protected final void doShutdown() {
 		interrupt();
 	}
 
 	@Override
 	protected final void doInterrupt() {
-		svcCoroutines.remove(this);
+		SVC_EXECUTOR.stop(this);
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} I/O tasks",
 			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
@@ -360,7 +366,6 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		super.doClose();
 		if(recycleQueue != null) {
 			recycleQueue.clear();
 		}

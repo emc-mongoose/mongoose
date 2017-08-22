@@ -1,10 +1,11 @@
 package com.emc.mongoose.tests.system.base;
 
+import com.emc.nagaina.impl.http.StorageMockFactory;
+
 import com.emc.mongoose.api.model.concurrent.Daemon;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
 import com.emc.mongoose.storage.driver.service.BasicStorageDriverBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.http.StorageMockFactory;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;

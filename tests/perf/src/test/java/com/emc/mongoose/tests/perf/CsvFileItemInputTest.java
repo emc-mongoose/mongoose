@@ -1,8 +1,8 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.io.Output;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.CsvFileItemOutput;
 import com.emc.mongoose.api.model.item.DataItem;

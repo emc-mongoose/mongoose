@@ -1,7 +1,8 @@
 package com.emc.mongoose.api.common.supply.async;
 
-import com.emc.mongoose.api.common.concurrent.InitCallable;
-import com.emc.mongoose.api.common.concurrent.InitRunnable;
+import com.github.akurilov.commons.concurrent.InitCallable;
+import com.github.akurilov.commons.concurrent.InitRunnable;
+
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;
 

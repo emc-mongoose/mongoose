@@ -1,8 +1,8 @@
 package com.emc.mongoose.api.common.supply;
 
-import com.emc.mongoose.api.common.math.Random;
+import com.github.akurilov.commons.math.Random;
 
-import static com.emc.mongoose.api.common.io.Input.DELIMITER;
+import static com.github.akurilov.commons.io.Input.DELIMITER;
 
 import java.io.File;
 import java.util.List;

@@ -3,7 +3,8 @@ description = "mongoose-storage-driver-net"
 dependencies {
 
 	compile(
-		project(":api:common"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:java-coroutines:${depVersion.javaCoroutines}",
 		project(":api:model"),
 		project(":ui"),
 		project(":storage:driver"),

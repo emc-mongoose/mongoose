@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.model.io.task.data;
 
-import com.emc.mongoose.api.common.ByteRange;
+import com.github.akurilov.commons.collection.Range;
+
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 
@@ -24,7 +25,7 @@ extends IoTask<I> {
 	
 	BitSet[] getMarkedRangesMaskPair();
 	
-	List<ByteRange> getFixedRanges();
+	List<Range> getFixedRanges();
 	
 	int getCurrRangeIdx();
 	

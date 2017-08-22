@@ -1,23 +1,17 @@
 package com.emc.mongoose.api.model.concurrent;
 
-import com.emc.mongoose.api.common.concurrent.StoppableTask;
+import com.github.akurilov.coroutines.CoroutinesProcessor;
 
 import static com.emc.mongoose.api.model.concurrent.Daemon.State.CLOSED;
 import static com.emc.mongoose.api.model.concurrent.Daemon.State.INITIAL;
 import static com.emc.mongoose.api.model.concurrent.Daemon.State.INTERRUPTED;
 import static com.emc.mongoose.api.model.concurrent.Daemon.State.SHUTDOWN;
 import static com.emc.mongoose.api.model.concurrent.Daemon.State.STARTED;
-import static com.emc.mongoose.api.common.concurrent.ThreadUtil.getHardwareThreadCount;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -27,86 +21,37 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
-	private static final ThreadPoolExecutor SVC_EXECUTOR;
-	private static final List<StoppableTask> SVC_WORKERS = new ArrayList<>();
-	private static final Map<Daemon, List<Coroutine>> SVC_COROUTINES = new ConcurrentHashMap<>();
-
-	static {
-
-		final int svcThreadCount = getHardwareThreadCount();
-
-		SVC_EXECUTOR = new ThreadPoolExecutor(
-			svcThreadCount, svcThreadCount, 0, TimeUnit.DAYS, new ArrayBlockingQueue<>(1),
-			new NamingThreadFactory("svcWorker", true)
-		);
-
-		for(int i = 0; i < getHardwareThreadCount(); i ++) {
-			final StoppableTask svcWorkerTask = new CoroutinesProcessorTask(SVC_COROUTINES);
-			SVC_EXECUTOR.submit(svcWorkerTask);
-			SVC_WORKERS.add(svcWorkerTask);
-		}
-	}
+	protected static final CoroutinesProcessor SVC_EXECUTOR = new CoroutinesProcessor();
 
 	public static void setThreadCount(final int threadCount) {
-		final int newThreadCount = threadCount > 0 ? threadCount : getHardwareThreadCount();
-		final int oldThreadCount = SVC_EXECUTOR.getCorePoolSize();
-		if(newThreadCount != oldThreadCount) {
-			SVC_EXECUTOR.setCorePoolSize(newThreadCount);
-			SVC_EXECUTOR.setMaximumPoolSize(newThreadCount);
-			if(newThreadCount > oldThreadCount) {
-				for(int i = oldThreadCount; i < newThreadCount; i ++) {
-					final CoroutinesProcessorTask procTask = new CoroutinesProcessorTask(
-						SVC_COROUTINES
-					);
-					SVC_EXECUTOR.submit(procTask);
-					SVC_WORKERS.add(procTask);
-				}
-			} else { // less, remove some active service worker tasks
-				try {
-					for(int i = oldThreadCount - 1; i >= newThreadCount; i --) {
-						SVC_WORKERS.remove(i).close();
-					}
-				} catch (final Exception e) {
-					e.printStackTrace(System.err);
-				}
-			}
-		}
+		SVC_EXECUTOR.setThreadCount(threadCount);
 	}
-	
-	protected final List<Coroutine> svcCoroutines = new CopyOnWriteArrayList<>();
+
+	private static final List<Daemon> REGISTRY = new ArrayList<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
+
+	protected DaemonBase() {
+		REGISTRY.add(this);
+	}
 	
 	@Override
 	public final State getState() {
 		return stateRef.get();
 	}
-	
-	protected void doStart()
-	throws IllegalStateException {
-		SVC_COROUTINES.put(this, svcCoroutines);
-	}
+
+	protected abstract void doStart()
+	throws IllegalStateException;
 
 	protected abstract void doShutdown()
 	throws IllegalStateException;
 
 	protected abstract void doInterrupt()
 	throws IllegalStateException;
-	
-	protected void doClose()
-	throws IOException, IllegalStateException {
-		SVC_COROUTINES.remove(this);
-		for(final Coroutine svcCoroutine : svcCoroutines) {
-			svcCoroutine.close();
-		}
-		svcCoroutines.clear();
-	}
 
-	@Override
-	public final List<Coroutine> getSvcCoroutines() {
-		return svcCoroutines;
-	}
+	protected abstract void doClose()
+	throws IllegalStateException, IOException;
 
 	@Override
 	public final void start()
@@ -196,8 +141,8 @@ implements Daemon {
 	}
 
 	public static void closeAll() {
-		synchronized(SVC_COROUTINES) {
-			for(final Daemon d : SVC_COROUTINES.keySet()) {
+		synchronized(REGISTRY) {
+			for(final Daemon d : REGISTRY) {
 				try {
 					d.close();
 				} catch(final Throwable t) {

@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.item;
 
 import com.emc.mongoose.api.common.exception.DanShootHisFootException;
-import com.emc.mongoose.api.common.math.MathUtil;
+import com.github.akurilov.commons.math.MathUtil;
 import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;
 
 import static java.lang.System.currentTimeMillis;

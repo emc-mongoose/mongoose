@@ -1,8 +1,8 @@
 package com.emc.mongoose.api.model.data;
 
-import static com.emc.mongoose.api.common.math.MathUtil.xorShift;
+import static com.github.akurilov.commons.math.MathUtil.xorShift;
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
-import com.emc.mongoose.api.common.env.DirectMemUtil;
+import com.github.akurilov.commons.system.DirectMemUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;

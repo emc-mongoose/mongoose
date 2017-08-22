@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.model.concurrent.Coroutine;
-import com.emc.mongoose.api.model.concurrent.CoroutineBase;
+import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.CoroutineBase;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -36,23 +36,23 @@ implements StorageDriverSvc<I, O> {
 	
 	private final int port;
 	private final StorageDriver<I, O> driver;
-	private final Coroutine stateReportCoroutine;
+	//private final Coroutine stateReportCoroutine;
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final long metricsPeriodSec,
 		final String stepId
 	) throws RemoteException {
-		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+		/*if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
 			stateReportCoroutine = new StateReportingCoroutine(driver, metricsPeriodSec, stepId);
 		} else {
 			stateReportCoroutine = null;
-		}
+		}*/
 		this.port = port;
 		this.driver = driver;
 		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 	
-	private final static class StateReportingCoroutine
+	/*private final static class StateReportingCoroutine
 	extends CoroutineBase
 	implements Coroutine {
 
@@ -105,7 +105,7 @@ implements StorageDriverSvc<I, O> {
 			prevNanoTimeStamp = Long.MAX_VALUE;
 			invocationLock.tryLock();
 		}
-	}
+	}*/
 
 	@Override
 	public final int getRegistryPort()
@@ -120,11 +120,6 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final List<Coroutine> getSvcCoroutines() {
-		throw new AssertionError("Shouldn't be invoked");
-	}
-	
-	@Override
 	public final State getState()
 	throws RemoteException {
 		return driver.getState();
@@ -135,9 +130,9 @@ implements StorageDriverSvc<I, O> {
 	throws IllegalStateException {
 		try {
 			driver.start();
-			if(stateReportCoroutine != null) {
-				driver.getSvcCoroutines().add(stateReportCoroutine); // start
-			}
+			/*if(stateReportCoroutine != null) {
+				stateReportCoroutine.start();
+			}*/
 		} catch(final RemoteException e) {
 			throw new AssertionError(e);
 		}
@@ -223,9 +218,9 @@ implements StorageDriverSvc<I, O> {
 	throws IllegalStateException {
 		try {
 			driver.interrupt();
-			if(stateReportCoroutine != null) {
+			/*if(stateReportCoroutine != null) {
 				stateReportCoroutine.close();
-			}
+			}*/
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Storage driver wrapping service failed on interrupt");
 		}

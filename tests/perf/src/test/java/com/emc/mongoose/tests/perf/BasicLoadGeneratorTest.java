@@ -1,9 +1,9 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.api.common.SizeInBytes;
-import com.emc.mongoose.api.common.io.Input;
-import com.emc.mongoose.api.common.io.Output;
-import com.emc.mongoose.api.common.io.collection.CircularListInput;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.io.collection.CircularListInput;
 import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.load.generator.BasicLoadGenerator;

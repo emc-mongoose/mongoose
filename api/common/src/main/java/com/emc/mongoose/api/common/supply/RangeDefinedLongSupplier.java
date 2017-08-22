@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.common.supply;
 
-import com.emc.mongoose.api.common.math.Random;
+import com.github.akurilov.commons.math.Random;
 
 import java.io.IOException;
 

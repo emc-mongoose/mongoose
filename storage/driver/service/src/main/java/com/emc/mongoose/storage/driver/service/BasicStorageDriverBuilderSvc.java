@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.model.concurrent.Coroutine;
+import com.github.akurilov.coroutines.Coroutine;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -75,11 +75,6 @@ implements StorageDriverBuilderSvc<I, O, T> {
 		return this;
 	}
 
-	@Override
-	public final List<Coroutine> getSvcCoroutines() {
-		throw new AssertionError("Shouldn't be invoked");
-	}
-	
 	@Override
 	public final State getState()
 	throws RemoteException {

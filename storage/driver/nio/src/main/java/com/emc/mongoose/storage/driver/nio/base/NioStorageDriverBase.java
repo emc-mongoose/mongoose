@@ -1,13 +1,16 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
+import com.github.akurilov.commons.collection.OptLockArrayBuffer;
+import com.github.akurilov.commons.collection.OptLockBuffer;
+
+import com.github.akurilov.coroutines.CoroutinesProcessor;
+import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.CoroutineBase;
+
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
-import com.emc.mongoose.api.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.api.common.collection.OptLockBuffer;
-import com.emc.mongoose.api.model.concurrent.Coroutine;
-import com.emc.mongoose.api.model.concurrent.CoroutineBase;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
@@ -29,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 19.07.16.
@@ -67,7 +69,7 @@ implements NioStorageDriver<I, O> {
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskBuffs[i] = new OptLockArrayBuffer<>(ioTaskBuffCapacity);
-			ioCoroutines.add(new NioCoroutine(svcCoroutines, ioTaskBuffs[i]));
+			ioCoroutines.add(new NioCoroutine(SVC_EXECUTOR, ioTaskBuffs[i]));
 		}
 	}
 
@@ -87,9 +89,9 @@ implements NioStorageDriver<I, O> {
 		private O ioTask;
 
 		public NioCoroutine(
-			final List<Coroutine> svcCoroutines, final OptLockBuffer<O> ioTaskBuff
+			final CoroutinesProcessor coroutinesProcessor, final OptLockBuffer<O> ioTaskBuff
 		) {
-			super(svcCoroutines);
+			super(coroutinesProcessor);
 			this.ioTaskBuff = ioTaskBuff;
 			this.ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
 		}
@@ -191,7 +193,9 @@ implements NioStorageDriver<I, O> {
 	protected final void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		svcCoroutines.addAll(ioCoroutines);
+		for(final Coroutine ioCoroutine : ioCoroutines) {
+			ioCoroutine.start();
+		}
 	}
 
 	@Override

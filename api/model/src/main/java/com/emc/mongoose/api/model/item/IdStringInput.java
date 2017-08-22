@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.io.Input;
+import com.github.akurilov.commons.io.Input;
 
 import java.util.function.LongSupplier;
 
