@@ -105,7 +105,7 @@ extends StepBase {
 				dataInput
 			);
 		} catch(final InterruptedException e) {
-			return;
+			throw new CancellationException();
 		}
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());

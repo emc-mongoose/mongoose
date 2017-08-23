@@ -60,6 +60,7 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -110,7 +111,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkContainerResp = executeHttpRequest(checkContainerReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -161,7 +162,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putContainerResp = executeHttpRequest(putContainerReq);
 			} catch(final InterruptedException e) {
-				return null;
+				throw new CancellationException();
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -211,7 +212,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -277,7 +278,8 @@ extends HttpStorageDriverBase<I, O> {
 			} else {
 				Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
@@ -343,7 +345,7 @@ extends HttpStorageDriverBase<I, O> {
 								"{}: interrupted while enqueueing the child subtasks",
 								toString()
 							);
-							return i - from;
+							throw new CancellationException();
 						}
 					} else {
 						throw new AssertionError("Composite I/O task yields 0 sub-tasks");

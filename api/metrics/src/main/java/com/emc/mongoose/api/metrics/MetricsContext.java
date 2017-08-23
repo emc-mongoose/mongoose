@@ -13,6 +13,7 @@ public interface MetricsContext
 extends Closeable {
 
 	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
+	int DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 
 	void start();
 	boolean isStarted();
@@ -81,7 +82,9 @@ extends Closeable {
 		/** @return value in milliseconds */
 		long getElapsedTimeMillis();
 
-		int getActualConcurrency();
+		int getActualConcurrencyLast();
+
+		double getActualConcurrencyMean();
 
 		/** @return value in microseconds */
 		long getDurationSum();

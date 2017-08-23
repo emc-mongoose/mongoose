@@ -22,7 +22,7 @@ import com.emc.mongoose.api.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.api.model.io.task.path.PathIoTask;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.api.metrics.MetricsManager;
 import com.github.akurilov.commons.io.Output;
@@ -615,7 +615,7 @@ implements LoadController<I, O> {
 		
 		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("shutdownWorker", true)
+			new LogContextThreadFactory("shutdownWorker", true)
 		);
 
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
@@ -737,7 +737,7 @@ implements LoadController<I, O> {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
-			new NamingThreadFactory("interruptWorker", true)
+			new LogContextThreadFactory("interruptWorker", true)
 		);
 
 		synchronized(driversMap) {
@@ -806,7 +806,7 @@ implements LoadController<I, O> {
 		}
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("ioResultsWorker", true)
+			ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("ioResultsWorker", true)
 		);
 		synchronized(driversMap) {
 			for(final LoadGenerator<I, O> generator : generatorsMap.values()) {

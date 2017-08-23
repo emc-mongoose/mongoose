@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.ui.log.LogUtil.BLUE;
@@ -24,8 +24,8 @@ import java.util.concurrent.ThreadFactory;
 public final class CommandStep
 extends StepBase {
 	//
-	private static final ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
-	private static final ThreadFactory TF_STD_ERR = new NamingThreadFactory("stdErrReader", true);
+	private static final ThreadFactory TF_STD_IN = new LogContextThreadFactory("stdInReader", true);
+	private static final ThreadFactory TF_STD_ERR = new LogContextThreadFactory("stdErrReader", true);
 	private static final String KEY_NODE_BLOCKING = "blocking";
 	//
 	private final String cmdLine;

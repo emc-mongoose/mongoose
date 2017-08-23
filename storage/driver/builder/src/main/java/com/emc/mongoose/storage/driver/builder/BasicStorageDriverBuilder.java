@@ -13,17 +13,22 @@ import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.Level;
+
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,37 +122,52 @@ public class BasicStorageDriverBuilder<
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();
 			final List<Map<String, Object>> implConfig = driverConfig.getImpl();
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
-			final Map<String, Class<T>> availableImpls = new HashMap<>();
-
-			for(final Map<String, Object> nextImplInfo : implConfig) {
-
-				final String implType = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE);
-				final String implFile = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FILE);
-				final String implFqcn = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN);
-
-				try {
-					final URL implUrl = new File(getBaseDir() + File.separator + implFile)
-						.toURI().toURL();
-					final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
-					final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
-					Loggers.MSG.debug(
-						"Loaded storage driver implementation \"{}\" from the class \"{}\"",
-						implType, implFqcn
-					);
-					availableImpls.put(implType, implCls);
-				} catch(final MalformedURLException e) {
-					Loggers.ERR.warn("Invalid storage driver implementation file: {}", implFile);
-				} catch(final ClassNotFoundException | NoClassDefFoundError e) {
-					Loggers.ERR.warn(
-						"Invalid FQCN \"{}\" for the implementation from file: {}", implFqcn,
-						implFile
-					);
-				}
-			}
 
 			final String driverType = driverConfig.getType();
-			final Class<T> matchingImplCls = availableImpls.get(driverType);
+			if(driverType == null) {
+				throw new UserShootHisFootException("No storage driver type configured");
+			}
+			String implType = null;
+			String implFile = null;
+			String implFqcn = null;
+			for(final Map<String, Object> nextImplInfo : implConfig) {
+				implType = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE);
+				if(driverType.equals(implType)) {
+					implFile = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FILE);
+					implFqcn = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN);
+					break;
+				}
+			}
+			if(implFile == null || implFqcn == null) {
+				throw new UserShootHisFootException(
+					"No valid storage driver implementation info found for the type: " + driverType
+				);
+			}
 
+			Class<T> matchingImplCls = null;
+			try(
+				final URLClassLoader clsLoader = new URLClassLoader(
+					new URL[] {
+						new File(getBaseDir() + File.separator + implFile).toURI().toURL()
+					},
+					Thread.currentThread().getContextClassLoader()
+				)
+			) {
+				matchingImplCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
+				Loggers.MSG.debug(
+					"Loaded storage driver implementation \"{}\" from the class \"{}\"",
+					implType, implFqcn
+				);
+			} catch(final MalformedURLException e) {
+				Loggers.ERR.warn("Invalid storage driver implementation file: {}", implFile);
+			} catch(final ClassNotFoundException | NoClassDefFoundError e) {
+				Loggers.ERR.warn(
+					"Invalid FQCN \"{}\" for the implementation from file: {}", implFqcn,
+					implFile
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(Level.WARN, e, "Failed to close the URL class loader");
+			}
 			if(matchingImplCls == null) {
 				throw new UserShootHisFootException(
 					"No matching implementation class for the storage driver type \"" +

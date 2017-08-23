@@ -5,7 +5,7 @@ import com.github.akurilov.commons.collection.OptLockBuffer;
 
 import com.github.akurilov.coroutines.CoroutinesProcessor;
 import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.CoroutineBase;
+import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
 
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
@@ -79,8 +79,7 @@ implements NioStorageDriver<I, O> {
 	 So the I/O task may be invoked multiple times (in the reentrant manner).
 	 */
 	private final class NioCoroutine
-	extends CoroutineBase
-	implements Coroutine {
+	extends ExclusiveCoroutineBase {
 
 		private final OptLockBuffer<O> ioTaskBuff;
 		private final List<O> ioTaskLocalBuff;
@@ -91,66 +90,61 @@ implements NioStorageDriver<I, O> {
 		public NioCoroutine(
 			final CoroutinesProcessor coroutinesProcessor, final OptLockBuffer<O> ioTaskBuff
 		) {
-			super(coroutinesProcessor);
+			super(coroutinesProcessor, ioTaskBuff);
 			this.ioTaskBuff = ioTaskBuff;
 			this.ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
 		}
 
 		@Override
-		protected final void invokeTimed(final long startTimeNanos) {
-			if(ioTaskBuff.tryLock()) {
-				ioTaskBuffSize = ioTaskBuff.size();
-				if(ioTaskBuffSize > 0) {
-					try {
-						for(int i = 0; i < ioTaskBuffSize; i ++) {
-							ioTask = ioTaskBuff.get(i);
-							// if timeout, put the task into the temporary buffer
-							if(System.nanoTime() - startTimeNanos >= TIMEOUT_NANOS) {
+		protected final void invokeTimedExclusively(final long startTimeNanos) {
+			ioTaskBuffSize = ioTaskBuff.size();
+			if(ioTaskBuffSize > 0) {
+				try {
+					for(int i = 0; i < ioTaskBuffSize; i ++) {
+						ioTask = ioTaskBuff.get(i);
+						// if timeout, put the task into the temporary buffer
+						if(System.nanoTime() - startTimeNanos >= TIMEOUT_NANOS) {
+							ioTaskLocalBuff.add(ioTask);
+							continue;
+						}
+						// check if the task is invoked 1st time
+						if(PENDING.equals(ioTask.getStatus())) {
+							// do not start the new task if the state is not more active
+							if(!isStarted()) {
+								continue;
+							}
+							// respect the configured concurrency level
+							if(!concurrencyThrottle.tryAcquire()) {
 								ioTaskLocalBuff.add(ioTask);
 								continue;
 							}
-							// check if the task is invoked 1st time
-							if(PENDING.equals(ioTask.getStatus())) {
-								// do not start the new task if the state is not more active
-								if(!isStarted()) {
-									continue;
-								}
-								// respect the configured concurrency level
-								if(!concurrencyThrottle.tryAcquire()) {
-									ioTaskLocalBuff.add(ioTask);
-									continue;
-								}
-								// mark the task as active
-								ioTask.startRequest();
-								ioTask.finishRequest();
-							}
-							// perform non blocking I/O for the task
-							invokeNio(ioTask);
-							// remove the task from the buffer if it is not active more
-							if(!ACTIVE.equals(ioTask.getStatus())) {
-								concurrencyThrottle.release();
-								ioTaskCompleted(ioTask);
-							} else {
-								// the task remains in the buffer for the next iteration
-								ioTaskLocalBuff.add(ioTask);
-							}
+							// mark the task as active
+							ioTask.startRequest();
+							ioTask.finishRequest();
 						}
-					} catch(final Throwable cause) {
-						LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
-					} finally {
-						// put the active tasks back into the buffer
-						ioTaskBuff.clear();
-						ioTaskBuffSize = ioTaskLocalBuff.size();
-						if(ioTaskBuffSize > 0) {
-							for(int i = 0; i < ioTaskBuffSize; i ++) {
-								ioTaskBuff.add(ioTaskLocalBuff.get(i));
-							}
-							ioTaskLocalBuff.clear();
+						// perform non blocking I/O for the task
+						invokeNio(ioTask);
+						// remove the task from the buffer if it is not active more
+						if(!ACTIVE.equals(ioTask.getStatus())) {
+							concurrencyThrottle.release();
+							ioTaskCompleted(ioTask);
+						} else {
+							// the task remains in the buffer for the next iteration
+							ioTaskLocalBuff.add(ioTask);
 						}
-						ioTaskBuff.unlock();
 					}
-				} else {
-					ioTaskBuff.unlock();
+				} catch(final Throwable cause) {
+					LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
+				} finally {
+					// put the active tasks back into the buffer
+					ioTaskBuff.clear();
+					ioTaskBuffSize = ioTaskLocalBuff.size();
+					if(ioTaskBuffSize > 0) {
+						for(int i = 0; i < ioTaskBuffSize; i ++) {
+							ioTaskBuff.add(ioTaskLocalBuff.get(i));
+						}
+						ioTaskLocalBuff.clear();
+					}
 				}
 			}
 		}

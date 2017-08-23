@@ -1,17 +1,10 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.github.akurilov.coroutines.CoroutinesProcessor;
-import com.github.akurilov.commons.collection.OptLockArrayBuffer;
-import com.github.akurilov.commons.collection.OptLockBuffer;
-
-import com.github.akurilov.coroutines.CoroutineBase;
-
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.github.akurilov.commons.io.Input;
-import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -28,7 +21,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
@@ -53,8 +45,6 @@ import java.util.function.Function;
 public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
-
-	private final static String CLS_NAME = StorageDriverBase.class.getSimpleName();
 
 	private final DataInput contentSrc;
 	private final int batchSize;
@@ -102,98 +92,17 @@ implements StorageDriver<I, O> {
 			}
 		}
 		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
-		if(concurrencyLevel == 0) {
+		if(concurrencyLevel > 0) {
 			this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		} else {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
 		this.verifyFlag = verifyFlag;
-		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine(SVC_EXECUTOR);
+		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine<>(
+			SVC_EXECUTOR, this, inTasksQueue, childTasksQueue, stepId, batchSize
+		);
 	}
 
-	private final class IoTasksDispatchCoroutine
-	extends CoroutineBase {
-
-		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
-		private int n = 0; // the current count of the I/O tasks in the buffer
-		private int m;
-
-		public IoTasksDispatchCoroutine(final CoroutinesProcessor coroutinesProcessor) {
-			super(coroutinesProcessor);
-		}
-
-		@Override
-		protected final void invokeTimed(final long startTimeNanos) {
-			if(buff.tryLock()) {
-				try(
-					final Instance logCtx = CloseableThreadContext
-						.put(KEY_TEST_STEP_ID, stepId)
-						.put(KEY_CLASS_NAME, CLS_NAME)
-				) {
-					// child tasks go first
-					if(n < batchSize) {
-						n += childTasksQueue.drainTo(buff, batchSize - n);
-					}
-					// check for the coroutine invocation timeout
-					if(TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
-						return;
-					}
-					// new tasks
-					if(n < batchSize) {
-						n += inTasksQueue.drainTo(buff, batchSize - n);
-					}
-					// check for the coroutine invocation timeout
-					if(TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
-						return;
-					}
-					// submit the tasks if any
-					if(n > 0) {
-						if(n == 1) { // non-batch mode
-							if(submit(buff.get(0))) {
-								buff.clear();
-								n --;
-							}
-						} else { // batch mode
-							m = submit(buff, 0, n);
-							if(m > 0) {
-								buff.removeRange(0, m);
-								n -= m;
-							}
-						}
-					}
-				} catch(final IllegalStateException e) {
-					LogUtil.exception(
-						Level.DEBUG, e, "{}: failed to submit some I/O tasks due to the illegal " +
-							"storage driver state ({})",
-						StorageDriverBase.this.toString(), getState()
-					);
-				} finally {
-					buff.unlock();
-				}
-			}
-		}
-
-		@Override
-		protected final void doClose() {
-			try(
-				final Instance logCtx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, stepId)
-					.put(KEY_CLASS_NAME, IoTasksDispatchCoroutine.class.getSimpleName())
-			) {
-				if(!buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-					Loggers.ERR.warn(
-						"{}: failed to obtain the I/O tasks buffer lock in time, thread dump:\n",
-						StorageDriverBase.this.toString(), new ThreadDump().toString()
-					);
-				}
-				buff.clear();
-			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: interrupted on close", StorageDriverBase.this.toString()
-				);
-			}
-		}
-	}
 
 	@Override
 	protected void doStart()
@@ -404,7 +313,6 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		SVC_EXECUTOR.stop(ioTasksDispatchCoroutine);
 		try {
 			ioTasksDispatchCoroutine.close();
 		} catch(final IOException ignored) {

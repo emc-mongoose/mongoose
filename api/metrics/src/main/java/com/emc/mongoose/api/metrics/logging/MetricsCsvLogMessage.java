@@ -63,7 +63,7 @@ extends LogMessageBase {
 			.append(snapshot.getByteCount()).append(',')
 			.append(snapshot.getElapsedTimeMillis() / K).append(',')
 			.append(snapshot.getDurationSum() / M).append(',')
-			.append(snapshot.getActualConcurrency()).append(',')
+			.append(snapshot.getActualConcurrencyLast()).append(',')
 			.append(snapshot.getSuccRateMean()).append(',')
 			.append(snapshot.getSuccRateLast()).append(',')
 			.append(snapshot.getByteRateMean()).append(',')

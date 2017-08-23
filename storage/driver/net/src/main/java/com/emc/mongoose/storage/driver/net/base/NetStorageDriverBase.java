@@ -14,7 +14,7 @@ import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedN
 import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
 import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
-import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.common.net.ssl.SslContext;
 import com.emc.mongoose.api.model.io.IoType;
@@ -135,7 +135,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							.forName(ioExecutorClsName);
 						IO_EXECUTOR = transportCls
 							.getConstructor(Integer.TYPE, ThreadFactory.class)
-							.newInstance(workerCount, new NamingThreadFactory("ioWorker", true));
+							.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
 						try {
 							final Method setIoRatioMethod = transportCls.getMethod(
 								"setIoRatio", Integer.TYPE

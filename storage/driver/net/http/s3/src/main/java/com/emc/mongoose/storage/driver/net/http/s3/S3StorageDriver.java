@@ -79,6 +79,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import org.xml.sax.SAXException;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -137,7 +138,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -172,7 +173,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketResp = executeHttpRequest(putBucketReq);
 			} catch(final InterruptedException e) {
-				return null;
+				throw new CancellationException();
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -201,7 +202,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -240,7 +241,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				return null;
+				throw new CancellationException();
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -267,7 +268,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				return null;
+				throw new CancellationException();
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -354,7 +355,8 @@ extends HttpStorageDriverBase<I, O> {
 			if(buff.size() == 0) {
 				throw new EOFException();
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
 		} catch(final SAXException | ParserConfigurationException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the XML response parser");
 		} catch(final ConnectException e) {

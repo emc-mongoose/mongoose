@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.emc.mongoose.run.scenario.ScenarioParseException;
-import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -27,7 +27,7 @@ extends CompositeStepBase {
 	throws CancellationException {
 
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			childSteps.size(), new NamingThreadFactory("stepWorker" + hashCode(), true)
+			childSteps.size(), new LogContextThreadFactory("stepWorker" + hashCode(), true)
 		);
 		for(final Step subStep : childSteps) {
 			parallelJobsExecutor.submit(subStep);

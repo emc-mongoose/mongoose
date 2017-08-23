@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.system.util;
 
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
-import com.emc.mongoose.api.model.concurrent.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 public interface HttpStorageMockUtil {
 
 	ExecutorService REQ_EXECUTOR = Executors.newFixedThreadPool(
-		ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("testHttpReqExecutor", true)
+		ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("testHttpReqExecutor", true)
 	);
 
 	static void assertItemNotExists(final String nodeAddr, final String itemPath) {

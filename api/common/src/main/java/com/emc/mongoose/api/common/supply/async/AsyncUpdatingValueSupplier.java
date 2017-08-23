@@ -9,6 +9,7 @@ import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -48,7 +49,7 @@ extends BasicUpdatingValueSupplier<T> {
 					}
 					LockSupport.parkNanos(1_000_000);
 				} catch(final InterruptedException e) {
-					break;
+					throw new CancellationException();
 				}
 			}
 		}

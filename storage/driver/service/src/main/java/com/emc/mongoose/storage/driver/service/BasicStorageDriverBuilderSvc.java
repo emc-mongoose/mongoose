@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.github.akurilov.coroutines.Coroutine;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -18,7 +17,7 @@ import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -166,7 +165,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 			);
 			return wrapper.getName();
 		} catch(final InterruptedException e) {
-			throw new UserShootHisFootException(e);
+			throw new CancellationException();
 		}
 	}
 }

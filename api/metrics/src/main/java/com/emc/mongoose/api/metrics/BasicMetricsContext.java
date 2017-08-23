@@ -2,7 +2,9 @@ package com.emc.mongoose.api.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.SlidingTimeWindowArrayReservoir;
 import com.codahale.metrics.SlidingWindowReservoir;
+import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -21,8 +23,9 @@ public final class BasicMetricsContext
 implements Comparable<BasicMetricsContext>, MetricsContext {
 
 	private final Clock clock = new ResumableUserTimeClock();
-	private final Histogram reqDuration, respLatency;
-	private volatile com.codahale.metrics.Snapshot reqDurSnapshot, respLatSnapshot;
+	private final Histogram reqDuration, respLatency, actualConcurrency;
+	private volatile com.codahale.metrics.Snapshot
+		reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 	private final LongAdder reqDurationSum, respLatencySum;
 	private volatile long lastDurationSum = 0, lastLatencySum = 0;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
@@ -74,6 +77,14 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		respLatencySum = new LongAdder();
 		reqDuration = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
+		actualConcurrency = new Histogram(
+			outputPeriodMillis > 0 ?
+				new SlidingTimeWindowArrayReservoir(
+					outputPeriodMillis, TimeUnit.MILLISECONDS, clock
+				) :
+				new UniformReservoir()
+		);
+		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -260,20 +271,26 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	//
 	@Override
 	public final void refreshLastSnapshot() {
-		final long currElapsedTime = tsStart > 0 ? System.currentTimeMillis() - tsStart : 0;
-		if(lastDurationSum != reqDurationSum.sum()) {
-			lastDurationSum = reqDurationSum.sum();
-			reqDurSnapshot = reqDuration.getSnapshot();
-		}
-		if(lastLatencySum != respLatencySum.sum()) {
-			lastLatencySum = respLatencySum.sum();
-			respLatSnapshot = respLatency.getSnapshot();
+		final long currentTimeMillis = System.currentTimeMillis();
+		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
+		final int actualConcurrencyLast = actualConcurrencyGauge.getAsInt();
+		if(currentTimeMillis - lastOutputTs > DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
+			if(lastDurationSum != reqDurationSum.sum()) {
+				lastDurationSum = reqDurationSum.sum();
+				reqDurSnapshot = reqDuration.getSnapshot();
+			}
+			if(lastLatencySum != respLatencySum.sum()) {
+				lastLatencySum = respLatencySum.sum();
+				respLatSnapshot = respLatency.getSnapshot();
+			}
+			actualConcurrency.update(actualConcurrencyLast);
+			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
 		lastSnapshot =  new BasicSnapshot(
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
-			actualConcurrencyGauge.getAsInt(),
+			actualConcurrencyLast, actualConcurrencySnapshot.getMean(),
 			lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
 		);
 		if(metricsListener != null) {
@@ -372,13 +389,15 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		private final long sumLat;
 		private final long startTime;
 		private final long elapsedTime;
-		private final int actualConcurrency;
+		private final int actualConcurrencyLast;
+		private final double actualConcurrencyMean;
 		//
 		public BasicSnapshot(
 			final long countSucc, final double succRateLast, final long countFail,
 			final double failRateLast, final long countByte, final double byteRateLast,
-			final long startTime, final long elapsedTime, final int actualConcurrency,
-			final long sumDur, final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
+			final long startTime, final long elapsedTime, final int actualConcurrencyLast,
+			final double actualConcurrencyMean, final long sumDur, final long sumLat,
+			final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
 		) {
 			this.countSucc = countSucc;
@@ -391,7 +410,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			this.sumLat = sumLat;
 			this.startTime = startTime;
 			this.elapsedTime = elapsedTime;
-			this.actualConcurrency = actualConcurrency;
+			this.actualConcurrencyLast = actualConcurrencyLast;
+			this.actualConcurrencyMean = actualConcurrencyMean;
 			this.durSnapshot = durSnapshot;
 			this.durValues = durSnapshot.getValues();
 			this.latSnapshot = latSnapshot;
@@ -559,8 +579,13 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 
 		@Override
-		public final int getActualConcurrency() {
-			return actualConcurrency;
+		public final int getActualConcurrencyLast() {
+			return actualConcurrencyLast;
+		}
+
+		@Override
+		public final double getActualConcurrencyMean() {
+			return actualConcurrencyMean;
 		}
 	}
 }

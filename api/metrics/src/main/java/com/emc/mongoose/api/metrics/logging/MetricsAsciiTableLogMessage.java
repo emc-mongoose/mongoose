@@ -24,11 +24,11 @@ public class MetricsAsciiTableLogMessage
 extends LogMessageBase {
 
 	public static final String TABLE_HEADER =
-		"----------------------------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +
-		" Step Id  |  Timestamp   |O|Concurrency|       Count       | Step  |  Actual  |   Last Rate    |  Mean    |   Mean    " + LINE_SEPARATOR +
-		" (last 10 |              |p|     x     |-------------------| Time  |Concurrenc|----------------| Latency  | Duration  " + LINE_SEPARATOR +
-		" symbols) |yyyyMMddHHmmss| |  Drivers  |   Success  |Failed|  [s]  |    y     | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
-		"----------|--------------|-|-----------|------------|------|-------|----------|--------|-------|----------|-----------" + LINE_SEPARATOR;
+		"------------------------------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +
+		" Step Id  | Timestamp  |  Op  |     Concurrency     |       Count       | Step  |   Last Rate    |  Mean    |   Mean    " + LINE_SEPARATOR +
+		" (last 10 |            | type |---------------------|-------------------| Time  |----------------| Latency  | Duration  " + LINE_SEPARATOR +
+		" symbols) |yyMMddHHmmss|      | Current  |   Mean   |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
+		"----------|------------|------|----------|----------|------------|------|-------|--------|-------|----------|-----------" + LINE_SEPARATOR;
 	public static final String TABLE_BORDER_VERTICAL = "|";
 	public static final int TABLE_HEADER_PERIOD = 20;
 
@@ -63,7 +63,7 @@ extends LogMessageBase {
 				strb
 					.appendFixedWidthPadLeft(metricsCtx.getStepId(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 14, ' ')
+					.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 12, ' ')
 					.append(TABLE_BORDER_VERTICAL);
 				if(stdOutColorFlag) {
 					switch(ioType) {
@@ -87,17 +87,15 @@ extends LogMessageBase {
 							break;
 					}
 				}
-				strb.appendFixedWidthPadRight(metricsCtx.getIoType().name().substring(0, 1), 1, ' ');
+				strb.appendFixedWidthPadRight(metricsCtx.getIoType().name(), 6, ' ');
 				if(stdOutColorFlag) {
 					strb.append(RESET);
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(
-						Integer.toString(metricsCtx.getConcurrency()) + 'x' +
-							Integer.toString(metricsCtx.getDriverCount()),
-						11, ' '
-					)
+					.appendFixedWidthPadLeft(snapshot.getActualConcurrencyLast(), 10, ' ')
+					.append(TABLE_BORDER_VERTICAL)
+					.appendFixedWidthPadRight(snapshot.getActualConcurrencyMean(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
 				if(stdOutColorFlag) {
@@ -110,8 +108,6 @@ extends LogMessageBase {
 				strb
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight((double) snapshot.getElapsedTimeMillis() / 1000, 7, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(snapshot.getActualConcurrency(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight(snapshot.getSuccRateLast(), 8, ' ')
 					.append(TABLE_BORDER_VERTICAL)
