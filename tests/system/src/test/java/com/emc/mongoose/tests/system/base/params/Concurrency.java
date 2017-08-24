@@ -4,6 +4,7 @@ package com.emc.mongoose.tests.system.base.params;
  Created by andrey on 11.08.17.
  */
 public enum Concurrency {
+	UNLIMITED(0),
 	SINGLE(1),
 	LOW(10),
 	MEDIUM(100),

@@ -327,28 +327,6 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	protected void doInterrupt() {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
-		) {
-			if(
-				!concurrencyThrottle.tryAcquire(
-					concurrencyLevel == 0 ? Integer.MAX_VALUE : concurrencyLevel,
-					10, TimeUnit.MILLISECONDS
-				)
-			) {
-				Loggers.MSG.debug("{}: interrupting while not in the idle state", toString());
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to await the idle state");
-		} finally {
-			Loggers.MSG.debug("{}: interrupted", toString());
-		}
-	}
-
-	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		try(

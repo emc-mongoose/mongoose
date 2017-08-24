@@ -31,7 +31,7 @@ ext {
 		slf4j : "1.7.24",
 		log4j : "2.8.2",
 		metrics : "3.2.3",
-		nagaina : "[3.5.10,)",
+		nagaina : "[3.5.11,)",
 		netty : "4.1.14.Final",
 	]
 

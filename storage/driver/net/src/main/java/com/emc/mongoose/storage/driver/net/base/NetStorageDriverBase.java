@@ -603,7 +603,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
-			super.doInterrupt();
 			try {
 				if(IO_EXECUTOR_LOCK.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {

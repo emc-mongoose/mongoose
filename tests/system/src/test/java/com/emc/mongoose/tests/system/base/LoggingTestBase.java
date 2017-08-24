@@ -95,7 +95,10 @@ extends ParameterizedSysTestBase {
 		//LogUtil.shutdown();
 	}
 
-	protected abstract String makeStepId();
+	protected String makeStepId() {
+		return getClass().getSimpleName() +  '-' + storageType.name() + '-' + driverCount.name() +
+			'x' + concurrency.name() + '-' + itemSize.name();
+	}
 
 	private List<String> getLogFileLines(final String fileName)
 	throws IOException {
@@ -229,6 +232,8 @@ extends ParameterizedSysTestBase {
 		String ioTypeStr;
 		int concurrencyLevel;
 		int driverCount;
+		int concurrencyCurr;
+		double concurrencyMean;
 		long totalBytes;
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
@@ -261,6 +266,15 @@ extends ParameterizedSysTestBase {
 			);
 			driverCount = Integer.parseInt(nextRecord.get("DriverCount"));
 			assertEquals("Expected driver count: " + driverCount, expectedDriverCount, driverCount);
+			concurrencyCurr = Integer.parseInt(nextRecord.get("ConcurrencyCurr"));
+			concurrencyMean = Double.parseDouble(nextRecord.get("ConcurrencyMean"));
+			if(expectedConcurrency > 0) {
+				assertTrue(concurrencyCurr <= driverCount * expectedConcurrency);
+				assertTrue(concurrencyMean <= driverCount * expectedConcurrency);
+			} else {
+				assertTrue(concurrencyCurr >= 0);
+				assertTrue(concurrencyMean >= 0);
+			}
 			totalBytes = SizeInBytes.toFixedSize(nextRecord.get("Size"));
 			assertTrue(totalBytes >= 0);
 			countSucc = Long.parseLong(nextRecord.get("CountSucc"));
@@ -359,6 +373,12 @@ extends ParameterizedSysTestBase {
 		assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 		final int driverCount = Integer.parseInt(metrics.get("DriverCount"));
 		assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
+		final double concurrencyLastMean = Double.parseDouble(metrics.get("ConcurrencyMean"));
+		if(expectedConcurrency > 0) {
+			assertTrue(concurrencyLastMean <= driverCount * expectedConcurrency);
+		} else {
+			assertTrue(concurrencyLastMean >= 0);
+		}
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
 		if(
 			expectedMaxCount > 0 && expectedItemDataSize.get() > 0 &&
@@ -487,6 +507,7 @@ extends ParameterizedSysTestBase {
 		String ioTypeStr;
 		int concurrencyLevel;
 		int driverCount;
+		double concurrencyMean;
 		long prevTotalBytes = Long.MIN_VALUE, totalBytes;
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
@@ -516,6 +537,12 @@ extends ParameterizedSysTestBase {
 			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 			driverCount = Integer.parseInt(m.group("driverCount"));
 			assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
+			concurrencyMean = Double.parseDouble(m.group("concurrencyLastMean"));
+			if(expectedConcurrency > 0) {
+				assertTrue(concurrencyMean <= driverCount * expectedConcurrency);
+			} else {
+				assertTrue(concurrencyMean >= 0);
+			}
 			totalBytes = SizeInBytes.toFixedSize(m.group("size"));
 			if(prevTotalBytes == Long.MIN_VALUE) {
 				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
@@ -581,7 +608,7 @@ extends ParameterizedSysTestBase {
 
 	protected void testMetricsTableStdout(
 		final String stdOutContent, final String stepName, final int driverCount,
-		final long countLimit, final Map<IoType, Integer> concurrencyMap
+		final long countLimit, final Map<IoType, Integer> configConcurrencyMap
 	) throws Exception {
 
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
@@ -594,8 +621,10 @@ extends ParameterizedSysTestBase {
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
-			final int actualConcurrency = Integer.parseInt(m.group("concurrency"));
-			final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
+			//final int configConcurrency = Integer.parseInt(m.group("concurrency"));
+			//final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
+			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
+			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
 			final long failCount = Long.parseLong(m.group("failCount"));
 			final float stepTimeSec = Float.parseFloat(m.group("stepTime"));
@@ -605,11 +634,11 @@ extends ParameterizedSysTestBase {
 			final long dur = Long.parseLong(m.group("dur"));
 
 			assertEquals(
-				stepName.length() > 17 ? stepName.substring(stepName.length() - 17) : stepName,
+				stepName.length() > 10 ? stepName.substring(stepName.length() - 10) : stepName,
 				actualStepNameEnding
 			);
 			ioTypeFoundFlag = false;
-			for(final IoType nextIoType : concurrencyMap.keySet()) {
+			for(final IoType nextIoType : configConcurrencyMap.keySet()) {
 				if(nextIoType.equals(actualIoType)) {
 					ioTypeFoundFlag = true;
 					break;
@@ -617,10 +646,16 @@ extends ParameterizedSysTestBase {
 			}
 			assertTrue(
 				"I/O type \"" + actualIoType + "\" was found but expected one of: " +
-					Arrays.toString(concurrencyMap.keySet().toArray()), ioTypeFoundFlag
+					Arrays.toString(configConcurrencyMap.keySet().toArray()), ioTypeFoundFlag
 			);
-			assertEquals((int) concurrencyMap.get(actualIoType), actualConcurrency);
-			assertEquals(driverCount, actualDriverCount);
+			final int expectedConfigConcurrency = configConcurrencyMap.get(actualIoType);
+			if(expectedConfigConcurrency > 0) {
+				assertTrue(actualConcurrencyCurr <= driverCount * expectedConfigConcurrency);
+				assertTrue(actualConcurrencyLastMean <= driverCount * expectedConfigConcurrency);
+			} else {
+				assertTrue(actualConcurrencyCurr >= 0);
+				assertTrue(actualConcurrencyLastMean >= 0);
+			}
 			if(countLimit > 0) {
 				assertTrue(countLimit >= succCount); // count succ
 			}

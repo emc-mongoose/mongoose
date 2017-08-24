@@ -202,7 +202,6 @@ implements NioStorageDriver<I, O> {
 				Loggers.ERR.warn("{}: failed to stop and close the I/O coroutine", stepId);
 			}
 		}
-		super.doInterrupt();
 	}
 
 	@Override

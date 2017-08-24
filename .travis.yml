@@ -236,6 +236,15 @@ jobs:
         - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
+    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=UnlimitedConcurrencyLimitByRateTest :tests:system:test
+    - env:
+        - TEST=UnlimitedConcurrencyLimitByRateTest
+        - STORAGE_TYPE=atmos,fs,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=unlimited
+        - ITEM_SIZE=small,medium,large
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=UpdateUsingInputFileLimitByTimeTest :tests:system:test
     - env:
         - TEST=UpdateUsingInputFileLimitByTimeTest

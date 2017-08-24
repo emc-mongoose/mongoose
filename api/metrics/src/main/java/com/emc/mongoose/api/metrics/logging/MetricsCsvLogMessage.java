@@ -17,6 +17,8 @@ import java.util.Date;
  TypeLoad,
  Concurrency,
  DriverCount,
+ ConcurrencyCurr,
+ ConcurrencyMean,
  CountSucc,
  CountFail,
  Size,
@@ -58,12 +60,13 @@ extends LogMessageBase {
 			.append(metricsCtx.getIoType().name()).append(',')
 			.append(metricsCtx.getConcurrency()).append(',')
 			.append(metricsCtx.getDriverCount()).append(',')
+			.append(snapshot.getActualConcurrencyLast()).append(',')
+			.append(snapshot.getActualConcurrencyMean()).append(',')
 			.append(snapshot.getSuccCount()).append(',')
 			.append(snapshot.getFailCount()).append(',')
 			.append(snapshot.getByteCount()).append(',')
 			.append(snapshot.getElapsedTimeMillis() / K).append(',')
 			.append(snapshot.getDurationSum() / M).append(',')
-			.append(snapshot.getActualConcurrencyLast()).append(',')
 			.append(snapshot.getSuccRateMean()).append(',')
 			.append(snapshot.getSuccRateLast()).append(',')
 			.append(snapshot.getByteRateMean()).append(',')

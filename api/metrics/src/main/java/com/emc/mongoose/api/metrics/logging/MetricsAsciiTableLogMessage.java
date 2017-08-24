@@ -95,7 +95,9 @@ extends LogMessageBase {
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(snapshot.getActualConcurrencyLast(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(snapshot.getActualConcurrencyMean(), 10, ' ')
+					.appendFixedWidthPadRight(
+						formatFixedWidth(snapshot.getActualConcurrencyMean(), 6), 10, ' '
+					)
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
 				if(stdOutColorFlag) {

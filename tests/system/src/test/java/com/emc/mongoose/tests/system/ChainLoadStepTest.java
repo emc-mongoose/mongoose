@@ -72,12 +72,6 @@ extends ScenarioTestBase {
 		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ChainStep.json");
 	}
 
-	@Override
-	protected String makeStepId() {
-		return ChainLoadStepTest.class.getSimpleName() + '-' + storageType.name() + '-' +
-			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
-	}
-
 	public final void test()
 	throws Exception {
 		testMetricsTableStdout(

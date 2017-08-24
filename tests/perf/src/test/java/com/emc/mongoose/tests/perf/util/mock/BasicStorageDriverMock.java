@@ -157,6 +157,11 @@ extends StorageDriverBase<I, O> {
 	}
 
 	@Override
+	protected void doInterrupt()
+	throws IllegalStateException {
+	}
+
+	@Override
 	public final String toString() {
 		return String.format(super.toString(), "mock-basic");
 	}
