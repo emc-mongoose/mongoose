@@ -2,7 +2,7 @@ package com.emc.mongoose.api.model.item;
 
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
-import com.github.akurilov.commons.io.text.TextFileOutput;
+import com.github.akurilov.commons.io.file.TextFileOutput;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 

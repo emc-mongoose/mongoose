@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.github.akurilov.commons.io.bin.file.FileItemOutput;
+import com.github.akurilov.commons.io.file.FileOutput;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,7 +12,7 @@ import java.nio.file.StandardOpenOption;
  */
 public class CsvFileItemOutput<I extends Item>
 extends CsvItemOutput<I>
-implements FileItemOutput<I> {
+implements FileOutput<I> {
 	
 	protected Path itemsFilePath;
 	

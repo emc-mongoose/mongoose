@@ -11,7 +11,6 @@
 			"step" : {
 				"limit" : {
 					"count" : 1000000,
-					"size" : "10GB",
 					"time" : "1m"
 				}
 			}

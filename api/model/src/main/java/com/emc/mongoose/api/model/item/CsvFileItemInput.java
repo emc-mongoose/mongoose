@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.github.akurilov.commons.io.bin.file.FileItemInput;
+import com.github.akurilov.commons.io.file.FileInput;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +12,7 @@ import java.nio.file.Path;
  */
 public class CsvFileItemInput<I extends Item>
 extends CsvItemInput<I>
-implements FileItemInput<I> {
+implements FileInput<I> {
 	//
 	protected final Path itemsFilePath;
 	/**

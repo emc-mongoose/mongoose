@@ -221,11 +221,7 @@ extends ParameterizedSysTestBase {
 	) throws Exception {
 		final int countRecords = metrics.size();
 		if(expectedLoadJobTime > 0) {
-			assertTrue(
-				"Count of the metrics records (" + countRecords + ") doesn't fit the step time " +
-					expectedLoadJobTime ,
-				expectedLoadJobTime <= metricsPeriodSec * (countRecords + 1)
-			);
+			assertTrue(expectedLoadJobTime + metricsPeriodSec >= countRecords * metricsPeriodSec);
 		}
 
 		Date lastTimeStamp = null, nextDateTimeStamp;
@@ -317,7 +313,7 @@ extends ParameterizedSysTestBase {
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
 				final double
-					effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
+					effEstimate = durationSum / (concurrencyMean * jobDuration);
 				assertTrue(
 					"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
 				);
@@ -391,7 +387,11 @@ extends ParameterizedSysTestBase {
 		}
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
-			assertEquals(expectedMaxCount, countSucc);
+			if(expectedLoadJobTime > 0) {
+				assertTrue(expectedMaxCount > countSucc);
+			} else {
+				assertEquals(expectedMaxCount, countSucc);
+			}
 			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
@@ -416,8 +416,8 @@ extends ParameterizedSysTestBase {
 			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
-		final double effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
-		if(countSucc > 0) {
+		final double effEstimate = durationSum / (concurrencyLastMean * driverCount * jobDuration);
+		if(countSucc > 0 && concurrencyLevel > 0) {
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 		}
 		final double tpAvg = Double.parseDouble(metrics.get("TPAvg[op/s]"));

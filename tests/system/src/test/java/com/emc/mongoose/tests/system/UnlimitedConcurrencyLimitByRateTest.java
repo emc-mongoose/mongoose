@@ -73,6 +73,7 @@ extends ScenarioTestBase {
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 				).toString();
 				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+				config.getTestConfig().getStepConfig().getLimitConfig().setSize(SIZE_LIMIT);
 				break;
 			case SWIFT:
 				config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
@@ -133,11 +134,16 @@ extends ScenarioTestBase {
 			totalMetricsRec, CREATE, 0, driverCount.getValue(), itemSize.getValue(), COUNT_LIMIT,
 			TIME_LIMIT_SEC
 		);
-		final double rate = Double.parseDouble(totalMetricsRec.get("TP[op/s]"));
-		assertTrue(rate < RATE_LIMIT);
+		final double rate = Double.parseDouble(totalMetricsRec.get("TPAvg[op/s]"));
+		assertTrue(rate < RATE_LIMIT + RATE_LIMIT / 2);
 		final long totalSize = Long.parseLong(totalMetricsRec.get("Size"));
-		assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 100);
+		if(StorageType.FS.equals(storageType)) {
+			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 10);
+		}
 
-		assertEquals(TIME_LIMIT_SEC, runTime, 5);
+		assertTrue(
+			"Test time was " + runTime + " while expected no more than " + TIME_LIMIT_SEC,
+			TIME_LIMIT_SEC + 5 >= runTime
+		);
 	}
 }

@@ -118,7 +118,7 @@ extends ExclusiveCoroutineBase {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(!buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-				Loggers.ERR.warn(
+				Loggers.ERR.debug(
 					"{}: failed to obtain the I/O tasks buffer lock in time, thread dump:\n",
 					storageDriver.toString(), new ThreadDump().toString()
 				);
