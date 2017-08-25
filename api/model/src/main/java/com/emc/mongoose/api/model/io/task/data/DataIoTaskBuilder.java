@@ -17,6 +17,10 @@ extends IoTaskBuilder<I, O> {
 	DataIoTaskBuilder<I, O> setRandomRangesCount(final int count);
 
 	DataIoTaskBuilder<I, O> setSizeThreshold(final long sizeThreshold);
+
+	DataIoTaskBuilder<I, O> setSrcItemsCount(final int min, final int max);
+
+	DataIoTaskBuilder<I, O> setSrcItemsForConcat(final List<I> items);
 	
 	List<Range> getFixedRanges();
 	
