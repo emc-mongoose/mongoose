@@ -43,7 +43,10 @@ implements Serializable {
 
 	public RangesConfig(final RangesConfig other) {
 		final List<String> otherRanges = other.getFixed();
-		this.copy = new Range(other.getCopy());
+		this.copy = other.getCopy();
+		if(this.copy != null) {
+			this.copy = new Range(this.copy);
+		}
 		this.fixed = otherRanges == null ? null : new ArrayList<>(otherRanges);
 		this.random = other.getRandom();
 		this.threshold = new SizeInBytes(other.getThreshold());
