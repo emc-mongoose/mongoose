@@ -18,8 +18,7 @@ extends JsonSerializer<SizeInBytes> {
 	@Override
 	public final void serialize(
 		final SizeInBytes value, final JsonGenerator gen, final SerializerProvider serializers
-	)
-	throws IOException, JsonProcessingException {
+	) throws IOException, JsonProcessingException {
 		gen.writeString(value.toString());
 	}
 }

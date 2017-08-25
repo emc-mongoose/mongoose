@@ -15,9 +15,7 @@ public final class TimeStrToLongDeserializer
 extends JsonDeserializer<Long> {
 
 	@Override
-	public final Long deserialize(
-		final JsonParser p, final DeserializationContext ctx
-	)
+	public final Long deserialize(final JsonParser p, final DeserializationContext ctx)
 	throws IOException {
 		return TimeUtil.getTimeInSeconds(p.getValueAsString());
 	}

@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.api.common.exception.DanShootHisFootException;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
@@ -370,17 +371,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
 				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
-					final ItemNameSupplier itemNameInput = new ItemNameSupplier(
+					itemInput = getNewItemInput(
 						namingType, namingPrefix, namingLength, namingRadix, namingOffset
 					);
-					if(itemFactory instanceof BasicDataItemFactory) {
-						final SizeInBytes size = itemConfig.getDataConfig().getSize();
-						itemInput = (Input<I>) new NewDataItemInput(
-							itemFactory, itemNameInput, size
-						);
-					} else {
-						itemInput = new NewItemInput<>(itemFactory, itemNameInput);
-					}
 				} else {
 					throw new UserShootHisFootException(
 						"No input (file either path) is specified for non-create generator"
@@ -404,6 +397,23 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
+		return itemInput;
+	}
+
+	private Input<I> getNewItemInput(
+		final ItemNamingType namingType, final String namingPrefix, final int namingLength,
+		final int namingRadix, final long namingOffset
+	)
+	throws DanShootHisFootException {
+		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
+			namingType, namingPrefix, namingLength, namingRadix, namingOffset
+		);
+		if(itemFactory instanceof BasicDataItemFactory) {
+			final SizeInBytes size = itemConfig.getDataConfig().getSize();
+			itemInput = (Input<I>) new NewDataItemInput(itemFactory, itemNameInput, size);
+		} else {
+			itemInput = new NewItemInput<>(itemFactory, itemNameInput);
+		}
 		return itemInput;
 	}
 	

@@ -80,6 +80,17 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
+								"copy" : {
+									"oneOf" : [
+										{
+											"type" : "null"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\d+(-\\d+)?"
+										}
+									]
+								},
 								"fixed" : {
 									"oneOf" : [
 										{

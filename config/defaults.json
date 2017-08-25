@@ -14,6 +14,9 @@
 				"seed" : "7a42d9c483244167"
 			},
 			"ranges" : {
+				// ECS/S3 Copy Ranges API support. The number/range of numbers of the source objects
+				// to use to aggregate every destination object.
+				"copy" : null,
 				// The fixed byte ranges to update or read (depends on the specified op type)
 				"fixed" : null,
 				// The count of the random ranges to update or read

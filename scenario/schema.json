@@ -74,6 +74,24 @@
 									"type" : "object",
 									"additionalProperties" : false,
 									"properties" : {
+										"copy" : {
+											"oneOf" : [
+												{
+													"type" : "null"
+												},
+												{
+													"type" : "array",
+													"items" : {
+														"type" : "string",
+														"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+													}
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
 										"fixed" : {
 											"oneOf" : [
 												{

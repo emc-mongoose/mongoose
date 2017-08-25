@@ -1,5 +1,8 @@
 package com.emc.mongoose.ui.config.item.data.ranges;
 
+import com.emc.mongoose.ui.config.RangeDeserializer;
+import com.emc.mongoose.ui.config.RangeSerializer;
+import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.ui.config.SizeInBytesDeserializer;
 import com.emc.mongoose.ui.config.SizeInBytesSerializer;
@@ -17,9 +20,14 @@ import java.util.List;
 public final class RangesConfig
 implements Serializable {
 
+	public static final String KEY_COPY = "copy";
 	public static final String KEY_FIXED = "fixed";
 	public static final String KEY_RANDOM = "random";
 	public static final String KEY_THRESHOLD = "threshold";
+
+	@JsonDeserialize(using = RangeDeserializer.class)
+	@JsonSerialize(using = RangeSerializer.class)
+	@JsonProperty(KEY_COPY) private Range copy;
 
 	@JsonProperty(KEY_FIXED) private List<String> fixed;
 
@@ -35,9 +43,18 @@ implements Serializable {
 
 	public RangesConfig(final RangesConfig other) {
 		final List<String> otherRanges = other.getFixed();
+		this.copy = new Range(other.getCopy());
 		this.fixed = otherRanges == null ? null : new ArrayList<>(otherRanges);
 		this.random = other.getRandom();
 		this.threshold = new SizeInBytes(other.getThreshold());
+	}
+
+	public final Range getCopy() {
+		return copy;
+	}
+
+	public final void setCopy(final Range copy) {
+		this.copy = copy;
 	}
 
 	public final List<String> getFixed() {
