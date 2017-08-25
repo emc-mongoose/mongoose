@@ -24,6 +24,7 @@ implements DataIoTaskBuilder<I, O> {
 	private final Random rnd = new Random();
 
 	protected volatile List<I> srcItemsForConcat = null;
+	protected volatile int srcItemsCount = 0;
 	protected volatile int srcItemsCountMin = 0;
 	protected volatile int srcItemsCountMax = 0;
 	protected volatile List<Range> fixedRanges = null;
@@ -58,6 +59,9 @@ implements DataIoTaskBuilder<I, O> {
 	@Override
 	public BasicDataIoTaskBuilder<I, O> setSrcItemsForConcat(final List<I> srcItemsForConcat) {
 		this.srcItemsForConcat = srcItemsForConcat;
+		if(this.srcItemsForConcat != null) {
+			this.srcItemsCount = srcItemsForConcat.size();
+		}
 		return this;
 	}
 	
@@ -124,6 +128,14 @@ implements DataIoTaskBuilder<I, O> {
 						fixedRanges, randomRangesCount, sizeThreshold
 					)
 				);
+			} else if(srcItemsCount > 0) {
+				buff.add(
+					(O) new BasicDataIoTask<>(
+						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+						fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
+					)
+				);
 			} else {
 				if(randomRangesCount > getRangeCount(nextItem.size())) {
 					throw new IllegalArgumentException(
@@ -160,7 +172,7 @@ implements DataIoTaskBuilder<I, O> {
 		final int n = srcItemsCountMin + rnd.nextInt(srcItemsCountMax) + 1;
 		final List<I> selectedItems = new ArrayList<>(n);
 		for(int i = 0; i < n; i ++) {
-			selectedItems.add(srcItemsForConcat.get(rnd.nextInt()));
+			selectedItems.add(srcItemsForConcat.get(rnd.nextInt(srcItemsCount)));
 		}
 		return selectedItems;
 	}

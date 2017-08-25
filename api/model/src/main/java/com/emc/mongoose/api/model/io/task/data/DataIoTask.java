@@ -26,6 +26,8 @@ extends IoTask<I> {
 	BitSet[] getMarkedRangesMaskPair();
 	
 	List<Range> getFixedRanges();
+
+	List<I> getSrcItemsToConcat();
 	
 	int getCurrRangeIdx();
 	
