@@ -1,0 +1,9 @@
+description = "mongoose-storage-driver-net-http-emc"
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
+}

@@ -25,19 +25,19 @@ public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
 	
-	protected long contentSize;
 	protected final BitSet[] markedRangesMaskPair = new BitSet[] {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
-	private int randomRangesCount;
-	private List<Range> fixedRanges;
-	private List<T> srcItemsToConcat;
-	
-	protected transient volatile DataInput contentSrc;
-	protected transient volatile long countBytesDone;
-	protected transient volatile long respDataTimeStart;
-	private volatile DataItem currRange;
-	private volatile int currRangeIdx;
+	private int randomRangesCount = 0;
+	private List<Range> fixedRanges = null;
+	private List<T> srcItemsToConcat = null;
+	protected long contentSize = 0;
+
+	protected transient volatile DataInput contentSrc = null;
+	protected transient volatile long countBytesDone = 0;
+	protected transient volatile long respDataTimeStart = 0;
+	private volatile DataItem currRange = null;
+	private volatile int currRangeIdx = 0;
 	
 	public BasicDataIoTask() {
 		super();
@@ -237,6 +237,11 @@ implements DataIoTask<T> {
 	@Override
 	public final List<Range> getFixedRanges() {
 		return fixedRanges;
+	}
+
+	@Override
+	public final int getRandomRangesCount() {
+		return randomRangesCount;
 	}
 
 	@Override

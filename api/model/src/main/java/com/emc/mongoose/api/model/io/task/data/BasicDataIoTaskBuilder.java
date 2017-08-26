@@ -95,6 +95,12 @@ implements DataIoTaskBuilder<I, O> {
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount, sizeThreshold
 			);
+		} else if(srcItemsCount > 0) {
+			return (O) new BasicDataIoTask<>(
+				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+				fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
+			);
 		} else {
 			if(randomRangesCount > getRangeCount(dataItem.size())) {
 				throw new IllegalArgumentException(
@@ -169,7 +175,9 @@ implements DataIoTaskBuilder<I, O> {
 	}
 
 	protected List<I> getNextSrcItemsForConcat() {
-		final int n = srcItemsCountMin + rnd.nextInt(srcItemsCountMax) + 1;
+		final int n = srcItemsCountMin < srcItemsCountMax ?
+			srcItemsCountMin + rnd.nextInt(srcItemsCountMax - srcItemsCountMin + 1) :
+			srcItemsCountMin;
 		final List<I> selectedItems = new ArrayList<>(n);
 		for(int i = 0; i < n; i ++) {
 			selectedItems.add(srcItemsForConcat.get(rnd.nextInt(srcItemsCount)));

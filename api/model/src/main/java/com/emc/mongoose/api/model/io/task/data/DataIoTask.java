@@ -27,6 +27,8 @@ extends IoTask<I> {
 	
 	List<Range> getFixedRanges();
 
+	int getRandomRangesCount();
+
 	List<I> getSrcItemsToConcat();
 	
 	int getCurrRangeIdx();

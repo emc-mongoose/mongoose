@@ -14,7 +14,6 @@ import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
 import static com.emc.mongoose.api.model.io.task.IoTask.SLASH;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.AUTH_URI;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.DEFAULT_VERSIONS_LOCATION;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_AUTH_KEY;
@@ -147,9 +146,10 @@ extends HttpStorageDriverBase<I, O> {
 			!containerExists || (versioningEnabled && !versioning) ||
 			(!versioningEnabled && versioning)
 		) {
-			if(fsAccess) {
-				reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true));
-			}
+			// TODO move to separate EMC-specific implementation
+			//if(fsAccess) {
+			//	reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true));
+			//}
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}

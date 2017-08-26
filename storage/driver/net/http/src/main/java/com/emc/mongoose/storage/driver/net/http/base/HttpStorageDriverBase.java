@@ -325,22 +325,28 @@ implements HttpStorageDriver<I, O> {
 			}
 
 		} else { // fixed byte ranges
-			Range nextFixedRange;
-			long nextRangeSize;
-			for(int i = 0; i < fixedRanges.size(); i ++) {
-				nextFixedRange = fixedRanges.get(i);
-				nextRangeSize = nextFixedRange.getSize();
-				if(i > 0) {
-					strb.append(',');
-				}
-				if(nextRangeSize == -1) {
-					strb.append(nextFixedRange.toString());
-				} else {
-					strb.append(baseItemSize).append("-");
-				}
-			}
+			rangeListToStringBuff(fixedRanges, baseItemSize, strb);
 		}
 		httpHeaders.set(HttpHeaderNames.RANGE, "bytes=" + strb.toString());
+	}
+
+	protected static void rangeListToStringBuff(
+		final List<Range> ranges, final long baseLength, final StringBuilder dstBuff
+	) {
+		Range nextFixedRange;
+		long nextRangeSize;
+		for(int i = 0; i < ranges.size(); i ++) {
+			nextFixedRange = ranges.get(i);
+			nextRangeSize = nextFixedRange.getSize();
+			if(i > 0) {
+				dstBuff.append(',');
+			}
+			if(nextRangeSize == -1) {
+				dstBuff.append(nextFixedRange.toString());
+			} else {
+				dstBuff.append(baseLength).append("-");
+			}
+		}
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
