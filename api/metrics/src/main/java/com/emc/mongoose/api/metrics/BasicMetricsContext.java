@@ -82,7 +82,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 				new SlidingTimeWindowArrayReservoir(
 					outputPeriodMillis, TimeUnit.MILLISECONDS, clock
 				) :
-				new UniformReservoir()
+				new UniformReservoir(DEFAULT_RESERVOIR_SIZE)
 		);
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
