@@ -80,11 +80,8 @@
 													"type" : "null"
 												},
 												{
-													"type" : "array",
-													"items" : {
-														"type" : "string",
-														"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
-													}
+													"type" : "string",
+													"pattern" : "\\d+(-\\d+)?"
 												},
 												{
 													"type" : "string",
