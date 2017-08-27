@@ -12,8 +12,8 @@ import java.io.Serializable;
 public interface MetricsContext
 extends Closeable {
 
-	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
-	int DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
+	int DEFAULT_RESERVOIR_SIZE = 1000;
+	int DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS = 100;
 
 	void start();
 	boolean isStarted();
