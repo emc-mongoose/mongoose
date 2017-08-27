@@ -13,7 +13,7 @@ public interface MetricsContext
 extends Closeable {
 
 	int DEFAULT_RESERVOIR_SIZE = 1000;
-	int DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS = 1;
+	int DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 
 	void start();
 	boolean isStarted();
