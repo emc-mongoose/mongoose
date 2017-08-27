@@ -7,6 +7,7 @@ package com.emc.mongoose.tests.system.base.params;
 public enum StorageType {
 	AMZS3,
 	ATMOS,
+	EMCS3,
 	FS,
 	SWIFT;
 

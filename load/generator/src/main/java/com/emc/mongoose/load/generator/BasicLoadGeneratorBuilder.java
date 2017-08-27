@@ -237,7 +237,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// intercept the items input for the copy ranges support
-		final Range srcItemsCountRange = rangesConfig.getCopy();
+		final Range srcItemsCountRange = rangesConfig.getConcat();
 		if(srcItemsCountRange != null) {
 			if(
 				IoType.CREATE.equals(ioType)

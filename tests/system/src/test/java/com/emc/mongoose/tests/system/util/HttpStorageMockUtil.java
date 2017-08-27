@@ -3,12 +3,15 @@ package com.emc.mongoose.tests.system.util;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,20 +45,62 @@ public interface HttpStorageMockUtil {
 		}
 	}
 
-	static void assertItemExists(
-		final String nodeAddr, final String itemPath, final long expectedSize
-	) {
-		final Future<Long> futureContentLen = REQ_EXECUTOR.submit(
+	static int getContentLength(final String nodeAddr, final String itemPath) {
+		final Future<Integer> futureContentLen = REQ_EXECUTOR.submit(
 			() -> {
 				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
-				return (long) itemUrl.openConnection().getContentLength();
+				return itemUrl.openConnection().getContentLength();
 			}
 		);
 		try {
-			final long actualSize = futureContentLen.get();
-			assertEquals(
-				"Invalid size returned for the \"" + itemPath + "\"", expectedSize, actualSize
-			);
+			return futureContentLen.get();
+		} catch(final InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	static void assertItemExists(
+		final String nodeAddr, final String itemPath, final long expectedSize
+	) {
+		final int actualSize = getContentLength(nodeAddr, itemPath);
+		assertEquals(
+			"Invalid size returned for the \"" + itemPath + "\"", expectedSize, actualSize
+		);
+	}
+
+	static void checkItemContent(
+		final String nodeAddr, final String itemPath, final Consumer<byte[]> checkContentFunc
+	) {
+		final Future<byte[]> futureContentLen = REQ_EXECUTOR.submit(
+			() -> {
+				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
+				byte[] buff = null;
+				HttpURLConnection conn = null;
+				try {
+					conn = (HttpURLConnection) itemUrl.openConnection();
+					final int contentLen = conn.getContentLength();
+					buff = new byte[contentLen];
+					try(final InputStream in = conn.getInputStream()) {
+						int offset = 0, n;
+						while(offset < contentLen) {
+							n = in.read(buff, offset, contentLen - offset);
+							if(n < 0) {
+								break;
+							} else {
+								offset += n;
+							}
+						}
+					}
+				} finally {
+					if(conn != null) {
+						conn.disconnect();
+					}
+				}
+				return buff;
+			}
+		);
+		try {
+			checkContentFunc.accept(futureContentLen.get());
 		} catch(final InterruptedException | ExecutionException e) {
 			throw new RuntimeException(e);
 		}

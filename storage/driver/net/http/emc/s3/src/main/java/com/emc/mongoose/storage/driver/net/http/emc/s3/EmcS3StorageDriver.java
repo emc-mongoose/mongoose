@@ -19,6 +19,7 @@ import static com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3Api.URL_ARG_VE
 import static com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3Api.VERSIONING_DISABLE_CONTENT;
 import static com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3Api.VERSIONING_ENABLE_CONTENT;
 import static com.emc.mongoose.storage.driver.net.http.emc.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
+import static com.emc.mongoose.storage.driver.net.http.emc.base.EmcConstants.KEY_X_EMC_MULTIPART_COPY;
 import static com.emc.mongoose.storage.driver.net.http.emc.base.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.net.http.emc.base.EmcConstants.PREFIX_KEY_X_EMC;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -304,7 +305,7 @@ extends AmzS3StorageDriver<I, O> {
 
 	@Override
 	public String toString() {
-		return super.toString().replace("amzs3", "emc-s3");
+		return super.toString().replace("amzs3", "emcs3");
 	}
 
 	@Override
@@ -415,6 +416,7 @@ extends AmzS3StorageDriver<I, O> {
 		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, content.length());
 		httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+		httpHeaders.set(KEY_X_EMC_MULTIPART_COPY, "true");
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);

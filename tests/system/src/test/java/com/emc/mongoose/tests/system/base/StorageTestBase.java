@@ -70,11 +70,11 @@ extends ConfiguredTestBase {
 		switch(storageType) {
 			case ATMOS:
 			case AMZS3:
+			case EMCS3:
 			case SWIFT:
 				httpStorageMocks = new HashMap<>();
 				final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
 				final ItemConfig itemConfig = config.getItemConfig();
-				final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 				final int port = nodeConfig.getPort();
 				final List<String> nodeAddrs = new ArrayList<>();
 				String nextNodeAddr;

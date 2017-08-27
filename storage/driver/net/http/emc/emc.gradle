@@ -1,5 +1,11 @@
 description = "mongoose-storage-driver-net-http-emc"
 
+dependencies {
+	compile(
+		"io.netty:netty-common:${depVersion.netty}",
+	)
+}
+
 jar {
 	manifest {
 		attributes (

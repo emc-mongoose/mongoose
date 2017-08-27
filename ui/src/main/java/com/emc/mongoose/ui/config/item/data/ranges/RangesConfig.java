@@ -20,14 +20,14 @@ import java.util.List;
 public final class RangesConfig
 implements Serializable {
 
-	public static final String KEY_COPY = "copy";
+	public static final String KEY_CONCAT = "concat";
 	public static final String KEY_FIXED = "fixed";
 	public static final String KEY_RANDOM = "random";
 	public static final String KEY_THRESHOLD = "threshold";
 
 	@JsonDeserialize(using = RangeDeserializer.class)
 	@JsonSerialize(using = RangeSerializer.class)
-	@JsonProperty(KEY_COPY) private Range copy;
+	@JsonProperty(KEY_CONCAT) private Range concat;
 
 	@JsonProperty(KEY_FIXED) private List<String> fixed;
 
@@ -43,21 +43,21 @@ implements Serializable {
 
 	public RangesConfig(final RangesConfig other) {
 		final List<String> otherRanges = other.getFixed();
-		this.copy = other.getCopy();
-		if(this.copy != null) {
-			this.copy = new Range(this.copy);
+		this.concat = other.getConcat();
+		if(this.concat != null) {
+			this.concat = new Range(this.concat);
 		}
 		this.fixed = otherRanges == null ? null : new ArrayList<>(otherRanges);
 		this.random = other.getRandom();
 		this.threshold = new SizeInBytes(other.getThreshold());
 	}
 
-	public final Range getCopy() {
-		return copy;
+	public final Range getConcat() {
+		return concat;
 	}
 
-	public final void setCopy(final Range copy) {
-		this.copy = copy;
+	public final void setConcat(final Range concat) {
+		this.concat = concat;
 	}
 
 	public final List<String> getFixed() {

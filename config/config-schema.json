@@ -80,7 +80,7 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
-								"copy" : {
+								"concat" : {
 									"oneOf" : [
 										{
 											"type" : "null"
