@@ -393,4 +393,14 @@ implements LoadGenerator<I, O>, Coroutine {
 	public final int hashCode() {
 		return originCode;
 	}
+
+	@Override
+	public void stop() {
+		interrupt();
+	}
+
+	@Override
+	public boolean isStopped() {
+		return isInterrupted();
+	}
 }

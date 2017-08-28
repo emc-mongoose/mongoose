@@ -149,26 +149,26 @@ implements Coroutine {
 	public final void run() {
 		if(allMetricsLock.tryLock()) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				int controllerActiveTaskCount;
+				int actualConcurrency;
 				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {
 					if(controller.isInterrupted() || controller.isClosed()) {
 						continue;
 					}
-					controllerActiveTaskCount = controller.getActualConcurrency();
 					for(final MetricsContext metricsCtx : allMetrics.get(controller).keySet()) {
 						try(
 							final Instance stepIdCtx = CloseableThreadContext.put(
 								KEY_TEST_STEP_ID, metricsCtx.getStepId()
 							)
 						) {
+							actualConcurrency = metricsCtx.getActualConcurrency();
 							metricsCtx.refreshLastSnapshot();
 
 							// threshold load state checks
 							nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
 							if(
 								nextConcurrencyThreshold > 0 &&
-									controllerActiveTaskCount >= nextConcurrencyThreshold
+									actualConcurrency >= nextConcurrencyThreshold
 							) {
 								if(
 									!metricsCtx.isThresholdStateEntered() &&
@@ -286,5 +286,15 @@ implements Coroutine {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
 		}
+	}
+
+	@Override
+	public void stop() {
+		interrupt();
+	}
+
+	@Override
+	public boolean isStopped() {
+		return isInterrupted();
 	}
 }
