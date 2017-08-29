@@ -11,7 +11,8 @@ public interface Loggers {
 	String BASE = Loggers.class.getPackage().getName() + '.';
 	String BASE_METRICS = BASE + "metrics.";
 	String BASE_METRICS_THRESHOLD = BASE_METRICS + "threshold.";
-	
+
+	Logger CLI = LogManager.getLogger(BASE + "Cli");
 	Logger CONFIG = LogManager.getLogger(BASE + "Config");
 	Logger ERR = LogManager.getLogger(BASE + "Errors");
 	Logger IO_TRACE = LogManager.getLogger(BASE + "IoTraces");
@@ -24,4 +25,5 @@ public interface Loggers {
 	Logger METRICS_THRESHOLD_FILE_TOTAL = LogManager.getLogger(BASE_METRICS_THRESHOLD + "FileTotal");
 	Logger MSG = LogManager.getLogger(BASE + "Messages");
 	Logger MULTIPART = LogManager.getLogger(BASE + "Multipart");
+	Logger SCENARIO = LogManager.getLogger(BASE + "Scenario");
 }

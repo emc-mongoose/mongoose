@@ -33,7 +33,6 @@ implements Step {
 				.put(KEY_TEST_STEP_ID, localConfig.getTestConfig().getStepConfig().getId())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			Loggers.CONFIG.info(localConfig.toString());
 			invoke();
 		}
 	}

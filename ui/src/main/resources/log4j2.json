@@ -164,16 +164,42 @@
 					}
 				},
 				{
-					"name" : "cfgFile",
+					"name" : "cliFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}effective.config.log",
-					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}effective.config.log",
+					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}cli.args.log",
+					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}cli.args.log",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0}:%n%m%n%n"
+						"pattern" : "%m%n"
+					}
+				},
+				{
+					"name" : "cfgFile",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}config.json",
+					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}config.json",
+					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
+					},
+					"PatternLayout" : {
+						"pattern" : "%m%n"
+					}
+				},
+				{
+					"name" : "scenarioFile",
+					"type" : "RollingRandomAccessFile",
+					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}scenario.json",
+					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}scenario.json",
+					"StepIdTriggeringPolicy" : {
+					},
+					"DirectWriteRolloverStrategy" : {
+					},
+					"PatternLayout" : {
+						"pattern" : "%m%n"
 					}
 				},
 				{
@@ -240,6 +266,14 @@
 					"level" : "ERROR",
 					"AppenderRef" : {
 						"ref" : "3rdPartyFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Cli",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "cliFile"
 					},
 					"additivity" : false
 				},
@@ -346,6 +380,14 @@
 					"level" : "DEBUG",
 					"AppenderRef" : {
 						"ref" : "partsUploadFile"
+					},
+					"additivity" : false
+				},
+				{
+					"name" : "com.emc.mongoose.ui.log.Scenario",
+					"level" : "INFO",
+					"AppenderRef" : {
+						"ref" : "scenarioFile"
 					},
 					"additivity" : false
 				}
