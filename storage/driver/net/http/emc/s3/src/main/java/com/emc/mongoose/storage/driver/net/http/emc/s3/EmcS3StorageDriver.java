@@ -8,6 +8,7 @@ import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3StorageDriver;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
@@ -82,6 +83,8 @@ extends AmzS3StorageDriver<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
+
+		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,

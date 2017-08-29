@@ -101,6 +101,8 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
 		applySharedHeaders(reqHeaders);
 		final String containerUri = namespacePath + path;
+
+		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
 		final FullHttpRequest checkContainerReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, containerUri, Unpooled.EMPTY_BUFFER, reqHeaders,

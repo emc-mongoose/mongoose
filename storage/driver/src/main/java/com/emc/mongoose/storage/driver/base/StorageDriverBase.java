@@ -57,6 +57,8 @@ implements StorageDriver<I, O> {
 	protected final boolean verifyFlag;
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
+
+	protected final ConcurrentMap<String, Credential> pathToCredMap = new ConcurrentHashMap<>(1);
 	
 	private final ConcurrentMap<String, String> pathMap = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewPath(final String path);
@@ -65,6 +67,7 @@ implements StorageDriver<I, O> {
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewAuthToken(final Credential credential);
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
+
 	private final IoTasksDispatchCoroutine ioTasksDispatchCoroutine;
 	
 	protected StorageDriverBase(
@@ -174,14 +177,15 @@ implements StorageDriver<I, O> {
 		if(ioTask instanceof DataIoTask) {
 			((DataIoTask) ioTask).getItem().setDataInput(contentSrc);
 		}
-		if(requestAuthTokenFunc != null) {
-			final Credential credential = ioTask.getCredential();
-			if(credential != null) {
+		final String dstPath = ioTask.getDstPath();
+		final Credential credential = ioTask.getCredential();
+		if(credential != null) {
+			pathToCredMap.putIfAbsent(dstPath, credential);
+			if(requestAuthTokenFunc != null) {
 				authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
 			}
 		}
 		if(requestNewPathFunc != null) {
-			final String dstPath = ioTask.getDstPath();
 			// NOTE: in the distributed mode null dstPath becomes empty one
 			if(dstPath != null && !dstPath.isEmpty()) {
 				if(null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
@@ -341,6 +345,8 @@ implements StorageDriver<I, O> {
 				);
 			}
 			ioResultsQueue.clear();
+			authTokens.clear();
+			pathToCredMap.clear();
 			pathMap.clear();
 			Loggers.MSG.debug("{}: closed", toString());
 		}

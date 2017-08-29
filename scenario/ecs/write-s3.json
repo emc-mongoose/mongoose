@@ -3,7 +3,7 @@
 	"config" : {
 		"storage" : {
 			"driver" : {
-				"type" : "s3"
+				"type" : "amzs3"
 			},
 			"net" : {
 				"node" : {
