@@ -102,7 +102,7 @@ public class BasicLoadGeneratorTest {
 				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
@@ -134,7 +134,7 @@ public class BasicLoadGeneratorTest {
 				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ asc names) rate: " + counter.sum() / TIME_LIMIT);
@@ -166,7 +166,7 @@ public class BasicLoadGeneratorTest {
 				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + "(w/ constant credentials) rate: " + counter.sum() / TIME_LIMIT);
@@ -198,7 +198,7 @@ public class BasicLoadGeneratorTest {
 				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ dynamic path) rate: " + counter.sum() / TIME_LIMIT);
@@ -232,7 +232,7 @@ public class BasicLoadGeneratorTest {
 				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
@@ -266,7 +266,7 @@ public class BasicLoadGeneratorTest {
 				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ shuffling) rate: " + counter.sum() / TIME_LIMIT);
