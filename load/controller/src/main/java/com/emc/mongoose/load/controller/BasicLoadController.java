@@ -77,7 +77,8 @@ implements LoadController<I, O> {
 	private final String name;
 	private final Int2ObjectMap<LoadGenerator<I, O>> generatorsMap;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
-	private final Map<LoadGenerator<I, O>, GetActualConcurrencySumCoroutine> getActualConcurrencySumCoroutines;
+	private final Map<LoadGenerator<I, O>, GetActualConcurrencySumCoroutine>
+		getActualConcurrencySumCoroutines;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final long failCountLimit;
@@ -105,7 +106,7 @@ implements LoadController<I, O> {
 	 **/
 	public BasicLoadController(
 		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
-		final Int2IntMap weightMap, final Map<LoadController<I, O>, SizeInBytes> itemDataSizes,
+		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, SizeInBytes> itemDataSizes,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final StepConfig stepConfig,
 		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
@@ -787,26 +788,11 @@ implements LoadController<I, O> {
 		}
 		
 		for(final Coroutine transferCoroutine : transferCoroutines) {
-			try {
-				transferCoroutine.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to stop the service coroutine {}", transferCoroutine
-				);
-			}
+			transferCoroutine.stop();
 		}
-		transferCoroutines.clear();
 		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
-			try {
-				getConcurrencyCoroutine.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to stop the service coroutine {}",
-					getConcurrencyCoroutine
-				);
-			}
+			getConcurrencyCoroutine.stop();
 		}
-		getActualConcurrencySumCoroutines.clear();
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("ioResultsWorker", true)
@@ -966,6 +952,28 @@ implements LoadController<I, O> {
 			generatorsMap.clear();
 			driversMap.clear();
 		}
+
+		for(final Coroutine transferCoroutine : transferCoroutines) {
+			try {
+				transferCoroutine.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to stop the service coroutine {}", transferCoroutine
+				);
+			}
+		}
+		transferCoroutines.clear();
+		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
+			try {
+				getConcurrencyCoroutine.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to stop the service coroutine {}",
+					getConcurrencyCoroutine
+				);
+			}
+		}
+		getActualConcurrencySumCoroutines.clear();
 
 		for(final Output<O> nextIoTaskOutput : ioTaskOutputs.values()) {
 			nextIoTaskOutput.close();

@@ -58,6 +58,5 @@ extends ExclusiveCoroutineBase {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		storageDrivers.clear();
 	}
 }
