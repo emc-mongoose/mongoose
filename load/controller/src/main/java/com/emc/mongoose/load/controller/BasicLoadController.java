@@ -56,6 +56,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -76,6 +77,7 @@ implements LoadController<I, O> {
 	private final String name;
 	private final Int2ObjectMap<LoadGenerator<I, O>> generatorsMap;
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
+	private final Map<LoadGenerator<I, O>, GetActualConcurrencySumCoroutine> getActualConcurrencySumCoroutines;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final long failCountLimit;
@@ -83,7 +85,6 @@ implements LoadController<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultsPerItem;
 	private final int batchSize;
 	private final boolean isAnyCircular;
-	private final GetActualConcurrencySumCoroutine getActualConcurrencySumCoroutine;
 	private final List<Coroutine> transferCoroutines = new ArrayList<>();
 
 	private final Int2ObjectMap<MetricsContext> ioStats = new Int2ObjectOpenHashMap<>();
@@ -144,16 +145,14 @@ implements LoadController<I, O> {
 		this.driversMap = driversMap;
 		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
 		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
+		getActualConcurrencySumCoroutines = new HashMap<>();
 		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
 		boolean anyCircularFlag = false;
-		final List<StorageDriver> drivers = new ArrayList<>();
 		for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
 			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
-			drivers.addAll(nextDrivers);
 			final MetricsConfig nextMetricsConfig = outputConfigs
 				.get(nextGenerator).getMetricsConfig();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
-			final int nextOriginCode = nextGenerator.hashCode();
 			if(nextGenerator.isRecycling()) {
 				anyCircularFlag = true;
 			}
@@ -171,7 +170,7 @@ implements LoadController<I, O> {
 			ioStats.put(
 				ioTypeCode,
 				new BasicMetricsContext(
-					name, ioType, () -> getActualConcurrency(),
+					name, ioType, () -> getActualConcurrency(nextGenerator),
 					nextDrivers.size(), ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
 					itemDataSizes.get(nextGenerator),
@@ -181,6 +180,10 @@ implements LoadController<I, O> {
 					nextMetricsConfig.getSummaryConfig().getPersist(),
 					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFileFlag()
 				)
+			);
+
+			getActualConcurrencySumCoroutines.put(
+				nextGenerator, new GetActualConcurrencySumCoroutine(SVC_EXECUTOR, nextDrivers)
 			);
 
 			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
@@ -199,10 +202,6 @@ implements LoadController<I, O> {
 		} else {
 			latestIoResultsPerItem = null;
 		}
-
-		this.getActualConcurrencySumCoroutine = new GetActualConcurrencySumCoroutine(
-			SVC_EXECUTOR, drivers
-		);
 
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
@@ -561,8 +560,8 @@ implements LoadController<I, O> {
 	}
 	
 	@Override
-	public final int getActualConcurrency() {
-		return getActualConcurrencySumCoroutine.getActualConcurrencySum();
+	public final int getActualConcurrency(final LoadGenerator<I, O> loadGenerator) {
+		return getActualConcurrencySumCoroutines.get(loadGenerator).getActualConcurrencySum();
 	}
 	
 	@Override
@@ -605,8 +604,9 @@ implements LoadController<I, O> {
 		for(final Coroutine transferCoroutine : transferCoroutines) {
 			transferCoroutine.start();
 		}
-
-		getActualConcurrencySumCoroutine.start();
+		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
+			getConcurrencyCoroutine.start();
+		}
 	}
 
 	@Override
@@ -796,14 +796,17 @@ implements LoadController<I, O> {
 			}
 		}
 		transferCoroutines.clear();
-		try {
-			getActualConcurrencySumCoroutine.close();
-		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: failed to stop the service coroutine {}",
-				getActualConcurrencySumCoroutine
-			);
+		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
+			try {
+				getConcurrencyCoroutine.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to stop the service coroutine {}",
+					getConcurrencyCoroutine
+				);
+			}
 		}
+		getActualConcurrencySumCoroutines.clear();
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("ioResultsWorker", true)

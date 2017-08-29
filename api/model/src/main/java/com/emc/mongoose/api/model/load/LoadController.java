@@ -16,7 +16,7 @@ extends Daemon, Output<O> {
 	
 	void setIoResultsOutput(final Output<O> ioTaskResultsOutput);
 
-	int getActualConcurrency();
+	int getActualConcurrency(final LoadGenerator<I, O> loadGenerator);
 	
 	default Input<O> getInput() {
 		throw new AssertionError("Shouldn't be invoked");

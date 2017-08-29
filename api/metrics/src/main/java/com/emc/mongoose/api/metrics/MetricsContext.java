@@ -35,6 +35,7 @@ extends Closeable {
 	int getDriverCount();
 	int getConcurrency();
 	int getConcurrencyThreshold();
+	int getActualConcurrency();
 	SizeInBytes getItemDataSize();
 
 	boolean getStdOutColorFlag();
