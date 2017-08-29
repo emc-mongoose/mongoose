@@ -79,6 +79,7 @@ implements LoadController<I, O> {
 	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
 	private final Map<LoadGenerator<I, O>, GetActualConcurrencySumCoroutine>
 		getActualConcurrencySumCoroutines;
+	private final Map<LoadGenerator<I, O>, Coroutine> generatorOutputCoroutines;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final long failCountLimit;
@@ -126,6 +127,7 @@ implements LoadController<I, O> {
 		}
 
 		generatorsMap = new Int2ObjectOpenHashMap<>(driversMap.size());
+		generatorOutputCoroutines = new HashMap<>(driversMap.size());
 		RoundRobinOutputCoroutine<O, StorageDriver<I, O>> nextGeneratorOutput = null;
 		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
 			// hashCode() returns the origin code
@@ -133,6 +135,7 @@ implements LoadController<I, O> {
 			nextGeneratorOutput = new RoundRobinOutputCoroutine<>(
 				SVC_EXECUTOR, driversMap.get(nextGenerator), nextGenerator.getBatchSize()
 			);
+			generatorOutputCoroutines.put(nextGenerator, nextGeneratorOutput);
 			ioTaskOutputs.put(nextGenerator.hashCode(), nextGeneratorOutput);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
@@ -786,7 +789,10 @@ implements LoadController<I, O> {
 				Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
 			);
 		}
-		
+
+		for(final Coroutine generatorOutputCoroutine : generatorOutputCoroutines.values()) {
+			generatorOutputCoroutine.stop();
+		}
 		for(final Coroutine transferCoroutine : transferCoroutines) {
 			transferCoroutine.stop();
 		}
@@ -974,6 +980,17 @@ implements LoadController<I, O> {
 			}
 		}
 		getActualConcurrencySumCoroutines.clear();
+		for(final Coroutine generatorOutputCoroutine : generatorOutputCoroutines.values()) {
+			try {
+				generatorOutputCoroutine.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to stop the service coroutine {}",
+					generatorOutputCoroutine
+				);
+			}
+		}
+		generatorOutputCoroutines.clear();
 
 		for(final Output<O> nextIoTaskOutput : ioTaskOutputs.values()) {
 			nextIoTaskOutput.close();

@@ -159,8 +159,8 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final void close()
 	throws IOException {
-		driver.close();
 		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
+		driver.close();
 	}
 
 	@Override
