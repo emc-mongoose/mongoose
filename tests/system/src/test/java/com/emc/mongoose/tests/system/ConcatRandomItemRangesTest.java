@@ -97,7 +97,11 @@ extends ScenarioTestBase {
 			testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
 			final String nextItemPath = ioTraceRec.get("ItemPath");
 			final int nextContentLength = HttpStorageMockUtil.getContentLength(node, nextItemPath);
-			assertEquals(avgDstItemContentSize, nextContentLength, 0.9 * avgDstItemContentSize);
+			assertEquals(
+				"I/O trace req #" + ioTraceRecCount.sum() + ": invalid object \"" + nextItemPath
+					+ "\"size: " + nextContentLength + ", expected: " + avgDstItemContentSize,
+				avgDstItemContentSize, nextContentLength, 0.9 * avgDstItemContentSize
+			);
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(ioTraceReqTestFunc);
