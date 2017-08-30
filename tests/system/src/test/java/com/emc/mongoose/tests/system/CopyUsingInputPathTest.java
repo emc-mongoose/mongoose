@@ -76,6 +76,16 @@ extends ScenarioTestBase {
 		}
 		itemDstPath = itemSrcPath + "-Dst";
 		itemSrcPath += "-Src";
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemSrcPath);
+			} catch(final Throwable ignored) {
+			}
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemDstPath);
+			} catch(final Throwable ignored) {
+			}
+		}
 		EnvUtil.set("ITEM_SRC_PATH", itemSrcPath);
 		EnvUtil.set("ITEM_DST_PATH", itemDstPath);
 		scenario = new JsonScenario(config, scenarioPath.toFile());
