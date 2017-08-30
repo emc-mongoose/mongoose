@@ -25,7 +25,6 @@ extends LogMessageBase {
 		size = to - from;
 		if(size > 0x1000) {
 			Loggers.ERR.warn("I/O trace batch size too big: {}", to - from);
-			System.out.println(new ThreadDump());
 		}
 		ioTraceRecords = new ArrayList<>(size);
 		for(int i = from; i < to; i ++) {
