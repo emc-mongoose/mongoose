@@ -1,5 +1,6 @@
 package com.emc.mongoose.api.metrics.logging;
 
+import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;
@@ -24,6 +25,7 @@ extends LogMessageBase {
 		size = to - from;
 		if(size > 0x1000) {
 			Loggers.ERR.warn("I/O trace batch size too big: {}", to - from);
+			System.out.println(new ThreadDump());
 		}
 		ioTraceRecords = new ArrayList<>(size);
 		for(int i = from; i < to; i ++) {
