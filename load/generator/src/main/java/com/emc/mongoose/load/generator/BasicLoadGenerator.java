@@ -368,7 +368,6 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	protected final void doInterrupt() {
 		SVC_EXECUTOR.stop(this);
-		ioTaskOutput.stop();
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} I/O tasks",
 			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),

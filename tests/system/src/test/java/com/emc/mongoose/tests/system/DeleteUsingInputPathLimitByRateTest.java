@@ -99,7 +99,7 @@ extends ScenarioTestBase {
 	}
 
 	@After
-	public void tearDownClass()
+	public void tearDown()
 	throws Exception {
 		if(StorageType.FS.equals(storageType)) {
 			try {

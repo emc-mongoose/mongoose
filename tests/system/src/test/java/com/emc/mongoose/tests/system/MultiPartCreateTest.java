@@ -17,7 +17,7 @@ import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
+import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -88,6 +88,12 @@ extends ScenarioTestBase {
 		LogUtil.flushAll();
 		stdOutput = stdOutStream.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
+	}
+
+	@After
+	public final void tearDown()
+	throws Exception {
+		super.tearDown();
 	}
 
 	@Override
