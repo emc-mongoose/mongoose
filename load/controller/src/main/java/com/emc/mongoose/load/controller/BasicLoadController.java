@@ -48,6 +48,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -393,6 +394,8 @@ implements LoadController<I, O> {
 	
 	@Override
 	public final boolean put(final O ioTaskResult) {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, name);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
@@ -464,6 +467,8 @@ implements LoadController<I, O> {
 	
 	@Override
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, name);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {

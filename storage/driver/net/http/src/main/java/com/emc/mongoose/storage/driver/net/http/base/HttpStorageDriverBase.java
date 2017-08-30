@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.github.akurilov.commons.collection.Range;
+
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.async.AsyncPatternDefinedSupplier;
@@ -47,8 +48,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -114,12 +115,12 @@ implements HttpStorageDriver<I, O> {
 
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		final Channel channel = getUnpooledConnection();
-		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+		try {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
 				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId,

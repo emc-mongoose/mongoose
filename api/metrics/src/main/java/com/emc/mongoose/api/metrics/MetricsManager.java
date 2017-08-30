@@ -15,9 +15,9 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import javax.management.MalformedObjectNameException;
 import java.io.Closeable;
@@ -147,8 +147,12 @@ implements Coroutine {
 	
 	@Override
 	public final void run() {
+
 		if(allMetricsLock.tryLock()) {
-			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
+
+			ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
+			try {
 				int actualConcurrency;
 				int nextConcurrencyThreshold;
 				for(final LoadController controller : allMetrics.keySet()) {
@@ -156,55 +160,52 @@ implements Coroutine {
 						continue;
 					}
 					for(final MetricsContext metricsCtx : allMetrics.get(controller).keySet()) {
-						try(
-							final Instance stepIdCtx = CloseableThreadContext.put(
-								KEY_TEST_STEP_ID, metricsCtx.getStepId()
-							)
-						) {
-							actualConcurrency = metricsCtx.getActualConcurrency();
-							metricsCtx.refreshLastSnapshot();
 
-							// threshold load state checks
-							nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
+						ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
+
+						actualConcurrency = metricsCtx.getActualConcurrency();
+						metricsCtx.refreshLastSnapshot();
+
+						// threshold load state checks
+						nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
+						if(
+							nextConcurrencyThreshold > 0 &&
+								actualConcurrency >= nextConcurrencyThreshold
+						) {
 							if(
-								nextConcurrencyThreshold > 0 &&
-									actualConcurrency >= nextConcurrencyThreshold
-							) {
-								if(
-									!metricsCtx.isThresholdStateEntered() &&
-										!metricsCtx.isThresholdStateExited()
-								) {
-									Loggers.MSG.info(
-										"{}: the threshold of {} active tasks count is " +
-										"reached, starting the additional metrics accounting",
-										metricsCtx.toString(),
-										metricsCtx.getConcurrencyThreshold()
-									);
-									metricsCtx.enterThresholdState();
-								}
-							} else if(
-								metricsCtx.isThresholdStateEntered() &&
+								!metricsCtx.isThresholdStateEntered() &&
 									!metricsCtx.isThresholdStateExited()
 							) {
-								exitMetricsThresholdState(metricsCtx);
+								Loggers.MSG.info(
+									"{}: the threshold of {} active tasks count is " +
+									"reached, starting the additional metrics accounting",
+									metricsCtx.toString(),
+									metricsCtx.getConcurrencyThreshold()
+								);
+								metricsCtx.enterThresholdState();
 							}
+						} else if(
+							metricsCtx.isThresholdStateEntered() &&
+								!metricsCtx.isThresholdStateExited()
+						) {
+							exitMetricsThresholdState(metricsCtx);
+						}
 
-							// periodic output
-							outputPeriodMillis = metricsCtx.getOutputPeriodMillis();
-							lastOutputTs = metricsCtx.getLastOutputTs();
-							nextOutputTs = System.currentTimeMillis();
-							if(
-								outputPeriodMillis > 0 &&
-									nextOutputTs - lastOutputTs >= outputPeriodMillis
-							) {
-								if(!controller.isInterrupted() && !controller.isClosed()) {
-									selectedMetrics.add(metricsCtx);
-									metricsCtx.setLastOutputTs(nextOutputTs);
-									if(metricsCtx.getAvgPersistFlag()) {
-										Loggers.METRICS_FILE.info(
-											new MetricsCsvLogMessage(metricsCtx)
-										);
-									}
+						// periodic output
+						outputPeriodMillis = metricsCtx.getOutputPeriodMillis();
+						lastOutputTs = metricsCtx.getLastOutputTs();
+						nextOutputTs = System.currentTimeMillis();
+						if(
+							outputPeriodMillis > 0 &&
+								nextOutputTs - lastOutputTs >= outputPeriodMillis
+						) {
+							if(!controller.isInterrupted() && !controller.isClosed()) {
+								selectedMetrics.add(metricsCtx);
+								metricsCtx.setLastOutputTs(nextOutputTs);
+								if(metricsCtx.getAvgPersistFlag()) {
+									Loggers.METRICS_FILE.info(
+										new MetricsCsvLogMessage(metricsCtx)
+									);
 								}
 							}
 						}

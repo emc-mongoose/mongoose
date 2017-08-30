@@ -8,6 +8,7 @@ import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
 
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
@@ -26,6 +27,7 @@ import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -97,6 +99,9 @@ implements NioStorageDriver<I, O> {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
+
+			ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+
 			ioTaskBuffSize = ioTaskBuff.size();
 			if(ioTaskBuffSize > 0) {
 				try {

@@ -11,9 +11,8 @@ import com.github.akurilov.commons.collection.OptLockBuffer;
 import com.github.akurilov.coroutines.CoroutinesProcessor;
 import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
 
-import org.apache.logging.log4j.CloseableThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -62,11 +61,11 @@ extends ExclusiveCoroutineBase {
 
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
+		try {
 			// child tasks go first
 			if(n < batchSize) {
 				n += childTasksQueue.drainTo(buff, batchSize - n);

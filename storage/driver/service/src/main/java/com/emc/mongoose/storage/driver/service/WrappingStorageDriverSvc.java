@@ -77,12 +77,10 @@ implements StorageDriverSvc<I, O> {
 		@Override
 		protected final void invokeTimed(final long startTimeNanos) {
 			if(invocationLock.tryLock()) {
-				try(
-					final Instance ctx = CloseableThreadContext
-						.put(KEY_TEST_STEP_ID, stepName)
-						.put(KEY_CLASS_NAME, getClass().getSimpleName())
-				) {
+				try {
 					nextNanoTimeStamp = nanoTime();
+					ThreadContext.put(KEY_TEST_STEP_ID, stepName);
+					ThreadContext.put(KEY_CLASS_NAME, getClass().getSimpleName());
 					if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
 						prevNanoTimeStamp = nextNanoTimeStamp;
 						try {

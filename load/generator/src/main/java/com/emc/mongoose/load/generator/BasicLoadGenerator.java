@@ -9,6 +9,7 @@ import com.github.akurilov.commons.io.Input;
 
 import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.OutputCoroutine;
+import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
 
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
@@ -22,9 +23,8 @@ import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 
-import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
-import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -165,6 +165,8 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	public final void run() {
 
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
 		if(tasksBuff == null) {
 			tasksBuff = new OptLockArrayBuffer<>(batchSize);
@@ -173,10 +175,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		int pendingTasksCount = tasksBuff.size();
 		int n = batchSize - pendingTasksCount;
 
-		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+		try {
 			if(n > 0) { // the tasks buffer has free space for the new tasks
 
 				if(!itemInputFinishFlag) {
