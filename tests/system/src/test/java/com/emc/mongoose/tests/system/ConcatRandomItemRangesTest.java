@@ -98,8 +98,7 @@ extends ScenarioTestBase {
 			final String nextItemPath = ioTraceRec.get("ItemPath");
 			final int nextContentLength = HttpStorageMockUtil.getContentLength(node, nextItemPath);
 			assertEquals(
-				"I/O trace req #" + ioTraceRecCount.sum() + ": invalid object \"" + nextItemPath
-					+ "\"size: " + nextContentLength + ", expected: " + avgDstItemContentSize,
+				"I/O trace req #" + ioTraceRecCount.sum() + ": invalid object \"" + nextItemPath + "\"",
 				avgDstItemContentSize, nextContentLength, 0.9 * avgDstItemContentSize
 			);
 			ioTraceRecCount.increment();
