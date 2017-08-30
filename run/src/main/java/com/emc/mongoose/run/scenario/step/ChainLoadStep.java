@@ -229,22 +229,22 @@ extends StepBase {
 		} catch(final InterruptedException e) {
 			Loggers.MSG.debug("Load step interrupted");
 			throw new CancellationException();
-		} finally {
-			for(final LoadController nextController : loadChain) {
-				try {
-					nextController.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to close the step \"{}\"",  nextController.getName()
-					);
-				}
-			}
 		}
 	}
 	
 	@Override
 	public void close()
 	throws IOException {
+		for(final LoadController nextController : loadChain) {
+			try {
+				nextController.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to close the step \"{}\"",  nextController.getName()
+				);
+			}
+		}
+		loadChain.clear();
 		nodeConfigList.clear();
 	}
 }
