@@ -125,6 +125,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
+		/*if(this.itemInput != null) {
+			try {
+				this.itemInput.close();
+			} catch(final IOException ignored) {
+			}
+		}*/
 		this.itemInput = itemInput;
 		// chain transfer buffer is not resettable
 		if(!(itemInput instanceof ChainTransferBuffer)) {
@@ -263,6 +269,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 					srcItemsCount = loadSrcItems(itemInput, srcItemsBuff, (int) M);
 				} catch(final IOException e) {
 					throw new DanShootHisFootException(e);
+				} finally {
+					try {
+						itemInput.close();
+					} catch(final IOException ignored) {
+					}
 				}
 				if(srcItemsCount == 0) {
 					throw new DanShootHisFootException(
