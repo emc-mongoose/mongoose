@@ -669,6 +669,7 @@ implements LoadController<I, O> {
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(Level.WARN, e, "{}: load controller shutdown interrupted", getName());
+			throw new CancellationException();
 		}
 	}
 

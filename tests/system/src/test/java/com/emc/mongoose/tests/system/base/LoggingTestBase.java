@@ -303,7 +303,7 @@ extends ParameterizedSysTestBase {
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
 			if(expectedLoadJobTime > 0) {
 				assertTrue(
-					"Step duration limit (" + expectedLoadJobTime + ") is breaked: " + jobDuration,
+					"Step duration limit (" + expectedLoadJobTime + ") is broken: " + jobDuration,
 					jobDuration <= expectedLoadJobTime + 1
 				);
 			}
