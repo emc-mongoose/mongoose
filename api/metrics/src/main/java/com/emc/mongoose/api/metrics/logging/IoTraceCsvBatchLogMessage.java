@@ -22,7 +22,7 @@ extends LogMessageBase {
 
 	public IoTraceCsvBatchLogMessage(final List<O> ioTaskResults, final int from, final int to) {
 		size = to - from;
-		if(size > 100_000) {
+		if(size > 0x1000) {
 			Loggers.ERR.warn("I/O trace batch size too big: {}", to - from);
 		}
 		ioTraceRecords = new ArrayList<>(size);
