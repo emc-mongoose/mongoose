@@ -143,7 +143,11 @@ extends ScenarioTestBase {
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		assertTrue(sizeLimit.get() + sizeLimit.get() / 10 >= sizeSum);
+		assertTrue(
+			"Expected to transfer no more than " + sizeLimit + ", but transferred actually: "
+				+ new SizeInBytes(sizeSum),
+			sizeLimit.get() + sizeLimit.get() / 10 >= sizeSum
+		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
