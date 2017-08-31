@@ -11,9 +11,12 @@ import static com.emc.mongoose.api.model.concurrent.Daemon.State.STARTED;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  Created on 12.07.16.
@@ -21,6 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DaemonBase
 implements Daemon {
 
+	private static final Logger LOG = Logger.getLogger(DaemonBase.class.getName());
 	protected static final CoroutinesProcessor SVC_EXECUTOR = new CoroutinesProcessor();
 
 	public static void setThreadCount(final int threadCount) {
@@ -124,6 +128,7 @@ implements Daemon {
 			interrupt();
 		} catch(final IllegalStateException ignored) {
 		}
+		REGISTRY.remove(this);
 		if(stateRef.compareAndSet(INTERRUPTED, CLOSED)) {
 			synchronized(state) {
 				state.notifyAll();
@@ -142,11 +147,12 @@ implements Daemon {
 
 	public static void closeAll() {
 		synchronized(REGISTRY) {
-			for(final Daemon d : REGISTRY) {
+			final Iterator<Daemon> i = REGISTRY.iterator();
+			while(i.hasNext()) {
 				try {
-					d.close();
-				} catch(final Throwable t) {
-					t.printStackTrace(System.err);
+					i.next().close();
+				} catch(final Throwable cause) {
+					LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
 				}
 			}
 		}

@@ -20,7 +20,6 @@ import com.emc.mongoose.ui.config.storage.mock.container.ContainerConfig;
 import com.emc.mongoose.ui.config.storage.mock.fail.FailConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
 import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
 
 import org.junit.After;
 import org.junit.Before;
