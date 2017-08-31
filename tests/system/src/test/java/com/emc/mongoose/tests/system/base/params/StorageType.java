@@ -5,9 +5,10 @@ package com.emc.mongoose.tests.system.base.params;
  */
 
 public enum StorageType {
+	AMZS3,
 	ATMOS,
+	EMCS3,
 	FS,
-	S3,
 	SWIFT;
 
 	public static final String KEY_ENV = "STORAGE_TYPE";

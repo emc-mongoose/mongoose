@@ -303,7 +303,7 @@ extends ParameterizedSysTestBase {
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
 			if(expectedLoadJobTime > 0) {
 				assertTrue(
-					"Step duration limit (" + expectedLoadJobTime + ") is breaked: " + jobDuration,
+					"Step duration limit (" + expectedLoadJobTime + ") is broken: " + jobDuration,
 					jobDuration <= expectedLoadJobTime + 1
 				);
 			}
@@ -313,7 +313,7 @@ extends ParameterizedSysTestBase {
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
 				final double
-					effEstimate = durationSum / (concurrencyMean * jobDuration);
+					effEstimate = durationSum / (expectedConcurrency * jobDuration);
 				assertTrue(
 					"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
 				);
@@ -416,7 +416,7 @@ extends ParameterizedSysTestBase {
 			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
-		final double effEstimate = durationSum / (concurrencyLastMean * driverCount * jobDuration);
+		final double effEstimate = durationSum / (expectedConcurrency * driverCount * jobDuration);
 		if(countSucc > 0 && concurrencyLevel > 0) {
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 		}

@@ -74,6 +74,21 @@
 									"type" : "object",
 									"additionalProperties" : false,
 									"properties" : {
+										"concat" : {
+											"oneOf" : [
+												{
+													"type" : "null"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\d+(-\\d+)?"
+												},
+												{
+													"type" : "string",
+													"pattern" : "\\$\\{.+\\}"
+												}
+											]
+										},
 										"fixed" : {
 											"oneOf" : [
 												{

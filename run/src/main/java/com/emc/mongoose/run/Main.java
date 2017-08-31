@@ -8,15 +8,21 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
 import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
 
+import org.apache.logging.log4j.CloseableThreadContext;
+
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 /**
  Created by kurila on 11.07.16.
@@ -49,12 +55,24 @@ public class Main {
 
 		final String scenarioValue = config.getTestConfig().getScenarioConfig().getFile();
 		final Path scenarioPath;
-		if(scenarioValue != null && !scenarioValue.isEmpty()) {
-			scenarioPath = Paths.get(scenarioValue);
-		} else {
-			scenarioPath = Paths.get(getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO);
+
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
+				.put(KEY_TEST_STEP_ID, config.getTestConfig().getStepConfig().getId())
+				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
+		) {
+			Arrays.stream(args).forEach(Loggers.CLI::info);
+			Loggers.CONFIG.info(config.toString());
+
+			if(scenarioValue != null && !scenarioValue.isEmpty()) {
+				scenarioPath = Paths.get(scenarioValue);
+			} else {
+				scenarioPath = Paths.get(getBaseDir(), DIR_SCENARIO, FNAME_DEFAULT_SCENARIO);
+			}
+
+			Files.lines(scenarioPath).forEach(Loggers.SCENARIO::info);
 		}
-		
+
 		try(final Scenario scenario = new JsonScenario(config, scenarioPath.toFile())) {
 			scenario.run();
 		} catch(final ScenarioParseException e) {

@@ -123,7 +123,6 @@ public class BasicStorageDriverBuilder<
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 			final Map<String, URL> implClsPathUrls = new HashMap<>();
 			final Map<String, String> implFqcnsByType = new HashMap<>();
-			final Map<String, Class<T>> availableImplsByType = new HashMap<>();
 
 			for(final Map<String, Object> nextImplInfo : implConfig) {
 

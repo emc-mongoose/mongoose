@@ -17,7 +17,7 @@ import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import org.apache.commons.csv.CSVRecord;
 
 import org.apache.logging.log4j.Level;
-
+import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -25,7 +25,6 @@ import static org.junit.Assert.fail;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -102,6 +101,12 @@ extends ScenarioTestBase {
 		LogUtil.flushAll();
 		stdOutput = stdOutStream.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
+	}
+
+	@After
+	public final void tearDown()
+	throws Exception {
+		super.tearDown();
 	}
 	
 	@Override

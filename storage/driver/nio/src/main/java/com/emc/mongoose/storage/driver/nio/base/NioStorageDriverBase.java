@@ -8,6 +8,7 @@ import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
 
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
@@ -26,6 +27,7 @@ import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -97,6 +99,9 @@ implements NioStorageDriver<I, O> {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
+
+			ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+
 			ioTaskBuffSize = ioTaskBuff.size();
 			if(ioTaskBuffSize > 0) {
 				try {
@@ -151,27 +156,17 @@ implements NioStorageDriver<I, O> {
 
 		@Override
 		protected final void doClose() {
-			try {
-				if(ioTaskBuff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-					ioTaskBuffSize = ioTaskBuff.size();
-					Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
-					for(int i = 0; i < ioTaskBuffSize; i ++) {
-						ioTask = ioTaskBuff.get(i);
-						if(ACTIVE.equals(ioTask.getStatus())) {
-							ioTask.setStatus(INTERRUPTED);
-							concurrencyThrottle.release();
-							ioTaskCompleted(ioTask);
-						}
-					}
-					Loggers.MSG.debug("Finish the remaining active tasks done");
-				} else {
-					Loggers.ERR.debug(
-						"Failed to obtain the I/O tasks buff lock in time, thread dump:\n{}",
-						new ThreadDump().toString()
-					);
+			ioTaskBuffSize = ioTaskBuff.size();
+			Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
+			for(int i = 0; i < ioTaskBuffSize; i ++) {
+				ioTask = ioTaskBuff.get(i);
+				if(ACTIVE.equals(ioTask.getStatus())) {
+					ioTask.setStatus(INTERRUPTED);
+					concurrencyThrottle.release();
+					ioTaskCompleted(ioTask);
 				}
-			} catch(final InterruptedException ignored) {
 			}
+			Loggers.MSG.debug("Finish the remaining active tasks done");
 		}
 	}
 
@@ -196,11 +191,7 @@ implements NioStorageDriver<I, O> {
 	protected final void doInterrupt()
 	throws IllegalStateException {
 		for(final Coroutine ioCoroutine : ioCoroutines) {
-			try {
-				ioCoroutine.close();
-			} catch(final IOException e) {
-				Loggers.ERR.warn("{}: failed to stop and close the I/O coroutine", stepId);
-			}
+			ioCoroutine.stop();
 		}
 	}
 
@@ -275,6 +266,9 @@ implements NioStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
+		for(final Coroutine ioCoroutine : ioCoroutines) {
+			ioCoroutine.close();
+		}
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				if(ioTaskBuffs[i].tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {

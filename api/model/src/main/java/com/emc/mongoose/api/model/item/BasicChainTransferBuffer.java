@@ -84,7 +84,7 @@ implements ChainTransferBuffer<I, O> {
 		return n;
 	}
 
-	/** Please don't use this method, it's unsafe and provided just for convenience */
+	/** Don't use this method, it will cause the assertion error */
 	@Override
 	public final Input<O> getInput()
 	throws IOException {
@@ -143,7 +143,7 @@ implements ChainTransferBuffer<I, O> {
 		int n = 0;
 		final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
 		if(delayMicroseconds > 0) {
-			while(ioResultsIter.hasNext()) {
+			while(ioResultsIter.hasNext() && n < limit) {
 				nextIoResult = ioResultsIter.next();
 				nextFinishTime = nextIoResult.getRespTimeDone();
 				currTime = IoTask.START_OFFSET_MICROS + nanoTime() / 1000;
@@ -158,7 +158,7 @@ implements ChainTransferBuffer<I, O> {
 				}
 			}
 		} else {
-			while(ioResultsIter.hasNext()) {
+			while(ioResultsIter.hasNext() && n < limit) {
 				nextIoResult = ioResultsIter.next();
 				buffer.add(nextIoResult.getItem());
 				if(markLimit > 0 && markLimit > markBuffer.size()) {

@@ -8,6 +8,9 @@ import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
 import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.OutputCoroutine;
+import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
+
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
@@ -20,8 +23,8 @@ import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 
-import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -48,7 +51,7 @@ implements LoadGenerator<I, O>, Coroutine {
 
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
-	private volatile Output<O> ioTaskOutput;
+	private volatile OutputCoroutine<O> ioTaskOutput = null;
 	private volatile boolean recycleQueueFullState = false;
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean taskInputFinishFlag = false;
@@ -112,8 +115,14 @@ implements LoadGenerator<I, O>, Coroutine {
 	}
 
 	@Override
-	public final void setOutput(final Output<O> ioTaskOutput) {
-		this.ioTaskOutput = ioTaskOutput;
+	public final void setOutputs(final List<? extends Output<O>> ioTaskOutputs) {
+		if(this.ioTaskOutput != null && !this.ioTaskOutput.isClosed()) {
+			try {
+				this.ioTaskOutput.close();
+			} catch(final IOException ignored) {
+			}
+		}
+		this.ioTaskOutput = new RoundRobinOutputCoroutine<>(SVC_EXECUTOR, ioTaskOutputs, batchSize);
 	}
 
 	@Override
@@ -156,6 +165,8 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	public final void run() {
 
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
 		if(tasksBuff == null) {
 			tasksBuff = new OptLockArrayBuffer<>(batchSize);
@@ -164,10 +175,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		int pendingTasksCount = tasksBuff.size();
 		int n = batchSize - pendingTasksCount;
 
-		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+		try {
 			if(n > 0) { // the tasks buffer has free space for the new tasks
 
 				if(!itemInputFinishFlag) {
@@ -326,21 +334,14 @@ implements LoadGenerator<I, O>, Coroutine {
 	protected void doStart()
 	throws IllegalStateException {
 		SVC_EXECUTOR.start(this);
+		if(ioTaskOutput != null) {
+			ioTaskOutput.start();
+		}
 	}
 
 	@Override
 	protected final void doShutdown() {
 		interrupt();
-	}
-
-	@Override
-	protected final void doInterrupt() {
-		SVC_EXECUTOR.stop(this);
-		Loggers.MSG.debug(
-			"{}: generated {}, recycled {}, output {} I/O tasks",
-			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
-			outputTaskCounter.sum()
-		);
 	}
 
 	@Override
@@ -364,6 +365,16 @@ implements LoadGenerator<I, O>, Coroutine {
 	}
 
 	@Override
+	protected final void doInterrupt() {
+		SVC_EXECUTOR.stop(this);
+		Loggers.MSG.debug(
+			"{}: generated {}, recycled {}, output {} I/O tasks",
+			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
+			outputTaskCounter.sum()
+		);
+	}
+
+	@Override
 	protected final void doClose()
 	throws IOException {
 		if(recycleQueue != null) {
@@ -382,6 +393,8 @@ implements LoadGenerator<I, O>, Coroutine {
 		// I/O task builder is instantiated by the load generator builder which forgets it
 		// so the load generator should close it
 		ioTaskBuilder.close();
+		//
+		ioTaskOutput.close();
 	}
 	
 	@Override
@@ -392,5 +405,15 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	public final int hashCode() {
 		return originCode;
+	}
+
+	@Override
+	public void stop() {
+		interrupt();
+	}
+
+	@Override
+	public boolean isStopped() {
+		return isInterrupted();
 	}
 }

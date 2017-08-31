@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.api.common.exception.DanShootHisFootException;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
@@ -124,6 +125,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
+		/*if(this.itemInput != null) {
+			try {
+				this.itemInput.close();
+			} catch(final IOException ignored) {
+			}
+		}*/
 		this.itemInput = itemInput;
 		// chain transfer buffer is not resettable
 		if(!(itemInput instanceof ChainTransferBuffer)) {
@@ -137,26 +144,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws UserShootHisFootException {
-		
-		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
+
+		// prepare
 		final IoTaskBuilder<I, O> ioTaskBuilder;
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
-
 		final GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
 		final boolean shuffleFlag = generatorConfig.getShuffle();
-
 		final InputConfig inputConfig = itemConfig.getInputConfig();
-		
-		final BatchSupplier<String> outputPathSupplier;
-		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
-			outputPathSupplier = getOutputPathSupplier();
-		} else {
-			outputPathSupplier = null;
-		}
-		
+		final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
+
+		// init the I/O task builder
 		if(ItemType.DATA.equals(itemType)) {
-			final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
 			final List<Range> fixedRanges;
 			if(fixedRangesConfig != null) {
@@ -176,12 +175,28 @@ implements LoadGeneratorBuilder<I, O, T> {
 		} else {
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicTokenIoTaskBuilder();
 		}
-		
+
+		// determine the operations type
+		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
+		ioTaskBuilder.setIoType(ioType);
+
+		// determine the input path
 		String itemInputPath = inputConfig.getPath();
 		if(itemInputPath != null && itemInputPath.indexOf('/') != 0) {
 			itemInputPath = '/' + itemInputPath;
 		}
-		
+		ioTaskBuilder.setInputPath(itemInputPath);
+
+		// determine the output path
+		final BatchSupplier<String> outputPathSupplier;
+		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
+			outputPathSupplier = getOutputPathSupplier();
+		} else {
+			outputPathSupplier = null;
+		}
+		ioTaskBuilder.setOutputPathSupplier(outputPathSupplier);
+
+		// init the credentials, multi-user case support
 		final BatchSupplier<String> uidSupplier;
 		final String uid = authConfig.getUid();
 		if(uid == null) {
@@ -191,6 +206,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		} else {
 			uidSupplier = new ConstantStringSupplier(uid);
 		}
+		ioTaskBuilder.setUidSupplier(uidSupplier);
 
 		final String authFile = authConfig.getFile();
 		if(authFile != null && !authFile.isEmpty()) {
@@ -208,13 +224,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 			
 			ioTaskBuilder.setSecretSupplier(secretSupplier);
 		}
-		
-		ioTaskBuilder
-			.setIoType(IoType.valueOf(loadConfig.getType().toUpperCase()))
-			.setInputPath(itemInputPath)
-			.setOutputPathSupplier(outputPathSupplier)
-			.setUidSupplier(uidSupplier);
 
+		// init the items input
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
@@ -231,6 +242,67 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
+		// intercept the items input for the copy ranges support
+		final Range srcItemsCountRange = rangesConfig.getConcat();
+		if(srcItemsCountRange != null) {
+			if(
+				IoType.CREATE.equals(ioType)
+					&& ItemType.DATA.equals(itemType)
+					&& !(itemInput instanceof NewItemInput)
+			) {
+				final long srcItemsCountMin = srcItemsCountRange.getBeg();
+				final long srcItemsCountMax = srcItemsCountRange.getEnd();
+				if(srcItemsCountMin < 0) {
+					throw new DanShootHisFootException(
+						"Source data items count min value should be more than 0"
+					);
+				}
+				if(srcItemsCountMax == 0 || srcItemsCountMax < srcItemsCountMin) {
+					throw new DanShootHisFootException(
+						"Source data items count max value should be more than 0 and not less than "
+							+ "min value"
+					);
+				}
+				final List<I> srcItemsBuff = new ArrayList<>((int) M);
+				final int srcItemsCount;
+				try {
+					srcItemsCount = loadSrcItems(itemInput, srcItemsBuff, (int) M);
+				} catch(final IOException e) {
+					throw new DanShootHisFootException(e);
+				} finally {
+					try {
+						itemInput.close();
+					} catch(final IOException ignored) {
+					}
+				}
+				if(srcItemsCount == 0) {
+					throw new DanShootHisFootException(
+						"Available source items count " + srcItemsCount + " should be more than 0"
+					);
+				}
+				if(srcItemsCount < srcItemsCountMin) {
+					throw new DanShootHisFootException(
+						"Available source items count " + srcItemsCount + " is less than configured"
+							+ " min " + srcItemsCountMin
+					);
+				}
+				if(srcItemsCount < srcItemsCountMax) {
+					throw new DanShootHisFootException(
+						"Available source items count " + srcItemsCount + " is less than configured"
+							+ " max " + srcItemsCountMax
+					);
+				}
+				// it's safe to cast to int here because the values will not be more than
+				// srcItemsCount which is not more than the integer limit
+				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsCount(
+					(int) srcItemsCountMin, (int) srcItemsCountMax
+				);
+				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsForConcat(srcItemsBuff);
+				itemInput = getNewItemInput();
+			}
+		}
+
+		// adjust the storage drivers for the estimated transfer size
 		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
 			for(final StorageDriver<I, O> storageDriver : storageDrivers) {
 				try {
@@ -358,35 +430,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 	) throws UserShootHisFootException {
 		
 		if(itemInputFile == null || itemInputFile.isEmpty()) {
-
-			final NamingConfig namingConfig = itemConfig.getNamingConfig();
-			final ItemNamingType namingType = ItemNamingType.valueOf(
-				namingConfig.getType().toUpperCase()
-			);
-			final String namingPrefix = namingConfig.getPrefix();
-			final int namingLength = namingConfig.getLength();
-			final int namingRadix = namingConfig.getRadix();
-			final long namingOffset = namingConfig.getOffset();
-
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
 				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
-					final ItemNameSupplier itemNameInput = new ItemNameSupplier(
-						namingType, namingPrefix, namingLength, namingRadix, namingOffset
-					);
-					if(itemFactory instanceof BasicDataItemFactory) {
-						final SizeInBytes size = itemConfig.getDataConfig().getSize();
-						itemInput = (Input<I>) new NewDataItemInput(
-							itemFactory, itemNameInput, size
-						);
-					} else {
-						itemInput = new NewItemInput<>(itemFactory, itemNameInput);
-					}
+					itemInput = getNewItemInput();
 				} else {
 					throw new UserShootHisFootException(
 						"No input (file either path) is specified for non-create generator"
 					);
 				}
 			} else {
+				final NamingConfig namingConfig = itemConfig.getNamingConfig();
+				final String namingPrefix = namingConfig.getPrefix();
+				final int namingRadix = namingConfig.getRadix();
 				itemInput = new StorageItemInput<>(
 					storageDrivers.get(0), batchSize, itemFactory, itemInputPath, namingPrefix,
 					namingRadix
@@ -404,6 +459,28 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
+		return itemInput;
+	}
+
+	private Input<I> getNewItemInput()
+	throws DanShootHisFootException {
+		final NamingConfig namingConfig = itemConfig.getNamingConfig();
+		final ItemNamingType namingType = ItemNamingType.valueOf(
+			namingConfig.getType().toUpperCase()
+		);
+		final String namingPrefix = namingConfig.getPrefix();
+		final int namingLength = namingConfig.getLength();
+		final int namingRadix = namingConfig.getRadix();
+		final long namingOffset = namingConfig.getOffset();
+		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
+			namingType, namingPrefix, namingLength, namingRadix, namingOffset
+		);
+		if(itemFactory instanceof BasicDataItemFactory) {
+			final SizeInBytes size = itemConfig.getDataConfig().getSize();
+			itemInput = (Input<I>) new NewDataItemInput(itemFactory, itemNameInput, size);
+		} else {
+			itemInput = new NewItemInput<>(itemFactory, itemNameInput);
+		}
 		return itemInput;
 	}
 	
@@ -434,5 +511,24 @@ implements LoadGeneratorBuilder<I, O, T> {
 			);
 		}
 		return credentials;
+	}
+
+	private static <I extends Item> int loadSrcItems(
+		final Input<I> itemInput, final List<I> itemBuff, final int countLimit
+	) throws IOException {
+		int n = 0;
+		try {
+			int m;
+			while(n < countLimit) {
+				m = itemInput.get(itemBuff, countLimit - n);
+				if(m < 0) {
+					break;
+				} else {
+					n += m;
+				}
+			}
+		} catch(final EOFException ignore) {
+		}
+		return n;
 	}
 }

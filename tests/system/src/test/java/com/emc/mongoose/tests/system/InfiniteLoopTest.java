@@ -11,7 +11,7 @@ import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
-
+import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 
@@ -62,6 +62,12 @@ extends ScenarioTestBase {
 		runner.join();
 		TimeUnit.SECONDS.sleep(10);
 		LogUtil.flushAll();
+	}
+
+	@After
+	public final void tearDown()
+	throws Exception {
+		super.tearDown();
 	}
 
 	@Override

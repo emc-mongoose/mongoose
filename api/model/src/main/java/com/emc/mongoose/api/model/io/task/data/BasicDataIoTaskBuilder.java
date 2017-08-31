@@ -5,12 +5,14 @@ import com.emc.mongoose.api.model.io.task.composite.data.BasicCompositeDataIoTas
 import com.emc.mongoose.api.model.io.task.BasicIoTaskBuilder;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.storage.Credential;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+
+import com.github.akurilov.commons.math.Random;
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
-import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 
 /**
  Created by kurila on 14.07.16.
@@ -19,6 +21,12 @@ public class BasicDataIoTaskBuilder<I extends DataItem, O extends DataIoTask<I>>
 extends BasicIoTaskBuilder<I, O>
 implements DataIoTaskBuilder<I, O> {
 
+	private final Random rnd = new Random();
+
+	protected volatile List<I> srcItemsForConcat = null;
+	protected volatile int srcItemsCount = 0;
+	protected volatile int srcItemsCountMin = 0;
+	protected volatile int srcItemsCountMax = 0;
 	protected volatile List<Range> fixedRanges = null;
 	protected volatile int randomRangesCount = 0;
 	protected volatile long sizeThreshold = 0;
@@ -38,6 +46,22 @@ implements DataIoTaskBuilder<I, O> {
 	@Override
 	public BasicDataIoTaskBuilder<I, O> setSizeThreshold(final long sizeThreshold) {
 		this.sizeThreshold = sizeThreshold > 0 ? sizeThreshold : Long.MAX_VALUE;
+		return this;
+	}
+
+	@Override
+	public BasicDataIoTaskBuilder<I, O> setSrcItemsCount(final int min, final int max) {
+		this.srcItemsCountMin = min;
+		this.srcItemsCountMax = max;
+		return this;
+	}
+
+	@Override
+	public BasicDataIoTaskBuilder<I, O> setSrcItemsForConcat(final List<I> srcItemsForConcat) {
+		this.srcItemsForConcat = srcItemsForConcat;
+		if(this.srcItemsForConcat != null) {
+			this.srcItemsCount = srcItemsForConcat.size();
+		}
 		return this;
 	}
 	
@@ -70,6 +94,12 @@ implements DataIoTaskBuilder<I, O> {
 				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount, sizeThreshold
+			);
+		} else if(srcItemsCount > 0) {
+			return (O) new BasicDataIoTask<>(
+				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+				fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
 			);
 		} else {
 			if(randomRangesCount > getRangeCount(dataItem.size())) {
@@ -104,6 +134,14 @@ implements DataIoTaskBuilder<I, O> {
 						fixedRanges, randomRangesCount, sizeThreshold
 					)
 				);
+			} else if(srcItemsCount > 0) {
+				buff.add(
+					(O) new BasicDataIoTask<>(
+						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+						fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
+					)
+				);
 			} else {
 				if(randomRangesCount > getRangeCount(nextItem.size())) {
 					throw new IllegalArgumentException(
@@ -120,5 +158,30 @@ implements DataIoTaskBuilder<I, O> {
 				);
 			}
 		}
+	}
+
+	@Override
+	public void close()
+	throws IOException {
+		super.close();
+		if(srcItemsForConcat != null) {
+			srcItemsForConcat.clear();
+			srcItemsForConcat = null;
+		}
+		if(fixedRanges != null) {
+			fixedRanges.clear();
+			fixedRanges = null;
+		}
+	}
+
+	protected List<I> getNextSrcItemsForConcat() {
+		final int n = srcItemsCountMin < srcItemsCountMax ?
+			srcItemsCountMin + rnd.nextInt(srcItemsCountMax - srcItemsCountMin + 1) :
+			srcItemsCountMin;
+		final List<I> selectedItems = new ArrayList<>(n);
+		for(int i = 0; i < n; i ++) {
+			selectedItems.add(srcItemsForConcat.get(rnd.nextInt(srcItemsCount)));
+		}
+		return selectedItems;
 	}
 }

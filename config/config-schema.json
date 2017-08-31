@@ -80,6 +80,17 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
+								"concat" : {
+									"oneOf" : [
+										{
+											"type" : "null"
+										},
+										{
+											"type" : "string",
+											"pattern" : "\\d+(-\\d+)?"
+										}
+									]
+								},
 								"fixed" : {
 									"oneOf" : [
 										{
@@ -112,7 +123,7 @@
 								}
 							},
 							"required" : [
-								"fixed", "random", "threshold"
+								"concat", "fixed", "random", "threshold"
 							]
 						},
 						"size": {

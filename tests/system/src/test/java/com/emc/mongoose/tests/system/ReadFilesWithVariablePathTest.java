@@ -57,6 +57,10 @@ extends ScenarioTestBase {
 		fileOutputPath = Paths
 			.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId)
 			.toString();
+		try {
+			DirWithManyFilesDeleter.deleteExternal(fileOutputPath);
+		} catch(final Throwable ignored) {
+		}
 		EnvUtil.set("FILE_OUTPUT_PATH", fileOutputPath);
 		scenario = new JsonScenario(config, scenarioPath.toFile());
 		stdOutStream.startRecording();

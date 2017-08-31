@@ -14,9 +14,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.PrematureChannelClosureException;
 import io.netty.handler.timeout.IdleStateEvent;
-import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -41,11 +40,12 @@ extends SimpleChannelInboundHandler<M> {
 	@Override @SuppressWarnings("unchecked")
 	protected final void channelRead0(final ChannelHandlerContext ctx, final M msg)
 	throws Exception {
+
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-			handle(channel, ioTask, msg);
-		}
+		handle(channel, ioTask, msg);
 	}
 	
 	protected abstract void handle(final Channel channel, final O ioTask, final M msg)

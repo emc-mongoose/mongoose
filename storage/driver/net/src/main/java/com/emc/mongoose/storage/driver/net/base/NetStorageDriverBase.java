@@ -48,6 +48,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
@@ -282,14 +283,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	protected boolean submit(final O ioTask)
 	throws IllegalStateException {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+		try {
 			if(IoType.NOOP.equals(ioTask.getIoType())) {
 				if(concurrencyThrottle.tryAcquire()) {
 					ioTask.startRequest();
@@ -328,13 +329,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> ioTasks, final int from, final int to)
 	throws IllegalStateException {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		Channel conn;
 		O nextIoTask;
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+		try {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
 				if(IoType.NOOP.equals(nextIoTask.getIoType())) {
@@ -538,11 +539,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@Override
 	public void complete(final Channel channel, final O ioTask) {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+
+		try {
 			ioTask.finishResponse();
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());

@@ -1,10 +1,8 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
@@ -13,12 +11,10 @@ import com.github.akurilov.commons.collection.OptLockBuffer;
 import com.github.akurilov.coroutines.CoroutinesProcessor;
 import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
 
-import org.apache.logging.log4j.CloseableThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  Created by andrey on 23.08.17.
@@ -65,11 +61,11 @@ extends ExclusiveCoroutineBase {
 
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
+		try {
 			// child tasks go first
 			if(n < batchSize) {
 				n += childTasksQueue.drainTo(buff, batchSize - n);
@@ -112,22 +108,6 @@ extends ExclusiveCoroutineBase {
 
 	@Override
 	protected final void doClose() {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
-		) {
-			if(!buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-				Loggers.ERR.debug(
-					"{}: failed to obtain the I/O tasks buffer lock in time, thread dump:\n",
-					storageDriver.toString(), new ThreadDump().toString()
-				);
-			}
-			buff.clear();
-		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: interrupted on close", storageDriver.toString()
-			);
-		}
+		buff.clear();
 	}
 }

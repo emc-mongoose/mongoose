@@ -25,13 +25,13 @@ ext {
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
 		jackson : "2.9.0",
-		javaCommons : "1.0.5",
-		javaCoroutines : "1.0.3",
+		javaCommons : "[1.0.8,)",
+		javaCoroutines : "[1.0.10,)",
 		javassist : "3.21.0-GA",
 		slf4j : "1.7.24",
 		log4j : "2.8.2",
 		metrics : "3.2.3",
-		nagaina : "[3.5.11,)",
+		nagaina : "[3.5.16,)",
 		netty : "4.1.14.Final",
 	]
 

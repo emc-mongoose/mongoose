@@ -28,6 +28,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 	private final LongAdder reqDurationSum, respLatencySum;
 	private volatile long lastDurationSum = 0, lastLatencySum = 0;
+	private volatile int lastConcurrency;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	private final long ts;
 	private volatile long tsStart = -1, prevElapsedTime = 0;
@@ -228,6 +229,19 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	public final int getConcurrencyThreshold() {
 		return thresholdConcurrency;
 	}
+
+	@Override
+	public final int getActualConcurrency() {
+		lastConcurrency = actualConcurrencyGauge.getAsInt();
+		actualConcurrency.update(lastConcurrency);
+		if(
+			System.currentTimeMillis() - lastOutputTs
+				> DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS
+		) {
+			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
+		}
+		return lastConcurrency;
+	}
 	//
 	@Override
 	public final SizeInBytes getItemDataSize() {
@@ -273,7 +287,6 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	public final void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
-		final int actualConcurrencyLast = actualConcurrencyGauge.getAsInt();
 		if(currentTimeMillis - lastOutputTs > DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum()) {
 				lastDurationSum = reqDurationSum.sum();
@@ -283,14 +296,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 				lastLatencySum = respLatencySum.sum();
 				respLatSnapshot = respLatency.getSnapshot();
 			}
-			actualConcurrency.update(actualConcurrencyLast);
-			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
 		lastSnapshot =  new BasicSnapshot(
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
 			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime,
-			actualConcurrencyLast, actualConcurrencySnapshot.getMean(),
+			lastConcurrency, actualConcurrencySnapshot.getMean(),
 			lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
 		);
 		if(metricsListener != null) {

@@ -25,18 +25,19 @@ public class BasicDataIoTask<T extends DataItem>
 extends BasicIoTask<T>
 implements DataIoTask<T> {
 	
-	protected long contentSize;
 	protected final BitSet[] markedRangesMaskPair = new BitSet[] {
 		new BitSet(Long.SIZE), new BitSet(Long.SIZE)
 	};
-	private int randomRangesCount;
-	private List<Range> fixedRanges;
-	
-	protected transient volatile DataInput contentSrc;
-	protected transient volatile long countBytesDone;
-	protected transient volatile long respDataTimeStart;
-	private volatile DataItem currRange;
-	private volatile int currRangeIdx;
+	private int randomRangesCount = 0;
+	private List<Range> fixedRanges = null;
+	private List<T> srcItemsToConcat = null;
+	protected long contentSize = 0;
+
+	protected transient volatile DataInput contentSrc = null;
+	protected transient volatile long countBytesDone = 0;
+	protected transient volatile long respDataTimeStart = 0;
+	private volatile DataItem currRange = null;
+	private volatile int currRangeIdx = 0;
 	
 	public BasicDataIoTask() {
 		super();
@@ -44,8 +45,8 @@ implements DataIoTask<T> {
 	
 	public BasicDataIoTask(
 		final int originCode, final IoType ioType, final T item, final String srcPath,
-		final String dstPath, final Credential credential,
-		final List<Range> fixedRanges, final int randomRangesCount
+		final String dstPath, final Credential credential, final List<Range> fixedRanges,
+		final int randomRangesCount
 	) throws IllegalArgumentException {
 		super(originCode, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
@@ -54,11 +55,23 @@ implements DataIoTask<T> {
 		contentSrc = item.getDataInput();
 	}
 
+	public BasicDataIoTask(
+		final int originCode, final IoType ioType, final T item, final String srcPath,
+		final String dstPath, final Credential credential, final List<Range> fixedRanges,
+		final int randomRangesCount, final List<T> srcItemsToConcat
+	) throws IllegalArgumentException {
+		this(
+			originCode, ioType, item, srcPath, dstPath, credential, fixedRanges, randomRangesCount
+		);
+		this.srcItemsToConcat = srcItemsToConcat;
+	}
+
 	protected BasicDataIoTask(final BasicDataIoTask<T> other) {
 		super(other);
 		this.contentSize = other.contentSize;
 		this.randomRangesCount = other.randomRangesCount;
 		this.fixedRanges = other.fixedRanges;
+		this.srcItemsToConcat = other.srcItemsToConcat;
 		this.countBytesDone = other.countBytesDone;
 		this.respDataTimeStart = other.respDataTimeStart;
 	}
@@ -225,6 +238,16 @@ implements DataIoTask<T> {
 	public final List<Range> getFixedRanges() {
 		return fixedRanges;
 	}
+
+	@Override
+	public final int getRandomRangesCount() {
+		return randomRangesCount;
+	}
+
+	@Override
+	public final List<T> getSrcItemsToConcat() {
+		return srcItemsToConcat;
+	}
 	
 	@Override
 	public final int getCurrRangeIdx() {
@@ -312,14 +335,20 @@ implements DataIoTask<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeLong(contentSize);
-		if(fixedRanges == null || fixedRanges.size() == 0) {
+		int n;
+		if(fixedRanges == null) {
 			out.writeInt(0);
 		} else {
-			out.writeInt(fixedRanges.size());
-			for(final Range br : fixedRanges) {
-				out.writeLong(br.getBeg());
-				out.writeLong(br.getEnd());
-				out.writeLong(br.getSize());
+			n = fixedRanges.size();
+			out.writeInt(n);
+			if(n > 0) {
+				Range nextRange;
+				for(int i = 0; i < n; i ++) {
+					nextRange = fixedRanges.get(i);
+					out.writeLong(nextRange.getBeg());
+					out.writeLong(nextRange.getEnd());
+					out.writeLong(nextRange.getSize());
+				}
 			}
 		}
 		out.writeInt(randomRangesCount);
@@ -331,6 +360,17 @@ implements DataIoTask<T> {
 		);
 		out.writeLong(countBytesDone);
 		out.writeLong(respDataTimeStart);
+		if(srcItemsToConcat == null) {
+			out.writeInt(0);
+		} else {
+			n = srcItemsToConcat.size();
+			out.writeInt(n);
+			if(n > 0) {
+				for(int i = 0; i < n; i ++) {
+					out.writeObject(srcItemsToConcat.get(i));
+				}
+			}
+		}
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -339,12 +379,12 @@ implements DataIoTask<T> {
 		super.readExternal(in);
 		contentSrc = item.getDataInput();
 		contentSize = in.readLong();
-		final int fixedRangesCount = in.readInt();
-		if(fixedRangesCount == 0) {
+		int n = in.readInt();
+		if(n == 0) {
 			fixedRanges = null;
 		} else {
-			fixedRanges = new ArrayList<>(fixedRangesCount);
-			for(int i = 0; i < fixedRangesCount; i ++) {
+			fixedRanges = new ArrayList<>(n);
+			for(int i = 0; i < n; i ++) {
 				fixedRanges.add(new Range(in.readLong(), in.readLong(), in.readLong()));
 			}
 		}
@@ -353,5 +393,12 @@ implements DataIoTask<T> {
 		markedRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
 		countBytesDone = in.readLong();
 		respDataTimeStart = in.readLong();
+		n = in.readInt();
+		if(n > 0) {
+			srcItemsToConcat = new ArrayList<>(n);
+			for(int i = 0; i < n; i ++) {
+				srcItemsToConcat.add((T) in.readObject());
+			}
+		}
 	}
 }

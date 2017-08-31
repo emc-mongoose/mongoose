@@ -9,6 +9,8 @@ import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.io.IoType;
 
+import java.util.List;
+
 /**
  Created on 11.07.16.
  */
@@ -21,9 +23,9 @@ extends Daemon {
 
 	/**
 	 Set the generated tasks destination
-	 @param ioTaskOutput tasks destionation
+	 @param ioTaskOutputs list of the task outputs
 	 */
-	void setOutput(final Output<O> ioTaskOutput);
+	void setOutputs(final List<? extends Output<O>> ioTaskOutputs);
 
 	/**
 	 @return sum of the new tasks and recycled ones

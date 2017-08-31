@@ -1,5 +1,6 @@
 package com.emc.mongoose.ui.config;
 
+import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
@@ -381,6 +382,11 @@ implements Serializable {
 						configCls
 							.getMethod("set" + capitalize(key), SizeInBytes.class)
 							.invoke(config, sizeValue);
+					} else if(fieldType.equals(Range.class)) {
+						final Range rangeValue = new Range((String) value);
+						configCls
+							.getMethod("set" + capitalize(key), Range.class)
+							.invoke(config, rangeValue);
 					} else {
 						throw new IllegalStateException(
 							"Field type is \"" + fieldType.getName() + "\" for key: " + key

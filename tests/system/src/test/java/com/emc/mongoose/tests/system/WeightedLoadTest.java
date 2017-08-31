@@ -117,7 +117,7 @@ extends ScenarioTestBase {
 				actualConcurrency = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
 				break;
 			case ATMOS:
-			case S3:
+			case AMZS3:
 			case SWIFT:
 				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {
@@ -168,7 +168,7 @@ extends ScenarioTestBase {
 				openChannels = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
 				break;
 			case ATMOS:
-			case S3:
+			case AMZS3:
 			case SWIFT:
 				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {

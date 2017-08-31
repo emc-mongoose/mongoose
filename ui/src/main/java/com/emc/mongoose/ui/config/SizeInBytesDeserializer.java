@@ -15,9 +15,7 @@ public final class SizeInBytesDeserializer
 extends JsonDeserializer<SizeInBytes> {
 
 	@Override
-	public final SizeInBytes deserialize(
-		final JsonParser p, final DeserializationContext ctx
-	)
+	public final SizeInBytes deserialize(final JsonParser p, final DeserializationContext ctx)
 	throws IOException {
 		return new SizeInBytes(p.getValueAsString());
 	}

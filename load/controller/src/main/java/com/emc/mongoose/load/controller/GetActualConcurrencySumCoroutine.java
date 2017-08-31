@@ -19,14 +19,15 @@ import java.util.concurrent.atomic.LongAdder;
 public class GetActualConcurrencySumCoroutine
 extends ExclusiveCoroutineBase {
 
-	private final List<StorageDriver> storageDrivers;
+	private final List<? extends StorageDriver> storageDrivers;
 	private final LongAdder tmpSum = new LongAdder();
 
-	private volatile Iterator<StorageDriver> it;
+	private volatile Iterator<? extends StorageDriver> it;
 	private volatile int lastValue = 0;
 
 	public GetActualConcurrencySumCoroutine(
-		final CoroutinesProcessor coroutinesProcessor, final List<StorageDriver> storageDrivers
+		final CoroutinesProcessor coroutinesProcessor,
+		final List<? extends StorageDriver> storageDrivers
 	) {
 		super(coroutinesProcessor);
 		this.storageDrivers = storageDrivers;
@@ -57,6 +58,5 @@ extends ExclusiveCoroutineBase {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		storageDrivers.clear();
 	}
 }

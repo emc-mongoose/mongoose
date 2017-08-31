@@ -197,48 +197,44 @@ extends StepBase {
 				Loggers.MSG.info("Load step \"{}\" started", nextController.getName());
 			}
 		} catch(final RemoteException e) {
-			LogUtil.exception(Level.WARN, e, "Unexpected failure");
+			LogUtil.exception(Level.WARN, e, "Unexpected failure while starting the controller");
 		}
 		
 		long timeRemainSec = timeLimitSec;
 		long tsStart;
 		final int controllersCount = loadChain.size();
-		for(int i = 0; i < controllersCount; i ++) {
-			final LoadController controller = loadChain.get(i);
-			if(timeRemainSec > 0) {
-				tsStart = System.currentTimeMillis();
-				try {
+		try {
+			for(int i = 0; i < controllersCount; i ++) {
+				final LoadController controller = loadChain.get(i);
+				if(timeRemainSec > 0) {
+					tsStart = System.currentTimeMillis();
 					try {
-						if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
-							Loggers.MSG.info("Load step \"{}\" done", controller.getName());
-						} else {
-							Loggers.MSG.info("Load step \"{}\" timeout", controller.getName());
-						}
-					} catch(final InterruptedException e) {
-						Loggers.MSG.debug("Load step interrupted");
-						for(final LoadController nextController : loadChain) {
-							try {
-								nextController.close();
-							} catch(final IOException ee) {
-								LogUtil.exception(
-									Level.WARN, ee, "Failed to close the step \"{}\"",
-									nextController.getName()
-								);
+						try {
+							if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
+								Loggers.MSG.info("Load step \"{}\" done", controller.getName());
+							} else {
+								Loggers.MSG.info("Load step \"{}\" timeout", controller.getName());
 							}
+						} finally {
+							controller.interrupt();
 						}
-						throw new CancellationException();
-					} finally {
-						controller.interrupt();
+					} catch(final RemoteException e) {
+						throw new AssertionError(e);
 					}
-				} catch(final RemoteException e) {
-					throw new AssertionError(e);
+					timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
+				} else {
+					break;
 				}
-				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
-			} else {
-				break;
 			}
+		} catch(final InterruptedException e) {
+			Loggers.MSG.debug("Load step interrupted");
+			throw new CancellationException();
 		}
-
+	}
+	
+	@Override
+	public void close()
+	throws IOException {
 		for(final LoadController nextController : loadChain) {
 			try {
 				nextController.close();
@@ -248,11 +244,7 @@ extends StepBase {
 				);
 			}
 		}
-	}
-	
-	@Override
-	public void close()
-	throws IOException {
+		loadChain.clear();
 		nodeConfigList.clear();
 	}
 }

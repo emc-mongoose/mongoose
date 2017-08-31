@@ -14,6 +14,9 @@
 				"seed" : "7a42d9c483244167"
 			},
 			"ranges" : {
+				// The number/range of numbers of the source objects used to concatenate every
+				// destination object.
+				"concat" : null,
 				// The fixed byte ranges to update or read (depends on the specified op type)
 				"fixed" : null,
 				// The count of the random ranges to update or read
@@ -161,19 +164,24 @@
 					"fqcn" : "com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver"
 				},
 				{
-					"type" : "atmos",
-					"file" : "mongoose-storage-driver-net-http-atmos.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.atmos.AtmosStorageDriver"
-				},
-				{
-					"type" : "s3",
-					"file" : "mongoose-storage-driver-net-http-s3.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.s3.S3StorageDriver"
+					"type" : "amzs3",
+					"file" : "mongoose-storage-driver-net-http-amzs3.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3StorageDriver"
 				},
 				{
 					"type" : "swift",
 					"file" : "mongoose-storage-driver-net-http-swift.jar",
 					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
+				},
+				{
+					"type" : "atmos",
+					"file" : "mongoose-storage-driver-net-http-emc-atmos.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.net.http.emc.atmos.AtmosStorageDriver"
+				},
+				{
+					"type" : "emcs3",
+					"file" : "mongoose-storage-driver-net-http-emc-s3.jar",
+					"fqcn" : "com.emc.mongoose.storage.driver.net.http.emc.s3.EmcS3StorageDriver"
 				},
 				{
 					"type" : "mock-dummy",
@@ -208,7 +216,7 @@
 			// The count of the shared/global I/O executor threads. 0 (default) is reserved to use the CPU cores/threads count
 			"threads" : 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
-			"type" : "s3"
+			"type" : "amzs3"
 		},
 		// The "mock" section is used by the storage mock embedded into the system tests runtime
 		"mock" : {

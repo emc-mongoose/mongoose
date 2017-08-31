@@ -11,6 +11,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
+import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -66,6 +67,12 @@ extends ScenarioTestBase {
 		scenario.run();
 		LogUtil.flushAll();
 		stdOutput = stdOutStream.stopRecordingAndGet();
+	}
+
+	@After
+	public final void tearDown()
+	throws Exception {
+		super.tearDown();
 	}
 
 	@Override

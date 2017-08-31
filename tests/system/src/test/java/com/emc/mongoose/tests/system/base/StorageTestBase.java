@@ -20,7 +20,6 @@ import com.emc.mongoose.ui.config.storage.mock.container.ContainerConfig;
 import com.emc.mongoose.ui.config.storage.mock.fail.FailConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
 import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
 
 import org.junit.After;
 import org.junit.Before;
@@ -69,12 +68,12 @@ extends ConfiguredTestBase {
 		storageConfig.getDriverConfig().setType(storageType.name().toLowerCase());
 		switch(storageType) {
 			case ATMOS:
-			case S3:
+			case AMZS3:
+			case EMCS3:
 			case SWIFT:
 				httpStorageMocks = new HashMap<>();
 				final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
 				final ItemConfig itemConfig = config.getItemConfig();
-				final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 				final int port = nodeConfig.getPort();
 				final List<String> nodeAddrs = new ArrayList<>();
 				String nextNodeAddr;

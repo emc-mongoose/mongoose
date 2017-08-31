@@ -1,5 +1,6 @@
 package com.emc.mongoose.tests.system;
 
+import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
@@ -78,6 +79,10 @@ extends ScenarioTestBase {
 				itemOutputPath = Paths.get(
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 				).toString();
+				try {
+					DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+				} catch(final Throwable ignored) {
+				}
 				EnvUtil.set("ITEMS_PATH", itemOutputPath);
 				break;
 			case SWIFT:
@@ -99,7 +104,7 @@ extends ScenarioTestBase {
 	}
 
 	@After
-	public void tearDownClass()
+	public void tearDown()
 	throws Exception {
 		if(StorageType.FS.equals(storageType)) {
 			try {
