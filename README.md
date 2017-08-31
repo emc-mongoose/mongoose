@@ -33,7 +33,7 @@ java -jar mongoose.jar
 1. **[[Configuration|v3.5 User Guide#1-configuration]]**
 
     Mongoose has rich configuration subsystem supporting the
-    [[parametrization|v3.5 User Guide#v3.4-User-Guide#13-parameterized-configuration]].
+    [[parametrization|v3.5 User Guide#v3.5-User-Guide#13-parameterized-configuration]].
 
 2. **[[Items|v3.5 User Guide#2-items]]**
 
