@@ -57,7 +57,10 @@ implements TransferConvertBuffer<I, O> {
 	 */
 	@Override
 	public final boolean put(final O ioResult)
-	throws IOException {
+	throws EOFException, IOException {
+		if(poisonedFlag) {
+			throw new EOFException("Poisoned already");
+		}
 		if(ioResult == null) {
 			return poisonedFlag = true;
 		}
@@ -87,15 +90,24 @@ implements TransferConvertBuffer<I, O> {
 	 */
 	@Override
 	public final int put(final List<O> ioResults, final int from, final int to)
-	throws IOException {
+	throws EOFException, IOException {
+		if(poisonedFlag) {
+			throw new EOFException("Poisoned already");
+		}
 		int n;
+		O ioResult;
 		for(int i = from; i < to; i ++) {
 			if(lock.tryLock()) {
 				try {
 					n = Math.min(to - i, ioResultsBuffLimit - ioResultsBuffSize);
 					if(n > 0) {
 						for(int j = 0; j < n; j ++) {
-							ioResultsBuff.add(ioResults.get(i + j));
+							ioResult = ioResults.get(i + j);
+							if(ioResult == null) {
+								poisonedFlag = true;
+								return to - i - j;
+							}
+							ioResultsBuff.add(ioResult);
 						}
 						i += n;
 						// avoid blocking, there's a chance to exit the outer loop

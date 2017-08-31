@@ -10,9 +10,8 @@ import static com.emc.mongoose.api.model.concurrent.Daemon.State.STARTED;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -31,7 +30,7 @@ implements Daemon {
 		SVC_EXECUTOR.setThreadCount(threadCount);
 	}
 
-	private static final List<Daemon> REGISTRY = new ArrayList<>();
+	private static final Queue<Daemon> REGISTRY = new ConcurrentLinkedQueue<>();
 	
 	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
@@ -146,14 +145,11 @@ implements Daemon {
 	}
 
 	public static void closeAll() {
-		synchronized(REGISTRY) {
-			final Iterator<Daemon> i = REGISTRY.iterator();
-			while(i.hasNext()) {
-				try {
-					i.next().close();
-				} catch(final Throwable cause) {
-					LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
-				}
+		while(!REGISTRY.isEmpty()) {
+			try {
+				REGISTRY.poll().close();
+			} catch(final Throwable cause) {
+				LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
 			}
 		}
 	}

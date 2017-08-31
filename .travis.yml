@@ -35,7 +35,7 @@ jobs:
         - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,amzs3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
+    # STORAGE_TYPE=atmos,amzs3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
     - env:
         - TEST=ChainWithDelayTest
         - STORAGE_TYPE=atmos,amzs3
