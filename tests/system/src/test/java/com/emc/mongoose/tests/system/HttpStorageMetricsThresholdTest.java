@@ -185,12 +185,12 @@ extends ScenarioTestBase {
 			}
 		}
 		testMetricsLogRecords(
-			createMetricsRecs, IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
-			0, 0, period
+			createMetricsRecs, IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0, period
 		);
 		testMetricsLogRecords(
-			readMetricsRecs, IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
-			0, 0, period
+			readMetricsRecs, IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0, period
 		);
 		testMetricsLogRecords(
 			updateMetricsRecs, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),

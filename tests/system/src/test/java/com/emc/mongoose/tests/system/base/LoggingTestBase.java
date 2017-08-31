@@ -416,7 +416,7 @@ extends ParameterizedSysTestBase {
 			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
-		final double effEstimate = durationSum / (expectedConcurrency * driverCount * jobDuration);
+		final double effEstimate = durationSum / (expectedConcurrency * expectedDriverCount * jobDuration);
 		if(countSucc > 0 && concurrencyLevel > 0) {
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 		}
