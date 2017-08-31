@@ -18,7 +18,7 @@ import com.emc.mongoose.api.model.item.BasicDataItemFactory;
 import com.emc.mongoose.api.model.item.ItemNameSupplier;
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.DataItem;
-import com.emc.mongoose.api.model.item.ChainTransferBuffer;
+import com.emc.mongoose.api.model.item.TransferConvertBuffer;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemNamingType;
@@ -133,7 +133,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}*/
 		this.itemInput = itemInput;
 		// chain transfer buffer is not resettable
-		if(!(itemInput instanceof ChainTransferBuffer)) {
+		if(!(itemInput instanceof TransferConvertBuffer)) {
 			sizeEstimate = estimateTransferSize(
 				null, IoType.valueOf(loadConfig.getType().toUpperCase()), (Input<DataItem>) itemInput
 			);

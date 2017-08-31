@@ -6,8 +6,8 @@ import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.item.BasicChainTransferBuffer;
-import com.emc.mongoose.api.model.item.ChainTransferBuffer;
+import com.emc.mongoose.api.model.item.DelayedTransferConvertBuffer;
+import com.emc.mongoose.api.model.item.TransferConvertBuffer;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
@@ -83,7 +83,7 @@ extends StepBase {
 		
 		try {
 			
-			ChainTransferBuffer nextItemBuff = null;
+			TransferConvertBuffer nextItemBuff = null;
 			
 			for(int i = 0; i < nodeConfigList.size(); i ++) {
 				
@@ -161,11 +161,12 @@ extends StepBase {
 				loadChain.add(loadController);
 				
 				if(i < nodeConfigList.size() - 1) {
-					nextItemBuff = new BasicChainTransferBuffer<>(
+					nextItemBuff = new DelayedTransferConvertBuffer<>(
 						queueConfig.getOutput(), TimeUnit.SECONDS, itemOutputConfig.getDelay()
 					);
 					loadController.setIoResultsOutput(nextItemBuff);
 				} else {
+					// last controller in the chain
 					final String itemOutputFile = localConfig
 						.getItemConfig().getOutputConfig().getFile();
 					if(itemOutputFile != null && itemOutputFile.length() > 0) {

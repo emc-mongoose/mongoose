@@ -436,7 +436,7 @@ implements LoadController<I, O> {
 				} else if(ioResultsOutput != null) {
 					try {
 						if(!ioResultsOutput.put(ioTaskResult)) {
-							return false;
+							Loggers.ERR.warn("Failed to output the I/O result");
 						}
 					} catch(final EOFException e) {
 						LogUtil.exception(
@@ -518,10 +518,10 @@ implements LoadController<I, O> {
 					if(loadGenerator.isRecycling()) {
 						latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
 						loadGenerator.recycle(ioTaskResult);
-					} else if(ioResultsOutput != null){
+					} else if(ioResultsOutput != null) {
 						try {
 							if(!ioResultsOutput.put(ioTaskResult)) {
-								break;
+								Loggers.ERR.warn("Failed to output the I/O result");
 							}
 						} catch(final EOFException e) {
 							LogUtil.exception(
