@@ -313,7 +313,7 @@ extends ParameterizedSysTestBase {
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
 				final double
-					effEstimate = durationSum / (expectedConcurrency * jobDuration);
+					effEstimate = durationSum / (driverCount * expectedConcurrency * jobDuration);
 				assertTrue(
 					"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
 				);
