@@ -32,7 +32,7 @@
 					"step" : {
 						"limit" : {
 							"count" : 500000,
-							"time" : "20s"
+							"time" : "30s"
 						}
 					}
 				}
