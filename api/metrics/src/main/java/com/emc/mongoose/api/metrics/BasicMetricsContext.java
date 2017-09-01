@@ -73,30 +73,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 
-		respLatency = new Histogram(
-			outputPeriodMillis > 0 ?
-			new SlidingTimeWindowArrayReservoir(
-				outputPeriodMillis, TimeUnit.MILLISECONDS, clock
-			) :
-			new UniformReservoir()
-		);
+		respLatency = new Histogram(new UnsafeButFasterUniformReservoir());
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(
-			outputPeriodMillis > 0 ?
-			new SlidingTimeWindowArrayReservoir(
-				outputPeriodMillis, TimeUnit.MILLISECONDS, clock
-			) :
-			new UniformReservoir()
-		);
+		reqDuration = new Histogram(new UnsafeButFasterUniformReservoir());
 		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(
-			outputPeriodMillis > 0 ?
-				new SlidingTimeWindowArrayReservoir(
-					outputPeriodMillis, TimeUnit.MILLISECONDS, clock
-				) :
-				new UniformReservoir()
-		);
+		actualConcurrency = new Histogram(new UnsafeButFasterUniformReservoir());
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
