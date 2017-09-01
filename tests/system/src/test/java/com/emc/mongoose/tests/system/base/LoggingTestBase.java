@@ -312,7 +312,7 @@ extends ParameterizedSysTestBase {
 				assertTrue(durationSum >= 0);
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
-				if(expectedConcurrency > 0) {
+				if(expectedConcurrency > 0 && jobDuration > 1) {
 					final double
 						effEstimate = durationSum / (driverCount * expectedConcurrency * jobDuration);
 					assertTrue(
@@ -419,7 +419,7 @@ extends ParameterizedSysTestBase {
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
 		final double effEstimate = durationSum / (expectedConcurrency * expectedDriverCount * jobDuration);
-		if(countSucc > 0 && expectedConcurrency > 0) {
+		if(countSucc > 0 && expectedConcurrency > 0 && jobDuration > 1) {
 			assertTrue(
 				"Invalid efficiency estimate: " + effEstimate + ", summary duration: " + durationSum
 					+ ", concurrency limit: " + expectedConcurrency + ", driver count: "
