@@ -228,12 +228,6 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	public final int getActualConcurrency() {
 		lastConcurrency = actualConcurrencyGauge.getAsInt();
 		actualConcurrency.update(lastConcurrency);
-		if(
-			System.currentTimeMillis() - lastOutputTs
-				> DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS
-		) {
-			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
-		}
 		return lastConcurrency;
 	}
 	//
@@ -290,6 +284,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 				lastLatencySum = respLatencySum.sum();
 				respLatSnapshot = respLatency.getSnapshot();
 			}
+			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
 		lastSnapshot =  new BasicSnapshot(
 			throughputSuccess.getCount(), throughputSuccess.getLastRate(),
