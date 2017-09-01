@@ -79,11 +79,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		reqDuration = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
 		actualConcurrency = new Histogram(
-			outputPeriodMillis > 0 ?
+			new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE)
+			/*outputPeriodMillis > 0 ?
 				new SlidingTimeWindowArrayReservoir(
 					outputPeriodMillis, TimeUnit.MILLISECONDS, clock
 				) :
-				new UniformReservoir()
+				new UniformReservoir()*/
 		);
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
