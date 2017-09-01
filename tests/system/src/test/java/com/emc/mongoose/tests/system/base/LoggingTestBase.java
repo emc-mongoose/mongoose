@@ -312,11 +312,13 @@ extends ParameterizedSysTestBase {
 				assertTrue(durationSum >= 0);
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
-				final double
-					effEstimate = durationSum / (driverCount * expectedConcurrency * jobDuration);
-				assertTrue(
-					"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
-				);
+				if(expectedConcurrency > 0) {
+					final double
+						effEstimate = durationSum / (driverCount * expectedConcurrency * jobDuration);
+					assertTrue(
+						"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
+					);
+				}
 			}
 			prevDurationSum = durationSum;
 			tpAvg = Double.parseDouble(nextRecord.get("TPAvg[op/s]"));
@@ -417,7 +419,7 @@ extends ParameterizedSysTestBase {
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
 		final double effEstimate = durationSum / (expectedConcurrency * expectedDriverCount * jobDuration);
-		if(countSucc > 0 && concurrencyLevel > 0) {
+		if(countSucc > 0 && expectedConcurrency > 0) {
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 		}
 		final double tpAvg = Double.parseDouble(metrics.get("TPAvg[op/s]"));
