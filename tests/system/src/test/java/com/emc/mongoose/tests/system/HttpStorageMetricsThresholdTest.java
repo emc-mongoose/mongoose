@@ -18,6 +18,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -102,9 +103,9 @@ extends ScenarioTestBase {
 			);
 			assertTrue(m.find());
 			final Date dtExit = FMT_DATE_ISO8601.parse(m.group("dateTime"));
-			assertTrue(
-				"Enter date (" + dtEnter + ") should be before exit date (" + dtExit + ")",
-				dtEnter.before(dtExit)
+			assertFalse(
+				"The entrance date (" + dtEnter + ") should be not after the exit date (" + dtExit + ")",
+				dtEnter.after(dtExit)
 			);
 			stdOutput = m.replaceFirst("");
 			n ++;
