@@ -21,9 +21,9 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 500000,
-							"size" : "500MB",
-							"time" : 50
+							"count" : 100000,
+							"size" : "1GB",
+							"time" : 30
 						}
 					}
 				}

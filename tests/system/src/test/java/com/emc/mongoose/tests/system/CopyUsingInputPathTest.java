@@ -41,7 +41,7 @@ extends ScenarioTestBase {
 	private String itemDstPath;
 	private String stdOutput;
 
-	private static final int COUNT_LIMIT = 500_000;
+	private static final int COUNT_LIMIT = 100_000;
 
 	public CopyUsingInputPathTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
