@@ -39,7 +39,7 @@ extends ScenarioTestBase {
 
 	private static final double LOAD_THRESHOLD = 0.8;
 	private static final int RANDOM_RANGES_COUNT = 10;
-	private static final int EXPECTED_STEP_TIME_SECONDS = 50;
+	private static final int EXPECTED_STEP_TIME_SECONDS = 30;
 
 	private String stdOutput;
 

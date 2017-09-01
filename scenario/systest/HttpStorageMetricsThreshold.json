@@ -31,9 +31,9 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 50000,
+							"count" : 500000,
 							"size" : "50GB",
-							"time" : "50s"
+							"time" : "30s"
 						}
 					}
 				}
