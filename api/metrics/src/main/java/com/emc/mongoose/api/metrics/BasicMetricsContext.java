@@ -4,9 +4,9 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
+import com.emc.mongoose.api.model.io.IoType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.model.io.IoType;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

@@ -3,7 +3,6 @@ package com.emc.mongoose.api.metrics;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.emc.mongoose.api.model.io.IoType;
-import static com.emc.mongoose.api.common.Constants.M;
 
 import java.io.Closeable;
 import java.io.Serializable;
