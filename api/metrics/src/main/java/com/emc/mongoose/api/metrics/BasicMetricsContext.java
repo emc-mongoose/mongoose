@@ -2,9 +2,7 @@ package com.emc.mongoose.api.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.SlidingTimeWindowArrayReservoir;
 import com.codahale.metrics.SlidingWindowReservoir;
-import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -73,12 +71,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 
-		respLatency = new Histogram(new UnsafeButFasterUniformReservoir());
+		respLatency = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new UnsafeButFasterUniformReservoir());
+		reqDuration = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(new UnsafeButFasterUniformReservoir());
+		actualConcurrency = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
@@ -275,7 +273,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	public final void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
-		if(currentTimeMillis - lastOutputTs > DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
+		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum()) {
 				lastDurationSum = reqDurationSum.sum();
 				reqDurSnapshot = reqDuration.getSnapshot();

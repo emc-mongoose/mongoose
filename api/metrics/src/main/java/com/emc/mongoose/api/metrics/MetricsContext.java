@@ -1,7 +1,9 @@
 package com.emc.mongoose.api.metrics;
 
 import com.github.akurilov.commons.system.SizeInBytes;
+
 import com.emc.mongoose.api.model.io.IoType;
+import static com.emc.mongoose.api.common.Constants.M;
 
 import java.io.Closeable;
 import java.io.Serializable;
@@ -12,7 +14,8 @@ import java.io.Serializable;
 public interface MetricsContext
 extends Closeable {
 
-	int DEFAULT_DISTRIBUTION_SNAPSHOT_UPDATE_PERIOD_MILLIS = 100;
+	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
+	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
 
 	void start();
 	boolean isStarted();
