@@ -107,6 +107,7 @@ implements NonBlockingConnPool {
 					disconnect(nodeAddr, conn);
 				}
 			}
+			Loggers.MSG.info("Pre-created {} connections", concurrencyLevel);
 		}
 	}
 

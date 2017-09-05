@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.amzs3;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -122,7 +122,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 
@@ -294,7 +294,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
@@ -447,7 +447,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
@@ -474,7 +474,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
@@ -528,7 +528,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final String contentStr = content.toString();
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(

@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.base;
 
+import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -43,6 +44,15 @@ import java.util.function.Function;
 public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
+
+	public static AsyncCurrentDateSupplier DATE_SUPPLIER = null;
+	static {
+		try {
+			DATE_SUPPLIER = new AsyncCurrentDateSupplier(SVC_EXECUTOR);
+		} catch(final OmgDoesNotPerformException e) {
+			e.printStackTrace(System.err);
+		}
+	}
 
 	private final DataInput contentSrc;
 	private final int batchSize;

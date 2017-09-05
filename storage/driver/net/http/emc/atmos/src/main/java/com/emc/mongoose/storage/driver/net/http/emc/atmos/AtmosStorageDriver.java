@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.emc.atmos;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import static com.emc.mongoose.api.model.io.IoType.CREATE;
@@ -113,7 +113,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
 		if(fsAccess) {
 			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));

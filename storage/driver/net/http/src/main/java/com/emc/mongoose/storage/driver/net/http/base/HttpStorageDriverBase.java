@@ -10,7 +10,6 @@ import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
 import com.emc.mongoose.api.model.io.IoType;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
@@ -74,14 +73,15 @@ implements HttpStorageDriver<I, O> {
 
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
-	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
-		try {
-			return new AsyncPatternDefinedSupplier(pattern);
-		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
-			return null;
-		}
-	};
+	private static final Function<String, BatchSupplier<String>>
+		ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
+			try {
+				return new AsyncPatternDefinedSupplier(SVC_EXECUTOR, pattern);
+			} catch(final UserShootHisFootException e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
+				return null;
+			}
+		};
 	
 	protected final String namespace;
 	protected final boolean fsAccess;
@@ -181,7 +181,7 @@ implements HttpStorageDriver<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);

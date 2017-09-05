@@ -2,6 +2,8 @@ package com.emc.mongoose.api.common.supply.async;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 
+import com.github.akurilov.coroutines.CoroutinesProcessor;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
@@ -11,9 +13,10 @@ extends AsyncRangeDefinedSupplierBase<Long> {
 	private final NumberFormat format;
 	
 	public AsyncRangeDefinedLongFormattingSupplier(
+		final CoroutinesProcessor coroutinesProcessor,
 		final long seed, final long minValue, final long maxValue, final String formatStr
 	) throws OmgDoesNotPerformException {
-		super(seed, minValue, maxValue);
+		super(coroutinesProcessor, seed, minValue, maxValue);
 		this.format = formatStr == null || formatStr.isEmpty() ?
 			null : new DecimalFormat(formatStr);
 	}

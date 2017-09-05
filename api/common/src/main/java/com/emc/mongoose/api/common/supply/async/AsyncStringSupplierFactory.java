@@ -3,6 +3,7 @@ package com.emc.mongoose.api.common.supply.async;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.SupplierFactory;
 import com.emc.mongoose.api.common.exception.DanShootHisFootException;
+import com.github.akurilov.coroutines.CoroutinesProcessor;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -16,11 +17,22 @@ implements SupplierFactory<String, G> {
 	private static final AsyncStringSupplierFactory<? extends BatchSupplier<String>>
 		INSTANCE = new AsyncStringSupplierFactory<>();
 
+	private CoroutinesProcessor coroutinesProcessor;
+
 	private AsyncStringSupplierFactory() {
 	}
 
-	public static AsyncStringSupplierFactory<? extends BatchSupplier<String>> getInstance() {
-		return INSTANCE;
+	public static AsyncStringSupplierFactory<? extends BatchSupplier<String>> getInstance(
+		final CoroutinesProcessor coroutinesProcessor
+	) {
+		return INSTANCE.setCoroutinesProcessor(coroutinesProcessor);
+	}
+
+	private AsyncStringSupplierFactory<? extends BatchSupplier<String>> setCoroutinesProcessor(
+		final CoroutinesProcessor coroutinesProcessor
+	) {
+		this.coroutinesProcessor = coroutinesProcessor;
+		return this;
 	}
 
 	/**
@@ -57,7 +69,9 @@ implements SupplierFactory<String, G> {
 						throw new DanShootHisFootException();
 					}
 				}
-				return (G) new AsyncRangeDefinedLongFormattingSupplier(seed, min, max, formatStr);
+				return (G) new AsyncRangeDefinedLongFormattingSupplier(
+					coroutinesProcessor, seed, min, max, formatStr
+				);
 			}
 
 			case 'f' : {
@@ -72,7 +86,9 @@ implements SupplierFactory<String, G> {
 						throw new DanShootHisFootException();
 					}
 				}
-				return (G) new AsyncRangeDefinedDoubleFormattingSupplier(seed, min, max, formatStr);
+				return (G) new AsyncRangeDefinedDoubleFormattingSupplier(
+					coroutinesProcessor, seed, min, max, formatStr
+				);
 			}
 
 			case 'D': {
@@ -91,7 +107,9 @@ implements SupplierFactory<String, G> {
 						throw new DanShootHisFootException();
 					}
 				}
-				return (G) new AsyncRangeDefinedDateFormattingSupplier(seed, min, max, formatStr);
+				return (G) new AsyncRangeDefinedDateFormattingSupplier(
+					coroutinesProcessor, seed, min, max, formatStr
+				);
 			}
 
 			default:

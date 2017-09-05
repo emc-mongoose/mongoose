@@ -3,6 +3,7 @@ package com.emc.mongoose.api.common.supply.async;
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.supply.RangeDefinedSupplier;
 
+import com.github.akurilov.coroutines.CoroutinesProcessor;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import java.text.Format;
@@ -15,13 +16,14 @@ extends AsyncRangeDefinedSupplierBase<Date> {
 	private final RangeDefinedSupplier<Long> longGenerator;
 	
 	public AsyncRangeDefinedDateFormattingSupplier(
+		final CoroutinesProcessor coroutinesProcessor,
 		final long seed, final Date minValue, final Date maxValue, final String formatString
 	) throws OmgDoesNotPerformException {
-		super(seed, minValue, maxValue);
+		super(coroutinesProcessor, seed, minValue, maxValue);
 		this.format = formatString == null || formatString.isEmpty() ?
 			null : FastDateFormat.getInstance(formatString);
 		longGenerator = new AsyncRangeDefinedLongFormattingSupplier(
-			seed, minValue.getTime(), maxValue.getTime(), null
+			coroutinesProcessor, seed, minValue.getTime(), maxValue.getTime(), null
 		);
 	}
 

@@ -1,7 +1,9 @@
-package com.emc.mongoose.api.common.supply.async;
+package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.api.common.env.DateUtil;
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.api.common.supply.async.AsyncUpdatingValueSupplier;
+import com.github.akurilov.coroutines.CoroutinesProcessor;
 
 import java.util.Date;
 
@@ -11,19 +13,10 @@ import java.util.Date;
 public final class AsyncCurrentDateSupplier
 extends AsyncUpdatingValueSupplier<String> {
 
-	public static AsyncCurrentDateSupplier INSTANCE = null;
-
-	static {
-		try {
-			INSTANCE = new AsyncCurrentDateSupplier();
-		} catch(final OmgDoesNotPerformException e) {
-			e.printStackTrace(System.err);
-		}
-	}
-
-	private AsyncCurrentDateSupplier()
+	public AsyncCurrentDateSupplier(final CoroutinesProcessor coroutinesProcessor)
 	throws OmgDoesNotPerformException {
 		super(
+			coroutinesProcessor,
 			DateUtil.FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis())),
 			new InitializedCallableBase<String>() {
 				//

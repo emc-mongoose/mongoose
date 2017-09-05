@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.emc.s3;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -80,7 +80,7 @@ extends AmzS3StorageDriver<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 
@@ -416,7 +416,7 @@ extends AmzS3StorageDriver<I, O> {
 		// request headers
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, content.length());
 		httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
 		httpHeaders.set(KEY_X_EMC_MULTIPART_COPY, "true");

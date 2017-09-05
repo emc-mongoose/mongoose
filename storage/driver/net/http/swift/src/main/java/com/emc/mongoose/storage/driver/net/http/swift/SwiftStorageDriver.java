@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.api.common.supply.async.AsyncCurrentDateSupplier;
+import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import static com.emc.mongoose.api.model.io.IoType.CREATE;
@@ -98,7 +98,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applySharedHeaders(reqHeaders);
 		final String containerUri = namespacePath + path;
 
@@ -193,7 +193,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		
 		final String uid = credential == null ? this.credential.getUid() : credential.getUid();
 		if(uid != null && ! uid.isEmpty()) {
@@ -238,7 +238,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
@@ -433,7 +433,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final String objManifestPath = super.getDataUriPath(
 			item, srcPath, mpuTask.getDstPath(), CREATE
@@ -465,7 +465,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
