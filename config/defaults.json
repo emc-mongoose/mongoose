@@ -248,8 +248,8 @@
 			"ioRatio" : 50,
 			// The I/O transport to use (see http://netty.io/wiki/native-transports.html for details).
 			// By default tries to use "nio" (the most compatible).
-			// For Linux try use "epoll", for MacOS/BSD try use "kqueue" (requires rebuilding).
-			"transport" : "nio",
+			// For Linux try use "epoll", for MacOS/BSD try use "kqueue"
+			"transport" : "epoll",
 			// The flag to enable the load through SSL/TLS.
 			// Currently only HTTPS implementation is available.
 			// Have no effect if configured storage type is filesystem.
