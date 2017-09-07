@@ -224,9 +224,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 
 	@Override
 	public final int getActualConcurrency() {
-		lastConcurrency = actualConcurrencyGauge.getAsInt();
-		actualConcurrency.update(lastConcurrency);
-		return lastConcurrency;
+		return lastConcurrency = actualConcurrencyGauge.getAsInt();
 	}
 	//
 	@Override
@@ -281,7 +279,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			if(lastLatencySum != respLatencySum.sum()) {
 				lastLatencySum = respLatencySum.sum();
 				respLatSnapshot = respLatency.getSnapshot();
-			}
+			};
+			actualConcurrency.update(lastConcurrency);
 			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
 		lastSnapshot =  new BasicSnapshot(
