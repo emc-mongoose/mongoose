@@ -53,7 +53,9 @@ extends Closeable, Externalizable {
 						);
 					}
 					try(final ReadableByteChannel rbc = Files.newByteChannel(p, READ)) {
-						instance = new ExternalDataInput(rbc, (int) fileSize, layerCacheLimit);
+						instance = new ExternalDataInput(
+							rbc, (int) layerSizeBytes, layerCacheLimit
+						);
 					}
 				} else {
 					throw new AssertionError(
@@ -68,7 +70,7 @@ extends Closeable, Externalizable {
 			}
 		} else {
 			instance = new SeedDataInput(
-				Long.parseLong(seed, 0x10), layerSizeBytes, layerCacheLimit
+				Long.parseLong(seed, 0x10), (int) layerSizeBytes, layerCacheLimit
 			);
 		}
 		return instance;
