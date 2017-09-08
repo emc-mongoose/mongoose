@@ -58,7 +58,7 @@ extends Item, SeekableByteChannel {
 	 * @throws  IOException
 	 *          If some other I/O error occurs
 	 */
-	int write(final WritableByteChannel chanDst, final long maxCount)
+	long write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;
 	
 	int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)

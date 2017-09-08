@@ -15,6 +15,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
+
 import static java.lang.Math.min;
 
 /**
@@ -352,17 +353,25 @@ implements DataItem {
 	}
 
 	@Override
-	public final int write(final WritableByteChannel chanDst, final long maxCount)
+	public final long write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
 			.getLayer(layerNum)
 			.asReadOnlyBuffer();
-		ringBuff.position((int) ((offset + position) % dataInputSize));
-		int n = (int) Math.min(maxCount, ringBuff.remaining());
-		ringBuff.limit(ringBuff.position() + n);
-		n = chanDst.write(ringBuff);
-		position += n;
-		return n;
+		long doneCount = 0;
+		int n, m;
+		while(doneCount < maxCount) {
+			ringBuff.position((int) ((offset + position) % dataInputSize));
+			n = (int) Math.min(maxCount - doneCount, ringBuff.remaining());
+			ringBuff.limit(ringBuff.position() + n);
+			m = chanDst.write(ringBuff);
+			doneCount += m;
+			position += m;
+			if(m < n) {
+				break;
+			}
+		}
+		return doneCount;
 	}
 	
 	@Override
