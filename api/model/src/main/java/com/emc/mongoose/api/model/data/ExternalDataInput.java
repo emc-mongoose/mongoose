@@ -20,17 +20,28 @@ extends CachedDataInput {
 		final int layersCacheCountLimit
 	) throws IOException {
 		super((MappedByteBuffer) ByteBuffer.allocateDirect(layerSize), layersCacheCountLimit);
+
+		int readByteCount = 0, m;
+
 		// read the data from the channel to the inputBuff which is already initialized with the
 		// parent constructor invocation
-		int n = 0, m;
-		do {
+		while(readByteCount < layerSize) {
 			m = initialLayerInputChannel.read(inputBuff);
-			if(m < 0) {
-				break;
+			if(m > 0) {
+				readByteCount += m;
 			} else {
-				n += m;
+				break;
 			}
-		} while(n < layerSize);
+		}
+
+		// if there's not enough data read from the given input, repeat it
+		final int inputSize = readByteCount;
+		final ByteBuffer initialData = inputBuff.asReadOnlyBuffer();
+		while(readByteCount < layerSize) {
+			initialData.position(0).limit(Math.min(inputBuff.remaining(), inputSize));
+			inputBuff.put(initialData);
+		}
+
 		inputBuff.flip();
 	}
 }

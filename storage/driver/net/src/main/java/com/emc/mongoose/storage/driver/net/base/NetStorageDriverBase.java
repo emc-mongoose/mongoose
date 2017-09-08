@@ -137,6 +137,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						IO_EXECUTOR = transportCls
 							.getConstructor(Integer.TYPE, ThreadFactory.class)
 							.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
+						Loggers.MSG.info("{}: use {} I/O workers", workerCount, toString());
 						try {
 							final Method setIoRatioMethod = transportCls.getMethod(
 								"setIoRatio", Integer.TYPE
