@@ -21,7 +21,7 @@ public class CachedDataInput
 extends DataInputBase {
 
 	private int layersCacheCountLimit;
-	private transient final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>>
+	private transient final ThreadLocal<Int2ObjectOpenHashMap<ReadableByteBufferChannelWrapper<MappedByteBuffer>>>
 		thrLocLayersCache = new ThreadLocal<>();
 
 	public CachedDataInput() {
@@ -42,29 +42,30 @@ extends DataInputBase {
 	}
 
 	private long getInitialSeed() {
-		return inputBuff.getLong(0);
+		return inputBuffChannel.getByteBuffer().getLong(0);
 	}
 
 	@Override
-	public final MappedByteBuffer getLayer(final int layerIndex)
+	public final ReadableByteBufferChannelWrapper<MappedByteBuffer> getLayer(final int layerIndex)
 	throws OutOfMemoryError {
 
 		if(layerIndex == 0) {
-			return inputBuff;
+			return inputBuffChannel;
 		}
 
-		Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+		Int2ObjectOpenHashMap<ReadableByteBufferChannelWrapper<MappedByteBuffer>>
+			layersCache = thrLocLayersCache.get();
 		if(layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		MappedByteBuffer layer = layersCache.get(layerIndex - 1);
+		ReadableByteBufferChannelWrapper<MappedByteBuffer> layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
 			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-			final int layerSize = inputBuff.capacity();
+			final int layerSize = inputBuffChannel.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
 					if(DirectMemUtil.free(layersCache.remove(i))) {
@@ -116,6 +117,6 @@ extends DataInputBase {
 
 	@Override
 	public final String toString() {
-		return Long.toHexString(getInitialSeed()) + ',' + Integer.toHexString(inputBuff.capacity());
+		return Long.toHexString(getInitialSeed()) + ',' + Integer.toHexString(inputBuffChannel.capacity());
 	}
 }

@@ -26,7 +26,7 @@ extends CachedDataInput {
 		// read the data from the channel to the inputBuff which is already initialized with the
 		// parent constructor invocation
 		while(doneByteCount < layerSize) {
-			n = initialLayerInputChannel.read(inputBuff);
+			n = initialLayerInputChannel.read(inputBuffChannel);
 			if(n > 0) {
 				doneByteCount += n;
 			} else {
@@ -36,14 +36,14 @@ extends CachedDataInput {
 
 		// if there's not enough data read from the given input, repeat it
 		final int inputSize = doneByteCount;
-		final ByteBuffer initialData = inputBuff.asReadOnlyBuffer();
+		final ByteBuffer initialData = inputBuffChannel.asReadOnlyBuffer();
 		while(doneByteCount < layerSize) {
-			n = Math.min(inputBuff.remaining(), inputSize);
+			n = Math.min(inputBuffChannel.remaining(), inputSize);
 			initialData.position(0).limit(n);
-			inputBuff.put(initialData);
+			inputBuffChannel.put(initialData);
 			doneByteCount += n;
 		}
 
-		inputBuff.flip();
+		inputBuffChannel.flip();
 	}
 }

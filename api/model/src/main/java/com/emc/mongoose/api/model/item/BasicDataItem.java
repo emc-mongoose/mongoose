@@ -360,6 +360,7 @@ implements DataItem {
 			.asReadOnlyBuffer();
 		long doneCount = 0;
 		int n, m;
+		// spin while not done either destination channel consumes all the data
 		while(doneCount < maxCount) {
 			ringBuff.position((int) ((offset + position) % dataInputSize));
 			n = (int) Math.min(maxCount - doneCount, ringBuff.remaining());

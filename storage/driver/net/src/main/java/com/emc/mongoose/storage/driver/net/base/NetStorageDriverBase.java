@@ -181,7 +181,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
 		//bootstrap.option(ChannelOption.AUTO_READ)
 		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.getTimeoutMilliSec());
-		//bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, 32);
+		bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, 1);
 		int size = (int) netConfig.getRcvBuf().get();
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
