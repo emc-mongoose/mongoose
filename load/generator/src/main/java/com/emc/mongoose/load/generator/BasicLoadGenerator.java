@@ -94,7 +94,7 @@ implements LoadGenerator<I, O>, Coroutine {
 			this.countLimit = Long.MAX_VALUE;
 		}
 		this.recycleQueue = recycleQueueSize > 0 ?
-			new ArrayBlockingQueue<O>(recycleQueueSize) : null;
+			new ArrayBlockingQueue<>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
 

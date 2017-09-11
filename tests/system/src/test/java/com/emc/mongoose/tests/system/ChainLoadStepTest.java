@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class ChainLoadStepTest
 extends ScenarioTestBase {
 
-	private static final long COUNT_LIMIT = 100_000;
+	private static final long COUNT_LIMIT = 10/*0_000*/;
 
 	private String itemOutputPath;
 	private String stdOutput;
