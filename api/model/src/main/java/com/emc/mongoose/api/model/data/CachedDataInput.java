@@ -1,8 +1,10 @@
 package com.emc.mongoose.api.model.data;
 
 import static com.github.akurilov.commons.math.MathUtil.xorShift;
-import static com.emc.mongoose.api.model.data.DataInput.generateData;
 import com.github.akurilov.commons.system.DirectMemUtil;
+
+import static com.emc.mongoose.api.model.data.DataInput.generateData;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
@@ -21,7 +23,7 @@ public class CachedDataInput
 extends DataInputBase {
 
 	private int layersCacheCountLimit;
-	private transient final ThreadLocal<Int2ObjectOpenHashMap<ReadableByteBufferChannelWrapper<MappedByteBuffer>>>
+	private transient final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>>
 		thrLocLayersCache = new ThreadLocal<>();
 
 	public CachedDataInput() {
@@ -42,34 +44,35 @@ extends DataInputBase {
 	}
 
 	private long getInitialSeed() {
-		return inputBuffChannel.getByteBuffer().getLong(0);
+		return inputBuff.getLong(0);
 	}
 
 	@Override
-	public final ReadableByteBufferChannelWrapper<MappedByteBuffer> getLayer(final int layerIndex)
+	public final MappedByteBuffer getLayer(final int layerIndex)
 	throws OutOfMemoryError {
 
 		if(layerIndex == 0) {
-			return inputBuffChannel;
+			return inputBuff;
 		}
 
-		Int2ObjectOpenHashMap<ReadableByteBufferChannelWrapper<MappedByteBuffer>>
-			layersCache = thrLocLayersCache.get();
+		Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		ReadableByteBufferChannelWrapper<MappedByteBuffer> layer = layersCache.get(layerIndex - 1);
+		MappedByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
 			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-			final int layerSize = inputBuffChannel.capacity();
+			final int layerSize = inputBuff.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
-					if(DirectMemUtil.free(layersCache.remove(i))) {
+					layer = layersCache.remove(i);
+					if(layer != null) {
 						layersCountToFree --;
+						DirectMemUtil.free(layer);
 						if(layersCountToFree == 0) {
 							break;
 						}
@@ -91,7 +94,8 @@ extends DataInputBase {
 	public void close()
 	throws IOException {
 		super.close();
-		final Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+		final Int2ObjectOpenHashMap<MappedByteBuffer>
+			layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
 			for(final MappedByteBuffer layer : layersCache.values()) {
 				DirectMemUtil.free(layer);
@@ -117,6 +121,7 @@ extends DataInputBase {
 
 	@Override
 	public final String toString() {
-		return Long.toHexString(getInitialSeed()) + ',' + Integer.toHexString(inputBuffChannel.capacity());
+		return Long.toHexString(getInitialSeed()) + ','
+			+ Integer.toHexString(inputBuff.capacity());
 	}
 }

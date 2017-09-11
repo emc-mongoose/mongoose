@@ -29,7 +29,7 @@ extends Closeable, Externalizable {
 
 	int getSize();
 
-	ReadableByteBufferChannelWrapper<MappedByteBuffer> getLayer(final int layerIndex);
+	MappedByteBuffer getLayer(final int layerIndex);
 
 	static DataInput getInstance(
 		final String inputFilePath, final String seed, final SizeInBytes layerSize,

@@ -9,6 +9,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -58,7 +59,10 @@ extends Item, SeekableByteChannel {
 	 * @throws  IOException
 	 *          If some other I/O error occurs
 	 */
-	long write(final WritableByteChannel chanDst, final long maxCount)
+	long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
+	throws IOException;
+
+	long writeToFileChannel(final FileChannel chanDst, final long maxCount)
 	throws IOException;
 	
 	int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)

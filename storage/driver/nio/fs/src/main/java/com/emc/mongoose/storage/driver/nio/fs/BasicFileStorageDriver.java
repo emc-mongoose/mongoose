@@ -1,10 +1,11 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.DirectMemUtil;
+
 import static com.emc.mongoose.api.model.io.task.IoTask.Status;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
-import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.system.DirectMemUtil;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -28,7 +29,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
@@ -339,12 +339,12 @@ implements FileStorageDriver<I, O> {
 	}
 	
 	private void invokeCreate(
-		final I fileItem, final O ioTask, final WritableByteChannel dstChannel
+		final I fileItem, final O ioTask, final FileChannel dstChannel
 	) throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
-			countBytesDone += fileItem.write(dstChannel, contentSize - countBytesDone);
+			countBytesDone += fileItem.writeToFileChannel(dstChannel, contentSize - countBytesDone);
 			ioTask.setCountBytesDone(countBytesDone);
 		}
 		if(countBytesDone == contentSize) {
@@ -716,7 +716,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeRandomRangesUpdate(
-		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel
+		final I fileItem, final O ioTask, final FileChannel dstChannel
 	) throws IOException {
 		
 		long countBytesDone = ioTask.getCountBytesDone();
@@ -749,7 +749,9 @@ implements FileStorageDriver<I, O> {
 				);
 			}
 			dstChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += updatingRange.write(dstChannel, updatingRangeSize - countBytesDone);
+			countBytesDone += updatingRange.writeToFileChannel(
+				dstChannel, updatingRangeSize - countBytesDone
+			);
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace(
 					"{}: {} bytes written totally", fileItem.getName(), countBytesDone
@@ -771,7 +773,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeFixedRangesUpdate(
-		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel,
+		final I fileItem, final O ioTask, final FileChannel dstChannel,
 		final List<Range> byteRanges
 	) throws IOException {
 
@@ -813,7 +815,7 @@ implements FileStorageDriver<I, O> {
 				updatingRange = fileItem.slice(rangeBeg, rangeSize);
 				updatingRange.position(countBytesDone);
 				dstChannel.position(rangeBeg + countBytesDone);
-				countBytesDone += updatingRange.write(dstChannel, rangeSize - countBytesDone);
+				countBytesDone += updatingRange.writeToFileChannel(dstChannel, rangeSize - countBytesDone);
 
 				if(countBytesDone == rangeSize) {
 					ioTask.setCurrRangeIdx(currRangeIdx + 1);

@@ -12,6 +12,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
@@ -353,7 +354,7 @@ implements DataItem {
 	}
 
 	@Override
-	public final long write(final WritableByteChannel chanDst, final long maxCount)
+	public final long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
 			.getLayer(layerNum)
@@ -373,6 +374,21 @@ implements DataItem {
 			}
 		}
 		return doneCount;
+	}
+
+	@Override
+	public final long writeToFileChannel(final FileChannel chanDst, final long maxCount)
+	throws IOException {
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
+		int n = (int) ((offset + position) % dataInputSize);
+		ringBuff.position(n);
+		n = (int) Math.min(maxCount, ringBuff.remaining());
+		ringBuff.limit(ringBuff.position() + n);
+		n = chanDst.write(ringBuff);
+		position += n;
+		return n;
 	}
 	
 	@Override

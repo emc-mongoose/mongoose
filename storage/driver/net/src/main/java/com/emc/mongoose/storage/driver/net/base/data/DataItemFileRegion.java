@@ -47,7 +47,7 @@ implements FileRegion {
 	public long transferTo(final WritableByteChannel target, final long position)
 	throws IOException {
 		dataItem.position(position);
-		doneByteCount += dataItem.write(target, baseItemSize - position);
+		doneByteCount += dataItem.writeToSocketChannel(target, baseItemSize - position);
 		return doneByteCount;
 	}
 

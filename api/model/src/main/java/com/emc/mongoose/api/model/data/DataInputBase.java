@@ -1,5 +1,7 @@
 package com.emc.mongoose.api.model.data;
 
+import com.github.akurilov.commons.system.DirectMemUtil;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -12,49 +14,46 @@ import java.nio.MappedByteBuffer;
 public abstract class DataInputBase
 implements DataInput {
 
-	protected ReadableByteBufferChannelWrapper<MappedByteBuffer> inputBuffChannel;
+	protected MappedByteBuffer inputBuff;
 
 	protected DataInputBase() {
-		inputBuffChannel = null;
+		inputBuff = null;
 	}
 
 	protected DataInputBase(final MappedByteBuffer inputBuff) {
-		this.inputBuffChannel = new ReadableMappedByteBufferChannelWrapper(inputBuff);
+		this.inputBuff = inputBuff;
 		inputBuff.clear();
 	}
 
 	protected DataInputBase(final DataInputBase other) {
-		this.inputBuffChannel = other.inputBuffChannel;
+		this.inputBuff = other.inputBuff;
 	}
 
 	@Override
 	public final int getSize() {
 		// NPE protection is necessary for the storage driver service
-		return inputBuffChannel == null ? 0 : inputBuffChannel.getByteBuffer().capacity();
+		return inputBuff == null ? 0 : inputBuff.capacity();
 	}
 
 	@Override
-	public abstract ReadableByteBufferChannelWrapper<MappedByteBuffer> getLayer(
-		final int layerIndex
-	);
+	public abstract MappedByteBuffer getLayer(final int layerIndex);
 
 	@Override
 	public void close()
 	throws IOException {
-		if(inputBuffChannel != null) {
-			inputBuffChannel.close();
+		if(inputBuff != null) {
+			DirectMemUtil.free(inputBuff);
+			inputBuff = null;
 		}
-		inputBuffChannel = null;
 	}
 
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		// write buffer capacity and data
-		final MappedByteBuffer inputBuffW = inputBuffChannel.getByteBuffer();
-		final byte buff[] = new byte[inputBuffW.capacity()];
-		inputBuffW.clear(); // reset the position
-		inputBuffW.get(buff);
+		final byte buff[] = new byte[inputBuff.capacity()];
+		inputBuff.clear(); // reset the position
+		inputBuff.get(buff);
 		out.writeInt(buff.length);
 		out.write(buff);
 	}
@@ -73,8 +72,6 @@ implements DataInput {
 				j += i;
 			}
 		}
-		inputBuffChannel = new ReadableMappedByteBufferChannelWrapper(
-			(MappedByteBuffer) ByteBuffer.allocateDirect(size).put(buff)
-		);
+		inputBuff = (MappedByteBuffer) ByteBuffer.allocateDirect(size).put(buff);
 	}
 }

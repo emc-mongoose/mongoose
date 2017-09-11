@@ -19,10 +19,10 @@ extends CachedDataInput {
 
 	public SeedDataInput(final long seed, final int size, final int cacheLimit) {
 		super((MappedByteBuffer) ByteBuffer.allocateDirect(size), cacheLimit);
-		generateData(inputBuffChannel, seed);
+		generateData(inputBuff, seed);
 	}
 
-	public SeedDataInput(final SeedDataInput anotherContentSource) {
-		super(anotherContentSource);
+	public SeedDataInput(final SeedDataInput other) {
+		super(other);
 	}
 }
