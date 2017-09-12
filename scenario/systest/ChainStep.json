@@ -7,7 +7,7 @@
 			"load" : {
 				"type" : "read"
 			}
-		}/*,
+		},
 		{
 			"item" : {
 				"data" : {
@@ -39,6 +39,6 @@
 			"load" : {
 				"type" : "noop"
 			}
-		}*/
+		}
 	]
 }
