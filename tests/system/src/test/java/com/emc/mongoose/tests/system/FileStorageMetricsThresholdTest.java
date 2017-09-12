@@ -38,7 +38,7 @@ import java.util.regex.Matcher;
 public class FileStorageMetricsThresholdTest
 extends ScenarioTestBase {
 
-	private static final double LOAD_THRESHOLD = 0.01;
+	private static final double LOAD_THRESHOLD = 0.1;
 	private static final int RANDOM_RANGES_COUNT = 10;
 
 	private String itemOutputPath;

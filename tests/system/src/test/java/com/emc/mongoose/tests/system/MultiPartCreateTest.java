@@ -143,6 +143,7 @@ extends ScenarioTestBase {
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
+		System.out.println("Expected transfer size: " + sizeLimit.get() + ", actual: " + sizeSum);
 		assertTrue(
 			"Expected to transfer no more than " + sizeLimit + ", but transferred actually: "
 				+ new SizeInBytes(sizeSum),

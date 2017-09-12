@@ -3,7 +3,7 @@
 	"config" : {
 		"output" : {
 			"metrics" : {
-				"threshold" : 0.01
+				"threshold" : 0.1
 			}
 		},
 		"storage" : {
@@ -28,9 +28,9 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 200000,
-							"size" : "2GB",
-							"time" : "20s"
+							"count" : 500000,
+							"size" : "5GB",
+							"time" : "50s"
 						}
 					}
 				}
