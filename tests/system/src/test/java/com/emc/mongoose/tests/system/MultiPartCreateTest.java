@@ -147,7 +147,8 @@ extends ScenarioTestBase {
 		assertTrue(
 			"Expected to transfer no more than " + sizeLimit + ", but transferred actually: "
 				+ new SizeInBytes(sizeSum),
-			driverCount.getValue() * concurrency.getValue() * partSize.getMax() >= sizeSum
+			sizeLimit.get() + driverCount.getValue() * concurrency.getValue() * partSize.getMax()
+				>= sizeSum
 		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
