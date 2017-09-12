@@ -153,7 +153,6 @@ extends ScenarioTestBase {
 			ioTraceRecTestFunc = ioTraceRecord -> {
 				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), itemSize.getValue());
 				final String nextItemPath = ioTraceRecord.get("ItemPath");
-				HttpStorageMockUtil.assertItemExists(node, nextItemPath, 0);
 				if(HttpStorageMockUtil.getContentLength(node, nextItemPath) < 0) {
 					// not found
 					lostItemsCount.increment();
