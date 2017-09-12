@@ -118,6 +118,7 @@ extends ScenarioTestBase {
 	throws Exception {
 
 		final LongAdder ioTraceRecCount = new LongAdder();
+		final LongAdder lostItemsCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceRecTestFunc;
 		if(storageType.equals(StorageType.FS)) {
 			ioTraceRecTestFunc = ioTraceRecord -> {
@@ -132,15 +133,16 @@ extends ScenarioTestBase {
 				Assert.assertTrue(
 					"File \"" + nextItemPath + "\" doesn't exist", nextSrcFile.exists()
 				);
-				Assert.assertTrue(
-					"File \"" + nextDstFile.getPath() + "\" doesn't exist", nextDstFile.exists()
-				);
-				Assert.assertEquals(
-					"Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
-						" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
-						") size (" + nextDstFile.length(),
-					nextSrcFile.length(), nextDstFile.length()
-				);
+				if(!nextDstFile.exists()) {
+					lostItemsCount.increment();
+				} else {
+					Assert.assertEquals(
+						"Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
+							" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
+							") size (" + nextDstFile.length(),
+						nextSrcFile.length(), nextDstFile.length()
+					);
+				}
 				testIoTraceRecord(
 					ioTraceRecord, IoType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
 				);
@@ -152,6 +154,10 @@ extends ScenarioTestBase {
 				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), itemSize.getValue());
 				final String nextItemPath = ioTraceRecord.get("ItemPath");
 				HttpStorageMockUtil.assertItemExists(node, nextItemPath, 0);
+				if(HttpStorageMockUtil.getContentLength(node, nextItemPath) < 0) {
+					// not found
+					lostItemsCount.increment();
+				}
 				final String nextItemId = nextItemPath.substring(
 					nextItemPath.lastIndexOf(File.separatorChar) + 1
 				);
@@ -167,6 +173,7 @@ extends ScenarioTestBase {
 			"There should be " + COUNT_LIMIT + " records in the I/O trace log file",
 			ioTraceRecCount.sum() <= COUNT_LIMIT
 		);
+		assertEquals(0, lostItemsCount.sum(), COUNT_LIMIT / 10_000);
 
 		final List<CSVRecord> totalMetricsLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

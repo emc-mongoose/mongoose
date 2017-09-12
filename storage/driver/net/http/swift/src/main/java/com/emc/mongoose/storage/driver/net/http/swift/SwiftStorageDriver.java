@@ -129,11 +129,7 @@ extends HttpStorageDriverBase<I, O> {
 			final String versionsLocation = checkContainerResp
 				.headers()
 				.get(KEY_X_VERSIONS_LOCATION);
-			if(versionsLocation == null || versionsLocation.isEmpty()) {
-				versioningEnabled = false;
-			} else {
-				versioningEnabled = true;
-			}
+			versioningEnabled = versionsLocation != null && !versionsLocation.isEmpty();
 		} else {
 			Loggers.ERR.warn(
 				"Unexpected container checking response: {}", checkContainerRespStatus.toString()

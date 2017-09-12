@@ -175,11 +175,7 @@ extends AmzS3StorageDriver<I, O> {
 			final String content = getBucketVersioningResp
 				.content()
 				.toString(StandardCharsets.US_ASCII);
-			if(content.contains("Enabled")) {
-				versioningEnabled = true;
-			} else {
-				versioningEnabled = false;
-			}
+			versioningEnabled = content.contains("Enabled");
 		}
 		getBucketVersioningResp.release();
 

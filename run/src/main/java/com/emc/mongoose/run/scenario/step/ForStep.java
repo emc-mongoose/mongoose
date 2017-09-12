@@ -419,7 +419,7 @@ extends SequentialStep {
 		return dstTree;
 	}
 
-	@Override
+	@Override @SuppressWarnings("InfiniteLoopStatement")
 	protected final void invoke()
 	throws CancellationException {
 		if(replaceMarkerName == null && valueSeq == null) { // infinite loop
