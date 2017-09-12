@@ -72,7 +72,7 @@ jobs:
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
-      env:
+    - env:
         - TEST=CopyUsingInputPathTest
         - STORAGE_TYPE=fs,amzs3,swift
         - DRIVER_COUNT=local,distributed
@@ -311,7 +311,7 @@ jobs:
     - stage: "Quarantine tests"
 
     # STORAGE_TYPE=amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=CreateLimitBySizeTest :tests:system:test
-    - env:
+      env:
         - TEST=CreateLimitBySizeTest
         - STORAGE_TYPE=amzs3,swift
         - DRIVER_COUNT=local,distributed
