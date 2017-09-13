@@ -9,8 +9,8 @@
 				"size" : "10KB"
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		},
@@ -25,7 +25,8 @@
 	"steps" : [
 		{
 			"type" : "precondition"
-		}, {
+		},
+		{
 			"type" : "load",
 			"config" : {
 				"item" : {

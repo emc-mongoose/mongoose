@@ -1,28 +1,30 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemInfoFileOutput;
-import com.emc.mongoose.model.item.ItemType;
-import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadController;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.github.akurilov.commons.io.Output;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
+import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.load.LoadGenerator;
+import com.emc.mongoose.api.model.load.LoadController;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.DataConfig;
+import com.emc.mongoose.ui.config.item.data.input.InputConfig;
+import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.OutputConfig;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
+import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -38,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,42 +60,53 @@ extends StepBase {
 	) {
 		super(appConfig);
 		final Map<String, Object> nodeConfig = (Map<String, Object>) subTree.get(KEY_NODE_CONFIG);
-		if(nodeConfig != null) {
-			localConfig.apply(nodeConfig);
-		}
+		localConfig.apply(nodeConfig, "load-" + LogUtil.getDateTimeStamp() + "-" + hashCode());
 		this.preconditionFlag = preconditionFlag;
 	}
 	
 	@Override
-	protected final void invoke() {
+	protected final void invoke()
+	throws CancellationException {
 
 		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
-		final String jobName = stepConfig.getName();
-		Loggers.MSG.info("Run the load step \"{}\"", jobName);
-		stepConfig.setPrecondition(preconditionFlag);
-
+		final String stepId = stepConfig.getId();
+		Loggers.MSG.info("Run the load step \"{}\"", stepId);
 		final LoadConfig loadConfig = localConfig.getLoadConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
+		final OutputConfig outputConfig = localConfig.getOutputConfig();
+		final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
+		final AverageConfig avgMetricsConfig = metricsConfig.getAverageConfig();
+		if(preconditionFlag) {
+			avgMetricsConfig.setPersist(false);
+			metricsConfig.getSummaryConfig().setPersist(false);
+			metricsConfig.getSummaryConfig().setPerfDbResultsFile(false);
+			metricsConfig.getTraceConfig().setPersist(false);
+		}
 		final ItemConfig itemConfig = localConfig.getItemConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
-		final ContentConfig contentConfig = dataConfig.getContentConfig();
+		final InputConfig dataInputConfig = dataConfig.getInputConfig();
 		final StorageConfig storageConfig = localConfig.getStorageConfig();
-		final RingConfig ringConfig = contentConfig.getRingConfig();
+		final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
 		
-		final ContentSource contentSrc;
+		final DataInput dataInput;
 		try {
-			contentSrc = ContentSourceUtil.getInstance(
-				contentConfig.getFile(), contentConfig.getSeed(), ringConfig.getSize(),
-				ringConfig.getCache()
+			dataInput = DataInput.getInstance(
+				dataInputConfig.getFile(), dataInputConfig.getSeed(), dataLayerConfig.getSize(),
+				dataLayerConfig.getCache()
 			);
 		} catch(final IOException e) {
 			throw new RuntimeException(e);
 		}
 		
 		final List<StorageDriver> drivers = new ArrayList<>();
-		StorageDriverUtil.init(
-			drivers, itemConfig, loadConfig, storageConfig, stepConfig, contentSrc
-		);
+		try {
+			StorageDriverUtil.init(
+				drivers, itemConfig, loadConfig, avgMetricsConfig, storageConfig, stepConfig,
+				dataInput
+			);
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
+		}
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
@@ -128,11 +142,11 @@ extends StepBase {
 		itemDataSizes.put(loadGenerator, dataConfig.getSize());
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
 		loadConfigMap.put(loadGenerator, loadConfig);
-		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>();
-		stepConfigMap.put(loadGenerator, stepConfig);
+		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
+		outputConfigMap.put(loadGenerator, outputConfig);
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driversMap, null, itemDataSizes, loadConfigMap, stepConfigMap
+				stepId, driversMap, null, itemDataSizes, loadConfigMap, stepConfig, outputConfigMap
 			)
 		) {
 			final String itemOutputFile = itemConfig.getOutputConfig().getFile();
@@ -145,17 +159,19 @@ extends StepBase {
 				controller.setIoResultsOutput(itemOutput);
 			}
 			controller.start();
+			Loggers.MSG.info("Load step \"{}\" started", stepId);
 			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
-				Loggers.MSG.info("Load step \"{}\" done", jobName);
+				Loggers.MSG.info("Load step \"{}\" done", stepId);
 			} else {
-				Loggers.MSG.info("Load step \"{}\" timeout", jobName);
+				Loggers.MSG.info("Load step \"{}\" timeout", stepId);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
-			Loggers.MSG.debug("Load step \"{}\" interrupted", jobName);
+			Loggers.MSG.debug("Load step \"{}\" interrupted", stepId);
+			throw new CancellationException();
 		}
 	}
 	

@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.model.NamingThreadFactory;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.ui.log.LogUtil.BLUE;
@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -23,32 +24,33 @@ import java.util.concurrent.ThreadFactory;
 public final class CommandStep
 extends StepBase {
 	//
-	private static final ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
-	private static final ThreadFactory TF_STD_ERR = new NamingThreadFactory("stdErrReader", true);
+	private static final ThreadFactory TF_STD_IN = new LogContextThreadFactory("stdInReader", true);
+	private static final ThreadFactory TF_STD_ERR = new LogContextThreadFactory("stdErrReader", true);
 	private static final String KEY_NODE_BLOCKING = "blocking";
 	//
 	private final String cmdLine;
 	private final boolean blockingFlag;
-	private final boolean consoleColorFlag;
+	private final boolean stdOutColorFlag;
 	//
 	public CommandStep(final Config appConfig, final Map<String, Object> subTree)
 	throws IllegalArgumentException {
 		super(appConfig);
 		cmdLine = (String) subTree.get(KEY_NODE_VALUE);
 		if(subTree.containsKey(KEY_NODE_BLOCKING)) {
-			blockingFlag = (boolean)subTree.get(KEY_NODE_BLOCKING);
+			blockingFlag = (boolean) subTree.get(KEY_NODE_BLOCKING);
 		} else {
 			blockingFlag = true;
 		}
-		consoleColorFlag = LogUtil.isConsoleColoringEnabled();
+		stdOutColorFlag = appConfig.getOutputConfig().getColor();
 	}
 	//
 	@Override
-	protected final void invoke() {
+	protected final void invoke()
+	throws CancellationException {
 		try {
 			Loggers.MSG.info(
 				"Invoking the shell command:\n{}{}{}",
-				consoleColorFlag ? CYAN : "", cmdLine, consoleColorFlag ? RESET : ""
+				stdOutColorFlag ? CYAN : "", cmdLine, stdOutColorFlag ? RESET : ""
 			);
 			final Process process = new ProcessBuilder("bash", "-c", cmdLine).start();
 			final Thread processStdInReader = TF_STD_IN.newThread(
@@ -61,8 +63,8 @@ extends StepBase {
 						String nextLine;
 						while(null != (nextLine = bufferedReader.readLine())) {
 							Loggers.MSG.info(
-								"{}{}{}", consoleColorFlag ? BLUE : "", nextLine,
-								consoleColorFlag ? RESET : ""
+								"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
+								stdOutColorFlag ? RESET : ""
 							);
 						}
 					} catch(final IOException e) {
@@ -82,8 +84,8 @@ extends StepBase {
 						String nextLine;
 						while(null != (nextLine = bufferedReader.readLine())) {
 							Loggers.MSG.info(
-								"{}{}{}", consoleColorFlag ? RED : "", nextLine,
-								consoleColorFlag ? RESET : ""
+								"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
+								stdOutColorFlag ? RESET : ""
 							);
 						}
 					} catch(final IOException e) {
@@ -105,14 +107,14 @@ extends StepBase {
 							"Shell command \"{}\" finished with exit code {}", cmdLine, exitCode
 						);
 					}
-				} catch(final InterruptedException e) {
-					Loggers.MSG.info("Shell command \"{}\" interrupted", cmdLine);
 				} finally {
 					processStdInReader.interrupt();
 					processStdErrReader.interrupt();
 					process.destroy();
 				}
 			}
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
 		} catch(final Exception e) {
 			LogUtil.exception(Level.WARN, e, "Shell command \"{}\" failed", cmdLine);
 		}

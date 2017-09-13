@@ -8,9 +8,13 @@
 				}
 			}
 		},
+		"load" : {
+			"limit": {
+				"concurrency": 2
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 2,
 				"type" : "fs"
 			}
 		}

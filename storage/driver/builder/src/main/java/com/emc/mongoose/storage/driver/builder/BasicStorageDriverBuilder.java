@@ -1,21 +1,24 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriver;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
+import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.Level;
+
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.File;
@@ -37,13 +40,13 @@ public class BasicStorageDriverBuilder<
 > implements StorageDriverBuilder<I, O, T> {
 	
 	private String stepName;
-	private ContentSource contentSrc;
+	private DataInput contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
-	private MetricsConfig metricsConfig;
+	private AverageConfig avgMetricsConfig;
 	private StorageConfig storageConfig;
 
-	protected final String getStepName() {
+	protected final String getStepId() {
 		return stepName;
 	}
 	
@@ -58,8 +61,8 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public MetricsConfig getMetricsConfig() {
-		return metricsConfig;
+	public AverageConfig getAverageConfig() {
+		return avgMetricsConfig;
 	}
 
 	@Override
@@ -74,7 +77,7 @@ public class BasicStorageDriverBuilder<
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setContentSource(final ContentSource contentSrc) {
+	public BasicStorageDriverBuilder<I, O, T> setContentSource(final DataInput contentSrc) {
 		this.contentSrc = contentSrc;
 		return this;
 	}
@@ -92,8 +95,10 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig) {
-		this.metricsConfig = metricsConfig;
+	public BasicStorageDriverBuilder<I, O, T> setAverageConfig(
+		final AverageConfig avgMetricsConfig
+	) {
+		this.avgMetricsConfig = avgMetricsConfig;
 		return this;
 	}
 
@@ -105,74 +110,82 @@ public class BasicStorageDriverBuilder<
 	
 	@Override @SuppressWarnings("unchecked")
 	public T build()
-	throws UserShootHisFootException {
+	throws UserShootHisFootException, InterruptedException {
 
 		try(
 			final Instance ctx = CloseableThreadContext
-				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();
-			final List<Map<String, Object>> implConfig = driverConfig.getImplConfig();
+			final List<Map<String, Object>> implConfig = driverConfig.getImpl();
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
-			final Map<String, Class<T>> availableImpls = new HashMap<>();
+			final Map<String, URL> implClsPathUrls = new HashMap<>();
+			final Map<String, String> implFqcnsByType = new HashMap<>();
 
 			for(final Map<String, Object> nextImplInfo : implConfig) {
 
-				final String implType = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE);
 				final String implFile = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FILE);
-				final String implFqcn = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN);
-
 				try {
-					final URL implUrl = new File(getBaseDir() + implFile)
-						.toURI().toURL();
-					final URLClassLoader clsLoader = new URLClassLoader(new URL[] { implUrl });
-					final Class<T> implCls = (Class<T>) Class.forName(implFqcn, true, clsLoader);
-					Loggers.MSG.debug(
-						"Loaded storage driver implementation \"{}\" from the class \"{}\"",
-						implType, implFqcn
+					implClsPathUrls.put(
+						implFile, new File(getBaseDir() + File.separator + implFile).toURI().toURL()
 					);
-					availableImpls.put(implType, implCls);
 				} catch(final MalformedURLException e) {
 					Loggers.ERR.warn("Invalid storage driver implementation file: {}", implFile);
-				} catch(final ClassNotFoundException | NoClassDefFoundError e) {
-					Loggers.ERR.warn(
-						"Invalid FQCN \"{}\" for the implementation from file: {}", implFqcn,
-						implFile
-					);
 				}
+
+				implFqcnsByType.put(
+					(String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE),
+					(String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN)
+				);
 			}
 
 			final String driverType = driverConfig.getType();
-			final Class<T> matchingImplCls = availableImpls.get(driverType);
-
-			if(matchingImplCls == null) {
-				throw new UserShootHisFootException(
-					"No matching implementation class for the storage driver type \"" +
-						driverType + "\""
-				);
-			}
+			T driver = null;
+			final URL[] clsPathUrls = new URL[implClsPathUrls.size()];
+			implClsPathUrls.values().toArray(clsPathUrls);
 
 			try {
+				final URLClassLoader clsLoader = new URLClassLoader(clsPathUrls);
+				final Class<T> matchingImplCls = (Class<T>) Class.forName(
+					implFqcnsByType.get(driverType), true, clsLoader
+				);
+				if(matchingImplCls == null) {
+					throw new UserShootHisFootException(
+						"No matching implementation class for the storage driver type \"" +
+							driverType + "\""
+					);
+				}
 				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
-					String.class, ContentSource.class, LoadConfig.class, StorageConfig.class,
+					String.class, DataInput.class, LoadConfig.class, StorageConfig.class,
 					Boolean.TYPE
 				);
 				Loggers.MSG.info("New storage driver for type \"{}\"", driverType);
-				return constructor.newInstance(
+				driver = constructor.newInstance(
 					stepName, contentSrc, loadConfig, storageConfig, verifyFlag
+				);
+			} catch(final ClassNotFoundException | NoClassDefFoundError e) {
+				throw new UserShootHisFootException(
+					"Failed to load storage driver implementation for type: " + driverType
 				);
 			} catch(final NoSuchMethodException e) {
 				throw new UserShootHisFootException(
 					"No valid constructor to make the \"" + driverType +
 						"\" storage driver instance"
 				);
-			} catch(
-				final InstantiationException | IllegalAccessException | InvocationTargetException e
-			) {
-				throw new UserShootHisFootException(e.getCause());
+			} catch(final InvocationTargetException e) {
+				final Throwable cause = e.getCause();
+				if(cause instanceof InterruptedException) {
+					throw (InterruptedException) cause;
+				} else {
+					throw new UserShootHisFootException(e);
+				}
+			} catch(final InstantiationException | IllegalAccessException e) {
+				throw new UserShootHisFootException(e);
 			}
+
+			return driver;
 		}
 	}
 }

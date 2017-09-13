@@ -1,15 +1,15 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.data.DataCorruptionException;
-import com.emc.mongoose.model.data.DataSizeException;
-import com.emc.mongoose.model.data.DataVerificationException;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import static com.emc.mongoose.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.DirectMemUtil;
+import com.emc.mongoose.api.model.data.DataCorruptionException;
+import com.emc.mongoose.api.model.data.DataSizeException;
+import com.emc.mongoose.api.model.data.DataVerificationException;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 
 import com.emc.mongoose.ui.log.Loggers;
 import io.netty.buffer.ByteBuf;
@@ -29,7 +29,7 @@ public abstract class ResponseContentUtil {
 		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf contentChunk,
 		final int chunkSize
 	) throws IOException {
-		final List<ByteRange> byteRanges = dataIoTask.getFixedRanges();
+		final List<Range> byteRanges = dataIoTask.getFixedRanges();
 		final DataItem item = dataIoTask.getItem();
 		try {
 			if(byteRanges != null && !byteRanges.isEmpty()) {
@@ -80,7 +80,7 @@ public abstract class ResponseContentUtil {
 
 	private static void verifyChunkDataAndSize(
 		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
-		final ByteBuf chunkData, final int chunkSize, final List<ByteRange> byteRanges
+		final ByteBuf chunkData, final int chunkSize, final List<Range> byteRanges
 	) throws DataCorruptionException, IOException {
 
 		final long rangesSizeSum = dataIoTask.getMarkedRangesSize();
@@ -91,7 +91,7 @@ public abstract class ResponseContentUtil {
 		}
 		final long baseItemSize = dataItem.size();
 
-		ByteRange byteRange;
+		Range byteRange;
 		DataItem currRange;
 		// "countBytesDone" is the current range done bytes counter here
 		long rangeBytesDone = countBytesDone;
@@ -265,7 +265,7 @@ public abstract class ResponseContentUtil {
 	) throws DataCorruptionException, IOException {
 
 		// fill the expected data buffer to compare with a chunk
-		final ByteBuffer bb = ThreadLocalByteBuffer.get(remainingSize);
+		final ByteBuffer bb = DirectMemUtil.getThreadLocalReusableBuff(remainingSize);
 		bb.limit(remainingSize);
 		int n = 0;
 		while(n < remainingSize) {

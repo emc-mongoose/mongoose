@@ -1,19 +1,18 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.Credential;
+import com.github.akurilov.commons.collection.Range;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -30,17 +29,17 @@ public final class NetStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O> {
 
 	public NetStorageDriverMock(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+	) throws UserShootHisFootException, InterruptedException {
+		super(stepId, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 
 	@Override
 	protected final NonBlockingConnPool createConnectionPool() {
 		return new BasicMultiNodeConnPoolMock(
 			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this,
-			storageNodePort
+			storageNodePort, connAttemptsLimit
 		);
 	}
 
@@ -87,8 +86,8 @@ extends NetStorageDriverBase<I, O> {
 				case READ:
 					dataIoTask.startDataResponse();
 				case UPDATE:
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+					final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(dataIoTask.hasMarkedRanges()) {
 							dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 						} else {

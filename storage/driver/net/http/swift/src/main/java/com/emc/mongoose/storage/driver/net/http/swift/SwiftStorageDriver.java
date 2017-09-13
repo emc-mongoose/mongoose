@@ -1,20 +1,19 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import static com.emc.mongoose.model.io.IoType.CREATE;
-import com.emc.mongoose.model.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.model.io.task.partial.data.PartialDataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.Credential;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import static com.emc.mongoose.api.model.io.IoType.CREATE;
+import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.api.model.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.base.HttpStorageDriverBase;
-import static com.emc.mongoose.model.io.task.IoTask.SLASH;
-import static com.emc.mongoose.storage.driver.net.http.base.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
+import static com.emc.mongoose.api.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.AUTH_URI;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.DEFAULT_VERSIONS_LOCATION;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_AUTH_KEY;
@@ -26,9 +25,9 @@ import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.KEY_X_VERS
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.MAX_LIST_LIMIT;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.URI_BASE;
 import static com.emc.mongoose.storage.driver.net.http.swift.SwiftApi.parseContainerListing;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -60,6 +59,7 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -80,9 +80,9 @@ extends HttpStorageDriverBase<I, O> {
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws UserShootHisFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
@@ -98,9 +98,11 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applySharedHeaders(reqHeaders);
 		final String containerUri = namespacePath + path;
+
+		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
 		final FullHttpRequest checkContainerReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, containerUri, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -110,7 +112,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkContainerResp = executeHttpRequest(checkContainerReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -127,11 +129,7 @@ extends HttpStorageDriverBase<I, O> {
 			final String versionsLocation = checkContainerResp
 				.headers()
 				.get(KEY_X_VERSIONS_LOCATION);
-			if(versionsLocation == null || versionsLocation.isEmpty()) {
-				versioningEnabled = false;
-			} else {
-				versioningEnabled = true;
-			}
+			versioningEnabled = versionsLocation != null && !versionsLocation.isEmpty();
 		} else {
 			Loggers.ERR.warn(
 				"Unexpected container checking response: {}", checkContainerRespStatus.toString()
@@ -146,9 +144,10 @@ extends HttpStorageDriverBase<I, O> {
 			!containerExists || (versioningEnabled && !versioning) ||
 			(!versioningEnabled && versioning)
 		) {
-			if(fsAccess) {
-				reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true));
-			}
+			// TODO move to separate EMC-specific implementation
+			//if(fsAccess) {
+			//	reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true));
+			//}
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}
@@ -161,7 +160,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putContainerResp = executeHttpRequest(putContainerReq);
 			} catch(final InterruptedException e) {
-				return null;
+				throw new CancellationException();
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -190,7 +189,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		
 		final String uid = credential == null ? this.credential.getUid() : credential.getUid();
 		if(uid != null && ! uid.isEmpty()) {
@@ -211,7 +210,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -235,7 +234,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
@@ -277,7 +276,8 @@ extends HttpStorageDriverBase<I, O> {
 			} else {
 				Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
@@ -287,9 +287,9 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override @SuppressWarnings("unchecked")
 	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
+	throws IllegalStateException {
 		if(isClosed() || isInterrupted()) {
-			throw new InterruptedException();
+			throw new IllegalStateException();
 		}
 		ioTask.reset();
 		if(ioTask instanceof CompositeDataIoTask) {
@@ -311,9 +311,9 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		if(isClosed() || isInterrupted()) {
-			throw new InterruptedException();
+			throw new IllegalStateException();
 		}
 		O nextIoTask;
 		for(int i = from; i < to; i ++) {
@@ -329,11 +329,21 @@ extends HttpStorageDriverBase<I, O> {
 					final List<O> subTasks = compositeTask.getSubTasks();
 					final int n = subTasks.size();
 					if(n > 0) {
+						// NOTE: blocking subtasks submission
 						while(!super.submit(subTasks.get(0))) {
 							LockSupport.parkNanos(1);
 						}
-						for(int j = 1; j < n; j ++) {
-							childTasksQueue.put(subTasks.get(j));
+						try {
+							for(int j = 1; j < n; j ++) {
+								childTasksQueue.put(subTasks.get(j));
+							}
+						} catch(final InterruptedException e) {
+							LogUtil.exception(
+								Level.DEBUG, e,
+								"{}: interrupted while enqueueing the child subtasks",
+								toString()
+							);
+							throw new CancellationException();
 						}
 					} else {
 						throw new AssertionError("Composite I/O task yields 0 sub-tasks");
@@ -419,7 +429,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final String objManifestPath = super.getDataUriPath(
 			item, srcPath, mpuTask.getDstPath(), CREATE
@@ -451,7 +461,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders

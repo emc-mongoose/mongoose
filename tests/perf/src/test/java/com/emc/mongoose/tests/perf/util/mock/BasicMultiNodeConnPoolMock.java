@@ -17,10 +17,12 @@ extends BasicMultiNodeConnPool {
 
 	public BasicMultiNodeConnPoolMock(
 		final int concurrencyLevel, final Semaphore concurrencyThrottle, final String[] nodes,
-		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort
+		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort,
+		final int connFailSeqLenLimit
 	) {
 		super(
-			concurrencyLevel, concurrencyThrottle, nodes, bootstrap, connPoolHandler, defaultPort
+			concurrencyLevel, concurrencyThrottle, nodes, bootstrap, connPoolHandler, defaultPort,
+			connFailSeqLenLimit
 		);
 	}
 

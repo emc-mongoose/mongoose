@@ -13,9 +13,13 @@
 				}
 			}
 		},
+		"load" : {
+			"limit": {
+				"concurrency": 5
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 5,
 				"type" : "fs"
 			}
 		}
@@ -31,7 +35,8 @@
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "load",
 			"config" : {
 				"item" : {

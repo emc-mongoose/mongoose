@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base;
 
-import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import io.netty.util.concurrent.Future;

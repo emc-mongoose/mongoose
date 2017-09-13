@@ -1,97 +1,88 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import org.junit.After;
+import org.junit.Before;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  Created by andrey on 07.06.17.
  */
-public class LoopByCountTest
-extends EnvConfiguredScenarioTestBase {
+public final class LoopByCountTest
+extends ScenarioTestBase {
 
 	private static final int EXPECTED_LOOP_COUNT = 10;
 	private static final int EXPECTED_STEP_TIME = 5;
-	private static long ACTUAL_TEST_TIME;
 
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("fs", "s3", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 10));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_NAME = LoopByCountTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "LoopByCount.json"
-		);
+	private long actualTestTime;
+
+	public LoopByCountTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
 	}
 
-	@BeforeClass
-	public static void setUpClass()
+	@Override
+	protected String makeStepId() {
+		return LoopByCountTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "LoopByCount.json");
+	}
+
+	@Before
+	public final void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		ACTUAL_TEST_TIME = System.currentTimeMillis();
-		SCENARIO.run();
-		ACTUAL_TEST_TIME = (System.currentTimeMillis() - ACTUAL_TEST_TIME) / 1000;
+		configArgs.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
+		super.setUp();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		actualTestTime = System.currentTimeMillis();
+		scenario.run();
+		actualTestTime = (System.currentTimeMillis() - actualTestTime) / 1000;
 		TimeUnit.SECONDS.sleep(10);
-		LoadJobLogFileManager.flushAll();
+		LogUtil.flushAll();
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public final void tearDown()
 	throws Exception {
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public final void testDuration()
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, ACTUAL_TEST_TIME, 25);
-	}
 
-	@Test
-	public final void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
 		for(final CSVRecord totalRec : totalRecs) {
 			testTotalMetricsLogRecord(
-				totalRec, IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0,
+				totalRec, IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), 0,
 				EXPECTED_STEP_TIME
 			);
 		}
+
+		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, actualTestTime, 25);
 	}
 }

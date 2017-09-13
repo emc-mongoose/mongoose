@@ -13,6 +13,13 @@
 						"file" : "UpdateUsingInputFileLimitByTimeTest.csv"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"average" : {
+							"period" : 0
+						}
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {

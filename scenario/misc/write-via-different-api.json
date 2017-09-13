@@ -21,8 +21,8 @@
 						"size" : "10KB"
 					}
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : 5
 					}
 				},
@@ -40,7 +40,7 @@
 					"config" : {
 						"storage" : {
 							"driver" : {
-								"type" : "s3"
+								"type" : "amzs3"
 							}
 						}
 					}

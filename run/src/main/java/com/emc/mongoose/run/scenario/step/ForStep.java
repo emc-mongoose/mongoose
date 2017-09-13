@@ -1,18 +1,18 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.reader.jackson.ConfigParser;
 import com.emc.mongoose.ui.log.Loggers;
 
-import static com.emc.mongoose.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
+import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.FORMAT_BRACKETS;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -210,14 +210,12 @@ extends SequentialStep {
 					Config childJobConfig;
 					Map<String, Object> newJobTree;
 					for(final Object nextValue : valueSeq) {
-						childJobConfig = ConfigParser.replace(
-							localConfig, replacePattern, nextValue
-						);
+						childJobConfig = localConfig.replace(replacePattern, nextValue);
 						if(nodeConfig != null) {
-							nextNodeConfig = ConfigParser.replace(
+							nextNodeConfig = Config.replace(
 								(Map<String, Object>) nodeConfig, replacePattern, nextValue
 							);
-							childJobConfig.apply(nextNodeConfig);
+							childJobConfig.apply(nextNodeConfig, null);
 						}
 						append(
 							new BasicTaskStep(
@@ -421,8 +419,9 @@ extends SequentialStep {
 		return dstTree;
 	}
 
-	@Override
-	protected final void invoke() {
+	@Override @SuppressWarnings("InfiniteLoopStatement")
+	protected final void invoke()
+	throws CancellationException {
 		if(replaceMarkerName == null && valueSeq == null) { // infinite loop
 			while(true) {
 				super.invoke();

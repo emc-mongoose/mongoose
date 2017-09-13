@@ -1,18 +1,18 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.Credential;
+import com.github.akurilov.commons.collection.Range;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
-import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -27,16 +27,10 @@ public final class BasicStorageDriverMock<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O> {
 
 	public BasicStorageDriverMock(
-		final String stepName, final ContentSource contentSrc, final Config.LoadConfig loadConfig,
-		final Config.StorageConfig storageConfig, final boolean verifyFlag
+		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException {
 		super(stepName, contentSrc, loadConfig, storageConfig, verifyFlag);
-	}
-
-	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException {
-		return true;
 	}
 
 	@Override
@@ -64,7 +58,7 @@ extends StorageDriverBase<I, O> {
 
 	@Override
 	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
+	throws IllegalStateException {
 		ioTask.reset();
 		ioTask.startRequest();
 		ioTask.finishRequest();
@@ -82,8 +76,8 @@ extends StorageDriverBase<I, O> {
 				case READ:
 					dataIoTask.startDataResponse();
 				case UPDATE:
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+					final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(dataIoTask.hasMarkedRanges()) {
 							dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 						} else {
@@ -109,7 +103,7 @@ extends StorageDriverBase<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		O ioTask;
 		for(int i = from; i < to; i ++) {
 			ioTask = ioTasks.get(i);
@@ -130,8 +124,8 @@ extends StorageDriverBase<I, O> {
 					case READ:
 						dataIoTask.startDataResponse();
 					case UPDATE:
-						final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+						final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+						if(fixedRanges == null || fixedRanges.isEmpty()) {
 							if(dataIoTask.hasMarkedRanges()) {
 								dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 							} else {
@@ -158,8 +152,13 @@ extends StorageDriverBase<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks)
-	throws InterruptedException {
+	throws IllegalStateException {
 		return submit(ioTasks, 0, ioTasks.size());
+	}
+
+	@Override
+	protected void doInterrupt()
+	throws IllegalStateException {
 	}
 
 	@Override

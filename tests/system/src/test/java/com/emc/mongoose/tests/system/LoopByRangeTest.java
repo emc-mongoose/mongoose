@@ -1,33 +1,31 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.LogPatterns;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+
+import org.junit.After;
+import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
-import org.apache.logging.log4j.ThreadContext;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  Created by andrey on 08.06.17.
  */
-public class LoopByRangeTest
-extends EnvConfiguredScenarioTestBase {
+public final class LoopByRangeTest
+extends ScenarioTestBase {
 
 	private static final double EXPECTED_LOOP_START_VALUE = 2.71828182846;
 	private static final double EXPECTED_LOOP_LIMIT_VALUE = 3.1415926;
@@ -40,51 +38,47 @@ extends EnvConfiguredScenarioTestBase {
 			"\\s+Use\\snext\\svalue\\sfor\\s\"i\":\\s(?<stepValue>\\d\\.\\d+)"
 	);
 
-	private static String STD_OUTPUT;
+	private String stdOutput;
 
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(10, 100, 1000));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(2));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes("1KB"), new SizeInBytes("1MB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_NAME = LoopByCountTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "LoopByRange.json"
-		);
+	public LoopByRangeTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
 	}
 
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+	@Override
+	protected String makeStepId() {
+		return LoopByCountTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		EnvConfiguredScenarioTestBase.tearDownClass();
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "LoopByRange.json");
 	}
 
-	@Test
-	public final void testSteps()
+	@Before
+	public final void setUp()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final Matcher m = PTRN_LOOP_STEP_MSG.matcher(STD_OUTPUT);
+		super.setUp();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
+	}
+
+	@After
+	public final void tearDown()
+	throws Exception {
+		super.tearDown();
+	}
+
+	@Override
+	public void test()
+	throws Exception {
+		final Matcher m = PTRN_LOOP_STEP_MSG.matcher(stdOutput);
 		double nextExpectedStepVal = EXPECTED_LOOP_START_VALUE;
 		while(m.find()) {
 			final String t = m.group("stepValue");

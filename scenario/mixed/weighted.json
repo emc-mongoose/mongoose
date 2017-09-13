@@ -6,8 +6,8 @@
 				"path" : "/weighted-load"
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 100
 			}
 		}
@@ -24,13 +24,23 @@
 						"file" : "weighted-load.csv"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"average" : {
+							"persist" : false
+						},
+						"summary" : {
+							"persist" : false
+						},
+						"trace" : {
+							"persist" : false
+						}
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
 							"count" : 10000
-						},
-						"metrics" : {
-							"period" : 0
 						}
 					}
 				}
@@ -63,7 +73,11 @@
 						}
 					},
 					"load" : {
-						"circular" : true,
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
 						"type" : "read"
 					}
 				}

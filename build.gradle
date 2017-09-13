@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import groovy.json.JsonParserType
 
 description = "Mongoose is a high-load storage performance testing tool"
 
@@ -21,22 +22,22 @@ ext {
 
 	depVersion = [
 		commonsCodec : "1.10",
-		commonsCollections : "4.1",
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
-		jackson : "2.8.7",
+		jackson : "2.9.0",
+		javaCommons : "[1.0.8,)",
+		javaCoroutines : "[1.0.12,)",
 		javassist : "3.21.0-GA",
 		slf4j : "1.7.24",
-		log4j : "2.8.1",
-		metrics : "3.2.2",
-		nagaina : "3.4.1",
-		netty : "4.1.9.Final",
+		log4j : "2.8.2",
+		metrics : "3.2.4",
+		nagaina : "[3.5.18,)",
+		netty : "4.1.15.Final",
 	]
 
 	mutualProjects = subprojects.findAll {
-		it != project("load") &&
-		it != project("storage") &&
-		it != project("tests")
+		it != project("api") && it != project("load") && it != project("storage") &&
+			it != project("tests")
 	}
 
 	setClassPath = {
@@ -60,7 +61,6 @@ subprojects {
 
 	apply plugin: "maven"
 	apply plugin: "signing"
-	apply plugin: "com.google.osdetector"
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -116,9 +116,13 @@ subprojects {
 	}
 
 	test {
+		jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+		jvmArgs "-XX:MaxDirectMemorySize=2g"
+		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		systemProperty "com.sun.management.jmxremote", "true"
 		systemProperty "com.sun.management.jmxremote.port", "9010"
+		systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
 		systemProperty "com.sun.management.jmxremote.local.only", "false"
 		systemProperty "com.sun.management.jmxremote.authenticate", "false"
 		systemProperty "com.sun.management.jmxremote.ssl", "false"
@@ -204,6 +208,10 @@ subprojects {
 	}
 }
 
+task wrapper(type: Wrapper) {
+	gradleVersion = "3.5"
+}
+
 task dist(type: Tar) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
@@ -238,10 +246,6 @@ task printVersion {
 	doLast { logger.quiet "Mongoose version: $version" }
 }
 
-task wrapper(type: Wrapper) {
-	gradleVersion = "3.5"
-}
-
 void collectName(Project p, LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
@@ -252,6 +256,6 @@ void collectName(Project p, LinkedList<String> names) {
 String defineVersion() {
 	def configFilePath = [rootDir, "config", "defaults.json"].join(File.separator);
 	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().parseText(inputFile.text)
+	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
 	json.version
 }

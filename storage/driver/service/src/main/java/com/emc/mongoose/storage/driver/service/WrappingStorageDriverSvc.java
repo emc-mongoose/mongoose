@@ -1,24 +1,19 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.concurrent.SvcTask;
-import com.emc.mongoose.common.concurrent.SvcTaskBase;
-import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.DataItemFactory;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.CoroutineBase;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
+import com.github.akurilov.commons.io.Input;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -28,6 +23,9 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import static java.lang.System.nanoTime;
 
 /**
@@ -38,36 +36,38 @@ implements StorageDriverSvc<I, O> {
 	
 	private final int port;
 	private final StorageDriver<I, O> driver;
-	private final SvcTask stateReportSvcTask;
+	//private final Coroutine stateReportCoroutine;
 
 	public WrappingStorageDriverSvc(
 		final int port, final StorageDriver<I, O> driver, final long metricsPeriodSec,
-		final String stepName
+		final String stepId
 	) throws RemoteException {
-		if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
-			stateReportSvcTask = new StateReportingTask(driver, metricsPeriodSec, stepName);
+		/*if(metricsPeriodSec > 0 && metricsPeriodSec < Long.MAX_VALUE) {
+			stateReportCoroutine = new StateReportingCoroutine(driver, metricsPeriodSec, stepId);
 		} else {
-			stateReportSvcTask = null;
-		}
+			stateReportCoroutine = null;
+		}*/
 		this.port = port;
 		this.driver = driver;
 		Loggers.MSG.info("Service started: " + ServiceUtil.create(this, port));
 	}
 	
-	private final static class StateReportingTask
-	extends SvcTaskBase {
+	/*private final static class StateReportingCoroutine
+	extends CoroutineBase
+	implements Coroutine {
 
 		private final StorageDriver driver;
 		private final long metricsPeriodNanoSec;
 		private final String stepName;
+		private final Lock invocationLock = new ReentrantLock();
 		
 		private long prevNanoTimeStamp;
 		private long nextNanoTimeStamp;
 		
-		public StateReportingTask(
+		public StateReportingCoroutine(
 			final StorageDriver driver, final long metricsPeriodSec, final String stepName
 		) throws RemoteException {
-			super(driver.getSvcTasks());
+			super(driver.getSvcCoroutines());
 			this.driver = driver;
 			this.metricsPeriodNanoSec = TimeUnit.SECONDS.toNanos(metricsPeriodSec);
 			this.stepName = stepName;
@@ -75,23 +75,25 @@ implements StorageDriverSvc<I, O> {
 		}
 		
 		@Override
-		protected final void invoke() {
-			try(
-				final Instance ctx = CloseableThreadContext
-					.put(KEY_STEP_NAME, stepName)
-					.put(KEY_CLASS_NAME, getClass().getSimpleName())
-			) {
-				nextNanoTimeStamp = nanoTime();
-				if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
-					prevNanoTimeStamp = nextNanoTimeStamp;
-					try {
-						Loggers.MSG.info(
-							"{} I/O tasks: scheduled={}, active={}, completed={}",
-							driver.toString(), driver.getScheduledTaskCount(),
-							driver.getActiveTaskCount(), driver.getCompletedTaskCount()
-						);
-					} catch(final RemoteException ignored) {
+		protected final void invokeTimed(final long startTimeNanos) {
+			if(invocationLock.tryLock()) {
+				try {
+					nextNanoTimeStamp = nanoTime();
+					ThreadContext.put(KEY_TEST_STEP_ID, stepName);
+					ThreadContext.put(KEY_CLASS_NAME, getClass().getSimpleName());
+					if(metricsPeriodNanoSec < nextNanoTimeStamp - prevNanoTimeStamp) {
+						prevNanoTimeStamp = nextNanoTimeStamp;
+						try {
+							Loggers.MSG.info(
+								"{} I/O tasks: scheduled={}, active={}, completed={}",
+								driver.toString(), driver.getScheduledTaskCount(),
+								driver.getActiveTaskCount(), driver.getCompletedTaskCount()
+							);
+						} catch(final RemoteException ignored) {
+						}
 					}
+				} finally {
+					invocationLock.unlock();
 				}
 			}
 		}
@@ -99,8 +101,9 @@ implements StorageDriverSvc<I, O> {
 		@Override
 		protected final void doClose() {
 			prevNanoTimeStamp = Long.MAX_VALUE;
+			invocationLock.tryLock();
 		}
-	}
+	}*/
 
 	@Override
 	public final int getRegistryPort()
@@ -115,11 +118,6 @@ implements StorageDriverSvc<I, O> {
 	}
 	
 	@Override
-	public final List<SvcTask> getSvcTasks() {
-		throw new AssertionError("Shouldn't be invoked");
-	}
-	
-	@Override
 	public final State getState()
 	throws RemoteException {
 		return driver.getState();
@@ -130,9 +128,9 @@ implements StorageDriverSvc<I, O> {
 	throws IllegalStateException {
 		try {
 			driver.start();
-			if(stateReportSvcTask != null) {
-				driver.getSvcTasks().add(stateReportSvcTask); // start
-			}
+			/*if(stateReportCoroutine != null) {
+				stateReportCoroutine.start();
+			}*/
 		} catch(final RemoteException e) {
 			throw new AssertionError(e);
 		}
@@ -159,8 +157,8 @@ implements StorageDriverSvc<I, O> {
 	@Override
 	public final void close()
 	throws IOException {
-		driver.close();
 		Loggers.MSG.info("Service closed: " + ServiceUtil.close(this));
+		driver.close();
 	}
 
 	@Override
@@ -218,9 +216,9 @@ implements StorageDriverSvc<I, O> {
 	throws IllegalStateException {
 		try {
 			driver.interrupt();
-			if(stateReportSvcTask != null) {
-				stateReportSvcTask.close();
-			}
+			/*if(stateReportCoroutine != null) {
+				stateReportCoroutine.close();
+			}*/
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Storage driver wrapping service failed on interrupt");
 		}

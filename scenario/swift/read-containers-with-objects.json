@@ -11,9 +11,13 @@
 				}
 			}
 		},
+		"load" : {
+			"limit": {
+				"concurrency": 10
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10,
 				"type" : "swift"
 			},
 			"net" : {
@@ -53,8 +57,8 @@
 						}
 					}
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : 10
 					}
 				}

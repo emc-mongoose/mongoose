@@ -15,12 +15,10 @@
 			}
 		},
 		"load" : {
-			"type" : "${LOAD_TYPE}"
-		},
-		"storage" : {
-			"driver" : {
+			"limit" : {
 				"concurrency" : "${LOAD_THREADS}"
-			}
+			},
+			"type" : "${LOAD_TYPE}"
 		}
 	}
 }

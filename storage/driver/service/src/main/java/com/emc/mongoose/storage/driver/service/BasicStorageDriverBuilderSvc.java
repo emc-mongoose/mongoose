@@ -1,25 +1,23 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.common.concurrent.SvcTask;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.Loggers;
-
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,7 +42,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 	
 	@Override
-	public BasicStorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc) {
+	public BasicStorageDriverBuilderSvc<I, O, T> setContentSource(final DataInput contentSrc) {
 		super.setContentSource(contentSrc);
 		return this;
 	}
@@ -62,8 +60,10 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	}
 
 	@Override
-	public BasicStorageDriverBuilderSvc<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig) {
-		super.setMetricsConfig(metricsConfig);
+	public BasicStorageDriverBuilderSvc<I, O, T> setAverageConfig(
+		final AverageConfig avgMetricsConfig
+	) {
+		super.setAverageConfig(avgMetricsConfig);
 		return this;
 	}
 
@@ -74,11 +74,6 @@ implements StorageDriverBuilderSvc<I, O, T> {
 		return this;
 	}
 
-	@Override
-	public final List<SvcTask> getSvcTasks() {
-		throw new AssertionError("Shouldn't be invoked");
-	}
-	
 	@Override
 	public final State getState()
 	throws RemoteException {
@@ -163,10 +158,14 @@ implements StorageDriverBuilderSvc<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws IOException, UserShootHisFootException {
-		final StorageDriver<I, O> driver = build();
-		final T wrapper = (T) new WrappingStorageDriverSvc<>(
-			port, driver, getMetricsConfig().getPeriod(), getStepName()
-		);
-		return wrapper.getName();
+		try {
+			final StorageDriver<I, O> driver = build();
+			final T wrapper = (T) new WrappingStorageDriverSvc<>(
+				port, driver, getAverageConfig().getPeriod(), getStepId()
+			);
+			return wrapper.getName();
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
+		}
 	}
 }

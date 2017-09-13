@@ -1,0 +1,22 @@
+---
+ssl: false
+whitelistObjectNames: [ "com.emc.mongoose.api.model.metrics:*" ]
+rules:
+  - pattern: "com.emc.mongoose.model.metrics<storageDriverConcurrency=(\\d+), storageDriverCount=(\\d+), loadType=(\\w+), stepId=(.+)><>(byte_count|duration_sum|elapsed_time_millis|fail_count|latency_sum|succ_count)"
+    attrNameSnakeCase: true
+    name: "mongoose_$5"
+    type: COUNTER
+    labels:
+      storage_driver_concurrency: "$1"
+      storage_driver_count: "$2"
+      load_type: "$3"
+      test_step_id: "$4"
+  - pattern: "com.emc.mongoose.model.metrics<storageDriverConcurrency=(\\d+), storageDriverCount=(\\d+), loadType=(\\w+), stepId=(.+)><>(byte_rate_last|byte_rate_mean|duration_hi_q|duration_lo_q|duration_max|duration_mean|duration_med|duration_min|fail_rate_last|fail_rate_mean|latency_hi_q|latency_lo_q|latency_max|latency_mean|latency_med|latemcy_min|start_time_millis|succ_rate_last|succ_rate_mean)"
+    attrNameSnakeCase: true
+    name: "mongoose_$5"
+    type: GAUGE
+    labels:
+      storage_driver_concurrency: "$1"
+      storage_driver_count: "$2"
+      load_type: "$3"
+      test_step_id: "$4"

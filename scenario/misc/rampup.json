@@ -10,14 +10,18 @@
 				"size" : "${size}"
 			}
 		},
+		"output" : {
+			"metrics" : {
+				"average" : {
+					"period" : 0
+				}
+			}
+		},
 		"test" : {
 			"step" : {
 				"limit" : {
 					"count" : 1000000,
 					"time" : "10s"
-				},
-				"metrics" : {
-					"period" : 0
 				}
 			}
 		}
@@ -35,8 +39,8 @@
 						"path" : "${size}_${threads}threads"
 					}
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : "${threads}"
 					}
 				}
@@ -55,7 +59,7 @@
 						},
 						"test" : {
 							"step" : {
-								"name" : "C${threads}_${size}"
+								"id" : "C${threads}_${size}"
 							}
 						}
 					}
@@ -72,7 +76,7 @@
 						},
 						"test" : {
 							"step" : {
-								"name" : "R${threads}_${size}"
+								"id" : "R${threads}_${size}"
 							}
 						}
 					}
@@ -89,7 +93,7 @@
 						},
 						"test" : {
 							"step" : {
-								"name" : "D${threads}_${size}"
+								"id" : "D${threads}_${size}"
 							}
 						}
 					}
