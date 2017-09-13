@@ -71,15 +71,6 @@ jobs:
         - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
-    - env:
-        - TEST=CopyUsingInputPathTest
-        - STORAGE_TYPE=fs,amzs3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,medium
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large,huge ./gradlew -Dtest.single=CreateNoLimitTest :tests:system:test
     - env:
         - TEST=CreateNoLimitTest
@@ -159,15 +150,6 @@ jobs:
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=single,medium
         - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=MultiPartCreateTest :tests:system:test
-    - env:
-        - TEST=MultiPartCreateTest
-        - STORAGE_TYPE=amzs3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,amzs3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
@@ -310,13 +292,31 @@ jobs:
 
     - stage: "Quarantine tests"
 
-    # STORAGE_TYPE=amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=CreateLimitBySizeTest :tests:system:test
+    # STORAGE_TYPE=fs,amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
       env:
+        - TEST=CopyUsingInputPathTest
+        - STORAGE_TYPE=fs,amzs3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=single,medium
+        - ITEM_SIZE=empty,small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=CreateLimitBySizeTest :tests:system:test
+    - env:
         - TEST=CreateLimitBySizeTest
         - STORAGE_TYPE=amzs3,swift
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=low,medium,high
         - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=MultiPartCreateTest :tests:system:test
+    - env:
+        - TEST=MultiPartCreateTest
+        - STORAGE_TYPE=amzs3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium
+        - ITEM_SIZE=medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,amzs3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest :tests:system:test
