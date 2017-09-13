@@ -143,12 +143,14 @@ extends ScenarioTestBase {
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		System.out.println("Expected transfer size: " + sizeLimit.get() + ", actual: " + sizeSum);
+		final long delta = driverCount.getValue() * concurrency.getValue() * partSize.getMax();
+		System.out.println(
+			"Expected transfer size: " + sizeLimit.get() + "+" + delta +", actual: " + sizeSum
+		);
 		assertTrue(
-			"Expected to transfer no more than " + sizeLimit + ", but transferred actually: "
-				+ new SizeInBytes(sizeSum),
-			sizeLimit.get() + driverCount.getValue() * concurrency.getValue() * partSize.getMax()
-				>= sizeSum
+			"Expected to transfer no more than " + sizeLimit + "+" + delta
+				+ ", but transferred actually: " + new SizeInBytes(sizeSum),
+			sizeLimit.get() + delta >= sizeSum
 		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
