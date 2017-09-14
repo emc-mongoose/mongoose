@@ -261,7 +261,7 @@
 				// An user may place here a key-value pair which will be used as HTTP header.
 				"headers" : {
 					"Connection" : "Keep-Alive",
-					"User-Agent" : "mongoose/3.5.0"
+					"User-Agent" : "mongoose/3.6.0"
 				},
 				// The HTTP storage namespace.
 				// WARNING: the default value (null) will not work in the case of Swift API
@@ -313,7 +313,7 @@
 		}
 	},
 	// The Mongoose version
-	"version" : "3.5.0",
+	"version" : "3.6.0",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
 	"aliasing" : [
 
