@@ -1,5 +1,5 @@
 parallel
-    .include(
+    .steps(
         [
             command
                 .config(

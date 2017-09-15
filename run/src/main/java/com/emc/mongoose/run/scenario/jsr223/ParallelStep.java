@@ -1,13 +1,13 @@
 package com.emc.mongoose.run.scenario.jsr223;
 
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
+import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
-import javax.script.Bindings;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,46 +16,64 @@ import java.util.concurrent.TimeUnit;
 /**
  The composite step implementation which executes the child steps simultaneously.
  */
-public final class ParallelStep
+public class ParallelStep
 extends StepBase
 implements CompositeStep {
 
 	private final List<Step> children;
 
 	public ParallelStep(final Config config) {
-		this(config, null);
+		this(config, null, null, null);
 	}
 
-	private ParallelStep(final Config config, final Bindings children) {
-		super(config);
+	protected ParallelStep(
+		final Config config, final Map<String, Object> stepConfig, final CompositeStep parentStep,
+		final List<Step> children
+	) {
+		super(config, stepConfig, parentStep);
+		this.children = children;
+	}
+
+	@Override
+	protected ParallelStep copyInstance(
+		final Config configCopy, final Map<String, Object> stepConfig,
+		final CompositeStep parentStep
+	) {
+		return new ParallelStep(configCopy, stepConfig, parentStep, children);
+	}
+
+	@Override
+	protected String getTypeName() {
+		return "parallel";
+	}
+
+	@Override
+	public ParallelStep steps(final Map<String, Object> children)
+	throws ScenarioParseException {
+		final List<Step> steps;
 		if(children == null) {
-			this.children = null;
+			steps = null;
 		} else {
-			this.children = new ArrayList<>(children.size());
-			for(final Object nextStep : children.values()) {
-				if(nextStep instanceof Step) {
-					this.children.add((Step) nextStep);
+			steps = new ArrayList<>(children.size());
+			for(final Object child : children.values()) {
+				if(child instanceof Step) {
+					steps.add(((Step) child).parent(this));
 				} else {
-					throw new AssertionError();
+					throw new ScenarioParseException();
 				}
 			}
 		}
+		return new ParallelStep(baseConfig, stepConfig, parentStep, steps);
 	}
 
 	@Override
-	public final ParallelStep config(final Bindings stepConfig) {
-		final Config configCopy = new Config(config);
-		configCopy.apply(stepConfig, "parallel-" + LogUtil.getDateTimeStamp() + "-" + hashCode());
-		return new ParallelStep(configCopy, stepConfig);
-	}
+	protected void invoke(final Config config)
+	throws Throwable {
 
-	@Override
-	public final ParallelStep include(final Bindings children) {
-		return new ParallelStep(new Config(config), children);
-	}
+		if(children == null) {
+			return;
+		}
 
-	@Override
-	public final void run() {
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
 			children.size(), new LogContextThreadFactory("stepWorker" + hashCode(), true)
 		);

@@ -61,7 +61,7 @@ extends StepBase {
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
-		// add the config params from the 1st element as defaults
+		// add the baseConfig params from the 1st element as defaults
 		this.localConfig.apply(
 			nodeConfigList.get(0), "chain-" + LogUtil.getDateTimeStamp() + "-" + hashCode()
 		);

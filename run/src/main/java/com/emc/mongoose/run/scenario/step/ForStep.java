@@ -193,7 +193,7 @@ extends SequentialStep {
 				localConfig.apply((Map<String, Object>) nodeConfig);
 			} else {
 				throw new ScenarioParseException(
-					"Invalid config node type: \"" + nodeConfig.getClass() + "\""
+					"Invalid baseConfig node type: \"" + nodeConfig.getClass() + "\""
 				);
 			}
 		}*/

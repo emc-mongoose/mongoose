@@ -1,6 +1,5 @@
 package com.emc.mongoose.run.scenario.jsr223;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
@@ -31,39 +30,50 @@ import com.github.akurilov.commons.system.SizeInBytes;
 
 import org.apache.logging.log4j.Level;
 
-import javax.script.Bindings;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
  Created by andrey on 14.09.17.
  */
-public final class LoadStep
+public class LoadStep
 extends StepBase
 implements Step {
 
-	public LoadStep(final Config config) {
-		super(config);
+	public LoadStep(final Config baseConfig) {
+		this(baseConfig, null, null);
+	}
+
+	protected LoadStep(
+		final Config baseConfig, final Map<String, Object> stepConfig,
+		final CompositeStep parentStep
+	) {
+		super(baseConfig, stepConfig, parentStep);
 	}
 
 	@Override
-	public final LoadStep config(final Bindings stepConfig) {
-		final Config configCopy = new Config(config);
-		configCopy.apply(stepConfig, "load-" + LogUtil.getDateTimeStamp() + "-" + hashCode());
-		return new LoadStep(configCopy);
+	protected LoadStep copyInstance(
+		final Config baseConfig, final Map<String, Object> stepConfig,
+		final CompositeStep parentStep
+	) {
+		return new LoadStep(baseConfig, stepConfig, parentStep);
 	}
 
 	@Override
-	public final void run() {
+	protected String getTypeName() {
+		return "load";
+	}
+
+	@Override
+	protected void invoke(final Config config)
+	throws Throwable {
 
 		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 		final String stepId = stepConfig.getId();
@@ -79,44 +89,30 @@ implements Step {
 		final StorageConfig storageConfig = config.getStorageConfig();
 		final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
 
-		final DataInput dataInput;
-		try {
-			dataInput = DataInput.getInstance(
-				dataInputConfig.getFile(), dataInputConfig.getSeed(), dataLayerConfig.getSize(),
-				dataLayerConfig.getCache()
-			);
-		} catch(final IOException e) {
-			throw new RuntimeException(e);
-		}
+		final DataInput dataInput = DataInput.getInstance(
+			dataInputConfig.getFile(), dataInputConfig.getSeed(), dataLayerConfig.getSize(),
+			dataLayerConfig.getCache()
+		);
 
 		final List<StorageDriver> drivers = new ArrayList<>();
-		try {
-			StorageDriverUtil.init(
-				drivers, itemConfig, loadConfig, avgMetricsConfig, storageConfig, stepConfig,
-				dataInput
-			);
-		} catch(final InterruptedException e) {
-			throw new CancellationException();
-		}
+		StorageDriverUtil.init(
+			drivers, itemConfig, loadConfig, avgMetricsConfig, storageConfig, stepConfig,
+			dataInput
+		);
 
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 		final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
 		Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
-		final LoadGenerator loadGenerator;
-		try {
-			loadGenerator = new BasicLoadGeneratorBuilder<>()
-				.setItemConfig(itemConfig)
-				.setLoadConfig(loadConfig)
-				.setLimitConfig(limitConfig)
-				.setItemType(itemType)
-				.setItemFactory(itemFactory)
-				.setStorageDrivers(drivers)
-				.setAuthConfig(storageConfig.getAuthConfig())
-				.build();
-		} catch(final UserShootHisFootException e) {
-			throw new RuntimeException(e);
-		}
+		final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
+			.setItemConfig(itemConfig)
+			.setLoadConfig(loadConfig)
+			.setLimitConfig(limitConfig)
+			.setItemType(itemType)
+			.setItemFactory(itemFactory)
+			.setStorageDrivers(drivers)
+			.setAuthConfig(storageConfig.getAuthConfig())
+			.build();
 		Loggers.MSG.info("Load generators initialized");
 
 		final long timeLimitSec;
@@ -156,13 +152,8 @@ implements Step {
 			} else {
 				Loggers.MSG.info("Load step \"{}\" timeout", stepId);
 			}
-		} catch(final RemoteException e) {
-			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
-		} catch(final InterruptedException e) {
-			Loggers.MSG.debug("Load step \"{}\" interrupted", stepId);
-			throw new CancellationException();
 		}
 	}
 }

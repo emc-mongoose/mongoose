@@ -11,17 +11,16 @@ import static com.emc.mongoose.ui.log.LogUtil.RESET;
 
 import org.apache.logging.log4j.Level;
 
-import javax.script.Bindings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.CancellationException;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 
 /**
  The specific scenario step executing a shell command.
  */
-public final class CommandStep
+public class CommandStep
 extends StepBase
 implements ValueStep {
 
@@ -30,99 +29,103 @@ implements ValueStep {
 
 	private final String cmd;
 
-	public CommandStep(final Config config) {
-		super(config);
-		this.cmd = null;
+	public CommandStep(final Config baseConfig) {
+		this(baseConfig, null, null, null);
 	}
 
-	private CommandStep(final Config config, final String cmd) {
-		super(config);
+	private CommandStep(
+		final Config baseConfig, final Map<String, Object> stepConfig,
+		final CompositeStep parentStep, final String cmd
+	) {
+		super(baseConfig, stepConfig, parentStep);
 		this.cmd = cmd;
 	}
 
 	@Override
-	public final CommandStep config(final Bindings stepConfig) {
-		final Config configCopy = new Config(config);
-		configCopy.apply(stepConfig, "command-" + LogUtil.getDateTimeStamp() + "-" + hashCode());
-		return new CommandStep(configCopy, cmd);
+	protected CommandStep copyInstance(
+		final Config configCopy, final Map<String, Object> stepConfig,
+		final CompositeStep parentStep
+	) {
+		return new CommandStep(configCopy, stepConfig, parentStep, cmd);
 	}
 
 	@Override
-	public final CommandStep value(final String value) {
-		return new CommandStep(new Config(config), value);
+	protected String getTypeName() {
+		return "command";
 	}
 
 	@Override
-	public final void run() {
+	public CommandStep value(final String value) {
+		return new CommandStep(baseConfig, stepConfig, parentStep, value);
+	}
+
+	@Override
+	protected void invoke(final Config config)
+	throws Throwable {
+
 		final boolean stdOutColorFlag = config.getOutputConfig().getColor();
-		try {
-			Loggers.MSG.info(
-				"Invoking the shell command:\n{}{}{}",
-				stdOutColorFlag ? CYAN : "", cmd, stdOutColorFlag ? RESET : ""
-			);
-			final Process process = new ProcessBuilder("bash", "-c", cmd).start();
-			final Thread processStdInReader = TF_STD_IN.newThread(
-				() -> {
-					try(
-						final BufferedReader bufferedReader = new BufferedReader(
-							new InputStreamReader(process.getInputStream())
-						)
-					) {
-						String nextLine;
-						while(null != (nextLine = bufferedReader.readLine())) {
-							Loggers.MSG.info(
-								"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
-								stdOutColorFlag ? RESET : ""
-							);
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.DEBUG, e, "Failed to read the process stdin"
+		Loggers.MSG.info(
+			"Invoking the shell command:\n{}{}{}",
+			stdOutColorFlag ? CYAN : "", cmd, stdOutColorFlag ? RESET : ""
+		);
+		final Process process = new ProcessBuilder("bash", "-c", cmd).start();
+		final Thread processStdInReader = TF_STD_IN.newThread(
+			() -> {
+				try(
+					final BufferedReader bufferedReader = new BufferedReader(
+						new InputStreamReader(process.getInputStream())
+					)
+				) {
+					String nextLine;
+					while(null != (nextLine = bufferedReader.readLine())) {
+						Loggers.MSG.info(
+							"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
+							stdOutColorFlag ? RESET : ""
 						);
 					}
-				}
-			);
-			final Thread processStdErrReader = TF_STD_ERR.newThread(
-				() -> {
-					try(
-						final BufferedReader bufferedReader = new BufferedReader(
-							new InputStreamReader(process.getErrorStream())
-						)
-					) {
-						String nextLine;
-						while(null != (nextLine = bufferedReader.readLine())) {
-							Loggers.MSG.info(
-								"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
-								stdOutColorFlag ? RESET : ""
-							);
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.DEBUG, e, "Failed to read the process error input"
-						);
-					}
-				}
-			);
-			processStdInReader.start();
-			processStdErrReader.start();
-			try {
-				final int exitCode = process.waitFor();
-				if(exitCode == 0) {
-					Loggers.MSG.info("Shell command \"{}\" finished", cmd);
-				} else {
-					Loggers.ERR.warn(
-						"Shell command \"{}\" finished with exit code {}", cmd, exitCode
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to read the process stdin"
 					);
 				}
-			} finally {
-				processStdInReader.interrupt();
-				processStdErrReader.interrupt();
-				process.destroy();
 			}
-		} catch(final InterruptedException e) {
-			throw new CancellationException();
-		} catch(final Exception e) {
-			LogUtil.exception(Level.WARN, e, "Shell command \"{}\" failed", cmd);
+		);
+		final Thread processStdErrReader = TF_STD_ERR.newThread(
+			() -> {
+				try(
+					final BufferedReader bufferedReader = new BufferedReader(
+						new InputStreamReader(process.getErrorStream())
+					)
+				) {
+					String nextLine;
+					while(null != (nextLine = bufferedReader.readLine())) {
+						Loggers.MSG.info(
+							"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
+							stdOutColorFlag ? RESET : ""
+						);
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to read the process error input"
+					);
+				}
+			}
+		);
+		processStdInReader.start();
+		processStdErrReader.start();
+		try {
+			final int exitCode = process.waitFor();
+			if(exitCode == 0) {
+				Loggers.MSG.info("Shell command \"{}\" finished", cmd);
+			} else {
+				Loggers.ERR.warn(
+					"Shell command \"{}\" finished with exit code {}", cmd, exitCode
+				);
+			}
+		} finally {
+			processStdInReader.interrupt();
+			processStdErrReader.interrupt();
+			process.destroy();
 		}
 	}
 }
