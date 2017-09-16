@@ -36,7 +36,7 @@
 				"uid" : "user-%d(314159265){00}[0-99]"
 			},
 			"driver" : {
-				"type" : "amzs3"
+				"type" : "s3"
 			}
 		},
 		"test" : {

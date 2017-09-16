@@ -164,7 +164,7 @@
 					"fqcn" : "com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver"
 				},
 				{
-					"type" : "amzs3",
+					"type" : "s3",
 					"file" : "mongoose-storage-driver-net-http-amzs3.jar",
 					"fqcn" : "com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3StorageDriver"
 				},
@@ -216,7 +216,7 @@
 			// The count of the shared/global I/O executor threads. 0 (default) is reserved to use the CPU cores/threads count
 			"threads" : 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
-			"type" : "amzs3"
+			"type" : "s3"
 		},
 		// The "mock" section is used by the storage mock embedded into the system tests runtime
 		"mock" : {

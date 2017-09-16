@@ -68,7 +68,7 @@ extends ConfiguredTestBase {
 		storageConfig.getDriverConfig().setType(storageType.name().toLowerCase());
 		switch(storageType) {
 			case ATMOS:
-			case AMZS3:
+			case S3:
 			case EMCS3:
 			case SWIFT:
 				httpStorageMocks = new HashMap<>();
