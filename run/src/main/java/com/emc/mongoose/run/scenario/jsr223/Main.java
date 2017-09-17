@@ -77,12 +77,13 @@ public final class Main {
 			final ScriptEngine scriptEngine = scriptEngineManager.getEngineByName("nashorn");
 
 			scriptEngine.put("command", new CommandStep(config));
+			scriptEngine.put("chain", new ChainLoadStep(config));
 			scriptEngine.put("load", new LoadStep(config));
 			scriptEngine.put("parallel", new ParallelStep(config));
 
-			final Object scenario = scriptEngine.eval(scenarioText);
-			scriptEngine.put("scenario", scenario);
+			scriptEngine.eval(scenarioText);
 			scriptEngine.eval("scenario.run()");
+			scriptEngine.eval("scenario.close()");
 		}
 	}
 }

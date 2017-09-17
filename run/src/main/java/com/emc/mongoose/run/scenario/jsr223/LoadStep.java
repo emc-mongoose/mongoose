@@ -48,22 +48,18 @@ extends StepBase
 implements Step {
 
 	public LoadStep(final Config baseConfig) {
-		this(baseConfig, null, null);
+		this(baseConfig, null);
 	}
 
 	protected LoadStep(
-		final Config baseConfig, final Map<String, Object> stepConfig,
-		final CompositeStep parentStep
+		final Config baseConfig, final Map<String, Object> stepConfig
 	) {
-		super(baseConfig, stepConfig, parentStep);
+		super(baseConfig, stepConfig);
 	}
 
 	@Override
-	protected LoadStep copyInstance(
-		final Config baseConfig, final Map<String, Object> stepConfig,
-		final CompositeStep parentStep
-	) {
-		return new LoadStep(baseConfig, stepConfig, parentStep);
+	protected LoadStep copyInstance(final Map<String, Object> stepConfig) {
+		return new LoadStep(baseConfig, stepConfig);
 	}
 
 	@Override

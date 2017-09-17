@@ -30,23 +30,19 @@ implements ValueStep {
 	private final String cmd;
 
 	public CommandStep(final Config baseConfig) {
-		this(baseConfig, null, null, null);
+		this(baseConfig, null, null);
 	}
 
 	private CommandStep(
-		final Config baseConfig, final Map<String, Object> stepConfig,
-		final CompositeStep parentStep, final String cmd
+		final Config baseConfig, final Map<String, Object> stepConfig, final String cmd
 	) {
-		super(baseConfig, stepConfig, parentStep);
+		super(baseConfig, stepConfig);
 		this.cmd = cmd;
 	}
 
 	@Override
-	protected CommandStep copyInstance(
-		final Config configCopy, final Map<String, Object> stepConfig,
-		final CompositeStep parentStep
-	) {
-		return new CommandStep(configCopy, stepConfig, parentStep, cmd);
+	protected CommandStep copyInstance(final Map<String, Object> stepConfig) {
+		return new CommandStep(baseConfig, stepConfig, cmd);
 	}
 
 	@Override
@@ -56,7 +52,7 @@ implements ValueStep {
 
 	@Override
 	public CommandStep value(final String value) {
-		return new CommandStep(baseConfig, stepConfig, parentStep, value);
+		return new CommandStep(baseConfig, stepConfig, value);
 	}
 
 	@Override

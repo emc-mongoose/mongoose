@@ -23,28 +23,32 @@ implements CompositeStep {
 	private final List<Step> children;
 
 	public ParallelStep(final Config config) {
-		this(config, null, null, null);
+		this(config, null, null);
 	}
 
 	protected ParallelStep(
-		final Config config, final Map<String, Object> stepConfig, final CompositeStep parentStep,
-		final List<Step> children
+		final Config config, final Map<String, Object> stepConfig, final List<Step> children
 	) {
-		super(config, stepConfig, parentStep);
+		super(config, stepConfig);
 		this.children = children;
 	}
 
 	@Override
-	protected ParallelStep copyInstance(
-		final Config configCopy, final Map<String, Object> stepConfig,
-		final CompositeStep parentStep
-	) {
-		return new ParallelStep(configCopy, stepConfig, parentStep, children);
+	protected ParallelStep copyInstance(final Map<String, Object> stepConfig) {
+		return new ParallelStep(baseConfig, stepConfig, children);
 	}
 
 	@Override
 	protected String getTypeName() {
 		return "parallel";
+	}
+
+	@Override
+	public StepBase config(final Map<String, Object> stepConfig)
+	throws ScenarioParseException {
+		throw new ScenarioParseException(
+			getTypeName() + " step type shouldn't contain the \"config\" section"
+		);
 	}
 
 	@Override
@@ -57,13 +61,13 @@ implements CompositeStep {
 			steps = new ArrayList<>(children.size());
 			for(final Object child : children.values()) {
 				if(child instanceof Step) {
-					steps.add(((Step) child).parent(this));
+					steps.add(((Step) child));
 				} else {
 					throw new ScenarioParseException();
 				}
 			}
 		}
-		return new ParallelStep(baseConfig, stepConfig, parentStep, steps);
+		return new ParallelStep(baseConfig, stepConfig, steps);
 	}
 
 	@Override

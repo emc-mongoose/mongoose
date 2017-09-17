@@ -1,1 +1,1 @@
-load
+var scenario = load;
