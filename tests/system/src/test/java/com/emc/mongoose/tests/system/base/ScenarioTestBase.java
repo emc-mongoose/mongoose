@@ -1,13 +1,13 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.run.scenario.Scenario;
+import com.emc.mongoose.scenario.Scenario;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static com.emc.mongoose.run.scenario.Scenario.FNAME_DEFAULT_SCENARIO;
+import static com.emc.mongoose.scenario.Scenario.DIR_SCENARIO;
+import static com.emc.mongoose.scenario.json.JsonScenario.FNAME_DEFAULT_SCENARIO;
 
 import org.junit.After;
 import org.junit.Before;

@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.run.scenario.JsonScenario;
+import com.emc.mongoose.scenario.json.JsonScenario;
 import com.emc.mongoose.tests.system.base.ScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
@@ -12,7 +12,7 @@ import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static com.emc.mongoose.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
 import org.junit.After;

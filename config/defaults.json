@@ -91,7 +91,13 @@
 			"remote" : false,
 			// Defines whether to shuffle or not the items got from the item input,
 			// what should make the order of the I/O tasks execution randomized
-			"shuffle" : false
+			"shuffle" : false,
+			// The relative operations weight for the particular load generator.
+			// Effective only if used with weighted load step and JSR-223 compliant scenario engine.
+			// The total step's weight is a sum of all included load generator weights.
+			// The particular load generator weight is a ratio of its weight value to the total
+			// step's weight.
+			"weight" : 1
 		},
 		"limit" : {
 			// The maxiumum number of concurrenct connections/open files for the test step
@@ -288,6 +294,11 @@
 	},
 	"test" : {
 		"scenario" : {
+			// The list of paths to the jars implementing the JSR-223
+			"engines" : [
+				"/opt/jython/jython.jar",
+				"/usr/share/groovy/lib/groovy-jsr223-2.4.12.jar"
+			],
 			// The default JSON scenario to run, null means invoking the default.json scenario bundled into the distribution
 			"file" : null
 		},
