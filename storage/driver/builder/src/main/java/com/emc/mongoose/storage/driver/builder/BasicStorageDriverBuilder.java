@@ -113,7 +113,7 @@ public class BasicStorageDriverBuilder<
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 
 			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
-				(Class) StorageDriverFactory.class, Extensions.EXT_CLS_LOADER
+				(Class) StorageDriverFactory.class, Extensions.CLS_LOADER
 			);
 
 			for(final StorageDriverFactory<I, O, T> storageDriverFactory : loader) {

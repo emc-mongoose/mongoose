@@ -11,7 +11,7 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.Scenario.DIR_SCENARIO;
+import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
 
 import org.apache.commons.csv.CSVRecord;
 
@@ -51,7 +51,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "LoopBySequence.json");
+		return Paths.get(getBaseDir(), DIR_SCENARIOS, "json", "systest", "LoopBySequence.json");
 	}
 
 	@Before

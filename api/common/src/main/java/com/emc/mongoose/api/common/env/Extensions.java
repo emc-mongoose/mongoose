@@ -9,19 +9,19 @@ import java.util.logging.Logger;
 public abstract class Extensions {
 
 	public static final String DIR_EXT = PathUtil.getBaseDir() + File.separator + "ext";
-	public static final URLClassLoader EXT_CLS_LOADER;
+	public static final URLClassLoader CLS_LOADER;
 
 	private static final Logger LOG = Logger.getLogger(Extensions.class.getSimpleName());
 
 	static {
 		final File dirExt = new File(DIR_EXT);
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
-			EXT_CLS_LOADER = new URLClassLoader(new URL[] {});
+			CLS_LOADER = new URLClassLoader(new URL[] {});
 			LOG.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
 		} else {
 			final File[] extFiles = dirExt.listFiles();
 			if(extFiles == null) {
-				EXT_CLS_LOADER = new URLClassLoader(new URL[] {});
+				CLS_LOADER = new URLClassLoader(new URL[] {});
 				LOG.warning(
 					"Failed to load the contents of the \"" + dirExt.getAbsolutePath()
 						+ "\" directory, loaded no extensions"
@@ -36,7 +36,7 @@ public abstract class Extensions {
 						throw new AssertionError(e);
 					}
 				}
-				EXT_CLS_LOADER = new URLClassLoader(extFileUrls);
+				CLS_LOADER = new URLClassLoader(extFileUrls);
 				LOG.info("Loaded " + extFileUrls.length + " extensions");
 			}
 		}

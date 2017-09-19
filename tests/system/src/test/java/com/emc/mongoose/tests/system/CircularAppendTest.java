@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.Scenario.DIR_SCENARIO;
+import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -68,7 +68,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "CircularAppend.json");
+		return Paths.get(getBaseDir(), DIR_SCENARIOS, "json", "systest", "CircularAppend.json");
 	}
 
 	@Override

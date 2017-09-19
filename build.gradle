@@ -246,8 +246,8 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 		into("config") {
 			from { "config" }
 		}
-		into("scenario") {
-			from { "scenario" }
+		into("scenarios") {
+			from { "scenarios" }
 		}
 		into("lib") {
 			for(Project p: mutualProjects) {

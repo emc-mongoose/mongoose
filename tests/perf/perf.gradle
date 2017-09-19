@@ -7,7 +7,7 @@ dependencies {
 		project(":api:model"),
 		project(":load:generator"),
 		project(":load:controller"),
-		project(":run"),
+		project(":scenario"),
 		project(":storage:driver"),
 		project(":storage:driver:builder"),
 		project(":storage:driver:net"),

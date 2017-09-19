@@ -162,54 +162,6 @@
 			"addrs" : [
 				"127.0.0.1"
 			],
-			// The list of the registered storage driver implementations
-			"impl" : [
-				{
-					"type" : "fs",
-					"file" : "mongoose-storage-driver-nio-fs.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver"
-				},
-				{
-					"type" : "s3",
-					"file" : "mongoose-storage-driver-net-http-amzs3.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3StorageDriver"
-				},
-				{
-					"type" : "swift",
-					"file" : "mongoose-storage-driver-net-http-swift.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
-				},
-				{
-					"type" : "atmos",
-					"file" : "mongoose-storage-driver-net-http-emc-atmos.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.emc.atmos.AtmosStorageDriver"
-				},
-				{
-					"type" : "emcs3",
-					"file" : "mongoose-storage-driver-net-http-emc-s3.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.emc.s3.EmcS3StorageDriver"
-				},
-				{
-					"type" : "mock-dummy",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.DummyStorageDriverMock"
-				},
-				{
-					"type" : "mock-basic",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.BasicStorageDriverMock"
-				},
-				{
-					"type" : "mock-net",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NetStorageDriverMock"
-				},
-				{
-					"type" : "mock-nio",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NioStorageDriverMock"
-				}
-			],
 			// Distributed mode: the common port number to start the storage driver services
 			"port" : 1099,
 			//
@@ -294,11 +246,6 @@
 	},
 	"test" : {
 		"scenario" : {
-			// The list of paths to the jars implementing the JSR-223
-			"engines" : [
-				"/opt/jython/jython.jar",
-				"/usr/share/groovy/lib/groovy-jsr223-2.4.12.jar"
-			],
 			// The default JSON scenario to run, null means invoking the default.json scenario bundled into the distribution
 			"file" : null
 		},

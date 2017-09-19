@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -30,12 +31,12 @@ public class ValidateScenariosTest {
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		final JsonNode jsonSchema = m.readTree(
-			Paths.get(PathUtil.getBaseDir(), "scenario", "schema.json").toFile()
+			Paths.get(PathUtil.getBaseDir(), DIR_SCENARIOS, "json", "schema.json").toFile()
 		);
 		final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
 		final JsonValidator validator = factory.getValidator();
 
-		final List<Path> scenarioPaths = Files.walk(Paths.get(PathUtil.getBaseDir(), "scenario"))
+		final List<Path> scenarioPaths = Files.walk(Paths.get(PathUtil.getBaseDir(), DIR_SCENARIOS))
 			.filter(path -> path.toString().endsWith(".json"))
 			.filter(path -> !path.endsWith("schema.json") && !path.endsWith("invalid.json"))
 			.collect(Collectors.toList());
