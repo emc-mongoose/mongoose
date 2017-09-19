@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.net.http.swift;
 
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import static com.emc.mongoose.api.model.io.IoType.CREATE;

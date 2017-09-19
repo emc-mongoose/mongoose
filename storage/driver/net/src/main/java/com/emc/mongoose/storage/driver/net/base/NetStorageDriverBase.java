@@ -90,7 +90,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException, InterruptedException {
+
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
 		final long sto = netConfig.getTimeoutMilliSec();

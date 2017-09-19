@@ -107,10 +107,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 
 	public AmzS3StorageDriver(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws UserShootHisFootException, InterruptedException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+		super(stepId, contentSrc, loadConfig, storageConfig, verifyFlag);
 		requestAuthTokenFunc = null; // do not use
 	}
 	

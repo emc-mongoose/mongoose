@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.builder;
 
+import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -7,30 +8,19 @@ import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+
+import com.emc.mongoose.storage.driver.base.StorageDriverFactory;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.Level;
-
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  Created by andrey on 05.10.16.
@@ -119,73 +109,25 @@ public class BasicStorageDriverBuilder<
 		) {
 
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();
-			final List<Map<String, Object>> implConfig = driverConfig.getImpl();
-			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
-			final Map<String, URL> implClsPathUrls = new HashMap<>();
-			final Map<String, String> implFqcnsByType = new HashMap<>();
-
-			for(final Map<String, Object> nextImplInfo : implConfig) {
-
-				final String implFile = (String) nextImplInfo.get(DriverConfig.KEY_IMPL_FILE);
-				try {
-					implClsPathUrls.put(
-						implFile, new File(getBaseDir() + File.separator + implFile).toURI().toURL()
-					);
-				} catch(final MalformedURLException e) {
-					Loggers.ERR.warn("Invalid storage driver implementation file: {}", implFile);
-				}
-
-				implFqcnsByType.put(
-					(String) nextImplInfo.get(DriverConfig.KEY_IMPL_TYPE),
-					(String) nextImplInfo.get(DriverConfig.KEY_IMPL_FQCN)
-				);
-			}
-
 			final String driverType = driverConfig.getType();
-			T driver = null;
-			final URL[] clsPathUrls = new URL[implClsPathUrls.size()];
-			implClsPathUrls.values().toArray(clsPathUrls);
+			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 
-			try {
-				final URLClassLoader clsLoader = new URLClassLoader(clsPathUrls);
-				final Class<T> matchingImplCls = (Class<T>) Class.forName(
-					implFqcnsByType.get(driverType), true, clsLoader
-				);
-				if(matchingImplCls == null) {
-					throw new UserShootHisFootException(
-						"No matching implementation class for the storage driver type \"" +
-							driverType + "\""
+			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
+				(Class) StorageDriverFactory.class, Extensions.EXT_CLS_LOADER
+			);
+
+			for(final StorageDriverFactory<I, O, T> storageDriverFactory : loader) {
+				if(driverType.equals(storageDriverFactory.getName())) {
+					return storageDriverFactory.create(
+						stepName, contentSrc, loadConfig, storageConfig, verifyFlag
 					);
 				}
-				final Constructor<T> constructor = matchingImplCls.<T>getConstructor(
-					String.class, DataInput.class, LoadConfig.class, StorageConfig.class,
-					Boolean.TYPE
-				);
-				Loggers.MSG.info("New storage driver for type \"{}\"", driverType);
-				driver = constructor.newInstance(
-					stepName, contentSrc, loadConfig, storageConfig, verifyFlag
-				);
-			} catch(final ClassNotFoundException | NoClassDefFoundError e) {
-				throw new UserShootHisFootException(
-					"Failed to load storage driver implementation for type: " + driverType
-				);
-			} catch(final NoSuchMethodException e) {
-				throw new UserShootHisFootException(
-					"No valid constructor to make the \"" + driverType +
-						"\" storage driver instance"
-				);
-			} catch(final InvocationTargetException e) {
-				final Throwable cause = e.getCause();
-				if(cause instanceof InterruptedException) {
-					throw (InterruptedException) cause;
-				} else {
-					throw new UserShootHisFootException(e);
-				}
-			} catch(final InstantiationException | IllegalAccessException e) {
-				throw new UserShootHisFootException(e);
 			}
 
-			return driver;
+			Loggers.ERR.fatal(
+				"Failed to create the storage driver for the type \"{}\"", driverType
+			);
+			return null;
 		}
 	}
 }
