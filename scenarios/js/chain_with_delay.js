@@ -1,4 +1,4 @@
-const config1 = {
+var config1 = {
     "item" : {
         "output" : {
             "delay" : "1m",
@@ -14,7 +14,7 @@ const config1 = {
     }
 };
 
-const config2 = {
+var config2 = {
     "load" : {
         "type" : "read"
     },
@@ -28,5 +28,6 @@ const config2 = {
 };
 
 chain
-    .config([config1, config2])
+    .config(config1)
+    .config(config2)
     .run();

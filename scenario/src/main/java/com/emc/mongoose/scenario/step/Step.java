@@ -10,12 +10,4 @@ import java.util.Map;
  */
 public interface Step
 extends Closeable, Runnable {
-
-	/**
-	 Configures the scenario step
-	 @param stepConfig a dictionary of the configuration values to override the inherited config
-	 @return <b>new</b> step with the applied config values
-	 */
-	Step config(final Map<String, Object> stepConfig)
-	throws ScenarioParseException;
 }

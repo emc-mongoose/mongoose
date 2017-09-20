@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 14.09.17.
  */
 public class LoadStep
-extends StepBase
+extends ConfigurableStepBase
 implements Step {
 
 	public LoadStep(final Config baseConfig) {
@@ -52,14 +52,14 @@ implements Step {
 	}
 
 	protected LoadStep(
-		final Config baseConfig, final Map<String, Object> stepConfig
+		final Config baseConfig, final List<Map<String, Object>> stepConfigs
 	) {
-		super(baseConfig, stepConfig);
+		super(baseConfig, stepConfigs);
 	}
 
 	@Override
-	protected LoadStep copyInstance(final Map<String, Object> stepConfig) {
-		return new LoadStep(baseConfig, stepConfig);
+	protected LoadStep copyInstance(final List<Map<String, Object>> stepConfigs) {
+		return new LoadStep(baseConfig, stepConfigs);
 	}
 
 	@Override

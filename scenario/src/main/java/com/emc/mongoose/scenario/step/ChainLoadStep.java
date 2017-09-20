@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 16.09.17.
  */
 public class ChainLoadStep
-extends StepBase {
+extends ConfigurableStepBase {
 
 	protected final List<LoadController> loadChain;
 
@@ -59,16 +59,16 @@ extends StepBase {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected ChainLoadStep(final Config baseConfig, final Map<String, Object> stepConfig) {
-		super(baseConfig, stepConfig);
-		loadChain = stepConfig == null ? null : new ArrayList<>(stepConfig.size());
+	protected ChainLoadStep(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
+		super(baseConfig, stepConfigs);
+		loadChain = stepConfigs == null ? null : new ArrayList<>(stepConfigs.size());
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	protected Config init() {
 		final Config firstConfig = new Config(baseConfig);
 		firstConfig.apply(
-			(Map<String, Object>) stepConfig.get("0"),
+			stepConfigs.get(0),
 			getTypeName() + "_" + LogUtil.getDateTimeStamp() + "_" + hashCode()
 		);
 		sharedTestStepConfig = firstConfig.getTestConfig().getStepConfig();
@@ -96,10 +96,10 @@ extends StepBase {
 
 			TransferConvertBuffer nextItemBuff = null;
 
-			for(int i = 0; i < stepConfig.size(); i ++) {
+			for(int i = 0; i < stepConfigs.size(); i ++) {
 
 				final Config config = new Config(actualConfig);
-				config.apply((Map<String, Object>) stepConfig.get(Integer.toString(i)), null);
+				config.apply(stepConfigs.get(i), null);
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final InputConfig dataInputConfig = dataConfig.getInputConfig();
@@ -166,7 +166,7 @@ extends StepBase {
 				);
 				loadChain.add(loadController);
 
-				if(i < stepConfig.size() - 1) {
+				if(i < stepConfigs.size() - 1) {
 					nextItemBuff = new DelayedTransferConvertBuffer<>(
 						queueConfig.getOutput(), TimeUnit.SECONDS, itemOutputConfig.getDelay()
 					);
@@ -252,8 +252,8 @@ extends StepBase {
 	}
 
 	@Override
-	protected ChainLoadStep copyInstance(final Map<String, Object> stepConfig) {
-		return new ChainLoadStep(baseConfig, stepConfig);
+	protected ChainLoadStep copyInstance(final List<Map<String, Object>> stepConfigs) {
+		return new ChainLoadStep(baseConfig, stepConfigs);
 	}
 
 	@Override

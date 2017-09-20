@@ -48,46 +48,46 @@ var precondition2 = load
 
 var weightedLoadStep = weighted
     .config(
-        [
-            {
-                "item" : {
-                    "data" : {
-                        "size" : itemDataSize
-                    },
-                    "output" : {
-                        "path" : itemOutputPath
-                    }
+        {
+            "item" : {
+                "data" : {
+                    "size" : itemDataSize
                 },
-                "load" : {
-                    "generator" : {
-                        "weight" : 20
-                    }
-                },
-                "test" : {
-                    "step" : {
-                        "limit" : {
-                            "time" : 100
-                        }
-                    }
+                "output" : {
+                    "path" : itemOutputPath
                 }
             },
-            {
-                "item" : {
-                    "input" : {
-                        "file" : itemsFile
+            "load" : {
+                "generator" : {
+                    "weight" : 20
+                }
+            },
+            "test" : {
+                "step" : {
+                    "limit" : {
+                        "time" : 100
                     }
-                },
-                "load" : {
-                    "generator" : {
-                        "recycle" : {
-                            "enabled" : true
-                        },
-                        "weight" : 80
-                    },
-                    "type" : "read"
                 }
             }
-        ]
+        }
+    )
+    .config(
+        {
+            "item" : {
+                "input" : {
+                    "file" : itemsFile
+                }
+            },
+            "load" : {
+                "generator" : {
+                    "recycle" : {
+                        "enabled" : true
+                    },
+                    "weight" : 80
+                },
+                "type" : "read"
+            }
+        }
     );
 
 precondition1.run();

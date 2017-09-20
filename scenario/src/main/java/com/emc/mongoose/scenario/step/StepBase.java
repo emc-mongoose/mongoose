@@ -1,6 +1,5 @@
 package com.emc.mongoose.scenario.step;
 
-import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -11,7 +10,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -21,22 +20,10 @@ public abstract class StepBase
 implements Step {
 
 	protected final Config baseConfig;
-	protected final Map<String, Object> stepConfig;
 	protected String id;
 
 	protected StepBase(final Config baseConfig) {
-		this(baseConfig, null);
-	}
-
-	protected StepBase(final Config baseConfig, final Map<String, Object> stepConfig) {
 		this.baseConfig = baseConfig;
-		this.stepConfig = stepConfig;
-	}
-
-	@Override
-	public StepBase config(final Map<String, Object> stepConfig)
-	throws ScenarioParseException {
-		return copyInstance(stepConfig);
 	}
 
 	@Override
@@ -62,28 +49,17 @@ implements Step {
 		}
 	}
 
-	@Override
-	public void close()
-	throws IOException {
-		if(stepConfig != null) {
-			stepConfig.clear();
-		}
-	}
-
 	protected Config init() {
 		final String autoStepId = getTypeName() + "_" + LogUtil.getDateTimeStamp() + "_"
 			+ hashCode();
 		final Config config = new Config(baseConfig);
-		if(stepConfig != null) {
-			config.apply(stepConfig, autoStepId);
-		}
+		config.apply(Collections.emptyMap(), autoStepId);
+		id = config.getTestConfig().getStepConfig().getId();
 		return config;
 	}
 
 	protected abstract void invoke(final Config actualConfig)
 	throws Throwable;
-
-	protected abstract StepBase copyInstance(final Map<String, Object> stepConfig);
 
 	protected abstract String getTypeName();
 }

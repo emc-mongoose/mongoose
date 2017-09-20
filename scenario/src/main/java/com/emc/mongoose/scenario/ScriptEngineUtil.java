@@ -7,10 +7,12 @@ import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.Level;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
  Created by andrey on 19.09.17.
@@ -19,27 +21,25 @@ public interface ScriptEngineUtil {
 
 	static ScriptEngine resolve(final Path scenarioPath) {
 
-		ScriptEngine scriptEngine = null;
+		ScriptEngine se = null;
 
 		// init the available external script engines
-		final ScriptEngineManager scriptEngineManager = new ScriptEngineManager(
-			Extensions.CLS_LOADER
-		);
+		final ScriptEngineManager sem = new ScriptEngineManager(Extensions.CLS_LOADER);
 
 		// 1st try to determine the scenario type by the scenario file extension
 		String scenarioFileExt = scenarioPath.toString();
 		int dotPos = scenarioFileExt.lastIndexOf('.');
 		if(dotPos > 0) {
 			scenarioFileExt = scenarioFileExt.substring(dotPos + 1);
-			scriptEngine = scriptEngineManager.getEngineByExtension(scenarioFileExt);
+			se = sem.getEngineByExtension(scenarioFileExt);
 		}
 
-		if(scriptEngine == null) {
+		if(se == null) {
 			// 2nd: try to determine the scenario MIME type
 			try {
 				final String scenarioMimeType = Files.probeContentType(scenarioPath);
 				if(scenarioMimeType != null) {
-					scriptEngine = scriptEngineManager.getEngineByMimeType(scenarioMimeType);
+					se = sem.getEngineByMimeType(scenarioMimeType);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
@@ -50,15 +50,24 @@ public interface ScriptEngineUtil {
 			}
 		}
 
-		if(scriptEngine == null) {
-			// 3rd: consider the scenario file a Javascript file
-			Loggers.MSG.debug(
-				"Unable to determine the scenario type for the file \"{}\"", scenarioPath
+		if(se == null) {
+			Loggers.MSG.info(
+				"Unable to resolve the scenario engine for the scenario file \"{}\", "
+					+ "available scenario engines list follows:", scenarioPath
 			);
-			scriptEngine = scriptEngineManager.getEngineByName("js");
+			for(final ScriptEngineFactory sef : sem.getEngineFactories()) {
+				Loggers.MSG.info(
+					"\nEngine name: {}\n\tLanguage: {}\n\tFile extensions: {}\n\tMIME types: {}",
+					sef.getEngineName(), sef.getLanguageName(),
+					Arrays.toString(sef.getExtensions().toArray()),
+					Arrays.toString(sef.getMimeTypes().toArray())
+				);
+			}
+			// 3rd: consider the scenario file a Javascript file
+			se = sem.getEngineByName("js");
 		}
 
-		return scriptEngine;
+		return se;
 	}
 
 }

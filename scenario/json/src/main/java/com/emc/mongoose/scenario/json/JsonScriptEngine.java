@@ -49,7 +49,7 @@ implements ScriptEngine {
 		try(final BufferedReader br = new BufferedReader(reader)) {
 			String nextLine;
 			while(null != (nextLine = br.readLine())) {
-				scriptLines.append(nextLine);
+				scriptLines.append(nextLine).append(System.lineSeparator());
 			}
 			return eval(scriptLines.toString(), context);
 		} catch(final IOException e) {

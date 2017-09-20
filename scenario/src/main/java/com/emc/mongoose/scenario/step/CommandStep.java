@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Level;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 
@@ -21,7 +22,7 @@ import java.util.concurrent.ThreadFactory;
  The specific scenario step executing a shell command.
  */
 public class CommandStep
-extends StepBase
+extends ConfigurableStepBase
 implements ValueStep {
 
 	private static final ThreadFactory TF_STD_IN = new LogContextThreadFactory("stdInReader", true);
@@ -34,15 +35,15 @@ implements ValueStep {
 	}
 
 	private CommandStep(
-		final Config baseConfig, final Map<String, Object> stepConfig, final String cmd
+		final Config baseConfig, final List<Map<String, Object>> stepConfigs, final String cmd
 	) {
-		super(baseConfig, stepConfig);
+		super(baseConfig, stepConfigs);
 		this.cmd = cmd;
 	}
 
 	@Override
-	protected CommandStep copyInstance(final Map<String, Object> stepConfig) {
-		return new CommandStep(baseConfig, stepConfig, cmd);
+	protected CommandStep copyInstance(final List<Map<String, Object>> stepConfigs) {
+		return new CommandStep(baseConfig, stepConfigs, cmd);
 	}
 
 	@Override
@@ -52,7 +53,7 @@ implements ValueStep {
 
 	@Override
 	public CommandStep value(final String value) {
-		return new CommandStep(baseConfig, stepConfig, value);
+		return new CommandStep(baseConfig, stepConfigs, value);
 	}
 
 	@Override

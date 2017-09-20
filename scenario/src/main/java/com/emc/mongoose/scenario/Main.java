@@ -78,7 +78,9 @@ public final class Main {
 			}
 
 			final StringBuilder strb = new StringBuilder();
-			Files.lines(scenarioPath).forEach(strb::append);
+			Files
+				.lines(scenarioPath)
+				.forEach(line -> strb.append(line).append(System.lineSeparator()));
 			final String scenarioText = strb.toString();
 			Loggers.SCENARIO.log(Level.INFO, scenarioText);
 

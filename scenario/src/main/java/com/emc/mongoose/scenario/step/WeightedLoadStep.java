@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 08.11.16.
  */
 public class WeightedLoadStep
-extends StepBase {
+extends ConfigurableStepBase {
 
 	protected long timeLimitSec = Long.MAX_VALUE;
 	protected StepConfig sharedTestStepConfig;
@@ -57,15 +57,17 @@ extends StepBase {
 		this(baseConfig, null);
 	}
 
-	protected WeightedLoadStep(final Config baseConfig, final Map<String, Object> stepConfig) {
-		super(baseConfig, stepConfig);
+	protected WeightedLoadStep(
+		final Config baseConfig, final List<Map<String, Object>> stepConfigs
+	) {
+		super(baseConfig, stepConfigs);
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	protected Config init() {
 		final Config firstConfig = new Config(baseConfig);
 		firstConfig.apply(
-			(Map<String, Object>) stepConfig.get("0"),
+			stepConfigs.get(0),
 			getTypeName() + "_" + LogUtil.getDateTimeStamp() + "_" + hashCode()
 		);
 		sharedTestStepConfig = firstConfig.getTestConfig().getStepConfig();
@@ -85,7 +87,7 @@ extends StepBase {
 
 		Loggers.MSG.info("Run the weighted load step \"{}\"", id);
 
-		final int loadGeneratorCount = stepConfig.size();
+		final int loadGeneratorCount = stepConfigs.size();
 		final Map<LoadGenerator, List<StorageDriver>> driverMap = new HashMap<>(loadGeneratorCount);
 		final Int2IntMap weightMap = new Int2IntOpenHashMap(loadGeneratorCount);
 		final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>(loadGeneratorCount);
@@ -97,7 +99,7 @@ extends StepBase {
 			for(int i = 0; i < loadGeneratorCount; i ++) {
 				
 				final Config config = new Config(actualConfig);
-				config.apply((Map<String, Object>) stepConfig.get(Integer.toString(i)), null);
+				config.apply(stepConfigs.get(i), null);
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
 				final InputConfig dataInputConfig = dataConfig.getInputConfig();
@@ -177,8 +179,8 @@ extends StepBase {
 	}
 
 	@Override
-	protected StepBase copyInstance(final Map<String, Object> stepConfig) {
-		return new WeightedLoadStep(baseConfig, stepConfig);
+	protected StepBase copyInstance(final List<Map<String, Object>> stepConfigs) {
+		return new WeightedLoadStep(baseConfig, stepConfigs);
 	}
 
 	@Override

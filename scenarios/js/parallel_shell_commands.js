@@ -1,17 +1,17 @@
-const noOutputColorConfig = {
+var noOutputColorConfig = {
     "output" : {
         "color" : false
     }
 };
 
-const commands = [
-    command
-        .config(noOutputColorConfig)
-        .value("echo \"Hello world!\""),
-    command
-        .value("ps alx | grep java"),
-];
+var command1 = command
+    .config(noOutputColorConfig)
+    .value("echo \"Hello world!\"");
+
+var command2 = command
+    .value("ps alx | grep java");
 
 parallel
-    .steps(commands)
+    .step(command1)
+    .step(command2)
     .run();

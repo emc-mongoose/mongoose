@@ -1,4 +1,4 @@
-var itemOutputFile = "items_passed_through_create_read_delete_chain.csv";
+var itemOutputFile = "items_passed_through_create_read_delete_chain.csv"
 
 var createConfig = {
     "test" : {
@@ -32,11 +32,7 @@ command
     .run();
 
 chain
-    .config(
-        [
-            createConfig,
-            readConfig,
-            deleteConfig,
-        ]
-    )
+    .config(createConfig)
+    .config(readConfig)
+    .config(deleteConfig)
     .run();

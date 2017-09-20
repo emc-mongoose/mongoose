@@ -5,9 +5,9 @@ import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,19 +23,12 @@ implements CompositeStep {
 	private final List<Step> children;
 
 	public ParallelStep(final Config config) {
-		this(config, null, null);
+		this(config, null);
 	}
 
-	protected ParallelStep(
-		final Config config, final Map<String, Object> stepConfig, final List<Step> children
-	) {
-		super(config, stepConfig);
+	protected ParallelStep(final Config config, final List<Step> children) {
+		super(config);
 		this.children = children;
-	}
-
-	@Override
-	protected ParallelStep copyInstance(final Map<String, Object> stepConfig) {
-		return new ParallelStep(baseConfig, stepConfig, children);
 	}
 
 	@Override
@@ -44,37 +37,23 @@ implements CompositeStep {
 	}
 
 	@Override
-	public StepBase config(final Map<String, Object> stepConfig)
+	public ParallelStep step(final Step child)
 	throws ScenarioParseException {
-		throw new ScenarioParseException(
-			getTypeName() + " step type shouldn't contain the \"config\" section"
-		);
-	}
-
-	@Override
-	public ParallelStep steps(final Map<String, Object> children)
-	throws ScenarioParseException {
-		final List<Step> steps;
-		if(children == null) {
-			steps = null;
-		} else {
-			steps = new ArrayList<>(children.size());
-			for(final Object child : children.values()) {
-				if(child instanceof Step) {
-					steps.add(((Step) child));
-				} else {
-					throw new ScenarioParseException();
-				}
-			}
+		final List<Step> childrenCopy = new ArrayList<>();
+		if(children != null) {
+			childrenCopy.addAll(children);
 		}
-		return new ParallelStep(baseConfig, stepConfig, steps);
+		if(child != null) {
+			childrenCopy.add(child);
+		}
+		return new ParallelStep(baseConfig, childrenCopy);
 	}
 
 	@Override
 	protected void invoke(final Config config)
 	throws Throwable {
 
-		if(children == null) {
+		if(children == null || children.isEmpty()) {
 			return;
 		}
 
@@ -103,5 +82,13 @@ implements CompositeStep {
 		Loggers.MSG.info(
 			"{}: finished parallel execution of {} child steps", toString(), children.size()
 		);
+	}
+
+	@Override
+	public void close()
+	throws IOException {
+		if(children != null) {
+			children.clear();
+		}
 	}
 }
