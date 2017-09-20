@@ -3,10 +3,12 @@ var itemDataSize = "10KB";
 var itemsFile = "weighted_load_example.csv";
 var itemOutputPath = "/weighted_load_example";
 
+// declare the cleanup shell command
 var precondition1 = command
     .value("rm -f " + itemsFile);
 
-var precondition2 = load
+// prepare (create) the 10000 items on a storage before the test
+var precondition2 = precondition_load
     .config(
         {
             "item" : {
@@ -23,19 +25,6 @@ var precondition2 = load
                     "concurrency" : sharedConcurrency
                 }
             },
-            "output" : {
-                "metrics" : {
-                    "average" : {
-                        "persist" : false
-                    },
-                    "summary" : {
-                        "persist" : false
-                    },
-                    "trace" : {
-                        "persist" : false
-                    }
-                }
-            },
             "test" : {
                 "step" : {
                     "limit" : {
@@ -46,7 +35,8 @@ var precondition2 = load
         }
     );
 
-var weightedLoadStep = weighted
+// declare the weighted load step instance (20% create operations, 80% read operations)
+var weighted1 = weighted
     .config(
         {
             "item" : {
@@ -90,6 +80,7 @@ var weightedLoadStep = weighted
         }
     );
 
+// go
 precondition1.run();
 precondition2.run();
-weightedLoadStep.run();
+weighted1.run();

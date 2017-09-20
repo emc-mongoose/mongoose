@@ -50,7 +50,9 @@ implements ConfigurableStep {
 			+ hashCode();
 		final Config config = new Config(baseConfig);
 		if(stepConfigs != null && stepConfigs.size() > 0) {
-			config.apply(stepConfigs.get(0), autoStepId);
+			for(final Map<String, Object> nextStepConfig : stepConfigs) {
+				config.apply(nextStepConfig, autoStepId);
+			}
 		}
 		id = config.getTestConfig().getStepConfig().getId();
 		return config;

@@ -1,6 +1,13 @@
 package com.emc.mongoose.scenario;
 
 import com.emc.mongoose.api.common.env.Extensions;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.scenario.step.ChainLoadStep;
+import com.emc.mongoose.scenario.step.CommandStep;
+import com.emc.mongoose.scenario.step.LoadStep;
+import com.emc.mongoose.scenario.step.ParallelStep;
+import com.emc.mongoose.scenario.step.WeightedLoadStep;
+import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -19,6 +26,11 @@ import java.util.Arrays;
  */
 public interface ScriptEngineUtil {
 
+	/**
+	 Tries to instantiate the script engine for the given script file
+	 @param scenarioPath the path to the script
+	 @return the script engine resolved either <code>null</code>
+	 */
 	static ScriptEngine resolve(final Path scenarioPath) {
 
 		ScriptEngine se = null;
@@ -68,6 +80,66 @@ public interface ScriptEngineUtil {
 		}
 
 		return se;
+	}
+
+	/**
+	 Expose the step types to the given script engine using the given configuration
+	 @param se the script engine
+	 @param config the configuration
+	 */
+	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
+		se.put("command", new CommandStep(config));
+		se.put("chain", new ChainLoadStep(config));
+		se.put("load", new LoadStep(config));
+		se.put("parallel", new ParallelStep(config));
+		se.put("weighted", new WeightedLoadStep(config));
+	}
+
+	/**
+	 Expose the additional/shortcut step types to the given script engine using the given
+	 configuration
+	 @param se the script engine
+	 @param config the configuration
+	 */
+	static void registerStepShortcutTypes(final ScriptEngine se, final Config config) {
+
+		Config specificConfig;
+
+		specificConfig = new Config(config);
+		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPeriod(0);
+		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPersist(false);
+		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
+		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPersist(false);
+		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
+		se.put("precondition_load", new LoadStep(specificConfig));
+
+		for(final IoType ioType : IoType.values()) {
+			specificConfig = new Config(config);
+			final String ioTypeName = ioType.name().toLowerCase();
+			specificConfig.getLoadConfig().setType(ioTypeName);
+			se.put(ioTypeName + "_load", new LoadStep(specificConfig));
+		}
+
+		specificConfig = new Config(config);
+		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
+		specificConfig.getItemConfig().getDataConfig().setVerify(true);
+		se.put("read_and_verify_load", new LoadStep(specificConfig));
+
+		specificConfig = new Config(config);
+		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
+		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
+		se.put("read_random_range_load", new LoadStep(specificConfig));
+
+		specificConfig = new Config(config);
+		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
+		specificConfig.getItemConfig().getDataConfig().setVerify(true);
+		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
+		se.put("read_and_verify_random_range_load", new LoadStep(specificConfig));
+
+		specificConfig = new Config(config);
+		specificConfig.getLoadConfig().setType(IoType.UPDATE.name().toLowerCase());
+		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
+		se.put("update_random_range_load", new LoadStep(specificConfig));
 	}
 
 }

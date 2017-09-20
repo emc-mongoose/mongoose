@@ -102,14 +102,9 @@ public final class Main {
 
 				// expose the loaded configuration
 				scriptEngine.getContext().setAttribute(ATTR_CONFIG, config, ENGINE_SCOPE);
-
 				// expose the step types
-				scriptEngine.put("command", new CommandStep(config));
-				scriptEngine.put("chain", new ChainLoadStep(config));
-				scriptEngine.put("load", new LoadStep(config));
-				scriptEngine.put("parallel", new ParallelStep(config));
-				scriptEngine.put("weighted", new WeightedLoadStep(config));
-
+				ScriptEngineUtil.registerStepBasicTypes(scriptEngine, config);
+				ScriptEngineUtil.registerStepShortcutTypes(scriptEngine, config);
 				// go
 				scriptEngine.eval(scenarioText);
 			}

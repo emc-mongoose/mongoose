@@ -1,5 +1,7 @@
 var itemOutputFile = "items_passed_through_create_read_delete_chain.csv"
 
+// limit the whole chain step execution time by 5 minutes
+// (chain step takes the limits configuration parameter values from the 1st configuration element)
 var createConfig = {
     "test" : {
         "step" : {
@@ -16,6 +18,7 @@ var readConfig = {
     }
 };
 
+// persist the items info into the output file after the last operation
 var deleteConfig = {
     "item" : {
         "output" : {
@@ -27,6 +30,7 @@ var deleteConfig = {
     }
 };
 
+// clean up before running the chain load step
 command
     .value("rm -f " + itemOutputFile)
     .run();
