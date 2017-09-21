@@ -279,13 +279,27 @@ jobs:
       after_deploy:
         - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
         - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
+
         - export REPO=emcmongoose/mongoose
         - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
         - docker tag $REPO:$COMMIT $REPO:$TAG
         - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
         - docker push $REPO
+
         - export REPO=emcmongoose/mongoose-storage-driver-service
         - docker build -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
+        - docker tag $REPO:$COMMIT $REPO:$TAG
+        - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+        - docker push $REPO
+
+        - export REPO=emcmongoose/mongoose-scripting-groovy
+        - docker build -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT --build-arg MONGOOSE_VERSION=$TAG.
+        - docker tag $REPO:$COMMIT $REPO:$TAG
+        - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+        - docker push $REPO
+
+        - export REPO=emcmongoose/mongoose-scripting-jython
+        - docker build -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT --build-arg MONGOOSE_VERSION=$TAG.
         - docker tag $REPO:$COMMIT $REPO:$TAG
         - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
         - docker push $REPO
