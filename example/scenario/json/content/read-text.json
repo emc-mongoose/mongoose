@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"input" : {
-					"file" : "config/content/textexample"
+					"file" : "example/content/textexample"
 				}
 			}
 		},

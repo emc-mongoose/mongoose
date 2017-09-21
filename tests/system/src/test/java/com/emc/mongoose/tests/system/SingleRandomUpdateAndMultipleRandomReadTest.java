@@ -13,7 +13,7 @@ import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
 
@@ -59,14 +59,14 @@ extends ScenarioTestBase {
 	@Override
 	protected Path makeScenarioPath() {
 		return Paths.get(
-			getBaseDir(), DIR_SCENARIOS, "json", "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
+			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
 		);
 	}
 
 	@Before
 	public final void setUp()
 	throws Exception {
-		configArgs.add("--item-data-input-file=" + BASE_DIR + "/config/content/textexample");
+		configArgs.add("--item-data-input-file=" + BASE_DIR + "/example/content/textexample");
 		super.setUp();
 		expectedReadSize = new SizeInBytes(
 			2 << (READ_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1

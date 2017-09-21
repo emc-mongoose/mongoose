@@ -5,8 +5,8 @@ import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
 import static com.emc.mongoose.scenario.json.JsonScenario.FNAME_DEFAULT_SCENARIO;
 
 import org.junit.After;
@@ -22,7 +22,7 @@ public abstract class ScenarioTestBase
 extends StorageTestBase {
 
 	protected static final Path DEFAULT_SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIOS, "json", FNAME_DEFAULT_SCENARIO
+		getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", FNAME_DEFAULT_SCENARIO
 	);
 	protected Path scenarioPath = null;
 	protected Scenario scenario = null;

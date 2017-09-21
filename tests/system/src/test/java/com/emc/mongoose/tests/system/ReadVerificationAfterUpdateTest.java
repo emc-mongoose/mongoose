@@ -12,7 +12,7 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
 
@@ -45,7 +45,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_SCENARIOS, "json", "systest", "ReadVerificationAfterUpdate.json");
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "ReadVerificationAfterUpdate.json");
 	}
 
 	@Override
@@ -58,7 +58,7 @@ extends ScenarioTestBase {
 	public void setUp()
 	throws Exception {
 		configArgs.add(
-			"--item-data-input-file=" + PathUtil.getBaseDir() + "/config/content/zerobytes"
+			"--item-data-input-file=" + PathUtil.getBaseDir() + "/example/content/zerobytes"
 		);
 		configArgs.add("--storage-net-http-namespace=ns1");
 		super.setUp();

@@ -1,21 +1,17 @@
 package com.emc.mongoose.scenario;
 
-import com.emc.mongoose.scenario.step.ChainLoadStep;
-import com.emc.mongoose.scenario.step.CommandStep;
-import com.emc.mongoose.scenario.step.LoadStep;
-import com.emc.mongoose.scenario.step.ParallelStep;
-import com.emc.mongoose.scenario.step.WeightedLoadStep;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.config.test.scenario.ScenarioConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.scenario.Constants.ATTR_CONFIG;
-import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
 import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
 
@@ -24,7 +20,9 @@ import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -74,7 +72,7 @@ public final class Main {
 			if(scenarioFile != null && !scenarioFile.isEmpty()) {
 				scenarioPath = Paths.get(scenarioFile);
 			} else {
-				scenarioPath = Paths.get(getBaseDir(), DIR_SCENARIOS, "js", "default.js");
+				scenarioPath = Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
 			}
 
 			final StringBuilder strb = new StringBuilder();
@@ -90,6 +88,7 @@ public final class Main {
 					"Failed to resolve the scenario engine for the file \"{}\"", scenarioPath
 				);
 			} else {
+
 				Loggers.MSG.info(
 					"Using the \"{}\" scenario engine", scriptEngine.getFactory().getEngineName()
 				);
@@ -106,7 +105,15 @@ public final class Main {
 				ScriptEngineUtil.registerStepBasicTypes(scriptEngine, config);
 				ScriptEngineUtil.registerStepShortcutTypes(scriptEngine, config);
 				// go
-				scriptEngine.eval(scenarioText);
+				try {
+					scriptEngine.eval(scenarioText);
+				} catch(final ScriptException e) {
+					LogUtil.exception(
+						Level.ERROR, e,
+						"\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}",
+						scenarioPath, e.getLineNumber(), e.getColumnNumber(), e.getMessage()
+					);
+				}
 			}
 		}
 	}

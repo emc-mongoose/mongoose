@@ -246,23 +246,23 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 		into("config") {
 			from { "config" }
 		}
-		into("scenarios") {
-			from { "scenarios" }
+		into("example") {
+			from { "example" }
 		}
-		into("lib") {
-			for(Project p: mutualProjects) {
-				from p.configurations.runtime {
-					exclude "${rootProject.name}*.jar"
-				}
-			}
-		}
-        into("ext") {
+		into("ext") {
             final extProjects = mutualProjects.findAll { isExtensionProject(it) }
             for(final Project p: extProjects) {
                 from p.jar.outputs.files
             }
         }
-		for(final Project p: mutualProjects.findAll { !isExtensionProject(it) }) {
+        into("lib") {
+            for(Project p: mutualProjects) {
+                from p.configurations.runtime {
+                    exclude "${rootProject.name}*.jar"
+                }
+            }
+        }
+        for(final Project p: mutualProjects.findAll { !isExtensionProject(it) }) {
 			from p.jar.outputs.files
 		}
 	}

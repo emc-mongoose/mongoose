@@ -9,7 +9,7 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
 import org.junit.After;
 import org.junit.Before;
@@ -55,7 +55,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_SCENARIOS, "json", "systest", "LoopByRange.json");
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "LoopByRange.json");
 	}
 
 	@Before

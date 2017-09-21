@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"input" : {
-					"file" : "config/content/textexample"
+					"file" : "example/content/zerobytes"
 				},
 				"size" : "4KB"
 			}
@@ -23,7 +23,7 @@
 			"config" : {
 				"item" : {
 					"output" : {
-						"file" : "content-read-text-0.csv"
+						"file" : "content-read-zerobytes-0.csv"
 					}
 				}
 			}
@@ -37,10 +37,10 @@
 						}
 					},
 					"output" : {
-						"file" : "content-read-text-1.csv"
+						"file" : "content-read-zerobytes-1.csv"
 					},
 					"input" : {
-						"file" : "content-read-text-0.csv"
+						"file" : "content-read-zerobytes-0.csv"
 					}
 				},
 				"load" : {
@@ -55,7 +55,7 @@
 						"verify" : true
 					},
 					"input" : {
-						"file" : "content-read-text-1.csv"
+						"file" : "content-read-zerobytes-1.csv"
 					}
 				},
 				"load" : {
