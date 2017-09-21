@@ -1,42 +1,42 @@
 {
-	"type" : "sequential",
+	"type": "sequential",
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "circular-read.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "circular-read.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 1
+				"test": {
+					"step": {
+						"limit": {
+							"count": 1
 						}
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "circular-read.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "circular-read.csv"
 					}
 				},
-				"load" : {
-					"type" : "read",
-					"generator" : {
-						"recycle" : {
-							"enabled" : true
+				"load": {
+					"type": "read",
+					"generator": {
+						"recycle": {
+							"enabled": true
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"time" : "1m"
+				"test": {
+					"step": {
+						"limit": {
+							"time": "1m"
 						}
 					}
 				}

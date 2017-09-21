@@ -1,57 +1,57 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "64KB"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"size": "64KB"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1
 				}
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "fs"
+		"storage": {
+			"driver": {
+				"type": "fs"
 			}
 		}
 	},
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "circular-file-overwrite.csv",
-						"path" : "circular-file-overwrite"
+			"config": {
+				"item": {
+					"output": {
+						"file": "circular-file-overwrite.csv",
+						"path": "circular-file-overwrite"
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "circular-file-overwrite.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "circular-file-overwrite.csv"
 					}
 				},
-				"load" : {
-					"type" : "update",
-					"generator" : {
-						"recycle" : {
-							"enabled" : true
+				"load": {
+					"type": "update",
+					"generator": {
+						"recycle": {
+							"enabled": true
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
+				"test": {
+					"step": {
+						"limit": {
 							// count -> infinity instead of inherited value, time -> 5 minutes
-							"count" : 0,
-							"time" : "5m"
+							"count": 0,
+							"time": "5m"
 						}
 					}
 				}

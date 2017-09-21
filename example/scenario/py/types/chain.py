@@ -1,5 +1,7 @@
 itemOutputFile = "items_passed_through_create_read_delete_chain.csv"
 
+# limit the whole chain step execution time by 5 minutes
+# (chain step takes the limits configuration parameter values from the 1st configuration element)
 createConfig = {
     "test": {
         "step": {
@@ -16,6 +18,7 @@ readConfig = {
     }
 }
 
+# persist the items info into the output file after the last operation
 deleteConfig = {
     "item": {
         "output": {
@@ -27,12 +30,13 @@ deleteConfig = {
     }
 }
 
-command\
-    .value("rm -f " + itemOutputFile)\
+# clean up before running the chain load step
+Command \
+    .value("rm -f " + itemOutputFile) \
     .run()
 
-chain\
-    .config(createConfig)\
-    .config(readConfig)\
-    .config(deleteConfig)\
+ChainLoad \
+    .config(createConfig) \
+    .config(readConfig) \
+    .config(deleteConfig) \
     .run()

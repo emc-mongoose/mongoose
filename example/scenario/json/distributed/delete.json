@@ -1,34 +1,34 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "distributed-delete"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "distributed-delete"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		},
-		"load" : {
+		"load": {
 			"limit": {
 				"concurrency": 10
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"remote" : true,
+		"storage": {
+			"driver": {
+				"remote": true,
 				"addrs": [
 					"10.249.237.71",
 					"10.249.237.72"
 				]
 			},
-			"net" : {
-				"node" : {
-					"addrs" : [
+			"net": {
+				"node": {
+					"addrs": [
 						"10.249.237.73"
 					]
 				}
@@ -38,27 +38,27 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "8KB"
+			"config": {
+				"item": {
+					"data": {
+						"size": "8KB"
 					},
-					"output" : {
-						"file" : "distributed-delete.csv"
+					"output": {
+						"file": "distributed-delete.csv"
 					}
 				}
 			}
 		},
 		{
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "distributed-delete.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "distributed-delete.csv"
 					}
 				},
-				"load" : {
-					"type" : "delete"
+				"load": {
+					"type": "delete"
 				}
 			}
 		}

@@ -1,15 +1,15 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "circular-read-from-container"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "circular-read-from-container"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"time" : "1m"
+		"test": {
+			"step": {
+				"limit": {
+					"time": "1m"
 				}
 			}
 		}
@@ -19,26 +19,26 @@
 			"type": "precondition"
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"path" : "circular-read-from-container"
+			"config": {
+				"item": {
+					"input": {
+						"path": "circular-read-from-container"
 					}
 				},
-				"load" : {
-					"type" : "read",
-					"generator" : {
-						"recycle" : {
-							"enabled" : true
+				"load": {
+					"type": "read",
+					"generator": {
+						"recycle": {
+							"enabled": true
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
+				"test": {
+					"step": {
+						"limit": {
 							// count -> infinity instead of inherited value of 1, time -> 1 minute
-							"count" : 0,
-							"time" : "1m"
+							"count": 0,
+							"time": "1m"
 						}
 					}
 				}

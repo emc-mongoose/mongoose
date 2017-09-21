@@ -1,24 +1,24 @@
 {
-	"type" : "load",
-	"config" : {
-		"test" : {
-			"step" : {
-				"limit" : {
-					"time" : "40s" // unit may be also "m", "h" and "d"
+	"type": "load",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"time": "40s" // unit may be also "m", "h" and "d"
 				}
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"remote" : true,
+		"storage": {
+			"driver": {
+				"remote": true,
 				"addrs": [
 					"10.249.237.71",
 					"10.249.237.72"
 				]
 			},
-			"net" : {
-				"node" : {
-					"addrs" : [
+			"net": {
+				"node": {
+					"addrs": [
 						"10.249.237.73"
 					]
 				}

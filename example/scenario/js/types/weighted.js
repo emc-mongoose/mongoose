@@ -4,31 +4,31 @@ var itemsFile = "weighted_load_example.csv";
 var itemOutputPath = "/weighted_load_example";
 
 // declare the cleanup shell command
-var precondition1 = command
+var precondition1 = Command
     .value("rm -f " + itemsFile);
 
 // prepare (create) the 10000 items on a storage before the test
-var precondition2 = precondition_load
+var precondition2 = PreconditionLoad
     .config(
         {
-            "item" : {
-                "data" : {
-                    "size" : itemDataSize
+            "item": {
+                "data": {
+                    "size": itemDataSize
                 },
-                "output" : {
-                    "file" : itemsFile,
-                    "path" : itemOutputPath
+                "output": {
+                    "file": itemsFile,
+                    "path": itemOutputPath
                 }
             },
-            "load" : {
-                "limit" : {
-                    "concurrency" : sharedConcurrency
+            "load": {
+                "limit": {
+                    "concurrency": sharedConcurrency
                 }
             },
-            "test" : {
-                "step" : {
-                    "limit" : {
-                        "count" : 10000
+            "test": {
+                "step": {
+                    "limit": {
+                        "count": 10000
                     }
                 }
             }
@@ -36,26 +36,26 @@ var precondition2 = precondition_load
     );
 
 // declare the weighted load step instance (20% create operations, 80% read operations)
-var weighted1 = weighted
+var weightedLoad1 = WeightedLoad
     .config(
         {
-            "item" : {
-                "data" : {
-                    "size" : itemDataSize
+            "item": {
+                "data": {
+                    "size": itemDataSize
                 },
-                "output" : {
-                    "path" : itemOutputPath
+                "output": {
+                    "path": itemOutputPath
                 }
             },
-            "load" : {
-                "generator" : {
-                    "weight" : 20
+            "load": {
+                "generator": {
+                    "weight": 20
                 }
             },
-            "test" : {
-                "step" : {
-                    "limit" : {
-                        "time" : 100
+            "test": {
+                "step": {
+                    "limit": {
+                        "time": 100
                     }
                 }
             }
@@ -63,19 +63,19 @@ var weighted1 = weighted
     )
     .config(
         {
-            "item" : {
-                "input" : {
-                    "file" : itemsFile
+            "item": {
+                "input": {
+                    "file": itemsFile
                 }
             },
-            "load" : {
-                "generator" : {
-                    "recycle" : {
-                        "enabled" : true
+            "load": {
+                "generator": {
+                    "recycle": {
+                        "enabled": true
                     },
-                    "weight" : 80
+                    "weight": 80
                 },
-                "type" : "read"
+                "type": "read"
             }
         }
     );
@@ -83,4 +83,4 @@ var weighted1 = weighted
 // go
 precondition1.run();
 precondition2.run();
-weighted1.run();
+weightedLoad1.run();

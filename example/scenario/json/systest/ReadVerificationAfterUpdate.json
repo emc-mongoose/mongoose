@@ -1,63 +1,63 @@
 {
-	"type" : "sequential",
-	"steps" : [
+	"type": "sequential",
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f ReadVerificationAfterUpdateTest0.csv ReadVerificationAfterUpdateTest1.csv"
+			"type": "command",
+			"value": "rm -f ReadVerificationAfterUpdateTest0.csv ReadVerificationAfterUpdateTest1.csv"
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "ReadVerificationAfterUpdateTest0.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "ReadVerificationAfterUpdateTest0.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 10000,
-							"size" : "10GB",
-							"time" : "50s"
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000,
+							"size": "10GB",
+							"time": "50s"
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 10
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 10
 						}
 					},
-					"input" : {
-						"file" : "ReadVerificationAfterUpdateTest0.csv"
+					"input": {
+						"file": "ReadVerificationAfterUpdateTest0.csv"
 					},
-					"output" : {
-						"file" : "ReadVerificationAfterUpdateTest1.csv"
+					"output": {
+						"file": "ReadVerificationAfterUpdateTest1.csv"
 					}
 				},
-				"load" : {
-					"type" : "update"
+				"load": {
+					"type": "update"
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"verify" : true
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"verify": true
 					},
-					"input" : {
-						"file" : "ReadVerificationAfterUpdateTest1.csv"
+					"input": {
+						"file": "ReadVerificationAfterUpdateTest1.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

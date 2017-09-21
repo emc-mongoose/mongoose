@@ -1,24 +1,24 @@
 {
-	"type" : "sequential",
-	"jobs" : [
+	"type": "sequential",
+	"jobs": [
 		{
-			"type" : "load",
-			"config" : {
-				"load" : {
-					"limit" : {
-						"count" : 100
+			"type": "load",
+			"config": {
+				"load": {
+					"limit": {
+						"count": 100
 					},
-					"threads" : 10
+					"threads": 10
 				},
-				"run" : {
-					"id" : "backward-compatibility-test"
+				"run": {
+					"id": "backward-compatibility-test"
 				},
-				"storage" : {
-					"auth" : {
-						"id" : "wuser1@sanity.local"
+				"storage": {
+					"auth": {
+						"id": "wuser1@sanity.local"
 					},
-					"node" : {
-						"addrs" : [
+					"node": {
+						"addrs": [
 							"127.0.0.1"
 						]
 					}

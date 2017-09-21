@@ -1,50 +1,50 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "1KB"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"size": "1KB"
 			},
-			"output" : {
-				"path" : "copy-swift-object"
+			"output": {
+				"path": "copy-swift-object"
 			}
 		},
-		"load" : {
+		"load": {
 			"limit": {
 				"concurrency": 10
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"storage": {
+			"driver": {
 				"type": "swift"
 			},
-			"net" : {
-				"http" : {
-					"namespace" : "examplens"
+			"net": {
+				"http": {
+					"namespace": "examplens"
 				}
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "precondition"
+			"type": "precondition"
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"path" : "copy-swift-object"
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"path": "copy-swift-object"
 					},
-					"output" : {
-						"path" : "copy-swift-object_"
+					"output": {
+						"path": "copy-swift-object_"
 					}
 				}
 			}

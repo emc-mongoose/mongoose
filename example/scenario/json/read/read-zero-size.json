@@ -1,18 +1,18 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "linear-read-zero-size"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "linear-read-zero-size"
 			},
-			"data" : {
-				"size" : 0
+			"data": {
+				"size": 0
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 100000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100000
 				}
 			}
 		}
@@ -20,26 +20,26 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "linear-read-zero-size.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-read-zero-size.csv"
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"verify" : true
+			"config": {
+				"item": {
+					"data": {
+						"verify": true
 					},
-					"input" : {
-						"file" : "linear-read-zero-size.csv"
+					"input": {
+						"file": "linear-read-zero-size.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

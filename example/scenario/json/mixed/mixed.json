@@ -1,65 +1,65 @@
 {
-	"type" : "sequential",
-	"steps" : [
+	"type": "sequential",
+	"steps": [
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "items2read.csv",
-						"path" : "items2read"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "items2read.csv",
+						"path": "items2read"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 1000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 1000
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "mixed",
-			"config" : [
+			"type": "mixed",
+			"config": [
 				{
-					"item" : {
-						"output" : {
-							"path" : "default"
+					"item": {
+						"output": {
+							"path": "default"
 						}
 					},
-					"load" : {
-						"limit" : {
-							"concurrency" : 20
+					"load": {
+						"limit": {
+							"concurrency": 20
 						}
 					},
-					"test" : {
-						"step" : {
-							"limit" : {
-								"time" : 60
+					"test": {
+						"step": {
+							"limit": {
+								"time": 60
 							}
 						}
 					}
 				},
 				{
-					"item" : {
-						"input" : {
-							"file" : "items2read.csv"
+					"item": {
+						"input": {
+							"file": "items2read.csv"
 						},
-						"output" : {
-							"path" : "items2read"
+						"output": {
+							"path": "items2read"
 						}
 					},
-					"load" : {
-						"generator" : {
-							"recycle" : {
-								"enabled" : true
+					"load": {
+						"generator": {
+							"recycle": {
+								"enabled": true
 							}
 						},
-						"limit" : {
-							"concurrency" : 50
+						"limit": {
+							"concurrency": 50
 						},
-						"type" : "read"
+						"type": "read"
 					}
 				}
 			]

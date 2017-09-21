@@ -1,24 +1,24 @@
 // example command:
 // ITEM_DST_CONTAINER=mongoose ITEM_SRC_FILE= LOAD_THREADS=100 ITEM_DATA_SIZE=1KB LOAD_TYPE=create java -jar mongoose-<VERSION>/mongoose.jar --scenario-file=mongoose-<VERSION>/scenario/misc/env-vars-substitution.json
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "${ITEM_DATA_SIZE}"
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"size": "${ITEM_DATA_SIZE}"
 			},
-			"output" : {
-				"path" : "${ITEM_DST_CONTAINER}"
+			"output": {
+				"path": "${ITEM_DST_CONTAINER}"
 			},
-			"input" : {
-				"file" : "${ITEM_SRC_FILE}"
+			"input": {
+				"file": "${ITEM_SRC_FILE}"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : "${LOAD_THREADS}"
+		"load": {
+			"limit": {
+				"concurrency": "${LOAD_THREADS}"
 			},
-			"type" : "${LOAD_TYPE}"
+			"type": "${LOAD_TYPE}"
 		}
 	}
 }

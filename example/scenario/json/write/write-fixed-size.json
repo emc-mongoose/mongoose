@@ -1,9 +1,9 @@
 {
 	"type": "load",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "10KB" // may be also a number 10240
+	"config": {
+		"item": {
+			"data": {
+				"size": "10KB" // may be also a number 10240
 			}
 		}
 	}

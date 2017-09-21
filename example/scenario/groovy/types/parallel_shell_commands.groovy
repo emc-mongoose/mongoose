@@ -4,13 +4,14 @@ final noOutputColorConfig = [
     ]
 ]
 
-final command1 = command
+final command1 = Command
     .config(noOutputColorConfig)
     .value("echo \"Hello world!\"")
 
-final command2 = command.value("ps alx | grep java")
+final command2 = Command
+    .value("ps alx | grep java")
 
-parallel
+Parallel
     .step(command1)
     .step(command2)
     .run()

@@ -1,99 +1,99 @@
 {
-	"type" : "for",
-	"value" : "size",
-	"in" : [
+	"type": "for",
+	"value": "size",
+	"in": [
 		0, "1KB", "1MB"
 	],
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "${size}"
+	"config": {
+		"item": {
+			"data": {
+				"size": "${size}"
 			}
 		},
-		"output" : {
-			"metrics" : {
-				"average" : {
-					"period" : 0
+		"output": {
+			"metrics": {
+				"average": {
+					"period": 0
 				}
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000000,
-					"time" : "10s"
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000000,
+					"time": "10s"
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "for",
-			"value" : "threads",
-			"in" : [
+			"type": "for",
+			"value": "threads",
+			"in": [
 				1, 10, 100
 			],
-			"config" : {
-				"item" : {
-					"output" : {
-						"path" : "${size}_${threads}threads"
+			"config": {
+				"item": {
+					"output": {
+						"path": "${size}_${threads}threads"
 					}
 				},
-				"load" : {
-					"limit" : {
-						"concurrency" : "${threads}"
+				"load": {
+					"limit": {
+						"concurrency": "${threads}"
 					}
 				}
 			},
-			"steps" : [
+			"steps": [
 				{
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"output" : {
-								"file" : "${size}_${threads}threads.csv"
+					"type": "load",
+					"config": {
+						"item": {
+							"output": {
+								"file": "${size}_${threads}threads.csv"
 							}
 						},
-						"load" : {
-							"type" : "create"
+						"load": {
+							"type": "create"
 						},
-						"test" : {
-							"step" : {
-								"id" : "C${threads}_${size}"
-							}
-						}
-					}
-				}, {
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"input" : {
-								"file" : "${size}_${threads}threads.csv"
-							}
-						},
-						"load" : {
-							"type" : "read"
-						},
-						"test" : {
-							"step" : {
-								"id" : "R${threads}_${size}"
+						"test": {
+							"step": {
+								"id": "C${threads}_${size}"
 							}
 						}
 					}
 				}, {
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"input" : {
-								"file" : "${size}_${threads}threads.csv"
+					"type": "load",
+					"config": {
+						"item": {
+							"input": {
+								"file": "${size}_${threads}threads.csv"
 							}
 						},
-						"load" : {
-							"type" : "delete"
+						"load": {
+							"type": "read"
 						},
-						"test" : {
-							"step" : {
-								"id" : "D${threads}_${size}"
+						"test": {
+							"step": {
+								"id": "R${threads}_${size}"
+							}
+						}
+					}
+				}, {
+					"type": "load",
+					"config": {
+						"item": {
+							"input": {
+								"file": "${size}_${threads}threads.csv"
+							}
+						},
+						"load": {
+							"type": "delete"
+						},
+						"test": {
+							"step": {
+								"id": "D${threads}_${size}"
 							}
 						}
 					}

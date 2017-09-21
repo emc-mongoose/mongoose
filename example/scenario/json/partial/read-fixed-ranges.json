@@ -1,18 +1,18 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "10MB"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"size": "10MB"
 			},
-			"output" : {
-				"path" : "read-fixed-ranges"
+			"output": {
+				"path": "read-fixed-ranges"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 100
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100
 				}
 			}
 		}
@@ -20,30 +20,30 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "read-fixed-ranges.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "read-fixed-ranges.csv"
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"fixed" : [
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"fixed": [
 								"4MB-5MB"
 							]
 						}
 					},
-					"input" : {
-						"file" : "read-fixed-ranges.csv"
+					"input": {
+						"file": "read-fixed-ranges.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

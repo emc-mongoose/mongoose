@@ -1,15 +1,15 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "linear-sleep-and-delete"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "linear-sleep-and-delete"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		}
@@ -17,28 +17,28 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "linear-sleep-and-delete.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-sleep-and-delete.csv"
 					}
 				}
 			}
 		}, {
 			// sleep 15 seconds between the jobs executed sequentially
-			"type" : "command",
-			"value" : "sleep 15s"
+			"type": "command",
+			"value": "sleep 15s"
 		},
 		{
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "linear-sleep-and-delete.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "linear-sleep-and-delete.csv"
 					}
 				},
-				"load" : {
-					"type" : "delete"
+				"load": {
+					"type": "delete"
 				}
 			}
 		}

@@ -1,21 +1,21 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "fs-circular-read-from-custom-dir"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "fs-circular-read-from-custom-dir"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 10
+		"test": {
+			"step": {
+				"limit": {
+					"count": 10
 				}
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "fs"
+		"storage": {
+			"driver": {
+				"type": "fs"
 			}
 		}
 	},
@@ -24,26 +24,26 @@
 			"type": "precondition"
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"path" : "fs-circular-read-from-custom-dir"
+			"config": {
+				"item": {
+					"input": {
+						"path": "fs-circular-read-from-custom-dir"
 					}
 				},
-				"load" : {
-					"type" : "read",
-					"generator" : {
-						"recycle" : {
-							"enabled" : true
+				"load": {
+					"type": "read",
+					"generator": {
+						"recycle": {
+							"enabled": true
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
+				"test": {
+					"step": {
+						"limit": {
 							// count -> infinity, time -> 1 minute
-							"count" : 0,
-							"time" : "1m"
+							"count": 0,
+							"time": "1m"
 						}
 					}
 				}

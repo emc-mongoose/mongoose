@@ -1,21 +1,21 @@
 {
 	"type": "load",
-	"config" : {
-		"item" : {
-			"output" : {
-				"file" : "linear-write-by-count-atmos.csv"
+	"config": {
+		"item": {
+			"output": {
+				"file": "linear-write-by-count-atmos.csv"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1234
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1234
 				}
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "atmos"
+		"storage": {
+			"driver": {
+				"type": "atmos"
 			}
 		}
 	}

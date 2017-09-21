@@ -1,8 +1,8 @@
 {
-	"type" : "load",
-	"config" : {
-		"load" : {
-			"type" : "noop"
+	"type": "load",
+	"config": {
+		"load": {
+			"type": "noop"
 		}
 	}
 }

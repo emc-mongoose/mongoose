@@ -1,59 +1,59 @@
 {
-	"type" : "sequential",
-	"steps" : [
+	"type": "sequential",
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f items2read.csv"
+			"type": "command",
+			"value": "rm -f items2read.csv"
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "items2read.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "items2read.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 10000,
-							"size" : "1GB",
-							"time" : 10
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000,
+							"size": "1GB",
+							"time": 10
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "mixed",
-			"config" : [
+			"type": "mixed",
+			"config": [
 				{
-					"item" : {
-						"output" : {
-							"path" : "${ITEM_OUTPUT_PATH}"
+					"item": {
+						"output": {
+							"path": "${ITEM_OUTPUT_PATH}"
 						}
 					},
-					"test" : {
-						"step" : {
-							"limit" : {
-								"time" : 50
+					"test": {
+						"step": {
+							"limit": {
+								"time": 50
 							}
 						}
 					}
 				},
 				{
-					"item" : {
-						"input" : {
-							"file" : "items2read.csv"
+					"item": {
+						"input": {
+							"file": "items2read.csv"
 						}
 					},
-					"load" : {
-						"generator" : {
-							"recycle" : {
-								"enabled" : true
+					"load": {
+						"generator": {
+							"recycle": {
+								"enabled": true
 							}
 						},
-						"type" : "read"
+						"type": "read"
 					}
 				}
 			]

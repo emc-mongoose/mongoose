@@ -1,14 +1,14 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : 0
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"size": 0
 			}
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 0,
+		"load": {
+			"limit": {
+				"concurrency": 0,
 				"rate"  : 1234.5
 			}
 		}

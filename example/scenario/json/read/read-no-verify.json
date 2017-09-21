@@ -1,56 +1,56 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "read-no-verify"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "read-no-verify"
 			},
-			"data" : {
-				"size" : "1KB"
+			"data": {
+				"size": "1KB"
 			}
 		}
 	},
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "read-no-verify.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "read-no-verify.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 100
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100
 						}
 					}
 				}
 			}
 		}, {
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 1
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 1
 						}
 					},
-					"input" : {
-						"file" : "read-no-verify.csv"
+					"input": {
+						"file": "read-no-verify.csv"
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "read-no-verify.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "read-no-verify.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

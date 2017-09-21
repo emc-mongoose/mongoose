@@ -1,10 +1,10 @@
 {
-	"type" : "load",
-	"config" : {
-		"test" : {
-			"step" : {
-				"limit" : {
-					"time" : "1m" // unit may be also "s", "h" and "d"
+	"type": "load",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"time": "1m" // unit may be also "s", "h" and "d"
 				}
 			}
 		}

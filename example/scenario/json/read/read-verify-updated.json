@@ -1,62 +1,62 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "linear-read-verify-updated"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "linear-read-verify-updated"
 			},
-			"data" : {
-				"size" : "1KB"
+			"data": {
+				"size": "1KB"
 			}
 		}
 	},
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "linear-read-verify-updated-0.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-read-verify-updated-0.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 100
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100
 						}
 					}
 				}
 			}
 		}, {
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 1
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 1
 						}
 					},
-					"output" : {
-						"file" : "linear-read-verify-updated-1.csv"
+					"output": {
+						"file": "linear-read-verify-updated-1.csv"
 					},
-					"input" : {
-						"file" : "linear-read-verify-updated-0.csv"
+					"input": {
+						"file": "linear-read-verify-updated-0.csv"
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"verify" : true
+			"config": {
+				"item": {
+					"data": {
+						"verify": true
 					},
-					"input" : {
-						"file" : "linear-read-verify-updated-1.csv"
+					"input": {
+						"file": "linear-read-verify-updated-1.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

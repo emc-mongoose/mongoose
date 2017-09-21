@@ -1,28 +1,28 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+	"type": "sequential",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		},
-		"load" : {
+		"load": {
 			"limit": {
 				"concurrency": 10
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"remote" : true,
+		"storage": {
+			"driver": {
+				"remote": true,
 				"addrs": [
 					"10.77.4.57"
 				]
 			},
-			"net" : {
-				"node" : {
-					"addrs" : [
+			"net": {
+				"node": {
+					"addrs": [
 						"10.77.4.57"
 					]
 				}
@@ -32,28 +32,28 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "8KB"
+			"config": {
+				"item": {
+					"data": {
+						"size": "8KB"
 					},
-					"output" : {
-						"file" : "distributed-read.csv",
-						"path" : "distributed-read"
+					"output": {
+						"file": "distributed-read.csv",
+						"path": "distributed-read"
 					}
 				}
 			}
 		},
 		{
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "distributed-read.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "distributed-read.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

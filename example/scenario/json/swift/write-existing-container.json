@@ -1,18 +1,18 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "existingContainerName"
+	"type": "load",
+	"config": {
+		"item": {
+			"output": {
+				"path": "existingContainerName"
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "swift"
+		"storage": {
+			"driver": {
+				"type": "swift"
 			},
-			"net" : {
-				"http" : {
-					"namespace" : "test"
+			"net": {
+				"http": {
+					"namespace": "test"
 				}
 			}
 		}

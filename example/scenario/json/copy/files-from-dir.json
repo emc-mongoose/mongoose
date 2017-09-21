@@ -1,47 +1,47 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"load" : {
+	"type": "sequential",
+	"config": {
+		"load": {
 			"limit": {
 				"concurrency": 10
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "fs"
+		"storage": {
+			"driver": {
+				"type": "fs"
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"path" : "/tmp/src-dir"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"path": "/tmp/src-dir"
 					},
-					"data" : {
-						"size" : "4KB"
+					"data": {
+						"size": "4KB"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 1000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 1000
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"output" : {
-						"path" : "/tmp/dst-dir"
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"path": "/tmp/dst-dir"
 					},
-					"input" : {
-						"path" : "/tmp/src-dir"
+					"input": {
+						"path": "/tmp/src-dir"
 					}
 				}
 			}

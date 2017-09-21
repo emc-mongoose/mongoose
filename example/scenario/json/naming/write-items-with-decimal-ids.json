@@ -1,9 +1,9 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"naming" : {
-				"radix" : 10
+	"type": "load",
+	"config": {
+		"item": {
+			"naming": {
+				"radix": 10
 			}
 		}
 	}

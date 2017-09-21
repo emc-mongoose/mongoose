@@ -1,43 +1,43 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"storage" : {
-			"net" : {
-				"http" : {
-					"namespace" : "ns1"
+	"type": "sequential",
+	"config": {
+		"storage": {
+			"net": {
+				"http": {
+					"namespace": "ns1"
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"path" : "${ITEM_SRC_PATH}"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"path": "${ITEM_SRC_PATH}"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 100000,
-							"size" : "1GB",
-							"time" : 30
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100000,
+							"size": "1GB",
+							"time": 30
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"path" : "${ITEM_SRC_PATH}"
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"path": "${ITEM_SRC_PATH}"
 					},
-					"output" : {
-						"path" : "${ITEM_DST_PATH}"
+					"output": {
+						"path": "${ITEM_DST_PATH}"
 					}
 				}
 			}

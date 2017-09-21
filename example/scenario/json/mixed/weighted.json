@@ -1,84 +1,84 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "/weighted-load"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "/weighted-load"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 100
+		"load": {
+			"limit": {
+				"concurrency": 100
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "1KB"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"size": "1KB"
 					},
-					"output" : {
-						"file" : "weighted-load.csv"
+					"output": {
+						"file": "weighted-load.csv"
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"average" : {
-							"persist" : false
+				"output": {
+					"metrics": {
+						"average": {
+							"persist": false
 						},
-						"summary" : {
-							"persist" : false
+						"summary": {
+							"persist": false
 						},
-						"trace" : {
-							"persist" : false
+						"trace": {
+							"persist": false
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 10000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "mixed",
-			"weights" : [
+			"type": "mixed",
+			"weights": [
 				20, 80
 			],
-			"config" : [
+			"config": [
 				{
-					"item" : {
-						"data" : {
-							"size" : "4KB-16KB"
+					"item": {
+						"data": {
+							"size": "4KB-16KB"
 						}
 					},
-					"test" : {
-						"step" : {
-							"limit" : {
-								"time" : "90s"
+					"test": {
+						"step": {
+							"limit": {
+								"time": "90s"
 							}
 						}
 					}
 				},
 				{
-					"item" : {
-						"input" : {
-							"file" : "weighted-load.csv"
+					"item": {
+						"input": {
+							"file": "weighted-load.csv"
 						}
 					},
-					"load" : {
-						"generator" : {
-							"recycle" : {
-								"enabled" : true
+					"load": {
+						"generator": {
+							"recycle": {
+								"enabled": true
 							}
 						},
-						"type" : "read"
+						"type": "read"
 					}
 				}
 			]

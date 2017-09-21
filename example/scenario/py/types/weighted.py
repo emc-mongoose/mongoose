@@ -3,10 +3,12 @@ itemDataSize = "10KB"
 itemsFile = "weighted_load_example.csv"
 itemOutputPath = "/weighted_load_example"
 
-precondition1 = command\
+# declare the cleanup shell command
+precondition1 = Command \
     .value("rm -f " + itemsFile)
 
-precondition2 = load\
+# prepare (create) the 10000 items on a storage before the test
+precondition2 = PreconditionLoad \
     .config(
         {
             "item": {
@@ -23,19 +25,6 @@ precondition2 = load\
                     "concurrency": sharedConcurrency
                 }
             },
-            "output": {
-                "metrics": {
-                    "average": {
-                        "persist": False
-                    },
-                    "summary": {
-                        "persist": False
-                    },
-                    "trace": {
-                        "persist": False
-                    }
-                }
-            },
             "test": {
                 "step": {
                     "limit": {
@@ -46,7 +35,8 @@ precondition2 = load\
         }
     )
 
-weightedLoadStep = weighted\
+# declare the weighted load step instance (20% create operations, 80% read operations)
+weightedLoad1 = WeightedLoad \
     .config(
         {
             "item": {
@@ -70,7 +60,7 @@ weightedLoadStep = weighted\
                 }
             }
         }
-    )\
+    ) \
     .config(
         {
             "item": {
@@ -90,6 +80,7 @@ weightedLoadStep = weighted\
         }
     )
 
+# go
 precondition1.run()
 precondition2.run()
-weightedLoadStep.run()
+weightedLoad1.run()

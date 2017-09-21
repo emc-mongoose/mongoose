@@ -1,7 +1,7 @@
 {
-	"$schema" : "http://json-schema.org/draft-04/scema#",
-	"definitions" : {
-		"config" : {
+	"$schema": "http://json-schema.org/draft-04/scema#",
+	"definitions": {
+		"config": {
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
@@ -13,153 +13,153 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
-								"input" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
+								"input": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
 										"file": {
 											"type": [
 												"null", "string"
 											]
 										},
-										"layer" : {
-											"type" : "object",
-											"additionalProperties" : false,
-											"properties" : {
-												"cache" : {
-													"oneOf" : [
+										"layer": {
+											"type": "object",
+											"additionalProperties": false,
+											"properties": {
+												"cache": {
+													"oneOf": [
 														{
 															"type": "integer",
-															"minimum" : 1
+															"minimum": 1
 														},
 														{
-															"type" : "string",
-															"pattern" : "\\$\\{.+\\}"
+															"type": "string",
+															"pattern": "\\$\\{.+\\}"
 														}
 													]
 												},
 												"size": {
-													"oneOf" : [
+													"oneOf": [
 														{
 															"type": "integer",
-															"minimum" : 1
+															"minimum": 1
 														},
 														{
-															"type" : "string",
-															"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+															"type": "string",
+															"pattern": "[\\d\\.]+[KMGTPE]?B?"
 														},
 														{
-															"type" : "string",
-															"pattern" : "\\$\\{.+\\}"
+															"type": "string",
+															"pattern": "\\$\\{.+\\}"
 														}
 													]
 												}
 											}
 										},
 										"seed": {
-											"oneOf" : [
+											"oneOf": [
 												{
 													"type": "string",
-													"pattern" : "[A-Fa-f0-9]+"
+													"pattern": "[A-Fa-f0-9]+"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
 								"ranges": {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"concat" : {
-											"oneOf" : [
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"concat": {
+											"oneOf": [
 												{
-													"type" : "null"
+													"type": "null"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\d+(-\\d+)?"
+													"type": "string",
+													"pattern": "\\d+(-\\d+)?"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"fixed" : {
-											"oneOf" : [
+										"fixed": {
+											"oneOf": [
 												{
-													"type" : "null"
+													"type": "null"
 												},
 												{
-													"type" : "array",
-													"items" : {
-														"type" : "string",
-														"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+													"type": "array",
+													"items": {
+														"type": "string",
+														"pattern": "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
 													}
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"random" : {
-											"oneOf" : [
+										"random": {
+											"oneOf": [
 												{
-													"type" : "number",
-													"minimum" : 0
+													"type": "number",
+													"minimum": 0
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"threshold" : {
-											"oneOf" : [
+										"threshold": {
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 0
+													"type": "integer",
+													"minimum": 0
 												},
 												{
-													"type" : "string",
-													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+													"type": "string",
+													"pattern": "[\\d\\.]+[KMGTPE]?B?"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
 								"size": {
-									"oneOf" : [
+									"oneOf": [
 										{
 											"type": "integer",
-											"minimum" : 0
+											"minimum": 0
 										}, {
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+											"type": "string",
+											"pattern": "[\\d\\.]+[KMGTPE]?B?"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"verify": {
-									"oneOf" : [
+									"oneOf": [
 										{
 											"type": "boolean"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
@@ -186,15 +186,15 @@
 							"additionalProperties": false,
 							"properties": {
 								"type": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"enum" : [
+											"enum": [
 												"asc", "desc", "random"
 											]
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -204,39 +204,39 @@
 									]
 								},
 								"radix": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 2,
-											"maximum" : 36
+											"type": "integer",
+											"minimum": 2,
+											"maximum": 36
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"offset": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0
+											"type": "integer",
+											"minimum": 0
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"length": {
-									"oneOf" : [
+									"oneOf": [
 										{
 											"type": "integer",
-											"minimum" : 1
+											"minimum": 1
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
@@ -246,19 +246,19 @@
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
-								"delay" : {
-									"oneOf" : [
+								"delay": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0
+											"type": "integer",
+											"minimum": 0
 										},
 										{
-											"type" : "string",
-											"pattern" : "[\\d]+[SsMmHhDd]?"
+											"type": "string",
+											"pattern": "[\\d]+[SsMmHhDd]?"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -274,16 +274,16 @@
 								}
 							}
 						},
-						"type" : {
-							"oneOf" : [
+						"type": {
+							"oneOf": [
 								{
-									"enum" : [
+									"enum": [
 										"data", "path", "token"
 									]
 								},
 								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
+									"type": "string",
+									"pattern": "\\$\\{.+\\}"
 								}
 							]
 						}
@@ -293,228 +293,228 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"batch" : {
-							"type" : "object",
+						"batch": {
+							"type": "object",
 							"additionalProperties": false,
-							"properties" : {
+							"properties": {
 								"size": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 1
+											"type": "integer",
+											"minimum": 1
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
 							}
 						},
-						"generator" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
+						"generator": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
 								"addrs": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"type" : "array",
-											"items" : {
-												"type" : "string"
+											"type": "array",
+											"items": {
+												"type": "string"
 											}
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"recycle": {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"enabled" : {
-											"oneOf" : [
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"enabled": {
+											"oneOf": [
 												{
 													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"limit" : {
-											"oneOf" : [
+										"limit": {
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 1
+													"type": "integer",
+													"minimum": 1
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
-								"remote" : {
-									"oneOf" : [
+								"remote": {
+									"oneOf": [
 										{
-											"type" : "boolean"
+											"type": "boolean"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"shuffle" : {
-									"oneOf" : [
+								"shuffle": {
+									"oneOf": [
 										{
-											"type" : "boolean"
+											"type": "boolean"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
 							}
 						},
 						"limit": {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
 								"concurrency": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0,
-											"maximum" : 2147483647
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 2147483647
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"rate" : {
-									"oneOf" : [
+								"rate": {
+									"oneOf": [
 										{
 											"type": "number",
-											"minimum" : 0
+											"minimum": 0
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
 							}
 						},
-						"service" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
-								"threads" : {
-									"oneOf" : [
+						"service": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"threads": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0,
-											"maximum" : 2147483647
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 2147483647
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
 							}
 						},
 						"type": {
-							"oneOf" : [
+							"oneOf": [
 								{
 									"type": "string",
-									"pattern" : "[NnOoPpCcRrEeAaTtDdUuLl]+=?[\\d]?%?",
-									"minLength" : 4,
-									"maxLength" : 6
+									"pattern": "[NnOoPpCcRrEeAaTtDdUuLl]+=?[\\d]?%?",
+									"minLength": 4,
+									"maxLength": 6
 								},
 								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
+									"type": "string",
+									"pattern": "\\$\\{.+\\}"
 								}
 							]
 						}
 					}
 				},
-				"output" : {
-					"type" : "object",
-					"additionalProperties" : false,
-					"properties" : {
-						"color" : {
-							"oneOf" : [
+				"output": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"color": {
+							"oneOf": [
 								{
-									"type" : "boolean"
+									"type": "boolean"
 								},
 								{
-									"type" : "string",
-									"pattern" : "\\$\\{.+\\}"
+									"type": "string",
+									"pattern": "\\$\\{.+\\}"
 								}
 							]
 						},
-						"metrics" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
-								"average" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"period" : {
-											"oneOf" : [
+						"metrics": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"average": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"period": {
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 0
+													"type": "integer",
+													"minimum": 0
 												},
 												{
-													"type" : "string",
-													"pattern" : "[\\d]+[SsMmHhDd]?"
+													"type": "string",
+													"pattern": "[\\d]+[SsMmHhDd]?"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"persist" : {
-											"oneOf" : [
+										"persist": {
+											"oneOf": [
 												{
-													"type" : "boolean"
+													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"table" : {
-											"type" : "object",
-											"additionalProperties" : false,
-											"properties" : {
-												"header" : {
-													"type" : "object",
-													"additionalProperties" : false,
-													"properties" : {
-														"period" : {
-															"oneOf" : [
+										"table": {
+											"type": "object",
+											"additionalProperties": false,
+											"properties": {
+												"header": {
+													"type": "object",
+													"additionalProperties": false,
+													"properties": {
+														"period": {
+															"oneOf": [
 																{
-																	"type" : "integer",
-																	"minimum" : 1
+																	"type": "integer",
+																	"minimum": 1
 																},
 																{
-																	"type" : "string",
-																	"pattern" : "\\$\\{.+\\}"
+																	"type": "string",
+																	"pattern": "\\$\\{.+\\}"
 																}
 															]
 														}
@@ -524,61 +524,61 @@
 										}
 									}
 								},
-								"summary" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"perfDbResultsFile" : {
-											"oneOf" : [
+								"summary": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"perfDbResultsFile": {
+											"oneOf": [
 												{
-													"type" : "boolean"
+													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"persist" : {
-											"oneOf" : [
+										"persist": {
+											"oneOf": [
 												{
-													"type" : "boolean"
+													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
-								"trace" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"persist" : {
-											"oneOf" : [
+								"trace": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"persist": {
+											"oneOf": [
 												{
-													"type" : "boolean"
+													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
-								"threshold" : {
-									"oneOf" : [
+								"threshold": {
+									"oneOf": [
 										{
-											"type" : "number",
-											"minimum" : 0,
-											"maximum" : 1
+											"type": "number",
+											"minimum": 0,
+											"maximum": 1
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								}
@@ -616,119 +616,119 @@
 								}
 							}
 						},
-						"driver" : {
+						"driver": {
 							"type": "object",
 							"additionalProperties": false,
 							"properties": {
 								"addrs": {
-									"oneOf" : [
+									"oneOf": [
 										{
 											"type": "array",
 											"items": {
-												"type" : "string"
+												"type": "string"
 											}
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"impl" : {
-									"type" : "array",
-									"items" : {
-										"type" : "object",
-										"additionalProperties" : false,
-										"properties" : {
-											"type" : {
-												"type" : "string",
-												"pattern" : "[\\w\\d]+"
+								"impl": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"additionalProperties": false,
+										"properties": {
+											"type": {
+												"type": "string",
+												"pattern": "[\\w\\d]+"
 											},
-											"file" : {
-												"type" : "string",
-												"pattern" : "[\\-_\\.\\w\\d]+"
+											"file": {
+												"type": "string",
+												"pattern": "[\\-_\\.\\w\\d]+"
 											},
-											"fqcn" : {
-												"type" : "string",
-												"pattern" : "([a-z][a-z_0-9]*\\.)*[A-Z_]($[A-Z_]|[\\w_])*"
+											"fqcn": {
+												"type": "string",
+												"pattern": "([a-z][a-z_0-9]*\\.)*[A-Z_]($[A-Z_]|[\\w_])*"
 											}
 										},
-										"required" : [
+										"required": [
 											"type", "file", "fqcn"
 										]
 									}
 								},
-								"port" : {
-									"oneOf" : [
+								"port": {
+									"oneOf": [
 										{
-											"type" : "number",
-											"minimum" : 1,
-											"maximum" : 65535
+											"type": "number",
+											"minimum": 1,
+											"maximum": 65535
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"queue" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"input" : {
-											"oneOf" : [
+								"queue": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"input": {
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 1,
-													"maximum" : 2147483647
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 2147483647
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"output" : {
-											"oneOf" : [
+										"output": {
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 1,
-													"maximum" : 2147483647
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 2147483647
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
-								"remote" : {
-									"oneOf" : [
+								"remote": {
+									"oneOf": [
 										{
-											"type" : "boolean"
+											"type": "boolean"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"threads" : {
-									"oneOf" : [
+								"threads": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0,
-											"maximum" : 2147483647
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 2147483647
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"type" : {
-									"type" : "string"
+								"type": {
+									"type": "string"
 								}
 							}
 						},
@@ -738,47 +738,47 @@
 							"properties": {
 								"capacity": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum": 0
 								},
 								"container": {
 									"type": "object",
 									"properties": {
 										"capacity": {
 											"type": "integer",
-											"minimum" : 0
+											"minimum": 0
 										},
 										"countLimit": {
 											"type": "integer",
-											"minimum" : 0
+											"minimum": 0
 										}
 									}
 								},
-								"fail" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
-										"connections" : {
-											"type" : "integer",
-											"minimum" : 0
+								"fail": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"connections": {
+											"type": "integer",
+											"minimum": 0
 										},
-										"responses" : {
-											"type" : "integer",
-											"minimum" : 0
+										"responses": {
+											"type": "integer",
+											"minimum": 0
 										}
 									}
 								},
-								"node" : {
-									"type" : "boolean"
+								"node": {
+									"type": "boolean"
 								}
 							}
 						},
-						"net" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
+						"net": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
 								"bindBacklogSize": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum": 0
 								},
 								"interestOpQueued": {
 									"type": "boolean"
@@ -788,118 +788,118 @@
 								},
 								"linger": {
 									"type": "integer",
-									"minimum" : 0
+									"minimum": 0
 								},
-								"rcvBuf" : {
-									"oneOf" : [
+								"rcvBuf": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0
+											"type": "integer",
+											"minimum": 0
 										},
 										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMG]?B?"
+											"type": "string",
+											"pattern": "[\\d\\.]+[KMG]?B?"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"reuseAddr": {
 									"type": "boolean"
 								},
-								"sndBuf" : {
-									"oneOf" : [
+								"sndBuf": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0
+											"type": "integer",
+											"minimum": 0
 										},
 										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMG]?B?"
+											"type": "string",
+											"pattern": "[\\d\\.]+[KMG]?B?"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"ioRatio" : {
-									"oneOf" : [
+								"ioRatio": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 1,
-											"maximum" : 99
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 99
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"transport" : {
-									"oneOf" : [
+								"transport": {
+									"oneOf": [
 										{
-											"type" : "string",
-											"enum" : [
+											"type": "string",
+											"enum": [
 												"nio", "epoll", "kqueue"
 											]
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"ssl" : {
-									"oneOf" : [
+								"ssl": {
+									"oneOf": [
 										{
 											"type": "boolean"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"tcpNoDelay": {
-									"oneOf" : [
+									"oneOf": [
 										{
-											"type" : "boolean"
+											"type": "boolean"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
 								"timeoutMilliSec": {
-									"oneOf" : [
+									"oneOf": [
 										{
 											"type": "integer",
-											"minimum" : 0
+											"minimum": 0
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
-								"writeBufferHighWaterMark" : {
-									"oneOf" : [
+								"writeBufferHighWaterMark": {
+									"oneOf": [
 										{
-											"type" : "integer",
-											"minimum" : 0,
-											"maximum" : 2147483647
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 2147483647
 										},
 										{
-											"type" : "string",
-											"pattern" : "[\\d\\.]+[KMG]?B?"
+											"type": "string",
+											"pattern": "[\\d\\.]+[KMG]?B?"
 										},
 										{
-											"type" : "string",
-											"pattern" : "\\$\\{.+\\}"
+											"type": "string",
+											"pattern": "\\$\\{.+\\}"
 										}
 									]
 								},
@@ -908,13 +908,13 @@
 									"additionalProperties": false,
 									"properties": {
 										"fsAccess": {
-											"oneOf" : [
+											"oneOf": [
 												{
 													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
@@ -929,58 +929,58 @@
 											]
 										},
 										"versioning": {
-											"oneOf" : [
+											"oneOf": [
 												{
 													"type": "boolean"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
 									}
 								},
-								"node" : {
-									"type" : "object",
-									"additionalProperties" : false,
-									"properties" : {
+								"node": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
 										"addrs": {
-											"oneOf" : [
+											"oneOf": [
 												{
-													"type" : "array",
-													"items" : {
-														"type" : "string"
+													"type": "array",
+													"items": {
+														"type": "string"
 													}
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"port" : {
-											"oneOf" : [
+										"port": {
+											"oneOf": [
 												{
-													"type" : "number",
-													"minimum" : 1,
-													"maximum" : 65535
+													"type": "number",
+													"minimum": 1,
+													"maximum": 65535
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"connAttemptsLimit" : {
-											"oneOf" : [
+										"connAttemptsLimit": {
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 0
+													"type": "integer",
+													"minimum": 0
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
@@ -990,16 +990,16 @@
 						}
 					}
 				},
-				"test" : {
-					"type" : "object",
-					"additionalProperties" : false,
-					"properties" : {
-						"step" : {
-							"type" : "object",
-							"additionalProperties" : false,
-							"properties" : {
-								"id" : {
-									"type" : [
+				"test": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"step": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"id": {
+									"type": [
 										"null", "string"
 									]
 								},
@@ -1008,73 +1008,73 @@
 									"additionalProperties": false,
 									"properties": {
 										"count": {
-											"oneOf" : [
+											"oneOf": [
 												{
 													"type": "integer",
-													"minimum" : 0
+													"minimum": 0
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
-										"fail" : {
-											"type" : "object",
-											"additionalProperties" : false,
-											"properties" : {
-												"count" : {
-													"oneOf" : [
+										"fail": {
+											"type": "object",
+											"additionalProperties": false,
+											"properties": {
+												"count": {
+													"oneOf": [
 														{
-															"type" : "integer",
-															"minimum" : 0
+															"type": "integer",
+															"minimum": 0
 														},
 														{
-															"type" : "string",
-															"pattern" : "\\$\\{.+\\}"
+															"type": "string",
+															"pattern": "\\$\\{.+\\}"
 														}
 													]
 												},
-												"rate" : {
-													"oneOf" : [
+												"rate": {
+													"oneOf": [
 														{
-															"type" : "boolean"
+															"type": "boolean"
 														},
 														{
-															"type" : "string",
-															"pattern" : "\\$\\{.+\\}"
+															"type": "string",
+															"pattern": "\\$\\{.+\\}"
 														}
 													]
 												}
 											}
 										},
 										"size": {
-											"oneOf" : [
+											"oneOf": [
 												{
 													"type": "integer",
-													"minimum" : 0
+													"minimum": 0
 												}, {
-													"type" : "string",
-													"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+													"type": "string",
+													"pattern": "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										},
 										"time": {
-											"oneOf" : [
+											"oneOf": [
 												{
-													"type" : "integer",
-													"minimum" : 0
+													"type": "integer",
+													"minimum": 0
 												}, {
-													"type" : "string",
-													"pattern" : "[\\d]+[SsMmHhDd]?"
+													"type": "string",
+													"pattern": "[\\d]+[SsMmHhDd]?"
 												},
 												{
-													"type" : "string",
-													"pattern" : "\\$\\{.+\\}"
+													"type": "string",
+													"pattern": "\\$\\{.+\\}"
 												}
 											]
 										}
@@ -1084,75 +1084,75 @@
 						}
 					}
 				},
-				"version" : {
-					"type" : "string"
+				"version": {
+					"type": "string"
 				}
 			}
 		}
 	},
-	"type" : "object",
-	"additionalProperties" : false,
-	"properties" : {
-		"blocking" : {
-			"type" : "boolean"
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"blocking": {
+			"type": "boolean"
 		},
-		"config" : {
-			"oneOf" : [
+		"config": {
+			"oneOf": [
 				{
-					"$ref" : "#/definitions/config"
+					"$ref": "#/definitions/config"
 				},
 				{
-					"type" : "array",
-					"items" : {
-						"$ref" : "#/definitions/config"
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/config"
 					}
 				}
 			]
 		},
-		"in" : {
-			"oneOf" : [
+		"in": {
+			"oneOf": [
 				{
-					"type" : "array"
+					"type": "array"
 				},
 				{
-					"type" : "string"
+					"type": "string"
 				},
 				{
-					"type" : "integer",
-					"minimum" : 0
+					"type": "integer",
+					"minimum": 0
 				}
 			]
 		},
-		"steps" : {
-			"type" : "array",
-			"items" : {
-				"$ref" : "#"
+		"steps": {
+			"type": "array",
+			"items": {
+				"$ref": "#"
 			}
 		},
-		"type" : {
-			"enum" : [
+		"type": {
+			"enum": [
 				"command", "for", "load", "parallel", "precondition", "sequential", "mixed", "chain"
 			]
 		},
-		"value" : {
-			"oneOf" : [
+		"value": {
+			"oneOf": [
 				{
-					"type" : "string"
+					"type": "string"
 				},
 				{
-					"type" : "integer"
+					"type": "integer"
 				}
 			]
 		},
-		"weights" : {
-			"type" : "array",
-			"items" : {
-				"type" : "integer"
+		"weights": {
+			"type": "array",
+			"items": {
+				"type": "integer"
 			},
-			"minItems" : 2
+			"minItems": 2
 		}
 	},
-	"required" : [
+	"required": [
 		"type"
 	]
 }

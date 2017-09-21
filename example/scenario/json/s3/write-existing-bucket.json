@@ -1,9 +1,9 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "existingBucketName"
+	"type": "load",
+	"config": {
+		"item": {
+			"output": {
+				"path": "existingBucketName"
 			}
 		}
 	}

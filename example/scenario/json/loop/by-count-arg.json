@@ -1,10 +1,10 @@
 {
-	"type" : "for",
-	"value" : "${N}",
-	"steps" : [
+	"type": "for",
+	"value": "${N}",
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "echo \"Hi there\""
+			"type": "command",
+			"value": "echo \"Hi there\""
 		}
 	]
 }

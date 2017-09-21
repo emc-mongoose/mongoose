@@ -1,10 +1,10 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"data" : {
-				"input" : {
-					"file" : "example/content/textexample"
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"input": {
+					"file": "example/content/textexample"
 				}
 			}
 		}

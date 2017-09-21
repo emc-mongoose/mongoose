@@ -1,15 +1,15 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"data" : {
-				"ranges" : {
-					"threshold" : "64MB"
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"ranges": {
+					"threshold": "64MB"
 				},
-				"size" : "1GB"
+				"size": "1GB"
 			}
 		},
-		"load" : {
+		"load": {
 			"batch": {
 				"size": 1
 			},
@@ -17,20 +17,20 @@
 				"concurrency": 10
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "swift"
+		"storage": {
+			"driver": {
+				"type": "swift"
 			},
-			"net" : {
-				"http" : {
-					"namespace" : "dlo"
+			"net": {
+				"http": {
+					"namespace": "dlo"
 				}
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 100
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100
 				}
 			}
 		}

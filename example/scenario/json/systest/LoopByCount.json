@@ -1,9 +1,9 @@
 {
-	"type" : "for",
-	"value" : 10,
-	"steps" : [
+	"type": "for",
+	"value": 10,
+	"steps": [
 		{
-			"type" : "load"
+			"type": "load"
 		}
 	]
 }

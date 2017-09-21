@@ -1,29 +1,29 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "write-to-custom-dir"
+	"type": "load",
+	"config": {
+		"item": {
+			"output": {
+				"path": "write-to-custom-dir"
 			},
-			"data" : {
-				"size" : "4KB"
+			"data": {
+				"size": "4KB"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		},
-		"load" : {
+		"load": {
 			"limit": {
 				"concurrency": 5
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "fs"
+		"storage": {
+			"driver": {
+				"type": "fs"
 			}
 		}
 	}

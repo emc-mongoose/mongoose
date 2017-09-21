@@ -1,81 +1,81 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"storage" : {
-			"net" : {
-				"http" : {
-					"namespace" : "ns1"
+	"type": "sequential",
+	"config": {
+		"storage": {
+			"net": {
+				"http": {
+					"namespace": "ns1"
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f SingleRandomUpdateAndMultipleRandomRead-0.csv SingleRandomUpdateAndMultipleRandomRead-1.csv"
+			"type": "command",
+			"value": "rm -f SingleRandomUpdateAndMultipleRandomRead-0.csv SingleRandomUpdateAndMultipleRandomRead-1.csv"
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "SingleRandomUpdateAndMultipleRandomRead-0.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "SingleRandomUpdateAndMultipleRandomRead-0.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 1000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 1000
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "command",
-			"value" : "sleep 5"
+			"type": "command",
+			"value": "sleep 5"
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 1
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 1
 						}
 					},
-					"input" : {
-						"file" : "SingleRandomUpdateAndMultipleRandomRead-0.csv"
+					"input": {
+						"file": "SingleRandomUpdateAndMultipleRandomRead-0.csv"
 					},
-					"output" : {
-						"file" : "SingleRandomUpdateAndMultipleRandomRead-1.csv"
+					"output": {
+						"file": "SingleRandomUpdateAndMultipleRandomRead-1.csv"
 					}
 				},
-				"load" : {
-					"type" : "update"
+				"load": {
+					"type": "update"
 				}
 			}
 		},
 		{
-			"type" : "command",
-			"value" : "sleep 5"
+			"type": "command",
+			"value": "sleep 5"
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 12
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 12
 						},
-						"verify" : true
+						"verify": true
 					},
-					"input" : {
-						"file" : "SingleRandomUpdateAndMultipleRandomRead-1.csv"
+					"input": {
+						"file": "SingleRandomUpdateAndMultipleRandomRead-1.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

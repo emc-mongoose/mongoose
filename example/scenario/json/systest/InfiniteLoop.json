@@ -1,8 +1,8 @@
 {
-	"type" : "for",
-	"steps" : [
+	"type": "for",
+	"steps": [
 		{
-			"type" : "load"
+			"type": "load"
 		}
 	]
 }

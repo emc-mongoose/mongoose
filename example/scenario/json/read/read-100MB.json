@@ -1,57 +1,57 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "linear-read-100MB"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "linear-read-100MB"
 			},
-			"data" : {
-				"size" : "100MB"
+			"data": {
+				"size": "100MB"
 			}
 		},
-		"storage" : {
+		"storage": {
 			"auth": {
 				"uid": "wuser1@sanity.local"
 			}
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 10
+		"load": {
+			"limit": {
+				"concurrency": 10
 			}
 		}
 	},
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "linear-read-100MB.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-read-100MB.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 100
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100
 						}
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "linear-read-100MB.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "linear-read-100MB.csv"
 					}
 				},
-				"load" : {
-					"generator" : {
-						"recycle" : {
-							"enabled" : true
+				"load": {
+					"generator": {
+						"recycle": {
+							"enabled": true
 						}
 					},
-					"type" : "read"
+					"type": "read"
 				}
 			}
 		}

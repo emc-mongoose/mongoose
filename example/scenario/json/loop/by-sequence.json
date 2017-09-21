@@ -1,13 +1,13 @@
 {
-	"type" : "for",
-	"value" : "e",
-	"in" : [
+	"type": "for",
+	"value": "e",
+	"in": [
 		"a", "b", "c", "d", "e"
 	],
-	"steps" : [
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "echo ${e}"
+			"type": "command",
+			"value": "echo ${e}"
 		}
 	]
 }

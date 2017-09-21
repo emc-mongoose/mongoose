@@ -1,43 +1,43 @@
 {
-	"type" : "chain",
-	"config" : [
+	"type": "chain",
+	"config": [
 		{
 		},
 		{
-			"load" : {
-				"type" : "read"
+			"load": {
+				"type": "read"
 			}
 		},
 		{
-			"item" : {
-				"data" : {
-					"ranges" : {
-						"random" : 1
+			"item": {
+				"data": {
+					"ranges": {
+						"random": 1
 					}
 				}
 			},
-			"load" : {
-				"type" : "update"
+			"load": {
+				"type": "update"
 			}
 		},
 		{
-			"item" : {
-				"data" : {
-					"verify" : true
+			"item": {
+				"data": {
+					"verify": true
 				}
 			},
-			"load" : {
-				"type" : "read"
+			"load": {
+				"type": "read"
 			}
 		},
 		{
-			"load" : {
-				"type" : "delete"
+			"load": {
+				"type": "delete"
 			}
 		},
 		{
-			"load" : {
-				"type" : "noop"
+			"load": {
+				"type": "noop"
 			}
 		}
 	]

@@ -1,16 +1,16 @@
 {
-	"type" : "load",
-	"config" : {
-		"storage" : {
-			"auth" : {
-				"token" : "existingAuthToken"
+	"type": "load",
+	"config": {
+		"storage": {
+			"auth": {
+				"token": "existingAuthToken"
 			},
-			"driver" : {
-				"type" : "swift"
+			"driver": {
+				"type": "swift"
 			},
-			"net" : {
-				"http" : {
-					"namespace" : "test"
+			"net": {
+				"http": {
+					"namespace": "test"
 				}
 			}
 		}

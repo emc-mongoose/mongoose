@@ -1,17 +1,17 @@
 var noOutputColorConfig = {
-    "output" : {
-        "color" : false
+    "output": {
+        "color": false
     }
 };
 
-var command1 = command
+var command1 = Command
     .config(noOutputColorConfig)
     .value("echo \"Hello world!\"");
 
-var command2 = command
+var command2 = Command
     .value("ps alx | grep java");
 
-parallel
+Parallel
     .step(command1)
     .step(command2)
     .run();

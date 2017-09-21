@@ -1,108 +1,108 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"storage" : {
-			"net" : {
-				"http" : {
-					"namespace" : "ns1"
+	"type": "sequential",
+	"config": {
+		"storage": {
+			"net": {
+				"http": {
+					"namespace": "ns1"
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f HttpStorageMetricsThresholdTest.csv"
+			"type": "command",
+			"value": "rm -f HttpStorageMetricsThresholdTest.csv"
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "HttpStorageMetricsThresholdTest.csv",
-						"path" : "/default"
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"file": "HttpStorageMetricsThresholdTest.csv",
+						"path": "/default"
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"threshold" : 0.8
+				"output": {
+					"metrics": {
+						"threshold": 0.8
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 500000,
-							"time" : "30s"
+				"test": {
+					"step": {
+						"limit": {
+							"count": 500000,
+							"time": "30s"
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "HttpStorageMetricsThresholdTest.csv"
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "HttpStorageMetricsThresholdTest.csv"
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"threshold" : 0.8
+				"output": {
+					"metrics": {
+						"threshold": 0.8
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 10
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 10
 						}
 					},
-					"input" : {
-						"file" : "HttpStorageMetricsThresholdTest.csv"
+					"input": {
+						"file": "HttpStorageMetricsThresholdTest.csv"
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"threshold" : 0.8
+				"output": {
+					"metrics": {
+						"threshold": 0.8
 					}
 				},
-				"load" : {
-					"type" : "update"
+				"load": {
+					"type": "update"
 				}
 			}
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "HttpStorageMetricsThresholdTest.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"input": {
+						"file": "HttpStorageMetricsThresholdTest.csv"
 					}
 				},
-				"load" : {
-					"type" : "delete",
-					"limit" : {
-						"concurrency" : 50
+				"load": {
+					"type": "delete",
+					"limit": {
+						"concurrency": 50
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"average" : {
-							"persist" : false
+				"output": {
+					"metrics": {
+						"average": {
+							"persist": false
 						},
-						"summary" : {
-							"persist" : false
+						"summary": {
+							"persist": false
 						},
-						"trace" : {
-							"persist" : false
+						"trace": {
+							"persist": false
 						}
 					}
 				}

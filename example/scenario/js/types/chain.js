@@ -3,39 +3,39 @@ var itemOutputFile = "items_passed_through_create_read_delete_chain.csv"
 // limit the whole chain step execution time by 5 minutes
 // (chain step takes the limits configuration parameter values from the 1st configuration element)
 var createConfig = {
-    "test" : {
-        "step" : {
-            "limit" : {
-                "time" : "5m"
+    "test": {
+        "step": {
+            "limit": {
+                "time": "5m"
             }
         }
     }
 };
 
 var readConfig = {
-    "load" : {
-        "type" : "read"
+    "load": {
+        "type": "read"
     }
 };
 
 // persist the items info into the output file after the last operation
 var deleteConfig = {
-    "item" : {
-        "output" : {
-            "file" : itemOutputFile
+    "item": {
+        "output": {
+            "file": itemOutputFile
         }
     },
-    "load" : {
-        "type" : "delete"
+    "load": {
+        "type": "delete"
     }
 };
 
 // clean up before running the chain load step
-command
+Command
     .value("rm -f " + itemOutputFile)
     .run();
 
-chain
+ChainLoad
     .config(createConfig)
     .config(readConfig)
     .config(deleteConfig)

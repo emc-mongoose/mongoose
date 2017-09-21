@@ -1,15 +1,15 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "linear-delete"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "linear-delete"
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		}
@@ -17,24 +17,24 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "linear-delete.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-delete.csv"
 					}
 				}
 			}
 		},
 		{
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "linear-delete.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "linear-delete.csv"
 					}
 				},
-				"load" : {
-					"type" : "delete"
+				"load": {
+					"type": "delete"
 				}
 			}
 		}

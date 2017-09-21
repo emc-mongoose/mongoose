@@ -1,18 +1,18 @@
 {
-	"type" : "for",
-	"config" : {
-		"test" : {
-			"step" : {
-				"limit" : {
-					"time" : 5
+	"type": "for",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"time": 5
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "echo \"Hi there!\""
+			"type": "command",
+			"value": "echo \"Hi there!\""
 		}
 	]
 }

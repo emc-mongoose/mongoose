@@ -1,9 +1,9 @@
 {
-	"type" : "load",
-	"config" : {
-		"load" : {
-			"limit" : {
-				"concurrency" : 1000
+	"type": "load",
+	"config": {
+		"load": {
+			"limit": {
+				"concurrency": 1000
 			}
 		}
 	}

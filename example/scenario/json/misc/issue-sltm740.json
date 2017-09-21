@@ -1,21 +1,21 @@
 {
-	"type" : "sequential",
-	"steps" : [
+	"type": "sequential",
+	"steps": [
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "${MONGOOSE_DIR}/log/INIT/items.csv"
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/INIT/items.csv"
 					}
 				}
 			}
 		}, {
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "${MONGOOSE_DIR}/log/INIT/items.csv"
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/INIT/items.csv"
 					}
 				}
 			}

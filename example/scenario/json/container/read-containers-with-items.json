@@ -1,147 +1,147 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"type" : "path"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"type": "path"
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 10
+		"load": {
+			"limit": {
+				"concurrency": 10
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 10
+		"test": {
+			"step": {
+				"limit": {
+					"count": 10
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
 			// create 10 containers
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "read-containers-with-items.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "read-containers-with-items.csv"
 					},
-					"naming" : {
-						"type" : "asc",
-						"radix" : 10,
-						"prefix" : "path",
-						"length" : 5
+					"naming": {
+						"type": "asc",
+						"radix": 10,
+						"prefix": "path",
+						"length": 5
 					}
 				}
 			}
 		}, {
 			// fill each of 10 created containers with items
-			"type" : "parallel",
-			"config" : {
-				"item" : {
-					"type" : "data"
+			"type": "parallel",
+			"config": {
+				"item": {
+					"type": "data"
 				},
-				"load" : {
-					"limit" : {
-						"concurrency" : 10
+				"load": {
+					"limit": {
+						"concurrency": 10
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 10000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000
 						}
 					}
 				}
 			},
-			"steps" : [
+			"steps": [
 				{
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path0"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path0"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path1"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path1"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path2"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path2"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path3"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path3"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path4"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path4"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path5"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path5"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path6"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path6"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path7"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path7"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path8"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path8"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "/path9"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "/path9"
 							}
 						}
 					}
@@ -149,15 +149,15 @@
 			]
 		}, {
 			// read 10 containers with the files
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "read-containers-with-items.csv"
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "read-containers-with-items.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

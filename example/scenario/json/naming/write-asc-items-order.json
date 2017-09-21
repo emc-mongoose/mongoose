@@ -1,9 +1,9 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"naming" : {
-				"type" : "asc"
+	"type": "load",
+	"config": {
+		"item": {
+			"naming": {
+				"type": "asc"
 			}
 		}
 	}

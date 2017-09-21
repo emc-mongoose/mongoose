@@ -1,17 +1,17 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : 100
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"size": 100
 			}
 		},
-		"storage" : {
-			"net" : {
-				"node" : {
-					"port" : 9021
+		"storage": {
+			"net": {
+				"node": {
+					"port": 9021
 				},
-				"ssl" : true
+				"ssl": true
 			}
 		}
 	}

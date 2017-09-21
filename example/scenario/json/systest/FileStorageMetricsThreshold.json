@@ -1,87 +1,87 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"output" : {
-			"metrics" : {
-				"threshold" : 0.1
+	"type": "sequential",
+	"config": {
+		"output": {
+			"metrics": {
+				"threshold": 0.1
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "fs"
+		"storage": {
+			"driver": {
+				"type": "fs"
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f FileStorageMetricsThresholdTest.csv"
+			"type": "command",
+			"value": "rm -f FileStorageMetricsThresholdTest.csv"
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "FileStorageMetricsThresholdTest.csv"
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"file": "FileStorageMetricsThresholdTest.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 500000,
-							"size" : "5GB",
-							"time" : "50s"
+				"test": {
+					"step": {
+						"limit": {
+							"count": 500000,
+							"size": "5GB",
+							"time": "50s"
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"verify" : true
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"verify": true
 					},
-					"input" : {
-						"file" : "FileStorageMetricsThresholdTest.csv"
+					"input": {
+						"file": "FileStorageMetricsThresholdTest.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 10
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 10
 						}
 					},
-					"input" : {
-						"file" : "FileStorageMetricsThresholdTest.csv"
+					"input": {
+						"file": "FileStorageMetricsThresholdTest.csv"
 					}
 				},
-				"load" : {
-					"type" : "update"
+				"load": {
+					"type": "update"
 				}
 			}
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "FileStorageMetricsThresholdTest.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"input": {
+						"file": "FileStorageMetricsThresholdTest.csv"
 					}
 				},
-				"load" : {
-					"type" : "delete",
-					"limit" : {
-						"concurrency" : 50
+				"load": {
+					"type": "delete",
+					"limit": {
+						"concurrency": 50
 					}
 				}
 			}

@@ -1,22 +1,22 @@
 {
-	"type" : "sequential",
+	"type": "sequential",
 	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f CircularReadSingleItemTest.csv"
+			"type": "command",
+			"value": "rm -f CircularReadSingleItemTest.csv"
 		},
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "CircularReadSingleItemTest.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "CircularReadSingleItemTest.csv"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 1
+				"test": {
+					"step": {
+						"limit": {
+							"count": 1
 						}
 					}
 				}
@@ -24,24 +24,24 @@
 		},
 		{
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "CircularReadSingleItemTest.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "CircularReadSingleItemTest.csv"
 					}
 				},
-				"load" : {
-					"type" : "read",
-					"generator" : {
-						"recycle" : {
-							"enabled" : true
+				"load": {
+					"type": "read",
+					"generator": {
+						"recycle": {
+							"enabled": true
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"time" : "1m"
+				"test": {
+					"step": {
+						"limit": {
+							"time": "1m"
 						}
 					}
 				}

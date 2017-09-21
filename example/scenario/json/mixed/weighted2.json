@@ -1,123 +1,123 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"data" : {
-				"size" : "8KB"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"size": "8KB"
 			},
-			"output" : {
-				"path" : "weighted2-load",
-				"file" : "weighted2-read-input.csv"
+			"output": {
+				"path": "weighted2-load",
+				"file": "weighted2-read-input.csv"
 			}
 		},
-		"output" : {
-			"metrics" : {
-				"average" : {
-					"persist" : false
+		"output": {
+			"metrics": {
+				"average": {
+					"persist": false
 				},
-				"summary" : {
-					"persist" : false
+				"summary": {
+					"persist": false
 				},
-				"trace" : {
-					"persist" : false
+				"trace": {
+					"persist": false
 				}
 			}
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 100
+		"load": {
+			"limit": {
+				"concurrency": 100
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 10000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 10000
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "8KB"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"size": "8KB"
 					},
-					"output" : {
-						"file" : "weighted2-read-input.csv"
+					"output": {
+						"file": "weighted2-read-input.csv"
 					}
 				}
 			}
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "1KB"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"size": "1KB"
 					},
-					"output" : {
-						"file" : "weighted2-delete-input.csv"
+					"output": {
+						"file": "weighted2-delete-input.csv"
 					}
 				},
-				"output" : {
+				"output": {
 					"metrics": {
-						"average" : {
-							"period" : 10
+						"average": {
+							"period": 10
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 0,
-							"time" : "5m"
+				"test": {
+					"step": {
+						"limit": {
+							"count": 0,
+							"time": "5m"
 						}
 					}
 				}
 			}
 		}, {
-			"type" : "mixed",
-			"weights" : [
+			"type": "mixed",
+			"weights": [
 				50, 30, 20
 			],
-			"config" : [
+			"config": [
 				{
-					"item" : {
-						"data" : {
-							"size" : "64KB"
+					"item": {
+						"data": {
+							"size": "64KB"
 						}
 					}
 				},
 				{
-					"item" : {
-						"input" : {
-							"file" : "weighted2-read-input.csv"
+					"item": {
+						"input": {
+							"file": "weighted2-read-input.csv"
 						}
 					},
-					"load" : {
-						"generator" : {
-							"recycle" : {
-								"enabled" : true
+					"load": {
+						"generator": {
+							"recycle": {
+								"enabled": true
 							}
 						},
-						"type" : "read"
+						"type": "read"
 					}
 				},
 				{
-					"item" : {
-						"input" : {
-							"file" : "weighted2-delete-input.csv"
+					"item": {
+						"input": {
+							"file": "weighted2-delete-input.csv"
 						}
 					},
-					"load" : {
-						"generator" : {
-							"recycle" : {
-								"enabled" : true
+					"load": {
+						"generator": {
+							"recycle": {
+								"enabled": true
 							}
 						},
-						"type" : "delete"
+						"type": "delete"
 					}
 				}
 			]

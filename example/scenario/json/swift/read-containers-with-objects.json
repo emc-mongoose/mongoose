@@ -1,156 +1,156 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"type" : "path"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"type": "path"
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 10
+		"test": {
+			"step": {
+				"limit": {
+					"count": 10
 				}
 			}
 		},
-		"load" : {
+		"load": {
 			"limit": {
 				"concurrency": 10
 			}
 		},
-		"storage" : {
-			"driver" : {
-				"type" : "swift"
+		"storage": {
+			"driver": {
+				"type": "swift"
 			},
-			"net" : {
-				"http" : {
-					"namespace" : "test"
+			"net": {
+				"http": {
+					"namespace": "test"
 				}
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
 			// create 10 directories
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "swift-read-containers-with-objects.json"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "swift-read-containers-with-objects.json"
 					},
-					"naming" : {
-						"type" : "asc",
-						"radix" : 10,
-						"length" : 1
+					"naming": {
+						"type": "asc",
+						"radix": 10,
+						"length": 1
 					}
 				}
 			}
 		}, {
 			// fill each of 10 created directories with files
-			"type" : "parallel",
-			"config" : {
-				"item" : {
-					"type" : "data"
+			"type": "parallel",
+			"config": {
+				"item": {
+					"type": "data"
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 100000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100000
 						}
 					}
 				},
-				"load" : {
-					"limit" : {
-						"concurrency" : 10
+				"load": {
+					"limit": {
+						"concurrency": 10
 					}
 				}
 			},
-			"steps" : [
+			"steps": [
 				{
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "0"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "0"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "1"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "1"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "2"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "2"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "3"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "3"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "4"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "4"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "5"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "5"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "6"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "6"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "7"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "7"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "8"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "8"
 							}
 						}
 					}
 				}, {
-					"type" : "precondition",
-					"config" : {
-						"item" : {
-							"output" : {
-								"path" : "9"
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "9"
 							}
 						}
 					}
@@ -158,15 +158,15 @@
 			]
 		}, {
 			// read 10 directories with the files
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "swift-read-containers-with-objects.json"
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "swift-read-containers-with-objects.json"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

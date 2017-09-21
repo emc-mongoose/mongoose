@@ -1,57 +1,57 @@
 {
-	"type" : "sequential",
-	"steps" : [
+	"type": "sequential",
+	"steps": [
 		{
-			"type" : "command",
-			"value" : "rm -f UpdateUsingInputFileLimitByTimeTest.csv UpdateUsingInputFileLimitByTimeTest_.csv"
+			"type": "command",
+			"value": "rm -f UpdateUsingInputFileLimitByTimeTest.csv UpdateUsingInputFileLimitByTimeTest_.csv"
 		},
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "UpdateUsingInputFileLimitByTimeTest.csv"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "UpdateUsingInputFileLimitByTimeTest.csv"
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"average" : {
-							"period" : 0
+				"output": {
+					"metrics": {
+						"average": {
+							"period": 0
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 10000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"random" : 1
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"random": 1
 						}
 					},
-					"input" : {
-						"file" : "UpdateUsingInputFileLimitByTimeTest.csv"
+					"input": {
+						"file": "UpdateUsingInputFileLimitByTimeTest.csv"
 					},
-					"output" : {
-						"file" : "UpdateUsingInputFileLimitByTimeTest_.csv"
+					"output": {
+						"file": "UpdateUsingInputFileLimitByTimeTest_.csv"
 					}
 				},
-				"load" : {
-					"type" : "update"
+				"load": {
+					"type": "update"
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"time" : 25
+				"test": {
+					"step": {
+						"limit": {
+							"time": 25
 						}
 					}
 				}

@@ -1,6 +1,6 @@
 // to run this scenario please define ITEM_INPUT_FILE either ITEM_INPUT_PATH environment variable
 // and ITEM_OUTPUT_PATH environment variable
-var copy_load_using_env_vars = create_load
+var CopyLoadUsingEnvVars = CreateLoad
     .config(
         {
             "item": {
@@ -15,4 +15,4 @@ var copy_load_using_env_vars = create_load
         }
     );
 
-copy_load_using_env_vars.run();
+CopyLoadUsingEnvVars.run();

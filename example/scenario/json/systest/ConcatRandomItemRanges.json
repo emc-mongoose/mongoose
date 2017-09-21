@@ -1,61 +1,61 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"storage" : {
-			"driver" : {
-				"type" : "emcs3"
+	"type": "sequential",
+	"config": {
+		"storage": {
+			"driver": {
+				"type": "emcs3"
 			}
 		}
 	},
-	"steps" : [
+	"steps": [
 		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "${SRC_ITEMS_TO_CONCAT_FILE}"
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "${SRC_ITEMS_TO_CONCAT_FILE}"
 					}
 				},
-				"output" : {
-					"metrics" : {
-						"average" : {
-							"persist" : false
+				"output": {
+					"metrics": {
+						"average": {
+							"persist": false
 						},
-						"summary" : {
-							"persist" : false
+						"summary": {
+							"persist": false
 						},
-						"trace" : {
-							"persist" : false
+						"trace": {
+							"persist": false
 						}
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 100
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100
 						}
 					}
 				}
 			}
 		},
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"ranges" : {
-							"concat" : "20-50",
-							"random" : 10
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"concat": "20-50",
+							"random": 10
 						}
 					},
-					"input" : {
-						"file" : "${SRC_ITEMS_TO_CONCAT_FILE}"
+					"input": {
+						"file": "${SRC_ITEMS_TO_CONCAT_FILE}"
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"count" : 10000
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000
 						}
 					}
 				}

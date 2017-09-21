@@ -1,17 +1,17 @@
 {
-	"type" : "load",
-	"config" : {
-		"load" : {
-			"limit" : {
-				"concurrency" : 0,
-				"rate" : 1000
+	"type": "load",
+	"config": {
+		"load": {
+			"limit": {
+				"concurrency": 0,
+				"rate": 1000
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000000,
-					"time" : "1m"
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000000,
+					"time": "1m"
 				}
 			}
 		}

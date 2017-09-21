@@ -1,23 +1,23 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"item" : {
-			"output" : {
-				"path" : "read-bucket-listing"
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "read-bucket-listing"
 			},
-			"data" : {
-				"size" : 0
+			"data": {
+				"size": 0
 			}
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 10
+		"load": {
+			"limit": {
+				"concurrency": 10
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 100000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100000
 				}
 			}
 		}
@@ -28,14 +28,14 @@
 		},
 		{
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"path" : "read-bucket-listing"
+			"config": {
+				"item": {
+					"input": {
+						"path": "read-bucket-listing"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

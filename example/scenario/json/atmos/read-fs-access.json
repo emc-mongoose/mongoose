@@ -1,23 +1,23 @@
 {
-	"type" : "sequential",
-	"config" : {
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 1000
+	"type": "sequential",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
 				}
 			}
 		},
-		"storage" : {
-			"auth" : {
-				"token" : "e3f86c95e6af49099aa1e6de386dbe54"
+		"storage": {
+			"auth": {
+				"token": "e3f86c95e6af49099aa1e6de386dbe54"
 			},
-			"driver" : {
-				"type" : "atmos"
+			"driver": {
+				"type": "atmos"
 			},
-			"net" : {
-				"http" : {
-					"fsAccess" : true
+			"net": {
+				"http": {
+					"fsAccess": true
 				}
 			}
 		}
@@ -25,23 +25,23 @@
 	"steps": [
 		{
 			"type": "precondition",
-			"config" : {
-				"item" : {
-					"output" : {
-						"file" : "linear-read-atmos-fs-access.csv"
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-read-atmos-fs-access.csv"
 					}
 				}
 			}
 		}, {
 			"type": "load",
-			"config" : {
-				"item" : {
-					"input" : {
-						"file" : "linear-read-atmos-fs-access.csv"
+			"config": {
+				"item": {
+					"input": {
+						"file": "linear-read-atmos-fs-access.csv"
 					}
 				},
-				"load" : {
-					"type" : "read"
+				"load": {
+					"type": "read"
 				}
 			}
 		}

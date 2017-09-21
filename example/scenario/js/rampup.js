@@ -1,168 +1,168 @@
 // increase the concurrency level by the factor of 10
-var limit_concurrency_factor = 10;
+var limitConcurrencyFactor = 10;
 
-var item_data_sizes = [
+var itemDataSizes = [
     "10KB", "1MB", "100MB", "10GB"
 ];
 
-var limit_count = 1000000;
-var limit_time = 100;
+var limitCount = 1000000;
+var limitTime = 100;
 // initial concurrency limit value
-var limit_concurrency = 1;
+var limitConcurrency = 1;
 
-function config_limit_concurrency(concurrency) {
+function configLimitConcurrency(c) {
     return {
         "load": {
             "limit": {
-                "concurrency": concurrency
+                "concurrency": c
             }
         }
     }
 };
 
-function config_item_data_size(size) {
+function configItemDataSize(s) {
+    return {
+        "item": {
+            "data": {
+                "size": s
+            }
+        }
+    }
+};
+
+function configCreate(iterId, size, itemOutputFile, limitCount, limitTime) {
     return {
         "item": {
             "data": {
                 "size": size
-            }
-        }
-    }
-};
-
-function config_create(iter_id, size, item_output_file, limit_count, limit_time) {
-    return {
-        "item": {
-            "data" : {
-                "size" : size
             },
             "output": {
-                "file" : item_output_file
-                "path" : "/default"
+                "file": itemOutputFile,
+                "path": "/default"
             }
         },
         "test": {
             "step": {
-                "id": "create0_" + iter_id,
+                "id": "create0_" + iterId,
                 "limit": {
-                    "count": limit_count,
-                    "time": limit_time
+                    "count": limitCount,
+                    "time": limitTime
                 }
             }
         }
     }
 };
 
-function config_read(iter_id, item_input_file) {
+function configRead(iterId, itemInputFile) {
     return {
         "item": {
             "input": {
-                "file": item_input_file
+                "file": itemInputFile
             }
         },
         "test": {
              "step": {
-                 "id": "read1_" + iter_id
+                 "id": "read1_" + iterId
              }
         }
     }
 };
 
-function config_update(iter_id, item_input_file, item_output_file) {
+function configUpdate(iterId, itemInputFile, itemOutputFile) {
     return {
         "item": {
             "input": {
-                "file": item_input_file
+                "file": itemInputFile
             },
             "output": {
-                "file": item_output_file
+                "file": itemOutputFile
             }
         },
         "test": {
             "step": {
-                "id": "update2_" + iter_id
+                "id": "update2_" + iterId
             }
         }
     }
 };
 
-function config_read_partial(iter_id, item_input_file) {
+function configReadPartial(iterId, itemInputFile) {
     return {
         "item": {
             "input": {
-                "file": item_input_file
+                "file": itemInputFile
             }
         },
         "test": {
             "step": {
-                "id": "read3_" + iter_id
+                "id": "read3_" + iterId
             }
         }
     }
 };
 
-function config_delete(iter_id, item_input_file) {
+function configDelete(iterId, itemInputFile) {
     return {
         "item": {
             "input": {
-                "file": item_input_file
+                "file": itemInputFile
             }
         },
         "test": {
             "step": {
-                "id": "delete4_" + iter_id
+                "id": "delete4_" + iterId
             }
         }
     }
 };
 
 // typically OS open files limit is 1024 so won't try to use the concurrency level higher than that
-while(limit_concurrency < 1024) {
+while(limitConcurrency < 1024) {
 
-    for(var i = 0; i < item_data_sizes.length; i ++) {
+    for(var i = 0; i < itemDataSizes.length; i ++) {
 
-        item_data_size = item_data_sizes[i];
+        itemDataSize = itemDataSizes[i];
         print(
-            "Run the load steps using the concurrency limit of " + limit_concurrency
-                + " and items data size " + item_data_size
+            "Run the load steps using the concurrency limit of " + limitConcurrency
+                + " and items data size " + itemDataSize
         );
-        var next_config_limit_concurrency = config_limit_concurrency(limit_concurrency);
-        var iter_id = "concurrency" + limit_concurrency + "_size" + item_data_size;
-        var iter_items_file_0 = "items_" + iter_id + "_0.csv";
-        var iter_items_file_1 = "items_" + iter_id + "_1.csv";
+        var nextConfigLimitConcurrency = configLimitConcurrency(limitConcurrency);
+        var iterId = "concurrency" + limitConcurrency + "_size" + itemDataSize;
+        var iterItemsFile0 = "items_" + iterId + "_0.csv";
+        var iterItemsFile11 = "items_" + iterId + "_1.csv";
 
-        create_load
-            .config(next_config_limit_concurrency)
-            .config(config_item_data_size)
+        CreateLoad
+            .config(nextConfigLimitConcurrency)
+            .config(configItemDataSize(itemDataSize))
             .config(
-                config_create(
-                    iter_id, item_data_size, iter_items_file_0, limit_count, limit_time
+                configCreate(
+                    iterId, itemDataSize, iterItemsFile0, limitCount, limitTime
                 )
             )
             .run();
 
-        read_load
-            .config(next_config_limit_concurrency)
-            .config(config_read(iter_id, iter_items_file_0))
+        ReadLoad
+            .config(nextConfigLimitConcurrency)
+            .config(configRead(iterId, iterItemsFile0))
             .run();
 
-        update_random_range_load
-            .config(next_config_limit_concurrency)
-            .config(config_update(iter_id, iter_items_file_0, iter_items_file_1))
+        UpdateRandomRangeLoad
+            .config(nextConfigLimitConcurrency)
+            .config(configUpdate(iterId, iterItemsFile0, iterItemsFile11))
             .run();
 
-        read_and_verify_random_range_load
-            .config(next_config_limit_concurrency)
-            .config(config_read_partial(iter_id, iter_items_file_1))
+        ReadVerifyRandomRangeLoad
+            .config(nextConfigLimitConcurrency)
+            .config(configReadPartial(iterId, iterItemsFile11))
             .run();
 
-        delete_load
-            .config(next_config_limit_concurrency)
-            .config(config_delete(iter_id, iter_items_file_0))
+        DeleteLoad
+            .config(nextConfigLimitConcurrency)
+            .config(configDelete(iterId, iterItemsFile0))
             .run();
     }
 
-    limit_concurrency *= limit_concurrency_factor;
-    // cast limit_concurrency value to int
-    limit_concurrency = ~~limit_concurrency;
+    limitConcurrency *= limitConcurrencyFactor;
+    // cast limitConcurrency value to int
+    limitConcurrency = ~~limitConcurrency;
 }

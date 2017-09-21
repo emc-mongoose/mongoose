@@ -1,9 +1,9 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"naming" : {
-				"prefix" : "____"
+	"type": "load",
+	"config": {
+		"item": {
+			"naming": {
+				"prefix": "____"
 			}
 		}
 	}

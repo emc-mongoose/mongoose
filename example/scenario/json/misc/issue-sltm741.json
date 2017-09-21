@@ -1,26 +1,26 @@
 {
-	"type" : "for",
-	"value" : "i",
-	"in" : "1-4",
-	"steps" : [
+	"type": "for",
+	"value": "i",
+	"in": "1-4",
+	"steps": [
 		{
-			"type" : "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : 1
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": 1
 					}
 				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"time" : "15s"
+				"test": {
+					"step": {
+						"limit": {
+							"time": "15s"
 						}
 					}
 				},
-				"load" : {
-					"limit" : {
-						"concurrency" : "${i}"
+				"load": {
+					"limit": {
+						"concurrency": "${i}"
 					}
 				}
 			}

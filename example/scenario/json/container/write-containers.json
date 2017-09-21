@@ -1,18 +1,18 @@
 {
-	"type" : "load",
-	"config" : {
-		"item" : {
-			"type" : "path"
+	"type": "load",
+	"config": {
+		"item": {
+			"type": "path"
 		},
-		"load" : {
-			"limit" : {
-				"concurrency" : 100
+		"load": {
+			"limit": {
+				"concurrency": 100
 			}
 		},
-		"test" : {
-			"step" : {
-				"limit" : {
-					"count" : 100000
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100000
 				}
 			}
 		}
