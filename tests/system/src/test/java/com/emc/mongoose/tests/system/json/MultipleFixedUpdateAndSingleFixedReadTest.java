@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
@@ -11,7 +11,6 @@ import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
@@ -27,11 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.stream.LongStream;
 
 /**
  Created by kurila on 15.06.17.
  */
-public final class SingleRandomUpdateAndMultipleRandomReadTest
+public final class MultipleFixedUpdateAndSingleFixedReadTest
 extends ScenarioTestBase {
 	
 	private String itemOutputPath;
@@ -39,10 +39,9 @@ extends ScenarioTestBase {
 	private SizeInBytes expectedUpdateSize;
 	private SizeInBytes expectedReadSize;
 	
-	private static final long EXPECTED_COUNT = 1000;
-	private static final int READ_RANDOM_RANGES_COUNT = 12;
+	private static final long EXPECTED_COUNT = 2000;
 
-	public SingleRandomUpdateAndMultipleRandomReadTest(
+	public MultipleFixedUpdateAndSingleFixedReadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -51,7 +50,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return SingleRandomUpdateAndMultipleRandomReadTest.class.getSimpleName() + '-' +
+		return MultipleFixedUpdateAndSingleFixedReadTest.class.getSimpleName() + '-' +
 			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
 			itemSize.name();
 	}
@@ -59,19 +58,19 @@ extends ScenarioTestBase {
 	@Override
 	protected Path makeScenarioPath() {
 		return Paths.get(
-			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
+			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "MultipleFixedUpdateAndSingleFixedRead.json"
 		);
 	}
 
 	@Before
 	public final void setUp()
 	throws Exception {
-		configArgs.add("--item-data-input-file=" + BASE_DIR + "/example/content/textexample");
+		// https://github.com/emc-mongoose/nagaina/issues/3
 		super.setUp();
-		expectedReadSize = new SizeInBytes(
-			2 << (READ_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1
+		expectedUpdateSize = new SizeInBytes(
+			-LongStream.of(2-5,10-20,50-100,200-500,1000-2000).sum()
 		);
-		expectedUpdateSize = new SizeInBytes(1, itemSize.getValue().get(), 1);
+		expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
 		if(StorageType.FS.equals(storageType)) {
 			itemOutputPath = Paths
 				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId)
@@ -120,12 +119,12 @@ extends ScenarioTestBase {
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
-			expectedUpdateSize, EXPECTED_COUNT, 0
+			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+			driverCount.getValue(), expectedUpdateSize, EXPECTED_COUNT, 0
 		);
 		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
-			expectedReadSize, EXPECTED_COUNT, 0
+			totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(),
+			driverCount.getValue(), expectedReadSize, EXPECTED_COUNT, 0
 		);
 
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();

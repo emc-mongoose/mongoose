@@ -44,7 +44,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return DEFAULT_SCENARIO_PATH;
+		return null;
 	}
 
 	@Override

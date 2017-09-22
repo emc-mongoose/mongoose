@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;

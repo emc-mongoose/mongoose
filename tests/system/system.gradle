@@ -1,14 +1,5 @@
 description = "mongoose-tests-system"
 
-sourceSets {
-	test {
-		java {
-			srcDir "src"
-			exclude '**/_2refactor/**'
-		}
-	}
-}
-
 dependencies {
 
 	testCompile(
@@ -57,7 +48,8 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations),
+            "Class-Path": classPathString(configurations.testRuntime),
+            "Main-Class": "junit.textui.TestRunner",
 		)
 	}
 	from sourceSets.test.output

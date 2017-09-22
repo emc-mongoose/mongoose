@@ -3,6 +3,7 @@ package com.emc.mongoose.tests.perf;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
+
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.CsvFileItemOutput;
 import com.emc.mongoose.api.model.item.DataItem;
@@ -11,8 +12,10 @@ import com.emc.mongoose.api.model.item.ItemNameSupplier;
 import com.emc.mongoose.api.model.item.ItemNamingType;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.item.NewDataItemInput;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.EOFException;
 import java.nio.file.Files;
@@ -21,8 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  Created by andrey on 11.06.17.

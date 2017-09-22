@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
@@ -18,12 +18,6 @@ import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
 import org.apache.logging.log4j.Level;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.After;
 import org.junit.Before;
 
@@ -32,30 +26,33 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 /**
- Created by andrey on 27.03.17.
- Covered use cases:
- * 2.1.1.1.2. Small Data Items (1B-100KB)
- * 2.2.1. Items Input File
+ Created by kurila on 23.03.17.
+ Covered Use Cases:
+ * 2.1.1.1.3. Intermediate Size Data Items (100KB-10MB)
  * 2.3.2. Items Output File
+ * 2.3.3.1. Constant Items Destination Path
  * 4.3. Medium Concurrency Level (11-100)
  * 5. Circularity
- * 6.2.2. Limit Step by Processed Item Count
- * 6.2.5. Limit Step by Time
+ * 6.2.5. Limit Load Job by Time
  * 7.1. Metrics Periodic Reporting
- * 7.2. Metrics Reporting is Suppressed for the Precondition Steps
  * 8.2.1. Create New Items
  * 8.3.1. Read With Disabled Validation
  * 9.1. Scenarios Syntax
- * 9.3. Custom Scenario File
  * 9.4.1. Override Default Configuration in the Scenario
- * 9.4.2. Step Configuration Inheritance
  * 9.4.3. Reusing The Items in the Scenario
- * 9.5.7.2. Weighted Load Step
+ * 9.5.3. Precondition Load Job
+ * 9.5.7.1. Separate Configuration in the Mixed Load Job
  * 10.1.2. Many Local Separate Storage Driver Services (at different ports)
  */
 
-public class WeightedLoadTest
+public class MixedLoadTest
 extends ScenarioTestBase {
 
 	private boolean finishedInTime;
@@ -63,7 +60,7 @@ extends ScenarioTestBase {
 	private int actualConcurrency;
 	private String itemOutputPath;
 
-	public WeightedLoadTest(
+	public MixedLoadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -72,15 +69,15 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "WeightedLoad.json");
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "MixedLoad.json");
 	}
 
 	@Override
 	protected String makeStepId() {
-		return WeightedLoadTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+		return MixedLoadTest.class.getSimpleName() + '-' + storageType.name() + '-' +
 			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
-
+	
 	@Before
 	public void setUp()
 	throws Exception {
@@ -101,17 +98,17 @@ extends ScenarioTestBase {
 		final Thread runner = new Thread(
 			() -> {
 				try {
-					stdOutStream.startRecording();
 					scenario.run();
-					stdOutput = stdOutStream.stopRecordingAndGet();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);
-
 		runner.start();
-		TimeUnit.SECONDS.sleep(20); // warmup
+		TimeUnit.SECONDS.sleep(10);
+		stdOutStream.startRecording();
+		TimeUnit.SECONDS.sleep(10);
+
 		switch(storageType) {
 			case FS:
 				actualConcurrency = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
@@ -125,13 +122,15 @@ extends ScenarioTestBase {
 				}
 				break;
 		}
-		TimeUnit.SECONDS.timedJoin(runner, 60);
+
+		TimeUnit.SECONDS.timedJoin(runner, 50);
 		finishedInTime = !runner.isAlive();
 		runner.interrupt();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 		LogUtil.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
-
+	
 	@After
 	public void tearDown()
 	throws Exception {
@@ -152,11 +151,7 @@ extends ScenarioTestBase {
 		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
 		concurrencyMap.put(IoType.CREATE, concurrency.getValue());
 		concurrencyMap.put(IoType.READ, concurrency.getValue());
-		final Map<IoType, Integer> weightsMap = new HashMap<>();
 		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0, concurrencyMap);
-
-		assertTrue("Scenario didn't finished in time", finishedInTime);
-
 		if(!StorageType.FS.equals(storageType)) {
 			assertEquals(2 * driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
 		}
@@ -179,5 +174,7 @@ extends ScenarioTestBase {
 		assertEquals(
 			"Expected no open channels after the test but got " + openChannels, 0, openChannels
 		);
+
+		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }

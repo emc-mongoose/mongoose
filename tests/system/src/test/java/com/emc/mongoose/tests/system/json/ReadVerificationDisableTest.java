@@ -1,5 +1,6 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -19,6 +20,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,14 +33,16 @@ import java.util.function.Consumer;
 /**
  Created by andrey on 12.06.17.
  */
-
-public class ReadVerificationAfterCircularUpdateTest
+public final class ReadVerificationDisableTest
 extends ScenarioTestBase {
+
+	private static final int EXPECTED_MAX_COUNT = 1_000_000;
+	private static final SizeInBytes EXPECTED_MAX_SIZE = new SizeInBytes("1GB");
 
 	private String itemOutputPath;
 	private String stdOutput;
 
-	public ReadVerificationAfterCircularUpdateTest(
+	public ReadVerificationDisableTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -45,25 +50,22 @@ extends ScenarioTestBase {
 	}
 
 	@Override
-	protected Path makeScenarioPath() {
-		return Paths.get(
-			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "ReadVerificationAfterCircularUpdate.json"
-		);
+	protected String makeStepId() {
+		return ReadVerificationDisableTest.class.getSimpleName() + '-' + storageType.name() +
+			'-' + driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Override
-	protected String makeStepId() {
-		return ReadVerificationAfterCircularUpdateTest.class.getSimpleName() + '-' +
-			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
-			itemSize.name();
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "ReadVerificationDisable.json");
 	}
 
 	@Before
-	public void setUp()
+	public final void setUp()
 	throws Exception {
 		configArgs.add("--storage-net-http-namespace=ns1");
 		super.setUp();
-		if(storageType.equals(StorageType.FS)) {
+		if(StorageType.FS.equals(storageType)) {
 			itemOutputPath = Paths.get(
 				Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 			).toString();
@@ -78,9 +80,9 @@ extends ScenarioTestBase {
 	}
 
 	@After
-	public void tearDown()
+	public final void tearDown()
 	throws Exception {
-		if(storageType.equals(StorageType.FS)) {
+		if(StorageType.FS.equals(storageType)) {
 			try {
 				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
 			} catch(final Exception e) {
@@ -94,21 +96,25 @@ extends ScenarioTestBase {
 	public void test()
 	throws Exception {
 
+		// I/O traces
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+		final LongAdder transferSize = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
 			assertEquals(
-				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " +
-					ioTraceRec.get("IoTypeCode"),
+				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " + ioTraceRec.get("IoTypeCode"),
 				IoType.READ, IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))]
 			);
 			assertEquals(
-				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " +
-					ioTraceRec.get("StatusCode"),
+				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " + ioTraceRec.get("StatusCode"),
 				IoTask.Status.SUCC,
 				IoTask.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
 			);
+			transferSize.add(Long.parseLong(ioTraceRec.get("TransferSize")));
+			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(ioTraceReqTestFunc);
+		testIoTraceLogRecords(ioTraceRecTestFunc);
+		assertTrue(EXPECTED_MAX_COUNT >= ioTraceRecCount.sum());
+		assumeTrue(EXPECTED_MAX_SIZE.get() >= transferSize.sum());
 
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
@@ -120,7 +126,6 @@ extends ScenarioTestBase {
 			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), 0, 0,
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-
 		testSingleMetricsStdout(
 			stdOutput.replaceAll("[\r\n]+", " "),
 			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),

@@ -25,7 +25,7 @@ jar {
 	archiveName = "mongoose.jar"
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations),
+            "Class-Path": classPathString(configurations.runtime),
 			"Main-Class": "com.emc.mongoose.scenario.Main",
 		)
 	}

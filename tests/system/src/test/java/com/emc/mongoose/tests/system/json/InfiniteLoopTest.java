@@ -1,6 +1,5 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
-import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
 import com.emc.mongoose.tests.system.base.ScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
@@ -12,7 +11,6 @@ import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
-
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
@@ -23,17 +21,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- Created by andrey on 07.06.17.
+ Created by andrey on 08.06.17.
  */
-public final class LoopByCountTest
+public class InfiniteLoopTest
 extends ScenarioTestBase {
 
-	private static final int EXPECTED_LOOP_COUNT = 10;
+	private static final int SCENARIO_TIMEOUT = 50;
 	private static final int EXPECTED_STEP_TIME = 5;
+	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME - 1;
 
-	private long actualTestTime;
-
-	public LoopByCountTest(
+	public InfiniteLoopTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -41,25 +38,28 @@ extends ScenarioTestBase {
 	}
 
 	@Override
-	protected String makeStepId() {
-		return LoopByCountTest.class.getSimpleName() + '-' + storageType.name() + '-' +
-			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "InfiniteLoop.json");
 	}
 
 	@Override
-	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "LoopByCount.json");
+	protected String makeStepId() {
+		return InfiniteLoopTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Before
-	public final void setUp()
+	public void setUp()
 	throws Exception {
+		configArgs.add("--item-output-path=/default");
 		configArgs.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
 		super.setUp();
 		scenario = new JsonScenario(config, scenarioPath.toFile());
-		actualTestTime = System.currentTimeMillis();
-		scenario.run();
-		actualTestTime = (System.currentTimeMillis() - actualTestTime) / 1000;
+		final Thread runner = new Thread(() -> scenario.run());
+		runner.start();
+		TimeUnit.SECONDS.timedJoin(runner, SCENARIO_TIMEOUT);
+		runner.interrupt();
+		runner.join();
 		TimeUnit.SECONDS.sleep(10);
 		LogUtil.flushAll();
 	}
@@ -73,16 +73,10 @@ extends ScenarioTestBase {
 	@Override
 	public void test()
 	throws Exception {
-
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
-		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
-		for(final CSVRecord totalRec : totalRecs) {
-			testTotalMetricsLogRecord(
-				totalRec, IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), 0,
-				EXPECTED_STEP_TIME
-			);
-		}
-
-		assertEquals(EXPECTED_LOOP_COUNT * EXPECTED_STEP_TIME, actualTestTime, 25);
+		assertEquals(
+			"Expected steps count: " + EXPECTED_LOOP_COUNT + ", but was: " + totalRecs.size(),
+			EXPECTED_LOOP_COUNT, totalRecs.size(), 1
+		);
 	}
 }

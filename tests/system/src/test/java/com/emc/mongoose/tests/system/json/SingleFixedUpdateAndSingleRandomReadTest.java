@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
@@ -26,12 +26,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
-import java.util.stream.LongStream;
 
 /**
  Created by kurila on 15.06.17.
  */
-public final class MultipleFixedUpdateAndSingleFixedReadTest
+public class SingleFixedUpdateAndSingleRandomReadTest
 extends ScenarioTestBase {
 	
 	private String itemOutputPath;
@@ -39,9 +38,9 @@ extends ScenarioTestBase {
 	private SizeInBytes expectedUpdateSize;
 	private SizeInBytes expectedReadSize;
 	
-	private static final long EXPECTED_COUNT = 2000;
+	private static final long EXPECTED_COUNT = 1000;
 
-	public MultipleFixedUpdateAndSingleFixedReadTest(
+	public SingleFixedUpdateAndSingleRandomReadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -49,28 +48,30 @@ extends ScenarioTestBase {
 	}
 
 	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
+			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "SingleFixedUpdateAndSingleRandomRead.json"
+		);
+	}
+
+	@Override
 	protected String makeStepId() {
-		return MultipleFixedUpdateAndSingleFixedReadTest.class.getSimpleName() + '-' +
+		return SingleFixedUpdateAndSingleRandomReadTest.class.getSimpleName() + '-' +
 			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
 			itemSize.name();
 	}
 
-	@Override
-	protected Path makeScenarioPath() {
-		return Paths.get(
-			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "MultipleFixedUpdateAndSingleFixedRead.json"
-		);
-	}
-
 	@Before
-	public final void setUp()
+	public void setUp()
 	throws Exception {
-		// https://github.com/emc-mongoose/nagaina/issues/3
+		/**
+		 https://github.com/emc-mongoose/nagaina/issues/3
+		 */
 		super.setUp();
 		expectedUpdateSize = new SizeInBytes(
-			-LongStream.of(2-5,10-20,50-100,200-500,1000-2000).sum()
+			SizeInBytes.toFixedSize("5KB") - SizeInBytes.toFixedSize("2KB")
 		);
-		expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
+		expectedReadSize = new SizeInBytes(1, itemSize.getValue().get(), 1);
 		if(StorageType.FS.equals(storageType)) {
 			itemOutputPath = Paths
 				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId)
@@ -85,7 +86,7 @@ extends ScenarioTestBase {
 	}
 	
 	@After
-	public final void tearDown()
+	public void tearDown()
 	throws Exception {
 		if(StorageType.FS.equals(storageType)) {
 			try {
@@ -96,22 +97,23 @@ extends ScenarioTestBase {
 		}
 		super.tearDown();
 	}
-
+	
 	@Override
 	public void test()
 	throws Exception {
 
-		// I/O traces
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
+		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
 			if(ioTraceRecCount.sum() < EXPECTED_COUNT) {
-				testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), expectedUpdateSize);
+				testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(),
+					expectedUpdateSize
+				);
 			} else {
 				testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
 			}
 			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(ioTraceRecTestFunc);
+		testIoTraceLogRecords(ioTraceRecFunc);
 		assertEquals(
 			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
 			2 * EXPECTED_COUNT, ioTraceRecCount.sum()

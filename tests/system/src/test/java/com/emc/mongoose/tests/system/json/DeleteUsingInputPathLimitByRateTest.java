@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.github.akurilov.commons.system.SizeInBytes;

@@ -7,7 +7,6 @@ import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.scenario.json.JsonScenario.FNAME_DEFAULT_SCENARIO;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,7 +21,7 @@ public abstract class ScenarioTestBase
 extends StorageTestBase {
 
 	protected static final Path DEFAULT_SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", FNAME_DEFAULT_SCENARIO
+		getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "default.js"
 	);
 	protected Path scenarioPath = null;
 	protected Scenario scenario = null;

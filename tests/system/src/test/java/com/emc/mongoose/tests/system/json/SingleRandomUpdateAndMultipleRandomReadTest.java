@@ -1,4 +1,4 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.json;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
@@ -11,6 +11,7 @@ import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
@@ -26,12 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
-import java.util.stream.LongStream;
 
 /**
  Created by kurila on 15.06.17.
  */
-public class MultipleRandomUpdateAndMultipleFixedReadTest
+public final class SingleRandomUpdateAndMultipleRandomReadTest
 extends ScenarioTestBase {
 	
 	private String itemOutputPath;
@@ -39,10 +39,10 @@ extends ScenarioTestBase {
 	private SizeInBytes expectedUpdateSize;
 	private SizeInBytes expectedReadSize;
 	
-	private static final long EXPECTED_COUNT = 10000;
-	private static final int UPDATE_RANDOM_RANGES_COUNT = 5;
+	private static final long EXPECTED_COUNT = 1000;
+	private static final int READ_RANDOM_RANGES_COUNT = 12;
 
-	public MultipleRandomUpdateAndMultipleFixedReadTest(
+	public SingleRandomUpdateAndMultipleRandomReadTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -51,7 +51,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return MultipleRandomUpdateAndMultipleFixedReadTest.class.getSimpleName() + '-' +
+		return SingleRandomUpdateAndMultipleRandomReadTest.class.getSimpleName() + '-' +
 			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
 			itemSize.name();
 	}
@@ -59,21 +59,20 @@ extends ScenarioTestBase {
 	@Override
 	protected Path makeScenarioPath() {
 		return Paths.get(
-			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "MultipleRandomUpdateAndMultipleFixedRead.json"
+			getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
 		);
 	}
 
 	@Before
-	public void setUp()
+	public final void setUp()
 	throws Exception {
+		configArgs.add("--item-data-input-file=" + BASE_DIR + "/example/content/textexample");
 		super.setUp();
-		expectedUpdateSize = new SizeInBytes(
-			2 << (UPDATE_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1
-		);
 		expectedReadSize = new SizeInBytes(
-			-LongStream.of(1-2,5-10,20-50,100-200,500-1000,2000-5000).sum()
+			2 << (READ_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1
 		);
-		if(storageType.equals(StorageType.FS)) {
+		expectedUpdateSize = new SizeInBytes(1, itemSize.getValue().get(), 1);
+		if(StorageType.FS.equals(storageType)) {
 			itemOutputPath = Paths
 				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId)
 				.toString();
@@ -85,11 +84,11 @@ extends ScenarioTestBase {
 		LogUtil.flushAll();
 		stdOutput = stdOutStream.stopRecordingAndGet();
 	}
-
+	
 	@After
-	public void tearDown()
+	public final void tearDown()
 	throws Exception {
-		if(storageType.equals(StorageType.FS)) {
+		if(StorageType.FS.equals(storageType)) {
 			try {
 				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
 			} catch(final Exception e) {
@@ -98,23 +97,22 @@ extends ScenarioTestBase {
 		}
 		super.tearDown();
 	}
-	
+
 	@Override
 	public void test()
 	throws Exception {
 
+		// I/O traces
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
+		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
 			if(ioTraceRecCount.sum() < EXPECTED_COUNT) {
-				testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(),
-					expectedUpdateSize
-				);
+				testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), expectedUpdateSize);
 			} else {
 				testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
 			}
 			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(ioTraceRecFunc);
+		testIoTraceLogRecords(ioTraceRecTestFunc);
 		assertEquals(
 			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
 			2 * EXPECTED_COUNT, ioTraceRecCount.sum()
@@ -122,12 +120,12 @@ extends ScenarioTestBase {
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
-			driverCount.getValue(), expectedUpdateSize, EXPECTED_COUNT, 0
+			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			expectedUpdateSize, EXPECTED_COUNT, 0
 		);
 		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(),
-			driverCount.getValue(), expectedReadSize, EXPECTED_COUNT, 0
+			totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			expectedReadSize, EXPECTED_COUNT, 0
 		);
 
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
@@ -153,11 +151,13 @@ extends ScenarioTestBase {
 
 		final String stdOutput = this.stdOutput.replaceAll("[\r\n]+", " ");
 		testSingleMetricsStdout(
-			stdOutput, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(), expectedUpdateSize,
+			stdOutput, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			expectedUpdateSize,
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testSingleMetricsStdout(
-			stdOutput, IoType.READ, concurrency.getValue(), driverCount.getValue(), expectedReadSize,
+			stdOutput, IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			expectedReadSize,
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 	}

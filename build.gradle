@@ -41,38 +41,34 @@ ext {
 		it != project("api") && it != project("load") && it != project("storage") &&
 			it != project("tests")
 	}
+}
 
-	setClassPath = {
-		configurations -> [
-			configurations.runtime
-				.collect { file ->
-					// it's 3rd party if jar file name doesn't contain the root project name
-					if(-1 == file.name.indexOf(rootProject.name)) {
-						["lib", file.name].join(File.separator)
-					} else {
-						file.name
-					}
-				}
-				.join(" "),
-		]
-			.join(" ")
-	}
+def classPathString(final configuration) {
+    return configuration
+        .collect {
+            file ->
+                // it's 3rd party if jar file name doesn't contain the root project name
+                if(-1 == file.name.indexOf(rootProject.name)) {
+                    ["lib", file.name].join(File.separator)
+                } else {
+                    file.name
+                }
+        }
+        .join(" ")
+}
 
-	setExtClassPath = {
-		configurations -> [
-			configurations.runtime
-					.collect { file ->
-				// it's 3rd party if jar file name doesn't contain the root project name
-				if(-1 == file.name.indexOf(rootProject.name)) {
-					["..", "lib", file.name].join(File.separator)
-				} else {
-					["..", file.name].join(File.separator)
-				}
-			}
-			.join(" "),
-		]
-			.join(" ")
-	}
+def extClassPathString(final configuration) {
+    return configuration
+            .collect {
+        file ->
+            // it's 3rd party if jar file name doesn't contain the root project name
+            if(-1 == file.name.indexOf(rootProject.name)) {
+                ["..", "lib", file.name].join(File.separator)
+            } else {
+                ["..", file.name].join(File.separator)
+            }
+    }
+    .join(" ")
 }
 
 subprojects {
@@ -230,9 +226,9 @@ task wrapper(type: Wrapper) {
 	gradleVersion = "3.5"
 }
 
-def isExtensionProject(final Project p) {
+static def isExtensionProject(final Project p) {
     final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
-    return f.exists() && f.isDirectory() && f.listFiles().length > 0;
+    return f.exists() && f.isDirectory() && f.listFiles().length > 0
 }
 
 task dist(type: Tar, dependsOn: tasks.withType(Jar)) {

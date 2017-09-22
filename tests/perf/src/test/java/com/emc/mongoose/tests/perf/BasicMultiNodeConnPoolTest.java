@@ -7,6 +7,7 @@ import com.emc.mongoose.tests.perf.mock.DummyChannelPoolHandlerMock;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
