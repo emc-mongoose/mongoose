@@ -1,5 +1,7 @@
-FROM emcmongoose/mongoose:3.5.0
+ARG MONGOOSE_VERSION
 
-ADD https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.9/jmx_prometheus_httpserver-0.9-jar-with-dependencies.jar /opt/jmx_prometheus_exporter_standalone-0.9.jar
+FROM emcmongoose/mongoose:${MONGOOSE_VERSION}
+
+ADD ["https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.9/jmx_prometheus_httpserver-0.9-jar-with-dependencies.jar", "/opt/jmx_prometheus_exporter_standalone-0.9.jar"]
 
 CMD ["java", "-jar", "/opt/mongoose/mongoose.jar"]
