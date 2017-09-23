@@ -35,12 +35,12 @@ before_install:
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
 
   - export REPO=emcmongoose/mongoose-scripting-groovy
-  - docker build -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT --build-arg MONGOOSE_VERSION=$TAG.
+  - docker build -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT --build-arg MONGOOSE_VERSION=$TAG .
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
 
   - export REPO=emcmongoose/mongoose-scripting-jython
-  - docker build -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT --build-arg MONGOOSE_VERSION=$TAG.
+  - docker build -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT --build-arg MONGOOSE_VERSION=$TAG .
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
 
