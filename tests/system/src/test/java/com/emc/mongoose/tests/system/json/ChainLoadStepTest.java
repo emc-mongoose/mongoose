@@ -4,7 +4,7 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 09.06.17.
  */
 public class ChainLoadStepTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final long COUNT_LIMIT = 100_000;
 

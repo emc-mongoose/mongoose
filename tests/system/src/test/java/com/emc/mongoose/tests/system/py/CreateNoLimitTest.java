@@ -1,9 +1,8 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.py;
 
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.Jsr223ScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -11,12 +10,11 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
 import com.emc.mongoose.tests.system.util.PortTools;
-import com.emc.mongoose.ui.log.LogUtil;
-
-import org.apache.logging.log4j.Level;
-
 import org.junit.After;
 import org.junit.Before;
+
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -29,9 +27,8 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 04.06.17.
  */
 public class CreateNoLimitTest
-extends ScenarioTestBase {
+extends Jsr223ScenarioTestBase {
 
-	private Thread runner;
 	private String itemOutputPath;
 	private String stdOutput;
 
@@ -44,7 +41,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return null;
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "py", "default.py");
 	}
 
 	@Override
@@ -56,41 +53,26 @@ extends ScenarioTestBase {
 	@Before
 	public void setUp()
 	throws Exception {
-		super.setUp();
 		switch(storageType) {
 			case FS:
 				itemOutputPath = Paths.get(
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 				).toString();
-				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+				configArgs.add("--item-output-path=" + itemOutputPath);
 				break;
 			case SWIFT:
-				config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
+				configArgs.add("--storage-net-http-namespace=ns1");
 				break;
 		}
-		scenario = new JsonScenario(config, scenarioPath.toFile());
-
-		runner = new Thread(
-			() -> {
-				try {
-					scenario.run();
-				} catch(final Throwable t) {
-					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
-				}
-			}
-		);
-		stdOutStream.startRecording();
-		runner.start();
+		super.setUp();
+		dockerClient.startContainerCmd(testContainerId).exec();
 		TimeUnit.SECONDS.sleep(25);
-		stdOutput = stdOutStream.stopRecordingAndGet();
+		stdOutput = stdOutBuff.toString();
 	}
 
 	@After
 	public void tearDown()
 	throws Exception {
-		if(runner != null) {
-			runner.interrupt();
-		}
 		super.tearDown();
 		if(storageType.equals(StorageType.FS)) {
 			try {

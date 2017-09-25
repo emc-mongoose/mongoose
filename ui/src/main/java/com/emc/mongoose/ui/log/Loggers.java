@@ -26,4 +26,5 @@ public interface Loggers {
 	Logger MSG = LogManager.getLogger(BASE + "Messages");
 	Logger MULTIPART = LogManager.getLogger(BASE + "Multipart");
 	Logger SCENARIO = LogManager.getLogger(BASE + "Scenario");
+	Logger TEST = LogManager.getLogger(BASE + "Test");
 }

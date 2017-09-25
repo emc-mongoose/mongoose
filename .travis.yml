@@ -47,11 +47,19 @@ before_install:
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
 
+  - export REPO=emcmongoose/mongoose-integration-prometheus
+  - docker build --build-arg MONGOOSE_VERSION=$TAG -f docker/Dockerfile.integration-prometheus -t $REPO:$COMMIT .
+  - docker tag $REPO:$COMMIT $REPO:$TAG
+  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+
 jobs:
   include:
 
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
+
+    - stage: "Component performance tests"
+      script: "./gradlew :tests:perf:test"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test
     - stage: "System tests"
@@ -88,16 +96,7 @@ jobs:
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=single,low
         - ITEM_SIZE=empty,small,medium,large,huge
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=DeleteUsingInputPathLimitByRateTest :tests:system:test
-    - env:
-        - TEST=DeleteUsingInputPathLimitByRateTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,high
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium ./gradlew -Dtest.single=FileStorageMetricsThresholdTest :tests:system:test
     - env:
@@ -243,10 +242,6 @@ jobs:
         - ITEM_SIZE=empty,small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    - stage: "Component performance tests"
-      script: "./gradlew :tests:perf:test"
-
-
     - stage: "Unstable system tests"
 
       # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
@@ -267,6 +262,24 @@ jobs:
         - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=DeleteUsingInputPathLimitByRateTest :tests:system:test
+    - env:
+        - TEST=DeleteUsingInputPathLimitByRateTest
+        - STORAGE_TYPE=fs,s3,swift
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,high
+        - ITEM_SIZE=empty,small
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=HttpStorageMetricsThresholdTest :tests:system:test
+    - env:
+        - TEST=HttpStorageMetricsThresholdTest
+        - STORAGE_TYPE=atmos,s3
+        - DRIVER_COUNT=local,distributed
+        - CONCURRENCY=low,medium
+        - ITEM_SIZE=medium,large
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
     # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=UnlimitedConcurrencyLimitByRateTest :tests:system:test
     - env:
         - TEST=UnlimitedConcurrencyLimitByRateTest
@@ -283,15 +296,6 @@ jobs:
         - DRIVER_COUNT=local,distributed
         - CONCURRENCY=low,medium,high
         - ITEM_SIZE=medium
-      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=HttpStorageMetricsThresholdTest :tests:system:test
-    - env:
-        - TEST=HttpStorageMetricsThresholdTest
-        - STORAGE_TYPE=atmos,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=medium,large
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     - stage: "Deploy"

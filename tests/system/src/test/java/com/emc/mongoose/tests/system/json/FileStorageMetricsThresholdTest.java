@@ -4,7 +4,7 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -36,7 +36,7 @@ import java.util.regex.Matcher;
  Created by andrey on 10.06.17.
  */
 public class FileStorageMetricsThresholdTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final double LOAD_THRESHOLD = 0.1;
 	private static final int RANDOM_RANGES_COUNT = 10;

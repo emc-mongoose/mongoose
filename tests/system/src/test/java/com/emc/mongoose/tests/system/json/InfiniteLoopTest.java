@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.system.json;
 
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 08.06.17.
  */
 public class InfiniteLoopTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final int SCENARIO_TIMEOUT = 50;
 	private static final int EXPECTED_STEP_TIME = 5;

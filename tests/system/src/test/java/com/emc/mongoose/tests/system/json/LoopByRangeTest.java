@@ -1,12 +1,11 @@
 package com.emc.mongoose.tests.system.json;
 
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
-import com.emc.mongoose.tests.system.json.LoopByCountTest;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
@@ -26,7 +25,7 @@ import java.util.regex.Pattern;
  Created by andrey on 08.06.17.
  */
 public final class LoopByRangeTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final double EXPECTED_LOOP_START_VALUE = 2.71828182846;
 	private static final double EXPECTED_LOOP_LIMIT_VALUE = 3.1415926;

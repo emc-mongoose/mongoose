@@ -76,7 +76,7 @@ extends ParameterizedSysTestBase {
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
 		LogUtil.init();
 		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
-		Loggers.MSG.info(
+		Loggers.TEST.info(
 			"{} params: {} = {}, {} = {}, {} = {}, {} = {}",
 			getClass().getSimpleName(),
 			StorageType.KEY_ENV, storageType.name(),

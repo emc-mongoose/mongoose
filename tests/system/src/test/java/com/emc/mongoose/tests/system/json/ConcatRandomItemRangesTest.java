@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.json;
 
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
  Created by andrey on 27.08.17.
  */
 public class ConcatRandomItemRangesTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final int SRC_ITEMS_TO_CONCAT_MAX = 50;
 	private static final int SRC_ITEMS_RANDOM_RANGES_COUNT = 10;

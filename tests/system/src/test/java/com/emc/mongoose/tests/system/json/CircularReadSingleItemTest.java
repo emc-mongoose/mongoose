@@ -3,7 +3,7 @@ package com.emc.mongoose.tests.system.json;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -52,7 +52,7 @@ import java.util.function.Consumer;
  */
 
 public class CircularReadSingleItemTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private final String itemOutputFile = CircularReadSingleItemTest.class.getSimpleName() + ".csv";
 	private String stdOutput;

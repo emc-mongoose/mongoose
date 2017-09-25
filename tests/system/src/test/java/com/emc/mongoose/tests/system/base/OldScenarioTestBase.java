@@ -17,16 +17,16 @@ import java.nio.file.Paths;
 /**
  Created by andrey on 11.08.17.
  */
-public abstract class ScenarioTestBase
+public abstract class OldScenarioTestBase
 extends StorageTestBase {
 
 	protected static final Path DEFAULT_SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "default.js"
+		getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "default.json"
 	);
 	protected Path scenarioPath = null;
 	protected Scenario scenario = null;
 
-	protected ScenarioTestBase(
+	protected OldScenarioTestBase(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {

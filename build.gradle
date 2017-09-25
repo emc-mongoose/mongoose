@@ -59,14 +59,14 @@ def classPathString(final configuration) {
 
 def extClassPathString(final configuration) {
     return configuration
-            .collect {
-        file ->
-            // it's 3rd party if jar file name doesn't contain the root project name
-            if(-1 == file.name.indexOf(rootProject.name)) {
-                ["..", "lib", file.name].join(File.separator)
-            } else {
-                ["..", file.name].join(File.separator)
-            }
+		.collect {
+			file ->
+				// it's 3rd party if jar file name doesn't contain the root project name
+				if(-1 == file.name.indexOf(rootProject.name)) {
+					["..", "lib", file.name].join(File.separator)
+				} else {
+					["..", file.name].join(File.separator)
+				}
     }
     .join(" ")
 }
@@ -231,6 +231,16 @@ static def isExtensionProject(final Project p) {
     return f.exists() && f.isDirectory() && f.listFiles().length > 0
 }
 
+static def isTestsProject(final Project p) {
+	if(p == null) {
+		return false
+	} else if(p.name.contains("test")) {
+		return true
+	} else {
+		return isTestsProject(p.parent)
+	}
+}
+
 task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
@@ -259,7 +269,9 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
             }
         }
         for(final Project p: mutualProjects.findAll { !isExtensionProject(it) }) {
-			from p.jar.outputs.files
+			if(!isTestsProject(p)) {
+				from p.jar.outputs.files
+			}
 		}
 	}
 }

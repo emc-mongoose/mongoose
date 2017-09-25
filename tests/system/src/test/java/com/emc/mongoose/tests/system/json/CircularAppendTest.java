@@ -4,7 +4,7 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -50,7 +50,7 @@ import static org.junit.Assert.assertTrue;
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
 public class CircularAppendTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final int EXPECTED_APPEND_COUNT = 100;
 	private static final long EXPECTED_COUNT = 100;

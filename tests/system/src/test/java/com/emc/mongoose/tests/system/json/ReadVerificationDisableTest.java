@@ -5,7 +5,7 @@ import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  Created by andrey on 12.06.17.
  */
 public final class ReadVerificationDisableTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private static final int EXPECTED_MAX_COUNT = 1_000_000;
 	private static final SizeInBytes EXPECTED_MAX_SIZE = new SizeInBytes("1GB");

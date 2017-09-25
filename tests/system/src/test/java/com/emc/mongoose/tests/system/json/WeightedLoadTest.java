@@ -3,7 +3,7 @@ package com.emc.mongoose.tests.system.json;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -56,7 +56,7 @@ import static org.junit.Assume.assumeThat;
  */
 
 public class WeightedLoadTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private boolean finishedInTime;
 	private String stdOutput;

@@ -1,10 +1,12 @@
-package com.emc.mongoose.tests.system;
+package com.emc.mongoose.tests.system.groovy;
 
+import com.emc.mongoose.tests.system.base.Jsr223ScenarioTestBase;
+import com.emc.mongoose.tests.system.util.docker.WaitResponseCallback;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -12,7 +14,9 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
-
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.model.WaitResponse;
+import com.github.dockerjava.core.command.WaitContainerResultCallback;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -21,11 +25,15 @@ import org.apache.logging.log4j.Level;
 
 import org.junit.After;
 import org.junit.Before;
+
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,7 +51,7 @@ import java.util.function.Consumer;
  */
 
 public class CreateLimitBySizeTest
-extends ScenarioTestBase {
+extends Jsr223ScenarioTestBase {
 	
 	private boolean finishedInTime = true;
 	private String stdOutput = null;
@@ -51,6 +59,7 @@ extends ScenarioTestBase {
 	private String itemOutputPath = null;
 	private SizeInBytes sizeLimit;
 	private long expectedCount;
+	private int containerExitCode;
 
 	public CreateLimitBySizeTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
@@ -61,7 +70,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return null;
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "groovy", "default.groovy");
 	}
 
 	@Override
@@ -73,7 +82,7 @@ extends ScenarioTestBase {
 	@Before
 	public void setUp()
 	throws Exception {
-		super.setUp();
+
 		final SizeInBytes envItemSize = itemSize.getValue();
 		final long envItemSizeValue = envItemSize.get();
 		if(envItemSizeValue > SizeInBytes.toFixedSize("1GB")) {
@@ -90,37 +99,28 @@ extends ScenarioTestBase {
 			Files.delete(Paths.get(itemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		config.getItemConfig().getOutputConfig().setFile(itemOutputFile);
-		config.getTestConfig().getStepConfig().getLimitConfig().setSize(sizeLimit);
+		configArgs.add("--item-output-file=" + itemOutputFile);
+		configArgs.add("--test-step-limit-size=" + sizeLimit);
 		switch(storageType) {
 			case FS:
 				itemOutputPath = Paths.get(
 					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 				).toString();
-				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+				configArgs.add("--item-output-path=" + itemOutputPath);
 				break;
 			case SWIFT:
-				config.getStorageConfig().getNetConfig().getHttpConfig().setNamespace("ns1");
+				configArgs.add("--storage-net-http-namespace=ns1");
 				break;
 		}
-		scenario = new JsonScenario(config, scenarioPath.toFile());
-		final Thread runner = new Thread(
-			() -> {
-				try {
-					stdOutStream.startRecording();
-					scenario.run();
-					stdOutput = stdOutStream.stopRecordingAndGet();
-				} catch(final Throwable t) {
-					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
-				}
-			}
-		);
-		runner.start();
-		TimeUnit.SECONDS.timedJoin(runner, 1000);
-		finishedInTime = !runner.isAlive();
-		runner.interrupt();
-		LogUtil.flushAll();
-		TimeUnit.SECONDS.sleep(10);
+
+		super.setUp();
+
+		dockerClient.startContainerCmd(testContainerId).exec();
+		containerExitCode = dockerClient
+			.waitContainerCmd(testContainerId)
+			.exec(new WaitContainerResultCallback())
+			.awaitStatusCode(1000, TimeUnit.SECONDS);
+		stdOutput = stdOutBuff.toString();
 	}
 	
 	@After
@@ -139,6 +139,8 @@ extends ScenarioTestBase {
 	@Override
 	public void test()
 	throws Exception {
+
+		assertEquals("Container exit code should be 0", 0, containerExitCode);
 
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final String nodeAddr = httpStorageMocks.keySet().iterator().next();
@@ -188,8 +190,8 @@ extends ScenarioTestBase {
 				msg = stdOutput.substring(k + msg.length());
 			} else {
 				fail(
-					"Expected the message to occur " + driverCount.getValue() + " times, but got " +
-						i
+					"Expected the message to occur " + driverCount.getValue() + " times, but got "
+						+ i
 				);
 			}
 		}

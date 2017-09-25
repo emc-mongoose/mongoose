@@ -3,7 +3,7 @@ package com.emc.mongoose.tests.system.json;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
-import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.OldScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  Created by andrey on 13.06.17.
  */
 public class MultiPartCreateTest
-extends ScenarioTestBase {
+extends OldScenarioTestBase {
 
 	private String stdOutput;
 	private long expectedCountMin;
