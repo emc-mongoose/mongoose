@@ -125,7 +125,7 @@ extends ContainerizedStorageTestBase {
 			cmd.add("-jar");
 			cmd.add("/opt/mongoose/mongoose.jar");
 			cmd.addAll(configArgs);
-			final StringJoiner cmdLine = new StringJoiner("\n\t");
+			final StringJoiner cmdLine = new StringJoiner(" ");
 			cmd.forEach(cmdLine::add);
 			System.out.println("Container arguments: " + cmdLine.toString());
 
