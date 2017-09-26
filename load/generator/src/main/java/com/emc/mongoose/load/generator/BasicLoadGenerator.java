@@ -89,7 +89,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
 		} else if(sizeLimit.get() > 0 && this.transferSizeEstimate > 0) {
-			this.countLimit = sizeLimit.get() / this.transferSizeEstimate;
+			this.countLimit = sizeLimit.get() / this.transferSizeEstimate + 1;
 		} else {
 			this.countLimit = Long.MAX_VALUE;
 		}

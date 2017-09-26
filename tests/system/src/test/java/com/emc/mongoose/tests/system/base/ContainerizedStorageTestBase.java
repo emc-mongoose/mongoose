@@ -13,18 +13,12 @@ import com.emc.mongoose.ui.config.storage.mock.container.ContainerConfig;
 import com.emc.mongoose.ui.config.storage.mock.fail.FailConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
 import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.DockerClientBuilder;
-
-import org.apache.logging.log4j.Level;
-
 import org.junit.After;
 import org.junit.Before;
 
@@ -40,10 +34,15 @@ import java.util.StringJoiner;
 public abstract class ContainerizedStorageTestBase
 extends ConfiguredTestBase {
 
-	protected static final String TEST_VERSION = System.getenv("TEST_VERSION");
 	private static final String STORAGE_MOCK_IMAGE_NAME = "emcmongoose/nagaina";
+	protected static final String MONGOOSE_VERSION = System.getenv("MONGOOSE_VERSION") == null ?
+		"latest" : System.getenv("MONGOOSE_VERSION");
+	static {
+		System.out.println("Mongoose images version: " + MONGOOSE_VERSION);
+	}
 	private static final String
-		STORAGE_DRIVER_IMAGE_NAME = "emcmongoose/mongoose-storage-driver-service:" + TEST_VERSION;
+		STORAGE_DRIVER_IMAGE_NAME = "emcmongoose/mongoose-storage-driver-service:" +
+		MONGOOSE_VERSION;
 
 	protected Map<String, String> httpStorageMocks = null;
 	protected int httpStorageNodeCount = 1;
@@ -88,7 +87,7 @@ extends ConfiguredTestBase {
 			case S3:
 			case EMCS3:
 			case SWIFT:
-				Loggers.TEST.info("Image {} pulled", STORAGE_MOCK_IMAGE_NAME);
+				System.out.println("Image pulled: " + STORAGE_MOCK_IMAGE_NAME);
 				httpStorageMocks = new HashMap<>();
 				final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
 				final ItemConfig itemConfig = config.getItemConfig();
@@ -193,7 +192,7 @@ extends ConfiguredTestBase {
 					.withName("mongoose_storage_driver_service_" + nextStorageDriverPort)
 					.withNetworkMode("host")
 					.withExposedPorts(ExposedPort.tcp(nextStorageDriverPort))
-					.withEntrypoint("java")
+					.withEntrypoint("mongoose")
 					.withCmd(cmd)
 					.exec();
 				final String containerId = container.getId();

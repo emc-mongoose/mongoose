@@ -2,7 +2,7 @@ package com.emc.mongoose.tests.system.py;
 
 import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.tests.system.base.Jsr223ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 04.06.17.
  */
 public class CreateNoLimitTest
-extends Jsr223ScenarioTestBase {
+extends ScenarioTestBase {
 
 	private String itemOutputPath;
 	private String stdOutput;
@@ -41,7 +41,7 @@ extends Jsr223ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "py", "default.py");
+		return Paths.get(DIR_EXAMPLE_SCENARIO, "py", "default.py");
 	}
 
 	@Override

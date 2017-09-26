@@ -74,16 +74,9 @@ extends ParameterizedSysTestBase {
 		stepId = makeStepId();
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "share", "log", stepId).toFile());
 		LogUtil.init();
 		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
-		Loggers.TEST.info(
-			"{} params: {} = {}, {} = {}, {} = {}, {} = {}",
-			getClass().getSimpleName(),
-			StorageType.KEY_ENV, storageType.name(),
-			DriverCount.KEY_ENV, driverCount.name(),
-			Concurrency.KEY_ENV, concurrency.name(),
-			ItemSize.KEY_ENV, itemSize.name()
-		);
 		stdOutStream = new BufferingOutputStream(System.out);
 	}
 
@@ -108,9 +101,24 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
+	private List<String> getContainerLogFileLines(final String fileName)
+	throws IOException {
+		final File logFile = Paths
+			.get(PathUtil.getBaseDir(), "share", "log", stepId, fileName)
+			.toFile();
+		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+			return br.lines().collect(Collectors.toList());
+		}
+	}
+
 	protected List<String> getMessageLogLines()
 	throws IOException {
 		return getLogFileLines("messages.log");
+	}
+
+	protected List<String> getContainerMessageLogLines()
+	throws IOException {
+		return getContainerLogFileLines("messages.log");
 	}
 
 	protected List<String> getErrorsLogLines()
@@ -118,9 +126,19 @@ extends ParameterizedSysTestBase {
 		return getLogFileLines("errors.log");
 	}
 
+	protected List<String> getContainerErrorsLogLines()
+	throws IOException {
+		return getContainerLogFileLines("errors.log");
+	}
+
 	protected List<String> getConfigLogLines()
 	throws IOException {
 		return getLogFileLines("config.log");
+	}
+
+	protected List<String> getContainerConfigLogLines()
+	throws IOException {
+		return getContainerLogFileLines("config.log");
 	}
 
 	protected List<String> getPartsUploadLogLines()
@@ -128,9 +146,21 @@ extends ParameterizedSysTestBase {
 		return getLogFileLines("parts.upload.csv");
 	}
 
-	protected List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	protected List<String> getContainerPartsUploadLogLines()
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
+		return getContainerLogFileLines("parts.upload.csv");
+	}
+
+	private File getLogFile(final String fileName) {
+		return Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
+	}
+
+	private File getContainerLogFile(final String fileName) {
+		return Paths.get(PathUtil.getBaseDir(), "share", "log", stepId, fileName).toFile();
+	}
+
+	private List<CSVRecord> waitAndGetLogFileCsvRecords(final File logFile)
+	throws IOException {
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
@@ -157,9 +187,26 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
+	protected List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	throws IOException {
+		final File logFile = getLogFile(fileName);
+		return waitAndGetLogFileCsvRecords(logFile);
+	}
+
+	protected List<CSVRecord> getContainerLogFileCsvRecords(final String fileName)
+	throws IOException {
+		final File logFile = getContainerLogFile(fileName);
+		return waitAndGetLogFileCsvRecords(logFile);
+	}
+
 	protected List<CSVRecord> getMetricsMedLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.threshold.csv");
+	}
+
+	protected List<CSVRecord> getContainerMetricsMedLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.threshold.csv");
 	}
 
 	protected List<CSVRecord> getMetricsMedTotalLogRecords()
@@ -167,9 +214,19 @@ extends ParameterizedSysTestBase {
 		return getLogFileCsvRecords("metrics.threshold.total.csv");
 	}
 
+	protected List<CSVRecord> getContainerMetricsMedTotalLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.threshold.total.csv");
+	}
+
 	protected List<CSVRecord> getMetricsLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.csv");
+	}
+
+	protected List<CSVRecord> getContainerMetricsLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.csv");
 	}
 
 	protected List<CSVRecord> getMetricsTotalLogRecords()
@@ -177,16 +234,22 @@ extends ParameterizedSysTestBase {
 		return getLogFileCsvRecords("metrics.total.csv");
 	}
 
+	protected List<CSVRecord> getContainerMetricsTotalLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.total.csv");
+	}
+
 	protected List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("io.trace.csv");
 	}
 
-	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	protected List<CSVRecord> getContainerIoTraceLogRecords()
 	throws IOException {
-		final File logFile = Paths
-			.get(PathUtil.getBaseDir(), "log", stepId, "io.trace.csv")
-			.toFile();
+		return getContainerLogFileCsvRecords("io.trace.csv");
+	}
+
+	private void waitLogFile(final File logFile) {
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
@@ -202,6 +265,11 @@ extends ParameterizedSysTestBase {
 				return;
 			}
 		}
+	}
+
+	private void testIoTraceLogFile(
+		final File logFile, final Consumer<CSVRecord> csvRecordTestFunc
+	) throws IOException {
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			try(final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br)) {
 				csvParser.forEach(csvRecordTestFunc);
@@ -209,9 +277,28 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
+	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
+		final File logFile = getLogFile("io.trace.csv");
+		waitLogFile(logFile);
+		testIoTraceLogFile(logFile, csvRecordTestFunc);
+	}
+
+	protected void testContainerIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
+		final File logFile = getContainerLogFile("io.trace.csv");
+		waitLogFile(logFile);
+		testIoTraceLogFile(logFile, csvRecordTestFunc);
+	}
+
 	protected List<CSVRecord> getPartsUploadRecords()
 	throws IOException {
 		return getLogFileCsvRecords("parts.upload.csv");
+	}
+
+	protected List<CSVRecord> getContainerPartsUploadRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("parts.upload.csv");
 	}
 
 	protected static void testMetricsLogRecords(

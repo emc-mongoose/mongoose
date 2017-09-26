@@ -4,4 +4,4 @@ FROM emcmongoose/mongoose:${MONGOOSE_VERSION}
 
 EXPOSE 1099
 
-ENTRYPOINT ["java", "-jar", "/opt/mongoose/mongoose-storage-driver-service.jar"]
+ENTRYPOINT ["/usr/bin/mongoose", "-jar", "/opt/mongoose/mongoose-storage-driver-service.jar"]

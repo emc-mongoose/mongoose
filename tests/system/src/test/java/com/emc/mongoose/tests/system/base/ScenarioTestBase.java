@@ -1,20 +1,22 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
-
 import com.emc.mongoose.tests.system.util.docker.ContainerOutputCallback;
+import com.emc.mongoose.ui.log.Loggers;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.Volume;
+
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.fail;
@@ -22,27 +24,40 @@ import static org.junit.Assert.fail;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  Created by andrey on 23.09.17.
  */
-public abstract class Jsr223ScenarioTestBase
+public abstract class ScenarioTestBase
 extends ContainerizedStorageTestBase {
 
 	private static final Path DEFAULT_SCENARIO_PATH = Paths.get(
 		getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "default.js"
 	);
-	protected static Volume VOLUME_LOGS = new Volume("/opt/mongoose/log");
+	protected static String CONTAINER_SHARE_PATH = "/opt/mongoose/share";
+	protected static Path HOST_SHARE_PATH = Paths.get(BASE_DIR, "share");
+	static {
+		HOST_SHARE_PATH.toFile().mkdir();
+	}
+	protected static String CONTAINER_LOG_PATH = "/opt/mongoose/log";
+	protected static Path HOST_LOG_PATH = Paths.get(BASE_DIR, "share", "log");
+	static {
+		HOST_LOG_PATH.toFile().mkdir();
+	}
 
 	private static final String
-		BASE_SCRIPTING_IMAGE_NAME = "emcmongoose/mongoose:" + TEST_VERSION;
+		BASE_SCRIPTING_IMAGE_NAME = "emcmongoose/mongoose:" + MONGOOSE_VERSION;
 	private static final String
-		GROOVY_SCRIPTING_ENGINE_IMAGE_NAME = "emcmongoose/mongoose-scripting-groovy:" + TEST_VERSION;
+		GROOVY_SCRIPTING_ENGINE_IMAGE_NAME = "emcmongoose/mongoose-scripting-groovy:" +
+		MONGOOSE_VERSION;
 	private static final String
-		JYTHON_SCRIPTING_ENGINE_IMAGE_NAME = "emcmongoose/mongoose-scripting-jython:" + TEST_VERSION;
+		JYTHON_SCRIPTING_ENGINE_IMAGE_NAME = "emcmongoose/mongoose-scripting-jython:" +
+		MONGOOSE_VERSION;
 	protected static final Map<String, String> SCENARIO_LANG_IMAGES = new HashMap<>();
 	static {
 		SCENARIO_LANG_IMAGES.put("json", BASE_SCRIPTING_IMAGE_NAME);
@@ -60,7 +75,7 @@ extends ContainerizedStorageTestBase {
 		stdOutBuff, stdErrBuff
 	);
 
-	protected Jsr223ScenarioTestBase(
+	protected ScenarioTestBase(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -78,12 +93,12 @@ extends ContainerizedStorageTestBase {
 			final String scenarioValue = config.getTestConfig().getScenarioConfig().getFile();
 			if(scenarioValue != null && !scenarioValue.isEmpty()) {
 				scenarioPath = Paths.get(scenarioValue);
-				configArgs.add("--test-scenario-file=" + scenarioPath.toString());
+				configArgs.add("--test-scenario-file=" + scenarioValue);
 			} else {
 				scenarioPath = DEFAULT_SCENARIO_PATH;
 			}
 		} else {
-			configArgs.add("--test-scenario-file=" + scenarioPath.toString());
+			configArgs.add("--test-scenario-file=/opt/mongoose/" + scenarioPath.toString());
 		}
 
 		final String scenarioFileName = scenarioPath.getFileName().toString();
@@ -110,17 +125,26 @@ extends ContainerizedStorageTestBase {
 			cmd.add("-jar");
 			cmd.add("/opt/mongoose/mongoose.jar");
 			cmd.addAll(configArgs);
+			final StringJoiner cmdLine = new StringJoiner("\n\t");
+			cmd.forEach(cmdLine::add);
+			System.out.println("Container arguments: " + cmdLine.toString());
 
+			final Volume volumeShare = new Volume(CONTAINER_SHARE_PATH);
+			final Volume volumeLog = new Volume(CONTAINER_LOG_PATH);
+			final Bind[] binds = new Bind[] {
+				new Bind(HOST_SHARE_PATH.toString(), volumeShare),
+				new Bind(HOST_LOG_PATH.toString(), volumeLog),
+			};
 			final CreateContainerResponse container = dockerClient
 				.createContainerCmd(dockerImageName)
 				.withName("mongoose")
 				.withNetworkMode("host")
 				.withExposedPorts(ExposedPort.tcp(9010), ExposedPort.tcp(5005))
-				.withVolumes(VOLUME_LOGS)
-				.withBinds(new Bind(Paths.get(PathUtil.getBaseDir(), "log").toString(), VOLUME_LOGS))
+				.withVolumes(volumeShare, volumeLog)
+				.withBinds(binds)
 				.withAttachStdout(true)
 				.withAttachStderr(true)
-				.withEntrypoint("java")
+				.withEntrypoint("mongoose")
 				.withCmd(cmd)
 				.exec();
 
