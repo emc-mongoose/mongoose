@@ -338,6 +338,7 @@ extends AmzS3StorageDriver<I, O> {
 		final List<Range> fixedRanges = dataIoTask.getFixedRanges();
 		final int randomRangesCount = dataIoTask.getRandomRangesCount();
 		DataItem srcItem;
+		String srcItemPath;
 
 		// request content
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
@@ -350,9 +351,13 @@ extends AmzS3StorageDriver<I, O> {
 				try {
 					for(int i = 0; i < srcItemsToConcat.size(); i ++) {
 						srcItem = srcItemsToConcat.get(i);
+						srcItemPath = srcItem.getName();
+						if(srcItemPath.charAt(0) == '/') {
+							srcItemPath = srcItemPath.substring(1);
+						}
 						content
 							.append("\t\t{\n\t\t\t\"path\": \"")
-							.append(srcItem.getName())
+							.append(srcItemPath)
 							.append("\",\n");
 						nextSrcItemSize = srcItem.size();
 						srcItemCellSize = nextSrcItemSize / randomRangesCount;
