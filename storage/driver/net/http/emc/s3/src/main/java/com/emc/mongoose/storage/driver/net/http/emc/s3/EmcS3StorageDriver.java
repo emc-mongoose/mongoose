@@ -388,9 +388,13 @@ extends AmzS3StorageDriver<I, O> {
 			} else {
 				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
 					srcItem = srcItemsToConcat.get(i);
+					srcItemPath = srcItem.getName();
+					if(srcItemPath.charAt(0) == '/') {
+						srcItemPath = srcItemPath.substring(1);
+					}
 					content
 						.append("\t\t{\n\t\t\t\"path\": \"")
-						.append(srcItem.getName())
+						.append(srcItemPath)
 						.append("\"\n\t\t}");
 					if(i < srcItemsToConcat.size() - 1) {
 						content.append(',');
@@ -402,9 +406,13 @@ extends AmzS3StorageDriver<I, O> {
 			try {
 				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
 					srcItem = srcItemsToConcat.get(i);
+					srcItemPath = srcItem.getName();
+					if(srcItemPath.charAt(0) == '/') {
+						srcItemPath = srcItemPath.substring(1);
+					}
 					content
 						.append("\t\t{\n\t\t\t\"path\": \"")
-						.append(srcItem.getName())
+						.append(srcItemPath)
 						.append("\",\n")
 						.append("\t\t\t\"range\": \"");
 					rangeListToStringBuff(fixedRanges, srcItem.size(), content);
