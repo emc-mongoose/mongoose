@@ -65,7 +65,7 @@ implements ValueStep {
 			"Invoking the shell command:\n{}{}{}",
 			stdOutColorFlag ? CYAN : "", cmd, stdOutColorFlag ? RESET : ""
 		);
-		final Process process = new ProcessBuilder("bash", "-c", cmd).start();
+		final Process process = new ProcessBuilder("sh", "-c", cmd).start();
 		final Thread processStdInReader = TF_STD_IN.newThread(
 			() -> {
 				try(

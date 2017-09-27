@@ -10,7 +10,7 @@ import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.scenario.Constants.ATTR_CONFIG;
 import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
@@ -72,7 +72,7 @@ public final class Main {
 			if(scenarioFile != null && !scenarioFile.isEmpty()) {
 				scenarioPath = Paths.get(scenarioFile);
 			} else {
-				scenarioPath = Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
+				scenarioPath = Paths.get(BASE_DIR, DIR_EXAMPLE_SCENARIO, "js", "default.js");
 			}
 
 			final StringBuilder strb = new StringBuilder();

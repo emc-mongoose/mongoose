@@ -19,6 +19,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.junit.After;
 import org.junit.Before;
 
@@ -87,7 +88,11 @@ extends ConfiguredTestBase {
 			case S3:
 			case EMCS3:
 			case SWIFT:
-				System.out.println("Image pulled: " + STORAGE_MOCK_IMAGE_NAME);
+				System.out.println("docker pull " + STORAGE_MOCK_IMAGE_NAME + "...");
+				dockerClient
+					.pullImageCmd(STORAGE_MOCK_IMAGE_NAME)
+					.exec(new PullImageResultCallback())
+					.awaitCompletion();
 				httpStorageMocks = new HashMap<>();
 				final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
 				final ItemConfig itemConfig = config.getItemConfig();
@@ -174,6 +179,10 @@ extends ConfiguredTestBase {
 	throws Exception {
 		final int n = driverCount.getValue();
 		if(n > 1) {
+			System.out.println("docker pull " + STORAGE_DRIVER_IMAGE_NAME + "...");
+			dockerClient.pullImageCmd(STORAGE_DRIVER_IMAGE_NAME)
+				.exec(new PullImageResultCallback())
+				.awaitCompletion();
 			storageDriverBuilderSvcs = new ArrayList<>(n);
 			final DriverConfig driverConfig = config.getStorageConfig().getDriverConfig();
 			final StringJoiner storageDriverAddrsOption = new StringJoiner(

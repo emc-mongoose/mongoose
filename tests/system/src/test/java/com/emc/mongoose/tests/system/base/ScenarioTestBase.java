@@ -1,5 +1,6 @@
 package com.emc.mongoose.tests.system.base;
 
+import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -8,15 +9,15 @@ import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import com.emc.mongoose.tests.system.util.docker.ContainerOutputCallback;
-import com.emc.mongoose.ui.log.Loggers;
+
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.Volume;
 
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.fail;
@@ -24,7 +25,6 @@ import static org.junit.Assert.fail;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,8 +98,20 @@ extends ContainerizedStorageTestBase {
 				scenarioPath = DEFAULT_SCENARIO_PATH;
 			}
 		} else {
-			configArgs.add("--test-scenario-file=/opt/mongoose/" + scenarioPath.toString());
+			final String scenarioPathStr = scenarioPath.toString();
+			if(scenarioPathStr.startsWith(BASE_DIR)) {
+				configArgs.add(
+					"--test-scenario-file=/opt/mongoose"
+						+ scenarioPathStr.substring(BASE_DIR.length())
+				);
+			} else {
+				configArgs.add("--test-scenario-file=" + scenarioPathStr);
+			}
 		}
+	}
+
+	protected void initTestContainer()
+	throws Exception {
 
 		final String scenarioFileName = scenarioPath.getFileName().toString();
 		int dotPos = scenarioFileName.lastIndexOf('.');
@@ -110,6 +122,10 @@ extends ContainerizedStorageTestBase {
 			if(dockerImageName == null) {
 				fail();
 			}
+			System.out.println("docker pull " + dockerImageName + "...");
+			dockerClient.pullImageCmd(dockerImageName)
+				.exec(new PullImageResultCallback())
+				.awaitSuccess();
 
 			final List<String> cmd = new ArrayList<>();
 			cmd.add("-Xms1g");
@@ -135,6 +151,16 @@ extends ContainerizedStorageTestBase {
 				new Bind(HOST_SHARE_PATH.toString(), volumeShare),
 				new Bind(HOST_LOG_PATH.toString(), volumeLog),
 			};
+
+			// put the environment variables into the container
+			final Map<String, String> envMap = System.getenv();
+			final String[] env = new String[envMap.size()];
+			int i = 0;
+			for(final String envKey : envMap.keySet()) {
+				env[i] = envKey + "=" + envMap.get(envKey);
+				i ++;
+			}
+
 			final CreateContainerResponse container = dockerClient
 				.createContainerCmd(dockerImageName)
 				.withName("mongoose")
@@ -144,6 +170,7 @@ extends ContainerizedStorageTestBase {
 				.withBinds(binds)
 				.withAttachStdout(true)
 				.withAttachStderr(true)
+				.withEnv(env)
 				.withEntrypoint("mongoose")
 				.withCmd(cmd)
 				.exec();
@@ -159,7 +186,6 @@ extends ContainerizedStorageTestBase {
 		} else {
 			fail();
 		}
-
 	}
 
 	@After

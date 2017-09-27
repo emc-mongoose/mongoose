@@ -6,9 +6,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.logging.Logger;
 
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
+
 public abstract class Extensions {
 
-	public static final String DIR_EXT = PathUtil.getBaseDir() + File.separator + "ext";
+	public static final String DIR_EXT = BASE_DIR + File.separator + "ext";
 	public static final URLClassLoader CLS_LOADER;
 
 	private static final Logger LOG = Logger.getLogger(Extensions.class.getSimpleName());
