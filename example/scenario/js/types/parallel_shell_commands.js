@@ -6,7 +6,7 @@ var noOutputColorConfig = {
 
 var command1 = Command
     .config(noOutputColorConfig)
-    .value("echo \"Hello world!\"");
+    .value("echo Hello world!");
 
 var command2 = Command
     .value("ps alx | grep java");

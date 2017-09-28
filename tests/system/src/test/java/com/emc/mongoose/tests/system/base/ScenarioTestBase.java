@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -154,11 +155,13 @@ extends ContainerizedStorageTestBase {
 
 			// put the environment variables into the container
 			final Map<String, String> envMap = System.getenv();
-			final String[] env = new String[envMap.size()];
-			int i = 0;
-			for(final String envKey : envMap.keySet()) {
-				env[i] = envKey + "=" + envMap.get(envKey);
-				i ++;
+			final String[] env = envMap.keySet().toArray(new String[envMap.size()]);
+			for(int i = 0; i < env.length; i ++) {
+				if("PATH".equals(env[i])) {
+					env[i] = env[i] + "=" + envMap.get(env[i]) + ":/bin";
+				} else {
+					env[i] = env[i] + "=" + envMap.get(env[i]);
+				}
 			}
 
 			final CreateContainerResponse container = dockerClient

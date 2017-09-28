@@ -6,7 +6,7 @@ noOutputColorConfig = {
 
 command1 = Command \
     .config(noOutputColorConfig) \
-    .value("echo \"Hello world!\"") \
+    .value("echo Hello world!") \
 
 command2 = Command \
     .value("ps alx | grep java")

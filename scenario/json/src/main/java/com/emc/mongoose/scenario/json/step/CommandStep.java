@@ -52,7 +52,7 @@ extends StepBase {
 				"Invoking the shell command:\n{}{}{}",
 				stdOutColorFlag ? CYAN : "", cmdLine, stdOutColorFlag ? RESET : ""
 			);
-			final Process process = new ProcessBuilder("bash", "-c", cmdLine).start();
+			final Process process = new ProcessBuilder("sh", "-c", cmdLine).start();
 			final Thread processStdInReader = TF_STD_IN.newThread(
 				() -> {
 					try(
