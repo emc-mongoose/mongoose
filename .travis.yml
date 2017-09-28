@@ -360,7 +360,7 @@ jobs:
     - stage: "Failing system tests"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest :tests:system:test
-    - env:
+      env:
       - TEST=ReadVerificationAfterCircularUpdateTest
       - STORAGE_TYPE=fs,s3,swift
       - DRIVER_COUNT=local,distributed
