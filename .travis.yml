@@ -5,12 +5,12 @@ sudo: false
 #addons:
 #  ulimit:
 #    nofile: 1048576
-
-services:
-- docker
-
-jdk:
-- oraclejdk8
+#
+#services:
+#- docker
+#
+#jdk:
+#- oraclejdk8
 
 env:
   global:
@@ -337,13 +337,13 @@ jobs:
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=MultiPartCreateTest :tests:system:test
-    env:
-    - TEST=MultiPartCreateTest
-    - STORAGE_TYPE=s3,swift
-    - DRIVER_COUNT=local,distributed
-    - CONCURRENCY=low,medium
-    - ITEM_SIZE=medium,large
-    script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+    - env:
+      - TEST=MultiPartCreateTest
+      - STORAGE_TYPE=s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=medium,large
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     - stage: "Deploy"
       deploy:
