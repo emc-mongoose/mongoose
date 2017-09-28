@@ -2,10 +2,10 @@ language: java
 
 sudo: false
 
-#addons:
-#  ulimit:
-#    nofile: 1048576
-#
+addons:
+  ulimit:
+    nofile: 1048576
+
 #services:
 #- docker
 #
