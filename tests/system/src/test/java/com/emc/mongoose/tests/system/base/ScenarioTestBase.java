@@ -1,6 +1,5 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
@@ -25,7 +24,6 @@ import static org.junit.Assert.fail;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +104,7 @@ extends ContainerizedStorageTestBase {
 						+ scenarioPathStr.substring(BASE_DIR.length())
 				);
 			} else {
-				configArgs.add("--test-scenario-file=" + scenarioPathStr);
+				configArgs.add("--test-scenario-file=/opt/mongoose/" + scenarioPathStr);
 			}
 		}
 	}
