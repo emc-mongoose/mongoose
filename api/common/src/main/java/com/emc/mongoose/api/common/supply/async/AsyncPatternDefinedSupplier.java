@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.common.supply.async;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.supply.PatternDefinedSupplier;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 
@@ -15,7 +15,7 @@ implements PatternDefinedSupplier {
 	
 	public AsyncPatternDefinedSupplier(
 		final CoroutinesProcessor coroutinesProcessor, final String pattern
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		this(
 			coroutinesProcessor,
 			new RangePatternDefinedSupplier(

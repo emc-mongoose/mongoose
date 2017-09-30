@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.coroutines.Coroutine;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -89,7 +89,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected NetStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();

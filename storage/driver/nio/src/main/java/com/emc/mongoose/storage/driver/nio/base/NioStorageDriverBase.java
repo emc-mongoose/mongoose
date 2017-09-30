@@ -12,7 +12,7 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -56,7 +56,7 @@ implements NioStorageDriver<I, O> {
 	public NioStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount > 0) {

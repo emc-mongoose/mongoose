@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.common.supply;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 
 import java.util.regex.Pattern;
 
@@ -32,6 +32,6 @@ public interface SupplierFactory<T, G extends BatchSupplier<T>> {
 	
 	G createSupplier(
 		final char type, final String seedStr, final String formatStr, final String rangeStr
-	) throws UserShootHisFootException;
+	) throws OmgShootMyFootException;
 
 }

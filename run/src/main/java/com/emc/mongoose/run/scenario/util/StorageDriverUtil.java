@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario.util;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.storage.StorageDriver;
@@ -89,7 +89,7 @@ public interface StorageDriverUtil {
 						.setAverageConfig(avgMetricsConfig)
 						.setStorageConfig(storageConfig)
 						.buildRemotely();
-				} catch(final IOException | UserShootHisFootException e) {
+				} catch(final IOException | OmgShootMyFootException e) {
 					throw new RuntimeException(e);
 				}
 				
@@ -137,7 +137,7 @@ public interface StorageDriverUtil {
 						.setStorageConfig(storageConfig)
 						.build()
 				);
-			} catch(final UserShootHisFootException e) {
+			} catch(final OmgShootMyFootException e) {
 				throw new RuntimeException(e);
 			}
 		}

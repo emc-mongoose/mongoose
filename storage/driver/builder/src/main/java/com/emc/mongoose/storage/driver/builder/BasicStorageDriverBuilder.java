@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -13,16 +13,13 @@ import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.Level;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
@@ -110,7 +107,7 @@ public class BasicStorageDriverBuilder<
 	
 	@Override @SuppressWarnings("unchecked")
 	public T build()
-	throws UserShootHisFootException, InterruptedException {
+	throws OmgShootMyFootException, InterruptedException {
 
 		try(
 			final Instance ctx = CloseableThreadContext
@@ -152,7 +149,7 @@ public class BasicStorageDriverBuilder<
 					implFqcnsByType.get(driverType), true, clsLoader
 				);
 				if(matchingImplCls == null) {
-					throw new UserShootHisFootException(
+					throw new OmgShootMyFootException(
 						"No matching implementation class for the storage driver type \"" +
 							driverType + "\""
 					);
@@ -166,11 +163,11 @@ public class BasicStorageDriverBuilder<
 					stepName, contentSrc, loadConfig, storageConfig, verifyFlag
 				);
 			} catch(final ClassNotFoundException | NoClassDefFoundError e) {
-				throw new UserShootHisFootException(
+				throw new OmgShootMyFootException(
 					"Failed to load storage driver implementation for type: " + driverType
 				);
 			} catch(final NoSuchMethodException e) {
-				throw new UserShootHisFootException(
+				throw new OmgShootMyFootException(
 					"No valid constructor to make the \"" + driverType +
 						"\" storage driver instance"
 				);
@@ -179,10 +176,10 @@ public class BasicStorageDriverBuilder<
 				if(cause instanceof InterruptedException) {
 					throw (InterruptedException) cause;
 				} else {
-					throw new UserShootHisFootException(e);
+					throw new OmgShootMyFootException(e);
 				}
 			} catch(final InstantiationException | IllegalAccessException e) {
-				throw new UserShootHisFootException(e);
+				throw new OmgShootMyFootException(e);
 			}
 
 			return driver;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
 import com.github.akurilov.commons.collection.Range;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -31,7 +31,7 @@ extends NetStorageDriverBase<I, O> {
 	public NetStorageDriverMock(
 		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 

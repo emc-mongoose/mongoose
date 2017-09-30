@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.github.akurilov.commons.io.Output;
@@ -148,7 +148,7 @@ extends StepBase {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
-		} catch(final UserShootHisFootException e) {
+		} catch(final OmgShootMyFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		} catch(final InterruptedException e) {
 			throw new CancellationException();

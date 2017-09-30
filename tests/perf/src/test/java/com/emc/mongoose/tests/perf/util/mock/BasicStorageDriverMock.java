@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
 import com.github.akurilov.commons.collection.Range;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  Created by andrey on 11.05.17.
@@ -29,7 +28,7 @@ extends StorageDriverBase<I, O> {
 	public BasicStorageDriverMock(
 		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		super(stepName, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 

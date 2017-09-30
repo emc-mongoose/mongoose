@@ -1,7 +1,7 @@
 package com.emc.mongoose.run.scenario.step;
 
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.github.akurilov.commons.io.Output;
@@ -123,7 +123,7 @@ extends StepBase {
 				.setStorageDrivers(drivers)
 				.setAuthConfig(storageConfig.getAuthConfig())
 				.build();
-		} catch(final UserShootHisFootException e) {
+		} catch(final OmgShootMyFootException e) {
 			throw new RuntimeException(e);
 		}
 		Loggers.MSG.info("Load generators initialized");

@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
@@ -247,7 +247,7 @@ extends SequentialStep {
 					);
 				}
 			}
-		} catch(final UserShootHisFootException | IOException e) {
+		} catch(final OmgShootMyFootException | IOException e) {
 			throw new ScenarioParseException("Failed to replace the configuration values", e);
 		}
 	}

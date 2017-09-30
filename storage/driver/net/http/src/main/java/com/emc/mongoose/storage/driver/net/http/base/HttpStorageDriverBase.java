@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.http.base;
 
 import com.github.akurilov.commons.collection.Range;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.async.AsyncPatternDefinedSupplier;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -77,7 +77,7 @@ implements HttpStorageDriver<I, O> {
 		ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 			try {
 				return new AsyncPatternDefinedSupplier(SVC_EXECUTOR, pattern);
-			} catch(final UserShootHisFootException e) {
+			} catch(final OmgShootMyFootException e) {
 				LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
 				return null;
 			}
@@ -92,7 +92,7 @@ implements HttpStorageDriver<I, O> {
 	protected HttpStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
