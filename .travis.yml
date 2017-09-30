@@ -39,6 +39,8 @@ jobs:
     - stage: "Docker images"
       script:
       - docker --version
+      - echo TAG=$TAG
+      - echo MONGOOSE_VERSION=$MONGOOSE_VERSION
 
       - ./gradlew clean dist
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
