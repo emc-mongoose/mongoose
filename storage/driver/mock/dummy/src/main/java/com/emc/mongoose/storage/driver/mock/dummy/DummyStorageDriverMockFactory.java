@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.mock.dummy;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -25,7 +25,7 @@ implements StorageDriverFactory<I, O, T> {
 	public final T create(
 		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		return (T) new DummyStorageDriverMock<>(
 			stepId, contentSrc, loadConfig, storageConfig, verifyFlag
 		);

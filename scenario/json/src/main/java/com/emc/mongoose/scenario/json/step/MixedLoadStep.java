@@ -6,7 +6,6 @@ import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.storage.driver.builder.StorageDriverUtil;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.ItemFactory;

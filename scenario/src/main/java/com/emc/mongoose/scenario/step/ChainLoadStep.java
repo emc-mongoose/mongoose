@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.step;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.DelayedTransferConvertBuffer;
 import com.emc.mongoose.api.model.item.ItemFactory;
@@ -192,7 +192,7 @@ extends ConfigurableStepBase {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the data input");
-		} catch(final UserShootHisFootException e) {
+		} catch(final OmgShootMyFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		}
 
