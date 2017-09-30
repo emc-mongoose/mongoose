@@ -39,8 +39,6 @@ jobs:
     - stage: "Docker images"
       script:
       - docker --version
-      - echo TAG=$TAG
-      - echo MONGOOSE_VERSION=$MONGOOSE_VERSION
 
       - ./gradlew clean dist
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -52,28 +50,28 @@ jobs:
 
     - script:
       - export REPO=emcmongoose/mongoose-storage-driver-service
-      - docker build --build-arg TAG=$TAG -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push emcmongoose/mongoose-storage-driver-service:$TAG
 
     - script:
       - export REPO=emcmongoose/mongoose-scripting-groovy
-      - docker build --build-arg TAG=$TAG -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push emcmongoose/mongoose-scripting-groovy:$TAG
 
     - script:
       - export REPO=emcmongoose/mongoose-scripting-jython
-      - docker build --build-arg TAG=$TAG -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push emcmongoose/mongoose-scripting-jython:$TAG
 
     - script:
       - export REPO=emcmongoose/mongoose-integration-prometheus
-      - docker build --build-arg MONGOOSE_VERSION=$TAG -f docker/Dockerfile.integration-prometheus -t $REPO:$COMMIT .
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.integration-prometheus -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push emcmongoose/mongoose-integration-prometheus:$TAG
