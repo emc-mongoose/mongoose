@@ -6,7 +6,7 @@ import com.github.akurilov.commons.system.DirectMemUtil;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
@@ -58,7 +58,7 @@ implements FileStorageDriver<I, O> {
 	public BasicFileStorageDriver(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		
 		openSrcFileFunc = ioTask -> {

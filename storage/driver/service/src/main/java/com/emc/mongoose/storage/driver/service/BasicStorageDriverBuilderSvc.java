@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -157,7 +157,7 @@ implements StorageDriverBuilderSvc<I, O, T> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
-	throws IOException, UserShootHisFootException {
+	throws IOException, OmgShootMyFootException {
 		try {
 			final StorageDriver<I, O> driver = build();
 			final T wrapper = (T) new WrappingStorageDriverSvc<>(

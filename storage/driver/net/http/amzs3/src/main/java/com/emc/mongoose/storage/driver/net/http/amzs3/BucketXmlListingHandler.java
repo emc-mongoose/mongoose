@@ -28,7 +28,7 @@ extends DefaultHandler {
 	private boolean itIsItemId = false;
 	private boolean itIsItemSize = false;
 	private boolean itIsTruncateFlag = false;
-	private boolean isTruncated = false;
+	private boolean isTruncatedFlag = false;
 	private String oid = null, strSize = null;
 	private long offset;
 	private I nextItem;
@@ -113,8 +113,12 @@ extends DefaultHandler {
 		} else if(itIsItemSize) {
 			strSize = new String(buff, start, length);
 		} else if(itIsTruncateFlag) {
-			isTruncated = Boolean.parseBoolean(new String(buff, start, length));
+			isTruncatedFlag = Boolean.parseBoolean(new String(buff, start, length));
 		}
 		super.characters(buff, start, length);
+	}
+
+	public final boolean isTruncated() {
+		return isTruncatedFlag;
 	}
 }

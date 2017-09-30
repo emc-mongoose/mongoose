@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.common.supply;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 
 import static com.emc.mongoose.api.common.supply.RangeDefinedSupplier.SEED_BRACKETS;
 
@@ -33,16 +33,16 @@ implements PatternDefinedSupplier {
 	private BatchSupplier<String>[] suppliers;
 
 	public BasicPatternDefinedSupplier(final String pattern)
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		this(pattern, StringSupplierFactory.getInstance());
 	}
 
 	public BasicPatternDefinedSupplier(
 		final String pattern,
 		final SupplierFactory<String, ? extends BatchSupplier<String>> supplierFactory
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		if(pattern == null) {
-			throw new UserShootHisFootException("Null pattern");
+			throw new OmgShootMyFootException("Null pattern");
 		}
 		this.supplierFactory = supplierFactory;
 		this.pattern = pattern;
@@ -78,9 +78,9 @@ implements PatternDefinedSupplier {
 	 */
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for getSuppliers[]
 	protected void initialize()
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		if(pattern.charAt(0) != PATTERN_CHAR) {
-			throw new UserShootHisFootException();
+			throw new OmgShootMyFootException();
 		}
 		final StringBuilder patternBuilder = STRING_BULDER.get();
 		patternBuilder.setLength(0);

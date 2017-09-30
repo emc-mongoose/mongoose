@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.base;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
@@ -83,7 +83,7 @@ implements StorageDriver<I, O> {
 	protected StorageDriverBase(
 		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		this.contentSrc = contentSrc;
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();

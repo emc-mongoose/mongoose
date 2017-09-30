@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.builder;
 
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.env.Extensions;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -100,7 +100,7 @@ public class BasicStorageDriverBuilder<
 	
 	@Override @SuppressWarnings("unchecked")
 	public T build()
-	throws UserShootHisFootException, InterruptedException {
+	throws OmgShootMyFootException, InterruptedException {
 
 		try(
 			final Instance ctx = CloseableThreadContext

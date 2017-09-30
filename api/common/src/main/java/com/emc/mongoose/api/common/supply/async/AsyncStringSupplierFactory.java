@@ -2,7 +2,7 @@ package com.emc.mongoose.api.common.supply.async;
 
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.SupplierFactory;
-import com.emc.mongoose.api.common.exception.DanShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.coroutines.CoroutinesProcessor;
 
 import java.text.ParseException;
@@ -43,13 +43,13 @@ implements SupplierFactory<String, G> {
 	@Override @SuppressWarnings("unchecked")
 	public final G createSupplier(
 		final char type, final String seedStr, final String formatStr, final String rangeStr
-	) throws DanShootHisFootException {
+	) throws OmgShootMyFootException {
 		long seed = System.nanoTime() ^ System.currentTimeMillis();
 		if(seedStr != null && !seedStr.isEmpty()) {
 			try {
 				seed = Long.parseLong(seedStr);
 			} catch(final NumberFormatException e) {
-				throw new DanShootHisFootException(
+				throw new OmgShootMyFootException(
 					"Seed value is not a 64 bit integer: \"" + seedStr + "\""
 				);
 			}
@@ -66,7 +66,7 @@ implements SupplierFactory<String, G> {
 						min = Long.parseLong(matcher.group(1));
 						max = Long.parseLong(matcher.group(2));
 					} else {
-						throw new DanShootHisFootException();
+						throw new OmgShootMyFootException();
 					}
 				}
 				return (G) new AsyncRangeDefinedLongFormattingSupplier(
@@ -83,7 +83,7 @@ implements SupplierFactory<String, G> {
 						min = Double.parseDouble(matcher.group(1));
 						max = Double.parseDouble(matcher.group(2));
 					} else {
-						throw new DanShootHisFootException();
+						throw new OmgShootMyFootException();
 					}
 				}
 				return (G) new AsyncRangeDefinedDoubleFormattingSupplier(
@@ -101,10 +101,10 @@ implements SupplierFactory<String, G> {
 							min = parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS);
 							max = parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS);
 						} catch(final ParseException e) {
-							throw new DanShootHisFootException("Failed to parse the pattern");
+							throw new OmgShootMyFootException("Failed to parse the pattern");
 						}
 					} else {
-						throw new DanShootHisFootException();
+						throw new OmgShootMyFootException();
 					}
 				}
 				return (G) new AsyncRangeDefinedDateFormattingSupplier(
@@ -113,7 +113,7 @@ implements SupplierFactory<String, G> {
 			}
 
 			default:
-				throw new DanShootHisFootException("Unknown format type: '" + type + "'");
+				throw new OmgShootMyFootException("Unknown format type: '" + type + "'");
 		}
 	}
 

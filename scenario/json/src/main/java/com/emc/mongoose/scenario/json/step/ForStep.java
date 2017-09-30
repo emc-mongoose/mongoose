@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.json.step;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
@@ -193,7 +193,7 @@ extends SequentialStep {
 				localConfig.apply((Map<String, Object>) nodeConfig);
 			} else {
 				throw new ScenarioParseException(
-					"Invalid baseConfig node type: \"" + nodeConfig.getClass() + "\""
+					"Invalid config node type: \"" + nodeConfig.getClass() + "\""
 				);
 			}
 		}*/
@@ -247,7 +247,7 @@ extends SequentialStep {
 					);
 				}
 			}
-		} catch(final UserShootHisFootException | IOException e) {
+		} catch(final OmgShootMyFootException | IOException e) {
 			throw new ScenarioParseException("Failed to replace the configuration values", e);
 		}
 	}

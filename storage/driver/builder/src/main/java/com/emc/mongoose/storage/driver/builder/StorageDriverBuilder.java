@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -50,5 +50,5 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	T build()
-	throws RemoteException, UserShootHisFootException, InterruptedException;
+	throws RemoteException, OmgShootMyFootException, InterruptedException;
 }

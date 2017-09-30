@@ -1,9 +1,8 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.api.common.exception.DanShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
 import com.github.akurilov.commons.io.Input;
@@ -143,7 +142,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	
 	@SuppressWarnings("unchecked")
 	public T build()
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 
 		// prepare
 		final IoTaskBuilder<I, O> ioTaskBuilder;
@@ -230,7 +229,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(itemInput == null) {
 			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
 			if(itemInput == null) {
-				throw new UserShootHisFootException("No item input available");
+				throw new OmgShootMyFootException("No item input available");
 			}
 			if(ItemType.DATA.equals(itemType)) {
 				sizeEstimate = estimateTransferSize(
@@ -253,12 +252,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 				final long srcItemsCountMin = srcItemsCountRange.getBeg();
 				final long srcItemsCountMax = srcItemsCountRange.getEnd();
 				if(srcItemsCountMin < 0) {
-					throw new DanShootHisFootException(
+					throw new OmgShootMyFootException(
 						"Source data items count min value should be more than 0"
 					);
 				}
 				if(srcItemsCountMax == 0 || srcItemsCountMax < srcItemsCountMin) {
-					throw new DanShootHisFootException(
+					throw new OmgShootMyFootException(
 						"Source data items count max value should be more than 0 and not less than "
 							+ "min value"
 					);
@@ -268,7 +267,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				try {
 					srcItemsCount = loadSrcItems(itemInput, srcItemsBuff, (int) M);
 				} catch(final IOException e) {
-					throw new DanShootHisFootException(e);
+					throw new OmgShootMyFootException(e);
 				} finally {
 					try {
 						itemInput.close();
@@ -276,18 +275,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 					}
 				}
 				if(srcItemsCount == 0) {
-					throw new DanShootHisFootException(
+					throw new OmgShootMyFootException(
 						"Available source items count " + srcItemsCount + " should be more than 0"
 					);
 				}
 				if(srcItemsCount < srcItemsCountMin) {
-					throw new DanShootHisFootException(
+					throw new OmgShootMyFootException(
 						"Available source items count " + srcItemsCount + " is less than configured"
 							+ " min " + srcItemsCountMin
 					);
 				}
 				if(srcItemsCount < srcItemsCountMax) {
-					throw new DanShootHisFootException(
+					throw new OmgShootMyFootException(
 						"Available source items count " + srcItemsCount + " is less than configured"
 							+ " max " + srcItemsCountMax
 					);
@@ -407,7 +406,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 
 	private BatchSupplier<String> getOutputPathSupplier()
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		final BatchSupplier<String> pathSupplier;
 		String path = itemConfig.getOutputConfig().getPath();
 		if(path == null || path.isEmpty()) {
@@ -427,14 +426,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@SuppressWarnings("unchecked")
 	private Input<I> getItemInput(
 		final IoType ioType, final String itemInputFile, final String itemInputPath
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		
 		if(itemInputFile == null || itemInputFile.isEmpty()) {
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
 				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
 					itemInput = getNewItemInput();
 				} else {
-					throw new UserShootHisFootException(
+					throw new OmgShootMyFootException(
 						"No input (file either path) is specified for non-create generator"
 					);
 				}
@@ -463,7 +462,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 
 	private Input<I> getNewItemInput()
-	throws DanShootHisFootException {
+	throws OmgShootMyFootException {
 		final NamingConfig namingConfig = itemConfig.getNamingConfig();
 		final ItemNamingType namingType = ItemNamingType.valueOf(
 			namingConfig.getType().toUpperCase()
@@ -485,7 +484,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	private static Map<String, String> loadCredentials(final String file, final long countLimit)
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		final Map<String, String> credentials = new HashMap<>();
 		try(final BufferedReader br = Files.newBufferedReader(Paths.get(file))) {
 			String line;
