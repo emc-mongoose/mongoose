@@ -245,7 +245,11 @@ extends HttpStorageDriverBase<I, O> {
 			queryBuilder.append("&prefix=").append(prefix);
 		}
 		if(lastPrevItem != null) {
-			queryBuilder.append("&marker=").append(lastPrevItem.getName());
+			String lastItemName = lastPrevItem.getName();
+			if(lastItemName.contains("/")) {
+				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
+			}
+			queryBuilder.append("&marker=").append(lastItemName);
 		}
 		queryBuilder.append("&limit=").append(countLimit);
 		final String query = queryBuilder.toString();
