@@ -90,11 +90,11 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	
 	protected HttpStorageDriverBase(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
 
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
@@ -114,7 +114,7 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
+	protected FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
 
 		ThreadContext.put(KEY_TEST_STEP_ID, stepId);

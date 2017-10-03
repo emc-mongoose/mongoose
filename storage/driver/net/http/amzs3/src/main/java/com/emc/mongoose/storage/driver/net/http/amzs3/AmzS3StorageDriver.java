@@ -106,10 +106,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 
 	public AmzS3StorageDriver(
-		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
-		super(stepId, contentSrc, loadConfig, storageConfig, verifyFlag);
+		super(stepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		requestAuthTokenFunc = null; // do not use
 	}
 	
@@ -118,7 +118,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
-		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
@@ -155,6 +155,10 @@ extends HttpStorageDriverBase<I, O> {
 
 		// create the destination bucket if it doesn't exists
 		if(!bucketExistedBefore) {
+			reqHeaders = new DefaultHttpHeaders();
+			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 			applyMetaDataHeaders(reqHeaders);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
@@ -182,6 +186,10 @@ extends HttpStorageDriverBase<I, O> {
 
 		// check the bucket versioning state
 		final String bucketVersioningReqUri = path + "?" + URL_ARG_VERSIONING;
+		reqHeaders = new DefaultHttpHeaders();
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
@@ -215,6 +223,9 @@ extends HttpStorageDriverBase<I, O> {
 		final FullHttpRequest putBucketVersioningReq;
 		if(!versioning && versioningEnabled) {
 			// disable bucket versioning
+			reqHeaders = new DefaultHttpHeaders();
+			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_DISABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
@@ -242,6 +253,9 @@ extends HttpStorageDriverBase<I, O> {
 			putBucketVersioningResp.release();
 		} else if(versioning && !versioningEnabled) {
 			// enable bucket versioning
+			reqHeaders = new DefaultHttpHeaders();
+			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, VERSIONING_ENABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
@@ -284,13 +298,12 @@ extends HttpStorageDriverBase<I, O> {
 	) throws IOException {
 
 		final int countLimit = count < 1 || count > MAX_KEYS_LIMIT ? MAX_KEYS_LIMIT : count;
+
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
-
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
-
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 

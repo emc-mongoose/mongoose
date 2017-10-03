@@ -88,22 +88,19 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@SuppressWarnings("unchecked")
 	protected NetStorageDriverBase(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
 
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
 
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
-		final long sto = netConfig.getTimeoutMilliSec();
-		if(sto < 0 || sto > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException(
-				"Socket timeout shouldn't be more than " + Integer.MAX_VALUE +
-				" seconds and less than 0"
-			);
+		final int sto = netConfig.getTimeoutMilliSec();
+		if(sto > 0) {
+			this.socketTimeout = sto;
 		} else {
-			this.socketTimeout = (int) sto;
+			this.socketTimeout = 0;
 		}
 		final NodeConfig nodeConfig = netConfig.getNodeConfig();
 		storageNodePort = nodeConfig.getPort();

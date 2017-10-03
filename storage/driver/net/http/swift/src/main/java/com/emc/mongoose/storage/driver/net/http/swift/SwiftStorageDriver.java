@@ -94,7 +94,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		// check the destination container if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
-		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
@@ -143,10 +143,7 @@ extends HttpStorageDriverBase<I, O> {
 			!containerExists || (versioningEnabled && !versioning) ||
 			(!versioningEnabled && versioning)
 		) {
-			// TODO move to separate EMC-specific implementation
-			//if(fsAccess) {
-			//	reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(true));
-			//}
+			reqHeaders = new DefaultHttpHeaders();
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}
