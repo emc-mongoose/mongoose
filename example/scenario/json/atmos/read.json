@@ -1,0 +1,41 @@
+{
+	"type": "sequential",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "atmos"
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "linear-read-atmos.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "linear-read-atmos.csv"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

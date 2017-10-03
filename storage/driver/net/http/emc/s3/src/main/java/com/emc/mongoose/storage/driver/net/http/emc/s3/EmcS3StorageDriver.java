@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.net.http.emc.s3;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -43,12 +42,15 @@ import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -62,13 +64,15 @@ extends AmzS3StorageDriver<I, O> {
 
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
+	private static final ThreadLocal<MessageDigest>
+		MD5_DIGEST = ThreadLocal.withInitial(DigestUtils::getMd5Digest);
 
 	private final Random rnd = new Random();
 
 	public EmcS3StorageDriver(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 	}
 
@@ -333,6 +337,7 @@ extends AmzS3StorageDriver<I, O> {
 		final List<Range> fixedRanges = dataIoTask.getFixedRanges();
 		final int randomRangesCount = dataIoTask.getRandomRangesCount();
 		DataItem srcItem;
+		String srcItemPath;
 
 		// request content
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
@@ -345,9 +350,13 @@ extends AmzS3StorageDriver<I, O> {
 				try {
 					for(int i = 0; i < srcItemsToConcat.size(); i ++) {
 						srcItem = srcItemsToConcat.get(i);
+						srcItemPath = srcItem.getName();
+						if(srcItemPath.charAt(0) == '/') {
+							srcItemPath = srcItemPath.substring(1);
+						}
 						content
 							.append("\t\t{\n\t\t\t\"path\": \"")
-							.append(srcItem.getName())
+							.append(srcItemPath)
 							.append("\",\n");
 						nextSrcItemSize = srcItem.size();
 						srcItemCellSize = nextSrcItemSize / randomRangesCount;
@@ -378,9 +387,13 @@ extends AmzS3StorageDriver<I, O> {
 			} else {
 				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
 					srcItem = srcItemsToConcat.get(i);
+					srcItemPath = srcItem.getName();
+					if(srcItemPath.charAt(0) == '/') {
+						srcItemPath = srcItemPath.substring(1);
+					}
 					content
 						.append("\t\t{\n\t\t\t\"path\": \"")
-						.append(srcItem.getName())
+						.append(srcItemPath)
 						.append("\"\n\t\t}");
 					if(i < srcItemsToConcat.size() - 1) {
 						content.append(',');
@@ -392,9 +405,13 @@ extends AmzS3StorageDriver<I, O> {
 			try {
 				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
 					srcItem = srcItemsToConcat.get(i);
+					srcItemPath = srcItem.getName();
+					if(srcItemPath.charAt(0) == '/') {
+						srcItemPath = srcItemPath.substring(1);
+					}
 					content
 						.append("\t\t{\n\t\t\t\"path\": \"")
-						.append(srcItem.getName())
+						.append(srcItemPath)
 						.append("\",\n")
 						.append("\t\t\t\"range\": \"");
 					rangeListToStringBuff(fixedRanges, srcItem.size(), content);
@@ -420,15 +437,21 @@ extends AmzS3StorageDriver<I, O> {
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
 
-		// request
+		// request content and its hash (required)
+		final byte[] contentBytes = content.toString().getBytes();
+		final MessageDigest md5Digest = MD5_DIGEST.get();
+		md5Digest.reset();
+		final byte[] contentMd5Bytes = md5Digest.digest(contentBytes);
+		final String contentMd5EncodedHash = new String(Base64.encodeBase64(contentMd5Bytes));
+		httpHeaders.set(HttpHeaderNames.CONTENT_MD5, contentMd5EncodedHash);
+
 		final HttpMethod httpMethod = HttpMethod.PUT;
-		final String contentStr = content.toString();
 		final String uriPath = getDataUriPath(
 			(I) dataIoTask.getItem(), dataIoTask.getSrcPath(), dataIoTask.getDstPath(),
 			IoType.CREATE
 		);
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
-			HTTP_1_1, httpMethod, uriPath, Unpooled.wrappedBuffer(contentStr.getBytes()),
+			HTTP_1_1, httpMethod, uriPath, Unpooled.wrappedBuffer(contentBytes),
 			httpHeaders, EmptyHttpHeaders.INSTANCE
 		);
 

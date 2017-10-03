@@ -1,6 +1,6 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -42,5 +42,5 @@ public interface LoadGeneratorBuilder<
 	LoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput);
 
 	T build()
-	throws UserShootHisFootException, IOException;
+	throws OmgShootMyFootException, IOException;
 }

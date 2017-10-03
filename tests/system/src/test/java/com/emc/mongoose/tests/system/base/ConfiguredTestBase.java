@@ -35,14 +35,12 @@ extends LoggingTestBase {
 	throws Exception {
 		super.setUp();
 		config = Config.loadDefaults();
-		if(configArgs != null) {
-			config.apply(
-				CliArgParser.parseArgs(
-					config.getAliasingConfig(), configArgs.toArray(new String[configArgs.size()])
-				),
-				"systest-" + LogUtil.getDateTimeStamp()
-			);
-		}
+		config.apply(
+			CliArgParser.parseArgs(
+				config.getAliasingConfig(), configArgs.toArray(new String[configArgs.size()])
+			),
+			"systest-" + LogUtil.getDateTimeStamp()
+		);
 		config.getTestConfig().getStepConfig().setId(stepId);
 		config.getTestConfig().getStepConfig().setIdTmp(false);
 		config.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(true);

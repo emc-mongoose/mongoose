@@ -26,7 +26,7 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations)
+            "Class-Path": extClassPathString(configurations.runtime),
 		)
 	}
 }

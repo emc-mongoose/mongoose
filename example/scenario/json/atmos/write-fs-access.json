@@ -1,0 +1,27 @@
+{
+	"type": "load",
+	"config": {
+		"item": {
+			"output": {
+				"file": "linear-write-fs-access-atmos.csv"
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "atmos"
+			},
+			"net": {
+				"http": {
+					"fsAccess": true
+				}
+			}
+		}
+	}
+}

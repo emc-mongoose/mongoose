@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.net.http.amzs3;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
-import com.emc.mongoose.storage.driver.base.AsyncCurrentDateSupplier;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -107,10 +106,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 
 	public AmzS3StorageDriver(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+	) throws OmgShootMyFootException, InterruptedException {
+		super(stepId, contentSrc, loadConfig, storageConfig, verifyFlag);
 		requestAuthTokenFunc = null; // do not use
 	}
 	
@@ -340,6 +339,9 @@ extends HttpStorageDriverBase<I, O> {
 			listRespContent.release();
 			if(buff.size() == 0) {
 				throw new EOFException();
+			}
+			if(!listingHandler.isTruncated()) {
+				buff.add(null); // poison
 			}
 		} catch(final InterruptedException e) {
 			throw new CancellationException();

@@ -1,0 +1,18 @@
+{
+	"type": "for",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"time": 5
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "command",
+			"value": "echo \"Hi there!\""
+		}
+	]
+}

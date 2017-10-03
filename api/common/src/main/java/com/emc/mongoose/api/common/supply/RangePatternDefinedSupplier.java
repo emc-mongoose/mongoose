@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.common.supply;
 
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 
 import static com.emc.mongoose.api.common.supply.RangeDefinedSupplier.RANGE_BRACKETS;
 import static com.emc.mongoose.api.common.supply.RangeDefinedSupplier.SEED_BRACKETS;
@@ -14,14 +14,14 @@ extends BasicPatternDefinedSupplier {
 	private String[] segments;
 
 	public RangePatternDefinedSupplier(final String pattern)
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		super(pattern);
 	}
 
 	public RangePatternDefinedSupplier(
 		final String pattern,
 		final SupplierFactory<String, ? extends BatchSupplier<String>> supplierFactory
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		super(pattern, supplierFactory);
 	}
 
@@ -47,7 +47,7 @@ extends BasicPatternDefinedSupplier {
 	 */
 	@Override
 	protected final void initialize()
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		final int patternSymbolsNum = countPatternSymbols(getPattern());
 		if(patternSymbolsNum > 0) {
 			setSuppliers(new BatchSupplier[patternSymbolsNum]);
@@ -106,7 +106,7 @@ extends BasicPatternDefinedSupplier {
 	 * @param index of current empty position in inputs' array ('inputs' field)
 	 */
 	private void addExpressionParams(final StringBuilder expression, final int index)
-	throws UserShootHisFootException {
+	throws OmgShootMyFootException {
 		final char type = expression.charAt(0);
 		final String seed = initParameter(expression, SEED_BRACKETS);
 		final String format = initParameter(expression, FORMAT_BRACKETS);

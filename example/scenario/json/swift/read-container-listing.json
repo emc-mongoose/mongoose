@@ -1,0 +1,50 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "read-container-listing"
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100000
+				}
+			}
+		},
+		"load": {
+			"limit": {
+				"concurrency": 10
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "swift"
+			},
+			"net": {
+				"http": {
+					"namespace": "test"
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition"
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"path": "read-container-listing"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

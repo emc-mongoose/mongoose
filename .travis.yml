@@ -1,23 +1,31 @@
 language: java
 
-sudo: required
+sudo: true
 
 addons:
   ulimit:
     nofile: 1048576
 
-services:
-- docker
-
-jdk:
-- oraclejdk8
+#services:
+#- docker
+#
+#jdk:
+#- oraclejdk8
 
 env:
   global:
-    - COMMIT=${TRAVIS_COMMIT::8}
-    - secure: Awm5ZsL8OJZTu6laZWGgm0kixqCQaAWnR7du+tMphQEra62axza+M5Dtj6OqmLXygtjirKUawEODN9oW64YAUqvWBy3ZV6b+x43Ixbh3dTTTGCkk9o0AbguGN3mcVyASf/FhXHsCR209dEmBN7rOxv1H/FXOsTBL7FrkrjB25SwRouiJa5q3ji2HsZXEIV8kpZ+l8eb8X4zuMpWfUJtqtzZ5Ozbr2UrL3EadImhfFzDqNggDZBZIYL5bsZk/7dJ2ATpHznqaWfRWw7KxKjZ/QCdjoquVQEnWt6Mg2dUh3eDzoynnDor7TTUrekSsJLFecfyRL6+1Y3KrgPxj1eiRqllCKbVNLzQltU5lrM5vMA3SzAJ/5HoRbqRiksKJrw+e/sE0WKeh48O+qMkdmOpLtdrdZMq9cguSmFUFTwOfh3X02z7KcdGixYNcu2jrwuPxt02hc0NxF2viv5vriagtFredTcGIT8hDUNh4ARCFsm2JH5TXkgdovTUYNfd1EFMVKsPp7WC73cRv+Hreex1MmkEbQkP9iHRwxVf7du3gWhJOvtiaXrZIk1Hi9lEiMjuqTrBFh5wpsOWM6Zhj1JCrdgH9OqmeatOrstZbjJu3U/ZEIsCsxFvI37+wpa2cgtGVUVgMxFQm2XEPzUM3QdU/1rsDVXIW6oylTlCM85qPy2Q=
-    - secure: rqGxUKnBladWD+2SuRBit/eLnJD/nZNoT0Gl1HW0GiQaI+OL38PDtIrEiQJBI8yBjj70SGGIMCaGhXifpQLUIBcnBLjtFj4ztvhIG9ooDQZcf6jVu0BgpfNzXgHKKJN4uM1bQb2upljmVaIrSDfrYitVHtPoxgp0JWESym/a2ITwhZ863OgmqKsVJm3uFhHJC1qle6OUTcgT0fI+o/XVATuqu6WbxH6YdUgIEwCjiaA8xcCY0TXt89R2cu7Tq9GbdNQVzTxwWpBRP7/JC9pzwQTsCNsAA++rkvMkNb2StPK5xDmqDNf91hfjv0ZNIxhIRRBKRr8V7p9sb4dPOxjdZkcKFzGWaNxFMqa3cMts1BYki/ZeRDEJmmRk/Z2ocKfHh0C0MLfL9JGkeG355oEFclKDZbpLzMUlg/B+oxzht6NnXCmOw0LzJxcxq9m9zEbWCaXmPCRvdkGOG0Bj+MvEFgxfyXRPhOSJayggIXx02YZN1HfUiKUZg8p1M54HyOEpaQEzSfjMRaGXhCOW6kHbYpJFeJYI+4weEDaivTfts1RvnB/84ZGl4hY5faTUnV56KzKOreh8V6UfQiriMr5h5qdBnK1J7Olz0Bc+T2q33zL5rqgeMiEMq2+YDqsBfC/UwE/lO5S6PHyONKm16+lqrZY3ay/cvXrhb/Rll2gPxgk=
-    - secure: JT3awhA8DPSKDmBv0ByCX1ri23rPDl5gKQr0XlR683L3pxjafyto3hHop0UDkztweQuFrXka+NnI3VJhEnfmccoK91v7C17SlfamqHGvp562AIXOBrSVKUgDdq8nDtPMvIcVj1SW/hyKlkLrTmPJYBjwpGN6moS67kN09S6p9RIDG3FqNSzmHmzqyGfFM41mY3gAXQLibjE5RLYiA+E4MMxww+O2ngln1eVRs0p025xPqFlW4n3z3DevhEmAv4jJ72lyNnDfb4SCm1Y41EIMrGE9wdspcSI3VNuB3lFpKobr5ynPH6kYZLgefJS5wcvqu1SgM6i45OyXCIOvpq94nf/PssvrSwk3aGNGTZLhdQ8brhSzbLS1tKJ2Ts4nCUAiq+OQx/jyOG7+xJTSQpZWG9QH8dHsNZnHmGFo48nrZifvMzjAln1jAhPdu97A2aV2atvUoPR+8HogvrDpdRjKRCkjicimQk0a2y4Ij30KwUfPD4ubpRTteTYUW2C4RVznCWzZrhPFQ2XYDxpPHgwG71UUwzGvEW83DEFSKOI7ohaBj2pksnJ429QHlGlb8HiQrbEP3tfutIVXY6teGYpZnZ2dDlgREzxdDHuzU8m/w19YUQUiyUrHdLEc5vSUOBclG59afeIHSgdXKtHLffv+7dvT1SZlYcmukTMeuvwLnKk=
+  - TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
+  - COMMIT=${TRAVIS_COMMIT::8}
+  - MONGOOSE_VERSION=$TAG
+  - secure: Awm5ZsL8OJZTu6laZWGgm0kixqCQaAWnR7du+tMphQEra62axza+M5Dtj6OqmLXygtjirKUawEODN9oW64YAUqvWBy3ZV6b+x43Ixbh3dTTTGCkk9o0AbguGN3mcVyASf/FhXHsCR209dEmBN7rOxv1H/FXOsTBL7FrkrjB25SwRouiJa5q3ji2HsZXEIV8kpZ+l8eb8X4zuMpWfUJtqtzZ5Ozbr2UrL3EadImhfFzDqNggDZBZIYL5bsZk/7dJ2ATpHznqaWfRWw7KxKjZ/QCdjoquVQEnWt6Mg2dUh3eDzoynnDor7TTUrekSsJLFecfyRL6+1Y3KrgPxj1eiRqllCKbVNLzQltU5lrM5vMA3SzAJ/5HoRbqRiksKJrw+e/sE0WKeh48O+qMkdmOpLtdrdZMq9cguSmFUFTwOfh3X02z7KcdGixYNcu2jrwuPxt02hc0NxF2viv5vriagtFredTcGIT8hDUNh4ARCFsm2JH5TXkgdovTUYNfd1EFMVKsPp7WC73cRv+Hreex1MmkEbQkP9iHRwxVf7du3gWhJOvtiaXrZIk1Hi9lEiMjuqTrBFh5wpsOWM6Zhj1JCrdgH9OqmeatOrstZbjJu3U/ZEIsCsxFvI37+wpa2cgtGVUVgMxFQm2XEPzUM3QdU/1rsDVXIW6oylTlCM85qPy2Q=
+  - secure: rqGxUKnBladWD+2SuRBit/eLnJD/nZNoT0Gl1HW0GiQaI+OL38PDtIrEiQJBI8yBjj70SGGIMCaGhXifpQLUIBcnBLjtFj4ztvhIG9ooDQZcf6jVu0BgpfNzXgHKKJN4uM1bQb2upljmVaIrSDfrYitVHtPoxgp0JWESym/a2ITwhZ863OgmqKsVJm3uFhHJC1qle6OUTcgT0fI+o/XVATuqu6WbxH6YdUgIEwCjiaA8xcCY0TXt89R2cu7Tq9GbdNQVzTxwWpBRP7/JC9pzwQTsCNsAA++rkvMkNb2StPK5xDmqDNf91hfjv0ZNIxhIRRBKRr8V7p9sb4dPOxjdZkcKFzGWaNxFMqa3cMts1BYki/ZeRDEJmmRk/Z2ocKfHh0C0MLfL9JGkeG355oEFclKDZbpLzMUlg/B+oxzht6NnXCmOw0LzJxcxq9m9zEbWCaXmPCRvdkGOG0Bj+MvEFgxfyXRPhOSJayggIXx02YZN1HfUiKUZg8p1M54HyOEpaQEzSfjMRaGXhCOW6kHbYpJFeJYI+4weEDaivTfts1RvnB/84ZGl4hY5faTUnV56KzKOreh8V6UfQiriMr5h5qdBnK1J7Olz0Bc+T2q33zL5rqgeMiEMq2+YDqsBfC/UwE/lO5S6PHyONKm16+lqrZY3ay/cvXrhb/Rll2gPxgk=
+  - secure: JT3awhA8DPSKDmBv0ByCX1ri23rPDl5gKQr0XlR683L3pxjafyto3hHop0UDkztweQuFrXka+NnI3VJhEnfmccoK91v7C17SlfamqHGvp562AIXOBrSVKUgDdq8nDtPMvIcVj1SW/hyKlkLrTmPJYBjwpGN6moS67kN09S6p9RIDG3FqNSzmHmzqyGfFM41mY3gAXQLibjE5RLYiA+E4MMxww+O2ngln1eVRs0p025xPqFlW4n3z3DevhEmAv4jJ72lyNnDfb4SCm1Y41EIMrGE9wdspcSI3VNuB3lFpKobr5ynPH6kYZLgefJS5wcvqu1SgM6i45OyXCIOvpq94nf/PssvrSwk3aGNGTZLhdQ8brhSzbLS1tKJ2Ts4nCUAiq+OQx/jyOG7+xJTSQpZWG9QH8dHsNZnHmGFo48nrZifvMzjAln1jAhPdu97A2aV2atvUoPR+8HogvrDpdRjKRCkjicimQk0a2y4Ij30KwUfPD4ubpRTteTYUW2C4RVznCWzZrhPFQ2XYDxpPHgwG71UUwzGvEW83DEFSKOI7ohaBj2pksnJ429QHlGlb8HiQrbEP3tfutIVXY6teGYpZnZ2dDlgREzxdDHuzU8m/w19YUQUiyUrHdLEc5vSUOBclG59afeIHSgdXKtHLffv+7dvT1SZlYcmukTMeuvwLnKk=
+
+before_install:
+- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+- sudo apt-get update
+- sudo apt-get -y install docker-ce
 
 jobs:
   include:
@@ -25,247 +33,361 @@ jobs:
     - stage: "Unit tests"
       script: "./gradlew :tests:unit:test"
 
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ChainLoadStepTest :tests:system:test
-    - stage: "System tests"
-      env:
-        - TEST=ChainLoadStepTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=ChainWithDelayTest :tests:system:test
-    - env:
-        - TEST=ChainWithDelayTest
-        - STORAGE_TYPE=atmos,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,medium
-        - ITEM_SIZE=medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=CircularAppendTest :tests:system:test
-    - env:
-        - TEST=CircularAppendTest
-        - STORAGE_TYPE=atmos,fs,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=CircularReadSingleItemTest :tests:system:test
-    - env:
-        - TEST=CircularReadSingleItemTest
-        - STORAGE_TYPE=fs,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,high
-        - ITEM_SIZE=empty,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=emcs3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ConcatRandomItemRangesTest :tests:system:test
-    - env:
-        - TEST=ConcatRandomItemRangesTest
-        - STORAGE_TYPE=emcs3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium
-        - ITEM_SIZE=small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large,huge ./gradlew -Dtest.single=CreateNoLimitTest :tests:system:test
-    - env:
-        - TEST=CreateNoLimitTest
-        - STORAGE_TYPE=atmos,fs
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low
-        - ITEM_SIZE=empty,small,medium,large,huge
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=DeleteUsingInputPathLimitByRateTest :tests:system:test
-    - env:
-        - TEST=DeleteUsingInputPathLimitByRateTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,high
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium ./gradlew -Dtest.single=FileStorageMetricsThresholdTest :tests:system:test
-    - env:
-        - TEST=FileStorageMetricsThresholdTest
-        - STORAGE_TYPE=fs
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=HttpStorageMetricsThresholdTest :tests:system:test
-    - env:
-        - TEST=HttpStorageMetricsThresholdTest
-        - STORAGE_TYPE=atmos,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=medium,large
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=s3 DRIVER_COUNT=distributed CONCURRENCY=medium,high ITEM_SIZE=small ./gradlew -Dtest.single=InfiniteLoopTest :tests:system:test
-    - env:
-        - TEST=InfiniteLoopTest
-        - STORAGE_TYPE=s3
-        - DRIVER_COUNT=distributed
-        - CONCURRENCY=medium,high
-        - ITEM_SIZE=small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos DRIVER_COUNT=local CONCURRENCY=medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=LoopByCountTest :tests:system:test
-    - env:
-        - TEST=LoopByCountTest
-        - STORAGE_TYPE=atmos
-        - DRIVER_COUNT=local
-        - CONCURRENCY=medium,high
-        - ITEM_SIZE=medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty ./gradlew -Dtest.single=LoopByRangeTest :tests:system:test
-    - env:
-        - TEST=LoopByRangeTest
-        - STORAGE_TYPE=fs
-        - DRIVER_COUNT=local
-        - CONCURRENCY=single
-        - ITEM_SIZE=empty
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,swift DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty,small ./gradlew -Dtest.single=LoopBySequenceTest :tests:system:test
-    - env:
-        - TEST=LoopBySequenceTest
-        - STORAGE_TYPE=fs,swift
-        - DRIVER_COUNT=local
-        - CONCURRENCY=single
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MixedLoadTest :tests:system:test
-    - env:
-        - TEST=MixedLoadTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
-    - env:
-        - TEST=MultipleFixedUpdateAndSingleFixedReadTest
-        - STORAGE_TYPE=fs,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleRandomUpdateAndMultipleFixedReadTest :tests:system:test
-    - env:
-        - TEST=MultipleRandomUpdateAndMultipleFixedReadTest
-        - STORAGE_TYPE=fs,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadCustomContentVerificationFailTest :tests:system:test
-    - env:
-        - TEST=ReadCustomContentVerificationFailTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=ReadFilesWithVariablePathTest :tests:system:test
-    - env:
-        - TEST=ReadFilesWithVariablePathTest
-        - STORAGE_TYPE=fs
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium,high
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=ReadUsingInputFileLimitByCountTest :tests:system:test
-    - env:
-        - TEST=ReadUsingInputFileLimitByCountTest
-        - STORAGE_TYPE=fs,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium,high
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadVerificationAfterUpdateTest :tests:system:test
-    - env:
-        - TEST=ReadVerificationAfterUpdateTest
-        - STORAGE_TYPE=fs,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium,high
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadVerificationDisableTest :tests:system:test
-    - env:
-        - TEST=ReadVerificationDisableTest
-        - STORAGE_TYPE=atmos,fs
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleFixedUpdateAndSingleRandomReadTest :tests:system:test
-    - env:
-        - TEST=SingleFixedUpdateAndSingleRandomReadTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium,high
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleRandomUpdateAndMultipleRandomReadTest :tests:system:test
-    - env:
-        - TEST=SingleRandomUpdateAndMultipleRandomReadTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=single,low,medium
-        - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=UnlimitedConcurrencyLimitByRateTest :tests:system:test
-    - env:
-        - TEST=UnlimitedConcurrencyLimitByRateTest
-        - STORAGE_TYPE=atmos,fs,swift
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=unlimited
-        - ITEM_SIZE=small,medium,large
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=UpdateUsingInputFileLimitByTimeTest :tests:system:test
-    - env:
-        - TEST=UpdateUsingInputFileLimitByTimeTest
-        - STORAGE_TYPE=fs,s3
-        - DRIVER_COUNT=local,distributed
-        - CONCURRENCY=low,medium,high
-        - ITEM_SIZE=medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=WeightedLoadTest :tests:system:test
-    - env:
-        - TEST=WeightedLoadTest
-        - STORAGE_TYPE=fs,s3,swift
-        - DRIVER_COUNT=distributed
-        - CONCURRENCY=single,medium
-        - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     - stage: "Component performance tests"
       script: "./gradlew :tests:perf:test"
 
+    - stage: "Docker images"
+      script:
+      - docker --version
+
+      - ./gradlew clean dist
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - export REPO=emcmongoose/mongoose
+      - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose:$TAG
+
+    - script:
+      - export REPO=emcmongoose/mongoose-storage-driver-service
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose-storage-driver-service:$TAG
+
+    - script:
+      - export REPO=emcmongoose/mongoose-scripting-groovy
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose-scripting-groovy:$TAG
+
+    - script:
+      - export REPO=emcmongoose/mongoose-scripting-jython
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose-scripting-jython:$TAG
+
+    - script:
+      - export REPO=emcmongoose/mongoose-integration-prometheus
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.integration-prometheus -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose-integration-prometheus:$TAG
+
+    - stage: "System tests"
+
+    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest :tests:system:test
+      env:
+      - TEST=GroovyCreateLimitBySizeTest
+      - STORAGE_TYPE=s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium,high
+      - ITEM_SIZE=small,medium
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=swift DRIVER_COUNT=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest :tests:system:test
+    - env:
+      - TEST=GroovyLoadTypeStepsTest
+      - STORAGE_TYPE=swift
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=medium
+      - ITEM_SIZE=small
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty ./gradlew -Dtest.single=GroovyParallelShellCommandTest :tests:system:test
+    - env:
+      - TEST=GroovyParallelShellCommandTest
+      - STORAGE_TYPE=fs
+      - DRIVER_COUNT=local
+      - CONCURRENCY=single
+      - ITEM_SIZE=empty
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsChainLoadStepTest :tests:system:test
+    - stage: "System tests"
+      env:
+      - TEST=JsChainLoadStepTest
+      - STORAGE_TYPE=swift
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=medium
+      - ITEM_SIZE=small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test
+    - env:
+      - TEST=JsCopyUsingInputPathTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonChainLoadStepTest :tests:system:test
+    - env:
+      - TEST=JsonChainLoadStepTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=JsonCircularReadSingleItemTest :tests:system:test
+    - env:
+      - TEST=JsonCircularReadSingleItemTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,high
+      - ITEM_SIZE=empty,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=emcs3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonConcatRandomItemRangesTest :tests:system:test
+    - env:
+      - TEST=JsonConcatRandomItemRangesTest
+      - STORAGE_TYPE=emcs3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low,medium
+      - ITEM_SIZE=small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonFileStorageMetricsThresholdTest :tests:system:test
+    - env:
+      - TEST=JsonFileStorageMetricsThresholdTest
+      - STORAGE_TYPE=fs
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=s3 DRIVER_COUNT=distributed CONCURRENCY=medium,high ITEM_SIZE=small ./gradlew -Dtest.single=JsonInfiniteLoopTest :tests:system:test
+    - env:
+      - TEST=JsonInfiniteLoopTest
+      - STORAGE_TYPE=s3
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=medium,high
+      - ITEM_SIZE=small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos DRIVER_COUNT=local CONCURRENCY=medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonLoopByCountTest :tests:system:test
+    - env:
+      - TEST=JsonLoopByCountTest
+      - STORAGE_TYPE=atmos
+      - DRIVER_COUNT=local
+      - CONCURRENCY=medium,high
+      - ITEM_SIZE=medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty ./gradlew -Dtest.single=JsonLoopByRangeTest :tests:system:test
+    - env:
+      - TEST=JsonLoopByRangeTest
+      - STORAGE_TYPE=fs
+      - DRIVER_COUNT=local
+      - CONCURRENCY=single
+      - ITEM_SIZE=empty
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,swift DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonLoopBySequenceTest :tests:system:test
+    - env:
+      - TEST=JsonLoopBySequenceTest
+      - STORAGE_TYPE=fs,swift
+      - DRIVER_COUNT=local
+      - CONCURRENCY=single
+      - ITEM_SIZE=empty,small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMixedLoadTest :tests:system:test
+    - env:
+      - TEST=JsonMixedLoadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
+    - env:
+      - TEST=JsonMultipleFixedUpdateAndSingleFixedReadTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleRandomUpdateAndMultipleFixedReadTest :tests:system:test
+    - env:
+      - TEST=JsonMultipleRandomUpdateAndMultipleFixedReadTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonReadCustomContentVerificationFailTest :tests:system:test
+    - env:
+      - TEST=JsonReadCustomContentVerificationFailTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonReadFilesWithVariablePathTest :tests:system:test
+    - env:
+      - TEST=JsonReadFilesWithVariablePathTest
+      - STORAGE_TYPE=fs
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low,medium,high
+      - ITEM_SIZE=empty,small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonReadUsingInputFileLimitByCountTest :tests:system:test
+    - env:
+      - TEST=JsonReadUsingInputFileLimitByCountTest
+      - STORAGE_TYPE=fs,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low,medium,high
+      - ITEM_SIZE=empty,small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonReadVerificationAfterUpdateTest :tests:system:test
+    - env:
+      - TEST=JsonReadVerificationAfterUpdateTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium,high
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonReadVerificationDisableTest :tests:system:test
+    - env:
+      - TEST=JsonReadVerificationDisableTest
+      - STORAGE_TYPE=atmos,fs
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleFixedUpdateAndSingleRandomReadTest :tests:system:test
+    - env:
+      - TEST=JsonSingleFixedUpdateAndSingleRandomReadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low,medium,high
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleRandomUpdateAndMultipleRandomReadTest :tests:system:test
+    - env:
+      - TEST=JsonSingleRandomUpdateAndMultipleRandomReadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low,medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest :tests:system:test
+    - env:
+      - TEST=JsonWeightedLoadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=s3 DRIVER_COUNT=distributed CONCURRENCY=low ITEM_SIZE=small ./gradlew -Dtest.single=JsUpdateAndReadVariantsTest :tests:system:test
+    - env:
+      - TEST=JsUpdateAndReadVariantsTest
+      - STORAGE_TYPE=s3
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=low
+      - ITEM_SIZE=small
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large,huge ./gradlew -Dtest.single=PyCreateNoLimitTest :tests:system:test
+    - env:
+      - TEST=PyCreateNoLimitTest
+      - STORAGE_TYPE=atmos,fs
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low
+      - ITEM_SIZE=empty,small,medium,large,huge
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    - stage: "Unstable system tests"
+
+    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest :tests:system:test
+      env:
+      - TEST=JsonChainWithDelayTest
+      - STORAGE_TYPE=atmos,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonCircularAppendTest :tests:system:test
+    - env:
+      - TEST=JsonCircularAppendTest
+      - STORAGE_TYPE=atmos,fs,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonDeleteUsingInputPathLimitByRateTest :tests:system:test
+    - env:
+      - TEST=JsonDeleteUsingInputPathLimitByRateTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,high
+      - ITEM_SIZE=empty,small
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=JsonHttpStorageMetricsThresholdTest :tests:system:test
+    - env:
+      - TEST=JsonHttpStorageMetricsThresholdTest
+      - STORAGE_TYPE=atmos,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=medium,large
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest :tests:system:test
+    - env:
+      - TEST=JsonUnlimitedConcurrencyLimitByRateTest
+      - STORAGE_TYPE=atmos,fs,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=unlimited
+      - ITEM_SIZE=small,medium,large
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonUpdateUsingInputFileLimitByTimeTest :tests:system:test
+    - env:
+      - TEST=JsonUpdateUsingInputFileLimitByTimeTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium,high
+      - ITEM_SIZE=medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=JsonMultiPartCreateTest :tests:system:test
+    - env:
+      - TEST=JsonMultiPartCreateTest
+      - STORAGE_TYPE=s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=medium,large
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     - stage: "Deploy"
-      script: "./gradlew clean dist"
       deploy:
         skip_cleanup: true
         provider: releases
@@ -276,63 +398,23 @@ jobs:
         - "./build/dist/mongoose-*.tgz"
         on:
           tags: true
-      after_deploy:
-        - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-        - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
-        - export REPO=emcmongoose/mongoose
-        - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
-        - docker tag $REPO:$COMMIT $REPO:$TAG
-        - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-        - docker push $REPO
-        - export REPO=emcmongoose/mongoose-storage-driver-service
-        - docker build -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
-        - docker tag $REPO:$COMMIT $REPO:$TAG
-        - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-        - docker push $REPO
 
-#    - stage: "Quarantine tests"
-#
-#    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=CopyUsingInputPathTest :tests:system:test
-#      env:
-#        - TEST=CopyUsingInputPathTest
-#        - STORAGE_TYPE=fs,s3,swift
-#        - DRIVER_COUNT=local,distributed
-#        - CONCURRENCY=single,medium
-#        - ITEM_SIZE=empty,small
-#      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-#
-#    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=CreateLimitBySizeTest :tests:system:test
-#    - env:
-#        - TEST=CreateLimitBySizeTest
-#        - STORAGE_TYPE=s3,swift
-#        - DRIVER_COUNT=local,distributed
-#        - CONCURRENCY=low,medium,high
-#        - ITEM_SIZE=small,medium
-#      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-#
-#    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=MultiPartCreateTest :tests:system:test
-#    - env:
-#        - TEST=MultiPartCreateTest
-#        - STORAGE_TYPE=s3,swift
-#        - DRIVER_COUNT=local,distributed
-#        - CONCURRENCY=low,medium
-#        - ITEM_SIZE=medium,large
-#      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-#
-#    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest :tests:system:test
-#    - env:
-#        - TEST=ReadVerificationAfterCircularUpdateTest
-#        - STORAGE_TYPE=fs,s3,swift
-#        - DRIVER_COUNT=local,distributed
-#        - CONCURRENCY=low,medium
-#        - ITEM_SIZE=small
-#      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-#
-#    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large ./gradlew -Dtest.single=TlsAndNodeBalancingTest :tests:system:test
-#    - env:
-#        - TEST=TlsAndNodeBalancingTest
-#        - STORAGE_TYPE=atmos,s3,swift
-#        - DRIVER_COUNT=local
-#        - CONCURRENCY=single,low
-#        - ITEM_SIZE=empty,small,medium,large
-#      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+    - stage: "Failing system tests"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonReadVerificationAfterCircularUpdateTest :tests:system:test
+      env:
+      - TEST=JsonReadVerificationAfterCircularUpdateTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large ./gradlew -Dtest.single=JsonTlsAndNodeBalancingTest :tests:system:test
+    - env:
+      - TEST=JsonTlsAndNodeBalancingTest
+      - STORAGE_TYPE=atmos,s3,swift
+      - DRIVER_COUNT=local
+      - CONCURRENCY=single,low
+      - ITEM_SIZE=empty,small,medium,large
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"

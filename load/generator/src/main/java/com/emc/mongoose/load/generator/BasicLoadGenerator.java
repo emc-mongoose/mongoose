@@ -13,7 +13,7 @@ import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
 
 import com.emc.mongoose.api.common.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -80,7 +80,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		final Input<I> itemInput, final int batchSize, final long transferSizeEstimate,
 		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
 		final int recycleQueueSize, final boolean shuffleFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		this.batchSize = batchSize;
 		this.itemInput = itemInput;
 		this.transferSizeEstimate = transferSizeEstimate;
@@ -89,7 +89,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
 		} else if(sizeLimit.get() > 0 && this.transferSizeEstimate > 0) {
-			this.countLimit = sizeLimit.get() / this.transferSizeEstimate;
+			this.countLimit = sizeLimit.get() / this.transferSizeEstimate + 1;
 		} else {
 			this.countLimit = Long.MAX_VALUE;
 		}

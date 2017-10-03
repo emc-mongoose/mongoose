@@ -80,6 +80,13 @@ public abstract class ParameterizedSysTestBase {
 		this.driverCount = driverCount;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
+		System.out.println(
+			getClass().getSimpleName() + " params: "
+				+ StorageType.KEY_ENV + " = " + storageType.name() + ", "
+				+ DriverCount.KEY_ENV + " = " + driverCount.name() + ", "
+				+ Concurrency.KEY_ENV + " = " + concurrency.name() + ", "
+				+ ItemSize.KEY_ENV + " = " + itemSize.name()
+		);
 	}
 
 	@Test

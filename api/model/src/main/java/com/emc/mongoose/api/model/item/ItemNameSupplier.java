@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.exception.DanShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.commons.math.MathUtil;
 import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;
 
@@ -23,7 +23,7 @@ implements IdStringInput {
 	public ItemNameSupplier(
 		final ItemNamingType namingType, final String prefix, final int length, final int radix,
 		final long offset
-	) throws DanShootHisFootException {
+	) throws OmgShootMyFootException {
 		//
 		super(null, null);
 		//
@@ -39,19 +39,19 @@ implements IdStringInput {
 			if(length > prefix.length()) {
 				this.length = length;
 			} else {
-				throw new DanShootHisFootException("Id length should be more than prefix length");
+				throw new OmgShootMyFootException("Id length should be more than prefix length");
 			}
 		} else {
 			prefixLength = 0;
 			if(length > 0){
 				this.length = length;
 			} else {
-				throw new DanShootHisFootException("Id length should be more than 0");
+				throw new OmgShootMyFootException("Id length should be more than 0");
 			}
 		}
 		//
 		if(radix < Character.MIN_RADIX || radix > Character.MAX_RADIX) {
-			throw new DanShootHisFootException("Invalid radix: " + radix);
+			throw new OmgShootMyFootException("Invalid radix: " + radix);
 		}
 		this.radix = radix;
 		// xorShift(0) = 0, so override this behaviour (which is by default)

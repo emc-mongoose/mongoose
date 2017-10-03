@@ -1,6 +1,8 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
+import java.nio.file.Paths
+
 description = "Mongoose is a high-load storage performance testing tool"
 
 buildscript {
@@ -39,22 +41,34 @@ ext {
 		it != project("api") && it != project("load") && it != project("storage") &&
 			it != project("tests")
 	}
+}
 
-	setClassPath = {
-		configurations -> [
-			configurations.runtime
-				.collect { file ->
-					// it's 3rd party if jar file name doesn't contain the root project name
-					if(-1 == file.name.indexOf(rootProject.name)) {
-						["lib", file.name].join(File.separator)
-					} else {
-						file.name
-					}
+def classPathString(final configuration) {
+    return configuration
+        .collect {
+            file ->
+                // it's 3rd party if jar file name doesn't contain the root project name
+                if(-1 == file.name.indexOf(rootProject.name)) {
+                    ["lib", file.name].join(File.separator)
+                } else {
+                    file.name
+                }
+        }
+        .join(" ")
+}
+
+def extClassPathString(final configuration) {
+    return configuration
+		.collect {
+			file ->
+				// it's 3rd party if jar file name doesn't contain the root project name
+				if(-1 == file.name.indexOf(rootProject.name)) {
+					["..", "lib", file.name].join(File.separator)
+				} else {
+					["..", file.name].join(File.separator)
 				}
-				.join(" "),
-		]
-			.join(" ")
-	}
+    }
+    .join(" ")
 }
 
 subprojects {
@@ -116,16 +130,16 @@ subprojects {
 	}
 
 	test {
-		jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+		///jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
-		systemProperty "com.sun.management.jmxremote", "true"
-		systemProperty "com.sun.management.jmxremote.port", "9010"
-		systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
-		systemProperty "com.sun.management.jmxremote.local.only", "false"
-		systemProperty "com.sun.management.jmxremote.authenticate", "false"
-		systemProperty "com.sun.management.jmxremote.ssl", "false"
+		//systemProperty "com.sun.management.jmxremote", "true"
+		//systemProperty "com.sun.management.jmxremote.port", "9010"
+		//systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
+		//systemProperty "com.sun.management.jmxremote.local.only", "false"
+		//systemProperty "com.sun.management.jmxremote.authenticate", "false"
+		//systemProperty "com.sun.management.jmxremote.ssl", "false"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
@@ -212,10 +226,24 @@ task wrapper(type: Wrapper) {
 	gradleVersion = "3.5"
 }
 
-task dist(type: Tar) {
+static def isExtensionProject(final Project p) {
+    final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
+    return f.exists() && f.isDirectory() && f.listFiles().length > 0
+}
+
+static def isTestsProject(final Project p) {
+	if(p == null) {
+		return false
+	} else if(p.name.contains("test")) {
+		return true
+	} else {
+		return isTestsProject(p.parent)
+	}
+}
+
+task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
-	dependsOn tasks.withType(Jar)
 	baseName = rootProject.name
 	compression = Compression.GZIP
 	destinationDir = new File("build", "dist")
@@ -224,18 +252,26 @@ task dist(type: Tar) {
 		into("config") {
 			from { "config" }
 		}
-		into("lib") {
-			for(Project p: mutualProjects) {
-				from p.configurations.runtime {
-					exclude "${rootProject.name}*.jar"
-				}
+		into("example") {
+			from { "example" }
+		}
+		into("ext") {
+            final extProjects = mutualProjects.findAll { isExtensionProject(it) }
+            for(final Project p: extProjects) {
+                from p.jar.outputs.files
+            }
+        }
+        into("lib") {
+            for(Project p: mutualProjects) {
+                from p.configurations.runtime {
+                    exclude "${rootProject.name}*.jar"
+                }
+            }
+        }
+        for(final Project p: mutualProjects.findAll { !isExtensionProject(it) }) {
+			if(!isTestsProject(p)) {
+				from p.jar.outputs.files
 			}
-		}
-		for(Project p: mutualProjects) {
-			from p.jar.outputs.files
-		}
-		into("scenario") {
-			from { "scenario" }
 		}
 	}
 }

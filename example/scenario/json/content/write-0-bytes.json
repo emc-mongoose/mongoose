@@ -1,0 +1,12 @@
+{
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"input": {
+					"file": "example/content/zerobytes"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,87 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "/weighted-load"
+			}
+		},
+		"load": {
+			"limit": {
+				"concurrency": 100
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"size": "1KB"
+					},
+					"output": {
+						"file": "weighted-load.csv"
+					}
+				},
+				"output": {
+					"metrics": {
+						"average": {
+							"persist": false
+						},
+						"summary": {
+							"persist": false
+						},
+						"trace": {
+							"persist": false
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "mixed",
+			"weights": [
+				20, 80
+			],
+			"config": [
+				{
+					"item": {
+						"data": {
+							"size": "4KB-16KB"
+						}
+					},
+					"test": {
+						"step": {
+							"limit": {
+								"time": "90s"
+							}
+						}
+					}
+				},
+				{
+					"item": {
+						"input": {
+							"file": "weighted-load.csv"
+						}
+					},
+					"load": {
+						"generator": {
+							"recycle": {
+								"enabled": true
+							}
+						},
+						"type": "read"
+					}
+				}
+			]
+		}
+	]
+}

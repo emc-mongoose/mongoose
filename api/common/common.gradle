@@ -17,7 +17,7 @@ task printClasspath {
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations)
+			"Class-Path": classPathString(configurations.runtime),
 		)
 	}
 }

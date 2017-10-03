@@ -1,0 +1,46 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"input": {
+					"file": "example/content/textexample"
+				}
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "content-read-text.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"verify": true
+					},
+					"input": {
+						"file": "content-read-text.csv"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,53 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"size": "10KB"
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 10000
+				}
+			}
+		},
+		"load": {
+			"limit": {
+				"concurrency": 10
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "fs"
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"path": "/var/tmp/read-files-from-variable-path/%p{16;2}",
+						"file": "read-files-from-variable-path.csv"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "read-files-from-variable-path.csv"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

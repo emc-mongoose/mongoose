@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.UserShootHisFootException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.coroutines.Coroutine;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -16,7 +16,6 @@ import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
-import com.emc.mongoose.api.common.net.ssl.SslContext;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -42,7 +41,9 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -50,7 +51,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
-import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
@@ -89,8 +90,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected NetStorageDriverBase(
 		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
+
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
 		final long sto = netConfig.getTimeoutMilliSec();
@@ -411,7 +414,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				if(!(dataIoTask instanceof CompositeDataIoTask)) {
 					final DataItem dataItem = (DataItem) item;
 					final String srcPath = dataIoTask.getSrcPath();
-					if(null == srcPath || srcPath.isEmpty()) {
+					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
 						if(sslFlag) {
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
 						} else {
@@ -578,15 +581,18 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void appendHandlers(final ChannelPipeline pipeline) {
 		if(sslFlag) {
 			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
-			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
-			sslEngine.setEnabledProtocols(
-				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
-			);
-			sslEngine.setUseClientMode(true);
-			sslEngine.setEnabledCipherSuites(
-				SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
-			);
-			pipeline.addLast(new SslHandler(sslEngine));
+			try {
+				final SslContext sslCtx = SslContextBuilder
+					.forClient()
+					.trustManager(InsecureTrustManagerFactory.INSTANCE)
+					.build();
+				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
+			} catch(final SSLException e) {
+				LogUtil.exception(
+					Level.ERROR, e, "Failed to enable the SSL/TLS for the connection: {}",
+					pipeline.channel()
+				);
+			}
 		}
 		if(socketTimeout > 0) {
 			pipeline.addLast(

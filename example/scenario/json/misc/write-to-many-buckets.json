@@ -1,0 +1,36 @@
+{
+	"type": "parallel",
+	"steps": [
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"path": "bucket1"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"path": "bucket2"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"path": "bucket3"
+					}
+				}
+			}
+		}
+	]
+}
+

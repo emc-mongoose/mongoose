@@ -1,0 +1,59 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "copy-swift-object"
+			},
+			"data": {
+				"size": "1KB"
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		},
+		"load": {
+			"limit": {
+				"concurrency": 10
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "swift"
+			},
+			"net": {
+				"http": {
+					"namespace": "examplens"
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "copy-swift-object.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config": {
+				"item": {
+					"output": {
+						"path": "copy-swift-object_"
+					},
+					"input": {
+						"file": "copy-swift-object.csv"
+					}
+				}
+			}
+		}
+	]
+}

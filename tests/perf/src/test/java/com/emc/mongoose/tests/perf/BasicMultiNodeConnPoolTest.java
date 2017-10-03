@@ -1,13 +1,13 @@
 package com.emc.mongoose.tests.perf;
 
 import com.emc.mongoose.api.common.concurrent.ThreadUtil;
-import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
 import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
-import com.emc.mongoose.tests.perf.util.mock.BasicMultiNodeConnPoolMock;
-import com.emc.mongoose.tests.perf.util.mock.DummyChannelPoolHandlerMock;
+import com.emc.mongoose.tests.perf.mock.BasicMultiNodeConnPoolMock;
+import com.emc.mongoose.tests.perf.mock.DummyChannelPoolHandlerMock;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -87,7 +87,7 @@ public class BasicMultiNodeConnPoolTest {
 								}
 								connBuff.clear();
 							}
-						} catch(final ConnLeaseException ignored) {
+						} catch(final Exception ignored) {
 						}
 					}
 				);
