@@ -107,7 +107,7 @@ extends AmzS3StorageDriver {
 		final Date reqDate0 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders0.get(HttpHeaderNames.DATE)
 		);
-		assertEquals(new Date().getTime(), reqDate0.getTime(), 1_000_000);
+		assertEquals(new Date().getTime(), reqDate0.getTime(), 10_000);
 		final String authHeaderValue0 = reqHeaders0.get(HttpHeaderNames.AUTHORIZATION);
 		assertTrue(authHeaderValue0.startsWith("AWS " + UID + ":"));
 
@@ -120,7 +120,7 @@ extends AmzS3StorageDriver {
 		final Date reqDate1 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders1.get(HttpHeaderNames.DATE)
 		);
-		assertEquals(new Date().getTime(), reqDate1.getTime(), 1_000_000);
+		assertEquals(new Date().getTime(), reqDate1.getTime(), 10_000);
 		final String authHeaderValue1 = reqHeaders1.get(HttpHeaderNames.AUTHORIZATION);
 		assertTrue(authHeaderValue1.startsWith("AWS " + UID + ":"));
 
@@ -132,7 +132,7 @@ extends AmzS3StorageDriver {
 		final Date reqDate2 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders2.get(HttpHeaderNames.DATE)
 		);
-		assertEquals(new Date().getTime(), reqDate2.getTime(), 1_000_000);
+		assertEquals(new Date().getTime(), reqDate2.getTime(), 10_000);
 		final String authHeaderValue2 = reqHeaders2.get(HttpHeaderNames.AUTHORIZATION);
 		assertTrue(authHeaderValue2.startsWith("AWS " + UID + ":"));
 		final byte[] reqContent2 = req2.content().array();
@@ -142,15 +142,36 @@ extends AmzS3StorageDriver {
 		);
 	}
 
-	@Test
+	@Test @SuppressWarnings("unchecked")
 	public void testBucketListing()
 	throws Exception {
 
 		final ItemFactory itemFactory = ItemType.getItemFactory(ItemType.DATA);
-
-		final List<DataItem> dataItems = list(
-			itemFactory, "/bucket1", "prefix", itemFactory.getItem()
-
+		final String bucketName = "/bucket1";
+		final String itemPrefix = "0000";
+		final String markerItemId = "00003brre8lgz";
+		final Item markerItem = itemFactory.getItem(
+			markerItemId, Long.parseLong(markerItemId, Character.MAX_RADIX), 10240
 		);
+
+		final List<Item> items = list(
+			itemFactory, bucketName, itemPrefix, Character.MAX_RADIX, markerItem, 1000
+		);
+
+		assertEquals(0, items.size());
+		assertEquals(1, httpRequestsLog.size());
+		final FullHttpRequest httpRequest = httpRequestsLog.poll();
+		assertEquals(HttpMethod.GET, httpRequest.method());
+		final String reqUri = httpRequest.uri();
+		assertEquals(
+			bucketName + "?prefix=" + itemPrefix + "&marker=" + markerItemId + "&max-keys=1000",
+			reqUri
+		);
+		final HttpHeaders httpHeaders = httpRequest.headers();
+		assertEquals(0, httpHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(httpHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertTrue(httpHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
 	}
 }
