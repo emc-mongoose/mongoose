@@ -220,7 +220,7 @@
 					"name" : "extResultsFile",
 					"type" : "File",
 					"fileName" : "result.xml",
-					"append" : false,
+					"append" : true,
 					"createOnDemand" : true,
 					"PatternLayout" : {
 						"header" : "<result>\n",
@@ -233,7 +233,7 @@
 					"name" : "extThresholdResultsFile",
 					"type" : "File",
 					"fileName" : "result-threshold.xml",
-					"append" : false,
+					"append" : true,
 					"createOnDemand" : true,
 					"PatternLayout" : {
 						"header" : "<result-with-threshold>\n",
