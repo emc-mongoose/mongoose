@@ -29,10 +29,12 @@ extends BasicUpdatingValueSupplier<T> {
 		final InitCallable<T> updateAction
 	)
 	throws OmgDoesNotPerformException {
+
 		super(initialValue, null);
 		if(updateAction == null) {
 			throw new NullPointerException("Argument should not be null");
 		}
+
 		updateTask = new ExclusiveCoroutineBase(coroutinesProcessor) {
 
 			@Override
@@ -51,6 +53,8 @@ extends BasicUpdatingValueSupplier<T> {
 				lastValue = null;
 			}
 		};
+
+		updateTask.start();
 	}
 	
 	public static abstract class InitializedCallableBase<T>
