@@ -318,7 +318,11 @@ extends AmzS3StorageDriver<I, O> {
 			final DataIoTask dataIoTask = (DataIoTask) ioTask;
 			final List<DataItem> srcItemsToConcat = dataIoTask.getSrcItemsToConcat();
 			if(srcItemsToConcat != null) {
-				return getCopyRangesRequest(dataIoTask, nodeAddr, srcItemsToConcat);
+				try {
+					return getCopyRangesRequest(dataIoTask, nodeAddr, srcItemsToConcat);
+				} catch(final IOException e) {
+					throw new AssertionError(e);
+				}
 			} else {
 				return super.getHttpRequest(ioTask, nodeAddr);
 			}
@@ -333,11 +337,14 @@ extends AmzS3StorageDriver<I, O> {
 
 	private FullHttpRequest getCopyRangesRequest(
 		final DataIoTask dataIoTask, final String nodeAddr, final List<DataItem> srcItemsToConcat
-	) {
+	) throws IOException {
+
 		final List<Range> fixedRanges = dataIoTask.getFixedRanges();
 		final int randomRangesCount = dataIoTask.getRandomRangesCount();
+		final DataItem dstItem = dataIoTask.getItem();
 		DataItem srcItem;
 		String srcItemPath;
+		long dstItemSize = 0;
 
 		// request content
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
@@ -347,42 +354,40 @@ extends AmzS3StorageDriver<I, O> {
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
 			if(randomRangesCount > 0) {
 				long nextSrcItemSize, srcItemCellSize, srcItemCellStartPos, rangeStart, rangeEnd;
-				try {
-					for(int i = 0; i < srcItemsToConcat.size(); i ++) {
-						srcItem = srcItemsToConcat.get(i);
-						srcItemPath = srcItem.getName();
-						if(srcItemPath.charAt(0) == '/') {
-							srcItemPath = srcItemPath.substring(1);
-						}
-						content
-							.append("\t\t{\n\t\t\t\"path\": \"")
-							.append(srcItemPath)
-							.append("\",\n");
-						nextSrcItemSize = srcItem.size();
-						srcItemCellSize = nextSrcItemSize / randomRangesCount;
-						if(srcItemCellSize > 0) {
-							content.append("\t\t\t\"range\": \"");
-							for(int j = 0; j < randomRangesCount; j ++) {
-								srcItemCellStartPos = j * srcItemCellSize;
-								rangeStart = srcItemCellStartPos
-									+ rnd.nextLong(srcItemCellSize / 2);
-								rangeEnd = rangeStart
-									+ rnd.nextLong(
-										srcItemCellStartPos + srcItemCellSize - rangeStart - 1
-									);
-								content.append(rangeStart).append('-').append(rangeEnd);
-								if(j < randomRangesCount - 1) {
-									content.append(',');
-								}
-							}
-							content.append("\"\n\t\t}");
-						}
-						if(i < srcItemsToConcat.size() - 1) {
-							content.append(',');
-						}
-						content.append('\n');
+				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
+					srcItem = srcItemsToConcat.get(i);
+					srcItemPath = srcItem.getName();
+					if(srcItemPath.charAt(0) == '/') {
+						srcItemPath = srcItemPath.substring(1);
 					}
-				} catch(final IOException ignored) {
+					content
+						.append("\t\t{\n\t\t\t\"path\": \"")
+						.append(srcItemPath)
+						.append("\",\n");
+					nextSrcItemSize = srcItem.size();
+					srcItemCellSize = nextSrcItemSize / randomRangesCount;
+					if(srcItemCellSize > 0) {
+						content.append("\t\t\t\"range\": \"");
+						for(int j = 0; j < randomRangesCount; j ++) {
+							srcItemCellStartPos = j * srcItemCellSize;
+							rangeStart = srcItemCellStartPos
+								+ rnd.nextLong(srcItemCellSize / 2);
+							rangeEnd = rangeStart
+								+ rnd.nextLong(
+									srcItemCellStartPos + srcItemCellSize - rangeStart - 1
+								);
+							content.append(rangeStart).append('-').append(rangeEnd);
+							if(j < randomRangesCount - 1) {
+								content.append(',');
+							}
+							dstItemSize += rangeEnd - rangeStart + 1;
+						}
+						content.append("\"\n\t\t}");
+					}
+					if(i < srcItemsToConcat.size() - 1) {
+						content.append(',');
+					}
+					content.append('\n');
 				}
 			} else {
 				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
@@ -398,33 +403,36 @@ extends AmzS3StorageDriver<I, O> {
 					if(i < srcItemsToConcat.size() - 1) {
 						content.append(',');
 					}
+					dstItemSize += srcItem.size();
 					content.append('\n');
 				}
 			}
 		} else {
-			try {
-				for(int i = 0; i < srcItemsToConcat.size(); i ++) {
-					srcItem = srcItemsToConcat.get(i);
-					srcItemPath = srcItem.getName();
-					if(srcItemPath.charAt(0) == '/') {
-						srcItemPath = srcItemPath.substring(1);
-					}
-					content
-						.append("\t\t{\n\t\t\t\"path\": \"")
-						.append(srcItemPath)
-						.append("\",\n")
-						.append("\t\t\t\"range\": \"");
-					rangeListToStringBuff(fixedRanges, srcItem.size(), content);
-					content.append("\"\n\t\t}");
-					if(i < srcItemsToConcat.size() - 1) {
-						content.append(',');
-					}
-					content.append('\n');
+			final int n = srcItemsToConcat.size();
+			for(int i = 0; i < n; i ++) {
+				srcItem = srcItemsToConcat.get(i);
+				srcItemPath = srcItem.getName();
+				if(srcItemPath.charAt(0) == '/') {
+					srcItemPath = srcItemPath.substring(1);
 				}
-			} catch(final IOException ignored) {
+				content
+					.append("\t\t{\n\t\t\t\"path\": \"")
+					.append(srcItemPath)
+					.append("\",\n")
+					.append("\t\t\t\"range\": \"");
+				rangeListToStringBuff(fixedRanges, srcItem.size(), content);
+				content.append("\"\n\t\t}");
+				if(i < srcItemsToConcat.size() - 1) {
+					content.append(',');
+				}
+				content.append('\n');
 			}
+			dstItemSize = dataIoTask.getMarkedRangesSize() * n;
 		}
 		content.append("\t]\n}\n");
+
+		// set the total summary size for the destination item
+		dstItem.size(dstItemSize);
 
 		// request headers
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
@@ -447,8 +455,7 @@ extends AmzS3StorageDriver<I, O> {
 
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final String uriPath = getDataUriPath(
-			(I) dataIoTask.getItem(), dataIoTask.getSrcPath(), dataIoTask.getDstPath(),
-			IoType.CREATE
+			(I) dstItem, dataIoTask.getSrcPath(), dataIoTask.getDstPath(), IoType.CREATE
 		);
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, Unpooled.wrappedBuffer(contentBytes),
