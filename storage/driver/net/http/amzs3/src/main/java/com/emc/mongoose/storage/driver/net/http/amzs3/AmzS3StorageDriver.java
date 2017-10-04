@@ -588,7 +588,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
+	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
 		httpHeaders.set(KEY_X_AMZ_COPY_SOURCE, srcPath);
 	}
@@ -641,7 +641,7 @@ extends HttpStorageDriverBase<I, O> {
 			}
 		}
 
-		// x-amz-*, x-emc-*
+		// x-amz-*
 		String headerName;
 		Map<String, String> sortedHeaders = new TreeMap<>();
 		if(sharedHeaders != null) {

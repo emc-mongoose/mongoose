@@ -3,23 +3,25 @@ package com.emc.mongoose.tests.unit;
 import com.emc.mongoose.api.common.env.DateUtil;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.composite.data.BasicCompositeDataIoTask;
+import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.api.model.io.task.data.BasicDataIoTask;
-import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
-import com.emc.mongoose.api.model.io.task.data.DataIoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.api.model.item.BasicDataItem;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3Api;
 import com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3StorageDriver;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.storage.net.http.HttpConfig;
+
+import com.github.akurilov.commons.collection.Range;
 
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -32,12 +34,15 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 
 import org.junit.After;
 import org.junit.Test;
+
+import static com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3Api.KEY_UPLOAD_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -184,17 +189,450 @@ extends AmzS3StorageDriver {
 	}
 
 	@Test
-	public void testHttpRequests()
+	public void testCreateRequest()
 	throws Exception {
 
+		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
 		final DataItem dataItem = new BasicDataItem(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
 		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
-			hashCode(), dataItem, IoType.CREATE,
+			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0
 		);
 		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.PUT, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(itemSize, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"PUT\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
+	}
+
+	@Test
+	public void testCopyRequest()
+	throws Exception {
+
+		final String bucketSrcName = "/bucketSrc";
+		final String bucketDstName = "/bucketDst";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.CREATE, dataItem, bucketSrcName, bucketDstName,
+			Credential.getInstance(UID, SECRET), null, 0
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.PUT, httpRequest.method());
+		assertEquals(bucketDstName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(bucketSrcName + "/" + itemId, reqHeaders.get(AmzS3Api.KEY_X_AMZ_COPY_SOURCE));
+		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"PUT\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n'
+				+ AmzS3Api.KEY_X_AMZ_COPY_SOURCE + ':' + bucketSrcName + '/' + itemId + '\n'
+				+ bucketDstName + '/' + itemId,
+			canonicalReq
+		);
+	}
+
+	@Test
+	public void testMpuInitRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket3";
+		final long itemSize = 12345;
+		final long partSize = 1234;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final CompositeDataIoTask<DataItem> mpuTask = new BasicCompositeDataIoTask<>(
+			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0, partSize
+		);
+
+		final HttpRequest httpRequest = getHttpRequest(mpuTask, "127.0.0.1");
+		final HttpHeaders reqHeaders = httpRequest.headers();
+
+		assertEquals(HttpMethod.POST, httpRequest.method());
+		assertEquals(bucketName + '/' + itemId + "?uploads", httpRequest.uri());
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"POST\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n' + bucketName + '/'
+				+ itemId + "?uploads",
+			canonicalReq
+		);
+	}
+
+	@Test
+	public void testMpuCompleteRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket3";
+		final long itemSize = 12345;
+		final long partSize = 1234;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final CompositeDataIoTask<DataItem> mpuTask = new BasicCompositeDataIoTask<>(
+			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0, partSize
+		);
+
+		// emulate the upload id setting
+		mpuTask.put(KEY_UPLOAD_ID, "qazxswedc");
+		// emulate the sub-tasks completion
+		for(int i = 0; i < mpuTask.getSubTasks().size(); i ++) {
+			mpuTask.subTaskCompleted();
+		}
+		assertTrue(mpuTask.allSubTasksDone());
+
+		final HttpRequest httpRequest = getHttpRequest(mpuTask, "127.0.0.1");
+		final HttpHeaders reqHeaders = httpRequest.headers();
+
+		assertEquals(HttpMethod.POST, httpRequest.method());
+		assertEquals(bucketName + '/' + itemId + "?uploadId=qazxswedc", httpRequest.uri());
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+		final byte[] reqContent = ((FullHttpRequest) httpRequest).content().array();
+		final int contentLen = reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH);
+		assertTrue(contentLen > 0);
+		assertEquals(contentLen, reqContent.length);
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"POST\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n' + bucketName + '/'
+				+ itemId + "?uploadId=qazxswedc",
+			canonicalReq
+		);
+	}
+
+	@Test
+	public void testUploadPartRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket4";
+		final long itemSize = 12345;
+		final long partSize = 1234;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final CompositeDataIoTask<DataItem> mpuTask = new BasicCompositeDataIoTask<>(
+			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0, partSize
+		);
+
+		// emulate the upload id setting
+		mpuTask.put(KEY_UPLOAD_ID, "vfrtgbnhy");
+
+		final List<? extends PartialDataIoTask> subTasks = mpuTask.getSubTasks();
+		final int subTasksCount = subTasks.size();
+		assertEquals(itemSize / partSize + (itemSize % partSize > 0 ? 1 : 0), subTasksCount);
+		PartialDataIoTask subTask;
+
+		for(int i = 0; i < subTasksCount; i ++) {
+
+			subTask = subTasks.get(i);
+			final HttpRequest httpRequest = getHttpRequest(subTask, "127.0.0.1");
+			assertEquals(HttpMethod.PUT, httpRequest.method());
+			assertEquals(
+				bucketName + '/' + itemId + "?partNumber=" + (i + 1) + "&uploadId=vfrtgbnhy",
+				httpRequest.uri()
+			);
+			final HttpHeaders reqHeaders = httpRequest.headers();
+			assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+			final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+				.parse(reqHeaders.get(HttpHeaderNames.DATE));
+			assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+			final int contentLen = reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH);
+			if(i == subTasksCount - 1) {
+				assertEquals(itemSize % partSize, contentLen);
+			} else {
+				assertEquals(partSize, contentLen);
+			}
+			assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+			final String canonicalReq = getCanonical(
+				reqHeaders, httpRequest.method(), httpRequest.uri()
+			);
+			assertEquals(
+				"PUT\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n'
+					+ bucketName + '/' + itemId + "?partNumber=" + (i + 1) + "&uploadId=vfrtgbnhy",
+				canonicalReq
+			);
+		}
+	}
+
+	@Test
+	public void testReadRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.READ, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.GET, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"GET\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
+	}
+
+	@Test
+	public void testReadFixedRangesRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final List<Range> fixedRanges = new ArrayList<>();
+		fixedRanges.add(new Range(0, 0, -1));
+		fixedRanges.add(new Range(1, 1, -1));
+		fixedRanges.add(new Range(2, 2, -1));
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.READ, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), fixedRanges, 0
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.GET, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertEquals("bytes=0-0,1-1,2-2", reqHeaders.get(HttpHeaderNames.RANGE));
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+	}
+
+	@Test
+	public void testReadRandomRangesRequest()
+	throws Exception {
+
+		final int rndRangeCount = 2;
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.READ, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, rndRangeCount
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.GET, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		final String rangeHeaderValue = reqHeaders.get(HttpHeaderNames.RANGE);
+		assertTrue(rangeHeaderValue.startsWith("bytes="));
+		final List<Range> ranges = new ArrayList<>();
+		for(final String nextRangeValue : rangeHeaderValue.substring(6).split(",")) {
+			ranges.add(new Range(nextRangeValue));
+		}
+		assertEquals(rndRangeCount, ranges.size());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+	}
+
+	@Test
+	public void testUpdateRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.PUT, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(itemSize, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+	}
+
+	@Test
+	public void testUpdateFixedRangesRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final List<Range> fixedRanges = new ArrayList<>();
+		fixedRanges.add(new Range(0, 0, -1));
+		fixedRanges.add(new Range(1, 1, -1));
+		fixedRanges.add(new Range(2, 2, -1));
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), fixedRanges, 0
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.PUT, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(3, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertEquals("bytes=0-0,1-1,2-2", reqHeaders.get(HttpHeaderNames.RANGE));
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+	}
+
+	@Test
+	public void testUpdateRandomRangesRequest()
+	throws Exception {
+
+		final int rndRangeCount = 2;
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, rndRangeCount
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.PUT, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertTrue(0 < reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(itemSize > reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		final String rangeHeaderValue = reqHeaders.get(HttpHeaderNames.RANGE);
+		assertTrue(rangeHeaderValue.startsWith("bytes="));
+		final List<Range> ranges = new ArrayList<>();
+		for(final String nextRangeValue : rangeHeaderValue.substring(6).split(",")) {
+			ranges.add(new Range(nextRangeValue));
+		}
+		assertEquals(rndRangeCount, ranges.size());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+	}
+
+	@Test
+	public void testDeleteRequest()
+	throws Exception {
+
+		final String bucketName = "/bucket2";
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), IoType.DELETE, dataItem, null, bucketName,
+			Credential.getInstance(UID, SECRET), null, 0
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+
+		assertEquals(HttpMethod.DELETE, httpRequest.method());
+		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
+		final HttpHeaders reqHeaders = httpRequest.headers();
+		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
+			.parse(reqHeaders.get(HttpHeaderNames.DATE));
+		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
+		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"DELETE\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
 	}
 }

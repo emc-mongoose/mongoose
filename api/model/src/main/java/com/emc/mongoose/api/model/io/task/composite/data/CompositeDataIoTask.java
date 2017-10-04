@@ -13,5 +13,5 @@ public interface CompositeDataIoTask<I extends DataItem>
 extends CompositeIoTask<I> {
 	
 	@Override
-	List<? extends PartialDataIoTask> getSubTasks();
+	List<? extends PartialDataIoTask<I>> getSubTasks();
 }

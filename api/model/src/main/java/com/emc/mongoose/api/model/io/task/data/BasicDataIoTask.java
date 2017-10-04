@@ -85,6 +85,7 @@ implements DataIoTask<T> {
 	@Override
 	public void reset()
 	throws IllegalArgumentException {
+
 		super.reset();
 
 		countBytesDone = 0;

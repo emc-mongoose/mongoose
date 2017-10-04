@@ -549,7 +549,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
+	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
 		httpHeaders.set(KEY_X_COPY_FROM, srcPath);
 	}
