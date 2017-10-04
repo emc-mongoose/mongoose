@@ -2,6 +2,13 @@ package com.emc.mongoose.tests.unit;
 
 import com.emc.mongoose.api.common.env.DateUtil;
 import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.BasicDataIoTask;
+import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTaskBuilder;
 import com.emc.mongoose.api.model.item.BasicDataItem;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
@@ -20,6 +27,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -173,5 +181,20 @@ extends AmzS3StorageDriver {
 			.parse(httpHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
 		assertTrue(httpHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+	}
+
+	@Test
+	public void testHttpRequests()
+	throws Exception {
+
+		final long itemSize = 10240;
+		final String itemId = "00003brre8lgz";
+		final DataItem dataItem = new BasicDataItem(
+			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
+		);
+		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+			hashCode(), dataItem, IoType.CREATE,
+		);
+		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
 	}
 }
