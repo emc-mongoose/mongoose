@@ -469,6 +469,14 @@ extends AmzS3StorageDriver {
 		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
 		assertEquals("bytes=0-0,1-1,2-2", reqHeaders.get(HttpHeaderNames.RANGE));
 		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"GET\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
 	}
 
 	@Test
@@ -504,6 +512,14 @@ extends AmzS3StorageDriver {
 		}
 		assertEquals(rndRangeCount, ranges.size());
 		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"GET\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
 	}
 
 	@Test
@@ -531,6 +547,14 @@ extends AmzS3StorageDriver {
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
 		assertEquals(itemSize, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
 		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"PUT\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
 	}
 
 	@Test
@@ -563,6 +587,14 @@ extends AmzS3StorageDriver {
 		assertEquals(3, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
 		assertEquals("bytes=0-0,1-1,2-2", reqHeaders.get(HttpHeaderNames.RANGE));
 		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"PUT\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
 	}
 
 	@Test
@@ -599,6 +631,14 @@ extends AmzS3StorageDriver {
 		}
 		assertEquals(rndRangeCount, ranges.size());
 		assertTrue(reqHeaders.get(HttpHeaderNames.AUTHORIZATION).startsWith("AWS " + UID + ":"));
+
+		final String canonicalReq = getCanonical(
+			reqHeaders, httpRequest.method(), httpRequest.uri()
+		);
+		assertEquals(
+			"PUT\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + "\n" + bucketName + '/' + itemId,
+			canonicalReq
+		);
 	}
 
 	@Test
