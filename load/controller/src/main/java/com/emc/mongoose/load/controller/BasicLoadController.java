@@ -172,7 +172,7 @@ implements LoadController<I, O> {
 					outputConfigs.get(nextGenerator).getColor(),
 					nextMetricsConfig.getAverageConfig().getPersist(),
 					nextMetricsConfig.getSummaryConfig().getPersist(),
-					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFileFlag()
+					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFile()
 				)
 			);
 
