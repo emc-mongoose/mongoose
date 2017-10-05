@@ -564,7 +564,7 @@ extends ParameterizedSysTestBase {
 			assertTrue(duration >= Long.parseLong(latencyStr));
 		}
 		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
-		if(sizeExpected.getMin() != sizeExpected.getMax()) {
+		if(sizeExpected.getMin() < sizeExpected.getMax()) {
 			assertTrue(
 				"Expected the size " + sizeExpected.toString() + ", but got " + size,
 				sizeExpected.getMin() <= size && size <= sizeExpected.getMax()
