@@ -15,6 +15,11 @@ extends Closeable {
 	AttributeKey<String> ATTR_KEY_NODE = AttributeKey.valueOf("node");
 
 	/**
+	 Prepare the connections
+	 */
+	void preCreateConnections();
+
+	/**
 	 Get the connection immediately (don't block) or null. The caller should decide whether to fail,
 	 to sleep or to block if no connection is available at the moment.
 	 @throws ConnLeaseException if no connections are in the pool and was unable to create new connection

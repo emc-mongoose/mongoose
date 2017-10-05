@@ -190,7 +190,7 @@ implements StorageDriver<I, O> {
 		final String dstPath = ioTask.getDstPath();
 		final Credential credential = ioTask.getCredential();
 		if(credential != null) {
-			pathToCredMap.putIfAbsent(dstPath, credential);
+			pathToCredMap.putIfAbsent(dstPath == null ? "" : dstPath, credential);
 			if(requestAuthTokenFunc != null) {
 				authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
 			}
