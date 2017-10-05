@@ -8,11 +8,11 @@ import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.EnvUtil;
-import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
+import com.github.akurilov.commons.system.SizeInBytes;
 import org.apache.commons.csv.CSVRecord;
 
 import org.apache.logging.log4j.Level;
@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -33,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 public class ConcatRandomItemRangesTest
 extends ScenarioTestBase {
 
+	private static final int SRC_ITEMS_TO_CONCAT_MIN = 20;
 	private static final int SRC_ITEMS_TO_CONCAT_MAX = 50;
 	private static final int SRC_ITEMS_RANDOM_RANGES_COUNT = 10;
 
@@ -89,18 +89,14 @@ extends ScenarioTestBase {
 	public final void test()
 	throws Exception {
 
-		final String node = httpStorageMocks.keySet().iterator().next();
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final long avgDstItemContentSize = SRC_ITEMS_TO_CONCAT_MAX * itemSize.getValue().get()
-			/ (2 * SRC_ITEMS_RANDOM_RANGES_COUNT);
+		final SizeInBytes avgDstItemContentSize = new SizeInBytes(
+			SRC_ITEMS_TO_CONCAT_MIN * SRC_ITEMS_RANDOM_RANGES_COUNT,
+			SRC_ITEMS_TO_CONCAT_MAX * SRC_ITEMS_RANDOM_RANGES_COUNT * itemSize.getValue().get() / 2,
+			1
+		);
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-			testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
-			final String nextItemPath = ioTraceRec.get("ItemPath");
-			final int nextContentLength = HttpStorageMockUtil.getContentLength(node, nextItemPath);
-			assertEquals(
-				"I/O trace req #" + ioTraceRecCount.sum() + ": invalid object \"" + nextItemPath + "\"",
-				avgDstItemContentSize, nextContentLength, 0.9 * avgDstItemContentSize
-			);
+			testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), avgDstItemContentSize);
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(ioTraceReqTestFunc);
