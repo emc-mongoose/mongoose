@@ -144,6 +144,10 @@ extends HttpStorageDriverBase<I, O> {
 			(!versioningEnabled && versioning)
 		) {
 			reqHeaders = new DefaultHttpHeaders();
+			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			applySharedHeaders(reqHeaders);
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}

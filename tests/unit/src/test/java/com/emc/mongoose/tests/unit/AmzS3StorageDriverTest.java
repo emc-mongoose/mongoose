@@ -115,7 +115,7 @@ extends AmzS3StorageDriver {
 		assertEquals(HttpMethod.HEAD, req0.method());
 		assertEquals(bucketName, req0.uri());
 		final HttpHeaders reqHeaders0 = req0.headers();
-		assertEquals("127.0.0.1:9020", reqHeaders0.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders0.get(HttpHeaderNames.HOST));
 		assertEquals(0, reqHeaders0.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
 		final Date reqDate0 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders0.get(HttpHeaderNames.DATE)
@@ -128,7 +128,7 @@ extends AmzS3StorageDriver {
 		assertEquals(HttpMethod.GET, req1.method());
 		assertEquals(bucketName + "?versioning", req1.uri());
 		final HttpHeaders reqHeaders1 = req1.headers();
-		assertEquals("127.0.0.1:9020", reqHeaders1.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders1.get(HttpHeaderNames.HOST));
 		assertEquals(0, reqHeaders1.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
 		final Date reqDate1 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders1.get(HttpHeaderNames.DATE)
@@ -141,7 +141,7 @@ extends AmzS3StorageDriver {
 		assertEquals(HttpMethod.PUT, req2.method());
 		assertEquals(bucketName + "?versioning", req2.uri());
 		final HttpHeaders reqHeaders2 = req2.headers();
-		assertEquals("127.0.0.1:9020", reqHeaders2.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders2.get(HttpHeaderNames.HOST));
 		final Date reqDate2 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders2.get(HttpHeaderNames.DATE)
 		);
@@ -182,6 +182,7 @@ extends AmzS3StorageDriver {
 		);
 		final HttpHeaders httpHeaders = httpRequest.headers();
 		assertEquals(0, httpHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
+		assertEquals(storageNodeAddrs[0], httpHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(httpHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -202,12 +203,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -238,12 +239,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.CREATE, dataItem, bucketSrcName, bucketDstName,
 			Credential.getInstance(UID, SECRET), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketDstName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -278,11 +279,12 @@ extends AmzS3StorageDriver {
 			Credential.getInstance(UID, SECRET), null, 0, partSize
 		);
 
-		final HttpRequest httpRequest = getHttpRequest(mpuTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(mpuTask, storageNodeAddrs[0]);
 		final HttpHeaders reqHeaders = httpRequest.headers();
 
 		assertEquals(HttpMethod.POST, httpRequest.method());
 		assertEquals(bucketName + '/' + itemId + "?uploads", httpRequest.uri());
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -318,16 +320,21 @@ extends AmzS3StorageDriver {
 		// emulate the upload id setting
 		mpuTask.put(KEY_UPLOAD_ID, "qazxswedc");
 		// emulate the sub-tasks completion
-		for(int i = 0; i < mpuTask.getSubTasks().size(); i ++) {
-			mpuTask.subTaskCompleted();
+		final List<? extends PartialDataIoTask<DataItem>> subTasks = mpuTask.getSubTasks();
+		for(final PartialDataIoTask<DataItem> subTask : subTasks) {
+			subTask.startRequest();
+			subTask.finishRequest();
+			subTask.startResponse();
+			subTask.finishResponse();
 		}
 		assertTrue(mpuTask.allSubTasksDone());
 
-		final HttpRequest httpRequest = getHttpRequest(mpuTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(mpuTask, storageNodeAddrs[0]);
 		final HttpHeaders reqHeaders = httpRequest.headers();
 
 		assertEquals(HttpMethod.POST, httpRequest.method());
 		assertEquals(bucketName + '/' + itemId + "?uploadId=qazxswedc", httpRequest.uri());
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -374,14 +381,14 @@ extends AmzS3StorageDriver {
 		for(int i = 0; i < subTasksCount; i ++) {
 
 			subTask = subTasks.get(i);
-			final HttpRequest httpRequest = getHttpRequest(subTask, "127.0.0.1");
+			final HttpRequest httpRequest = getHttpRequest(subTask, storageNodeAddrs[0]);
 			assertEquals(HttpMethod.PUT, httpRequest.method());
 			assertEquals(
 				bucketName + '/' + itemId + "?partNumber=" + (i + 1) + "&uploadId=vfrtgbnhy",
 				httpRequest.uri()
 			);
 			final HttpHeaders reqHeaders = httpRequest.headers();
-			assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+			assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 			final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 				.parse(reqHeaders.get(HttpHeaderNames.DATE));
 			assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -418,12 +425,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.READ, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.GET, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -457,12 +464,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.READ, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), fixedRanges, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.GET, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -494,12 +501,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.READ, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), null, rndRangeCount
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.GET, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -536,12 +543,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -575,12 +582,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), fixedRanges, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -612,12 +619,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), null, rndRangeCount
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);
@@ -655,12 +662,12 @@ extends AmzS3StorageDriver {
 			hashCode(), IoType.DELETE, dataItem, null, bucketName,
 			Credential.getInstance(UID, SECRET), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, "127.0.0.1");
+		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.DELETE, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
 		final HttpHeaders reqHeaders = httpRequest.headers();
-		assertEquals("127.0.0.1", reqHeaders.get(HttpHeaderNames.HOST));
+		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		final Date dateHeaderValue = DateUtil.FMT_DATE_RFC1123
 			.parse(reqHeaders.get(HttpHeaderNames.DATE));
 		assertEquals(new Date().getTime(), dateHeaderValue.getTime(), 10_000);

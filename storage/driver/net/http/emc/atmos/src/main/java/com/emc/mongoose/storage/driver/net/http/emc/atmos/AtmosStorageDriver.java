@@ -59,7 +59,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosStorageDriver<I extends Item, O extends IoTask<I>>
+public class AtmosStorageDriver<I extends Item, O extends IoTask<I>>
 extends HttpStorageDriverBase<I, O> {
 	
 	private static final ThreadLocal<StringBuilder>
@@ -167,8 +167,9 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final HttpMethod getDataHttpMethod(final IoType ioType) {
 		switch(ioType) {
-			case CREATE:
 			case NOOP:
+				return HttpMethod.HEAD;
+			case CREATE:
 				return HttpMethod.POST;
 			case READ:
 				return HttpMethod.GET;
@@ -184,6 +185,8 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
 		switch(ioType) {
+			case NOOP:
+				return HttpMethod.HEAD;
 			case CREATE:
 				return HttpMethod.PUT;
 			case READ:
@@ -258,7 +261,10 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		
 		if(uid != null && !uid.isEmpty()) {
-			if(authToken != null && !authToken.isEmpty()) {
+			if(
+				authToken != null && !authToken.isEmpty()
+					&& !dstUriPath.equals(SUBTENANT_URI_BASE)
+			) {
 				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
 			} else {
 				httpHeaders.set(KEY_X_EMC_UID, uid);
@@ -273,7 +279,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 	}
 
-	private String getCanonical(
+	protected String getCanonical(
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
 	) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
@@ -300,14 +306,14 @@ extends HttpStorageDriverBase<I, O> {
 		if(sharedHeaders != null) {
 			for(final Map.Entry<String, String> header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();
-				if(headerName.startsWith(PREFIX_KEY_X_EMC)) {
+				if(headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
 					sortedHeaders.put(headerName, header.getValue());
 				}
 			}
 		}
 		for(final Map.Entry<String, String> header : httpHeaders) {
 			headerName = header.getKey().toLowerCase();
-			if(headerName.startsWith(PREFIX_KEY_X_EMC)) {
+			if(headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
