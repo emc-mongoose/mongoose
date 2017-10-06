@@ -90,11 +90,11 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	
 	protected HttpStorageDriverBase(
-		final String jobName, final DataInput itemDataInput, final LoadConfig loadConfig,
+		final String testStepId, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
 
-		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
+		super(testStepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
@@ -424,7 +424,9 @@ implements HttpStorageDriver<I, O> {
 					);
 				}
 			}
-			sendRequestData(channel, ioTask);
+			if(!(httpRequest instanceof FullHttpRequest)) {
+				sendRequestData(channel, ioTask);
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {

@@ -28,11 +28,11 @@ implements Serializable {
 	}
 
 	public SummaryConfig(final SummaryConfig other) {
-		this.perfDbResultsFileFlag = other.getPerfDbResultsFileFlag();
+		this.perfDbResultsFileFlag = other.getPerfDbResultsFile();
 		this.persistFlag = other.getPersist();
 	}
 
-	public final boolean getPerfDbResultsFileFlag() {
+	public final boolean getPerfDbResultsFile() {
 		return perfDbResultsFileFlag;
 	}
 

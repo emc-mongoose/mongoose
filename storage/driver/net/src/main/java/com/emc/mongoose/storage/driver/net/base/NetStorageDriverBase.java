@@ -280,6 +280,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 		return bootstrap.connect(nodeAddr).sync().channel();
 	}
+
+	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		super.doStart();
+		connPool.preCreateConnections();
+	}
 	
 	@Override
 	protected boolean submit(final O ioTask)
@@ -571,7 +578,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final ChannelPipeline pipeline = channel.pipeline();
 		appendHandlers(pipeline);
 		if(Loggers.MSG.isTraceEnabled()) {
-			Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepId, pipeline.toString());
+			Loggers.MSG.trace(
+				"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
+			);
 		}
 	}
 

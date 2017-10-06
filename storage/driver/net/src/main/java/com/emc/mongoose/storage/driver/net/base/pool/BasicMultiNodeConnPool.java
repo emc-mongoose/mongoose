@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BasicMultiNodeConnPool
 implements NonBlockingConnPool {
 
+	private final int concurrencyLevel;
 	private final Semaphore concurrencyThrottle;
 	private final String nodes[];
 	private final int n;
@@ -47,6 +48,7 @@ implements NonBlockingConnPool {
 		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort,
 		final int connAttemptsLimit
 	) {
+		this.concurrencyLevel = concurrencyLevel;
 		this.concurrencyThrottle = concurrencyThrottle;
 		if(nodes.length == 0) {
 			throw new IllegalArgumentException("Empty nodes array argument");
@@ -88,8 +90,10 @@ implements NonBlockingConnPool {
 			connCounts.put(node, 0);
 			failedConnAttemptCounts.put(node, 0);
 		}
+	}
 
-		// pre-create the connections
+	@Override
+	public void preCreateConnections() {
 		if(concurrencyLevel > 0) {
 			for(int i = 0; i < concurrencyLevel; i ++) {
 				final Channel conn = connect();

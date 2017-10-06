@@ -434,6 +434,7 @@ extends AmzS3StorageDriver<I, O> {
 
 		// set the total summary size for the destination item
 		dstItem.size(dstItemSize);
+		dataIoTask.setCountBytesDone(dstItemSize);
 
 		// request headers
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();

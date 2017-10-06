@@ -3,6 +3,7 @@ package com.emc.mongoose.load.controller;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.RateThrottle;
 import com.github.akurilov.commons.concurrent.Throttle;
+import com.github.akurilov.commons.io.Output;
 
 import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.TransferCoroutine;
@@ -24,7 +25,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.api.metrics.MetricsManager;
-import com.github.akurilov.commons.io.Output;
 import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.config.load.LoadConfig;
@@ -40,6 +40,7 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
+
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -172,7 +173,7 @@ implements LoadController<I, O> {
 					outputConfigs.get(nextGenerator).getColor(),
 					nextMetricsConfig.getAverageConfig().getPersist(),
 					nextMetricsConfig.getSummaryConfig().getPersist(),
-					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFileFlag()
+					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFile()
 				)
 			);
 

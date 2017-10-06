@@ -116,7 +116,8 @@ implements Coroutine {
 					}
 					if(metricsCtx.getPerfDbResultsFileFlag()) {
 						Loggers.METRICS_EXT_RESULTS_FILE.info(
-							new ExtResultsXmlLogMessage(metricsCtx));
+							new ExtResultsXmlLogMessage(metricsCtx)
+						);
 					}
 					// console output
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
