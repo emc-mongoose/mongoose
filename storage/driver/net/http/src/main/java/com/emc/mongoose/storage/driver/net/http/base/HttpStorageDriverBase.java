@@ -424,7 +424,9 @@ implements HttpStorageDriver<I, O> {
 					);
 				}
 			}
-			sendRequestData(channel, ioTask);
+			if(!(httpRequest instanceof FullHttpRequest)) {
+				sendRequestData(channel, ioTask);
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {
