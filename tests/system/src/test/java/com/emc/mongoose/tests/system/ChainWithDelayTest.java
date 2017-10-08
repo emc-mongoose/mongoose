@@ -95,7 +95,7 @@ extends ScenarioTestBase {
 		);
 		stdOutStream.startRecording();
 		runner.start();
-		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
+		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 10);
 		finishedInTime = !runner.isAlive();
 		runner.interrupt();
 		LogUtil.flushAll();
