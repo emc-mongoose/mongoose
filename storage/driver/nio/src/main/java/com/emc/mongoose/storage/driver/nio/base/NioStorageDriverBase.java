@@ -54,10 +54,10 @@ implements NioStorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String testSteoName, final DataInput dataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+		super(testSteoName, dataInput, loadConfig, storageConfig, verifyFlag);
 		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;

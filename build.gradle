@@ -44,21 +44,21 @@ ext {
 }
 
 def classPathString(final configuration) {
-    return configuration
-        .collect {
-            file ->
-                // it's 3rd party if jar file name doesn't contain the root project name
-                if(-1 == file.name.indexOf(rootProject.name)) {
-                    ["lib", file.name].join(File.separator)
-                } else {
-                    file.name
-                }
-        }
-        .join(" ")
+	return configuration
+		.collect {
+			file ->
+				// it's 3rd party if jar file name doesn't contain the root project name
+				if(-1 == file.name.indexOf(rootProject.name)) {
+					["lib", file.name].join(File.separator)
+				} else {
+					file.name
+				}
+		}
+		.join(" ")
 }
 
 def extClassPathString(final configuration) {
-    return configuration
+	return configuration
 		.collect {
 			file ->
 				// it's 3rd party if jar file name doesn't contain the root project name
@@ -67,8 +67,8 @@ def extClassPathString(final configuration) {
 				} else {
 					["..", file.name].join(File.separator)
 				}
-    }
-    .join(" ")
+	}
+	.join(" ")
 }
 
 subprojects {
