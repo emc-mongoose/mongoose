@@ -102,9 +102,9 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty ./gradlew -Dtest.single=GroovyParallelShellCommandTest :tests:system:test
+    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty ./gradlew -Dtest.single=GroovyParallelShellCommandsTest :tests:system:test
     - env:
-      - TEST=GroovyParallelShellCommandTest
+      - TEST=GroovyParallelShellCommandsTest
       - STORAGE_TYPE=fs
       - DRIVER_COUNT=local
       - CONCURRENCY=single
@@ -118,7 +118,7 @@ jobs:
       - STORAGE_TYPE=swift
       - DRIVER_COUNT=distributed
       - CONCURRENCY=medium
-      - ITEM_SIZE=small
+      - ITEM_SIZE=smallo
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test

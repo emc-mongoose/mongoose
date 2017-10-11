@@ -179,20 +179,6 @@ extends ScenarioTestBase {
 		}
 		assertEquals(items.size(), freq.getUniqueCount());
 
-		String msg = "Adjust output buffer size: " + itemSize.getValue().toString();
-		int k;
-		for(int i = 0; i < driverCount.getValue(); i ++) {
-			k = stdOutput.indexOf(msg);
-			if(k > -1) {
-				msg = stdOutput.substring(k + msg.length());
-			} else {
-				fail(
-					"Expected the message to occur " + driverCount.getValue() + " times, but got "
-						+ i
-				);
-			}
-		}
-
 		testTotalMetricsLogRecord(
 			getContainerMetricsTotalLogRecords().get(0), IoType.CREATE, concurrency.getValue(),
 			driverCount.getValue(), itemSize.getValue(), 0, 0
