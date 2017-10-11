@@ -82,18 +82,8 @@ jobs:
 
     - stage: "System tests"
 
-    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest :tests:system:test
-      env:
-      - TEST=GroovyCreateLimitBySizeTest
-      - STORAGE_TYPE=s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,medium,high
-      - ITEM_SIZE=small,medium
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=swift DRIVER_COUNT=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest :tests:system:test
-    - env:
+      env:
       - TEST=GroovyLoadTypeStepsTest
       - STORAGE_TYPE=swift
       - DRIVER_COUNT=distributed
@@ -112,13 +102,12 @@ jobs:
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsChainLoadStepTest :tests:system:test
-    - stage: "System tests"
-      env:
+    - env:
       - TEST=JsChainLoadStepTest
       - STORAGE_TYPE=swift
       - DRIVER_COUNT=distributed
       - CONCURRENCY=medium
-      - ITEM_SIZE=smallo
+      - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test
@@ -324,8 +313,18 @@ jobs:
 
     - stage: "Unstable system tests"
 
-    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest :tests:system:test
+    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest :tests:system:test
       env:
+      - TEST=GroovyCreateLimitBySizeTest
+      - STORAGE_TYPE=s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium,high
+      - ITEM_SIZE=small,medium
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest :tests:system:test
+    - env:
       - TEST=JsonChainWithDelayTest
       - STORAGE_TYPE=atmos,s3
       - DRIVER_COUNT=local,distributed

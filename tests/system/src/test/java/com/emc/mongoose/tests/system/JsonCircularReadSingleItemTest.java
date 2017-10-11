@@ -54,7 +54,7 @@ import java.util.function.Consumer;
 public class JsonCircularReadSingleItemTest
 extends OldScenarioTestBase {
 
-	private final String itemOutputFile = JsonCircularReadSingleItemTest.class.getSimpleName() + ".csv";
+	private static final String ITEM_OUTPUT_FILE = "CircularReadSingleItem.csv";
 	private String stdOutput;
 	private boolean finishedInTime;
 	private String itemOutputPath;
@@ -68,8 +68,8 @@ extends OldScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return JsonCircularReadSingleItemTest.class.getSimpleName() + '-' + storageType.name() + '-' +
-			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+		return JsonCircularReadSingleItemTest.class.getSimpleName() + '-' + storageType.name()
+			+ '-' + driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Override
@@ -139,7 +139,7 @@ extends OldScenarioTestBase {
 		);
 
 		final List<CSVRecord> items = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);

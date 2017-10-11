@@ -9,18 +9,19 @@ import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
+
 import com.github.dockerjava.core.command.WaitContainerResultCallback;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.math3.stat.Frequency;
+
 import org.junit.After;
 import org.junit.Before;
-
-import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.File;

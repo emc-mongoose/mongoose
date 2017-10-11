@@ -3,14 +3,14 @@
 	"steps": [
 		{
 			"type": "command",
-			"value": "rm -f CircularReadSingleItemTest.csv"
+			"value": "rm -f CircularReadSingleItem.csv"
 		},
 		{
 			"type": "precondition",
 			"config": {
 				"item": {
 					"output": {
-						"file": "CircularReadSingleItemTest.csv"
+						"file": "CircularReadSingleItem.csv"
 					}
 				},
 				"test": {
@@ -27,7 +27,7 @@
 			"config": {
 				"item": {
 					"input": {
-						"file": "CircularReadSingleItemTest.csv"
+						"file": "CircularReadSingleItem.csv"
 					}
 				},
 				"load": {

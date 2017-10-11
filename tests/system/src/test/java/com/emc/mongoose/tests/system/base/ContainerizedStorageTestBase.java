@@ -62,6 +62,7 @@ extends ConfiguredTestBase {
 	throws Exception {
 		super.setUp();
 		configArgs.add("--test-step-id=" + stepId);
+		configArgs.add("--storage-driver-type=" + storageType.name().toLowerCase());
 		configArgs.add("--output-metrics-trace-persist=true");
 		configArgs.add("--item-data-size=" + itemSize.getValue());
 		configArgs.add("--load-limit-concurrency=" + concurrency.getValue());
