@@ -181,7 +181,7 @@ implements StorageDriver<I, O> {
 		return n;
 	}
 	
-	private void prepareIoTask(final O ioTask)
+	protected void prepareIoTask(final O ioTask)
 	throws ServerException {
 		ioTask.reset();
 		if(ioTask instanceof DataIoTask) {

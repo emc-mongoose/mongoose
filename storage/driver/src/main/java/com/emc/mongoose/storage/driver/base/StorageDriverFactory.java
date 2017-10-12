@@ -15,7 +15,7 @@ public interface StorageDriverFactory<
 	String getName();
 
 	T create(
-		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput dataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException;
 }

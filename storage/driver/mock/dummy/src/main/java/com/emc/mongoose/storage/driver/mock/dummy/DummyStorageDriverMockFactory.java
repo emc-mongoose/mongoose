@@ -23,11 +23,11 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final T create(
-		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput dataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
 		return (T) new DummyStorageDriverMock<>(
-			stepId, contentSrc, loadConfig, storageConfig, verifyFlag
+			stepId, dataInput, loadConfig, storageConfig, verifyFlag
 		);
 	}
 }
