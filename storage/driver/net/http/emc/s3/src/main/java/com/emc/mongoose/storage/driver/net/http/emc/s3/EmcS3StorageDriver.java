@@ -27,6 +27,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -433,7 +434,7 @@ extends AmzS3StorageDriver<I, O> {
 
 		// set the total summary size for the destination item
 		dstItem.size(dstItemSize);
-		dataIoTask.setCountBytesDone(dstItemSize);
+		dataIoTask.setCountBytesDone(content.length());
 
 		// request headers
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();

@@ -91,9 +91,7 @@ extends ScenarioTestBase {
 
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final SizeInBytes avgDstItemContentSize = new SizeInBytes(
-			SRC_ITEMS_TO_CONCAT_MIN * SRC_ITEMS_RANDOM_RANGES_COUNT,
-			SRC_ITEMS_TO_CONCAT_MAX * SRC_ITEMS_RANDOM_RANGES_COUNT * itemSize.getValue().get() / 2,
-			1
+			SRC_ITEMS_TO_CONCAT_MIN * 100, SRC_ITEMS_TO_CONCAT_MAX * 200, 1
 		);
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), avgDstItemContentSize);
