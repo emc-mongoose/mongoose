@@ -5,7 +5,8 @@ import com.emc.mongoose.api.model.data.DataCorruptionException;
 import com.emc.mongoose.api.model.data.DataSizeException;
 
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
@@ -64,8 +65,19 @@ extends Item, SeekableByteChannel {
 
 	long writeToFileChannel(final FileChannel chanDst, final long maxCount)
 	throws IOException;
+
+	/**
+	 * Convenience method which shouldn't be used due to performance considerations.
+	 * Writing the data to an OutputStream leads the memory copying.
+	 * @param dstStream the stream to write the bytes to
+	 * @param maxCount max byte count to write
+	 * @return the count of bytes actually written
+	 * @throws IOException
+	 */
+	long writeToStream(final OutputStream dstStream, final long maxCount)
+	throws IOException;
 	
-	int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)
+	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataSizeException, DataCorruptionException, IOException;
 	
 	static int getRangeCount(final long size) {

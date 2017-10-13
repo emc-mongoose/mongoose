@@ -133,7 +133,10 @@ extends AmzS3StorageDriver {
 		final Date reqDate1 = DateUtil.FMT_DATE_RFC1123.parse(
 			reqHeaders1.get(HttpHeaderNames.DATE)
 		);
-		assertEquals(new Date().getTime(), reqDate1.getTime(), 10_000);
+		assertEquals(
+			"Date differs from now " + new Date() + " more than 10 sec: " + reqDate1,
+			new Date().getTime(), reqDate1.getTime(), 10_000
+		);
 		final String authHeaderValue1 = reqHeaders1.get(HttpHeaderNames.AUTHORIZATION);
 		assertTrue(authHeaderValue1.startsWith("AWS " + UID + ":"));
 

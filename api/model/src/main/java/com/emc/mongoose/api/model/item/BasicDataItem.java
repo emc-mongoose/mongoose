@@ -10,6 +10,7 @@ import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -390,9 +391,26 @@ implements DataItem {
 		position += n;
 		return n;
 	}
+
+	@Override
+	public final long writeToStream(final OutputStream dstStream, final long maxCount)
+	throws IOException {
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
+		int n = (int) ((offset + position) % dataInputSize);
+		ringBuff.position(n);
+		n = (int) Math.min(maxCount, ringBuff.remaining());
+		final byte[] tmpOutBuff = new byte[n];
+		ringBuff.limit(ringBuff.position() + n);
+		ringBuff.get(tmpOutBuff);
+		dstStream.write(tmpOutBuff);
+		position += n;
+		return n;
+	}
 	
 	@Override
-	public final int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)
+	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {
 		int n;
 		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
