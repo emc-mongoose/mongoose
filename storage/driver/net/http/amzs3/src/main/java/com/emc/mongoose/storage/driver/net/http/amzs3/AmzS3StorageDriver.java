@@ -560,7 +560,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public final void complete(final Channel channel, final O ioTask) {
+	public void complete(final Channel channel, final O ioTask) {
 		if(channel != null && ioTask instanceof CompositeDataIoTask) {
 			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
 			if(compositeIoTask.allSubTasksDone()) {

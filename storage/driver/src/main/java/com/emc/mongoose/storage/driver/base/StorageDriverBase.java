@@ -277,7 +277,9 @@ implements StorageDriver<I, O> {
 
 		final O ioTaskResult = ioTask.getResult();
 		if(!ioResultsQueue.offer(ioTaskResult/*, 1, TimeUnit.MICROSECONDS*/)) {
-			Loggers.ERR.warn("{}: I/O task results queue overflow, dropping the result", toString());
+			Loggers.ERR.warn(
+				"{}: I/O task results queue overflow, dropping the result", toString()
+			);
 		}
 
 		if(ioTask instanceof CompositeIoTask) {
