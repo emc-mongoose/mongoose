@@ -117,7 +117,6 @@ public class BasicStorageDriverBuilder<
 			);
 
 			for(final StorageDriverFactory<I, O, T> storageDriverFactory : loader) {
-				System.out.println(storageDriverFactory.getName());
 				if(driverType.equals(storageDriverFactory.getName())) {
 					return storageDriverFactory.create(
 						stepName, contentSrc, loadConfig, storageConfig, verifyFlag
