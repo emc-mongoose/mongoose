@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Enumeration;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
@@ -60,37 +58,7 @@ public abstract class Extensions {
 					}
 				}
 
-				CLS_LOADER = new URLClassLoader(extFileUrls);
-
-				Enumeration jarEntries;
-				JarEntry jarEntry;
-				String jarEntryName;
-				String clsName;
-				int clsCounter = 0;
-				for(int i = 0; i < extFiles.length; i ++) {
-					if(null != extFileJars[i]) {
-						jarEntries = extFileJars[i].entries();
-						while(jarEntries.hasMoreElements()) {
-							jarEntry = (JarEntry) jarEntries.nextElement();
-							jarEntryName = jarEntry.getName();
-							if(!jarEntry.isDirectory() && jarEntryName.endsWith(".class")) {
-								clsName = jarEntryName
-									.substring(0, jarEntryName.length() - 6)
-									.replace('/', '.');
-								try {
-									CLS_LOADER.loadClass(clsName);
-									clsCounter ++;
-								} catch(final Throwable cause) {
-									LOG.fine(
-										"Failed to load class \"" + clsName
-											+ "\" from the jar file \"" + extFiles[i] + "\""
-									);
-								}
-							}
-						}
-					}
-				}
-				LOG.info("Loaded " + clsCounter + " extension classes");
+				CLS_LOADER = new URLClassLoader(extFileUrls, ClassLoader.getSystemClassLoader());
 			}
 		}
 	}
