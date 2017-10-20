@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
@@ -388,23 +389,6 @@ implements DataItem {
 		n = (int) Math.min(maxCount, ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
 		n = chanDst.write(ringBuff);
-		position += n;
-		return n;
-	}
-
-	@Override
-	public final long writeToStream(final OutputStream dstStream, final long maxCount)
-	throws IOException {
-		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
-			.getLayer(layerNum)
-			.asReadOnlyBuffer();
-		int n = (int) ((offset + position) % dataInputSize);
-		ringBuff.position(n);
-		n = (int) Math.min(maxCount, ringBuff.remaining());
-		final byte[] tmpOutBuff = new byte[n];
-		ringBuff.limit(ringBuff.position() + n);
-		ringBuff.get(tmpOutBuff);
-		dstStream.write(tmpOutBuff);
 		position += n;
 		return n;
 	}
