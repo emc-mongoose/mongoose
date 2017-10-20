@@ -54,7 +54,7 @@
 			"offset": 0,
 			// The name length for the new items.
 			// Has effect only in the case of create (if not partial) load
-			"length": 13
+			"length": 12
 		},
 		"output": {
 			// The minimum delay between the subsequent I/O operations for each item (chain load).
@@ -271,7 +271,7 @@
 		}
 	},
 	// The Mongoose version
-	"version": "next",
+	"version": "4.0.0-alpha4",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
 	"aliasing": [
 
