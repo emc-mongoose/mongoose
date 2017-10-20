@@ -67,8 +67,8 @@ def extClassPathString(final configuration) {
 				} else {
 					["..", file.name].join(File.separator)
 				}
-	}
-	.join(" ")
+		}
+		.join(" ")
 }
 
 subprojects {
