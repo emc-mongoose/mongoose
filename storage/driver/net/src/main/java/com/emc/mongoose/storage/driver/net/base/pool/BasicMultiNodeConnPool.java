@@ -4,6 +4,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.pool.ChannelPoolHandler;
 
@@ -35,6 +36,7 @@ implements NonBlockingConnPool {
 	private final Semaphore concurrencyThrottle;
 	private final String nodes[];
 	private final int n;
+	private final int concurrencyLevel;
 	private final Map<String, Bootstrap> bootstrapMap;
 	private final Map<String, Queue<Channel>> connsMap;
 	private final Object2IntMap<String> connsCountMap;
@@ -43,6 +45,7 @@ implements NonBlockingConnPool {
 		final int concurrencyLevel, final Semaphore concurrencyThrottle,  final String nodes[],
 		final Bootstrap bootstrap, final ChannelPoolHandler connPoolHandler, final int defaultPort
 	) {
+		this.concurrencyLevel = concurrencyLevel;
 		this.concurrencyThrottle = concurrencyThrottle;
 		if(nodes.length == 0) {
 			throw new IllegalArgumentException("Empty nodes array argument");
@@ -122,6 +125,18 @@ implements NonBlockingConnPool {
 			Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
 			try {
 				conn = connect(selectedNodeAddr);
+				conn.closeFuture().addListener((ChannelFutureListener) future -> {
+					final String nodeAddr = future.channel().attr(ATTR_KEY_NODE).get();
+
+					synchronized (connsCountMap) {
+						connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
+					}
+
+					//concurrencyThrottle.release() can be called twice in case of close() is called after a successful release()
+					//so we need to keep track of available permits
+					if (concurrencyThrottle.availablePermits() < concurrencyLevel)
+						concurrencyThrottle.release();
+				});
 				conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
 				connsCountMap.put(selectedNodeAddr, nextConnsCount + 1);
 			} catch(final Exception e) {
@@ -145,7 +160,7 @@ implements NonBlockingConnPool {
 		for(int j = i; j < i + n; j ++) {
 			connQueue = connsMap.get(nodes[j % n]);
 			conn = connQueue.poll();
-			if(conn != null) {
+			if(conn != null && conn.isActive()) {
 				return conn;
 			}
 		}
@@ -200,13 +215,10 @@ implements NonBlockingConnPool {
 			if(connQueue != null) {
 				connQueue.add(conn);
 			}
+			concurrencyThrottle.release();
 		} else {
-			synchronized(connsCountMap) {
-				connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
-			}
 			conn.close();
 		}
-		concurrencyThrottle.release();
 	}
 	
 	@Override
@@ -218,13 +230,10 @@ implements NonBlockingConnPool {
 			if(conn.isActive()) {
 				connQueue = connsMap.get(nodeAddr);
 				connQueue.add(conn);
+				concurrencyThrottle.release();
 			} else {
-				synchronized(connsCountMap) {
-					connsCountMap.put(nodeAddr, connsCountMap.get(nodeAddr) - 1);
-				}
 				conn.close();
 			}
-			concurrencyThrottle.release();
 		}
 	}
 
