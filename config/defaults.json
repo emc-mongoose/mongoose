@@ -271,7 +271,7 @@
 		}
 	},
 	// The Mongoose version
-	"version": "4.0.0-alpha5",
+	"version": "next",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
 	"aliasing": [
 

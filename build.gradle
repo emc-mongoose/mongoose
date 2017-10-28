@@ -226,7 +226,7 @@ task wrapper(type: Wrapper) {
 	gradleVersion = "3.5"
 }
 
-static def isExtensionProject(final Project p) {
+static def isExtProject(final Project p) {
     final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
     return f.exists() && f.isDirectory() && f.listFiles().length > 0
 }
@@ -256,7 +256,7 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 			from { "example" }
 		}
 		into("ext") {
-            final extProjects = mutualProjects.findAll { isExtensionProject(it) }
+            final extProjects = mutualProjects.findAll { isExtProject(it) }
             for(final Project p: extProjects) {
                 from p.jar.outputs.files
             }
@@ -268,7 +268,7 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
                 }
             }
         }
-        for(final Project p: mutualProjects.findAll { !isExtensionProject(it) }) {
+        for(final Project p: mutualProjects.findAll { !isExtProject(it) }) {
 			if(!isTestsProject(p)) {
 				from p.jar.outputs.files
 			}

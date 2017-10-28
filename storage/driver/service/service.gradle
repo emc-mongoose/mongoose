@@ -22,8 +22,38 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-            "Class-Path": classPathString(configurations.runtime),
+			"Class-Path": classPathString(configurations.runtime),
 			"Main-Class": "com.emc.mongoose.storage.driver.service.Main",
 		)
+	}
+}
+
+task dist(type: Tar, dependsOn: jar) {
+	group = "distribution"
+	description = "Build storage driver distribution tarball"
+	baseName = rootProject.name + "-storage-driver"
+	compression = Compression.GZIP
+	destinationDir = new File("build", "dist")
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	into("$baseName-$rootProject.version") {
+		into("config") {
+			from { "config" }
+		}
+		into("ext") {
+			final Collection<Project> extProjects = mutualProjects
+				.findAll { isExtProject(it) }
+				.findAll { it.displayName.contains("storage") && it.displayName.contains("driver") }
+			for(final p: extProjects) {
+				from p.jar.outputs.files
+			}
+		}
+		into("lib") {
+			from configurations.runtime {
+				exclude "${rootProject.name}*.jar"
+			}
+		}
+		/*from configurations.runtime {
+			include "${rootProject.name}*.jar"
+		}*/
 	}
 }
