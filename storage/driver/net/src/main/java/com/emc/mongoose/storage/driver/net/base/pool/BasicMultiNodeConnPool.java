@@ -2,8 +2,10 @@ package com.emc.mongoose.storage.driver.net.base.pool;
 
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.pool.ChannelPoolHandler;
 
@@ -32,10 +34,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BasicMultiNodeConnPool
 implements NonBlockingConnPool {
 
-	private final int concurrencyLevel;
 	private final Semaphore concurrencyThrottle;
 	private final String nodes[];
 	private final int n;
+	private final int concurrencyLevel;
 	private final int connAttemptsLimit;
 	private final Map<String, Bootstrap> bootstraps;
 	private final Map<String, List<Channel>> allConns;
@@ -142,6 +144,22 @@ implements NonBlockingConnPool {
 				Loggers.MSG.debug("New connection to \"{}\"", selectedNodeAddr);
 				try {
 					conn = connect(selectedNodeAddr);
+					conn.closeFuture().addListener(
+						(ChannelFutureListener) future -> {
+							final String nodeAddr = future.channel().attr(ATTR_KEY_NODE).get();
+
+							synchronized(connCounts) {
+								connCounts.put(nodeAddr, connCounts.get(nodeAddr) - 1);
+							}
+
+							// concurrencyThrottle.release() can be called twice in case of close()
+							// is called after a successful release()
+							// so we need to keep track of available permits
+							if(concurrencyThrottle.availablePermits() < concurrencyLevel) {
+								concurrencyThrottle.release();
+							}
+						}
+					);
 					conn.attr(ATTR_KEY_NODE).set(selectedNodeAddr);
 					allConns.computeIfAbsent(selectedNodeAddr, sna -> new ArrayList<>()).add(conn);
 					connCounts.put(selectedNodeAddr, nextConnsCount + 1);
@@ -209,7 +227,7 @@ implements NonBlockingConnPool {
 		for(int j = i; j < i + n; j ++) {
 			connQueue = availableConns.get(nodes[j % n]);
 			conn = connQueue.poll();
-			if(conn != null) {
+			if(conn != null && conn.isActive()) {
 				return conn;
 			}
 		}
@@ -267,10 +285,10 @@ implements NonBlockingConnPool {
 			if(connQueue != null) {
 				connQueue.add(conn);
 			}
+			concurrencyThrottle.release();
 		} else {
 			disconnect(nodeAddr, conn);
 		}
-		concurrencyThrottle.release();
 	}
 	
 	@Override
@@ -282,10 +300,10 @@ implements NonBlockingConnPool {
 			if(conn.isActive()) {
 				connQueue = availableConns.get(nodeAddr);
 				connQueue.add(conn);
+				concurrencyThrottle.release();
 			} else {
 				disconnect(nodeAddr, conn);
 			}
-			concurrencyThrottle.release();
 		}
 	}
 
