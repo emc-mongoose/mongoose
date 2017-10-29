@@ -133,7 +133,7 @@ java -jar mongoose.jar
 
 ## Documentation
 
-*[Mongoose v3.5](https://github.com/emc-mongoose/mongoose/wiki/v4.0-Overview)*
+*[Mongoose v4.0](https://github.com/emc-mongoose/mongoose/wiki/v4.0-Overview)*
 
 **[Mongoose v3.5](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Overview)**
 
