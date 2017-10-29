@@ -1,101 +1,133 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.After;
+import org.junit.Before;
+import static org.junit.Assert.assertEquals;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by kurila on 15.06.17.
  */
-public class SingleRandomUpdateAndMultipleRandomReadTest
-extends EnvConfiguredScenarioTestBase {
+public final class SingleRandomUpdateAndMultipleRandomReadTest
+extends ScenarioTestBase {
 	
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_NAME = SingleRandomUpdateAndMultipleRandomReadTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
+	private String itemOutputPath;
+	private String stdOutput;
+	private SizeInBytes expectedUpdateSize;
+	private SizeInBytes expectedReadSize;
+	
+	private static final long EXPECTED_COUNT = 1000;
+	private static final int READ_RANDOM_RANGES_COUNT = 12;
+
+	public SingleRandomUpdateAndMultipleRandomReadTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected String makeStepId() {
+		return SingleRandomUpdateAndMultipleRandomReadTest.class.getSimpleName() + '-' +
+			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
+			itemSize.name();
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "SingleRandomUpdateAndMultipleRandomRead.json"
 		);
 	}
-	
-	private static String ITEM_OUTPUT_PATH;
-	private static String STD_OUTPUT;
-	private static SizeInBytes EXPECTED_UPDATE_SIZE;
-	private static SizeInBytes EXPECTED_READ_SIZE;
-	
-	private static final long EXPECTED_COUNT = 1000;
-	private static final int READ_RANDOM_RANGES_COUNT = 7;
-	
-	@BeforeClass
-	public static void setUpClass()
+
+	@Before
+	public final void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		EXPECTED_READ_SIZE = new SizeInBytes(
-			(2 << (READ_RANDOM_RANGES_COUNT - 1)) - 1, ITEM_DATA_SIZE.get(), 1
+		configArgs.add("--item-data-input-file=" + BASE_DIR + "/config/content/textexample");
+		super.setUp();
+		expectedReadSize = new SizeInBytes(
+			2 << (READ_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1
 		);
-		EXPECTED_UPDATE_SIZE = new SizeInBytes(1, ITEM_DATA_SIZE.get(), 1);
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			ITEM_OUTPUT_PATH = Paths
-				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME)
+		expectedUpdateSize = new SizeInBytes(1, itemSize.getValue().get(), 1);
+		if(StorageType.FS.equals(storageType)) {
+			itemOutputPath = Paths
+				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId)
 				.toString();
-			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+			config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 	}
 	
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public final void tearDown()
 	throws Exception {
-		if(!SKIP_FLAG) {
-			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
+		if(StorageType.FS.equals(storageType)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
-	
-	@Test
-	public void testMetricsLogFile()
+
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
+
+		// I/O traces
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
+			if(ioTraceRecCount.sum() < EXPECTED_COUNT) {
+				testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), expectedUpdateSize);
+			} else {
+				testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
+			}
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceRecTestFunc);
+		assertEquals(
+			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
+			2 * EXPECTED_COUNT, ioTraceRecCount.sum()
+		);
+
+		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			expectedUpdateSize, EXPECTED_COUNT, 0
+		);
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			expectedReadSize, EXPECTED_COUNT, 0
+		);
+
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
 		final List<CSVRecord> readMetricsRecords = new ArrayList<>();
@@ -107,62 +139,26 @@ extends EnvConfiguredScenarioTestBase {
 			}
 		}
 		testMetricsLogRecords(
-			updateMetricsRecords, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_UPDATE_SIZE, EXPECTED_COUNT, 0,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			updateMetricsRecords, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			expectedUpdateSize, EXPECTED_COUNT, 0,
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsLogRecords(
-			readMetricsRecords, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_READ_SIZE, EXPECTED_COUNT, 0,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			readMetricsRecords, IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			expectedReadSize, EXPECTED_COUNT, 0,
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-	}
-	
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
-		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(0), IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_UPDATE_SIZE, EXPECTED_COUNT, 0
-		);
-		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(1), IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			EXPECTED_READ_SIZE, EXPECTED_COUNT, 0
-		);
-	}
-	
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final String stdOutput = STD_OUTPUT.replaceAll("[\r\n]+", " ");
+
+		final String stdOutput = this.stdOutput.replaceAll("[\r\n]+", " ");
 		testSingleMetricsStdout(
-			stdOutput, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_UPDATE_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			stdOutput, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			expectedUpdateSize,
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testSingleMetricsStdout(
-			stdOutput, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, EXPECTED_READ_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			stdOutput, IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			expectedReadSize,
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-	}
-	
-	@Test
-	public void testIoTraceLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(
-			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
-			2 * EXPECTED_COUNT, ioTraceRecords.size()
-		);
-		for(int i = 0; i < 2 * EXPECTED_COUNT; i ++) {
-			if(i < EXPECTED_COUNT) {
-				testIoTraceRecord(ioTraceRecords.get(i), IoType.UPDATE.ordinal(), EXPECTED_UPDATE_SIZE);
-			} else {
-				testIoTraceRecord(ioTraceRecords.get(i), IoType.READ.ordinal(), EXPECTED_READ_SIZE);
-			}
-		}
 	}
 }

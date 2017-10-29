@@ -1,164 +1,115 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.ThreadContext;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.After;
+import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 07.06.17.
  */
 public class UpdateUsingInputFileLimitByTimeTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 
-	private static final int EXPECTED_TIME = 25;
-	private static String STD_OUTPUT = null;
-	private static String ITEM_OUTPUT_PATH = null;
+	private final int expectedTime = 25;
+	private String stdOutput = null;
+	private String itemOutputPath = null;
 
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_NAME = UpdateUsingInputFileLimitByTimeTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
+	public UpdateUsingInputFileLimitByTimeTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "UpdateUsingInputFileLimitByTime.json"
 		);
 	}
 
-	@BeforeClass
-	public static void setUpClass()
+	@Override
+	protected String makeStepId() {
+		return UpdateUsingInputFileLimitByTimeTest.class.getSimpleName() + '-' + storageType.name()
+			+ '-' + driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		switch(STORAGE_DRIVER_TYPE) {
-			case STORAGE_TYPE_FS:
-				ITEM_OUTPUT_PATH = Paths.get(
-					Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+		super.setUp();
+		switch(storageType) {
+			case FS:
+				itemOutputPath = Paths.get(
+					Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 				).toString();
-				CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+				config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 				break;
 		}
 		try {
-			SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-			STD_OUT_STREAM.startRecording();
-			SCENARIO.run();
-			STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+			scenario = new JsonScenario(config, scenarioPath.toFile());
+			stdOutStream.startRecording();
+			scenario.run();
+			stdOutput = stdOutStream.stopRecordingAndGet();
 		} catch(final Throwable t) {
 			LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 		}
-		LoadJobLogFileManager.flushAll();
+		LogUtil.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		if(! SKIP_FLAG) {
-			if(STORAGE_TYPE_FS.equals(STORAGE_DRIVER_TYPE)) {
-				try {
-					FileUtils.deleteDirectory(new File(ITEM_OUTPUT_PATH));
-				} catch(final IOException e) {
-					e.printStackTrace(System.err);
-				}
+		if(StorageType.FS.equals(storageType)) {
+			try {
+				FileUtils.deleteDirectory(new File(itemOutputPath));
+			} catch(final IOException e) {
+				e.printStackTrace(System.err);
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public void testMetricsLogFile()
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testMetricsLogRecords(
-			getMetricsLogRecords(),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, EXPECTED_TIME,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
-	}
 
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
-		testTotalMetricsLogRecord(
-			getMetricsTotalLogRecords().get(0),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, updateSize, 0, EXPECTED_TIME
-		);
-	}
-
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
-		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
-			new HashMap<IoType, Integer>() {{ put(IoType.UPDATE, CONCURRENCY ); }}
-		);
-	}
-
-	@Test
-	public void testIoTraceLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertTrue(ioTraceRecords.size() > 0);
-		final SizeInBytes updateSize = new SizeInBytes(1, ITEM_DATA_SIZE.get() / 2 + 1, 1);
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.UPDATE.ordinal(), updateSize);
-		}
-	}
-
-	@Test
-	public void testUpdatedItemsListFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader("UpdateUsingInputFileLimitByTimeTest_.csv"))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
@@ -166,12 +117,11 @@ extends EnvConfiguredScenarioTestBase {
 				items.add(csvRecord);
 			}
 		}
-
 		String itemPath;
 		String itemId;
 		long itemOffset;
-		final int itemIdRadix = CONFIG.getItemConfig().getNamingConfig().getRadix();
-		long itemSize;
+		final int itemIdRadix = config.getItemConfig().getNamingConfig().getRadix();
+		long actualItemSize;
 		String[] modLayerAndMask;
 		int layer;
 		String rangesMask;
@@ -182,8 +132,8 @@ extends EnvConfiguredScenarioTestBase {
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
 			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
 			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-			itemSize = Long.parseLong(itemRec.get(2));
-			assertEquals(ITEM_DATA_SIZE.get(), itemSize);
+			actualItemSize = Long.parseLong(itemRec.get(2));
+			assertEquals(itemSize.getValue().get(), actualItemSize);
 			modLayerAndMask = itemRec.get(3).split("/");
 			assertEquals("Modification record should contain 2 parts", 2, modLayerAndMask.length);
 			layer = Integer.parseInt(modLayerAndMask[0], 0x10);
@@ -202,5 +152,38 @@ extends EnvConfiguredScenarioTestBase {
 				mask.cardinality() > 0
 			);
 		}
+
+		final SizeInBytes updateSize = new SizeInBytes(1, itemSize.getValue().get() / 2 + 1, 1);
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), updateSize);
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
+		assertTrue(ioTraceRecCount.sum() > 0);
+
+		testTotalMetricsLogRecord(
+			getMetricsTotalLogRecords().get(0),
+			IoType.UPDATE, concurrency.getValue(), driverCount.getValue(), updateSize, 0, expectedTime
+		);
+
+		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
+		final long metricsPeriod = config
+			.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod();
+		assertTrue(metricsLogRecords.size() <= expectedTime / metricsPeriod + 1);
+		testMetricsLogRecords(
+			metricsLogRecords, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(), updateSize, 0, 0,
+			metricsPeriod
+		);
+
+		testSingleMetricsStdout(
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.UPDATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
+		);
+		testMetricsTableStdout(
+			stdOutput, stepId, driverCount.getValue(), 0,
+			new HashMap<IoType, Integer>() {{ put(IoType.UPDATE, concurrency.getValue() ); }}
+		);
 	}
 }

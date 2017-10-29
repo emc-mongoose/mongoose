@@ -1,16 +1,14 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"output" : {
+			"metrics" : {
+				"threshold" : 0.1
+			}
+		},
 		"storage" : {
 			"driver" : {
 				"type" : "fs"
-			}
-		},
-		"test" : {
-			"step" :{
-				"metrics" : {
-					"threshold" : 0.1
-				}
 			}
 		}
 	},
@@ -30,8 +28,8 @@
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 1000000,
-							"size" : "1GB",
+							"count" : 500000,
+							"size" : "5GB",
 							"time" : "50s"
 						}
 					}
@@ -81,10 +79,8 @@
 					}
 				},
 				"load" : {
-					"type" : "delete"
-				},
-				"storage" : {
-					"driver" : {
+					"type" : "delete",
+					"limit" : {
 						"concurrency" : 50
 					}
 				}

@@ -1,33 +1,32 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.LogPatterns;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import org.junit.After;
+import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,67 +36,120 @@ import java.util.regex.Matcher;
  Created by andrey on 10.06.17.
  */
 public class FileStorageMetricsThresholdTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 
 	private static final double LOAD_THRESHOLD = 0.1;
 	private static final int RANDOM_RANGES_COUNT = 10;
 
-	private static String ITEM_OUTPUT_PATH;
-	private static String STD_OUTPUT;
+	private String itemOutputPath;
+	private String stdOutput;
 
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("10KB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_NAME = FileStorageMetricsThresholdTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
+	public FileStorageMetricsThresholdTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "FileStorageMetricsThreshold.json"
 		);
 	}
 
-	@BeforeClass
-	public static void setUpClass()
+	@Override
+	protected String makeStepId() {
+		return FileStorageMetricsThresholdTest.class.getSimpleName() + '-' +
+			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
+			itemSize.name();
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		ITEM_OUTPUT_PATH = Paths.get(
-			Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+		super.setUp();
+		itemOutputPath = Paths.get(
+			Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 		).toString();
-		CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+		config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		if(! SKIP_FLAG) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
+		try {
+			DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+		} catch(final Exception e) {
+			e.printStackTrace(System.err);
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public void testMetricsLogFile()
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
+
+		// metrics threshold in the stdout
+		int n = 0;
+		Matcher m;
+		while(true) {
+			m = LogPatterns.STD_OUT_LOAD_THRESHOLD_ENTRANCE.matcher(stdOutput);
+			if(!m.find()) {
+				break;
+			}
+			final Date dtEnter = FMT_DATE_ISO8601.parse(m.group("dateTime"));
+			final int threshold = Integer.parseInt(m.group("threshold"));
+			assertEquals(concurrency.getValue() * LOAD_THRESHOLD, threshold, 0);
+			stdOutput = m.replaceFirst("");
+			m = LogPatterns.STD_OUT_LOAD_THRESHOLD_EXIT.matcher(
+				stdOutput.substring(m.regionStart())
+			);
+			assertTrue(m.find());
+			final Date dtExit = FMT_DATE_ISO8601.parse(m.group("dateTime"));
+			assertTrue(dtEnter.before(dtExit));
+			stdOutput = m.replaceFirst("");
+			n ++;
+		}
+		assertEquals(3, n);
+
+		// threshold total metrics file
+		final List<CSVRecord> totalThresholdMetricsRecs = getMetricsMedTotalLogRecords();
+		testTotalMetricsLogRecord(
+			totalThresholdMetricsRecs.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0
+		);
+		testTotalMetricsLogRecord(
+			totalThresholdMetricsRecs.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0
+		);
+		testTotalMetricsLogRecord(
+			totalThresholdMetricsRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), 0, 0
+		);
+
+		// total metrics log file
+		final List<CSVRecord> totalMetricsRecs = getMetricsTotalLogRecords();
+		testTotalMetricsLogRecord(
+			totalMetricsRecs.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0
+		);
+		testTotalMetricsLogRecord(
+			totalMetricsRecs.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			itemSize.getValue(), 0, 0
+		);
+		testTotalMetricsLogRecord(
+			totalMetricsRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), 0, 0
+		);
+
+		// metrics log file
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords();
 		final List<CSVRecord> createMetricsRecs = new ArrayList<>();
 		final List<CSVRecord> readMetricsRecs = new ArrayList<>();
@@ -126,104 +178,34 @@ extends EnvConfiguredScenarioTestBase {
 					break;
 			}
 		}
-		final long period = CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod();
+		final long period = config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod();
 		testMetricsLogRecords(
-			createMetricsRecs, IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
+			createMetricsRecs, IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
 			0, 0, period
 		);
 		testMetricsLogRecords(
-			readMetricsRecs, IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
+			readMetricsRecs, IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
 			0, 0, period
 		);
 		testMetricsLogRecords(
-			updateMetricsRecs, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, ITEM_DATA_SIZE.get(), 1),
+			updateMetricsRecs, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1),
 			0, 0, period
 		);
-	}
 
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> totalMetricsRecs = getMetricsTotalLogRecords();
-		testTotalMetricsLogRecord(
-			totalMetricsRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, 0, 0
-		);
-		testTotalMetricsLogRecord(
-			totalMetricsRecs.get(1), IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, 0, 0
-		);
-		testTotalMetricsLogRecord(
-			totalMetricsRecs.get(2), IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, ITEM_DATA_SIZE.get(), 1), 0, 0
-		);
-	}
-
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final long period = CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod();
+		// stdout
 		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, period
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), period
 		);
 		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, period
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), period
 		);
 		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, ITEM_DATA_SIZE.get(), 1), period
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), period
 		);
-	}
-
-	@Test
-	public void testMedTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> totalThresholdMetricsRecs = getMetricsMedTotalLogRecords();
-		testTotalMetricsLogRecord(
-			totalThresholdMetricsRecs.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, 0, 0
-		);
-		testTotalMetricsLogRecord(
-			totalThresholdMetricsRecs.get(1), IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, 0, 0
-		);
-		testTotalMetricsLogRecord(
-			totalThresholdMetricsRecs.get(2), IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, ITEM_DATA_SIZE.get(), 1), 0, 0
-		);
-	}
-
-	@Test
-	public void testThresholdConditionMessagesInStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		int n = 0;
-		Matcher m;
-		while(true) {
-			m = LogPatterns.STD_OUT_LOAD_THRESHOLD_ENTRANCE.matcher(STD_OUTPUT);
-			if(!m.find()) {
-				break;
-			}
-			final Date dtEnter = FMT_DATE_ISO8601.parse(m.group("dateTime"));
-			final int threshold = Integer.parseInt(m.group("threshold"));
-			assertEquals(CONCURRENCY * LOAD_THRESHOLD, threshold, 0);
-			STD_OUTPUT = m.replaceFirst("");
-			m = LogPatterns.STD_OUT_LOAD_THRESHOLD_EXIT.matcher(
-				STD_OUTPUT.substring(m.regionStart())
-			);
-			assertTrue(m.find());
-			final Date dtExit = FMT_DATE_ISO8601.parse(m.group("dateTime"));
-			assertTrue(dtEnter.before(dtExit));
-			STD_OUTPUT = m.replaceFirst("");
-			n ++;
-		}
-		assertEquals(3, n);
 	}
 }

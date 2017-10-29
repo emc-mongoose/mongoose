@@ -1,23 +1,22 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.After;
+import org.junit.Before;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -25,53 +24,59 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 08.06.17.
  */
 public class InfiniteLoopTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 
 	private static final int SCENARIO_TIMEOUT = 50;
 	private static final int EXPECTED_STEP_TIME = 5;
-	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME;
+	private static final int EXPECTED_LOOP_COUNT = SCENARIO_TIMEOUT / EXPECTED_STEP_TIME - 1;
 
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "fs", "swift"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_COUNT, Arrays.asList(1));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 10));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("1MB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_NAME = InfiniteLoopTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "InfiniteLoop.json"
-		);
+	public InfiniteLoopTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
 	}
 
-	@BeforeClass
-	public static void setUpClass()
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "InfiniteLoop.json");
+	}
+
+	@Override
+	protected String makeStepId() {
+		return InfiniteLoopTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--item-output-path=/default");
-		CONFIG_ARGS.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		final Thread runner = new Thread(() -> SCENARIO.run());
+		configArgs.add("--item-output-path=/default");
+		configArgs.add("--test-step-limit-time=" + EXPECTED_STEP_TIME);
+		super.setUp();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		final Thread runner = new Thread(() -> scenario.run());
 		runner.start();
 		TimeUnit.SECONDS.timedJoin(runner, SCENARIO_TIMEOUT);
 		runner.interrupt();
+		runner.join();
 		TimeUnit.SECONDS.sleep(10);
-		LoadJobLogFileManager.flushAll();
+		LogUtil.flushAll();
 	}
 
-	@Test
-	public final void testTotalMetricsLogFile()
+	@After
+	public final void tearDown()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
+		super.tearDown();
+	}
+
+	@Override
+	public void test()
+	throws Exception {
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
-		assertEquals(EXPECTED_LOOP_COUNT, totalRecs.size());
+		assertEquals(
+			"Expected steps count: " + EXPECTED_LOOP_COUNT + ", but was: " + totalRecs.size(),
+			EXPECTED_LOOP_COUNT, totalRecs.size(), 1
+		);
 	}
 }

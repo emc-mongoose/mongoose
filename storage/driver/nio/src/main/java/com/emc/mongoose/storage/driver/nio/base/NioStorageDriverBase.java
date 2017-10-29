@@ -1,43 +1,44 @@
 package com.emc.mongoose.storage.driver.nio.base;
 
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.io.task.IoTask.Status.ACTIVE;
-import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
-import static com.emc.mongoose.model.io.task.IoTask.Status.PENDING;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.common.collection.OptLockBuffer;
-import com.emc.mongoose.common.concurrent.SvcTask;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.model.NamingThreadFactory;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
+import com.github.akurilov.commons.collection.OptLockArrayBuffer;
+import com.github.akurilov.commons.collection.OptLockBuffer;
+
+import com.github.akurilov.coroutines.CoroutinesProcessor;
+import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
+
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.common.concurrent.ThreadUtil;
+import com.emc.mongoose.api.model.concurrent.ThreadDump;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 19.07.16.
  The multi-threaded non-blocking I/O storage driver.
+ Note that this kind of storage driver uses the service coroutines facility to execute the I/O
  */
 public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
@@ -45,134 +46,127 @@ implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
 
-	private final ThreadPoolExecutor ioTaskExecutor;
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
-	private final Runnable ioWorkerTasks[];
+	private final List<Coroutine> ioCoroutines;
 	private final OptLockBuffer<O> ioTaskBuffs[];
 	private final AtomicLong rrc = new AtomicLong(0);
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
-		final int confWorkerCount = storageConfig.getDriverConfig().getIoConfig().getWorkers();
-		if(confWorkerCount < 1) {
+		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
+		if(confWorkerCount > 0) {
+			ioWorkerCount = confWorkerCount;
+		} else if(concurrencyLevel > 0) {
 			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
 		} else {
-			ioWorkerCount = confWorkerCount;
+			ioWorkerCount = ThreadUtil.getHardwareThreadCount();
 		}
-		ioWorkerTasks = new Runnable[ioWorkerCount];
+		ioCoroutines = new ArrayList<>(ioWorkerCount);
 		ioTaskBuffs = new OptLockBuffer[ioWorkerCount];
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskBuffs[i] = new OptLockArrayBuffer<>(ioTaskBuffCapacity);
-			ioWorkerTasks[i] = new NioWorkerTask(ioTaskBuffs[i]);
+			ioCoroutines.add(new NioCoroutine(SVC_EXECUTOR, ioTaskBuffs[i]));
 		}
-		ioTaskExecutor = new ThreadPoolExecutor(
-			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<>(ioWorkerCount),
-			new NamingThreadFactory(toString() + "/ioWorker", true)
-		);
 	}
-
 
 	/**
 	 The class represents the non-blocking I/O task execution algorithm.
 	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
 	 So the I/O task may be invoked multiple times (in the reentrant manner).
 	 */
-	private final class NioWorkerTask
-	implements Runnable {
+	private final class NioCoroutine
+	extends ExclusiveCoroutineBase {
 
 		private final OptLockBuffer<O> ioTaskBuff;
+		private final List<O> ioTaskLocalBuff;
 
-		public NioWorkerTask(final OptLockBuffer<O> ioTaskBuff) {
+		private int ioTaskBuffSize;
+		private O ioTask;
+
+		public NioCoroutine(
+			final CoroutinesProcessor coroutinesProcessor, final OptLockBuffer<O> ioTaskBuff
+		) {
+			super(coroutinesProcessor, ioTaskBuff);
 			this.ioTaskBuff = ioTaskBuff;
+			this.ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
 		}
 
 		@Override
-		public final void run() {
+		protected final void invokeTimedExclusively(final long startTimeNanos) {
 
-			int ioTaskBuffSize;
-			O ioTask;
-			final List<O> ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
+			ThreadContext.put(KEY_TEST_STEP_ID, stepId);
 
-			try(
-				final Instance logCtx = CloseableThreadContext
-					.put(KEY_CLASS_NAME, CLS_NAME)
-			) {
-
-				while(isStarted() || isShutdown()) {
-					if(ioTaskBuff.tryLock()) {
-						ioTaskBuffSize = ioTaskBuff.size();
-						if(ioTaskBuffSize > 0) {
-							try {
-								for(int i = 0; i < ioTaskBuffSize; i ++) {
-									ioTask = ioTaskBuff.get(i);
-									// check if the task is invoked 1st time
-									if(PENDING.equals(ioTask.getStatus())) {
-										// do not start the new task if the state is not more active
-										if(!isStarted()) {
-											continue;
-										}
-										// respect the configured concurrency level
-										if(!concurrencyThrottle.tryAcquire()) {
-											ioTaskLocalBuff.add(ioTask);
-											continue;
-										}
-										// mark the task as active
-										ioTask.startRequest();
-										ioTask.finishRequest();
-									}
-									// perform non blocking I/O for the task
-									invokeNio(ioTask);
-									// remove the task from the buffer if it is not active more
-									if(!ACTIVE.equals(ioTask.getStatus())) {
-										concurrencyThrottle.release();
-										ioTaskCompleted(ioTask);
-									} else {
-										// the task remains in the buffer for the next iteration
-										ioTaskLocalBuff.add(ioTask);
-									}
-								}
-							} catch(final Throwable cause) {
-								LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
-							} finally {
-								// put the active tasks back into the buffer
-								ioTaskBuff.clear();
-								ioTaskBuffSize = ioTaskLocalBuff.size();
-								if(ioTaskBuffSize > 0) {
-									for(int i = 0; i < ioTaskBuffSize; i ++) {
-										ioTaskBuff.add(ioTaskLocalBuff.get(i));
-									}
-									ioTaskLocalBuff.clear();
-								}
-								ioTaskBuff.unlock();
-							}
-						} else {
-							ioTaskBuff.unlock();
-							LockSupport.parkNanos(1);
-						}
-					}
-				}
-
-				if(ioTaskBuff.tryLock()) {
-					ioTaskBuffSize = ioTaskBuff.size();
-					Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
+			ioTaskBuffSize = ioTaskBuff.size();
+			if(ioTaskBuffSize > 0) {
+				try {
 					for(int i = 0; i < ioTaskBuffSize; i ++) {
 						ioTask = ioTaskBuff.get(i);
-						if(ACTIVE.equals(ioTask.getStatus())) {
-							ioTask.setStatus(INTERRUPTED);
+						// if timeout, put the task into the temporary buffer
+						if(System.nanoTime() - startTimeNanos >= TIMEOUT_NANOS) {
+							ioTaskLocalBuff.add(ioTask);
+							continue;
+						}
+						// check if the task is invoked 1st time
+						if(PENDING.equals(ioTask.getStatus())) {
+							// do not start the new task if the state is not more active
+							if(!isStarted()) {
+								continue;
+							}
+							// respect the configured concurrency level
+							if(!concurrencyThrottle.tryAcquire()) {
+								ioTaskLocalBuff.add(ioTask);
+								continue;
+							}
+							// mark the task as active
+							ioTask.startRequest();
+							ioTask.finishRequest();
+						}
+						// perform non blocking I/O for the task
+						invokeNio(ioTask);
+						// remove the task from the buffer if it is not active more
+						if(!ACTIVE.equals(ioTask.getStatus())) {
 							concurrencyThrottle.release();
 							ioTaskCompleted(ioTask);
+						} else {
+							// the task remains in the buffer for the next iteration
+							ioTaskLocalBuff.add(ioTask);
 						}
 					}
-					Loggers.MSG.debug("Finish the remaining active tasks done");
+				} catch(final Throwable cause) {
+					LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
+				} finally {
+					// put the active tasks back into the buffer
+					ioTaskBuff.clear();
+					ioTaskBuffSize = ioTaskLocalBuff.size();
+					if(ioTaskBuffSize > 0) {
+						for(int i = 0; i < ioTaskBuffSize; i ++) {
+							ioTaskBuff.add(ioTaskLocalBuff.get(i));
+						}
+						ioTaskLocalBuff.clear();
+					}
 				}
 			}
+		}
+
+		@Override
+		protected final void doClose() {
+			ioTaskBuffSize = ioTaskBuff.size();
+			Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
+			for(int i = 0; i < ioTaskBuffSize; i ++) {
+				ioTask = ioTaskBuff.get(i);
+				if(ACTIVE.equals(ioTask.getStatus())) {
+					ioTask.setStatus(INTERRUPTED);
+					concurrencyThrottle.release();
+					ioTaskCompleted(ioTask);
+				}
+			}
+			Loggers.MSG.debug("Finish the remaining active tasks done");
 		}
 	}
 
@@ -188,42 +182,26 @@ implements NioStorageDriver<I, O> {
 	protected final void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		for(final Runnable ioWorkerTask : ioWorkerTasks) {
-			ioTaskExecutor.execute(ioWorkerTask);
+		for(final Coroutine ioCoroutine : ioCoroutines) {
+			ioCoroutine.start();
 		}
-	}
-
-	@Override
-	protected final void doShutdown()
-	throws IllegalStateException {
-		ioTaskExecutor.shutdown();
 	}
 
 	@Override
 	protected final void doInterrupt()
 	throws IllegalStateException {
-		try {
-			if(!ioTaskExecutor.awaitTermination(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-				Loggers.ERR.error("Failed to stop the remaining I/O tasks in 0.25 second");
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Unexpected interruption");
+		for(final Coroutine ioCoroutine : ioCoroutines) {
+			ioCoroutine.stop();
 		}
-		ioTaskExecutor.shutdownNow();
-		if(!ioTaskExecutor.isTerminated()) {
-			Loggers.ERR.warn("I/O tasks executor is not finished after the interruption");
-		}
-		super.doInterrupt();
 	}
 
 	@Override
 	protected final boolean submit(final O ioTask)
-	throws InterruptedException {
-		ioTask.reset();
+	throws IllegalStateException {
 		OptLockBuffer<O> ioTaskBuff;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
-				throw new InterruptedException();
+				throw new IllegalStateException();
 			}
 			ioTaskBuff = ioTaskBuffs[(int) (rrc.getAndIncrement() % ioWorkerCount)];
 			if(ioTaskBuff.tryLock()) {
@@ -241,12 +219,12 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException {
+	throws IllegalStateException {
 		OptLockBuffer<O> ioTaskBuff;
 		int j = from, k, n;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
-				throw new InterruptedException();
+				throw new IllegalStateException();
 			}
 			ioTaskBuff = ioTaskBuffs[(int) (rrc.getAndIncrement() % ioWorkerCount)];
 			if(ioTaskBuff.tryLock()) {
@@ -266,7 +244,7 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ioTasks)
-	throws InterruptedException {
+	throws IllegalStateException {
 		return submit(ioTasks, 0, ioTasks.size());
 	}
 	
@@ -285,23 +263,20 @@ implements NioStorageDriver<I, O> {
 	}
 	
 	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException {
-		return ioTaskExecutor.awaitTermination(timeout, timeUnit);
-	}
-
-	@Override
 	protected void doClose()
 	throws IOException {
 		super.doClose();
+		for(final Coroutine ioCoroutine : ioCoroutines) {
+			ioCoroutine.close();
+		}
 		for(int i = 0; i < ioWorkerCount; i ++) {
-			ioWorkerTasks[i] = null;
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(ioTaskBuffs[i].tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+				if(ioTaskBuffs[i].tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){
 					Loggers.ERR.debug(
-						"Failed to obtain the lock, I/O tasks buff remains uncleared"
+						"Failed to obtain the I/O tasks buff lock in time, thread dump:\n{}",
+						new ThreadDump().toString()
 					);
 				}
 			} catch(final InterruptedException e) {
@@ -311,5 +286,6 @@ implements NioStorageDriver<I, O> {
 			}
 			ioTaskBuffs[i] = null;
 		}
+		ioCoroutines.clear();
 	}
 }

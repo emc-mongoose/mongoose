@@ -1,16 +1,17 @@
 package com.emc.mongoose.tests.system.util;
 
-import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.model.NamingThreadFactory;
+import com.emc.mongoose.api.common.concurrent.ThreadUtil;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -20,11 +21,10 @@ import static org.junit.Assert.assertEquals;
 public interface HttpStorageMockUtil {
 
 	ExecutorService REQ_EXECUTOR = Executors.newFixedThreadPool(
-		ThreadUtil.getHardwareThreadCount(), new NamingThreadFactory("testHttpReqExecutor", true)
+		ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("testHttpReqExecutor", true)
 	);
 
-	static void assertItemNotExists(final String nodeAddr, final String itemPath)
-	throws MalformedURLException, IOException, InterruptedException, ExecutionException {
+	static void assertItemNotExists(final String nodeAddr, final String itemPath) {
 		final Future<Integer> futureRespCode = REQ_EXECUTOR.submit(
 			() -> {
 				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
@@ -38,18 +38,71 @@ public interface HttpStorageMockUtil {
 				}
 			}
 		);
-		assertEquals(404, futureRespCode.get().intValue());
+		try {
+			assertEquals(404, futureRespCode.get().intValue());
+		} catch(final InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	static int getContentLength(final String nodeAddr, final String itemPath) {
+		final Future<Integer> futureContentLen = REQ_EXECUTOR.submit(
+			() -> {
+				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
+				return itemUrl.openConnection().getContentLength();
+			}
+		);
+		try {
+			return futureContentLen.get();
+		} catch(final InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	static void assertItemExists(
 		final String nodeAddr, final String itemPath, final long expectedSize
-	) throws MalformedURLException, IOException, InterruptedException, ExecutionException {
-		final Future<Long> futureContentLen = REQ_EXECUTOR.submit(
+	) {
+		final int actualSize = getContentLength(nodeAddr, itemPath);
+		assertEquals(
+			"Invalid size returned for the \"" + itemPath + "\"", expectedSize, actualSize
+		);
+	}
+
+	static void checkItemContent(
+		final String nodeAddr, final String itemPath, final Consumer<byte[]> checkContentFunc
+	) {
+		final Future<byte[]> futureContentLen = REQ_EXECUTOR.submit(
 			() -> {
 				final URL itemUrl = new URL("http://" + nodeAddr + itemPath);
-				return (long) itemUrl.openConnection().getContentLength();
+				byte[] buff = null;
+				HttpURLConnection conn = null;
+				try {
+					conn = (HttpURLConnection) itemUrl.openConnection();
+					final int contentLen = conn.getContentLength();
+					buff = new byte[contentLen];
+					try(final InputStream in = conn.getInputStream()) {
+						int offset = 0, n;
+						while(offset < contentLen) {
+							n = in.read(buff, offset, contentLen - offset);
+							if(n < 0) {
+								break;
+							} else {
+								offset += n;
+							}
+						}
+					}
+				} finally {
+					if(conn != null) {
+						conn.disconnect();
+					}
+				}
+				return buff;
 			}
 		);
-		assertEquals(expectedSize, futureContentLen.get().longValue());
+		try {
+			checkContentFunc.accept(futureContentLen.get());
+		} catch(final InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

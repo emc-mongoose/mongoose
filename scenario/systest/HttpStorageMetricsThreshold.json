@@ -7,13 +7,6 @@
 					"namespace" : "ns1"
 				}
 			}
-		},
-		"test" : {
-			"step" :{
-				"metrics" : {
-					"threshold" : 0.8
-				}
-			}
 		}
 	},
 	"steps" : [
@@ -30,12 +23,16 @@
 						"path" : "/default"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"threshold" : 0.8
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 1000000,
-							"size" : "1TB",
-							"time" : "50s"
+							"count" : 500000,
+							"time" : "30s"
 						}
 					}
 				}
@@ -47,6 +44,11 @@
 				"item" : {
 					"input" : {
 						"file" : "HttpStorageMetricsThresholdTest.csv"
+					}
+				},
+				"output" : {
+					"metrics" : {
+						"threshold" : 0.8
 					}
 				},
 				"load" : {
@@ -67,6 +69,11 @@
 						"file" : "HttpStorageMetricsThresholdTest.csv"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"threshold" : 0.8
+					}
+				},
 				"load" : {
 					"type" : "update"
 				}
@@ -81,11 +88,22 @@
 					}
 				},
 				"load" : {
-					"type" : "delete"
-				},
-				"storage" : {
-					"driver" : {
+					"type" : "delete",
+					"limit" : {
 						"concurrency" : 50
+					}
+				},
+				"output" : {
+					"metrics" : {
+						"average" : {
+							"persist" : false
+						},
+						"summary" : {
+							"persist" : false
+						},
+						"trace" : {
+							"persist" : false
+						}
 					}
 				}
 			}

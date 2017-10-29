@@ -46,8 +46,8 @@
 					},
 					"type" : "data"
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : 10
 					}
 				},
@@ -71,8 +71,8 @@
 						"file" : "copy-directory.json"
 					}
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : 5
 					}
 				},

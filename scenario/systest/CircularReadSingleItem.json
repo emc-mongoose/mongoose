@@ -32,7 +32,11 @@
 				},
 				"load" : {
 					"type" : "read",
-					"circular" : true
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					}
 				},
 				"test" : {
 					"step" : {

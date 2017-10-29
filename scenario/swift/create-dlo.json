@@ -10,13 +10,15 @@
 			}
 		},
 		"load" : {
-			"batch" : {
-				"size" : 1
+			"batch": {
+				"size": 1
+			},
+			"limit": {
+				"concurrency": 10
 			}
 		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10,
 				"type" : "swift"
 			},
 			"net" : {

@@ -11,9 +11,13 @@
 				}
 			}
 		},
+		"load" : {
+			"limit": {
+				"concurrency": 10
+			}
+		},
 		"storage" : {
 			"driver" : {
-				"concurrency" : 10,
 				"type" : "fs"
 			}
 		}
@@ -42,8 +46,8 @@
 				"item" : {
 					"type" : "data"
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : 1
 					}
 				},

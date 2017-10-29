@@ -1,205 +1,221 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.EnvUtil;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 import com.emc.mongoose.tests.system.util.HttpStorageMockUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
 
-import org.apache.logging.log4j.ThreadContext;
-
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 12.06.17.
  */
 public class CopyUsingInputPathTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_NAME = CopyUsingInputPathTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
+	private String itemSrcPath;
+	private String itemDstPath;
+	private String stdOutput;
+
+	private static final int COUNT_LIMIT = 100_000;
+
+	public CopyUsingInputPathTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "CopyUsingInputPath.json"
 		);
 	}
 
-	private static String ITEM_SRC_PATH;
-	private static String ITEM_DST_PATH;
-	private static String STD_OUTPUT;
+	@Override
+	protected String makeStepId() {
+		return CopyUsingInputPathTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
 
-	private static final int COUNT_LIMIT = 1_000_000;
-
-	@BeforeClass
-	public static void setUpClass()
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			ITEM_SRC_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+		super.setUp();
+		if(storageType.equals(StorageType.FS)) {
+			itemSrcPath = Paths.get(
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 			).toString();
 		} else {
-			ITEM_SRC_PATH = '/' + STEP_NAME;
+			itemSrcPath = '/' + stepId;
 		}
-		ITEM_DST_PATH = ITEM_SRC_PATH + "Dst";
-		ITEM_SRC_PATH += "Src";
-		EnvUtil.set("ITEM_SRC_PATH", ITEM_SRC_PATH);
-		EnvUtil.set("ITEM_DST_PATH", ITEM_DST_PATH);
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-	}
-
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		if(! SKIP_FLAG) {
-			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_SRC_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_DST_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
+		itemDstPath = itemSrcPath + "-Dst";
+		itemSrcPath += "-Src";
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemSrcPath);
+			} catch(final Throwable ignored) {
+			}
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemDstPath);
+			} catch(final Throwable ignored) {
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		EnvUtil.set("ITEM_SRC_PATH", itemSrcPath);
+		EnvUtil.set("ITEM_DST_PATH", itemDstPath);
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 	}
 
-	@Test
-	public void testMetricsLogFile()
+	@After
+	public void tearDown()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemSrcPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
+			}
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemDstPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
+			}
+		}
+		super.tearDown();
+	}
+	
+	@Override
+	public void test()
+	throws Exception {
+
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final LongAdder lostItemsCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecTestFunc;
+		if(storageType.equals(StorageType.FS)) {
+			ioTraceRecTestFunc = ioTraceRecord -> {
+				File nextSrcFile;
+				File nextDstFile;
+				final String nextItemPath = ioTraceRecord.get("ItemPath");
+				nextSrcFile = new File(nextItemPath);
+				final String nextItemId = nextItemPath.substring(
+					nextItemPath.lastIndexOf(File.separatorChar) + 1
+				);
+				nextDstFile = Paths.get(itemSrcPath, nextItemId).toFile();
+				Assert.assertTrue(
+					"File \"" + nextItemPath + "\" doesn't exist", nextSrcFile.exists()
+				);
+				if(!nextDstFile.exists()) {
+					lostItemsCount.increment();
+				} else {
+					Assert.assertEquals(
+						"Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
+							" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
+							") size (" + nextDstFile.length(),
+						nextSrcFile.length(), nextDstFile.length()
+					);
+				}
+				testIoTraceRecord(
+					ioTraceRecord, IoType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
+				);
+				ioTraceRecCount.increment();
+			};
+		} else {
+			final String node = httpStorageMocks.keySet().iterator().next();
+			ioTraceRecTestFunc = ioTraceRecord -> {
+				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), itemSize.getValue());
+				final String nextItemPath = ioTraceRecord.get("ItemPath");
+				if(HttpStorageMockUtil.getContentLength(node, nextItemPath) < 0) {
+					// not found
+					lostItemsCount.increment();
+				}
+				final String nextItemId = nextItemPath.substring(
+					nextItemPath.lastIndexOf(File.separatorChar) + 1
+				);
+				HttpStorageMockUtil.assertItemExists(
+					node, itemSrcPath + '/' + nextItemId, itemSize.getValue().get()
+				);
+				ioTraceRecCount.increment();
+			};
+		}
+		testIoTraceLogRecords(ioTraceRecTestFunc);
+
+		assertTrue(
+			"There should be " + COUNT_LIMIT + " records in the I/O trace log file",
+			ioTraceRecCount.sum() <= COUNT_LIMIT
+		);
+		assertEquals(0, lostItemsCount.sum(), COUNT_LIMIT / 10_000);
+
+		final List<CSVRecord> totalMetricsLogRecords = getMetricsTotalLogRecords();
+		assertEquals(
+			"There should be 1 total metrics records in the log file", 1,
+			totalMetricsLogRecords.size()
+		);
+		if(storageType.equals(StorageType.FS)) {
+			// some files may remain not written fully
+			testTotalMetricsLogRecord(
+				totalMetricsLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0
+			);
+		} else {
+			testTotalMetricsLogRecord(
+				totalMetricsLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				itemSize.getValue(), 0, 0
+			);
+		}
+
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 		assertTrue(
 			"There should be more than 0 metrics records in the log file",
 			metricsLogRecords.size() > 0
 		);
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
+		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
-			testMetricsLogRecords(metricsLogRecords, IoType.CREATE, CONCURRENCY,
-				STORAGE_DRIVERS_COUNT,
-				new SizeInBytes(ITEM_DATA_SIZE.get() / 2, ITEM_DATA_SIZE.get(), 1),
-				0, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			testMetricsLogRecords(
+				metricsLogRecords, IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1),
+				0, 0, config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		} else {
-			testMetricsLogRecords(metricsLogRecords, IoType.CREATE, CONCURRENCY,
-				STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0,
-				CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			testMetricsLogRecords(
+				metricsLogRecords, IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
+				itemSize.getValue(), 0, 0,
+				config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		}
-	}
 
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
-		assertEquals(
-			"There should be 1 total metrics records in the log file", 1,
-			totalMetrcisLogRecords.size()
-		);
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			// some files may remain not written fully
-			testTotalMetricsLogRecord(
-				totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-				new SizeInBytes(ITEM_DATA_SIZE.get() / 2, ITEM_DATA_SIZE.get(), 1), 0, 0
-			);
-		} else {
-			testTotalMetricsLogRecord(
-				totalMetrcisLogRecords.get(0), IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-				ITEM_DATA_SIZE, 0, 0
-			);
-		}
-	}
-
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.CREATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-	}
-
-	@Test
-	public void testIoTraceLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertTrue(
-			"There should be " + COUNT_LIMIT + " records in the I/O trace log file",
-			ioTraceRecords.size() <= COUNT_LIMIT
-		);
-		String nextItemPath, nextItemId;
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			File nextSrcFile;
-			File nextDstFile;
-			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-				nextItemPath = ioTraceRecord.get("ItemPath");
-				nextSrcFile = new File(nextItemPath);
-				nextItemId = nextItemPath.substring(
-					nextItemPath.lastIndexOf(File.separatorChar) + 1
-				);
-				nextDstFile = Paths.get(ITEM_SRC_PATH, nextItemId).toFile();
-				Assert.assertTrue(
-					"File \"" + nextItemPath + "\" doesn't exist", nextSrcFile.exists()
-				);
-				Assert.assertTrue(
-					"File \"" + nextDstFile.getPath() + "\" doesn't exist", nextDstFile.exists()
-				);
-				Assert.assertEquals(nextSrcFile.length(), nextDstFile.length());
-				testIoTraceRecord(
-					ioTraceRecord, IoType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
-				);
-			}
-		} else {
-			final String node = HTTP_STORAGE_MOCKS.keySet().iterator().next();
-			for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-				testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), ITEM_DATA_SIZE);
-				nextItemPath = ioTraceRecord.get("ItemPath");
-				//HttpStorageMockUtil.assertItemExists(node, nextItemPath, ITEM_DATA_SIZE.get());
-				nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf(File.separatorChar) + 1);
-				HttpStorageMockUtil.assertItemExists(
-					node, ITEM_SRC_PATH + '/' + nextItemId, ITEM_DATA_SIZE.get()
-				);
-			}
-		}
 	}
 }

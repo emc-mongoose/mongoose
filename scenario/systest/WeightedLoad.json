@@ -31,10 +31,15 @@
 			],
 			"config" : [
 				{
+					"item" : {
+						"output" : {
+							"path" : "${ITEM_OUTPUT_PATH}"
+						}
+					},
 					"test" : {
 						"step" : {
 							"limit" : {
-								"time" : "90s"
+								"time" : 50
 							}
 						}
 					}
@@ -46,7 +51,11 @@
 						}
 					},
 					"load" : {
-						"circular" : true,
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
 						"type" : "read"
 					}
 				}

@@ -1,45 +1,34 @@
 package com.emc.mongoose.tests.system.base;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.common.Constants.K;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_ISO8601;
-import static com.emc.mongoose.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_BORDER_BOTTOM;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER;
-import static com.emc.mongoose.load.monitor.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
-import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
-import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
-import static com.emc.mongoose.tests.system.util.LogPatterns.CELL_BORDER;
-import static com.emc.mongoose.tests.system.util.LogPatterns.WHITESPACES;
-import static com.emc.mongoose.ui.log.LogUtil.CREATE_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.DELETE_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.LIST_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.NOOP_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.READ_COLOR;
-import static com.emc.mongoose.ui.log.LogUtil.UPDATE_COLOR;
+import static com.emc.mongoose.api.common.Constants.K;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
+import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
+import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
+import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.SystemUtils;
-
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.junit.After;
+import org.junit.Before;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-
-import static com.emc.mongoose.ui.log.LogUtil.getFailureRatioAnsiColorCode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -49,7 +38,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -58,70 +46,91 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  Created by andrey on 19.01.17.
  */
-public abstract class LoggingTestBase {
-	
-	protected static Logger LOG;
-	protected static String STEP_NAME;
-	protected static BufferingOutputStream STD_OUT_STREAM;
-	protected static int LOG_FILE_TIMEOUT_SEC = 50;
+public abstract class LoggingTestBase
+extends ParameterizedSysTestBase {
 
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		// remove previous logs if exist
-		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME).toFile());
-		final URL u = LoggingTestBase.class.getClassLoader().getResource("logging.json");
-		System.setProperty("log4j.configurationFile", u.toString());
-		LogUtil.init();
-		STEP_NAME = ThreadContext.get(KEY_STEP_NAME);
-		STD_OUT_STREAM = new BufferingOutputStream(System.out);
-	}
+	protected static int LOG_FILE_TIMEOUT_SEC = 15;
 	
-	@AfterClass
-	public static void tearDownClass()
+	protected String stepId;
+	protected BufferingOutputStream stdOutStream;
+
+	protected LoggingTestBase(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		STD_OUT_STREAM.close();
+		stepId = makeStepId();
+		// remove previous logs if exist
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
+		LogUtil.init();
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		Loggers.MSG.info(
+			"{} params: {} = {}, {} = {}, {} = {}, {} = {}",
+			getClass().getSimpleName(),
+			StorageType.KEY_ENV, storageType.name(),
+			DriverCount.KEY_ENV, driverCount.name(),
+			Concurrency.KEY_ENV, concurrency.name(),
+			ItemSize.KEY_ENV, itemSize.name()
+		);
+		stdOutStream = new BufferingOutputStream(System.out);
+	}
+
+	@After
+	public void tearDown()
+	throws Exception {
+		stdOutStream.close();
+		ThreadContext.remove(KEY_TEST_STEP_ID);
 		//LogUtil.shutdown();
 	}
 
-	private static List<String> getLogFileLines(final String fileName)
+	protected String makeStepId() {
+		return getClass().getSimpleName() +  '-' + storageType.name() + '-' + driverCount.name() +
+			'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+	private List<String> getLogFileLines(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			return br.lines().collect(Collectors.toList());
 		}
 	}
 
-	protected static List<String> getMessageLogLines()
+	protected List<String> getMessageLogLines()
 	throws IOException {
 		return getLogFileLines("messages.log");
 	}
 
-	protected static List<String> getErrorsLogLines()
+	protected List<String> getErrorsLogLines()
 	throws IOException {
 		return getLogFileLines("errors.log");
 	}
 
-	protected static List<String> getConfigLogLines()
+	protected List<String> getConfigLogLines()
 	throws IOException {
 		return getLogFileLines("config.log");
 	}
 
-	protected static List<String> getPartsUploadLogLines()
+	protected List<String> getPartsUploadLogLines()
 	throws IOException {
 		return getLogFileLines("parts.upload.csv");
 	}
 
-	protected static List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	protected List<CSVRecord> getLogFileCsvRecords(final String fileName)
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", STEP_NAME, fileName).toFile();
+		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
@@ -148,32 +157,59 @@ public abstract class LoggingTestBase {
 		}
 	}
 
-	protected static List<CSVRecord> getMetricsMedLogRecords()
+	protected List<CSVRecord> getMetricsMedLogRecords()
 	throws IOException {
-		return getLogFileCsvRecords("metrics.med.csv");
+		return getLogFileCsvRecords("metrics.threshold.csv");
 	}
 
-	protected static List<CSVRecord> getMetricsMedTotalLogRecords()
+	protected List<CSVRecord> getMetricsMedTotalLogRecords()
 	throws IOException {
-		return getLogFileCsvRecords("metrics.med.total.csv");
+		return getLogFileCsvRecords("metrics.threshold.total.csv");
 	}
 
-	protected static List<CSVRecord> getMetricsLogRecords()
+	protected List<CSVRecord> getMetricsLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.csv");
 	}
 
-	protected static List<CSVRecord> getMetricsTotalLogRecords()
+	protected List<CSVRecord> getMetricsTotalLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.total.csv");
 	}
 
-	protected static List<CSVRecord> getIoTraceLogRecords()
+	protected List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("io.trace.csv");
 	}
 
-	protected static List<CSVRecord> getPartsUploadRecords()
+	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
+		final File logFile = Paths
+			.get(PathUtil.getBaseDir(), "log", stepId, "io.trace.csv")
+			.toFile();
+		long prevSize = 1, nextSize;
+		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
+			if(logFile.exists()) {
+				nextSize = logFile.length();
+				if(prevSize == nextSize) {
+					break;
+				}
+				prevSize = nextSize;
+			}
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch(final InterruptedException e) {
+				return;
+			}
+		}
+		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+			try(final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br)) {
+				csvParser.forEach(csvRecordTestFunc);
+			}
+		}
+	}
+
+	protected List<CSVRecord> getPartsUploadRecords()
 	throws IOException {
 		return getLogFileCsvRecords("parts.upload.csv");
 	}
@@ -185,21 +221,20 @@ public abstract class LoggingTestBase {
 	) throws Exception {
 		final int countRecords = metrics.size();
 		if(expectedLoadJobTime > 0) {
-			assertEquals(
-				"Count of the metrics records: " + countRecords,
-				expectedLoadJobTime, metricsPeriodSec * countRecords, metricsPeriodSec
-			);
+			assertTrue(expectedLoadJobTime + metricsPeriodSec >= countRecords * metricsPeriodSec);
 		}
 
 		Date lastTimeStamp = null, nextDateTimeStamp;
 		String ioTypeStr;
 		int concurrencyLevel;
 		int driverCount;
-		long prevTotalBytes = Long.MIN_VALUE, totalBytes;
+		int concurrencyCurr;
+		double concurrencyMean;
+		long totalBytes;
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
 		long avgItemSize;
-		double prevJobDuration = Double.NaN, jobDuration;
+		double jobDuration;
 		double prevDurationSum = Double.NaN, durationSum;
 		double tpAvg, tpLast;
 		double bwAvg, bwLast;
@@ -227,13 +262,17 @@ public abstract class LoggingTestBase {
 			);
 			driverCount = Integer.parseInt(nextRecord.get("DriverCount"));
 			assertEquals("Expected driver count: " + driverCount, expectedDriverCount, driverCount);
-			totalBytes = SizeInBytes.toFixedSize(nextRecord.get("Size"));
-			if(prevTotalBytes == Long.MIN_VALUE) {
-				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
+			concurrencyCurr = Integer.parseInt(nextRecord.get("ConcurrencyCurr"));
+			concurrencyMean = Double.parseDouble(nextRecord.get("ConcurrencyMean"));
+			if(expectedConcurrency > 0) {
+				assertTrue(concurrencyCurr <= driverCount * expectedConcurrency);
+				assertTrue(concurrencyMean <= driverCount * expectedConcurrency);
 			} else {
-				assertTrue(Long.toString(totalBytes), totalBytes >= prevTotalBytes);
+				assertTrue(concurrencyCurr >= 0);
+				assertTrue(concurrencyMean >= 0);
 			}
-			prevTotalBytes = totalBytes;
+			totalBytes = SizeInBytes.toFixedSize(nextRecord.get("Size"));
+			assertTrue(totalBytes >= 0);
 			countSucc = Long.parseLong(nextRecord.get("CountSucc"));
 			if(prevCountSucc == Long.MIN_VALUE) {
 				assertTrue(Long.toString(countSucc), countSucc >= 0);
@@ -241,7 +280,10 @@ public abstract class LoggingTestBase {
 				assertTrue(Long.toString(countSucc), countSucc >= prevCountSucc);
 			}
 			if(expectedMaxCount > 0) {
-				assertTrue(Long.toString(countSucc), countSucc <= expectedMaxCount);
+				assertTrue(
+					"Expected no more than " + expectedMaxCount + " results, bot got " + countSucc,
+					countSucc <= expectedMaxCount
+				);
 			}
 			prevCountSucc = countSucc;
 			countFail = Long.parseLong(nextRecord.get("CountFail"));
@@ -259,24 +301,24 @@ public abstract class LoggingTestBase {
 				}
 			}
 			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
-			if(Double.isNaN(prevJobDuration)) {
-				assertEquals(Double.toString(jobDuration), 0, jobDuration, 15);
-			} else {
-				assertEquals(
-					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 2
+			if(expectedLoadJobTime > 0) {
+				assertTrue(
+					"Step duration limit (" + expectedLoadJobTime + ") is broken: " + jobDuration,
+					jobDuration <= expectedLoadJobTime + 1
 				);
 			}
-			prevJobDuration = jobDuration;
 			durationSum = Double.parseDouble(nextRecord.get("DurationSum[s]"));
 			if(Double.isNaN(prevDurationSum)) {
 				assertTrue(durationSum >= 0);
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
-				final double
-					effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
-				assertTrue(
-					"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
-				);
+				if(expectedConcurrency > 0 && jobDuration > 1) {
+					final double
+						effEstimate = durationSum / (driverCount * expectedConcurrency * jobDuration);
+					assertTrue(
+						"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
+					);
+				}
 			}
 			prevDurationSum = durationSum;
 			tpAvg = Double.parseDouble(nextRecord.get("TPAvg[op/s]"));
@@ -329,6 +371,12 @@ public abstract class LoggingTestBase {
 		assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 		final int driverCount = Integer.parseInt(metrics.get("DriverCount"));
 		assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
+		final double concurrencyLastMean = Double.parseDouble(metrics.get("ConcurrencyMean"));
+		if(expectedConcurrency > 0) {
+			assertTrue(concurrencyLastMean <= driverCount * expectedConcurrency);
+		} else {
+			assertTrue(concurrencyLastMean >= 0);
+		}
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
 		if(
 			expectedMaxCount > 0 && expectedItemDataSize.get() > 0 &&
@@ -341,28 +389,44 @@ public abstract class LoggingTestBase {
 		}
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
-			assertEquals(expectedMaxCount, countSucc);
+			if(expectedLoadJobTime > 0) {
+				assertTrue(expectedMaxCount > countSucc);
+			} else {
+				assertEquals(expectedMaxCount, countSucc);
+			}
 			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
-		assertTrue(Long.toString(countFail), countFail < 1);
-		final long avgItemSize = totalBytes / countSucc;
-		if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
-			assertTrue(avgItemSize >= expectedItemDataSize.getMin());
-			assertTrue(avgItemSize <= expectedItemDataSize.getMax());
-		} else {
-			assertEquals(
-				Long.toString(avgItemSize), expectedItemDataSize.get(), avgItemSize,
-				expectedItemDataSize.getAvg() / 100
-			);
+		assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
+		if(countSucc > 0) {
+			final long avgItemSize = totalBytes / countSucc;
+			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
+				assertTrue(avgItemSize >= expectedItemDataSize.getMin());
+				assertTrue(avgItemSize <= expectedItemDataSize.getMax());
+			} else {
+				assertEquals(
+					Long.toString(avgItemSize), expectedItemDataSize.get(), avgItemSize,
+					expectedItemDataSize.getAvg() / 100
+				);
+			}
 		}
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
 		if(expectedLoadJobTime > 0) {
-			assertEquals(Double.toString(jobDuration), expectedLoadJobTime, jobDuration, 5);
+			assertTrue(
+				"Step duration was " + jobDuration + ", but expected not more than" +
+					expectedLoadJobTime + 5, jobDuration <= expectedLoadJobTime + 5
+			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
-		final double effEstimate = durationSum / (concurrencyLevel * driverCount * jobDuration);
-		assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate > 0);
+		final double effEstimate = durationSum / (expectedConcurrency * expectedDriverCount * jobDuration);
+		if(countSucc > 0 && expectedConcurrency > 0 && jobDuration > 1) {
+			assertTrue(
+				"Invalid efficiency estimate: " + effEstimate + ", summary duration: " + durationSum
+					+ ", concurrency limit: " + expectedConcurrency + ", driver count: "
+					+ driverCount + ", job duration: " + jobDuration,
+				effEstimate <= 1 && effEstimate >= 0
+			);
+		}
 		final double tpAvg = Double.parseDouble(metrics.get("TPAvg[op/s]"));
 		final double tpLast = Double.parseDouble(metrics.get("TPLast[op/s]"));
 		final double bwAvg = Double.parseDouble(metrics.get("BWAvg[MB/s]"));
@@ -397,7 +461,7 @@ public abstract class LoggingTestBase {
 
 	protected static void testIoTraceRecord(
 		final CSVRecord ioTraceRecord, final int ioTypeCodeExpected, final SizeInBytes sizeExpected
-	) throws Exception {
+	) {
 		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
 		if(INTERRUPTED.ordinal() == actualStatusCode) {
@@ -413,7 +477,7 @@ public abstract class LoggingTestBase {
 			assertTrue(duration >= Long.parseLong(latencyStr));
 		}
 		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
-		if(sizeExpected.getMin() != sizeExpected.getMax()) {
+		if(sizeExpected.getMin() < sizeExpected.getMax()) {
 			assertTrue(
 				"Expected the size " + sizeExpected.toString() + ", but got " + size,
 				sizeExpected.getMin() <= size && size <= sizeExpected.getMax()
@@ -450,6 +514,7 @@ public abstract class LoggingTestBase {
 		String ioTypeStr;
 		int concurrencyLevel;
 		int driverCount;
+		double concurrencyMean;
 		long prevTotalBytes = Long.MIN_VALUE, totalBytes;
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
@@ -479,6 +544,12 @@ public abstract class LoggingTestBase {
 			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 			driverCount = Integer.parseInt(m.group("driverCount"));
 			assertEquals(Integer.toString(driverCount), expectedDriverCount, driverCount);
+			concurrencyMean = Double.parseDouble(m.group("concurrencyLastMean"));
+			if(expectedConcurrency > 0) {
+				assertTrue(concurrencyMean <= driverCount * expectedConcurrency);
+			} else {
+				assertTrue(concurrencyMean >= 0);
+			}
 			totalBytes = SizeInBytes.toFixedSize(m.group("size"));
 			if(prevTotalBytes == Long.MIN_VALUE) {
 				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
@@ -542,9 +613,9 @@ public abstract class LoggingTestBase {
 		}
 	}
 
-	protected static void testMetricsTableStdout(
+	protected void testMetricsTableStdout(
 		final String stdOutContent, final String stepName, final int driverCount,
-		final long countLimit, final Map<IoType, Integer> concurrencyMap
+		final long countLimit, final Map<IoType, Integer> configConcurrencyMap
 	) throws Exception {
 
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
@@ -557,8 +628,10 @@ public abstract class LoggingTestBase {
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
-			final int actualConcurrency = Integer.parseInt(m.group("concurrency"));
-			final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
+			//final int configConcurrency = Integer.parseInt(m.group("concurrency"));
+			//final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
+			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
+			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
 			final long failCount = Long.parseLong(m.group("failCount"));
 			final float stepTimeSec = Float.parseFloat(m.group("stepTime"));
@@ -568,31 +641,39 @@ public abstract class LoggingTestBase {
 			final long dur = Long.parseLong(m.group("dur"));
 
 			assertEquals(
-				stepName.length() > 17 ? stepName.substring(stepName.length() - 17) : stepName,
+				stepName.length() > 10 ? stepName.substring(stepName.length() - 10) : stepName,
 				actualStepNameEnding
 			);
 			ioTypeFoundFlag = false;
-			for(final IoType nextIoType : concurrencyMap.keySet()) {
+			for(final IoType nextIoType : configConcurrencyMap.keySet()) {
 				if(nextIoType.equals(actualIoType)) {
 					ioTypeFoundFlag = true;
 					break;
 				}
 			}
 			assertTrue(
-				"I/O type \"" + actualIoType + "\" not found, expected one of: " +
-					Arrays.toString(concurrencyMap.keySet().toArray()), ioTypeFoundFlag
+				"I/O type \"" + actualIoType + "\" was found but expected one of: " +
+					Arrays.toString(configConcurrencyMap.keySet().toArray()), ioTypeFoundFlag
 			);
-			assertEquals((int) concurrencyMap.get(actualIoType), actualConcurrency);
-			assertEquals(driverCount, actualDriverCount);
+			final int expectedConfigConcurrency = configConcurrencyMap.get(actualIoType);
+			if(expectedConfigConcurrency > 0) {
+				assertTrue(actualConcurrencyCurr <= driverCount * expectedConfigConcurrency);
+				assertTrue(actualConcurrencyLastMean <= driverCount * expectedConfigConcurrency);
+			} else {
+				assertTrue(actualConcurrencyCurr >= 0);
+				assertTrue(actualConcurrencyLastMean >= 0);
+			}
 			if(countLimit > 0) {
-				assertTrue(countLimit > succCount); // count succ
+				assertTrue(countLimit >= succCount); // count succ
 			}
 			assertTrue(failCount == 0);
 			assertTrue(stepTimeSec >= 0);
 			assertTrue(tp >= 0);
 			assertTrue(bw >= 0);
 			assertTrue(lat >= 0);
-			assertTrue(lat <= dur);
+			if(!storageType.equals(StorageType.FS)) {
+				assertTrue(lat <= dur);
+			}
 		}
 
 		assertTrue(rowCount > 0);
@@ -600,6 +681,8 @@ public abstract class LoggingTestBase {
 		final int tableHeaderCount =
 			(stdOutContent.length() - stdOutContent.replaceAll(TABLE_HEADER, "").length())
 				/ TABLE_HEADER.length();
-		assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
+		if(tableHeaderCount > 0) {
+			assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
+		}
 	}
 }

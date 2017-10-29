@@ -7,12 +7,16 @@
 			},
 			"output" : {
 				"file" : "objects.csv",
-				/* Missing buckets will be created on demand.
-				Note the seed value "314159265" used to init the internal PRNG.
+				/* Note the seed value "314159265" used to init the internal PRNG.
 				This is a dirty hack. The same seed value should be used as a part of uid dynamic
 				value to get the same "XY" value for each pair of "bucket-XY" and "user-XY" supplied
 				*/
 				"path" : "bucket-%d(314159265){00}[0-99]"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"concurrency" : 10
 			}
 		},
 		"storage" : {
@@ -32,7 +36,6 @@
 				"uid" : "user-%d(314159265){00}[0-99]"
 			},
 			"driver" : {
-				"concurrency" : 10,
 				"type" : "s3"
 			}
 		},

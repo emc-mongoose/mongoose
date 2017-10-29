@@ -1,12 +1,12 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.common.io.collection.BufferingInputBase;
-import com.emc.mongoose.model.io.task.IoTask;
+import com.github.akurilov.commons.io.collection.BufferingInputBase;
+import com.emc.mongoose.api.model.io.task.IoTask;
 
-import com.emc.mongoose.model.item.DataItemFactory;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.item.DataItemFactory;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +23,8 @@ extends BufferingInputBase<I> {
 	private final String prefix;
 	private final int idRadix;
 
+	private boolean poisonedFlag = false;
+
 	public StorageItemInput(
 		final StorageDriver<I, ? extends IoTask<I>> storageDriver, final int batchSize,
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix
@@ -38,17 +40,36 @@ extends BufferingInputBase<I> {
 	@Override
 	protected final int loadMoreItems(final I lastItem)
 	throws IOException {
-		final List<I>
-			newItems = storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, capacity);
-		for(final I item : newItems) {
-			items.add(item);
+		if(poisonedFlag) {
+			return 0;
 		}
-		return items.size();
+		final List<I> newItems = storageDriver.list(
+			itemFactory, path, prefix, idRadix, lastItem, capacity
+		);
+		final int n = newItems.size();
+		I nextItem;
+		for(int i = 0; i < n; i ++) {
+			nextItem = newItems.get(i);
+			if(null == nextItem) {
+				poisonedFlag = true;
+				return i;
+			} else {
+				items.add(nextItem);
+			}
+		}
+		return n;
 	}
 
 	@Override
 	public final String toString() {
 		return (itemFactory instanceof DataItemFactory ? "Data" : "") +
 			"ItemsFromPath(" + path + ")";
+	}
+
+	@Override
+	public final void reset()
+	throws IOException {
+		super.reset();
+		poisonedFlag = false;
 	}
 }

@@ -1,22 +1,21 @@
 package com.emc.mongoose.storage.driver.net.base;
 
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.ui.log.LogUtil;
 
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
-import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
-import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_IO;
+import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.PrematureChannelClosureException;
 import io.netty.handler.timeout.IdleStateEvent;
-import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -41,11 +40,12 @@ extends SimpleChannelInboundHandler<M> {
 	@Override @SuppressWarnings("unchecked")
 	protected final void channelRead0(final ChannelHandlerContext ctx, final M msg)
 	throws Exception {
+
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
-		try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-			handle(channel, ioTask, msg);
-		}
+		handle(channel, ioTask, msg);
 	}
 	
 	protected abstract void handle(final Channel channel, final O ioTask, final M msg)

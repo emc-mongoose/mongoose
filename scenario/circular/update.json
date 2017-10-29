@@ -6,8 +6,8 @@
 				"size" : "1KB"
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		}
@@ -48,7 +48,11 @@
 				},
 				"load" : {
 					"type" : "update",
-					"circular" : true
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					}
 				},
 				"test" : {
 					"step" : {

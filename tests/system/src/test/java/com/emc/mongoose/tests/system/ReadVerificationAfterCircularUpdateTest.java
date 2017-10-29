@@ -1,151 +1,138 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
+import org.apache.commons.csv.CSVRecord;
+
+import org.junit.After;
+import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 /**
  Created by andrey on 12.06.17.
  */
+
 public class ReadVerificationAfterCircularUpdateTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 
-	private static String ITEM_OUTPUT_PATH;
-	private static String STD_OUTPUT;
+	private String itemOutputPath;
+	private String stdOutput;
 
-	static {
-		// exclude atmos as far as storage mock is unable to get the data item offset from its id
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos"));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1, 1000));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(
-				new SizeInBytes(0), new SizeInBytes("1MB"), new SizeInBytes("100MB"),
-				new SizeInBytes("10GB")
-			)
-		);
-		STEP_NAME = ReadVerificationAfterCircularUpdateTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
+	public ReadVerificationAfterCircularUpdateTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
 			getBaseDir(), DIR_SCENARIO, "systest", "ReadVerificationAfterCircularUpdate.json"
 		);
 	}
 
-	@BeforeClass
-	public static void setUpClass()
+	@Override
+	protected String makeStepId() {
+		return ReadVerificationAfterCircularUpdateTest.class.getSimpleName() + '-' +
+			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
+			itemSize.name();
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+		configArgs.add("--storage-net-http-namespace=ns1");
+		super.setUp();
+		if(storageType.equals(StorageType.FS)) {
+			itemOutputPath = Paths.get(
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 			).toString();
-			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+			config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(5);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		if(! SKIP_FLAG) {
-			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public void testIoTraceLogFile()
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		CSVRecord csvRecord;
-		for(int i = 0; i < ioTraceRecords.size(); i ++) {
-			csvRecord = ioTraceRecords.get(i);
+
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			assertEquals(
-				"Record #" + i + ": unexpected operation type " + csvRecord.get("IoTypeCode"),
-				IoType.READ, IoType.values()[Integer.parseInt(csvRecord.get("IoTypeCode"))]
+				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " +
+					ioTraceRec.get("IoTypeCode"),
+				IoType.READ, IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))]
 			);
 			assertEquals(
-				"Record #" + i + ": unexpected status code " + csvRecord.get("StatusCode"),
+				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " +
+					ioTraceRec.get("StatusCode"),
 				IoTask.Status.SUCC,
-				IoTask.Status.values()[Integer.parseInt(csvRecord.get("StatusCode"))]
+				IoTask.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
 			);
-		}
-	}
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
 
-	@Test
-	public void testMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testMetricsLogRecords(
-			getMetricsLogRecords(),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
-	}
-
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords().get(0),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, 0, 0
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), 0, 0
 		);
-	}
 
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
+		testMetricsLogRecords(
+			getMetricsLogRecords(),
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(), 0, 0,
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
+		);
+
 		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			stdOutput, stepId, driverCount.getValue(), 0,
 			new HashMap<IoType, Integer>() {{
-				put(IoType.CREATE, CONCURRENCY);
-				put(IoType.UPDATE, CONCURRENCY);
-				put(IoType.READ, CONCURRENCY);
+				put(IoType.CREATE, concurrency.getValue());
+				put(IoType.UPDATE, concurrency.getValue());
+				put(IoType.READ, concurrency.getValue());
 			}}
 		);
 	}

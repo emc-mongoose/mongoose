@@ -1,38 +1,40 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
-import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-
+import com.emc.mongoose.tests.system.util.EnvUtil;
+import com.emc.mongoose.ui.log.LogUtil;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.math3.stat.Frequency;
-import org.apache.logging.log4j.ThreadContext;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
+import org.junit.After;
+import org.junit.Before;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
+
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  Created by andrey on 06.02.17.
@@ -47,70 +49,71 @@ import java.util.concurrent.TimeUnit;
  * 9.5.5. Sequential Job
  * 10.1.2. Two Local Separate Storage Driver Services (at different ports)
  */
-
 public class CircularAppendTest
-extends EnvConfiguredScenarioTestBase {
-
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes(0), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_NAME = CircularAppendTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "CircularAppend.json");
-	}
+extends ScenarioTestBase {
 
 	private static final int EXPECTED_APPEND_COUNT = 100;
 	private static final long EXPECTED_COUNT = 100;
 	private static final String ITEM_OUTPUT_FILE_1 = "CircularAppendTest1.csv";
 
-	private static String STD_OUTPUT;
-	private static String ITEM_OUTPUT_PATH;
+	private String stdOutput;
+	private String itemOutputPath;
 
-	@BeforeClass
-	public static void setUpClass()
+	public CircularAppendTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "CircularAppend.json");
+	}
+
+	@Override
+	protected String makeStepId() {
+		return CircularAppendTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		STEP_NAME = CircularAppendTest.class.getSimpleName();
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+		configArgs.add("--storage-net-http-namespace=ns1");
+		super.setUp();
+		if(storageType.equals(StorageType.FS)) {
+			itemOutputPath = Paths.get(
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 			).toString();
-			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+			config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
-		LoadJobLogFileManager.flushAll();
+		EnvUtil.set("ITEM_DATA_SIZE", itemSize.getValue().toString());
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		stdOutput = stdOutStream.stopRecordingAndGet();
+		LogUtil.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		if(! SKIP_FLAG) {
-			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public void testMetricsLogFile()
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
+
 		try {
 			final List<CSVRecord> metricsLogRecords = getMetricsLogRecords();
 			assertTrue(
@@ -118,60 +121,43 @@ extends EnvConfiguredScenarioTestBase {
 				metricsLogRecords.size() > 0
 			);
 			testMetricsLogRecords(
-				metricsLogRecords, IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-				ITEM_DATA_SIZE, EXPECTED_APPEND_COUNT * EXPECTED_COUNT, 0,
-				CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+				metricsLogRecords, IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+				itemSize.getValue(), (long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT),
+				0, config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 			);
 		} catch(final FileNotFoundException ignored) {
 			// there may be no metrics file if append step duration is less than 10s
 		}
-	}
 
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(
 			"There should be 1 total metrics records in the log file", 1,
 			totalMetrcisLogRecords.size()
 		);
 		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(0), IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT,
-			ITEM_DATA_SIZE, 0, 0
+			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+			driverCount.getValue(), itemSize.getValue(), 0, 0
 		);
-	}
 
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
 		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.UPDATE, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.UPDATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
-	}
 
-	@Test
-	public void testIoTraceLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), itemSize.getValue());
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
 		assertTrue(
 			"There should be more than " + EXPECTED_COUNT +
-				" records in the I/O trace log file, but got: " + ioTraceRecords.size(),
-			EXPECTED_COUNT < ioTraceRecords.size()
+				" records in the I/O trace log file, but got: " + ioTraceRecCount.sum(),
+			EXPECTED_COUNT < ioTraceRecCount.sum()
 		);
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.UPDATE.ordinal(), ITEM_DATA_SIZE);
-		}
-	}
 
-	@Test
-	public void testUpdatedItemsOutputFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
+
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE_1))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
@@ -179,13 +165,15 @@ extends EnvConfiguredScenarioTestBase {
 				items.add(csvRecord);
 			}
 		}
-		final int itemIdRadix = CONFIG.getItemConfig().getNamingConfig().getRadix();
+		final int itemIdRadix = config.getItemConfig().getNamingConfig().getRadix();
 		final Frequency freq = new Frequency();
 		String itemPath, itemId;
 		long itemOffset;
-		long itemSize;
+		long size;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			ITEM_DATA_SIZE.get(), 2 * EXPECTED_APPEND_COUNT * ITEM_DATA_SIZE.get(), 1
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
+			3 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(),
+			1
 		);
 		final int n = items.size();
 		CSVRecord itemRec;
@@ -193,19 +181,25 @@ extends EnvConfiguredScenarioTestBase {
 			itemRec = items.get(i);
 			itemPath = itemRec.get(0);
 			for(int j = i; j < n; j ++) {
-				assertFalse(itemPath.equals(items.get(j).get(0)));
+				if(i != j) {
+					assertFalse(itemPath.equals(items.get(j).get(0)));
+				}
 			}
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
-			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-			freq.addValue(itemOffset);
-			itemSize = Long.parseLong(itemRec.get(2));
+			if(!storageType.equals(StorageType.ATMOS)) {
+				itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+				assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+				freq.addValue(itemOffset);
+			}
+			size = Long.parseLong(itemRec.get(2));
 			assertTrue(
-				"Expected size: " + expectedFinalSize.toString() + ", actual: " + itemSize,
-				expectedFinalSize.getMin() <= itemSize && itemSize <= expectedFinalSize.getMax()
+				"Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
+				expectedFinalSize.getMin() <= size && size <= expectedFinalSize.getMax()
 			);
 			assertEquals("0/0", itemRec.get(3));
 		}
-		assertEquals(EXPECTED_COUNT, freq.getUniqueCount());
+		if(!storageType.equals(StorageType.ATMOS)) {
+			assertEquals(EXPECTED_COUNT, freq.getUniqueCount(), EXPECTED_COUNT / 20);
+		}
 	}
 }

@@ -12,10 +12,8 @@
 		"load" : {
 			"batch" : {
 				"size" : 1
-			}
-		},
-		"storage" : {
-			"driver" : {
+			},
+			"limit" : {
 				"concurrency" : 10
 			}
 		},

@@ -1,22 +1,24 @@
 package com.emc.mongoose.tests.perf;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.collection.CircularListInput;
-import com.emc.mongoose.common.supply.ConstantStringSupplier;
-import com.emc.mongoose.common.supply.RangePatternDefinedSupplier;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.github.akurilov.commons.io.collection.ListInput;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.io.collection.CircularListInput;
+import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
+import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.load.generator.BasicLoadGenerator;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.io.task.data.BasicDataIoTaskBuilder;
-import com.emc.mongoose.model.item.BasicDataItem;
-import com.emc.mongoose.model.item.BasicDataItemFactory;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemNameSupplier;
-import com.emc.mongoose.model.item.ItemNamingType;
-import com.emc.mongoose.model.item.NewDataItemInput;
-import com.emc.mongoose.model.load.LoadGenerator;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
+import com.emc.mongoose.api.model.item.BasicDataItem;
+import com.emc.mongoose.api.model.item.BasicDataItemFactory;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemNameSupplier;
+import com.emc.mongoose.api.model.item.ItemNamingType;
+import com.emc.mongoose.api.model.item.NewDataItemInput;
+import com.emc.mongoose.api.model.load.LoadGenerator;
 
 import org.junit.Test;
 
@@ -35,12 +37,12 @@ public class BasicLoadGeneratorTest {
 	
 	private static final int TIME_LIMIT = 30;
 	
-	private static final class CountingOutput<T>
+	private static class CountingOutput<T>
 	implements Output<T> {
 		
 		private final LongAdder counter;
 		
-		public CountingOutput(final LongAdder counter) {
+		CountingOutput(final LongAdder counter) {
 			this.counter = counter;
 		}
 		
@@ -76,6 +78,42 @@ public class BasicLoadGeneratorTest {
 		throws IOException {
 		}
 	}
+
+	private static final class RecyclingAndCountingOutput<T>
+	extends CountingOutput<T> {
+
+		private final LoadGenerator loadGenerator;
+
+		RecyclingAndCountingOutput(final LoadGenerator loadGenerator, final LongAdder counter) {
+			super(counter);
+			this.loadGenerator = loadGenerator;
+		}
+
+		@Override
+		public boolean put(final T item)
+		throws IOException {
+			loadGenerator.recycle((IoTask) item);
+			return super.put(item);
+		}
+
+		@Override
+		public int put(final List<T> buffer, final int from, final int to)
+		throws IOException {
+			for(int i = from; i < to; i ++) {
+				loadGenerator.recycle((IoTask) buffer.get(i));
+			}
+			return super.put(buffer, from, to);
+		}
+
+		@Override
+		public int put(final List<T> buffer)
+		throws IOException {
+			for(int i = 0; i < buffer.size(); i ++) {
+				loadGenerator.recycle((IoTask) buffer.get(i));
+			}
+			return super.put(buffer);
+		}
+	}
 	
 	@Test
 	public final void testNewDataItems()
@@ -99,10 +137,10 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
@@ -131,10 +169,10 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ asc names) rate: " + counter.sum() / TIME_LIMIT);
@@ -163,10 +201,10 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + "(w/ constant credentials) rate: " + counter.sum() / TIME_LIMIT);
@@ -195,10 +233,10 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ dynamic path) rate: " + counter.sum() / TIME_LIMIT);
@@ -229,10 +267,10 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
@@ -263,13 +301,53 @@ public class BasicLoadGeneratorTest {
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
 				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				shuffleFlag
+				0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new CountingOutput(counter));
+			loadGenerator.setOutputs(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ shuffling) rate: " + counter.sum() / TIME_LIMIT);
+		}
+	}
+
+	@Test
+	public final void testRecycleMode()
+	throws Exception {
+
+		final LongAdder counter = new LongAdder();
+
+		final List items = new ArrayList(BATCH_SIZE);
+		BasicDataItem item;
+		for(int i = 0; i < BATCH_SIZE; i ++) {
+			item = new BasicDataItem();
+			item.setName(Long.toString(System.nanoTime(), Character.MAX_RADIX));
+			items.add(item);
+		}
+		final Input itemInput = new ListInput(items);
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+			.setIoType(IoType.READ)
+			.setOutputPathSupplier(null)
+			.setUidSupplier(null)
+			.setSecretSupplier(null);
+		final boolean shuffleFlag = false;
+
+		try(
+			final LoadGenerator loadGenerator = new BasicLoadGenerator(
+				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
+				BATCH_SIZE, shuffleFlag
+			)
+		) {
+			loadGenerator.setOutputs(
+				new ArrayList<Output>() {
+					{
+						add(new RecyclingAndCountingOutput(loadGenerator, counter));
+					}
+				}
+			);
+			loadGenerator.start();
+			TimeUnit.SECONDS.sleep(TIME_LIMIT);
+			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
 		}
 	}
 }

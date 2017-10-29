@@ -2,12 +2,17 @@ package com.emc.mongoose.ui.cli;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
+import org.apache.commons.lang.WordUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
+import static java.lang.Character.toLowerCase;
+import static java.lang.Character.toUpperCase;
 
 /**
  Created by kurila on 16.08.16.
@@ -119,72 +124,74 @@ public final class CliArgParser {
 		return strb.toString();
 	}
 	
-	public static Map<String, Class> getAllCliArgs(final Config config) {
+	public static Map<String, Class> getAllCliArgs()
+	throws ReflectiveOperationException {
+
 		final Map<String, Class> argsWithTypes = new TreeMap<>();
-		dumpCliArgsRecursively(argsWithTypes, ARG_PREFIX, config.getClass());
-		return argsWithTypes;
-	}
-	
-	private static void dumpCliArgsRecursively(
-		final Map<String, Class> argsWithTypes, final String prefix, final Class configCls
-	) {
-		
-		final Class[] innerClasses = configCls.getClasses();
-		for(final Class innerCls : innerClasses) {
-			final String configClsName = innerCls.getSimpleName();
-			if(configClsName.endsWith(CONFIG_CLS_SUFFIX)) {
-				final String subPrefix = innerCls
-					.getSimpleName()
-					.substring(0, configClsName.length() - CONFIG_CLS_SUFFIX.length())
-					.toLowerCase();
-				if(prefix.equals(ARG_PREFIX)) {
-					dumpCliArgsRecursively(argsWithTypes, ARG_PREFIX + subPrefix, innerCls);
+		final Package configRootPkg = Config.class.getPackage();
+		final String configRootPkgName = configRootPkg.getName();
+		final Package[] allPkgs = Package.getPackages();
+
+		for(final Package subPkg : allPkgs) {
+			final String subPkgName = subPkg.getName();
+			if(subPkgName.startsWith(configRootPkgName)) {
+
+				final String configBranchPrefix = subPkgName
+					.substring(configRootPkgName.length())
+					.replaceAll(Pattern.quote("."), Config.PATH_SEP);
+				final String configBranchClsNamePrefix;
+				if(subPkg.equals(configRootPkg)) {
+					configBranchClsNamePrefix = "";
 				} else {
-					dumpCliArgsRecursively(
-						argsWithTypes, prefix + Config.PATH_SEP + subPrefix, innerCls
+					configBranchClsNamePrefix = WordUtils.capitalize(
+						subPkgName.substring(subPkgName.lastIndexOf('.') + 1)
 					);
 				}
-			}
-		}
-		
-		final Field[] fields = configCls.getFields();
-		for(final Field field : fields) {
-			if(field.getType().equals(String.class)) {
-				final String fieldName = field.getName();
-				if(fieldName.startsWith(FIELD_PREFIX)) {
-					final String rawArgName = fieldName
-						.substring(FIELD_PREFIX.length())
-						.toLowerCase();
-					boolean configLeaf = true;
-					for(final Class innerCls : innerClasses) {
-						if(innerCls.getSimpleName().equalsIgnoreCase(rawArgName + CONFIG_CLS_SUFFIX)) {
-							configLeaf = false;
-							break;
+
+				try {
+
+					final Class<Serializable> configBranchCls = (Class<Serializable>) Class.forName(
+						subPkgName + '.' + configBranchClsNamePrefix + CONFIG_CLS_SUFFIX
+					);
+
+					final Field[] fields = configBranchCls.getFields();
+					for(final Field field : fields) {
+						if(field.getType().equals(String.class)) {
+							final String fieldName = field.getName();
+							if(fieldName.startsWith(FIELD_PREFIX)) {
+
+								final String rawArgName = fieldName
+									.substring(FIELD_PREFIX.length())
+									.toLowerCase();
+
+								try {
+									final String[] argNameParts = rawArgName.split("_");
+									final StringBuilder argNameBuilder = new StringBuilder();
+									for(final String argNamePart : argNameParts) {
+										argNameBuilder
+											.append(toUpperCase(argNamePart.charAt(0)))
+											.append(argNamePart.substring(1));
+									}
+									final Method m = configBranchCls.getMethod(
+										"get" + argNameBuilder.toString()
+									);
+									final Class type = m.getReturnType();
+									final String argName = toLowerCase(argNameBuilder.charAt(0)) +
+											argNameBuilder.substring(1);
+									argsWithTypes.put(
+										ARG_PREFIX + configBranchPrefix + Config.PATH_SEP + argName,
+										type
+									);
+								} catch(final Exception ignored) {
+								}
+							}
 						}
 					}
-					if(configLeaf) {
-						try {
-							final String[] argNameParts = rawArgName.split("_");
-							final StringBuilder argNameBuilder = new StringBuilder();
-							for(final String argNamePart : argNameParts) {
-								argNameBuilder
-									.append(Character.toUpperCase(argNamePart.charAt(0)))
-									.append(argNamePart.substring(1));
-							}
-							final Method m = configCls.getMethod("get" + argNameBuilder.toString());
-							final Class type = m.getReturnType();
-							final String argName = Character.toLowerCase(argNameBuilder.charAt(0)) +
-								argNameBuilder.substring(1);
-							if(prefix.equals(ARG_PREFIX)) {
-								argsWithTypes.put(ARG_PREFIX + argName, type);
-							} else {
-								argsWithTypes.put(prefix + Config.PATH_SEP + argName, type);
-							}
-						} catch(final Exception ignored) {
-						}
-					}
+				} catch(final ClassNotFoundException ignored) {
 				}
 			}
 		}
+
+		return argsWithTypes;
 	}
 }

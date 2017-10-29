@@ -1,37 +1,36 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.tests.system.util.OpenFilesCounter;
-import com.emc.mongoose.tests.system.util.PortListener;
+import com.emc.mongoose.tests.system.util.PortTools;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.ThreadContext;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeThat;
-
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.After;
+import org.junit.Before;
+
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeThat;
 
 /**
  Created by andrey on 27.03.17.
@@ -57,110 +56,128 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class WeightedLoadTest
-extends EnvConfiguredScenarioTestBase {
-	static {
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_NAME = WeightedLoadTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "WeightedLoad.json"
-		);
+extends ScenarioTestBase {
+
+	private boolean finishedInTime;
+	private String stdOutput;
+	private int actualConcurrency;
+	private String itemOutputPath;
+
+	public WeightedLoadTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
 	}
 
-	private static boolean FINISHED_IN_TIME;
-	private static String STD_OUTPUT;
-	private static int ACTUAL_CONCURRENCY;
-	private static String ITEM_OUTPUT_PATH;
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "WeightedLoad.json");
+	}
 
-	@BeforeClass
-	public static void setUpClass()
+	@Override
+	protected String makeStepId() {
+		return WeightedLoadTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			ITEM_OUTPUT_PATH = Paths.get(
-				Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME
+		configArgs.add("--storage-net-http-namespace=ns1");
+		configArgs.add("--storage-mock-capacity=10000000");
+		super.setUp();
+		if(storageType.equals(StorageType.FS)) {
+			itemOutputPath = Paths.get(
+				Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId
 			).toString();
-			CONFIG.getItemConfig().getOutputConfig().setPath(ITEM_OUTPUT_PATH);
+			EnvUtil.set("ITEM_OUTPUT_PATH", itemOutputPath);
+		} else {
+			itemOutputPath = "/default";
+			EnvUtil.set("ITEM_OUTPUT_PATH", stepId);
 		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
+		config.getItemConfig().getOutputConfig().setPath(itemOutputPath);
+		scenario = new JsonScenario(config, scenarioPath.toFile());
 		final Thread runner = new Thread(
 			() -> {
 				try {
-					STD_OUT_STREAM.startRecording();
-					SCENARIO.run();
-					STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+					stdOutStream.startRecording();
+					scenario.run();
+					stdOutput = stdOutStream.stopRecordingAndGet();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				}
 			}
 		);
+
 		runner.start();
-		TimeUnit.SECONDS.sleep(30); // warmup
-		switch(STORAGE_DRIVER_TYPE) {
-			case STORAGE_TYPE_FS:
-				ACTUAL_CONCURRENCY = OpenFilesCounter.getOpenFilesCount(ITEM_OUTPUT_PATH);
+		TimeUnit.SECONDS.sleep(20); // warmup
+		switch(storageType) {
+			case FS:
+				actualConcurrency = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
 				break;
-			case STORAGE_TYPE_ATMOS:
-			case STORAGE_TYPE_S3:
-			case STORAGE_TYPE_SWIFT:
-				final int startPort = CONFIG.getStorageConfig().getNetConfig().getNodeConfig().getPort();
-				for(int i = 0; i < HTTP_STORAGE_NODE_COUNT; i ++) {
-					ACTUAL_CONCURRENCY += PortListener
-						.getCountConnectionsOnPort("127.0.0.1:" + (startPort + i));
+			case ATMOS:
+			case S3:
+			case SWIFT:
+				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+				for(int i = 0; i < httpStorageNodeCount; i ++) {
+					actualConcurrency += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
 				}
 				break;
 		}
-		TimeUnit.SECONDS.timedJoin(runner, 100);
-		FINISHED_IN_TIME = !runner.isAlive();
+		TimeUnit.SECONDS.timedJoin(runner, 60);
+		finishedInTime = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flushAll();
+		LogUtil.flushAll();
 		TimeUnit.SECONDS.sleep(10);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		if(! SKIP_FLAG) {
-			if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-				try {
-					DirWithManyFilesDeleter.deleteExternal(ITEM_OUTPUT_PATH);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
-				}
+		if(storageType.equals(StorageType.FS)) {
+			try {
+				DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
 			}
 		}
-		EnvConfiguredScenarioTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public void testFinishedInTime() {
-		assumeFalse(SKIP_FLAG);
-		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
-	}
-
-	@Test
-	public void testActualConcurrency() {
-		assumeFalse(SKIP_FLAG);
-		assumeThat(STORAGE_DRIVER_TYPE, not(equalTo(STORAGE_TYPE_FS)));
-		assertEquals(2 * STORAGE_DRIVERS_COUNT * CONCURRENCY, ACTUAL_CONCURRENCY, 5);
-	}
-
-	@Test
-	public void testMetricsStdout()
+	@Override
+	public void test()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
-		concurrencyMap.put(IoType.CREATE, CONCURRENCY);
-		concurrencyMap.put(IoType.READ, CONCURRENCY);
-		final Map<IoType, Integer> weightsMap = new HashMap<>();
-		testMetricsTableStdout(STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0, concurrencyMap);
-	}
 
+		final Map<IoType, Integer> concurrencyMap = new HashMap<>();
+		concurrencyMap.put(IoType.CREATE, concurrency.getValue());
+		concurrencyMap.put(IoType.READ, concurrency.getValue());
+		final Map<IoType, Integer> weightsMap = new HashMap<>();
+		testMetricsTableStdout(stdOutput, stepId, driverCount.getValue(), 0, concurrencyMap);
+
+		assertTrue("Scenario didn't finished in time", finishedInTime);
+
+		if(!StorageType.FS.equals(storageType)) {
+			assertEquals(2 * driverCount.getValue() * concurrency.getValue(), actualConcurrency, 5);
+		}
+
+		// check if all files/connections are closed after the test
+		int openChannels = 0;
+		switch(storageType) {
+			case FS:
+				openChannels = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
+				break;
+			case ATMOS:
+			case S3:
+			case SWIFT:
+				final int startPort = config.getStorageConfig().getNetConfig().getNodeConfig().getPort();
+				for(int i = 0; i < httpStorageNodeCount; i ++) {
+					openChannels += PortTools.getConnectionCount("127.0.0.1:" + (startPort + i));
+				}
+				break;
+		}
+		assertEquals(
+			"Expected no open channels after the test but got " + openChannels, 0, openChannels
+		);
+	}
 }

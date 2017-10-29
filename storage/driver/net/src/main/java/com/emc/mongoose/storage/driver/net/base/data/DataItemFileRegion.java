@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base.data;
 
-import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.api.model.item.DataItem;
 
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
@@ -47,7 +47,7 @@ implements FileRegion {
 	public long transferTo(final WritableByteChannel target, final long position)
 	throws IOException {
 		dataItem.position(position);
-		doneByteCount += dataItem.write(target, baseItemSize - position);
+		doneByteCount += dataItem.writeToSocketChannel(target, baseItemSize - position);
 		return doneByteCount;
 	}
 

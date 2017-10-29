@@ -1,29 +1,30 @@
 package com.emc.mongoose.run.scenario.step;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.load.controller.BasicLoadController;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.data.ContentSourceUtil;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.item.ItemInfoFileOutput;
-import com.emc.mongoose.model.item.ItemType;
-import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.model.load.LoadController;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.github.akurilov.commons.io.Output;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
+import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.load.LoadGenerator;
+import com.emc.mongoose.api.model.load.LoadController;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.run.scenario.ScenarioParseException;
 import com.emc.mongoose.run.scenario.util.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.ItemConfig.DataConfig.ContentConfig.RingConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.LimitConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.DataConfig;
+import com.emc.mongoose.ui.config.item.data.input.InputConfig;
+import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.OutputConfig;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,21 +51,21 @@ import java.util.concurrent.TimeUnit;
 public class MixedLoadStep
 extends StepBase {
 
-	private final Config appConfig;
 	private final List<Map<String, Object>> nodeConfigList;
 	private final List<Integer> weights;
 
 	public MixedLoadStep(final Config appConfig, final Map<String, Object> subTree)
 	throws ScenarioParseException {
 		super(appConfig);
-		this.appConfig = appConfig;
 
 		nodeConfigList = (List<Map<String, Object>>) subTree.get(KEY_NODE_CONFIG);
 		if(nodeConfigList == null || nodeConfigList.size() == 0) {
 			throw new ScenarioParseException("Configuration list is empty");
 		}
-		localConfig.apply(nodeConfigList.get(0));
 
+		localConfig.apply(
+			nodeConfigList.get(0), "mixed-" + LogUtil.getDateTimeStamp() + "-" + hashCode()
+		);
 		weights = (List<Integer>) subTree.get(KEY_NODE_WEIGHTS);
 		if(weights != null) {
 			if(weights.size() != nodeConfigList.size()) {
@@ -73,12 +75,13 @@ extends StepBase {
 	}
 
 	@Override
-	protected final void invoke() {
+	protected final void invoke()
+	throws CancellationException {
 
-		final StepConfig localStepConfig = localConfig.getTestConfig().getStepConfig();
-		final String jobName = localStepConfig.getName();
-		Loggers.MSG.info("Run the mixed load step \"{}\"", jobName);
-		final LimitConfig localLimitConfig = localStepConfig.getLimitConfig();
+		final StepConfig stepConfig = localConfig.getTestConfig().getStepConfig();
+		final String stepId = stepConfig.getId();
+		Loggers.MSG.info("Run the mixed load step \"{}\"", stepId);
+		final LimitConfig localLimitConfig = stepConfig.getLimitConfig();
 		
 		final long t = localLimitConfig.getTime();
 		final long timeLimitSec = t > 0 ? t : Long.MAX_VALUE;
@@ -89,39 +92,39 @@ extends StepBase {
 			null : new Int2IntOpenHashMap(loadGeneratorCount);
 		final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>(loadGeneratorCount);
 		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>(loadGeneratorCount);
+		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>(loadGeneratorCount);
 		final Map<LoadGenerator, StepConfig> stepConfigMap = new HashMap<>(loadGeneratorCount);
 		
 		try {
 			for(int i = 0; i < loadGeneratorCount; i ++) {
 				
-				final Config config = new Config(appConfig);
-				if(i > 0) {
-					// add the config params from the 1st element as defaults
-					config.apply(nodeConfigList.get(0));
-				}
-				config.apply(nodeConfigList.get(i));
+				final Config config = new Config(localConfig);
+				config.apply(nodeConfigList.get(i), null);
+
 				final ItemConfig itemConfig = config.getItemConfig();
 				final DataConfig dataConfig = itemConfig.getDataConfig();
-				final ContentConfig contentConfig = dataConfig.getContentConfig();
+				final InputConfig dataInputConfig = dataConfig.getInputConfig();
 				
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-				final RingConfig ringConfig = contentConfig.getRingConfig();
-				final ContentSource contentSrc = ContentSourceUtil.getInstance(
-					contentConfig.getFile(), contentConfig.getSeed(),
-					ringConfig.getSize(), ringConfig.getCache()
+				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
+				final DataInput dataInput = DataInput.getInstance(
+					dataInputConfig.getFile(), dataInputConfig.getSeed(),
+					dataLayerConfig.getSize(), dataLayerConfig.getCache()
 				);
 				
 				final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
 				Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 				final LoadConfig loadConfig = config.getLoadConfig();
+				final OutputConfig outputConfig = config.getOutputConfig();
+				final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
 				final StorageConfig storageConfig = config.getStorageConfig();
-				final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 				final LimitConfig limitConfig = stepConfig.getLimitConfig();
 
 				final List<StorageDriver> drivers = new ArrayList<>();
 				StorageDriverUtil.init(
-					drivers, itemConfig, loadConfig, storageConfig, stepConfig, contentSrc
+					drivers, itemConfig, loadConfig, metricsConfig.getAverageConfig(),
+					storageConfig, stepConfig, dataInput
 				);
 
 				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
@@ -140,17 +143,21 @@ extends StepBase {
 				}
 				itemDataSizes.put(loadGenerator, dataConfig.getSize());
 				loadConfigMap.put(loadGenerator, loadConfig);
+				outputConfigMap.put(loadGenerator, outputConfig);
 				stepConfigMap.put(loadGenerator, stepConfig);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
-		} catch(final UserShootHisFootException e) {
+		} catch(final OmgShootMyFootException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
 		}
 		
 		try(
 			final LoadController controller = new BasicLoadController(
-				jobName, driverMap, weightMap, itemDataSizes, loadConfigMap, stepConfigMap
+				stepId, driverMap, weightMap, itemDataSizes, loadConfigMap, stepConfig,
+				outputConfigMap
 			)
 		) {
 			final String itemOutputFile = localConfig.getItemConfig().getOutputConfig().getFile();
@@ -164,10 +171,11 @@ extends StepBase {
 				controller.setIoResultsOutput(itemOutput);
 			}
 			controller.start();
+			Loggers.MSG.info("Mixed load step \"{}\" started", controller.getName());
 			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
-				Loggers.MSG.info("Load step done");
+				Loggers.MSG.info("Mixed load step \"{}\" done", controller.getName());
 			} else {
-				Loggers.MSG.info("Load step timeout");
+				Loggers.MSG.info("Mixed load step \"{}\" timeout", controller.getName());
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
@@ -175,6 +183,7 @@ extends StepBase {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
 		} catch(final InterruptedException e) {
 			Loggers.MSG.debug("Load step interrupted");
+			throw new CancellationException();
 		}
 	}
 

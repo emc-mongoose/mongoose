@@ -1,0 +1,21 @@
+description = "mongoose-api-model"
+
+dependencies {
+	compile(
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:java-coroutines:${depVersion.javaCoroutines}",
+		project(":api:common"),
+		"commons-codec:commons-codec:${depVersion.commonsCodec}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		//"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
+	)
+}
+
+jar {
+	manifest {
+		attributes (
+			"Class-Path": setClassPath(configurations)
+		)
+	}
+}

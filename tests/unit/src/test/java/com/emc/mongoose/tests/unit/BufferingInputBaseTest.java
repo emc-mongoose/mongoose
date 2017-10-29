@@ -1,7 +1,7 @@
 package com.emc.mongoose.tests.unit;
 
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.collection.BufferingInputBase;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.collection.BufferingInputBase;
 import org.junit.Test;
 
 import java.io.EOFException;

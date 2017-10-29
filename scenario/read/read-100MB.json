@@ -10,10 +10,12 @@
 			}
 		},
 		"storage" : {
-			"auth" : {
-				"uid" : "wuser1@sanity.local"
-			},
-			"driver" : {
+			"auth": {
+				"uid": "wuser1@sanity.local"
+			}
+		},
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		}
@@ -44,7 +46,11 @@
 					}
 				},
 				"load" : {
-					"circular" : true,
+					"generator" : {
+						"recycle" : {
+							"enabled" : true
+						}
+					},
 					"type" : "read"
 				}
 			}

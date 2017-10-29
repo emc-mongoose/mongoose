@@ -41,7 +41,7 @@ implements Message, StringBuilderFormattable {
 	
 	protected static String formatFixedWidth(final double value, final int count) {
 		final String valueStr = Double.toString(value);
-		if(valueStr.length() > count) {
+		if(value < Math.pow(10, count) && valueStr.length() > count) {
 			return valueStr.substring(0, count);
 		} else {
 			return valueStr;

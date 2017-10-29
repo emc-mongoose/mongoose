@@ -1,21 +1,22 @@
 package com.emc.mongoose.storage.driver.nio.fs;
 
-import static com.emc.mongoose.model.io.task.IoTask.Status;
-import static com.emc.mongoose.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.io.ThreadLocalByteBuffer;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.data.DataCorruptionException;
-import com.emc.mongoose.model.data.DataSizeException;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.storage.Credential;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.DirectMemUtil;
+
+import static com.emc.mongoose.api.model.io.task.IoTask.Status;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.data.DataCorruptionException;
+import com.emc.mongoose.api.model.data.DataSizeException;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -28,10 +29,9 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
-
+import java.nio.file.FileSystemException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.BitSet;
@@ -56,9 +56,9 @@ implements FileStorageDriver<I, O> {
 	private final Function<O, FileChannel> openDstFileFunc;
 	
 	public BasicFileStorageDriver(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
 		
 		openSrcFileFunc = ioTask -> {
@@ -76,6 +76,7 @@ implements FileStorageDriver<I, O> {
 					Level.WARN, e, "Failed to open the source channel for the path @ \"{}\"",
 					srcFilePath
 				);
+				ioTask.setStatus(Status.FAIL_IO);
 				return null;
 			}
 		};
@@ -103,19 +104,48 @@ implements FileStorageDriver<I, O> {
 				} else {
 					dstParentDirs.computeIfAbsent(dstPath, createParentDirFunc);
 					itemPath = FS.getPath(dstPath, fileItemName);
-
 				}
 				if(IoType.CREATE.equals(ioType)) {
 					return FS_PROVIDER.newFileChannel(itemPath, CREATE_OPEN_OPT);
 				} else {
 					return FS_PROVIDER.newFileChannel(itemPath, WRITE_OPEN_OPT);
 				}
-			} catch(final IOException e) {
+			} catch(final AccessDeniedException e) {
+				ioTask.setStatus(Status.RESP_FAIL_AUTH);
 				LogUtil.exception(
-					Level.WARN, e, "Failed to open the output channel for the path \"{}\"", dstPath
+					Level.DEBUG, e, "Access denied to open the output channel for the path \"{}\"",
+					dstPath
 				);
-				return null;
+			} catch(final NoSuchFileException e) {
+				ioTask.setStatus(Status.FAIL_IO);
+				LogUtil.exception(
+					Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath
+				);
+			} catch(final FileSystemException e) {
+				final long freeSpace = (new File(e.getFile())).getFreeSpace();
+				if(freeSpace > 0) {
+					ioTask.setStatus(Status.FAIL_IO);
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"",
+						dstPath
+					);
+				} else {
+					ioTask.setStatus(Status.RESP_FAIL_SPACE);
+					LogUtil.exception(Level.DEBUG, e, "No free space for the path \"{}\"", dstPath);
+				}
+			} catch(final IOException e) {
+				ioTask.setStatus(Status.FAIL_IO);
+				LogUtil.exception(
+					Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath
+				);
+			} catch(final Throwable cause) {
+				ioTask.setStatus(Status.FAIL_UNKNOWN);
+				LogUtil.exception(
+					Level.WARN, cause, "Failed to open the output channel for the path \"{}\"",
+					dstPath
+				);
 			}
+			return null;
 		};
 		
 		requestAuthTokenFunc = null; // do not use
@@ -125,9 +155,7 @@ implements FileStorageDriver<I, O> {
 	protected final String requestNewPath(final String path) {
 		final File pathFile = FS.getPath(path).toFile();
 		if(!pathFile.exists()) {
-			if(!pathFile.mkdirs()) {
-				return null;
-			}
+			pathFile.mkdirs();
 		}
 		return path;
 	}
@@ -162,9 +190,14 @@ implements FileStorageDriver<I, O> {
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.FAIL_IO);
-					} else if(srcChannel == null) {
-						invokeCreate(item, ioTask, dstChannel);
+						break;
+					}
+					if(srcChannel == null) {
+						if(ioTask.getStatus().equals(Status.FAIL_IO)) {
+							break;
+						} else {
+							invokeCreate(item, ioTask, dstChannel);
+						}
 					} else { // copy the data from the src channel to the dst channel
 						invokeCopy(item, ioTask, srcChannel, dstChannel);
 					}
@@ -173,58 +206,57 @@ implements FileStorageDriver<I, O> {
 				case READ:
 					srcChannel = srcOpenFiles.computeIfAbsent(ioTask, openSrcFileFunc);
 					if(srcChannel == null) {
-						ioTask.setStatus(Status.FAIL_IO);
-					} else {
-						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
-						if(verifyFlag) {
-							try {
-								if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-									if(ioTask.hasMarkedRanges()) {
-										invokeReadAndVerifyRandomRanges(
-											item, ioTask, srcChannel,
-											ioTask.getMarkedRangesMaskPair()
-										);
-									} else {
-										invokeReadAndVerify(item, ioTask, srcChannel);
-									}
-								} else {
-									invokeReadAndVerifyFixedRanges(
-										item, ioTask, srcChannel, fixedByteRanges
-									);
-								}
-							} catch(final DataSizeException e) {
-								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
-								final long
-									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-								ioTask.setCountBytesDone(countBytesDone);
-								Loggers.MSG.debug(
-									"{}: content size mismatch, expected: {}, actual: {}",
-									item.getName(), item.size(), countBytesDone
-								);
-							} catch(final DataCorruptionException e) {
-								ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
-								final long
-									countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
-								ioTask.setCountBytesDone(countBytesDone);
-								Loggers.MSG.debug(
-									"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-									item.getName(), countBytesDone,
-									String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
-									String.format("\"0x%X\"", (int) (e.actual & 0xFF))
-								);
-							}
-						} else {
-							if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+						break;
+					}
+					final List<Range> fixedRangesToRead = ioTask.getFixedRanges();
+					if(verifyFlag) {
+						try {
+							if(fixedRangesToRead == null || fixedRangesToRead.isEmpty()) {
 								if(ioTask.hasMarkedRanges()) {
-									invokeReadRandomRanges(
-										item, ioTask, srcChannel, ioTask.getMarkedRangesMaskPair()
+									invokeReadAndVerifyRandomRanges(
+										item, ioTask, srcChannel,
+										ioTask.getMarkedRangesMaskPair()
 									);
 								} else {
-									invokeRead(item, ioTask, srcChannel);
+									invokeReadAndVerify(item, ioTask, srcChannel);
 								}
 							} else {
-								invokeReadFixedRanges(item, ioTask, srcChannel, fixedByteRanges);
+								invokeReadAndVerifyFixedRanges(
+									item, ioTask, srcChannel, fixedRangesToRead
+								);
 							}
+						} catch(final DataSizeException e) {
+							ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
+							final long
+								countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
+							ioTask.setCountBytesDone(countBytesDone);
+							Loggers.MSG.debug(
+								"{}: content size mismatch, expected: {}, actual: {}",
+								item.getName(), item.size(), countBytesDone
+							);
+						} catch(final DataCorruptionException e) {
+							ioTask.setStatus(Status.RESP_FAIL_CORRUPT);
+							final long
+								countBytesDone = ioTask.getCountBytesDone() + e.getOffset();
+							ioTask.setCountBytesDone(countBytesDone);
+							Loggers.MSG.debug(
+								"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
+								item.getName(), countBytesDone,
+								String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
+								String.format("\"0x%X\"", (int) (e.actual & 0xFF))
+							);
+						}
+					} else {
+						if(fixedRangesToRead == null || fixedRangesToRead.isEmpty()) {
+							if(ioTask.hasMarkedRanges()) {
+								invokeReadRandomRanges(
+									item, ioTask, srcChannel, ioTask.getMarkedRangesMaskPair()
+								);
+							} else {
+								invokeRead(item, ioTask, srcChannel);
+							}
+						} else {
+							invokeReadFixedRanges(item, ioTask, srcChannel, fixedRangesToRead);
 						}
 					}
 					break;
@@ -232,18 +264,17 @@ implements FileStorageDriver<I, O> {
 				case UPDATE:
 					dstChannel = dstOpenFiles.computeIfAbsent(ioTask, openDstFileFunc);
 					if(dstChannel == null) {
-						ioTask.setStatus(Status.FAIL_IO);
-					} else {
-						final List<ByteRange> fixedByteRanges = ioTask.getFixedRanges();
-						if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
-							if(ioTask.hasMarkedRanges()) {
-								invokeRandomRangesUpdate(item, ioTask, dstChannel);
-							} else {
-								throw new AssertionError("Not implemented");
-							}
+						break;
+					}
+					final List<Range> fixedRangesToUpdate = ioTask.getFixedRanges();
+					if(fixedRangesToUpdate == null || fixedRangesToUpdate.isEmpty()) {
+						if(ioTask.hasMarkedRanges()) {
+							invokeRandomRangesUpdate(item, ioTask, dstChannel);
 						} else {
-							invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedByteRanges);
+							throw new AssertionError("Not implemented");
 						}
+					} else {
+						invokeFixedRangesUpdate(item, ioTask, dstChannel, fixedRangesToUpdate);
 					}
 					break;
 				
@@ -271,6 +302,8 @@ implements FileStorageDriver<I, O> {
 			if(!isClosed()) { // shared content source may be already closed from the load generator
 				e.printStackTrace(System.out);
 				ioTask.setStatus(Status.FAIL_UNKNOWN);
+			} else {
+				Loggers.ERR.debug("I/O task caused NPE while being interrupted: {}", ioTask);
 			}
 		} catch(final Throwable e) {
 			// should be Throwable here in order to make the closing block further always reachable
@@ -306,12 +339,12 @@ implements FileStorageDriver<I, O> {
 	}
 	
 	private void invokeCreate(
-		final I fileItem, final O ioTask, final WritableByteChannel dstChannel
+		final I fileItem, final O ioTask, final FileChannel dstChannel
 	) throws IOException {
 		long countBytesDone = ioTask.getCountBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Status.ACTIVE.equals(ioTask.getStatus())) {
-			countBytesDone += fileItem.write(dstChannel, contentSize - countBytesDone);
+			countBytesDone += fileItem.writeToFileChannel(dstChannel, contentSize - countBytesDone);
 			ioTask.setCountBytesDone(countBytesDone);
 		}
 		if(countBytesDone == contentSize) {
@@ -348,7 +381,10 @@ implements FileStorageDriver<I, O> {
 					final long nextRangeOffset = getRangeOffset(nextRangeIdx);
 					if(currRange != null) {
 						final int n = currRange.readAndVerify(
-							srcChannel, ThreadLocalByteBuffer.get(nextRangeOffset - countBytesDone)
+							srcChannel,
+							DirectMemUtil.getThreadLocalReusableBuff(
+								nextRangeOffset - countBytesDone
+							)
 						);
 						if(n < 0) {
 							throw new DataSizeException(contentSize, countBytesDone);
@@ -363,7 +399,10 @@ implements FileStorageDriver<I, O> {
 					}
 				} else {
 					final int n = fileItem.readAndVerify(
-						srcChannel, ThreadLocalByteBuffer.get(contentSize - countBytesDone)
+						srcChannel,
+						DirectMemUtil.getThreadLocalReusableBuff(
+							contentSize - countBytesDone
+						)
 					);
 					if(n < 0) {
 						throw new DataSizeException(contentSize, countBytesDone);
@@ -404,6 +443,14 @@ implements FileStorageDriver<I, O> {
 				if(currRangeIdx < getRangeCount(fileItem.size())) {
 					if(maskRangesPair[0].get(currRangeIdx) || maskRangesPair[1].get(currRangeIdx)) {
 						range2read = ioTask.getCurrRange();
+						if(Loggers.MSG.isTraceEnabled()) {
+							Loggers.MSG.trace(
+								"I/O task: {}, Range index: {}, size: {}, internal position: {}, " +
+									"Done byte count: {}",
+								ioTask.toString(), currRangeIdx, range2read.size(),
+								range2read.position(), countBytesDone
+							);
+						}
 						break;
 					} else {
 						ioTask.setCurrRangeIdx(++ currRangeIdx);
@@ -415,13 +462,32 @@ implements FileStorageDriver<I, O> {
 			}
 
 			final long currRangeSize = range2read.size();
-			srcChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += range2read.readAndVerify(
-				srcChannel, ThreadLocalByteBuffer.get(currRangeSize - countBytesDone)
-			);
+			final long currPos = getRangeOffset(currRangeIdx) + countBytesDone;
+			srcChannel.position(currPos);
+
+			try {
+				countBytesDone += range2read.readAndVerify(
+					srcChannel,
+					DirectMemUtil.getThreadLocalReusableBuff(currRangeSize - countBytesDone)
+				);
+			} catch(final DataCorruptionException e) {
+				throw new DataCorruptionException(
+					currPos + e.getOffset() - countBytesDone, e.expected, e.actual
+				);
+			}
+
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"I/O task: {}, Done bytes count: {}, Curr range size: {}",
+					ioTask.toString(), countBytesDone, range2read.size()
+				);
+			}
+
 			if(countBytesDone == currRangeSize) {
 				ioTask.setCurrRangeIdx(currRangeIdx + 1);
 				ioTask.setCountBytesDone(0);
+			} else {
+				ioTask.setCountBytesDone(countBytesDone);
 			}
 		} else {
 			finishIoTask(ioTask);
@@ -430,7 +496,7 @@ implements FileStorageDriver<I, O> {
 
 	private void invokeReadAndVerifyFixedRanges(
 		final I fileItem, final O ioTask, final SeekableByteChannel srcChannel,
-		final List<ByteRange> fixedRanges
+		final List<Range> fixedRanges
 	) throws DataSizeException, DataCorruptionException, IOException {
 		
 		final long baseItemSize = fileItem.size();
@@ -446,7 +512,7 @@ implements FileStorageDriver<I, O> {
 		
 		if(fixedRangesSizeSum > 0 && fixedRangesSizeSum > countBytesDone) {
 
-			ByteRange fixedRange;
+			Range fixedRange;
 			DataItem currRange;
 			int currFixedRangeIdx = ioTask.getCurrRangeIdx();
 			long fixedRangeEnd;
@@ -482,14 +548,22 @@ implements FileStorageDriver<I, O> {
 				// set the cell data item internal position to (current offset - cell's offset)
 				currRange.position(currOffset - cellOffset);
 				srcChannel.position(currOffset);
-				rangeBytesDone += currRange.readAndVerify(
-					srcChannel,
-					ThreadLocalByteBuffer.get(
-						Math.min(
-							fixedRangeSize - countBytesDone, currRange.size() - currRange.position()
+
+				try {
+					rangeBytesDone += currRange.readAndVerify(
+						srcChannel,
+						DirectMemUtil.getThreadLocalReusableBuff(
+							Math.min(
+								fixedRangeSize - countBytesDone,
+								currRange.size() - currRange.position()
+							)
 						)
-					)
-				);
+					);
+				} catch(final DataCorruptionException e) {
+					throw new DataCorruptionException(
+						currOffset + e.getOffset() - countBytesDone, e.expected, e.actual
+					);
+				}
 
 				if(rangeBytesDone == fixedRangeSize) {
 					// current byte range verification is finished
@@ -518,7 +592,9 @@ implements FileStorageDriver<I, O> {
 		final long contentSize = fileItem.size();
 		int n;
 		if(countBytesDone < contentSize) {
-			n = srcChannel.read(ThreadLocalByteBuffer.get(contentSize - countBytesDone));
+			n = srcChannel.read(
+				DirectMemUtil.getThreadLocalReusableBuff(contentSize - countBytesDone)
+			);
 			if(n < 0) {
 				finishIoTask(ioTask);
 				ioTask.setCountBytesDone(countBytesDone);
@@ -563,7 +639,7 @@ implements FileStorageDriver<I, O> {
 			
 			final long currRangeSize = range2read.size();
 			n = srcChannel.read(
-				ThreadLocalByteBuffer.get(currRangeSize - countBytesDone),
+				DirectMemUtil.getThreadLocalReusableBuff(currRangeSize - countBytesDone),
 				getRangeOffset(currRangeIdx) + countBytesDone
 			);
 			if(n < 0) {
@@ -584,7 +660,7 @@ implements FileStorageDriver<I, O> {
 
 	private void invokeReadFixedRanges(
 		final I fileItem, final O ioTask, final FileChannel srcChannel,
-		final List<ByteRange> byteRanges
+		final List<Range> byteRanges
 	) throws IOException {
 		
 		int n;
@@ -594,7 +670,7 @@ implements FileStorageDriver<I, O> {
 		
 		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
 			
-			ByteRange byteRange;
+			Range byteRange;
 			int currRangeIdx = ioTask.getCurrRangeIdx();
 			long rangeBeg;
 			long rangeEnd;
@@ -615,7 +691,8 @@ implements FileStorageDriver<I, O> {
 					rangeSize = rangeEnd - rangeBeg + 1;
 				}
 				n = srcChannel.read(
-					ThreadLocalByteBuffer.get(rangeSize - countBytesDone), rangeBeg + countBytesDone
+					DirectMemUtil.getThreadLocalReusableBuff(rangeSize - countBytesDone),
+					rangeBeg + countBytesDone
 				);
 				if(n < 0) {
 					finishIoTask(ioTask);
@@ -639,7 +716,7 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeRandomRangesUpdate(
-		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel
+		final I fileItem, final O ioTask, final FileChannel dstChannel
 	) throws IOException {
 		
 		long countBytesDone = ioTask.getCountBytesDone();
@@ -672,7 +749,9 @@ implements FileStorageDriver<I, O> {
 				);
 			}
 			dstChannel.position(getRangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += updatingRange.write(dstChannel, updatingRangeSize - countBytesDone);
+			countBytesDone += updatingRange.writeToFileChannel(
+				dstChannel, updatingRangeSize - countBytesDone
+			);
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace(
 					"{}: {} bytes written totally", fileItem.getName(), countBytesDone
@@ -694,8 +773,8 @@ implements FileStorageDriver<I, O> {
 	}
 
 	private void invokeFixedRangesUpdate(
-		final I fileItem, final O ioTask, final SeekableByteChannel dstChannel,
-		final List<ByteRange> byteRanges
+		final I fileItem, final O ioTask, final FileChannel dstChannel,
+		final List<Range> byteRanges
 	) throws IOException {
 
 		long countBytesDone = ioTask.getCountBytesDone();
@@ -704,7 +783,7 @@ implements FileStorageDriver<I, O> {
 
 		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
 
-			ByteRange byteRange;
+			Range byteRange;
 			DataItem updatingRange;
 			int currRangeIdx = ioTask.getCurrRangeIdx();
 			long rangeBeg;
@@ -736,7 +815,7 @@ implements FileStorageDriver<I, O> {
 				updatingRange = fileItem.slice(rangeBeg, rangeSize);
 				updatingRange.position(countBytesDone);
 				dstChannel.position(rangeBeg + countBytesDone);
-				countBytesDone += updatingRange.write(dstChannel, rangeSize - countBytesDone);
+				countBytesDone += updatingRange.writeToFileChannel(dstChannel, rangeSize - countBytesDone);
 
 				if(countBytesDone == rangeSize) {
 					ioTask.setCurrRangeIdx(currRangeIdx + 1);
@@ -757,7 +836,7 @@ implements FileStorageDriver<I, O> {
 	throws IOException {
 		final String dstPath = ioTask.getDstPath();
 		final I fileItem = ioTask.getItem();
-		Files.delete(
+		FS_PROVIDER.delete(
 			dstPath == null ? Paths.get(fileItem.getName()) : Paths.get(dstPath, fileItem.getName())
 		);
 		finishIoTask(ioTask);

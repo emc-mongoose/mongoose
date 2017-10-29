@@ -16,8 +16,8 @@
 				}
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 20
 			}
 		}

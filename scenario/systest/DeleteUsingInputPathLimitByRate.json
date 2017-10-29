@@ -9,10 +9,17 @@
 						"path" : "${ITEMS_PATH}"
 					}
 				},
+				"output" : {
+					"metrics" : {
+						"average" : {
+							"period" : 0
+						}
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
-							"count" : 100000
+							"count" : 10000
 						}
 					}
 				}
@@ -27,13 +34,9 @@
 					}
 				},
 				"load" : {
-					"type" : "delete"
-				},
-				"test" : {
-					"step" : {
-						"limit" : {
-							"rate" : 1234
-						}
+					"type" : "delete",
+					"limit" : {
+						"rate" : 234.5
 					}
 				}
 			}

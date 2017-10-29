@@ -4,8 +4,8 @@
 		"item" : {
 			"type" : "path"
 		},
-		"storage" : {
-			"driver" : {
+		"load" : {
+			"limit" : {
 				"concurrency" : 10
 			}
 		},
@@ -41,8 +41,8 @@
 				"item" : {
 					"type" : "data"
 				},
-				"storage" : {
-					"driver" : {
+				"load" : {
+					"limit" : {
 						"concurrency" : 10
 					}
 				},

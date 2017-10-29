@@ -1,29 +1,29 @@
 package com.emc.mongoose.storage.driver.net.http.base;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.supply.BatchSupplier;
-import com.emc.mongoose.common.supply.async.AsyncPatternDefinedSupplier;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.common.supply.async.AsyncCurrentDateSupplier;
-import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
-import static com.emc.mongoose.model.io.task.IoTask.SLASH;
-import static com.emc.mongoose.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.NetConfig.HttpConfig;
-import com.emc.mongoose.model.item.PathItem;
-import com.emc.mongoose.model.item.TokenItem;
-import com.emc.mongoose.model.storage.Credential;
+import com.github.akurilov.commons.collection.Range;
+
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.common.supply.BatchSupplier;
+import com.emc.mongoose.api.common.supply.async.AsyncPatternDefinedSupplier;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.io.IoType;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.emc.mongoose.api.model.io.task.IoTask.SLASH;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
+import com.emc.mongoose.api.model.item.PathItem;
+import com.emc.mongoose.api.model.item.TokenItem;
+import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.net.http.HttpConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -47,8 +47,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -70,17 +70,18 @@ extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 
 	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-	
+
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
-	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
-		try {
-			return new AsyncPatternDefinedSupplier(pattern);
-		} catch(final UserShootHisFootException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
-			return null;
-		}
-	};
+	private static final Function<String, BatchSupplier<String>>
+		ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
+			try {
+				return new AsyncPatternDefinedSupplier(SVC_EXECUTOR, pattern);
+			} catch(final OmgShootMyFootException e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
+				return null;
+			}
+		};
 	
 	protected final String namespace;
 	protected final boolean fsAccess;
@@ -89,10 +90,11 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	
 	protected HttpStorageDriverBase(
-		final String jobName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String testStepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+	) throws OmgShootMyFootException, InterruptedException {
+
+		super(testStepId, contentSrc, loadConfig, storageConfig, verifyFlag);
 		
 		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
@@ -114,15 +116,15 @@ implements HttpStorageDriver<I, O> {
 
 	protected final FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
+
+		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
 		final Channel channel = getUnpooledConnection();
-		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_NAME, stepName)
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
+		try {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
-				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepName,
+				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId,
 				channel.hashCode(), pipeline
 			);
 			pipeline.removeLast(); // remove the API specific handler
@@ -180,7 +182,7 @@ implements HttpStorageDriver<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, AsyncCurrentDateSupplier.INSTANCE.get());
+		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);
@@ -206,13 +208,13 @@ implements HttpStorageDriver<I, O> {
 			case READ:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				if(ioTask instanceof DataIoTask) {
-					applyByteRangesHeaders(httpHeaders, (DataIoTask) ioTask);
+					applyRangesHeaders(httpHeaders, (DataIoTask) ioTask);
 				}
 				break;
 			case UPDATE:
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.getMarkedRangesSize());
-				applyByteRangesHeaders(httpHeaders, dataIoTask);
+				applyRangesHeaders(httpHeaders, dataIoTask);
 				break;
 			case DELETE:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -281,7 +283,7 @@ implements HttpStorageDriver<I, O> {
 			}
 		};
 	
-	protected void applyByteRangesHeaders(
+	protected void applyRangesHeaders(
 		final HttpHeaders httpHeaders, final DataIoTask dataIoTask
 	) {
 		final long baseItemSize;
@@ -290,11 +292,11 @@ implements HttpStorageDriver<I, O> {
 		} catch(final IOException e) {
 			throw new AssertionError(e);
 		}
-		final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
+		final List<Range> fixedRanges = dataIoTask.getFixedRanges();
 		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
 		strb.setLength(0);
 
-		if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+		if(fixedRanges == null || fixedRanges.isEmpty()) {
 			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
 			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
@@ -325,22 +327,28 @@ implements HttpStorageDriver<I, O> {
 			}
 
 		} else { // fixed byte ranges
-			ByteRange nextFixedByteRange;
-			long nextRangeSize;
-			for(int i = 0; i < fixedByteRanges.size(); i ++) {
-				nextFixedByteRange = fixedByteRanges.get(i);
-				nextRangeSize = nextFixedByteRange.getSize();
-				if(i > 0) {
-					strb.append(',');
-				}
-				if(nextRangeSize == -1) {
-					strb.append(nextFixedByteRange.toString());
-				} else {
-					strb.append(baseItemSize).append("-");
-				}
-			}
+			rangeListToStringBuff(fixedRanges, baseItemSize, strb);
 		}
 		httpHeaders.set(HttpHeaderNames.RANGE, "bytes=" + strb.toString());
+	}
+
+	protected static void rangeListToStringBuff(
+		final List<Range> ranges, final long baseLength, final StringBuilder dstBuff
+	) {
+		Range nextFixedRange;
+		long nextRangeSize;
+		for(int i = 0; i < ranges.size(); i ++) {
+			nextFixedRange = ranges.get(i);
+			nextRangeSize = nextFixedRange.getSize();
+			if(i > 0) {
+				dstBuff.append(',');
+			}
+			if(nextRangeSize == -1) {
+				dstBuff.append(nextFixedRange.toString());
+			} else {
+				dstBuff.append(baseLength).append("-");
+			}
+		}
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
@@ -416,7 +424,9 @@ implements HttpStorageDriver<I, O> {
 					);
 				}
 			}
-			sendRequestData(channel, ioTask);
+			if(!(httpRequest instanceof FullHttpRequest)) {
+				sendRequestData(channel, ioTask);
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {

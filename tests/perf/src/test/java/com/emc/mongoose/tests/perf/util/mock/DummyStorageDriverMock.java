@@ -1,20 +1,19 @@
 package com.emc.mongoose.tests.perf.util.mock;
 
-import com.emc.mongoose.common.api.ByteRange;
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.DaemonBase;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.DataItem;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.item.ItemFactory;
-import com.emc.mongoose.model.storage.StorageDriver;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.io.Input;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -35,20 +34,20 @@ extends DaemonBase
 implements StorageDriver<I, O> {
 
 	private final int batchSize;
-	private final int queueCapacity;
+	private final int outputQueueCapacity;
 	private final int concurrencyLevel;
 	private final BlockingQueue<O> ioResultsQueue;
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
 
 	public DummyStorageDriverMock(
-		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) {
 		this.batchSize = loadConfig.getBatchConfig().getSize();
-		this.queueCapacity = loadConfig.getQueueConfig().getSize();
-		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
-		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
+		this.outputQueueCapacity = storageConfig.getDriverConfig().getQueueConfig().getOutput();
+		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
+		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 	}
 
 	@Override
@@ -130,8 +129,8 @@ implements StorageDriver<I, O> {
 				case READ:
 					dataIoTask.startDataResponse();
 				case UPDATE:
-					final List<ByteRange> fixedByteRanges = dataIoTask.getFixedRanges();
-					if(fixedByteRanges == null || fixedByteRanges.isEmpty()) {
+					final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(dataIoTask.hasMarkedRanges()) {
 							dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
 						} else {
@@ -164,8 +163,9 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final List<O> getAll() {
-		final List<O> ioTaskResults = new ArrayList<>(queueCapacity);
-		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
+		final int n = ioResultsQueue.size();
+		final List<O> ioTaskResults = new ArrayList<>(n);
+		ioResultsQueue.drainTo(ioTaskResults, n);
 		return ioTaskResults;
 	}
 
@@ -223,6 +223,12 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		Loggers.MSG.debug("{}: started", toString());
+	}
+
+	@Override
 	protected final void doShutdown()
 	throws IllegalStateException {
 		Loggers.MSG.debug("{}: shut down", toString());
@@ -243,7 +249,6 @@ implements StorageDriver<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		super.doClose();
 		ioResultsQueue.clear();
 		Loggers.MSG.debug("{}: closed", toString());
 	}

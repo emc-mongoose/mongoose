@@ -71,7 +71,7 @@ implements Scenario {
 		super(config, overrideByEnv(validateAgainstSchema(tree)));
 	}
 	//
-	private static final Map<String, Object> validateAgainstSchema(final Map<String, Object> tree) {
+	private static Map<String, Object> validateAgainstSchema(final Map<String, Object> tree) {
 		/*final Path schemaPath = Paths.get(
 			BasicConfig.getWorkingDir(), DIR_SCENARIO, FNAME_SCENARIO_SCHEMA
 		);

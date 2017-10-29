@@ -1,31 +1,27 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.common.collection.OptLockBuffer;
-import com.emc.mongoose.common.concurrent.SvcTask;
-import com.emc.mongoose.common.concurrent.SvcTaskBase;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.DaemonBase;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.AuthConfig;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.io.task.partial.PartialIoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.Credential;
-import com.emc.mongoose.model.storage.StorageDriver;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.github.akurilov.commons.io.Input;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.io.task.partial.PartialIoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.Credential;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
+import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.log.Loggers;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -49,42 +45,53 @@ public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements StorageDriver<I, O> {
 
-	private final static String CLS_NAME = StorageDriverBase.class.getSimpleName();
+	public static AsyncCurrentDateSupplier DATE_SUPPLIER = null;
+	static {
+		try {
+			DATE_SUPPLIER = new AsyncCurrentDateSupplier(SVC_EXECUTOR);
+		} catch(final OmgDoesNotPerformException e) {
+			e.printStackTrace(System.err);
+		}
+	}
 
-	private final ContentSource contentSrc;
+	private final DataInput contentSrc;
 	private final int batchSize;
-	private final int queueCapacity;
+	private final int outputQueueCapacity;
 	protected final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
 	private final BlockingQueue<O> ioResultsQueue;
-	protected final String stepName;
+	protected final String stepId;
 	protected final int concurrencyLevel;
 	protected final Semaphore concurrencyThrottle;
 	protected final Credential credential;
 	protected final boolean verifyFlag;
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
+
+	protected final ConcurrentMap<String, Credential> pathToCredMap = new ConcurrentHashMap<>(1);
 	
 	private final ConcurrentMap<String, String> pathMap = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewPath(final String path);
-	protected Function<String, String> requestPathFunc = this::requestNewPath;
+	protected Function<String, String> requestNewPathFunc = this::requestNewPath;
 	
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
 	protected abstract String requestNewAuthToken(final Credential credential);
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
-	private final IoTasksDispatch ioTasksDispatchTask;
+
+	private final IoTasksDispatchCoroutine ioTasksDispatchCoroutine;
 	
 	protected StorageDriverBase(
-		final String stepName, final ContentSource contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws UserShootHisFootException {
+	) throws OmgShootMyFootException {
 		this.contentSrc = contentSrc;
 		this.batchSize = loadConfig.getBatchConfig().getSize();
-		this.queueCapacity = loadConfig.getQueueConfig().getSize();
-		this.childTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.inTasksQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.ioResultsQueue = new ArrayBlockingQueue<>(queueCapacity);
-		this.stepName = stepName;
+		final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();
+		this.outputQueueCapacity = queueConfig.getOutput();
+		this.childTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
+		this.inTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
+		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
+		this.stepId = stepId;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();
 		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
 		final String authToken = authConfig.getToken();
@@ -95,81 +102,23 @@ implements StorageDriver<I, O> {
 				this.authTokens.put(credential, authToken);
 			}
 		}
-		this.concurrencyLevel = storageConfig.getDriverConfig().getConcurrency();
-		this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
+		if(concurrencyLevel > 0) {
+			this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		} else {
+			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
+		}
 		this.verifyFlag = verifyFlag;
-		this.ioTasksDispatchTask = new IoTasksDispatch(svcTasks);
-		svcTasks.add(ioTasksDispatchTask);
+		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine<>(
+			SVC_EXECUTOR, this, inTasksQueue, childTasksQueue, stepId, batchSize
+		);
 	}
 
-	private final class IoTasksDispatch
-	extends SvcTaskBase {
 
-		private final OptLockBuffer<O> buff = new OptLockArrayBuffer<>(batchSize);
-		private int n = 0;
-		private int m;
-
-		public IoTasksDispatch(final List<SvcTask> svcTasks) {
-			super(svcTasks);
-		}
-
-		@Override
-		protected final void invoke() {
-			if(buff.tryLock()) {
-				try(
-					final Instance logCtx = CloseableThreadContext
-						.put(KEY_STEP_NAME, stepName)
-						.put(KEY_CLASS_NAME, CLS_NAME)
-				) {
-					if(n < batchSize) {
-						n += childTasksQueue.drainTo(buff, batchSize - n);
-					}
-					if(n < batchSize) {
-						n += inTasksQueue.drainTo(buff, batchSize - n);
-					}
-					if(n > 0) {
-						if(n == 1) {
-							if(submit(buff.get(0))) {
-								buff.clear();
-								n --;
-							}
-						} else {
-							m = submit(buff, 0, n);
-							if(m > 0) {
-								buff.removeRange(0, m);
-								n -= m;
-							}
-						}
-					}
-				} catch(final InterruptedException ignored) {
-				} finally {
-					buff.unlock();
-				}
-			}
-		}
-
-		@Override
-		protected final void doClose() {
-			try(
-				final Instance logCtx = CloseableThreadContext
-					.put(KEY_STEP_NAME, stepName)
-					.put(KEY_CLASS_NAME, IoTasksDispatch.class.getSimpleName())
-			) {
-				if(buff.tryLock(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-					buff.clear();
-				} else {
-					Loggers.ERR.warn(
-						"{}: failed to obtain the I/O tasks buffer lock in time",
-						StorageDriverBase.this.toString()
-					);
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: interrupted on close",
-					StorageDriverBase.this.toString()
-				);
-			}
-		}
+	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		ioTasksDispatchCoroutine.start();
 	}
 
 	@Override
@@ -236,19 +185,25 @@ implements StorageDriver<I, O> {
 	throws ServerException {
 		ioTask.reset();
 		if(ioTask instanceof DataIoTask) {
-			((DataIoTask) ioTask).getItem().setContentSrc(contentSrc);
+			((DataIoTask) ioTask).getItem().setDataInput(contentSrc);
 		}
-		if(requestAuthTokenFunc != null) {
-			final Credential credential = ioTask.getCredential();
-			if(credential != null) {
+		final String dstPath = ioTask.getDstPath();
+		final Credential credential = ioTask.getCredential();
+		if(credential != null) {
+			pathToCredMap.putIfAbsent(dstPath == null ? "" : dstPath, credential);
+			if(requestAuthTokenFunc != null) {
 				authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
 			}
 		}
-		if(requestPathFunc != null) {
-			final String dstPath = ioTask.getDstPath();
+		if(requestNewPathFunc != null) {
 			// NOTE: in the distributed mode null dstPath becomes empty one
 			if(dstPath != null && !dstPath.isEmpty()) {
-				pathMap.computeIfAbsent(dstPath, requestPathFunc);
+				if(null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
+					Loggers.ERR.debug(
+						"Failed to compute the destination path for the I/O task {}", ioTask
+					);
+					ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
+				}
 			}
 		}
 	}
@@ -260,7 +215,11 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final int getActiveTaskCount() {
-		return concurrencyLevel - concurrencyThrottle.availablePermits();
+		if(concurrencyLevel > 0) {
+			return concurrencyLevel - concurrencyThrottle.availablePermits();
+		} else {
+			return Integer.MAX_VALUE - concurrencyThrottle.availablePermits();
+		}
 	}
 	
 	@Override
@@ -275,8 +234,12 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean isIdle() {
-		return !concurrencyThrottle.hasQueuedThreads() &&
-			concurrencyThrottle.availablePermits() >= concurrencyLevel;
+		if(concurrencyLevel > 0) {
+			return !concurrencyThrottle.hasQueuedThreads() &&
+				concurrencyThrottle.availablePermits() >= concurrencyLevel;
+		} else {
+			return concurrencyThrottle.availablePermits() == Integer.MAX_VALUE;
+		}
 	}
 	
 	@Override
@@ -286,11 +249,12 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	public final List<O> getAll() {
-		if(ioResultsQueue.isEmpty()) {
+		final int n = ioResultsQueue.size();
+		if(n == 0) {
 			return Collections.emptyList();
 		}
-		final List<O> ioTaskResults = new ArrayList<>(queueCapacity);
-		ioResultsQueue.drainTo(ioTaskResults, queueCapacity);
+		final List<O> ioTaskResults = new ArrayList<>(n);
+		ioResultsQueue.drainTo(ioTaskResults, n);
 		return ioTaskResults;
 	}
 	
@@ -313,7 +277,9 @@ implements StorageDriver<I, O> {
 
 		final O ioTaskResult = ioTask.getResult();
 		if(!ioResultsQueue.offer(ioTaskResult/*, 1, TimeUnit.MICROSECONDS*/)) {
-			Loggers.ERR.warn("{}: I/O task results queue overflow, dropping the result", toString());
+			Loggers.ERR.warn(
+				"{}: I/O task results queue overflow, dropping the result", toString()
+			);
 		}
 
 		if(ioTask instanceof CompositeIoTask) {
@@ -346,13 +312,13 @@ implements StorageDriver<I, O> {
 	}
 
 	protected abstract boolean submit(final O ioTask)
-	throws InterruptedException;
+	throws IllegalStateException;
 
 	protected abstract int submit(final List<O> ioTasks, final int from, final int to)
-	throws InterruptedException;
+	throws IllegalStateException;
 
 	protected abstract int submit(final List<O> ioTasks)
-	throws InterruptedException;
+	throws IllegalStateException;
 
 	@Override
 	public Input<O> getInput() {
@@ -361,40 +327,25 @@ implements StorageDriver<I, O> {
 	
 	@Override
 	protected void doShutdown() {
-		svcTasks.remove(ioTasksDispatchTask);
-		try {
-			ioTasksDispatchTask.close();
-		} catch(final IOException ignored) {
-		}
+		ioTasksDispatchCoroutine.stop();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
 	@Override
-	protected void doInterrupt() {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_NAME, stepName)
-				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
-		) {
-			if(!concurrencyThrottle.tryAcquire(concurrencyLevel, 10, TimeUnit.MILLISECONDS)) {
-				Loggers.MSG.debug("{}: interrupting while not in the idle state", toString());
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to await the idle state");
-		} finally {
-			Loggers.MSG.debug("{}: interrupted", toString());
-		}
+	public boolean await(final long timeout, final TimeUnit timeUnit)
+	throws InterruptedException {
+		return false;
 	}
 
 	@Override
 	protected void doClose()
 	throws IOException, IllegalStateException {
-		super.doClose();
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_NAME, stepName)
+				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
+			ioTasksDispatchCoroutine.close();
 			contentSrc.close();
 			childTasksQueue.clear();
 			inTasksQueue.clear();
@@ -406,6 +357,8 @@ implements StorageDriver<I, O> {
 				);
 			}
 			ioResultsQueue.clear();
+			authTokens.clear();
+			pathToCredMap.clear();
 			pathMap.clear();
 			Loggers.MSG.debug("{}: closed", toString());
 		}

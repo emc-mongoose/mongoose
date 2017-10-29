@@ -8,9 +8,7 @@ import java.util.regex.Pattern;
 public interface LogPatterns {
 	
 	// common
-	Pattern WHITESPACES = Pattern.compile("\\s+");
-	Pattern CELL_BORDER = Pattern.compile("\\|");
-	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]+");
+	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]*");
 	
 	Pattern DATE_TIME_ISO8601 = Pattern.compile(
 		"(?<dateTime>[\\d]{4}-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
@@ -25,6 +23,9 @@ public interface LogPatterns {
 	);
 	Pattern STD_OUT_CONCURRENCY = Pattern.compile(
 		"(?<concurrency>[0-9]{1,7})x(?<driverCount>[0-9]{1,7})"
+	);
+	Pattern STD_OUT_CONCURRENCY_ACTUAL = Pattern.compile(
+		"c=\\((?<concurrencyLastMean>[0-9.]+)\\)"
 	);
 	Pattern STD_OUT_ITEM_COUNTS = Pattern.compile(
 		"n=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
@@ -51,19 +52,21 @@ public interface LogPatterns {
 		ASCII_COLOR.pattern() + DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() +
 			"\\s+" + STD_OUT_CLASS_NAME.pattern() + "\\s" + STD_OUT_THREAD_NAME.pattern() + "\\s+" +
 			TYPE_LOAD.pattern() + "-" + STD_OUT_CONCURRENCY.pattern() + ":\\s+" +
+			STD_OUT_CONCURRENCY_ACTUAL.pattern() + ";\\s+" +
 			STD_OUT_ITEM_COUNTS.pattern() + ";\\s+" + STD_OUT_METRICS_TIME.pattern() + ";\\s+" +
 			STD_OUT_METRICS_SIZE.pattern() + ";\\s+" + STD_OUT_METRICS_TP.pattern() + ";\\s+" +
 			STD_OUT_METRICS_BW.pattern() + ";\\s+" + STD_OUT_METRICS_DUR.pattern() + ";\\s+" +
 			STD_OUT_METRICS_LAT.pattern()
 	);
 	Pattern STD_OUT_METRICS_TABLE_ROW = Pattern.compile(
-		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]{1,17})\\|(?<timestamp>[\\d]{8}-[\\d]{6})" +
+		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]{1,10})\\|(?<timestamp>[\\d]{12})" +
 			"\\|" + ASCII_COLOR.pattern() + "(?<ioType>[NOPCREATDULIS]{4,6})\\s*" + ASCII_COLOR.pattern() +
-			"\\|\\s*(?<concurrency>[\\d]{1,7})x(?<driverCount>[\\d]{1,4})" +
+			"\\|\\s*(?<concurrencyCurr>[\\d]{1,10})" +
+			"\\|(?<concurrencyLastMean>[\\d]+\\.?[\\d]*)\\s*" +
 			"\\|\\s*(?<succCount>[\\d]{1,12})" +
 			"\\|\\s*" + ASCII_COLOR.pattern() + "\\s*(?<failCount>[\\d]{1,6})" + ASCII_COLOR.pattern() +
-			"\\|(?<stepTime>[\\d\\.]{1,7})\\s*" +
-			"\\|(?<tp>[\\d]+\\.?[\\d]?)\\.?\\s*\\|(?<bw>[\\d]+\\.?[\\d]?)\\.?\\s*" +
+			"\\|(?<stepTime>[\\d]+\\.?[\\d]*)\\s*" +
+			"\\|(?<tp>[\\d]+\\.?[\\d]*)\\.?\\s*\\|(?<bw>[\\d]+\\.?[\\d]*)\\.?\\s*" +
 			"\\|\\s*(?<lat>[\\d]{1,10})" +
 			"\\|\\s*(?<dur>[\\d]{1,11})"
 	);

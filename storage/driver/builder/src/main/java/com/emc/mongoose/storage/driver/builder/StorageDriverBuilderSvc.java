@@ -1,15 +1,15 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.svc.Service;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -28,7 +28,7 @@ public interface StorageDriverBuilderSvc<
 	throws RemoteException;
 	
 	@Override
-	StorageDriverBuilderSvc<I, O, T> setContentSource(final ContentSource contentSrc)
+	StorageDriverBuilderSvc<I, O, T> setContentSource(final DataInput contentSrc)
 	throws RemoteException;
 
 	@Override
@@ -40,7 +40,7 @@ public interface StorageDriverBuilderSvc<
 	throws RemoteException;
 
 	@Override
-	StorageDriverBuilderSvc<I, O, T> setMetricsConfig(final MetricsConfig metricsConfig)
+	StorageDriverBuilderSvc<I, O, T> setAverageConfig(final AverageConfig metricsConfig)
 	throws RemoteException;
 
 	@Override
@@ -48,5 +48,5 @@ public interface StorageDriverBuilderSvc<
 	throws RemoteException;
 
 	String buildRemotely()
-	throws IOException, UserShootHisFootException;
+	throws IOException, OmgShootMyFootException;
 }

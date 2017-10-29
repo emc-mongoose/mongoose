@@ -1,18 +1,18 @@
 package com.emc.mongoose.run.scenario.util;
 
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.model.data.ContentSource;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.model.storage.StorageDriverSvc;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.svc.ServiceUtil;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriverSvc;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverBuilderSvc;
-import static com.emc.mongoose.ui.config.Config.ItemConfig;
-import static com.emc.mongoose.ui.config.Config.LoadConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig;
-import static com.emc.mongoose.ui.config.Config.StorageConfig.DriverConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig;
-import static com.emc.mongoose.ui.config.Config.TestConfig.StepConfig.MetricsConfig;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -30,12 +30,11 @@ public interface StorageDriverUtil {
 	
 	static void init(
 		final List<StorageDriver> drivers, final ItemConfig itemConfig, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final StepConfig stepConfig,
-		final ContentSource contentSrc
-	) {
+		final AverageConfig avgMetricsConfig, final StorageConfig storageConfig,
+		final StepConfig stepConfig, final DataInput contentSrc
+	) throws InterruptedException {
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final MetricsConfig metricsConfig = stepConfig.getMetricsConfig();
-		final String testStepName = stepConfig.getName();
+		final String testStepName = stepConfig.getId();
 		final int driverPort = driverConfig.getPort();
 		final boolean remoteDriversFlag = driverConfig.getRemote();
 		
@@ -87,10 +86,10 @@ public interface StorageDriverUtil {
 						.setContentSource(contentSrc)
 						.setItemConfig(itemConfig)
 						.setLoadConfig(loadConfig)
-						.setMetricsConfig(metricsConfig)
+						.setAverageConfig(avgMetricsConfig)
 						.setStorageConfig(storageConfig)
 						.buildRemotely();
-				} catch(final IOException | UserShootHisFootException e) {
+				} catch(final IOException | OmgShootMyFootException e) {
 					throw new RuntimeException(e);
 				}
 				
@@ -134,11 +133,11 @@ public interface StorageDriverUtil {
 						.setItemConfig(itemConfig)
 						.setContentSource(contentSrc)
 						.setLoadConfig(loadConfig)
-						.setMetricsConfig(metricsConfig)
+						.setAverageConfig(avgMetricsConfig)
 						.setStorageConfig(storageConfig)
 						.build()
 				);
-			} catch(final UserShootHisFootException e) {
+			} catch(final OmgShootMyFootException e) {
 				throw new RuntimeException(e);
 			}
 		}

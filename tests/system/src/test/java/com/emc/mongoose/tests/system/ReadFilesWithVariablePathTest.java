@@ -1,31 +1,32 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.env.PathUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.api.common.env.PathUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
-import com.emc.mongoose.tests.system.base.EnvConfiguredTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.tests.system.util.EnvUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import com.emc.mongoose.ui.log.LogUtil;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.ThreadContext;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
+import org.junit.After;
+import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,117 +34,106 @@ import java.util.regex.Pattern;
  Created by andrey on 13.06.17.
  */
 public class ReadFilesWithVariablePathTest
-extends EnvConfiguredScenarioTestBase {
-
-	static {
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList("atmos", "s3", "swift"));
-		EXCLUDE_PARAMS.put(
-			KEY_ENV_ITEM_DATA_SIZE,
-			Arrays.asList(new SizeInBytes("1MB"), new SizeInBytes("100MB"), new SizeInBytes("10GB"))
-		);
-		STEP_NAME = ReadFilesWithVariablePathTest.class.getSimpleName();
-		SCENARIO_PATH = Paths.get(
-			getBaseDir(), DIR_SCENARIO, "systest", "ReadFilesWithVariablePath.json"
-		);
-	}
-
-	private static String FILE_OUTPUT_PATH;
-	private static String STD_OUTPUT;
+extends ScenarioTestBase {
 
 	private static final int EXPECTED_COUNT = 10000;
 
-	@BeforeClass
-	public static void setUpClass()
+	private String fileOutputPath;
+	private String stdOutput;
+
+	public ReadFilesWithVariablePathTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Before
+	public void setUp()
 	throws Exception {
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--item-naming-radix=16");
-		CONFIG_ARGS.add("--item-naming-length=16");
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
+		configArgs.add("--item-naming-radix=16");
+		configArgs.add("--item-naming-length=16");
+		super.setUp();
+		fileOutputPath = Paths
+			.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), stepId)
+			.toString();
+		try {
+			DirWithManyFilesDeleter.deleteExternal(fileOutputPath);
+		} catch(final Throwable ignored) {
 		}
-		if(STORAGE_DRIVER_TYPE.equals(STORAGE_TYPE_FS)) {
-			FILE_OUTPUT_PATH = Paths
-				.get(Paths.get(PathUtil.getBaseDir()).getParent().toString(), STEP_NAME)
-				.toString();
-			EnvUtil.set("FILE_OUTPUT_PATH", FILE_OUTPUT_PATH);
-		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
-		STD_OUT_STREAM.startRecording();
-		SCENARIO.run();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+		EnvUtil.set("FILE_OUTPUT_PATH", fileOutputPath);
+		scenario = new JsonScenario(config, scenarioPath.toFile());
+		stdOutStream.startRecording();
+		scenario.run();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(5);
 	}
 
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		if(! SKIP_FLAG) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(FILE_OUTPUT_PATH);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
+		try {
+			DirWithManyFilesDeleter.deleteExternal(fileOutputPath);
+		} catch(final Exception e) {
+			e.printStackTrace(System.err);
 		}
-		EnvConfiguredTestBase.tearDownClass();
+		super.tearDown();
 	}
 
-	@Test
-	public void testMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testMetricsLogRecords(
-			getMetricsLogRecords(),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			EXPECTED_COUNT, 0, CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(getBaseDir(), DIR_SCENARIO, "systest", "ReadFilesWithVariablePath.json");
 	}
 
-	@Test
-	public void testTotalMetricsLogFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testTotalMetricsLogRecord(
-			getMetricsTotalLogRecords().get(0),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE, EXPECTED_COUNT, 0
-		);
+	@Override
+	protected String makeStepId() {
+		return ReadFilesWithVariablePathTest.class.getSimpleName() + '-' +
+			storageType.name() + '-' + driverCount.name() + 'x' + concurrency.name() + '-' +
+			itemSize.name();
 	}
 
-	@Test
-	public void testMetricsStdout()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
-		testSingleMetricsStdout(
-			STD_OUTPUT.replaceAll("[\r\n]+", " "),
-			IoType.READ, CONCURRENCY, STORAGE_DRIVERS_COUNT, ITEM_DATA_SIZE,
-			CONFIG.getTestConfig().getStepConfig().getMetricsConfig().getPeriod()
-		);
-	}
-
-	@Test
-	public void testIoTraceLogFile()
+	@Override
+	public void test()
 	throws Exception {
 
-		assumeFalse(SKIP_FLAG);
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		assertEquals(EXPECTED_COUNT, ioTraceRecords.size());
-
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final int baseOutputPathLen = fileOutputPath.length();
 		// Item path should look like:
 		// ${FILE_OUTPUT_PATH}/1/b/0123456789abcdef
 		// ${FILE_OUTPUT_PATH}/b/fedcba9876543210
 		final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
-
-		String nextFilePath;
-		Matcher m;
-		final int baseOutputPathLen = FILE_OUTPUT_PATH.length();
-		for(final CSVRecord ioTraceRecord : ioTraceRecords) {
-			testIoTraceRecord(ioTraceRecord, IoType.READ.ordinal(), ITEM_DATA_SIZE);
-			nextFilePath = ioTraceRecord.get("ItemPath");
-			assertTrue(nextFilePath.startsWith(FILE_OUTPUT_PATH));
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
+			String nextFilePath = ioTraceRec.get("ItemPath");
+			assertTrue(nextFilePath.startsWith(fileOutputPath));
 			nextFilePath = nextFilePath.substring(baseOutputPathLen);
-			m = subPathPtrn.matcher(nextFilePath);
+			final Matcher m = subPathPtrn.matcher(nextFilePath);
 			assertTrue(m.matches());
-		}
+			ioTraceRecCount.increment();
+		};
+		testIoTraceLogRecords(ioTraceReqTestFunc);
+		assertEquals(
+			"There should be more than 1 record in the I/O trace log file",
+			EXPECTED_COUNT, ioTraceRecCount.sum()
+		);
+
+		testMetricsLogRecords(
+			getMetricsLogRecords(),
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			EXPECTED_COUNT, 0, config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
+		);
+
+		testTotalMetricsLogRecord(
+			getMetricsTotalLogRecords().get(0),
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			EXPECTED_COUNT, 0
+		);
+
+		testSingleMetricsStdout(
+			stdOutput.replaceAll("[\r\n]+", " "),
+			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
+			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
+		);
 	}
 }

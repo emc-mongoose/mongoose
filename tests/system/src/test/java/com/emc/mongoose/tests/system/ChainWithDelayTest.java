@@ -1,165 +1,164 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.net.NetUtil;
-import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.api.common.net.NetUtil;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.run.scenario.JsonScenario;
-import com.emc.mongoose.tests.system.base.EnvConfiguredScenarioTestBase;
+import com.emc.mongoose.tests.system.base.ScenarioTestBase;
+import com.emc.mongoose.tests.system.base.params.Concurrency;
+import com.emc.mongoose.tests.system.base.params.DriverCount;
+import com.emc.mongoose.tests.system.base.params.ItemSize;
+import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.EnvUtil;
 import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.appenders.LoadJobLogFileManager;
-import static com.emc.mongoose.common.Constants.KEY_STEP_NAME;
-import static com.emc.mongoose.common.Constants.M;
-import static com.emc.mongoose.common.env.PathUtil.getBaseDir;
+import static com.emc.mongoose.api.common.Constants.M;
+import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.run.scenario.Scenario.DIR_SCENARIO;
 
 import org.apache.commons.csv.CSVRecord;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.ThreadContext;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import org.junit.After;
+import org.junit.Before;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  Created by kurila on 28.03.17.
  */
 public class ChainWithDelayTest
-extends EnvConfiguredScenarioTestBase {
+extends ScenarioTestBase {
 	
-	private static final Path SCENARIO_PATH = Paths.get(
-		getBaseDir(), DIR_SCENARIO, "systest", "ChainWithDelay.json"
-	);
 	private static final int DELAY_SECONDS = 60;
 	private static final int TIME_LIMIT = 180;
-	private static final String ZONE1_ADDR = "127.0.0.1";
-	private static final String ZONE2_ADDR;
-	static {
+
+	private final String zone1Addr = "127.0.0.1";
+	private String zone2Addr;
+	private boolean finishedInTime;
+	private String stdOutput;
+
+	public ChainWithDelayTest(
+		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
+		final ItemSize itemSize
+	) throws Exception {
+		super(storageType, driverCount, concurrency, itemSize);
+	}
+
+	@Override
+	protected Path makeScenarioPath() {
+		return Paths.get(
+			getBaseDir(), DIR_SCENARIO, "systest", "ChainWithDelay.json"
+		);
+	}
+
+	@Override
+	protected String makeStepId() {
+		return ChainWithDelayTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
+	}
+
+
+	@Before
+	public void setUp()
+	throws Exception {
 		try {
-			ZONE2_ADDR = NetUtil.getHostAddrString();
+			zone2Addr = NetUtil.getHostAddrString();
 		} catch(final Exception e) {
 			throw new RuntimeException(e);
 		}
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_TYPE, Arrays.asList(STORAGE_TYPE_FS));
-		EXCLUDE_PARAMS.put(KEY_ENV_STORAGE_DRIVER_CONCURRENCY, Arrays.asList(1000));
-		EXCLUDE_PARAMS.put(KEY_ENV_ITEM_DATA_SIZE, Arrays.asList(new SizeInBytes("10GB")));
-		STEP_NAME = ChainWithDelayTest.class.getSimpleName();
-	}
-	
-	private static boolean FINISHED_IN_TIME;
-	private static String STD_OUTPUT;
-	
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		EnvUtil.set("ZONE1_ADDRS", ZONE1_ADDR);
-		EnvUtil.set("ZONE2_ADDRS", ZONE2_ADDR);
-		ThreadContext.put(KEY_STEP_NAME, STEP_NAME);
-		CONFIG_ARGS.add("--storage-net-http-namespace=ns1");
-		CONFIG_ARGS.add("--test-step-limit-time=" + TIME_LIMIT);
-		EnvConfiguredScenarioTestBase.setUpClass();
-		if(SKIP_FLAG) {
-			return;
-		}
-		SCENARIO = new JsonScenario(CONFIG, SCENARIO_PATH.toFile());
+		EnvUtil.set("ZONE1_ADDRS", zone1Addr);
+		EnvUtil.set("ZONE2_ADDRS", zone2Addr);
+		configArgs.add("--storage-net-http-namespace=ns1");
+		configArgs.add("--test-step-limit-time=" + TIME_LIMIT);
+		super.setUp();
+		scenario = new JsonScenario(config, scenarioPath.toFile());
 		final Thread runner = new Thread(
 			() -> {
 				try {
-					SCENARIO.run();
+					scenario.run();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
 				} finally {
 					try {
-						SCENARIO.close();
+						scenario.close();
 					} catch(final Throwable tt) {
 						LogUtil.exception(Level.ERROR, tt, "Failed to close the scenario");
 					}
 				}
 			}
 		);
-		STD_OUT_STREAM.startRecording();
+		stdOutStream.startRecording();
 		runner.start();
-		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 5);
-		FINISHED_IN_TIME = !runner.isAlive();
+		TimeUnit.SECONDS.timedJoin(runner, TIME_LIMIT + 10);
+		finishedInTime = !runner.isAlive();
 		runner.interrupt();
-		LoadJobLogFileManager.flushAll();
-		STD_OUTPUT = STD_OUT_STREAM.stopRecordingAndGet();
+		LogUtil.flushAll();
+		stdOutput = stdOutStream.stopRecordingAndGet();
 		TimeUnit.SECONDS.sleep(10);
 	}
-	
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		EnvConfiguredScenarioTestBase.tearDownClass();
-	}
-	
-	@Test
-	public void testFinishedInTime() {
-		assumeFalse(SKIP_FLAG);
-		assertTrue("Scenario didn't finished in time", FINISHED_IN_TIME);
-	}
 
-	@Test
-	public final void testStdOutput()
+	@After
+	public final void tearDown()
 	throws Exception {
-		assumeFalse(SKIP_FLAG);
+		super.tearDown();
+	}
+	
+	@Override
+	public void test()
+	throws Exception {
+
 		testMetricsTableStdout(
-			STD_OUTPUT, STEP_NAME, STORAGE_DRIVERS_COUNT, 0,
+			stdOutput, stepId, driverCount.getValue(), 0,
 			new HashMap<IoType, Integer>() {{
-				put(IoType.CREATE, CONCURRENCY);
-				put(IoType.READ, CONCURRENCY);
+				put(IoType.CREATE, concurrency.getValue());
+				put(IoType.READ, concurrency.getValue());
 			}}
 		);
-	}
-	
-	@Test
-	public void testIoTraceFile()
-	throws Exception {
-		assumeFalse(SKIP_FLAG);
+
 		final Map<String, Long> timingMap = new HashMap<>();
-		String storageNode;
-		String itemPath;
-		IoType ioType;
-		long reqTimeStart;
-		long duration;
-		Long prevOpFinishTime;
-		final List<CSVRecord> ioTraceRecords = getIoTraceLogRecords();
-		for(final CSVRecord ioTraceRec : ioTraceRecords) {
-			storageNode = ioTraceRec.get("StorageNode");
-			itemPath = ioTraceRec.get("ItemPath");
-			ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
-			reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
-			duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
-			switch(ioType) {
-				case CREATE:
-					assertTrue(storageNode.startsWith(ZONE1_ADDR));
-					timingMap.put(itemPath, reqTimeStart + duration);
-					break;
-				case READ:
-					assertTrue(storageNode.startsWith(ZONE2_ADDR));
-					prevOpFinishTime = timingMap.get(itemPath);
-					if(prevOpFinishTime == null) {
-						fail("No create I/O trace record for \"" + itemPath + "\"");
-					} else {
-						assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
-					}
-					break;
-				default:
-					fail("Unexpected I/O type: " + ioType);
+		final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
+
+			String storageNode;
+			String itemPath;
+			IoType ioType;
+			long reqTimeStart;
+			long duration;
+			Long prevOpFinishTime;
+
+			@Override
+			public final void accept(final CSVRecord ioTraceRec) {
+				storageNode = ioTraceRec.get("StorageNode");
+				itemPath = ioTraceRec.get("ItemPath");
+				ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
+				reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
+				duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+				switch(ioType) {
+					case CREATE:
+						assertTrue(storageNode.startsWith(zone1Addr));
+						timingMap.put(itemPath, reqTimeStart + duration);
+						break;
+					case READ:
+						assertTrue(storageNode.startsWith(zone2Addr));
+						prevOpFinishTime = timingMap.get(itemPath);
+						if(prevOpFinishTime == null) {
+							fail("No create I/O trace record for \"" + itemPath + "\"");
+						} else {
+							assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
+						}
+						break;
+					default:
+						fail("Unexpected I/O type: " + ioType);
+				}
 			}
-		}
+		};
+		testIoTraceLogRecords(ioTraceRecTestFunc);
+
+		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }

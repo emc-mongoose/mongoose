@@ -1,26 +1,30 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.common.api.SizeInBytes;
-import com.emc.mongoose.common.collection.OptLockArrayBuffer;
-import com.emc.mongoose.common.collection.OptLockBuffer;
-import com.emc.mongoose.common.concurrent.SvcTask;
-import com.emc.mongoose.common.concurrent.WeightThrottle;
-import com.emc.mongoose.model.DaemonBase;
-import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.exception.UserShootHisFootException;
-import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.IoTaskBuilder;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.load.LoadGenerator;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.common.Constants.KEY_CLASS_NAME;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.collection.OptLockArrayBuffer;
+import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.commons.concurrent.Throttle;
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.io.Input;
 
-import org.apache.logging.log4j.CloseableThreadContext;
+import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.coroutines.OutputCoroutine;
+import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
+
+import com.emc.mongoose.api.common.concurrent.WeightThrottle;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.load.LoadGenerator;
+import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -29,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -39,17 +45,19 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadGenerator<I, O>, SvcTask {
+implements LoadGenerator<I, O>, Coroutine {
 
 	private final static String CLS_NAME = BasicLoadGenerator.class.getSimpleName();
 
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
-	private volatile Output<O> ioTaskOutput;
+	private volatile OutputCoroutine<O> ioTaskOutput = null;
+	private volatile boolean recycleQueueFullState = false;
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean taskInputFinishFlag = false;
 	private volatile boolean outputFinishFlag = false;
 
+	private final BlockingQueue<O> recycleQueue;
 	private final int batchSize;
 	private final Input<I> itemInput;
 	private final Lock inputLock = new ReentrantLock();
@@ -61,6 +69,7 @@ implements LoadGenerator<I, O>, SvcTask {
 	private final int originCode;
 
 	private final LongAdder builtTasksCounter = new LongAdder();
+	private final LongAdder recycledTasksCounter = new LongAdder();
 	private final LongAdder outputTaskCounter = new LongAdder();
 	private final String name;
 
@@ -70,8 +79,8 @@ implements LoadGenerator<I, O>, SvcTask {
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final int batchSize, final long transferSizeEstimate,
 		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
-		final boolean shuffleFlag
-	) throws UserShootHisFootException {
+		final int recycleQueueSize, final boolean shuffleFlag
+	) throws OmgShootMyFootException {
 		this.batchSize = batchSize;
 		this.itemInput = itemInput;
 		this.transferSizeEstimate = transferSizeEstimate;
@@ -84,6 +93,8 @@ implements LoadGenerator<I, O>, SvcTask {
 		} else {
 			this.countLimit = Long.MAX_VALUE;
 		}
+		this.recycleQueue = recycleQueueSize > 0 ?
+			new ArrayBlockingQueue<>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
 
@@ -91,7 +102,6 @@ implements LoadGenerator<I, O>, SvcTask {
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-		svcTasks.add(this);
 	}
 
 	@Override
@@ -105,13 +115,19 @@ implements LoadGenerator<I, O>, SvcTask {
 	}
 
 	@Override
-	public final void setOutput(final Output<O> ioTaskOutput) {
-		this.ioTaskOutput = ioTaskOutput;
+	public final void setOutputs(final List<? extends Output<O>> ioTaskOutputs) {
+		if(this.ioTaskOutput != null && !this.ioTaskOutput.isClosed()) {
+			try {
+				this.ioTaskOutput.close();
+			} catch(final IOException ignored) {
+			}
+		}
+		this.ioTaskOutput = new RoundRobinOutputCoroutine<>(SVC_EXECUTOR, ioTaskOutputs, batchSize);
 	}
 
 	@Override
-	public final long getGeneratedIoTasksCount() {
-		return builtTasksCounter.sum();
+	public final long getGeneratedTasksCount() {
+		return builtTasksCounter.sum() + recycledTasksCounter.sum();
 	}
 
 	@Override
@@ -123,9 +139,33 @@ implements LoadGenerator<I, O>, SvcTask {
 	public final IoType getIoType() {
 		return ioTaskBuilder.getIoType();
 	}
+	
+	@Override
+	public final int getBatchSize() {
+		return batchSize;
+	}
+
+	@Override
+	public final boolean isRecycling() {
+		return recycleQueue != null;
+	}
+
+	@Override
+	public final void recycle(final O ioTask) {
+		if(recycleQueue != null) {
+			if(!recycleQueue.add(ioTask)) {
+				if(!recycleQueueFullState && 0 == recycleQueue.remainingCapacity()) {
+					recycleQueueFullState = true;
+					Loggers.ERR.error("{}: cannot recycle I/O tasks, queue is full", name);
+				}
+			}
+		}
+	}
 
 	@Override
 	public final void run() {
+
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
 		if(tasksBuff == null) {
@@ -135,51 +175,65 @@ implements LoadGenerator<I, O>, SvcTask {
 		int pendingTasksCount = tasksBuff.size();
 		int n = batchSize - pendingTasksCount;
 
-		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, CLS_NAME)
-		) {
-			if(n > 0 && !itemInputFinishFlag) {
-				if(inputLock.tryLock()) {
-					try {
-						// find the limits and prepare the items buffer
-						final long remainingTasksCount = countLimit - builtTasksCounter.sum();
-						if(remainingTasksCount > 0) {
-							n = (int) Math.min(remainingTasksCount, n);
-							final List<I> items = new ArrayList<>(n);
-							try {
-								// get the items from the input
-								itemInput.get(items, n);
-							} catch(final EOFException e) {
-								Loggers.MSG.debug(
-									"{}: end of items input @ the count {}",
-									BasicLoadGenerator.this.toString(), builtTasksCounter.sum()
-								);
-								itemInputFinishFlag = true;
-							}
-							
-							n = items.size();
-							if(n > 0) {
-								if(shuffleFlag) {
-									Collections.shuffle(items, rnd);
-								}
-								try {
-									ioTaskBuilder.getInstances(items, tasksBuff);
-									pendingTasksCount += n;
-									builtTasksCounter.add(n);
-								} catch(final IllegalArgumentException e) {
-									LogUtil.exception(
-										Level.ERROR, e, "Failed to generate the I/O task"
-									);
-								}
-							}
+		try {
+			if(n > 0) { // the tasks buffer has free space for the new tasks
 
-							if(itemInputFinishFlag) {
-								taskInputFinishFlag = true;
+				if(!itemInputFinishFlag) {
+					// try to produce new items from the items input
+					if(inputLock.tryLock()) {
+						try {
+							// find the remaining count of the tasks to generate
+							final long remainingTasksCount = countLimit - getGeneratedTasksCount();
+							if(remainingTasksCount > 0) {
+								// make the limit not more than batch size
+								n = (int) Math.min(remainingTasksCount, n);
+								// prepare the items buffer
+								final List<I> items = new ArrayList<>(n);
+								try {
+									// get the items from the input
+									itemInput.get(items, n);
+								} catch(final EOFException e) {
+									Loggers.MSG.debug(
+										"{}: end of items input @ the count {}",
+										BasicLoadGenerator.this.toString(), builtTasksCounter.sum()
+									);
+									itemInputFinishFlag = true;
+								}
+
+								n = items.size();
+								if(n > 0) {
+									// build new tasks for the corresponding items
+									if(shuffleFlag) {
+										Collections.shuffle(items, rnd);
+									}
+									try {
+										ioTaskBuilder.getInstances(items, tasksBuff);
+										pendingTasksCount += n;
+										builtTasksCounter.add(n);
+									} catch(final IllegalArgumentException e) {
+										LogUtil.exception(
+											Level.ERROR, e, "Failed to generate the I/O task"
+										);
+									}
+								}
 							}
+						} finally {
+							inputLock.unlock();
 						}
-					} finally {
-						inputLock.unlock();
+					}
+
+				} else {
+					// items input was exhausted
+					if(recycleQueue == null) {
+						// recycling is disabled
+						taskInputFinishFlag = true; // allow shutdown
+					} else {
+						// recycle the tasks if any
+						n = recycleQueue.drainTo(tasksBuff, n);
+						if(n > 0) {
+							pendingTasksCount += n;
+							recycledTasksCounter.add(n);
+						}
 					}
 				}
 			}
@@ -264,9 +318,8 @@ implements LoadGenerator<I, O>, SvcTask {
 			if(
 				outputFinishFlag ||
 					(
-						itemInputFinishFlag &&
-							taskInputFinishFlag &&
-							builtTasksCounter.sum() == outputTaskCounter.sum()
+						itemInputFinishFlag && taskInputFinishFlag &&
+							getGeneratedTasksCount() == outputTaskCounter.sum()
 					)
 			) {
 				try {
@@ -278,17 +331,17 @@ implements LoadGenerator<I, O>, SvcTask {
 	}
 
 	@Override
-	protected final void doShutdown() {
-		interrupt();
+	protected void doStart()
+	throws IllegalStateException {
+		SVC_EXECUTOR.start(this);
+		if(ioTaskOutput != null) {
+			ioTaskOutput.start();
+		}
 	}
 
 	@Override
-	protected final void doInterrupt() {
-		svcTasks.remove(this);
-		Loggers.MSG.debug(
-			"{}: generated {}, output {} I/O tasks", BasicLoadGenerator.this.toString(),
-			builtTasksCounter.sum(), outputTaskCounter.sum()
-		);
+	protected final void doShutdown() {
+		interrupt();
 	}
 
 	@Override
@@ -312,18 +365,35 @@ implements LoadGenerator<I, O>, SvcTask {
 	}
 
 	@Override
+	protected final void doInterrupt() {
+		SVC_EXECUTOR.stop(this);
+		Loggers.MSG.debug(
+			"{}: generated {}, recycled {}, output {} I/O tasks",
+			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
+			outputTaskCounter.sum()
+		);
+	}
+
+	@Override
 	protected final void doClose()
 	throws IOException {
-		super.doClose();
+		if(recycleQueue != null) {
+			recycleQueue.clear();
+		}
+		// the item input may be instantiated by the load generator builder which has no reference
+		// to it so the load generator builder should close it
 		if(itemInput != null) {
 			try {
-				inputLock.tryLock(SvcTask.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				inputLock.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
 				itemInput.close();
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}
 		}
+		// I/O task builder is instantiated by the load generator builder which forgets it
+		// so the load generator should close it
 		ioTaskBuilder.close();
+		//
 		ioTaskOutput.close();
 	}
 	
@@ -335,5 +405,15 @@ implements LoadGenerator<I, O>, SvcTask {
 	@Override
 	public final int hashCode() {
 		return originCode;
+	}
+
+	@Override
+	public void stop() {
+		interrupt();
+	}
+
+	@Override
+	public boolean isStopped() {
+		return isInterrupted();
 	}
 }

@@ -10,8 +10,21 @@
 				"file" : "weighted2-read-input.csv"
 			}
 		},
-		"storage" : {
-			"driver" : {
+		"output" : {
+			"metrics" : {
+				"average" : {
+					"persist" : false
+				},
+				"summary" : {
+					"persist" : false
+				},
+				"trace" : {
+					"persist" : false
+				}
+			}
+		},
+		"load" : {
+			"limit" : {
 				"concurrency" : 100
 			}
 		},
@@ -19,9 +32,6 @@
 			"step" : {
 				"limit" : {
 					"count" : 10000
-				},
-				"metrics" : {
-					"period" : 0
 				}
 			}
 		}
@@ -39,7 +49,8 @@
 					}
 				}
 			}
-		}, {
+		},
+		{
 			"type" : "precondition",
 			"config" : {
 				"item" : {
@@ -50,14 +61,18 @@
 						"file" : "weighted2-delete-input.csv"
 					}
 				},
+				"output" : {
+					"metrics": {
+						"average" : {
+							"period" : 10
+						}
+					}
+				},
 				"test" : {
 					"step" : {
 						"limit" : {
 							"count" : 0,
 							"time" : "5m"
-						},
-						"metrics": {
-							"period" : 10
 						}
 					}
 				}
@@ -82,7 +97,11 @@
 						}
 					},
 					"load" : {
-						"circular" : true,
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
 						"type" : "read"
 					}
 				},
@@ -93,7 +112,11 @@
 						}
 					},
 					"load" : {
-						"circular" : true,
+						"generator" : {
+							"recycle" : {
+								"enabled" : true
+							}
+						},
 						"type" : "delete"
 					}
 				}
