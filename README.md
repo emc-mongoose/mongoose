@@ -30,10 +30,10 @@ java -jar mongoose.jar
 
 ### Core Functionality
 
-1. **[Configuration](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#1-configuration)**
+1. **[Configuration](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Configuration)**
 
     Mongoose has rich configuration subsystem supporting the
-    [parametrization](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#v3.5-User-Guide#13-parameterized-configuration).
+    [parametrization](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Configuration#2-parametrization).
 
 2. **[Items](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#2-items)**
 
@@ -46,18 +46,19 @@ java -jar mongoose.jar
     [output](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#23-items-output) which later may be used as
     [items input](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#22-items-input) for another run/job.
 
-3. **[Content](https://github.com/emc-mongoose/mongoose/wiki/v3.5-UserGuide#3-content)**
+3. **[Content](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#3-content)**
 
     Different data may be used to perform a load on a storage. By default Mongoose uses random,
     uncompressible data. An user may supply
-    [custom data input](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#32-payload-from-the-external) file instead.
+    [custom data input](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#32-payload-from-the-external-file) file instead.
 
 4. **[Concurrency](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#4-concurrency)**
 
     In contradiction to all other comparable performance testing software, Mongoose doesn't use the
-    threads to set up a specified concurrency level. This allows to use unlimited concurrency levels easily.
+    threads to set up a specified concurrency level. This allows to use
+    [unlimited concurrency](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#42-unlimited-concurrency) levels easily.
 
-5. **[Recycle Mode](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#5-circularity)**
+5. **[Recycle Mode](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#5-recycle-mode)**
 
     The so called *recycling* feature allows to use the limited amount of *items* for an unlimited
     test run/load job by reusing these items again and again (circularly).
@@ -66,10 +67,10 @@ java -jar mongoose.jar
 
     A *test step* is an unit of a test run with its own configuration and metrics reporting.
 
-    An user is able to configure and [identify a test step](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#61-test-steps-naming) and
+    An user is able to configure and [identify a test step](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#61-test-steps-identification) and
     [limit it using one of available constraints](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#62-test-steps-limitation).
 
-7. **[Metrics Reporting](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#7-metrics-reporting)**
+7. **[Metrics Reporting](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#72-metrics-output)**
 
     The metrics reported by Mongoose are designed to be most useful for performance analysis.
     The following metrics are accounted:
@@ -81,16 +82,16 @@ java -jar mongoose.jar
     total ones when a load job is finished.
 
     Also, it's possible to
-    [obtain the highest-precision metrics (for each operation)](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#74-io-traces-reporting).
+    [obtain the highest-precision metrics (for each operation)](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#723-trace-metrics-output).
 
 8. **[Load Types](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#8-load-types)**
 
     The CRUD notation is used to describe the load operations. However, there are some extensions:
-    * Create may act as *[copying](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#822-copy-mode)* the items from the source to the destination
-    * Read may [validate the data on the fly](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#832-read-with-enabled-verification)
-    * Read may be [partial](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#833-partial-read)
-    * Update may act as *[append](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#8434-append)*
-    * [Noop](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#81-noop) operation is also available.
+    * Create may act as *[copying](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#822-copy-mode)* the items from the source to the destination
+    * Read may [validate the data on the fly](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#832-read-with-enabled-verification)
+    * Read may be [partial](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#833-partial-read)
+    * Update may act as *[append](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#8434-append)*
+    * [Noop](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#81-noop) operation is also available.
 
     One of the most interesting things is a *data reentrancy*. This allows to validate the data
     read back from the storage successfully even after the data items have been randomly updated
