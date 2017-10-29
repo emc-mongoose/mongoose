@@ -103,7 +103,7 @@ java -jar mongoose.jar
     syntax allow to:
     * [Inherit the jobs configuration](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#942-step-configuration-inheritance)
     * [Substitute the values using the environment variables](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#944-environment-values-substitution-in-the-scenario).
-    * [Execute the external commands](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#951-shell-command-step)
+    * [Execute the external commands](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#951-shell-command)
     * Execute the steps [sequentially](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#955-sequential-step) or in [parallel](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#954-parallel-step)
     * [Execute the steps in a loop](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#956-loop-step)
     * Execute the so called *[weighted load](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#9572-weighted-load-step)*
@@ -123,15 +123,17 @@ java -jar mongoose.jar
     * [EMC Atmos](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#10453-s3)
     * [OpenStack Swift](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#10454-swift).
 
-    It's possible to implement a [custom storage driver](https://github.com/emc-mongoose/mongoose/wiki/v3.4-Custom-Storage-Driver) to extend the storages support.
+    It's possible to implement a [custom storage driver](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Custom-Storage-Driver) to extend the storages support.
 
 ### Other
 
-1. [Deployment using Docker](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Quickstart#docker)
+1. [Deployment using Docker](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Docker)
 2. [Storage Mock](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Quickstart#hello-world)
 3. [Web GUI](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Quickstart#web-gui)
 
 ## Documentation
+
+*[Mongoose v3.5](https://github.com/emc-mongoose/mongoose/wiki/v4.0-Overview)*
 
 **[Mongoose v3.5](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Overview)**
 
