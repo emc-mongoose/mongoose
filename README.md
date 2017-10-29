@@ -88,7 +88,7 @@ java -jar mongoose.jar
 
     The CRUD notation is used to describe the load operations. However, there are some extensions:
     * Create may act as *[copying](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#822-copy-mode)* the items from the source to the destination
-    * Read may [validate the data on the fly](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#832-read-with-enabled-verification)
+    * Read may [validate the data on the fly](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#832-read-with-enabled-validation)
     * Read may be [partial](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#833-partial-read)
     * Update may act as *[append](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#8434-append)*
     * [Noop](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#81-noop) operation is also available.
@@ -97,19 +97,19 @@ java -jar mongoose.jar
     read back from the storage successfully even after the data items have been randomly updated
     multiple times before.
 
-9. **[Scenarios](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#9-scenarios)**
+9. **[Scenarios](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#9-scenarios)**
 
     Mongoose is able to run the tests described with scenario files in the JSON format. Scenario
     syntax allow to:
-    * [Inherit the jobs configuration](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#942-step-configuration-inheritance)
-    * [Substitute the values using the environment variables](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#944-environment-values-substitution-in-the-scenario).
-    * [Execute the external commands](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#951-shell-command-step)
-    * Execute the steps [sequentially](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#955-sequential-step) or in [parallel](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#954-parallel-step)
-    * [Execute the steps in a loop](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#956-loop-step)
-    * Execute the so called *[weighted load](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#9572-weighted-load-step)*
-    * Execute the so called *[chain load](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#958-chain-load-step)*
+    * [Inherit the jobs configuration](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#942-step-configuration-inheritance)
+    * [Substitute the values using the environment variables](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#944-environment-values-substitution-in-the-scenario).
+    * [Execute the external commands](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#951-shell-command-step)
+    * Execute the steps [sequentially](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#955-sequential-step) or in [parallel](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#954-parallel-step)
+    * [Execute the steps in a loop](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#956-loop-step)
+    * Execute the so called *[weighted load](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#9572-weighted-load-step)*
+    * Execute the so called *[chain load](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#958-chain-load-step)*
 
-10. **[Storage Driver](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#10-storage-driver)**
+10. **[Storage Driver](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#10-storage-driver)**
 
     Mongoose is able to work in the distributed mode what allows to scale out the load
     performed on a storage. In the distributed mode there's a controller which aggregates the
@@ -117,11 +117,11 @@ java -jar mongoose.jar
     load on the storage.
 
     Mongoose supports different storage types: a
-    [filesystem](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#103-filesystem-storage-driver) or a cloud storage.
+    [filesystem](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#103-filesystem-storage-driver) or a cloud storage.
     Currently, the following cloud storage APIs are supported:
-    * [Amazon S3](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#10452-atmos)
-    * [EMC Atmos](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#10453-s3)
-    * [OpenStack Swift](https://github.com/emc-mongoose/mongoose/wiki/v3.4-User-Guide#10454-swift).
+    * [Amazon S3](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#10452-atmos)
+    * [EMC Atmos](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#10453-s3)
+    * [OpenStack Swift](https://github.com/emc-mongoose/mongoose/wiki/v3.5-User-Guide#10454-swift).
 
     It's possible to implement a [custom storage driver](https://github.com/emc-mongoose/mongoose/wiki/v3.4-Custom-Storage-Driver) to extend the storages support.
 
