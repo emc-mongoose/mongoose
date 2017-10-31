@@ -52,8 +52,10 @@ task dist(type: Tar, dependsOn: jar) {
 				exclude "${rootProject.name}*.jar"
 			}
 		}
-		/*from configurations.runtime {
+	}
+	into("$baseName-$rootProject.version") {
+		from configurations.runtime {
 			include "${rootProject.name}*.jar"
-		}*/
+		}
 	}
 }

@@ -4,6 +4,7 @@ import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.IOException;
