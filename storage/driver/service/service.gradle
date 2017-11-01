@@ -31,14 +31,18 @@ jar {
 task dist(type: Tar, dependsOn: jar) {
 	group = "distribution"
 	description = "Build storage driver distribution tarball"
-	baseName = rootProject.name + "-storage-driver"
+	baseName = "$rootProject.name-storage-driver-service"
 	compression = Compression.GZIP
 	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	into("$baseName-$rootProject.version") {
+	into("$rootProject.name-$rootProject.version") {
 		into("config") {
-			from { "config" }
+			from {
+				"..${File.separator}..${File.separator}..${File.separator}config"
+			}
 		}
+	}
+	into("$rootProject.name-$rootProject.version") {
 		into("ext") {
 			final Collection<Project> extProjects = mutualProjects
 				.findAll { isExtProject(it) }
@@ -53,9 +57,12 @@ task dist(type: Tar, dependsOn: jar) {
 			}
 		}
 	}
-	into("$baseName-$rootProject.version") {
+	into("$rootProject.name-$rootProject.version") {
 		from configurations.runtime {
 			include "${rootProject.name}*.jar"
 		}
+	}
+	into("$rootProject.name-$rootProject.version") {
+		from jar.outputs.files
 	}
 }

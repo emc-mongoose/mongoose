@@ -244,32 +244,35 @@ static def isTestsProject(final Project p) {
 task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
-	baseName = rootProject.name
+	baseName = "$rootProject.name-base"
 	compression = Compression.GZIP
 	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	into("$baseName-$rootProject.version") {
+	into("$rootProject.name-$rootProject.version") {
 		into("config") {
 			from { "config" }
 		}
 		into("example") {
 			from { "example" }
 		}
+		final extProjects = mutualProjects.findAll { isExtProject(it) }
+		final nonExtNonTestProjects = mutualProjects.findAll {
+			!isExtProject(it) && !isTestsProject(it)
+		}
 		into("ext") {
-            final extProjects = mutualProjects.findAll { isExtProject(it) }
-            for(final Project p: extProjects) {
-                from p.jar.outputs.files
-            }
-        }
-        into("lib") {
-            for(Project p: mutualProjects) {
-                from p.configurations.runtime {
-                    exclude "${rootProject.name}*.jar"
-                }
-            }
-        }
-        for(final Project p: mutualProjects.findAll { !isExtProject(it) }) {
-			if(!isTestsProject(p)) {
+			for(final Project p: extProjects) {
+				from p.jar.outputs.files
+			}
+		}
+		into("lib") {
+			for(Project p: mutualProjects) {
+				from p.configurations.runtime {
+					exclude "${rootProject.name}*.jar"
+				}
+			}
+		}
+		for(final Project p: nonExtNonTestProjects) {
+			if(!p.displayName.contains(":storage:driver:service")) {
 				from p.jar.outputs.files
 			}
 		}

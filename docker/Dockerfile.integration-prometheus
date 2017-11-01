@@ -1,6 +1,6 @@
 ARG MONGOOSE_VERSION
 
-FROM emcmongoose/mongoose:${MONGOOSE_VERSION}
+FROM emcmongoose/mongoose-base:${MONGOOSE_VERSION}
 
 EXPOSE 9280
 

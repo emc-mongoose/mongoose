@@ -40,38 +40,54 @@ jobs:
       script:
       - docker --version
 
-      - ./gradlew clean dist
+      - ./gradlew clean dist :storage:driver:service:dist
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose
-      - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
+      - export REPO=emcmongoose/mongoose-base
+      - docker build -f docker/Dockerfile.base -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push emcmongoose/mongoose:$TAG
+      - docker push $REPO:$TAG
 
     - script:
-      - export REPO=emcmongoose/mongoose-storage-driver-service
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - export REPO=emcmongoose/mongoose
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push $REPO:$TAG
+
+    - script:
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - export REPO=emcmongoose/mongoose-storage-driver-base-service
+      - docker build -f docker/Dockerfile.storage-driver-service-base -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push $REPO:$TAG
+
+    - script:
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - export REPO=emcmongoose/mongoose-storage-driver-service
       - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push emcmongoose/mongoose-storage-driver-service:$TAG
+      - docker push $REPO:$TAG
 
-    - script:
-      - export REPO=emcmongoose/mongoose-scripting-groovy
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push emcmongoose/mongoose-scripting-groovy:$TAG
-
-    - script:
-      - export REPO=emcmongoose/mongoose-scripting-jython
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push emcmongoose/mongoose-scripting-jython:$TAG
-
+#    - script:
+#      - export REPO=emcmongoose/mongoose-scripting-groovy
+#      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+#      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
+#      - docker tag $REPO:$COMMIT $REPO:$TAG
+#      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+#      - docker push emcmongoose/mongoose-scripting-groovy:$TAG
+#
+#    - script:
+#      - export REPO=emcmongoose/mongoose-scripting-jython
+#      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+#      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
+#      - docker tag $REPO:$COMMIT $REPO:$TAG
+#      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+#      - docker push emcmongoose/mongoose-scripting-jython:$TAG
+#
     - script:
       - export REPO=emcmongoose/mongoose-integration-prometheus
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -394,7 +410,8 @@ jobs:
           secure: ciLar6EGDY+CVwcmdSAI98DiPHG0Sy0nCOrSpGhOuoaZR/AMIN4IIZE3fOzh8U0Y+p/9IlPkSg7QQFkRmfUgw3nXQJ5CjniMQyK1yeQxOBHVyl9p8HHLvSjU7EC4Ec3JmrA/jgZD0uASgLYaBrAHDgIS97/wgSF8TUJbTfq20VEq7PmFpO+YX0fCi0gGz/S9ts/cQ76pIS0ADlQfrZ44Qa4mNRxG22dN7HtmhxSFe9qmDUdehPX+I4Gaf2/MwhrTeMADArQihTR/1CeS9v84gyD3ODOiLCKJClmGtdpBCD7WXEM2GytxNNPDwKmdm2ly88H7T5xW4toNXHh4uTtfsBd/Wf6nmDrM/TreMhTsMQlVaEA17dh3pXkiHTvL0MemldJVmqNUgsN2f/8shAsyQrY5Cr8HTAsW1r05IIS/9a8xiOVy7CNz61WiNB9oH9+xpYfUKqQxzjFPqFcFkTrc1IvGHM/5YqNw7TK826gk3xBAclGxlQ7ZZXyHVrIN8EYfLSVZFsaplTiQyJFLJ0kpnjB+npvLCTXhEcClJNFQVBvAi8joJufCHvnfjRnKR9CHoS5JghfxNBBdRM9yahggTgpgUselOEUAAd6R9Sf9b3ihI5nFEdejc9GB9zCE8cRBpPp69dMagZ7wZnQHXDg4VlEsE7m3tohn8shaIzYJXfc=
         file_glob: true
         file:
-        - "./build/dist/mongoose-*.tgz"
+        - "./build/dist/mongoose-base-*.tgz"
+        - "./build/dist/mongoose-storage-driver-service-*.tgz"
         on:
           tags: true
 
