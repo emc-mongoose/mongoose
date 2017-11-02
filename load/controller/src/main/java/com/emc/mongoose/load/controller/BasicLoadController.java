@@ -674,8 +674,7 @@ implements LoadController<I, O> {
 				Loggers.ERR.warn("{}: load controller shutdown timeout", getName());
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.WARN, e, "{}: load controller shutdown interrupted", getName());
-			throw new CancellationException();
+			throw new CancellationException(e.getMessage());
 		}
 	}
 
@@ -779,9 +778,7 @@ implements LoadController<I, O> {
 				Loggers.ERR.warn("{}: storage drivers interrupting timeout", getName());
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: storage drivers interrupting interrupted", getName()
-			);
+			throw new CancellationException(e.getMessage());
 		}
 
 		for(final Coroutine transferCoroutine : transferCoroutines) {
@@ -792,7 +789,8 @@ implements LoadController<I, O> {
 		}
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("ioResultsWorker", true)
+			ThreadUtil.getHardwareThreadCount(),
+			new LogContextThreadFactory("ioResultsWorker", true)
 		);
 		synchronized(driversMap) {
 			for(final LoadGenerator<I, O> generator : generatorsMap.values()) {
@@ -843,10 +841,7 @@ implements LoadController<I, O> {
 					);
 				}
 			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					Level.WARN, e,
-					"{}: interrupted  while getting and processing the final I/O results", getName()
-				);
+				throw new CancellationException(e.getMessage());
 			}
 		}
 
@@ -874,7 +869,8 @@ implements LoadController<I, O> {
 						);
 					}
 				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException e) {
+				throw new CancellationException(e.getMessage());
 			} finally {
 				Loggers.MSG.info("{}: I/O results output done", name);
 			}
@@ -900,7 +896,7 @@ implements LoadController<I, O> {
 			try {
 				MetricsManager.unregister(this, nextStats);
 			} catch(final InterruptedException e) {
-				LogUtil.exception(Level.WARN, e, "{}: metrics context unregister failure", name);
+				throw new CancellationException(e.getMessage());
 			}
 		}
 
@@ -911,39 +907,68 @@ implements LoadController<I, O> {
 	protected final void doClose()
 	throws IOException {
 
+		final ExecutorService closeExecutor = Executors.newFixedThreadPool(
+			ThreadUtil.getHardwareThreadCount(),
+			new LogContextThreadFactory("interruptWorker", true)
+		);
+
 		synchronized (driversMap) {
 
 			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
 
-				try {
-					generator.close();
-					Loggers.MSG.debug(
-						"{}: the load generator \"{}\" has been closed", getName(), generator
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to close the generator {}", getName(), generator
-					);
-				}
+				closeExecutor.submit(
+					() -> {
+						try {
+							generator.close();
+							Loggers.MSG.debug(
+								"{}: the load generator \"{}\" has been closed", getName(),
+								generator
+							);
+						} catch(final IOException e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the generator {}", getName(),
+								generator
+							);
+						}
+					}
+				);
 
 				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-					try {
-						driver.close();
-						Loggers.MSG.debug("{}: next storage driver {} closed", getName(),
-							((driver instanceof Service) ?
-								((Service) driver).getName() + " @ " +
-									ServiceUtil.getAddress((Service) driver) :
-								driver.toString())
-						);
-					} catch(final NoSuchObjectException ignored) {
-						// closing causes this normally
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the driver {}",
-							getName(), driver.toString()
-						);
-					}
+					closeExecutor.submit(
+						() -> {
+							try {
+								driver.close();
+								Loggers.MSG.debug("{}: next storage driver {} closed", getName(),
+									((driver instanceof Service) ?
+										((Service) driver).getName() + " @ " +
+											ServiceUtil.getAddress((Service) driver) :
+										driver.toString())
+								);
+							} catch(final NoSuchObjectException ignored) {
+								// closing causes this normally
+							} catch(final IOException e) {
+								LogUtil.exception(
+									Level.WARN, e, "{}: failed to close the driver {}",
+									getName(), driver.toString()
+								);
+							}
+						}
+					);
 				}
+			}
+
+			closeExecutor.shutdown();
+			try {
+				if(closeExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+					Loggers.MSG.debug(
+						"{}: all generators and storage drivers have been closed in time", getName()
+					);
+				} else {
+					closeExecutor.shutdownNow();
+					Loggers.ERR.warn("{}: timeout while closing storage driver(s)", getName());
+				}
+			} catch(final InterruptedException e) {
+				throw new CancellationException(e.getMessage());
 			}
 
 			generatorsMap.clear();
