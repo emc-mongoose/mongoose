@@ -60,4 +60,8 @@ extends Daemon, Input<O>, Output<O>, Remote {
 
 	void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
 	throws RemoteException;
+
+	@Override
+	void close()
+	throws IOException;
 }
