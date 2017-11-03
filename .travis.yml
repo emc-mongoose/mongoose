@@ -58,7 +58,7 @@ jobs:
 
     - script:
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose-storage-driver-base-service
+      - export REPO=emcmongoose/mongoose-storage-driver-service-base
       - docker build -f docker/Dockerfile.storage-driver-service-base -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
