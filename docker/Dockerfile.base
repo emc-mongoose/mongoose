@@ -12,4 +12,4 @@ RUN chmod +x /usr/bin/mongoose
 
 RUN chmod -R ugo+rwx /opt/mongoose
 
-ENTRYPOINT ["/usr/bin/mongoose", "-Dcom.sun.management.jmxremote", "-Dcom.sun.management.jmxremote.port=9010", "-Dcom.sun.management.jmxremote.rmi.port=9010", "-Dcom.sun.management.jmxremote.local.only=false", "-Dcom.sun.management.jmxremote.authenticate=false", "-Dcom.sun.management.jmxremote.ssl=false", "-jar", "/opt/mongoose/mongoose.jar"]
+ENTRYPOINT ["/usr/bin/mongoose", "-jar", "/opt/mongoose/mongoose.jar"]
