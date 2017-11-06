@@ -8,7 +8,6 @@ import org.junit.runners.Suite;
 	BufferingInputBaseTest.class,
 	CliArgParserTest.class,
 	ConfigTest.class,
-	FileStorageDriverTest.class,
 	ThreadLocalByteBufferTest.class,
 	ValidateConfigTest.class,
 	ValidateScenariosTest.class,

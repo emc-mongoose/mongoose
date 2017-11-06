@@ -88,7 +88,7 @@ public class ConfigTest {
 		assertThat(namingConfig.getPrefix(), nullValue("item.naming.prefix"));
 		assertThat(namingConfig.getRadix(), equalTo(36, "item.naming.radix"));
 		assertThat(namingConfig.getOffset(), equalTo(0L, "item.naming.offset"));
-		assertThat(namingConfig.getLength(), equalTo(13, "item.naming.length"));
+		assertThat(namingConfig.getLength(), equalTo(12, "item.naming.length"));
 		final LoadConfig loadConfig = config.getLoadConfig();
 		assertThat(loadConfig, notNullValue());
 		assertThat(loadConfig.getGeneratorConfig().getRecycleConfig().getEnabled(), equalTo(false, "load.circular"));
