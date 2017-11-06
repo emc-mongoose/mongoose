@@ -40,7 +40,7 @@ jobs:
       script:
       - docker --version
 
-      - ./gradlew clean dist :storage:driver:service:dist
+      - ./gradlew clean dist
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
       - export REPO=emcmongoose/mongoose-base
       - docker build -f docker/Dockerfile.base -t $REPO:$COMMIT .
@@ -57,6 +57,7 @@ jobs:
       - docker push $REPO:$TAG
 
     - script:
+      - ./gradlew clean :storage:driver:service:dist
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
       - export REPO=emcmongoose/mongoose-storage-driver-service-base
       - docker build -f docker/Dockerfile.storage-driver-service-base -t $REPO:$COMMIT .
