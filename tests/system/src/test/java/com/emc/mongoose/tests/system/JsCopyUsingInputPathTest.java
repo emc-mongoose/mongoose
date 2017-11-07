@@ -133,15 +133,18 @@ extends ScenarioTestBase {
 			final String hostItemSrcPath = itemSrcPath.replace(
 				CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()
 			);
+			final String hostItemDstPath = itemDstPath.replace(
+				CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()
+			);
 			ioTraceRecTestFunc = ioTraceRecord -> {
 				File nextSrcFile;
 				File nextDstFile;
 				final String nextItemPath = ioTraceRecord.get("ItemPath");
-				nextSrcFile = new File(nextItemPath);
 				final String nextItemId = nextItemPath.substring(
 					nextItemPath.lastIndexOf(File.separatorChar) + 1
 				);
-				nextDstFile = Paths.get(hostItemSrcPath, nextItemId).toFile();
+				nextSrcFile = Paths.get(hostItemSrcPath, nextItemId).toFile();
+				nextDstFile = Paths.get(hostItemDstPath, nextItemId).toFile();
 				Assert.assertTrue(
 					"File \"" + nextItemPath + "\" doesn't exist", nextSrcFile.exists()
 				);
