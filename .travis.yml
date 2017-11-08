@@ -127,11 +127,11 @@ jobs:
       - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test
     - env:
       - TEST=JsCopyUsingInputPathTest
       - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=local,distributed
+      - DRIVER_COUNT=local
       - CONCURRENCY=single,medium
       - ITEM_SIZE=empty,small
       - MONGOOSE_VERSION=$TAG
@@ -318,13 +318,13 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local,distributed CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large,huge ./gradlew -Dtest.single=PyCreateNoLimitTest :tests:system:test
+    # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew -Dtest.single=PyCreateNoLimitTest :tests:system:test
     - env:
       - TEST=PyCreateNoLimitTest
       - STORAGE_TYPE=atmos,fs
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=single,low
-      - ITEM_SIZE=empty,small,medium,large,huge
+      - DRIVER_COUNT=local
+      - CONCURRENCY=low
+      - ITEM_SIZE=empty,medium,huge
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 

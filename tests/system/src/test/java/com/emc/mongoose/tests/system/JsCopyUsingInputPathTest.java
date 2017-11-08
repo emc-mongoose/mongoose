@@ -69,6 +69,7 @@ extends ScenarioTestBase {
 	@Before
 	public void setUp()
 	throws Exception {
+		configArgs.add("--storage-net-http-namespace=ns1");
 		super.setUp();
 		if(storageType.equals(StorageType.FS)) {
 			itemSrcPath = CONTAINER_SHARE_PATH + "/" + stepId;

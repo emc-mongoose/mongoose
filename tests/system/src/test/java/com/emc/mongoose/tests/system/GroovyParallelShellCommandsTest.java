@@ -61,7 +61,6 @@ extends ScenarioTestBase {
 	throws Exception {
 		assertTrue(stdOutput.contains("Hello world!"));
 		assertTrue(stdOutput.contains("mongoose.jar"));
-		assertTrue(stdOutput.contains("--test-scenario-file="));
-		assertTrue(stdOutput.contains("groovy/types/parallel_shell_commands.groovy"));
+		assertTrue(stdOutput.contains("--test-scenario-file=/opt/mongoose/example/scenario/groovy/types/parallel_shell_commands.groovy"));
 	}
 }
