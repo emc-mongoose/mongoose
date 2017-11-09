@@ -143,7 +143,8 @@ extends OldScenarioTestBase {
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		final long delta = driverCount.getValue() * concurrency.getValue() * partSize.getMax();
+		final long delta = sizeLimit.get() / 10
+			+ driverCount.getValue() * concurrency.getValue() * partSize.getMax();
 		System.out.println(
 			"Expected transfer size: " + sizeLimit.get() + "+" + delta +", actual: " + sizeSum
 		);
