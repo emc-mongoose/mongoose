@@ -208,6 +208,15 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
+    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large
+    - env:
+      - TEST=JsonMultiPartCreateTest
+      - STORAGE_TYPE=s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=large
+      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
+
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
     - env:
       - TEST=JsonMultipleFixedUpdateAndSingleFixedReadTest
@@ -382,15 +391,6 @@ jobs:
       - DRIVER_COUNT=local,distributed
       - CONCURRENCY=low,medium,high
       - ITEM_SIZE=medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=JsonMultiPartCreateTest :tests:system:test
-    - env:
-      - TEST=JsonMultiPartCreateTest
-      - STORAGE_TYPE=s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     - stage: "Deploy"
