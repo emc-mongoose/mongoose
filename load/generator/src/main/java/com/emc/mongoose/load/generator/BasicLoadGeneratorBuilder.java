@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
@@ -56,6 +57,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 /**
@@ -266,8 +273,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 				final int srcItemsCount;
 				try {
 					srcItemsCount = loadSrcItems(itemInput, srcItemsBuff, (int) M);
-				} catch(final IOException e) {
-					throw new OmgShootMyFootException(e);
 				} finally {
 					try {
 						itemInput.close();
@@ -514,20 +519,52 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	private static <I extends Item> int loadSrcItems(
 		final Input<I> itemInput, final List<I> itemBuff, final int countLimit
-	) throws IOException {
-		int n = 0;
+	) {
+		final LongAdder loadedCount = new LongAdder();
+		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
+			2, new LogContextThreadFactory("loadSrcItemsWorker", true)
+		);
+		final Semaphore loadFinishSemaphore = new Semaphore(1);
 		try {
-			int m;
-			while(n < countLimit) {
-				m = itemInput.get(itemBuff, countLimit - n);
-				if(m < 0) {
-					break;
-				} else {
-					n += m;
+			loadFinishSemaphore.acquire();
+			executor.submit(
+				() -> {
+					int n = 0;
+					int m;
+					try {
+						while(n < countLimit) {
+							m = itemInput.get(itemBuff, countLimit - n);
+							if(m < 0) {
+								Loggers.MSG.info("Loaded {} items, limit reached", n);
+								break;
+							} else {
+								loadedCount.add(m);
+								n += m;
+							}
+						}
+					} catch(final EOFException e) {
+						Loggers.MSG.info("Loaded {} items, end of items input", n);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Loaded {} items, I/O failure occurred", n
+						);
+					} finally {
+						loadFinishSemaphore.release();
+					}
+
 				}
-			}
-		} catch(final EOFException ignore) {
+			);
+			executor.scheduleAtFixedRate(
+				() -> Loggers.MSG.info("Loaded {} items from the input...", loadedCount.sum()),
+				0, 10, TimeUnit.SECONDS
+			);
+			loadFinishSemaphore.acquire();
+		} catch(final InterruptedException e) {
+			throw new CancellationException(e.getMessage());
+		} finally {
+			executor.shutdownNow();
 		}
-		return n;
+
+		return loadedCount.intValue();
 	}
 }
