@@ -34,7 +34,7 @@ ext {
 		log4j : "2.8.2",
 		metrics : "3.2.5",
 		mongooseStorageDriver : "[0.1.1,)",
-		nagaina : "[3.6.2,)",
+		nagaina : "[3.6.3,)",
 		netty : "4.1.16.Final",
 	]
 
