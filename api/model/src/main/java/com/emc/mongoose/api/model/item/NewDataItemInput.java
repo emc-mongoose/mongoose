@@ -13,8 +13,7 @@ implements Input<D> {
 	private final SizeInBytes dataSize;
 	
 	public NewDataItemInput(
-		final ItemFactory<D> itemFactory, final IdStringInput idInput,
-		final SizeInBytes dataSize
+		final ItemFactory<D> itemFactory, final IdStringInput idInput, final SizeInBytes dataSize
 	) {
 		super(itemFactory, idInput);
 		this.dataSize = dataSize;
