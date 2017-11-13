@@ -10,9 +10,6 @@ import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import org.apache.commons.csv.CSVRecord;
 
@@ -32,7 +29,7 @@ import java.util.function.Consumer;
 /**
  Created by andrey on 12.06.17.
  */
-public final class JsonTlsAndNodeBalancingTest
+public final class JsonTlsReadUsingInputFileTest
 extends OldScenarioTestBase {
 
 	private String stdOutput;
@@ -40,7 +37,7 @@ extends OldScenarioTestBase {
 
 	private static final int EXPECTED_TEST_TIME_MINUTES = 3;
 
-	public JsonTlsAndNodeBalancingTest(
+	public JsonTlsReadUsingInputFileTest(
 		final StorageType storageType, final DriverCount driverCount, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
@@ -49,19 +46,18 @@ extends OldScenarioTestBase {
 
 	@Override
 	protected String makeStepId() {
-		return JsonTlsAndNodeBalancingTest.class.getSimpleName() + '-' + storageType.name() + '-' +
+		return JsonTlsReadUsingInputFileTest.class.getSimpleName() + '-' + storageType.name() + '-' +
 			driverCount.name() + 'x' + concurrency.name() + '-' + itemSize.name();
 	}
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "ReadUsingInputPath.json");
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "systest", "ReadUsingInputFile.json");
 	}
 
 	@Before
 	public final void setUp()
 	throws Exception {
-		configArgs.add("--storage-mock-node=true");
 		configArgs.add("--storage-net-ssl=true");
 		super.setUp();
 		scenario = new JsonScenario(config, scenarioPath.toFile());
@@ -91,41 +87,20 @@ extends OldScenarioTestBase {
 				msgCount ++;
 			}
 		}
-		// 3 steps + additional bucket checking/creating connections
-		Assert.assertTrue(3 * driverCount.getValue() * concurrency.getValue() <= msgCount);
+		// 2 steps + additional bucket checking/creating connections
+		Assert.assertTrue(2 * driverCount.getValue() * concurrency.getValue() <= msgCount);
 
 		// I/O traces
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final Object2IntMap<String> nodeFreq = new Object2IntOpenHashMap<>();
 		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
 			testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
-			final String storageNodeAddr = ioTraceRec.get("StorageNode");
-			if(nodeFreq.containsKey(storageNodeAddr)) {
-				nodeFreq.put(storageNodeAddr, nodeFreq.getInt(storageNodeAddr) + 1);
-			} else {
-				nodeFreq.put(storageNodeAddr, 1);
-			}
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(ioTraceRecTestFunc);
-		final ObjectSet<String> storageNodeSet = nodeFreq.keySet();
-		assertTrue(storageNodeSet.size() > 0);
-		final double expectedAvgPerNode = ((double) ioTraceRecCount.sum()) / storageNodeSet.size();
-		for(final String nextNode : storageNodeSet) {
-			assertEquals(
-				"Actual node " + nextNode + " record count: " + nodeFreq.getInt(nextNode) +
-					", expected: " + expectedAvgPerNode,
-				expectedAvgPerNode, nodeFreq.getInt(nextNode), expectedAvgPerNode / 1000
-			);
-		}
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
-			itemSize.getValue(), 0, 0
-		);
-		testTotalMetricsLogRecord(
-			totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+			totalMetrcisLogRecords.get(0), IoType.READ, concurrency.getValue(), driverCount.getValue(),
 			itemSize.getValue(), 0, 0
 		);
 

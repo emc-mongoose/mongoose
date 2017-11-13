@@ -575,12 +575,18 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public final void channelCreated(final Channel channel)
 	throws Exception {
-		final ChannelPipeline pipeline = channel.pipeline();
-		appendHandlers(pipeline);
-		if(Loggers.MSG.isTraceEnabled()) {
-			Loggers.MSG.trace(
-				"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
-			);
+		try(
+			final Instance ctx = CloseableThreadContext
+				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
+			final ChannelPipeline pipeline = channel.pipeline();
+			appendHandlers(pipeline);
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
+				);
+			}
 		}
 	}
 
