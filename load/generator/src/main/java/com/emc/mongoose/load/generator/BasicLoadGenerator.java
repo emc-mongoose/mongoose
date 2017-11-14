@@ -11,7 +11,7 @@ import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.OutputCoroutine;
 import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
 
-import com.emc.mongoose.api.common.concurrent.WeightThrottle;
+import com.github.akurilov.commons.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.io.IoType;

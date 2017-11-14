@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system;
 
-import com.emc.mongoose.api.common.net.NetUtil;
+import com.github.akurilov.commons.net.NetUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.json.JsonScenario;
 import com.emc.mongoose.tests.system.base.OldScenarioTestBase;

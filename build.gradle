@@ -27,15 +27,16 @@ ext {
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
 		jackson : "2.9.1",
-		javaCommons : "[1.1.0,)",
-		javaCoroutines : "[1.0.14,)",
+		javaCommons : "[1.2.0,)",
+		javaCoroutines : "[1.1.0,)",
 		javassist : "3.21.0-GA",
 		slf4j : "1.7.24",
 		log4j : "2.8.2",
 		metrics : "3.2.5",
 		mongooseStorageDriver : "[0.1.1,)",
-		nagaina : "[3.6.4,)",
-		netty : "4.1.16.Final",
+		nagaina : "[3.6.6,)",
+		netty : "4.1.17.Final",
+		nettyConnectionPool : "[0.1,)"
 	]
 
 	mutualProjects = subprojects.findAll {

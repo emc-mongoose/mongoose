@@ -2,8 +2,15 @@ package com.emc.mongoose.storage.driver.net.base;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
+
 import com.github.akurilov.coroutines.Coroutine;
+
+import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
+import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
+import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
+
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
@@ -11,11 +18,7 @@ import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
-import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
-import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
-import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
-import com.emc.mongoose.api.common.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -24,7 +27,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
@@ -285,7 +287,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		connPool.preCreateConnections();
+		try {
+			connPool.preCreateConnections();
+		} catch(final ConnectException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
+		}
 	}
 	
 	@Override
@@ -325,7 +331,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
-		} catch(final ConnLeaseException e) {
+		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
 			ioTask.setStatus(IoTask.Status.FAIL_IO);
 			complete(null, ioTask);
@@ -378,7 +384,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			if(!isInterrupted()) {
 				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
 			}
-		} catch(final ConnLeaseException e) {
+		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);

@@ -13,7 +13,7 @@ import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.common.concurrent.ThreadUtil;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
