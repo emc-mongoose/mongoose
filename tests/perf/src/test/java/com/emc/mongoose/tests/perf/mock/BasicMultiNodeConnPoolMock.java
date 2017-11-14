@@ -29,6 +29,8 @@ implements NonBlockingConnPool {
 	}
 
 	protected final Channel connect(final String addr) {
-		return new EmbeddedChannel();
+		final Channel c = new EmbeddedChannel();
+		c.attr(ATTR_KEY_NODE).set(addr);
+		return c;
 	}
 }

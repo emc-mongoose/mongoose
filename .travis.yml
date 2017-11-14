@@ -298,13 +298,13 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local CONCURRENCY=single,low ITEM_SIZE=empty,small,medium,large ./gradlew -Dtest.single=JsonTlsReadUsingInputFileTest :tests:system:test
+    # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local CONCURRENCY=single,low ITEM_SIZE=empty,small,medium ./gradlew -Dtest.single=JsonTlsReadUsingInputFileTest :tests:system:test
     - env:
       - TEST=JsonTlsReadUsingInputFileTest
       - STORAGE_TYPE=atmos,s3,swift
       - DRIVER_COUNT=local
       - CONCURRENCY=single,low
-      - ITEM_SIZE=empty,small,medium,large
+      - ITEM_SIZE=empty,small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=s3 DRIVER_COUNT=distributed CONCURRENCY=low ITEM_SIZE=small ./gradlew -Dtest.single=JsUpdateAndReadVariantsTest :tests:system:test

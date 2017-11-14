@@ -98,7 +98,7 @@ implements NonBlockingConnPool {
 	public void preCreateConnections() {
 		if(concurrencyLevel > 0) {
 			for(int i = 0; i < concurrencyLevel; i ++) {
-				final Channel conn = connect();
+				final Channel conn = connectToAnyNode();
 				if(conn == null) {
 					Loggers.ERR.warn("Failed to pre-create the connections to the target nodes");
 					break;
@@ -117,7 +117,7 @@ implements NonBlockingConnPool {
 		}
 	}
 
-	private Channel connect() {
+	private Channel connectToAnyNode() {
 
 		Channel conn = null;
 		String selectedNodeAddr = null;
@@ -127,8 +127,9 @@ implements NonBlockingConnPool {
 			// select the endpoint node having the minimum count of established connections
 			int minConnsCount = Integer.MAX_VALUE, nextConnsCount = 0;
 			String nextNodeAddr;
-			for(int i = 0; i < n; i ++) {
-				nextNodeAddr = nodes[i];
+			final int i = ThreadLocalRandom.current().nextInt(n);
+			for(int j = i; j < n; j ++) {
+				nextNodeAddr = nodes[j % n];
 				nextConnsCount = connCounts.getInt(nextNodeAddr);
 				if(nextConnsCount == 0) {
 					selectedNodeAddr = nextNodeAddr;
@@ -194,7 +195,7 @@ implements NonBlockingConnPool {
 								}
 							}
 							if(allNodesExcluded) {
-								Loggers.ERR.fatal("No storage nodes left in the connection pool!");
+								Loggers.ERR.fatal("No endpoint nodes left in the connection pool!");
 							}
 						}
 					}
@@ -240,7 +241,7 @@ implements NonBlockingConnPool {
 		Channel conn = null;
 		if(concurrencyThrottle.tryAcquire()) {
 			if(null == (conn = poll())) {
-				conn = connect();
+				conn = connectToAnyNode();
 			}
 			if(conn == null) {
 				concurrencyThrottle.release();
@@ -265,7 +266,7 @@ implements NonBlockingConnPool {
 		Channel conn;
 		for(int i = 0; i < availableCount; i ++) {
 			if(null == (conn = poll())) {
-				conn = connect();
+				conn = connectToAnyNode();
 			}
 			if(conn == null) {
 				concurrencyThrottle.release(availableCount - i);
