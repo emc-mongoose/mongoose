@@ -29,16 +29,27 @@ extends LogMessageBase {
 		" (last 10 |            | type |---------------------|-------------------| Time  |----------------| Latency  | Duration  " + LINE_SEPARATOR +
 		" symbols) |yyMMddHHmmss|      | Current  |   Mean   |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
 		"----------|------------|------|----------|----------|------------|------|-------|--------|-------|----------|-----------" + LINE_SEPARATOR;
+	public static final String SUMMARY_DELIMETER =
+		"************************************************************************************************************************" + LINE_SEPARATOR;
 	public static final String TABLE_BORDER_VERTICAL = "|";
 	public static final int TABLE_HEADER_PERIOD = 20;
 
 	private static volatile long ROW_OUTPUT_COUNTER = 0;
 
 	private final Set<MetricsContext> metrics;
+	private final boolean summaryFlag;
+
 	private volatile String formattedMsg = null;
 	
-	public MetricsAsciiTableLogMessage(Set<MetricsContext> metrics) {
+	public MetricsAsciiTableLogMessage(final Set<MetricsContext> metrics) {
+		this(metrics, false);
+	}
+
+	public MetricsAsciiTableLogMessage(
+		final Set<MetricsContext> metrics, final boolean summaryFlag
+	) {
 		this.metrics = metrics;
+		this.summaryFlag = summaryFlag;
 	}
 	
 	@Override
@@ -58,6 +69,9 @@ extends LogMessageBase {
 				stdOutColorFlag = metricsCtx.getStdOutColorFlag();
 				if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
 					strb.append(TABLE_HEADER);
+				}
+				if(summaryFlag) {
+					strb.append(SUMMARY_DELIMETER);
 				}
 				ROW_OUTPUT_COUNTER ++;
 				strb
@@ -119,6 +133,9 @@ extends LogMessageBase {
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft((long) snapshot.getDurationMean(), 11, ' ')
 					.appendNewLine();
+				if(summaryFlag) {
+					strb.append(SUMMARY_DELIMETER);
+				}
 			}
 			formattedMsg = strb.toString();
 		}

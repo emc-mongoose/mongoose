@@ -665,7 +665,7 @@ implements LoadController<I, O> {
 			}
 		}
 		
-		Loggers.MSG.info("{}: shutting down the storage drivers...", getName());
+		Loggers.MSG.debug("{}: shutting down the storage drivers...", getName());
 		shutdownExecutor.shutdown();
 		try {
 			if(shutdownExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
@@ -769,7 +769,7 @@ implements LoadController<I, O> {
 			}
 		}
 		
-		Loggers.MSG.info("{}: interrupting the storage drivers...", getName());
+		Loggers.MSG.debug("{}: interrupting the storage drivers...", getName());
 		interruptExecutor.shutdown();
 		try {
 			if(interruptExecutor.awaitTermination(100, TimeUnit.SECONDS)) {

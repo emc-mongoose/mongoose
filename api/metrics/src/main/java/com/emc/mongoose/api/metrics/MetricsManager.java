@@ -23,6 +23,7 @@ import javax.management.MalformedObjectNameException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +77,7 @@ implements Coroutine {
 						controller, c -> new HashMap<>()
 					);
 				controllerMetrics.put(metricsCtx, new Meter(metricsCtx));
-				Loggers.MSG.info("Metrics context \"{}\" registered", metricsCtx);
+				Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 			} catch(final MalformedObjectNameException e) {
 				LogUtil.exception(
 					Level.WARN, e,
@@ -120,6 +121,9 @@ implements Coroutine {
 						);
 					}
 					// console output
+					Loggers.METRICS_STD_OUT.info(
+						new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx), true)
+					);
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
 					final Closeable meterMBean = controllerMetrics.remove(metricsCtx);
 					if(meterMBean != null) {
@@ -137,7 +141,7 @@ implements Coroutine {
 				}
 			} finally {
 				INSTANCE.allMetricsLock.unlock();
-				Loggers.MSG.info("Metrics context \"{}\" unregistered", metricsCtx);
+				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
 			}
 		} else {
 			Loggers.ERR.warn(
