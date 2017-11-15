@@ -166,6 +166,10 @@ extends OldScenarioTestBase {
 			IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.CREATE, driverCount.getValue(), concurrency.getValue(),
+			0, 60, itemSize.getValue()
+		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords();
 		assertEquals(

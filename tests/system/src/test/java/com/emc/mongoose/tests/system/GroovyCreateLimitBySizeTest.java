@@ -200,6 +200,10 @@ extends ScenarioTestBase {
 			stdOutput, stepId, driverCount.getValue(), 0,
 			new HashMap<IoType, Integer>() {{ put(IoType.CREATE, concurrency.getValue()); }}
 		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.CREATE, driverCount.getValue(), concurrency.getValue(),
+			0, 0, itemSize.getValue()
+		);
 
 		assertTrue(duration < 1000000);
 	}

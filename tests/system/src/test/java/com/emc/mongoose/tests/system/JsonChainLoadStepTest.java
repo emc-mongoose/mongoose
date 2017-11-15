@@ -84,6 +84,26 @@ extends OldScenarioTestBase {
 				put(IoType.NOOP, concurrency.getValue());
 			}}
 		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.CREATE, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, itemSize.getValue()
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.READ, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, itemSize.getValue()
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.UPDATE, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, new SizeInBytes(1, itemSize.getValue().getMax(), 1)
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.DELETE, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, new SizeInBytes(0)
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.NOOP, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, new SizeInBytes(0)
+		);
 		final List<CSVRecord> totalRecs = getMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
 			totalRecs.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
@@ -97,10 +117,9 @@ extends OldScenarioTestBase {
 			totalRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
 			new SizeInBytes(1, itemSize.getValue().get(), 1), COUNT_LIMIT, 0
 		);
-		// looks like nagaina is not fast enough to reflect the immediate data changes...
 		testTotalMetricsLogRecord(
 			totalRecs.get(3), IoType.READ, concurrency.getValue(), driverCount.getValue(),
-			itemSize.getValue(), 0, 0
+			itemSize.getValue(), COUNT_LIMIT, 0
 		);
 		testTotalMetricsLogRecord(
 			totalRecs.get(4), IoType.DELETE, concurrency.getValue(), driverCount.getValue(),

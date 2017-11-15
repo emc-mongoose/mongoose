@@ -70,6 +70,9 @@ public interface LogPatterns {
 			"\\|\\s*(?<lat>[\\d]{1,10})" +
 			"\\|\\s*(?<dur>[\\d]{1,11})"
 	);
+	Pattern STD_OUT_METRICS_TABLE_ROW_FINAL = Pattern.compile(
+		"\\*{120}\\R" + STD_OUT_METRICS_TABLE_ROW.pattern() + "\\R\\*{120}"
+	);
 	
 	Pattern STD_OUT_LOAD_THRESHOLD_ENTRANCE = Pattern.compile(
 		ASCII_COLOR.pattern() + DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() +

@@ -13,6 +13,7 @@ import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.Constants.MIB;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
@@ -715,8 +716,6 @@ extends ParameterizedSysTestBase {
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
-			//final int configConcurrency = Integer.parseInt(m.group("concurrency"));
-			//final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
 			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
 			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
@@ -771,5 +770,97 @@ extends ParameterizedSysTestBase {
 		if(tableHeaderCount > 0) {
 			assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
 		}
+	}
+
+	protected void testFinalMetricsTableRowStdout(
+		final String stdOutContent, final String stepId, final IoType expectedIoType,
+		final int driverCount, final int expectedConcurrency, final long countLimit,
+		final long timeLimit, final SizeInBytes expectedItemDataSize
+	) throws Exception {
+		
+		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW_FINAL.matcher(stdOutContent);
+		boolean rowFoundFlag = false;
+		Date nextTimstamp = null;
+		int actualConcurrencyCurr = -1;
+		float actualConcurrencyLastMean = -1;
+		long succCount = -1;
+		long failCount = -1;
+		float stepTimeSec = -1;
+		float tp = -1;
+		float bw = -1;
+		long lat = 0;
+		long dur = -1;
+		
+		while(m.find()) {
+			final String actualStepNameEnding = m.group("stepName");
+			if(stepId.endsWith(actualStepNameEnding) || stepId.equals(actualStepNameEnding)) {
+				final IoType actualIoType = IoType.valueOf(m.group("ioType"));
+				if(actualIoType.equals(expectedIoType)) {
+					rowFoundFlag = true;
+					nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
+					actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
+					actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
+					succCount = Long.parseLong(m.group("succCount"));
+					failCount = Long.parseLong(m.group("failCount"));
+					stepTimeSec = Float.parseFloat(m.group("stepTime"));
+					tp = Float.parseFloat(m.group("tp"));
+					bw = Float.parseFloat(m.group("bw"));
+					lat = Long.parseLong(m.group("lat"));
+					dur = Long.parseLong(m.group("dur"));
+					break;
+				}
+			}
+		}
+
+		assertTrue(
+			"Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \""
+				+ expectedIoType + "\" was not found",
+			rowFoundFlag
+		);
+		assertTrue(actualConcurrencyCurr >= 0);
+		assertTrue(driverCount * expectedConcurrency >= actualConcurrencyCurr);
+		assertTrue(actualConcurrencyLastMean >= 0);
+		assertTrue(driverCount * expectedConcurrency >= actualConcurrencyLastMean);
+		assertTrue("Successful operations count should be > 0", succCount > 0);
+		assertEquals("Failure count should be 0", failCount, 0);
+		assertTrue("Step time should be > 0", stepTimeSec > 0);
+		if(timeLimit > 0) {
+			assertTrue(
+				"Step time (" + stepTimeSec + ") should not be much more than time limit ("
+					+ timeLimit + ")",
+				stepTimeSec <= timeLimit + 10
+			);
+		}
+		assertTrue("Final throughput should be more than 0", tp > 0);
+		if(expectedItemDataSize != null) {
+			final float avgItemSize = MIB * bw / tp;
+			if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
+				assertEquals(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") should be approx equal the expected (" + expectedItemDataSize + ")",
+					expectedItemDataSize.get(), avgItemSize, expectedItemDataSize.get() / 10
+				);
+			} else {
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
+					avgItemSize >= expectedItemDataSize.getMin()
+				);
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
+					avgItemSize <= expectedItemDataSize.getMax()
+				);
+			}
+		}
+		assertTrue(
+			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
+			lat <= dur
+		);
+		assertEquals(
+			"Step time (" + stepTimeSec + ") should be approx equal to " + succCount + " * " + dur
+				+ " / (1e6 * " + expectedConcurrency + ")",
+			stepTimeSec / 2, succCount * dur / (1e6 * expectedConcurrency), stepTimeSec / 2
+		);
 	}
 }

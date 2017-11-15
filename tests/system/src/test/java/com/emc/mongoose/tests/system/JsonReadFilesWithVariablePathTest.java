@@ -134,5 +134,10 @@ extends OldScenarioTestBase {
 			IoType.READ, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
+
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.CREATE, driverCount.getValue(), concurrency.getValue(),
+			EXPECTED_COUNT, 0, itemSize.getValue()
+		);
 	}
 }

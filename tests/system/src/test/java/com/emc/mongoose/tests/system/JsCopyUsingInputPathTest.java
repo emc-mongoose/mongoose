@@ -234,5 +234,9 @@ extends ScenarioTestBase {
 			IoType.CREATE, concurrency.getValue(), driverCount.getValue(), itemSize.getValue(),
 			config.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod()
 		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.CREATE, driverCount.getValue(), concurrency.getValue(),
+			0, 0, itemSize.getValue()
+		);
 	}
 }

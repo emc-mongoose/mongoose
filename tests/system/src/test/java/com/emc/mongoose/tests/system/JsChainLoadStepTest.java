@@ -86,10 +86,20 @@ extends ScenarioTestBase {
 			new HashMap<IoType, Integer>() {{
 				put(IoType.CREATE, concurrency.getValue());
 				put(IoType.READ, concurrency.getValue());
-				put(IoType.UPDATE, concurrency.getValue());
 				put(IoType.DELETE, concurrency.getValue());
-				put(IoType.NOOP, concurrency.getValue());
 			}}
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.CREATE, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, itemSize.getValue()
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.READ, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, itemSize.getValue()
+		);
+		testFinalMetricsTableRowStdout(
+			stdOutput, stepId, IoType.DELETE, driverCount.getValue(), concurrency.getValue(),
+			COUNT_LIMIT, 0, new SizeInBytes(0)
 		);
 		final List<CSVRecord> totalRecs = getContainerMetricsTotalLogRecords();
 		testTotalMetricsLogRecord(
