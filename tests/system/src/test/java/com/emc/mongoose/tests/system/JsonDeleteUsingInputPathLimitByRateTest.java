@@ -174,7 +174,10 @@ extends OldScenarioTestBase {
 		);
 		testMetricsTableStdout(
 			stdOutput, stepId, driverCount.getValue(), EXPECTED_COUNT,
-			new HashMap<IoType, Integer>() {{ put(IoType.DELETE, concurrency.getValue()); }}
+			new HashMap<IoType, Integer>() {{
+				put(IoType.CREATE, concurrency.getValue());
+				put(IoType.DELETE, concurrency.getValue());
+			}}
 		);
 	}
 }

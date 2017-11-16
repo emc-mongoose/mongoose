@@ -831,8 +831,8 @@ extends ParameterizedSysTestBase {
 				stepTimeSec <= timeLimit + 10
 			);
 		}
-		assertTrue("Final throughput should be more than 0", tp > 0);
-		if(expectedItemDataSize != null) {
+		assertTrue("Final throughput should be >= 0", tp >= 0);
+		if(expectedItemDataSize != null && tp > 0) {
 			final float avgItemSize = MIB * bw / tp;
 			if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
 				assertEquals(
@@ -856,11 +856,6 @@ extends ParameterizedSysTestBase {
 		assertTrue(
 			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
 			lat <= dur
-		);
-		assertEquals(
-			"Step time (" + stepTimeSec + ") should be approx equal to " + succCount + " * " + dur
-				+ " / (1e6 * " + expectedConcurrency + ")",
-			stepTimeSec / 2, succCount * dur / (1e6 * expectedConcurrency), stepTimeSec / 2
 		);
 	}
 }
