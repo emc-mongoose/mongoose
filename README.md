@@ -5,10 +5,6 @@
 [![release](https://img.shields.io/github/release/emc-mongoose/mongoose.svg)]()
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 
-# Mongoose
-
-## Description
-
 Mongoose is a storage performance testing tool.
 
 It is designed to be used for:
@@ -21,14 +17,30 @@ It is designed to be used for:
 Mongoose is able to sustain millions of concurrent connections and
 millions of operations per second.
 
-Basically, Mongoose may be started very simply:
-```bash
-java -jar mongoose.jar
-```
+## Getting Started
 
-## Features
+Please refer to the [quickstart](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Quickstart)
+page for the details.
 
-### Core Functionality
+## Documentation
+
+*[Mongoose v3.6](https://github.com/emc-mongoose/mongoose/wiki/v3.6-Overview)*
+
+**[Mongoose v3.5](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Overview)**
+
+[Mongoose v3.4](https://github.com/emc-mongoose/mongoose/wiki/v3.4-Overview)
+
+[Mongoose v3.3](https://github.com/emc-mongoose/mongoose/wiki/v3.3-Overview)
+
+[Mongoose v3.1](https://github.com/emc-mongoose/mongoose/wiki/v3.1-Overview)
+
+[Mongoose v3.0](https://github.com/emc-mongoose/mongoose/wiki/v3.0-Overview)
+
+[Mongoose v2.x.x](http://emc-mongoose.github.io/mongoose)
+
+[Mongoose v1.x.x](https://github.com/emc-mongoose/mongoose/wiki/v1.x-Overview)
+
+## Key Features
 
 1. **[Configuration](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Configuration)**
 
@@ -125,27 +137,14 @@ java -jar mongoose.jar
 
     It's possible to implement a [custom storage driver](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Custom-Storage-Driver) to extend the storages support.
 
-### Other
+## Authors
 
-1. [Deployment using Docker](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Docker)
-2. [Storage Mock](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Quickstart#hello-world)
-3. [Web GUI](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Quickstart#web-gui)
+* Andrey Kurilov
 
-## Documentation
+## Acknowledgements
 
-*[Mongoose v4.0](https://github.com/emc-mongoose/mongoose/wiki/v4.0-Overview)*
-
-**[Mongoose v3.5](https://github.com/emc-mongoose/mongoose/wiki/v3.5-Overview)**
-
-[Mongoose v3.4](https://github.com/emc-mongoose/mongoose/wiki/v3.4-Overview)
-
-[Mongoose v3.3](https://github.com/emc-mongoose/mongoose/wiki/v3.3-Overview)
-
-[Mongoose v3.1](https://github.com/emc-mongoose/mongoose/wiki/v3.1-Overview)
-
-[Mongoose v3.0](https://github.com/emc-mongoose/mongoose/wiki/v3.0-Overview)
-
-[Mongoose v2.x.x](http://emc-mongoose.github.io/mongoose)
-
-[Mongoose v1.x.x](https://github.com/emc-mongoose/mongoose/wiki/v1.x-Overview)
-
+* Gennady Eremeev
+* Ilya Kisliakovsky
+* Kirill Gusakov
+* Mikhail Danilov
+* Olga Zhavzharova
