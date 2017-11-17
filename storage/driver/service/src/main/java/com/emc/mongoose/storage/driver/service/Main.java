@@ -34,9 +34,9 @@ public final class Main {
 				"none-" + LogUtil.getDateTimeStamp()
 			);
 		} catch(final IllegalArgumentNameException e) {
-			Loggers.ERR.fatal(
-				"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
-				formatCliArgsList(getAllCliArgs())
+			System.err.println(
+				"Invalid argument: \"" + e.getMessage() + "\"\nThe list of all possible args:\n"
+					+ formatCliArgsList(getAllCliArgs())
 			);
 			return;
 		}

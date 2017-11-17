@@ -208,8 +208,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new BasicMultiNodeConnPool(
-			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this,
-			storageNodePort, connAttemptsLimit
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
+			connAttemptsLimit
 		);
 	}
 	
@@ -287,10 +287,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		try {
-			connPool.preCreateConnections();
-		} catch(final ConnectException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
+		if(concurrencyLevel > 0) {
+			try {
+				connPool.preCreateConnections(concurrencyLevel);
+			} catch(final ConnectException e) {
+				LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
+			}
 		}
 	}
 	

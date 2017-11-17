@@ -51,11 +51,14 @@ public final class CliArgParser {
 						(boolean) aliasingNode.get(Config.DEPRECATED);
 					if(arg.startsWith(nextAliasName)) {
 						if(nextAliasTarget == null) {
-							Loggers.ERR.fatal("The argument \"{}\" is deprecated", nextAliasName);
+							System.err.println(
+								"The argument \"" + nextAliasName + "\" is deprecated"
+							);
+							break;
 						} else if(nextDeprecatedFlag) {
 							Loggers.ERR.warn(
-								"The argument \"{}\" is deprecated, use \"{}\" instead",
-								nextAliasName, nextAliasTarget
+								"The argument \"" + nextAliasName + "\" is deprecated, use \""
+									+ nextAliasTarget + "\" instead"
 							);
 						}
 						aliasArgValPair = nextAliasTarget.split("=", 2);
