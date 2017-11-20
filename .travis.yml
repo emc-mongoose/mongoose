@@ -99,18 +99,8 @@ jobs:
 
     - stage: "System tests"
 
-    # STORAGE_TYPE=swift DRIVER_COUNT=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest :tests:system:test
-      env:
-      - TEST=GroovyLoadTypeStepsTest
-      - STORAGE_TYPE=swift
-      - DRIVER_COUNT=distributed
-      - CONCURRENCY=medium
-      - ITEM_SIZE=small
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single ITEM_SIZE=empty ./gradlew -Dtest.single=GroovyParallelShellCommandsTest :tests:system:test
-    - env:
+      env:
       - TEST=GroovyParallelShellCommandsTest
       - STORAGE_TYPE=fs
       - DRIVER_COUNT=local
@@ -124,15 +114,6 @@ jobs:
       - STORAGE_TYPE=swift
       - DRIVER_COUNT=distributed
       - CONCURRENCY=medium
-      - ITEM_SIZE=small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonChainLoadStepTest :tests:system:test
-    - env:
-      - TEST=JsonChainLoadStepTest
-      - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,medium
       - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
@@ -289,15 +270,6 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleRandomUpdateAndMultipleRandomReadTest :tests:system:test
-    - env:
-      - TEST=JsonSingleRandomUpdateAndMultipleRandomReadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=single,low,medium
-      - ITEM_SIZE=small,medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local CONCURRENCY=single,low ITEM_SIZE=empty,medium ./gradlew -Dtest.single=JsonTlsReadUsingInputFileTest :tests:system:test
     - env:
       - TEST=JsonTlsReadUsingInputFileTest
@@ -347,8 +319,27 @@ jobs:
 
     - stage: "Unstable system tests"
 
-    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest :tests:system:test
+    # STORAGE_TYPE=swift DRIVER_COUNT=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest :tests:system:test
       env:
+      - TEST=GroovyLoadTypeStepsTest
+      - STORAGE_TYPE=swift
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=medium
+      - ITEM_SIZE=small
+      - MONGOOSE_VERSION=$TAG
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonChainLoadStepTest :tests:system:test
+    - env:
+      - TEST=JsonChainLoadStepTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=atmos,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest :tests:system:test
+    - env:
       - TEST=JsonChainWithDelayTest
       - STORAGE_TYPE=atmos,s3
       - DRIVER_COUNT=local,distributed
@@ -383,7 +374,16 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest :tests:system:test
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleRandomUpdateAndMultipleRandomReadTest :tests:system:test
+    - env:
+      - TEST=JsonSingleRandomUpdateAndMultipleRandomReadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,low,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+        # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest :tests:system:test
     - env:
       - TEST=JsonUnlimitedConcurrencyLimitByRateTest
       - STORAGE_TYPE=atmos,fs,swift
