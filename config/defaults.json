@@ -246,7 +246,8 @@
 	},
 	"test": {
 		"scenario": {
-			// The default JSON scenario to run, null means invoking the default.json scenario bundled into the distribution
+			// The default scenario file to run, null means invoking the default.js scenario bundled
+			// into the distribution
 			"file": null
 		},
 		"step": {

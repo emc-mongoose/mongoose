@@ -135,15 +135,6 @@ jobs:
       - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonDeleteUsingInputPathLimitByRateTest :tests:system:test
-    - env:
-      - TEST=JsonDeleteUsingInputPathLimitByRateTest
-      - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,high
-      - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonFileStorageMetricsThresholdTest :tests:system:test
     - env:
       - TEST=JsonFileStorageMetricsThresholdTest
@@ -205,15 +196,6 @@ jobs:
       - DRIVER_COUNT=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=large
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
-    - env:
-      - TEST=JsonMultipleFixedUpdateAndSingleFixedReadTest
-      - STORAGE_TYPE=fs,s3
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=small,medium
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleRandomUpdateAndMultipleFixedReadTest :tests:system:test
@@ -289,24 +271,6 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonUpdateUsingInputFileLimitByTimeTest :tests:system:test
-    - env:
-      - TEST=JsonUpdateUsingInputFileLimitByTimeTest
-      - STORAGE_TYPE=fs,s3
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,medium,high
-      - ITEM_SIZE=medium
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest :tests:system:test
-    - env:
-      - TEST=JsonWeightedLoadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=empty,small
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=atmos,fs DRIVER_COUNT=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew -Dtest.single=PyCreateNoLimitTest :tests:system:test
     - env:
       - TEST=PyCreateNoLimitTest
@@ -356,12 +320,30 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonDeleteUsingInputPathLimitByRateTest :tests:system:test
+    - env:
+      - TEST=JsonDeleteUsingInputPathLimitByRateTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,high
+      - ITEM_SIZE=empty,small
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMixedLoadTest :tests:system:test
     - env:
       - TEST=JsonMixedLoadTest
       - STORAGE_TYPE=fs,s3,swift
       - DRIVER_COUNT=local,distributed
       - CONCURRENCY=single,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
+    - env:
+      - TEST=JsonMultipleFixedUpdateAndSingleFixedReadTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium
       - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
@@ -383,13 +365,31 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-        # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest :tests:system:test
+    # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest :tests:system:test
     - env:
       - TEST=JsonUnlimitedConcurrencyLimitByRateTest
       - STORAGE_TYPE=atmos,fs,swift
       - DRIVER_COUNT=local,distributed
       - CONCURRENCY=unlimited
       - ITEM_SIZE=small,medium,large
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonUpdateUsingInputFileLimitByTimeTest :tests:system:test
+    - env:
+      - TEST=JsonUpdateUsingInputFileLimitByTimeTest
+      - STORAGE_TYPE=fs,s3
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,medium,high
+      - ITEM_SIZE=medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest :tests:system:test
+    - env:
+      - TEST=JsonWeightedLoadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     - stage: "Deploy"
