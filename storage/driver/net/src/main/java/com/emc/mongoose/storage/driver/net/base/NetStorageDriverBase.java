@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 
@@ -43,10 +44,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslProvider;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -54,7 +52,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
-import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
@@ -605,10 +603,18 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void appendHandlers(final ChannelPipeline pipeline) {
 		if(sslFlag) {
 			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
-			try {
+			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
+			sslEngine.setEnabledProtocols(
+				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
+			);
+			sslEngine.setUseClientMode(true);
+			sslEngine.setEnabledCipherSuites(
+				SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
+			);
+			pipeline.addLast(new SslHandler(sslEngine));
+			/*try {
 				final SslContext sslCtx = SslContextBuilder
 					.forClient()
-					.sslProvider(SslProvider.OPENSSL)
 					.trustManager(InsecureTrustManagerFactory.INSTANCE)
 					.build();
 				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
@@ -617,7 +623,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					Level.ERROR, e, "Failed to enable the SSL/TLS for the connection: {}",
 					pipeline.channel()
 				);
-			}
+			}*/
 		}
 		if(socketTimeout > 0) {
 			pipeline.addLast(
