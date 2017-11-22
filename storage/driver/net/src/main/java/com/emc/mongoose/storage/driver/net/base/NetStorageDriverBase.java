@@ -45,6 +45,7 @@ import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.IdleStateHandler;
 
@@ -98,6 +99,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
+		if(sslFlag) {
+			Loggers.MSG.info("{}: SSL/TLS is enabled", jobName);
+		}
 		final int sto = netConfig.getTimeoutMilliSec();
 		if(sto > 0) {
 			this.socketTimeout = sto;
@@ -604,6 +608,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			try {
 				final SslContext sslCtx = SslContextBuilder
 					.forClient()
+					.sslProvider(SslProvider.OPENSSL)
 					.trustManager(InsecureTrustManagerFactory.INSTANCE)
 					.build();
 				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
