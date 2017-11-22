@@ -165,11 +165,11 @@ extends ConfigurableStepBase {
 				controller.setIoResultsOutput(itemOutput);
 			}
 			controller.start();
-			Loggers.MSG.info("Mixed load step \"{}\" started", controller.getName());
+			Loggers.MSG.info("Weighted load step \"{}\" started", controller.getName());
 			if(controller.await(timeLimitSec, TimeUnit.SECONDS)) {
-				Loggers.MSG.info("Mixed load step \"{}\" done", controller.getName());
+				Loggers.MSG.info("Weighted load step \"{}\" done", controller.getName());
 			} else {
-				Loggers.MSG.info("Mixed load step \"{}\" timeout", controller.getName());
+				Loggers.MSG.info("Weighted load step \"{}\" timeout", controller.getName());
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
