@@ -19,6 +19,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.math3.stat.Frequency;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -141,15 +142,39 @@ extends ScenarioTestBase {
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
 
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final String nodeAddr = httpStorageMocks.keySet().iterator().next();
-		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
-			testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
-			HttpStorageMockUtil.assertItemExists(
-				nodeAddr, ioTraceRec.get("ItemPath"),
-				Long.parseLong(ioTraceRec.get("TransferSize"))
+
+		final Consumer<CSVRecord> ioTraceRecFunc;
+		if(storageType.equals(StorageType.FS)) {
+			final String hostItemDstPath = containerItemOutputPath.replace(
+				CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()
 			);
-			ioTraceRecCount.increment();
-		};
+			ioTraceRecFunc = ioTraceRecord -> {
+				File nextDstFile;
+				final String nextItemPath = ioTraceRecord.get("ItemPath");
+				final String nextItemId = nextItemPath.substring(
+					nextItemPath.lastIndexOf(File.separatorChar) + 1
+				);
+				nextDstFile = Paths.get(hostItemDstPath, nextItemId).toFile();
+				assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
+				Assert.assertEquals(
+					"File (" + nextItemPath + ") size (" + nextDstFile.length() +
+						" is not equal to the configured: " + itemSize.getValue(),
+					itemSize.getValue().get(), nextDstFile.length()
+				);
+				ioTraceRecCount.increment();
+			};
+		} else {
+			final String nodeAddr = httpStorageMocks.keySet().iterator().next();
+			ioTraceRecFunc = ioTraceRec -> {
+				testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
+				HttpStorageMockUtil.assertItemExists(
+					nodeAddr, ioTraceRec.get("ItemPath"),
+					Long.parseLong(ioTraceRec.get("TransferSize"))
+				);
+				ioTraceRecCount.increment();
+			};
+		}
+
 		testContainerIoTraceLogRecords(ioTraceRecFunc);
 		assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount / 1000);
 

@@ -283,13 +283,33 @@ jobs:
 
     - stage: "Unstable system tests"
 
+    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest :tests:system:test
+     env:
+      - TEST=GroovyCreateLimitBySizeTest
+      - STORAGE_TYPE=fs
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=low,high
+      - ITEM_SIZE=small,medium
+      - MONGOOSE_VERSION=$TAG
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
     # STORAGE_TYPE=swift DRIVER_COUNT=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest :tests:system:test
-      env:
+    - env:
       - TEST=GroovyLoadTypeStepsTest
       - STORAGE_TYPE=swift
       - DRIVER_COUNT=distributed
       - CONCURRENCY=medium
       - ITEM_SIZE=small
+      - MONGOOSE_VERSION=$TAG
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test
+    - env:
+      - TEST=JsCopyUsingInputPathTest
+      - STORAGE_TYPE=fs
+      - DRIVER_COUNT=local
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
       - MONGOOSE_VERSION=$TAG
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
@@ -406,26 +426,6 @@ jobs:
           tags: true
 
     - stage: "Failing system tests"
-
-    # STORAGE_TYPE=s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest :tests:system:test
-      env:
-      - TEST=GroovyCreateLimitBySizeTest
-      - STORAGE_TYPE=s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=low,medium,high
-      - ITEM_SIZE=small,medium
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
-
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsCopyUsingInputPathTest :tests:system:test
-    - env:
-      - TEST=JsCopyUsingInputPathTest
-      - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=local
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=empty,small
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonReadVerificationAfterCircularUpdateTest :tests:system:test
     - env:
