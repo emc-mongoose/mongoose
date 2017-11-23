@@ -284,7 +284,7 @@ jobs:
     - stage: "Unstable system tests"
 
     # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest :tests:system:test
-     env:
+      env:
       - TEST=GroovyCreateLimitBySizeTest
       - STORAGE_TYPE=fs
       - DRIVER_COUNT=local,distributed
