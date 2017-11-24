@@ -131,6 +131,11 @@ extends ScenarioTestBase {
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
 			}
+			try {
+				DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+			} catch(final IOException e) {
+				e.printStackTrace(System.err);
+			}
 		}
 		super.tearDown();
 	}
