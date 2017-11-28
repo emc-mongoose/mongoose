@@ -23,9 +23,9 @@ page for the details.
 
 ## Documentation
 
-*[Mongoose v3.6](https://github.com/emc-mongoose/mongoose-base/wiki/v3.6-Overview)*
+**[Mongoose v3.6](https://github.com/emc-mongoose/mongoose-base/wiki/v3.6-Overview)**
 
-**[Mongoose v3.5](https://github.com/emc-mongoose/mongoose-base/wiki/v3.5-Overview)**
+[Mongoose v3.5](https://github.com/emc-mongoose/mongoose-base/wiki/v3.5-Overview)
 
 [Mongoose v3.4](https://github.com/emc-mongoose/mongoose-base/wiki/v3.4-Overview)
 
