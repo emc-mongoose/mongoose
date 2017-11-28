@@ -36,7 +36,7 @@ ext {
 		mongooseStorageDriver : "[0.1.2,)",
 		nagaina : "[3.6.7,)",
 		netty : "4.1.17.Final",
-		nettyConnectionPool : "[0.1.1,)"
+		nettyConnectionPool : "[0.1.2,)"
 	]
 
 	mutualProjects = subprojects.findAll {

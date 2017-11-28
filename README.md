@@ -146,4 +146,5 @@ page for the details.
 * [Ilya Kisliakovsky](https://github.com/kisliakovsky)
 * [Kirill Gusakov](https://github.com/gusakk)
 * Mikhail Danilov
+* [Mikhail Malygin](https://github.com/aphreet)
 * [Olga Zhavzharova](https://github.com/Zhavzharova)
