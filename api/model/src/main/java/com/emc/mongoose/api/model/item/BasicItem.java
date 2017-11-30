@@ -14,6 +14,7 @@ implements Item {
 	private int hashCode;
 	
 	public BasicItem() {
+		this.hashCode = super.hashCode();
 	}
 	
 	public BasicItem(final String value) {
@@ -21,7 +22,7 @@ implements Item {
 			throw new IllegalArgumentException("Empty/null item value");
 		}
 		this.name = value;
-		this.hashCode = hashCode();
+		this.hashCode = super.hashCode();
 	}
 	
 	@Override
