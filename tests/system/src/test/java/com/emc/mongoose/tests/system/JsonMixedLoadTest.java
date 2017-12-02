@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -101,6 +102,11 @@ extends OldScenarioTestBase {
 					scenario.run();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
+				} finally {
+					try {
+						scenario.close();
+					} catch(final IOException ignored) {
+					}
 				}
 			}
 		);
@@ -128,7 +134,7 @@ extends OldScenarioTestBase {
 		runner.interrupt();
 		stdOutput = stdOutStream.stopRecordingAndGet();
 		LogUtil.flushAll();
-		TimeUnit.SECONDS.sleep(10);
+		TimeUnit.SECONDS.sleep(50);
 	}
 	
 	@After

@@ -18,6 +18,7 @@ import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
 import org.apache.logging.log4j.Level;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -106,6 +107,11 @@ extends OldScenarioTestBase {
 					stdOutput = stdOutStream.stopRecordingAndGet();
 				} catch(final Throwable t) {
 					LogUtil.exception(Level.ERROR, t, "Failed to run the scenario");
+				} finally {
+					try {
+						scenario.close();
+					} catch(final IOException ignored) {
+					}
 				}
 			}
 		);
@@ -129,7 +135,7 @@ extends OldScenarioTestBase {
 		finishedInTime = !runner.isAlive();
 		runner.interrupt();
 		LogUtil.flushAll();
-		TimeUnit.SECONDS.sleep(10);
+		TimeUnit.SECONDS.sleep(30);
 	}
 
 	@After

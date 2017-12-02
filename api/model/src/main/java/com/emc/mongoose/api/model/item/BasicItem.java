@@ -11,8 +11,8 @@ public class BasicItem
 implements Item {
 	
 	protected volatile String name = null;
-	private int hashCode;
-	
+	private int hashCode; // needed for the distributed mode
+
 	public BasicItem() {
 		this.hashCode = super.hashCode();
 	}
@@ -68,7 +68,7 @@ implements Item {
 	public int hashCode() {
 		return hashCode;
 	}
-	
+
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
