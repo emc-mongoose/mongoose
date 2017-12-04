@@ -401,9 +401,7 @@ implements DataItem {
 		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
 			.getLayer(layerNum)
 			.asReadOnlyBuffer();
-		// the input buffer contains some count of the bytes been read right before
-		// rollback the ring buffer position to the offset before the bytes have been read
-		ringBuff.position((int) ((offset + position - inputSize) % dataInputSize));
+		ringBuff.position((int) ((offset + position) % dataInputSize));
 		final int sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
 
 		// compare the 64 bit words 1st to make it faster
