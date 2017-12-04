@@ -65,8 +65,8 @@ extends Item, SeekableByteChannel {
 	long writeToFileChannel(final FileChannel chanDst, final long maxCount)
 	throws IOException;
 
-	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
-	throws DataSizeException, DataCorruptionException, IOException;
+	void verify(final ByteBuffer buff)
+	throws DataCorruptionException;
 	
 	static int getRangeCount(final long size) {
 		return (int) Math.ceil(Math.log(size + 1) / LOG2);
