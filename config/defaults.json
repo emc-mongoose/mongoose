@@ -272,7 +272,7 @@
 		}
 	},
 	// The Mongoose version
-	"version": "3.6.0-beta5",
+	"version": "3.6.0-beta6",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
 	"aliasing": [
 

@@ -394,14 +394,17 @@ implements DataItem {
 	}
 
 	@Override
-	public final void verify(final ByteBuffer buff)
+	public final void verify(final ByteBuffer inBuff)
+	throws DataCorruptionException {
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) ((offset + position) % dataInputSize));
+		verify(inBuff, ringBuff);
+	}
+
+	private void verify(final ByteBuffer inBuff, final ByteBuffer ringBuff)
 	throws DataCorruptionException {
 
-		final int inputSize = buff.remaining();
-		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
-			.getLayer(layerNum)
-			.asReadOnlyBuffer();
-		ringBuff.position((int) ((offset + position) % dataInputSize));
+		final int inputSize = inBuff.remaining();
 		final int sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
 
 		// compare the 64 bit words 1st to make it faster
@@ -410,7 +413,7 @@ implements DataItem {
 			long ws, wi;
 			for(int k = 0; k < wordCount; k ++) {
 				ws = ringBuff.getLong();
-				wi = buff.getLong();
+				wi = inBuff.getLong();
 				if(ws != wi) {
 					// don't hurry more, find the exact non-matching byte
 					final int wordPos = k << 3;
@@ -434,7 +437,7 @@ implements DataItem {
 			byte bs, bi;
 			for(int m = 0; m < tailByteCount; m ++) {
 				bs = ringBuff.get();
-				bi = buff.get();
+				bi = inBuff.get();
 				if(bs != bi) {
 					throw new DataCorruptionException(m, bs, bi);
 				}
@@ -444,7 +447,8 @@ implements DataItem {
 		// ring buffer's remaining bytes count was less than input buffer's remaining bytes
 		if(sizeToVerify < inputSize) {
 			// try to verify again starting from the ring buffer's 0 position
-			verify(buff);
+			ringBuff.position(0);
+			verify(inBuff, ringBuff);
 		}
 	}
 
