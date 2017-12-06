@@ -108,7 +108,7 @@ jobs:
       - ITEM_SIZE=empty
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsChainLoadStepTest :tests:system:test
+    # STORAGE_TYPE=swift DRIVER_COUNT=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=JsChainLoadStepTest :tests:system:test
     - env:
       - TEST=JsChainLoadStepTest
       - STORAGE_TYPE=swift

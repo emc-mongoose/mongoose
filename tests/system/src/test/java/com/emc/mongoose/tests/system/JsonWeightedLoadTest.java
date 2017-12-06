@@ -135,7 +135,7 @@ extends OldScenarioTestBase {
 		finishedInTime = !runner.isAlive();
 		runner.interrupt();
 		LogUtil.flushAll();
-		TimeUnit.SECONDS.sleep(30);
+		TimeUnit.SECONDS.sleep(50);
 	}
 
 	@After
