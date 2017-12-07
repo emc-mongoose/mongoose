@@ -349,15 +349,6 @@ jobs:
       - ITEM_SIZE=empty,small
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMixedLoadTest :tests:system:test
-    - env:
-      - TEST=JsonMixedLoadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - DRIVER_COUNT=local,distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=small,medium
-      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
-
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest :tests:system:test
     - env:
       - TEST=JsonMultipleFixedUpdateAndSingleFixedReadTest
@@ -427,8 +418,17 @@ jobs:
 
     - stage: "Failing system tests"
 
-    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonReadVerificationAfterCircularUpdateTest :tests:system:test
+    # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMixedLoadTest :tests:system:test
       env:
+      - TEST=JsonMixedLoadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - DRIVER_COUNT=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
+
+    # STORAGE_TYPE=fs DRIVER_COUNT=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonReadVerificationAfterCircularUpdateTest :tests:system:test
+    - env:
       - TEST=JsonReadVerificationAfterCircularUpdateTest
       - STORAGE_TYPE=fs
       - DRIVER_COUNT=local
