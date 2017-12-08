@@ -15,9 +15,20 @@ buildscript {
 }
 
 allprojects {
+
 	apply plugin: "java"
+	apply plugin: "maven"
+	apply plugin: "signing"
+
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
+
+	signing {
+		required {
+			gradle.taskGraph.hasTask("uploadArchives")
+		}
+		sign configurations.archives
+	}
 }
 
 ext {
@@ -27,14 +38,14 @@ ext {
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
 		jackson : "2.9.1",
-		javaCommons : "[1.3.0,)",
-		javaCoroutines : "[1.1.1,)",
+		javaCommons : "[1.4.0,)",
+		javaCoroutines : "[1.1.2,)",
 		javassist : "3.21.0-GA",
 		slf4j : "1.7.24",
 		log4j : "2.8.2",
 		metrics : "3.2.5",
-		mongooseStorageDriver : "[0.1.3,)",
-		nagaina : "[3.6.8,)",
+		mongooseStorageDriver : "[0.1.4,)",
+		nagaina : "[3.6.9,)",
 		netty : "4.1.17.Final",
 		nettyConnectionPool : "[0.1.4,)"
 	]
@@ -74,9 +85,6 @@ def extClassPathString(final configuration) {
 }
 
 subprojects {
-
-	apply plugin: "maven"
-	apply plugin: "signing"
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -149,18 +157,11 @@ subprojects {
 		}
 	}
 
-	signing {
-		required {
-			gradle.taskGraph.hasTask("uploadArchives")
-		}
-		sign configurations.archives
-	}
-
 	// see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
 
 		// prevent the execution for empty (not leaf) subprojects and tests packages
-		if(project.name.contains("tests") || !(project in mutualProjects)) {
+		if(project.path.contains("tests") || !(project in mutualProjects)) {
 			return
 		}
 
@@ -276,6 +277,74 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 		for(final Project p: nonExtNonTestProjects) {
 			if(!p.displayName.contains(":storage:driver:service")) {
 				from p.jar.outputs.files
+			}
+		}
+	}
+}
+
+task configJar(type: Jar) {
+	archiveName "$rootProject.name-config.$extension"
+	from("config")
+}
+
+artifacts {
+	archives(configJar) {
+		name "config"
+	}
+}
+
+// see http://central.sonatype.org/pages/gradle.html for details
+uploadArchives {
+
+	def ossrhUsername = project.hasProperty("ossrhUsername") ?
+		project.property("ossrhUsername") : null
+	def ossrhPassword = project.hasProperty("ossrhPassword") ?
+		project.property("ossrhPassword") : null
+
+	repositories {
+		mavenDeployer {
+			beforeDeployment {
+				MavenDeployment deployment -> signing.signPom(deployment)
+			}
+
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			pom {
+
+				groupId = rootProject.group
+
+				project {
+					description = rootProject.description
+
+					url "https://github.com/emc-mongoose/mongoose/wiki"
+
+					scm {
+						connection "https://github.com/emc-mongoose/mongoose.git"
+						developerConnection "https://github.com/emc-mongoose/mongoose.git"
+						url "https://github.com/emc-mongoose/mongoose.git"
+					}
+
+					licenses {
+						license {
+							name "The MIT License (MIT)"
+							url "https://github.com/emc-mongoose/mongoose/wiki/License"
+						}
+					}
+
+					developers {
+						developer {
+							id "akurilov"
+							name "Andrey Kurilov"
+							email "akurilov123@gmail.com"
+						}
+					}
+				}
 			}
 		}
 	}
