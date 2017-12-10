@@ -135,13 +135,13 @@ jobs:
       - ITEM_SIZE=small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
-    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonFileStorageMetricsThresholdTest :tests:system:test
+    # STORAGE_TYPE=fs DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=JsonFileStorageMetricsThresholdTest :tests:system:test
     - env:
       - TEST=JsonFileStorageMetricsThresholdTest
       - STORAGE_TYPE=fs
       - DRIVER_COUNT=local,distributed
       - CONCURRENCY=low,medium
-      - ITEM_SIZE=medium
+      - ITEM_SIZE=medium,large
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=atmos,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=medium,large ./gradlew -Dtest.single=JsonHttpStorageMetricsThresholdTest :tests:system:test
@@ -315,6 +315,7 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312914999
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/313654714
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonChainLoadStepTest :tests:system:test
     - env:
       - TEST=JsonChainLoadStepTest
@@ -337,6 +338,7 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915008
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/313654718
     # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonCircularAppendTest :tests:system:test
     - env:
       - TEST=JsonCircularAppendTest
