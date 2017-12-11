@@ -338,7 +338,6 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915008
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/313654718
     # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonCircularAppendTest :tests:system:test
     - env:
       - TEST=JsonCircularAppendTest
