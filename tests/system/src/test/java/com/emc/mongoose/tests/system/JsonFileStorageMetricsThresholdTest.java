@@ -128,10 +128,6 @@ extends OldScenarioTestBase {
 			itemSize.getValue(), 0, 0
 		);
 		testTotalMetricsLogRecord(
-			totalThresholdMetricsRecs.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
-			itemSize.getValue(), 0, 0
-		);
-		testTotalMetricsLogRecord(
 			totalThresholdMetricsRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
 			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), 0, 0
 		);
