@@ -127,10 +127,23 @@ extends OldScenarioTestBase {
 			totalThresholdMetricsRecs.get(0), IoType.CREATE, concurrency.getValue(), driverCount.getValue(),
 			itemSize.getValue(), 0, 0
 		);
-		testTotalMetricsLogRecord(
-			totalThresholdMetricsRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
-			new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), 0, 0
-		);
+		if(totalThresholdMetricsRecs.size() == 2) {
+			testTotalMetricsLogRecord(
+				totalThresholdMetricsRecs.get(1), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+				new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), 0, 0
+			);
+		} else if(totalThresholdMetricsRecs.size() == 3) {
+			testTotalMetricsLogRecord(
+				totalThresholdMetricsRecs.get(1), IoType.READ, concurrency.getValue(), driverCount.getValue(),
+				itemSize.getValue(), 0, 0
+			);
+			testTotalMetricsLogRecord(
+				totalThresholdMetricsRecs.get(2), IoType.UPDATE, concurrency.getValue(), driverCount.getValue(),
+				new SizeInBytes(2 >> RANDOM_RANGES_COUNT - 1, itemSize.getValue().get(), 1), 0, 0
+			);
+		} else {
+			fail();
+		}
 
 		// total metrics log file
 		final List<CSVRecord> totalMetricsRecs = getMetricsTotalLogRecords();
