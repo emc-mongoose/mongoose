@@ -8,6 +8,7 @@ dependencies {
 		project(":storage:driver"),
 		project(":storage:driver:net"),
 		project(":storage:driver:net:http"),
+		// HDFS storage driver won't work w/o this
 		project(":storage:driver:nio"),
 		project(":ui"),
 

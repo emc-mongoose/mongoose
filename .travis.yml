@@ -316,6 +316,7 @@ jobs:
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312914999
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/313654714
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447289
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonChainLoadStepTest :tests:system:test
     - env:
       - TEST=JsonChainLoadStepTest
@@ -338,6 +339,7 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915008
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447295
     # STORAGE_TYPE=atmos,fs,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonCircularAppendTest :tests:system:test
     - env:
       - TEST=JsonCircularAppendTest
@@ -367,6 +369,7 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915013
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447298
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleFixedUpdateAndSingleRandomReadTest :tests:system:test
     - env:
       - TEST=JsonSingleFixedUpdateAndSingleRandomReadTest
@@ -378,6 +381,7 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915014
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447299
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleRandomUpdateAndMultipleRandomReadTest :tests:system:test
     - env:
       - TEST=JsonSingleRandomUpdateAndMultipleRandomReadTest
@@ -400,6 +404,7 @@ jobs:
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915018
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447301
     # STORAGE_TYPE=fs,s3 DRIVER_COUNT=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonUpdateUsingInputFileLimitByTimeTest :tests:system:test
     - env:
       - TEST=JsonUpdateUsingInputFileLimitByTimeTest
@@ -409,6 +414,8 @@ jobs:
       - ITEM_SIZE=medium
       script: "travis_retry ./gradlew -Dtest.single=${TEST} :tests:system:test"
 
+    # failures:
+    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447302
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest :tests:system:test
     - env:
       - TEST=JsonWeightedLoadTest

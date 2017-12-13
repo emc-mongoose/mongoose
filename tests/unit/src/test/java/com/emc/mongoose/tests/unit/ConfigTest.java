@@ -46,7 +46,7 @@ public class ConfigTest {
 	throws IOException {
 		final Config config = Config.loadDefaults();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("3.6.0-beta7", "version"));
+		assertThat(config.getVersion(), equalTo("3.6.0-beta8", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertThat(netConfig, notNullValue());
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
