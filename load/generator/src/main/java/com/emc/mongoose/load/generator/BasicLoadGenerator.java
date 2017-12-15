@@ -153,7 +153,7 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	public final void recycle(final O ioTask) {
 		if(recycleQueue != null) {
-			if(!recycleQueue.add(ioTask)) {
+			if(!recycleQueue.offer(ioTask)) {
 				if(!recycleQueueFullState && 0 == recycleQueue.remainingCapacity()) {
 					recycleQueueFullState = true;
 					Loggers.ERR.error("{}: cannot recycle I/O tasks, queue is full", name);
