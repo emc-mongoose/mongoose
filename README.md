@@ -4,7 +4,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 
 Mongoose is a storage performance testing tool.
-Mongoose is a storage performance testing tool.
 
 It is designed to be used for:
 * [Load Testing](https://en.wikipedia.org/wiki/Load_testing)
