@@ -1,14 +1,5 @@
 description = "mongoose-tests-system"
 
-sourceSets {
-	test {
-		java {
-			srcDir "src"
-			exclude '**/_2refactor/**'
-		}
-	}
-}
-
 dependencies {
 
 	testCompile(
@@ -21,21 +12,17 @@ dependencies {
 		project(":storage:driver:builder"),
 		project(":storage:driver:net"),
 		project(":storage:driver:net:http"),
-		project(":storage:driver:net:http:amzs3"),
-		project(":storage:driver:net:http:swift"),
-		project(":storage:driver:net:http:emc"),
-		project(":storage:driver:net:http:emc:atmos"),
-		project(":storage:driver:net:http:emc:s3"),
 		project(":storage:driver:nio"),
-		project(":storage:driver:nio:fs"),
 		project(":storage:driver:service"),
-		project(":run"),
+		project(":scenario"),
+		project(":scenario:json"),
 		"junit:junit:4.12",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.apache.commons:commons-csv:1.1",
 		"commons-io:commons-io:2.5",
 		"org.apache.commons:commons-math3:3.6.1",
+		"com.github.docker-java:docker-java:3.0.13",
 	)
 
 	testCompile("com.github.emc-mongoose:nagaina:${depVersion.nagaina}") {
@@ -50,13 +37,19 @@ dependencies {
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+		"com.github.emc-mongoose:mongoose-storage-driver-fs:0.1.11",
+		"com.github.emc-mongoose:mongoose-storage-driver-s3:0.1.5",
+		"com.github.emc-mongoose:mongoose-storage-driver-atmos:0.1.5",
+		"com.github.emc-mongoose:mongoose-storage-driver-swift:0.1.5",
+		"com.github.emc-mongoose:mongoose-storage-driver-emc-s3:0.1.5",
 	)
 }
 
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations),
+            "Class-Path": classPathString(configurations.testRuntime),
+            "Main-Class": "junit.textui.TestRunner",
 		)
 	}
 	from sourceSets.test.output

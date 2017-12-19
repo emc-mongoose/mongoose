@@ -5,6 +5,11 @@ dependencies {
 	compile(
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		project(":api:model"),
+		project(":storage:driver"),
+		project(":storage:driver:net"),
+		project(":storage:driver:net:http"),
+		// HDFS storage driver won't work w/o this
+		project(":storage:driver:nio"),
 		project(":ui"),
 
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
@@ -21,7 +26,7 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations),
+            "Class-Path": classPathString(configurations.runtime),
 		)
 	}
 }

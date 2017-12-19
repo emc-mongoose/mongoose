@@ -4,7 +4,7 @@ import com.github.akurilov.commons.concurrent.Throttle;
 import com.github.akurilov.commons.io.Output;
 
 import com.emc.mongoose.api.model.concurrent.Daemon;
-import com.emc.mongoose.api.common.concurrent.WeightThrottle;
+import com.github.akurilov.commons.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.io.IoType;

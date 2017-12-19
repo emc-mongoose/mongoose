@@ -1,0 +1,43 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"output": {
+				"path": "read-bucket-listing"
+			},
+			"data": {
+				"size": 0
+			}
+		},
+		"load": {
+			"limit": {
+				"concurrency": 10
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100000
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition"
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"path": "read-bucket-listing"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

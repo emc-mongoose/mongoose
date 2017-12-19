@@ -33,7 +33,7 @@ implements DataIoTask<T> {
 	private List<T> srcItemsToConcat = null;
 	protected long contentSize = 0;
 
-	protected transient volatile DataInput contentSrc = null;
+	protected transient volatile DataInput dataInput = null;
 	protected transient volatile long countBytesDone = 0;
 	protected transient volatile long respDataTimeStart = 0;
 	private volatile DataItem currRange = null;
@@ -52,7 +52,7 @@ implements DataIoTask<T> {
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		reset();
-		contentSrc = item.getDataInput();
+		dataInput = item.getDataInput();
 	}
 
 	public BasicDataIoTask(
@@ -85,6 +85,7 @@ implements DataIoTask<T> {
 	@Override
 	public void reset()
 	throws IllegalArgumentException {
+
 		super.reset();
 
 		countBytesDone = 0;
@@ -377,7 +378,7 @@ implements DataIoTask<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		contentSrc = item.getDataInput();
+		dataInput = item.getDataInput();
 		contentSize = in.readLong();
 		int n = in.readInt();
 		if(n == 0) {

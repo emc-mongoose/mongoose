@@ -1,9 +1,12 @@
 package com.emc.mongoose.api.model.item;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.github.akurilov.commons.math.MathUtil;
+
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;
 
+import static java.lang.Long.reverse;
+import static java.lang.Long.reverseBytes;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.nanoTime;
 
@@ -16,6 +19,7 @@ implements IdStringInput {
 	//
 	protected final ItemNamingType namingType;
 	protected final int length, prefixLength, radix;
+	protected final long maxValue;
 	protected final StringBuilder strb = new StringBuilder();
 	//
 	protected volatile long lastValue;
@@ -43,7 +47,7 @@ implements IdStringInput {
 			}
 		} else {
 			prefixLength = 0;
-			if(length > 0){
+			if(length > 0) {
 				this.length = length;
 			} else {
 				throw new OmgShootMyFootException("Id length should be more than 0");
@@ -54,17 +58,24 @@ implements IdStringInput {
 			throw new OmgShootMyFootException("Invalid radix: " + radix);
 		}
 		this.radix = radix;
+		final double _maxValue = Math.pow(this.radix, this.length) - 1;
+		if(Long.MAX_VALUE < _maxValue) {
+			this.maxValue = Long.MAX_VALUE;
+		} else {
+			this.maxValue = (long) _maxValue;
+		}
 		// xorShift(0) = 0, so override this behaviour (which is by default)
 		if(ItemNamingType.RANDOM.equals(namingType) && offset == 0) {
-			this.lastValue = Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime());
+			this.lastValue = reverse(currentTimeMillis()) ^ reverseBytes(nanoTime())
+				% (maxValue + 1);
 		} else {
-			this.lastValue = offset;
+			this.lastValue = offset % (maxValue + 1);
 		}
 	}
 	//
 	/**
-	 INTENDED ONLY FOR SEQUENTIAL USE. NOT THREAD-SAFE!
-	 @return next id
+	 Generate the next item name. Not thread safe.
+	 @return next name
 	 */
 	@Override
 	public String get() {
@@ -73,10 +84,10 @@ implements IdStringInput {
 		// calc next number
 		switch(namingType) {
 			case RANDOM:
-				lastValue = Math.abs(MathUtil.xorShift(lastValue));
+				lastValue = Math.abs(MathUtil.xorShift(lastValue) % (maxValue + 1));
 				break;
 			case ASC:
-				if(lastValue < Long.MAX_VALUE) {
+				if(lastValue < maxValue) {
 					lastValue ++;
 				} else {
 					lastValue = 0;
@@ -86,7 +97,7 @@ implements IdStringInput {
 				if(lastValue > 0) {
 					lastValue --;
 				} else {
-					lastValue = Long.MAX_VALUE;
+					lastValue = maxValue;
 				}
 				break;
 		}

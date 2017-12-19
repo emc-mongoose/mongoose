@@ -9,7 +9,7 @@ import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.api.common.TimeUtil;
 import static com.emc.mongoose.api.common.Constants.DIR_CONFIG;
-import static com.emc.mongoose.api.common.Constants.FNAME_CONFIG;
+import static com.emc.mongoose.api.common.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
@@ -428,8 +428,7 @@ implements Serializable {
 
 	public static Config loadDefaults()
 	throws IOException {
-		final String defaultConfigPath = PathUtil.getBaseDir() + File.separator + DIR_CONFIG +
-			File.separator + FNAME_CONFIG;
+		final String defaultConfigPath = PathUtil.getBaseDir() + File.separator + PATH_DEFAULTS;
 		final ObjectMapper mapper = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);

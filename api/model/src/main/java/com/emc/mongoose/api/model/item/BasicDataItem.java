@@ -8,8 +8,10 @@ import org.apache.commons.codec.binary.Hex;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -390,61 +392,64 @@ implements DataItem {
 		position += n;
 		return n;
 	}
-	
+
 	@Override
-	public final int readAndVerify(final ReadableByteChannel chanSrc, final MappedByteBuffer buff)
-	throws DataCorruptionException, IOException {
-		int n;
-		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
-			.getLayer(layerNum)
-			.asReadOnlyBuffer();
+	public final void verify(final ByteBuffer inBuff)
+	throws DataCorruptionException {
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
-		n = ringBuff.remaining();
-		if(buff.limit() > n) {
-			buff.limit(n);
-		}
+		verify(inBuff, ringBuff);
+	}
 
-		n = chanSrc.read(buff);
-		position += n;
+	private void verify(final ByteBuffer inBuff, final ByteBuffer ringBuff)
+	throws DataCorruptionException {
 
-		if(n > 0) {
-			buff.flip();
-			
-			final int wordCount = n >>> 3;
-			if(wordCount > 0) {
-				long ws, wi;
-				for(int k = 0; k < wordCount; k ++) {
-					ws = ringBuff.getLong();
-					wi = buff.getLong();
-					if(ws != wi) {
-						final int wordPos = k << 3;
-						byte bs, bi;
-						for(int i = 0; i < 8; i ++) {
-							bs = (byte) ws;
-							ws >>= 8;
-							bi = (byte) wi;
-							wi >>= 8;
-							if(bs != bi) {
-								throw new DataCorruptionException(wordPos + i, bs, bi);
-							}
+		final int inputSize = inBuff.remaining();
+		final int sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
+
+		// compare the 64 bit words 1st to make it faster
+		final int wordCount = sizeToVerify >>> 3; // how many 64 bit words are there
+		if(wordCount > 0) {
+			long ws, wi;
+			for(int k = 0; k < wordCount; k ++) {
+				ws = ringBuff.getLong();
+				wi = inBuff.getLong();
+				if(ws != wi) {
+					// don't hurry more, find the exact non-matching byte
+					final int wordPos = k << 3;
+					byte bs, bi;
+					for(int i = 0; i < 8; i ++) {
+						bs = (byte) ws;
+						ws >>= 8;
+						bi = (byte) wi;
+						wi >>= 8;
+						if(bs != bi) {
+							throw new DataCorruptionException(wordPos + i, bs, bi);
 						}
 					}
 				}
 			}
+		}
 
-			final int tailByteCount = n & 7;
-			if(tailByteCount > 0) {
-				byte bs, bi;
-				for(int m = 0; m < tailByteCount; m ++) {
-					bs = ringBuff.get();
-					bi = buff.get();
-					if(bs != bi) {
-						throw new DataCorruptionException(m, bs, bi);
-					}
+		// compare the remaining bytes if any
+		final int tailByteCount = sizeToVerify & 7;
+		if(tailByteCount > 0) {
+			byte bs, bi;
+			for(int m = 0; m < tailByteCount; m ++) {
+				bs = ringBuff.get();
+				bi = inBuff.get();
+				if(bs != bi) {
+					throw new DataCorruptionException(m, bs, bi);
 				}
 			}
 		}
-		return n;
+
+		// ring buffer's remaining bytes count was less than input buffer's remaining bytes
+		if(sizeToVerify < inputSize) {
+			// try to verify again starting from the ring buffer's 0 position
+			ringBuff.position(0);
+			verify(inBuff, ringBuff);
+		}
 	}
 
 	@Override

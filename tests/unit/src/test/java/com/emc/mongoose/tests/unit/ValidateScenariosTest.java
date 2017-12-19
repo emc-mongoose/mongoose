@@ -1,13 +1,16 @@
 package com.emc.mongoose.tests.unit;
 
 import com.emc.mongoose.api.common.env.PathUtil;
+import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.scenario.Constants.DIR_SCENARIOS;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
-import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +18,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -30,12 +34,13 @@ public class ValidateScenariosTest {
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		final JsonNode jsonSchema = m.readTree(
-			Paths.get(PathUtil.getBaseDir(), "scenario", "schema.json").toFile()
+			Paths.get(PathUtil.getBaseDir(), DIR_EXAMPLE_SCENARIO, "json", "schema.json").toFile()
 		);
 		final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
 		final JsonValidator validator = factory.getValidator();
 
-		final List<Path> scenarioPaths = Files.walk(Paths.get(PathUtil.getBaseDir(), "scenario"))
+		final List<Path> scenarioPaths = Files
+			.walk(Paths.get(PathUtil.getBaseDir(), DIR_EXAMPLE_SCENARIO, "json"))
 			.filter(path -> path.toString().endsWith(".json"))
 			.filter(path -> !path.endsWith("schema.json") && !path.endsWith("invalid.json"))
 			.collect(Collectors.toList());

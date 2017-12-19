@@ -10,9 +10,9 @@ dependencies {
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-iostreams:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
-
 		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
 		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
 
 	runtime(
@@ -24,7 +24,7 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations),
+            "Class-Path": classPathString(configurations.runtime),
 		)
 	}
 }

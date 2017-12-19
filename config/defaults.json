@@ -1,595 +1,554 @@
 {
-	"item" : {
-		"data" : {
-			"input" : {
+	"item": {
+		"data": {
+			"input": {
 				// The source file for the content generation
-				"file" : null,
-				"layer" : {
+				"file": null,
+				"layer": {
 					// The maximum count of the data "layers" to be cached into the memory
-					"cache" : 16,
+					"cache": 16,
 					// The size of the content source ring buffer
-					"size" : "4MB"
+					"size": "4MB"
 				},
 				// The initial value for the random data generation
-				"seed" : "7a42d9c483244167"
+				"seed": "7a42d9c483244167"
 			},
-			"ranges" : {
+			"ranges": {
 				// The number/range of numbers of the source objects used to concatenate every
 				// destination object.
-				"concat" : null,
+				"concat": null,
 				// The fixed byte ranges to update or read (depends on the specified op type)
-				"fixed" : null,
+				"fixed": null,
 				// The count of the random ranges to update or read
-				"random" : 0,
+				"random": 0,
 				// The size threshold to enable multipart upload if supported by the configured storage driver
-				"threshold" : 0
+				"threshold": 0
 			},
 			// The size of the data items to process. Doesn't have any effect if item-type=path
-			"size" : "1MB",
+			"size": "1MB",
 			// Specifies whether to verify the content while reading the data items or not.
 			// Doesn't have any effect if load-type != read
-			"verify" : false
+			"verify": false
 		},
-		"input" : {
+		"input": {
 			// The source file for the items to process.
 			// If null the behavior depends on the load type.
-			"file" : null,
+			"file": null,
 			// The source path which may be used as items input if not "item-input-file" is specified.
 			// Also used for the copy mode as the path containing the items to be copied into the output path.
-			"path" : null
+			"path": null
 		},
-		"naming" : {
+		"naming": {
 			// Specifies the new items naming order. Has effect only in the case of create load.
 			// "asc": the new items are named in the ascending order,
 			// "desc": the new items are named in the descending order,
 			// "random": the new items are named randomly
-			"type" : "random",
+			"type": "random",
 			// The name prefix for the processed items.
 			// A correct value is necessary to pass the content verification in the case of read load.
-			"prefix" : null,
+			"prefix": null,
 			// The radix for the item ids. May be in the range of 2..36.
 			// A correct value is necessary to pass the content verification in the case of read load.
-			"radix" : 36,
+			"radix": 36,
 			// The start id for the new item ids
-			"offset" : 0,
+			"offset": 0,
 			// The name length for the new items.
 			// Has effect only in the case of create (if not partial) load
-			"length" : 13
+			"length": 12
 		},
-		"output" : {
+		"output": {
 			// The minimum delay between the subsequent I/O operations for each item (chain load).
 			// 0 means no delay.
-			"delay" : 0,
+			"delay": 0,
 			// Specified the target file for the items processed successfully.
 			// If null the items info is not saved.
-			"file" : null,
+			"file": null,
 			// The target path. Null (default) value leads to path name generation and pre-creation.
-			"path" : null
+			"path": null
 		},
 		// The type of the item to use, the possible values are: "data", "path", "token".
 		// In case of filesystem "data" means files and "path" means directories
-		"type" : "data"
+		"type": "data"
 	},
-	"load" : {
-		"batch" : {
+	"load": {
+		"batch": {
 			// The count of the items/tasks processed by a single invocation.
 			// It may be useful to set to 1 for MPU or DLO tests
 			"size": 4096
 		},
-		"generator" : {
+		"generator": {
 			// Reserved, not used
-			"addrs" : [
+			"addrs": [
 				"127.0.0.1"
 			],
-			"recycle" : {
+			"recycle": {
 				// Specifies whether to recycle the load tasks or not
-				"enabled" : false,
+				"enabled": false,
 				// The maximum number of the unique items processed in the case of the recycle mode
-				"limit" : 1000000
+				"limit": 1000000
 			},
 			// Reserved, not used
-			"remote" : false,
+			"remote": false,
 			// Defines whether to shuffle or not the items got from the item input,
 			// what should make the order of the I/O tasks execution randomized
-			"shuffle" : false
+			"shuffle": false,
+			// The relative operations weight for the particular load generator.
+			// Effective only if used with weighted load step and JSR-223 compliant scenario engine.
+			// The total step's weight is a sum of all included load generator weights.
+			// The particular load generator weight is a ratio of its weight value to the total
+			// step's weight.
+			"weight": 1
 		},
-		"limit" : {
+		"limit": {
 			// The maxiumum number of concurrenct connections/open files for the test step
-			"concurrency" : 1,
+			"concurrency": 1,
 			// The maximum number of the operations per second (throughput limit) for the test step.
 			// 0 means no rate limit.
-			"rate" : 0
+			"rate": 0
 		},
 		// The count of the service threads. 0 means automatic value
-		"service" : {
-			"threads" : 0
+		"service": {
+			"threads": 0
 		},
 		// The operation to process the items, may be "noop", "create", "update", "read" or "delete"
-		"type" : "create"
+		"type": "create"
 	},
-	"output" : {
+	"output": {
 		// Use colored standard output flag
-		"color" : true,
-		"metrics" : {
-			"average" : {
+		"color": true,
+		"metrics": {
+			"average": {
 				// The time period for the load step's metrics console output.
 				// 0 means to not to output the metrics to the console
-				"period" : "10s",
+				"period": "10s",
 				// Persist the average (periodic) metrics if true
-				"persist" : true,
-				"table" : {
-					"header" : {
+				"persist": true,
+				"table": {
+					"header": {
 						// Output the metrics table header every N rows
-						"period" : 20
+						"period": 20
 					}
 				}
 			},
-			"summary" : {
+			"summary": {
 				// Output the results.xml file used as a PerfDb input if true
-				"perfDbResultsFile" : false,
+				"perfDbResultsFile": false,
 				// Persist the summary (total) metrics if true
-				"persist" : true
+				"persist": true
 			},
-			"trace" : {
+			"trace": {
 				// Persist the information about each load operation if true
-				"persist" : false
+				"persist": false
 			},
 			// The concurrency threshold to enable intermediate statistics calculation,
 			// 0 means no threshold
-			"threshold" : 0
+			"threshold": 0
 		}
 	},
-	"storage" : {
-		"auth" : {
+	"storage": {
+		"auth": {
 			// The path to a credentials list file, containing the lines of comma-separated uids and secret keys
-			"file" : null,
+			"file": null,
 			// The authentication secret if constant and required
-			"secret" : null,
+			"secret": null,
 			// FS, S3: no effect, Atmos: subtenant, Swift: token
-			"token" : null,
+			"token": null,
 			// The authentication identifier if constant and required
-			"uid" : null
+			"uid": null
 		},
 		"driver": {
 			// Distributed mode: the list of the storage drivers IPs or hostnames,
 			// may include port numbers to override the default port number value
-			"addrs" : [
+			"addrs": [
 				"127.0.0.1"
 			],
-			// The list of the registered storage driver implementations
-			"impl" : [
-				{
-					"type" : "fs",
-					"file" : "mongoose-storage-driver-nio-fs.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.nio.fs.BasicFileStorageDriver"
-				},
-				{
-					"type" : "s3",
-					"file" : "mongoose-storage-driver-net-http-amzs3.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.amzs3.AmzS3StorageDriver"
-				},
-				{
-					"type" : "swift",
-					"file" : "mongoose-storage-driver-net-http-swift.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.swift.SwiftStorageDriver"
-				},
-				{
-					"type" : "atmos",
-					"file" : "mongoose-storage-driver-net-http-emc-atmos.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.emc.atmos.AtmosStorageDriver"
-				},
-				{
-					"type" : "emcs3",
-					"file" : "mongoose-storage-driver-net-http-emc-s3.jar",
-					"fqcn" : "com.emc.mongoose.storage.driver.net.http.emc.s3.EmcS3StorageDriver"
-				},
-				{
-					"type" : "mock-dummy",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.DummyStorageDriverMock"
-				},
-				{
-					"type" : "mock-basic",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.BasicStorageDriverMock"
-				},
-				{
-					"type" : "mock-net",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NetStorageDriverMock"
-				},
-				{
-					"type" : "mock-nio",
-					"file" : "mongoose-tests-perf.jar",
-					"fqcn" : "com.emc.mongoose.tests.perf.util.mock.NioStorageDriverMock"
-				}
-			],
 			// Distributed mode: the common port number to start the storage driver services
-			"port" : 1099,
+			"port": 1099,
 			//
-			"queue" : {
-				"input" : 1000000,
-				"output" : 1000000
+			"queue": {
+				"input": 1000000,
+				"output": 1000000
 			},
 			// Distributed mode: the flag to enable using remote storage drivers
-			"remote" : false,
+			"remote": false,
 			// The count of the shared/global I/O executor threads. 0 (default) is reserved to use the CPU cores/threads count
-			"threads" : 0,
+			"threads": 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
-			"type" : "s3"
+			"type": "s3"
 		},
 		// The "mock" section is used by the storage mock embedded into the system tests runtime
-		"mock" : {
-			"capacity" : 1000000,
-			"container" : {
-				"capacity" : 1000000,
-				"countLimit" : 1000000
+		"mock": {
+			"capacity": 1000000,
+			"container": {
+				"capacity": 1000000,
+				"countLimit": 1000000
 			},
-			"fail" : {
-				"connections" : 0,
-				"responses" : 0
+			"fail": {
+				"connections": 0,
+				"responses": 0
 			},
 			"node": false
 		},
-		"net" : {
+		"net": {
 			// Socket options
-			"bindBacklogSize" : 0,
-			"interestOpQueued" : false,
-			"keepAlive" : true,
-			"linger" : 0,
-			"reuseAddr" : true,
-			"rcvBuf" : 0,
-			"sndBuf" : 0,
-			"tcpNoDelay" : true,
-			"timeoutMilliSec" : 0,
+			"bindBacklogSize": 0,
+			"interestOpQueued": false,
+			"keepAlive": true,
+			"linger": 0,
+			"reuseAddr": true,
+			"rcvBuf": 0,
+			"sndBuf": 0,
+			"tcpNoDelay": true,
+			"timeoutMilliSec": 0,
 			// Internal Netty's I/O ratio parameter:
 			// https://github.com/netty/netty/issues/1154#issuecomment-14870909
 			// it's recommended to make it higher for large request/response payload (>1MB)
-			"ioRatio" : 50,
+			"ioRatio": 50,
 			// The I/O transport to use (see http://netty.io/wiki/native-transports.html for details).
 			// By default tries to use "nio" (the most compatible).
 			// For Linux try use "epoll", for MacOS/BSD try use "kqueue"
-			"transport" : "epoll",
+			"transport": "epoll",
 			// The flag to enable the load through SSL/TLS.
 			// Currently only HTTPS implementation is available.
 			// Have no effect if configured storage type is filesystem.
-			"ssl" : false,
-			"http" : {
+			"ssl": false,
+			"http": {
 				// Specifies whether filesystem access is enabled or not in the case of S3 or Atmos API
-				"fsAccess" : false,
+				"fsAccess": false,
 				// Custom HTTP headers section.
 				// An user may place here a key-value pair which will be used as HTTP header.
-				"headers" : {
-					"Connection" : "Keep-Alive",
-					"User-Agent" : "mongoose/3.5.1"
+				"headers": {
+					"Connection": "Keep-Alive",
+					"User-Agent": "mongoose/3.6.0"
 				},
 				// The HTTP storage namespace.
 				// WARNING: the default value (null) will not work in the case of Swift API
-				"namespace" : null,
+				"namespace": null,
 				// Specifies whether the versioning storage feature is used or not
-				"versioning" : false
+				"versioning": false
 			},
 			"node": {
 				// The list of the storage node IPs or hostnames to use for HTTP load.
 				// May include port numbers.
-				"addrs" : [
+				"addrs": [
 					"127.0.0.1"
 				],
 				// The common port number to access the storage nodes,
 				// may be overridden adding the port number to the storage-driver-net-node-addrs,
 				// for example: "127.0.0.1:9020,127.0.0.1:9022,..."
-				"port" : 9020,
+				"port": 9020,
 				// The limit for the subsequent connection attempts for each storage endpoint node.
 				// The node is excluded from the connection pool forever if the node has more
 				// subsequent connection failures. The default value (0) means no limit.
-				"connAttemptsLimit" : 0
+				"connAttemptsLimit": 0
 			}
 		}
 	},
-	"test" : {
-		"scenario" : {
-			// The default JSON scenario to run, null means invoking the default.json scenario bundled into the distribution
-			"file" : null
+	"test": {
+		"scenario": {
+			// The default scenario file to run, null means invoking the default.js scenario bundled
+			// into the distribution
+			"file": null
 		},
-		"step" : {
+		"step": {
 			// The test step id. Generated automatically if not specified (null).
 			// Specifies also the logs sub directory path: log/<STEP_ID>/
-			"id" : null,
-			"limit" : {
+			"id": null,
+			"limit": {
 				// The maximum number of the items to process for any load step. 0 means no limit
-				"count" : 0,
-				"fail" : {
+				"count": 0,
+				"fail": {
 					// The maximum number of the failed I/O tasks before the step will be stopped,
 					// 0 means no limit
-					"count" : 100000,
+					"count": 100000,
 					// Stop the step if failures rate is more than success rate and if the flag is set to true
-					"rate" : false
+					"rate": false
 				},
 				// The maximum size of the data items to process. 0 means no size limit.
-				"size" : 0,
+				"size": 0,
 				// The maximum time to perform a load step. 0 means no time limit
-				"time" : "0s"
+				"time": "0s"
 			}
 		}
 	},
 	// The Mongoose version
-	"version" : "3.5.1",
+	"version": "3.6.0",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
-	"aliasing" : [
+	"aliasing": [
 
 		// v3.0.0
 		{
-			"name" : "load-threads",
-			"deprecated" : true,
-			"target" : "load-limit-concurrency"
+			"name": "load-threads",
+			"deprecated": true,
+			"target": "load-limit-concurrency"
 		},
 		{
-			"name" : "run-id",
-			"deprecated" : true,
-			"target" : "test-step-id"
+			"name": "run-id",
+			"deprecated": true,
+			"target": "test-step-id"
 		},
 		{
-			"name" : "noop",
-			"target" : "load-type=noop"
+			"name": "noop",
+			"target": "load-type=noop"
 		},
 		{
-			"name" : "create",
-			"target" : "load-type=create"
+			"name": "create",
+			"target": "load-type=create"
 		},
 		{
-			"name" : "read",
-			"target" : "load-type=read"
+			"name": "read",
+			"target": "load-type=read"
 		},
 		{
-			"name" : "update",
-			"target" : "load-type=update"
+			"name": "update",
+			"target": "load-type=update"
 		},
 		{
-			"name" : "delete",
-			"target" : "load-type=delete"
+			"name": "delete",
+			"target": "load-type=delete"
 		},
 		{
-			"name" : "atmos-subtenant",
-			"target" : "storage-auth-token"
+			"name": "atmos-subtenant",
+			"target": "storage-auth-token"
 		},
 		{
-			"name" : "s3-input-bucket",
-			"target" : "item-input-path"
+			"name": "s3-input-bucket",
+			"target": "item-input-path"
 		},
 		{
-			"name" : "s3-output-bucket",
-			"target" : "item-output-path"
+			"name": "s3-output-bucket",
+			"target": "item-output-path"
 		},
 		{
-			"name" : "swift-input-container",
-			"target" : "item-input-path"
+			"name": "swift-input-container",
+			"target": "item-input-path"
 		},
 		{
-			"name" : "swift-output-container",
-			"target" : "item-output-path"
+			"name": "swift-output-container",
+			"target": "item-output-path"
 		},
 
 		// v3.2.0
 		{
-			"name" : "socket-bindBacklogSize",
-			"deprecated" : true,
-			"target" : "storage-net-bindBacklogSize"
+			"name": "socket-bindBacklogSize",
+			"deprecated": true,
+			"target": "storage-net-bindBacklogSize"
 		},
 		{
-			"name" : "socket-interestOpQueued",
-			"deprecated" : true,
-			"target" : "storage-net-interestOpQueued"
+			"name": "socket-interestOpQueued",
+			"deprecated": true,
+			"target": "storage-net-interestOpQueued"
 		},
 		{
-			"name" : "socket-keepAlive",
-			"deprecated" : true,
-			"target" : "storage-net-keepAlive"
+			"name": "socket-keepAlive",
+			"deprecated": true,
+			"target": "storage-net-keepAlive"
 		},
 		{
-			"name" : "socket-linger",
-			"deprecated" : true,
-			"target" : "storage-net-linger"
+			"name": "socket-linger",
+			"deprecated": true,
+			"target": "storage-net-linger"
 		},
 		{
-			"name" : "socket-reuseAddr",
-			"deprecated" : true,
-			"target" : "storage-net-reuseAddr"
+			"name": "socket-reuseAddr",
+			"deprecated": true,
+			"target": "storage-net-reuseAddr"
 		},
 		{
-			"name" : "socket-rcvBuf",
-			"deprecated" : true,
-			"target" : "storage-net-rcvBuf"
+			"name": "socket-rcvBuf",
+			"deprecated": true,
+			"target": "storage-net-rcvBuf"
 		},
 		{
-			"name" : "socket-sndBuf",
-			"deprecated" : true,
-			"target" : "storage-net-sndBuf"
+			"name": "socket-sndBuf",
+			"deprecated": true,
+			"target": "storage-net-sndBuf"
 		},
 		{
-			"name" : "socket-tcpNoDelay",
-			"deprecated" : true,
-			"target" : "storage-net-tcpNoDelay"
+			"name": "socket-tcpNoDelay",
+			"deprecated": true,
+			"target": "storage-net-tcpNoDelay"
 		},
 		{
-			"name" : "socket-timeoutMilliSec",
-			"deprecated" : true,
-			"target" : "storage-net-timeOutMilliSec"
+			"name": "socket-timeoutMilliSec",
+			"deprecated": true,
+			"target": "storage-net-timeOutMilliSec"
 		},
 		{
-			"name" : "storage-ssl",
-			"deprecated" : true,
-			"target" : "storage-net-ssl"
+			"name": "storage-ssl",
+			"deprecated": true,
+			"target": "storage-net-ssl"
 		},
 		{
-			"name" : "storage-http-api",
-			"deprecated" : true,
-			"target" : "storage-driver-type"
+			"name": "storage-http-api",
+			"deprecated": true,
+			"target": "storage-driver-type"
 		},
 		{
-			"name" : "socket-http-fsAccess",
-			"deprecated" : true,
-			"target" : "storage-net-http-fsAccess"
+			"name": "socket-http-fsAccess",
+			"deprecated": true,
+			"target": "storage-net-http-fsAccess"
 		},
 		{
-			"name" : "storage-http-headers",
-			"deprecated" : true,
-			"target" : "storage-net-http-headers"
+			"name": "storage-http-headers",
+			"deprecated": true,
+			"target": "storage-net-http-headers"
 		},
 		{
-			"name" : "storage-http-namespace",
-			"deprecated" : true,
-			"target" : "storage-net-http-namespace"
+			"name": "storage-http-namespace",
+			"deprecated": true,
+			"target": "storage-net-http-namespace"
 		},
 		{
-			"name" : "storage-http-versioning",
-			"deprecated" : true,
-			"target" : "storage-net-http-versioning"
+			"name": "storage-http-versioning",
+			"deprecated": true,
+			"target": "storage-net-http-versioning"
 		},
 		{
-			"name" : "storage-node-addrs",
-			"deprecated" : true,
-			"target" : "storage-net-node-addrs"
+			"name": "storage-node-addrs",
+			"deprecated": true,
+			"target": "storage-net-node-addrs"
 		},
 		{
-			"name" : "storage-node-port",
-			"deprecated" : true,
-			"target" : "storage-net-node-port"
+			"name": "storage-node-port",
+			"deprecated": true,
+			"target": "storage-net-node-port"
 		},
 		{
-			"name" : "storage-type",
-			"deprecated" : true,
-			"target" : "storage-driver-type"
+			"name": "storage-type",
+			"deprecated": true,
+			"target": "storage-driver-type"
 		},
 		{
-			"name" : "storage-net-http-api",
-			"deprecated" : true,
-			"target" : "storage-driver-type"
+			"name": "storage-net-http-api",
+			"deprecated": true,
+			"target": "storage-driver-type"
 		},
 
 		// v3.3.0
 		{
-			"name" : "load-concurrency",
-			"deprecated" : true,
-			"target" : "load-limit-concurrency"
+			"name": "load-concurrency",
+			"deprecated": true,
+			"target": "load-limit-concurrency"
 		},
 		{
-			"name" : "load-job-name",
-			"deprecated" : true,
-			"target" : "test-step-id"
+			"name": "load-job-name",
+			"deprecated": true,
+			"target": "test-step-id"
 		},
 		{
-			"name" : "load-limit-count",
-			"deprecated" : true,
-			"target" : "test-step-limit-count"
+			"name": "load-limit-count",
+			"deprecated": true,
+			"target": "test-step-limit-count"
 		},
 		{
-			"name" : "load-limit-size",
-			"deprecated" : true,
-			"target" : "test-step-limit-size"
+			"name": "load-limit-size",
+			"deprecated": true,
+			"target": "test-step-limit-size"
 		},
 		{
-			"name" : "load-limit-time",
-			"deprecated" : true,
-			"target" : "test-step-limit-time"
+			"name": "load-limit-time",
+			"deprecated": true,
+			"target": "test-step-limit-time"
 		},
 		{
-			"name" : "load-metrics-period",
-			"deprecated" : true,
-			"target" : "test-step-metrics-period"
+			"name": "load-metrics-period",
+			"deprecated": true,
+			"target": "test-step-metrics-period"
 		},
 		{
-			"name" : "load-metrics-precondition",
-			"deprecated" : true,
-			"target" : "test-step-precondition"
+			"name": "load-metrics-precondition",
+			"deprecated": true,
+			"target": "test-step-precondition"
 		},
 		{
-			"name" : "load-metrics-threshold",
-			"deprecated" : true,
-			"target" : "test-step-metrics-threshold"
+			"name": "load-metrics-threshold",
+			"deprecated": true,
+			"target": "test-step-metrics-threshold"
 		},
 		{
-			"name" : "scenario-file",
-			"deprecated" : true,
-			"target" : "test-scenario-file"
+			"name": "scenario-file",
+			"deprecated": true,
+			"target": "test-scenario-file"
 		},
 		{
-			"name" : "storage-auth-id",
-			"deprecated" : true,
-			"target" : "storage-auth-uid"
+			"name": "storage-auth-id",
+			"deprecated": true,
+			"target": "storage-auth-uid"
 		},
 
 		// v3.4.0
 		{
-			"name" : "item-data-content-ringSize",
-			"deprecated" : true,
-			"target" : "item-data-input-layer-size"
+			"name": "item-data-content-ringSize",
+			"deprecated": true,
+			"target": "item-data-input-layer-size"
 		},
 
 		// v3.5.0
 		{
-			"name" : "test-step-metrics-period",
-			"deprecated" : true,
-			"target" : "output-metrics-period"
+			"name": "test-step-metrics-period",
+			"deprecated": true,
+			"target": "output-metrics-period"
 		},
 		{
-			"name" : "test-step-metrics-threshold",
-			"deprecated" : true,
-			"target" : "output-metrics-threshold"
+			"name": "test-step-metrics-threshold",
+			"deprecated": true,
+			"target": "output-metrics-threshold"
 		},
 		{
-			"name" : "test-step-name",
-			"deprecated" : true,
-			"target" : "test-step-id"
+			"name": "test-step-name",
+			"deprecated": true,
+			"target": "test-step-id"
 		},
 		{
-			"name" : "test-step-limit-rate",
-			"deprecated" : true,
-			"target" : "load-limit-rate"
+			"name": "test-step-limit-rate",
+			"deprecated": true,
+			"target": "load-limit-rate"
 		},
 		{
-			"name" : "item-data-content-file",
-			"deprecated" : true,
-			"target" : "item-data-input-file"
+			"name": "item-data-content-file",
+			"deprecated": true,
+			"target": "item-data-input-file"
 		},
 		{
-			"name" : "item-data-content-seed",
-			"deprecated" : true,
-			"target" : "item-data-input-seed"
+			"name": "item-data-content-seed",
+			"deprecated": true,
+			"target": "item-data-input-seed"
 		},
 		{
-			"name" : "item-data-content-ring-cache",
-			"deprecated" : true,
-			"target" : "item-data-input-layer-cache"
+			"name": "item-data-content-ring-cache",
+			"deprecated": true,
+			"target": "item-data-input-layer-cache"
 		},
 		{
-			"name" : "item-data-content-ring-size",
-			"deprecated" : true,
-			"target" : "item-data-input-layer-size"
+			"name": "item-data-content-ring-size",
+			"deprecated": true,
+			"target": "item-data-input-layer-size"
 		},
 		{
-			"name" : "load-circular",
-			"deprecated" : true,
-			"target" : "load-generator-recycle-enabled"
+			"name": "load-circular",
+			"deprecated": true,
+			"target": "load-generator-recycle-enabled"
 		},
 		{
-			"name" : "load-queue-size",
-			"deprecated" : true,
-			"target" : "load-generator-recycle-limit"
+			"name": "load-queue-size",
+			"deprecated": true,
+			"target": "load-generator-recycle-limit"
 		},
 		{
-			"name" : "storage-driver-io-workers",
-			"deprecated" : true,
-			"target" : "storage-driver-threads"
+			"name": "storage-driver-io-workers",
+			"deprecated": true,
+			"target": "storage-driver-threads"
 		},
 		{
-			"name" : "storage-driver-concurrency",
-			"deprecated" : true,
-			"target" : "load-limit-concurrency"
+			"name": "storage-driver-concurrency",
+			"deprecated": true,
+			"target": "load-limit-concurrency"
 		},
 		{
-			"name" : "load-rate-limit",
-			"deprecated" : true,
-			"target" : "load-limit-rate"
+			"name": "load-rate-limit",
+			"deprecated": true,
+			"target": "load-limit-rate"
 		}
 	]
 }

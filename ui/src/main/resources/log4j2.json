@@ -390,6 +390,19 @@
 						"ref" : "scenarioFile"
 					},
 					"additivity" : false
+				},
+				{
+					"name" : "com.github.akurilov",
+					"level" : "WARN",
+					"AppenderRef" : [
+						{
+							"ref" : "stdout"
+						},
+						{
+							"ref" : "msgFile"
+						}
+					],
+					"additivity" : false
 				}
 			]
 		}

@@ -58,7 +58,7 @@ extends Daemon, Input<O>, Output<O>, Remote {
 	boolean isIdle()
 	throws RemoteException;
 
-	void adjustIoBuffers(final long avgDataItemSize, final IoType ioType)
+	void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
 	throws RemoteException;
 
 	@Override

@@ -13,6 +13,7 @@ import com.emc.mongoose.tests.system.util.LogPatterns;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.common.Constants.MIB;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
@@ -35,9 +36,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -74,16 +77,9 @@ extends ParameterizedSysTestBase {
 		stepId = makeStepId();
 		// remove previous logs if exist
 		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "log", stepId).toFile());
+		FileUtils.deleteDirectory(Paths.get(PathUtil.getBaseDir(), "share", "log", stepId).toFile());
 		LogUtil.init();
 		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
-		Loggers.MSG.info(
-			"{} params: {} = {}, {} = {}, {} = {}, {} = {}",
-			getClass().getSimpleName(),
-			StorageType.KEY_ENV, storageType.name(),
-			DriverCount.KEY_ENV, driverCount.name(),
-			Concurrency.KEY_ENV, concurrency.name(),
-			ItemSize.KEY_ENV, itemSize.name()
-		);
 		stdOutStream = new BufferingOutputStream(System.out);
 	}
 
@@ -108,9 +104,24 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
+	private List<String> getContainerLogFileLines(final String fileName)
+	throws IOException {
+		final File logFile = Paths
+			.get(PathUtil.getBaseDir(), "share", "log", stepId, fileName)
+			.toFile();
+		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+			return br.lines().collect(Collectors.toList());
+		}
+	}
+
 	protected List<String> getMessageLogLines()
 	throws IOException {
 		return getLogFileLines("messages.log");
+	}
+
+	protected List<String> getContainerMessageLogLines()
+	throws IOException {
+		return getContainerLogFileLines("messages.log");
 	}
 
 	protected List<String> getErrorsLogLines()
@@ -118,9 +129,19 @@ extends ParameterizedSysTestBase {
 		return getLogFileLines("errors.log");
 	}
 
+	protected List<String> getContainerErrorsLogLines()
+	throws IOException {
+		return getContainerLogFileLines("errors.log");
+	}
+
 	protected List<String> getConfigLogLines()
 	throws IOException {
 		return getLogFileLines("config.log");
+	}
+
+	protected List<String> getContainerConfigLogLines()
+	throws IOException {
+		return getContainerLogFileLines("config.log");
 	}
 
 	protected List<String> getPartsUploadLogLines()
@@ -128,9 +149,21 @@ extends ParameterizedSysTestBase {
 		return getLogFileLines("parts.upload.csv");
 	}
 
-	protected List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	protected List<String> getContainerPartsUploadLogLines()
 	throws IOException {
-		final File logFile = Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
+		return getContainerLogFileLines("parts.upload.csv");
+	}
+
+	private File getLogFile(final String fileName) {
+		return Paths.get(PathUtil.getBaseDir(), "log", stepId, fileName).toFile();
+	}
+
+	private File getContainerLogFile(final String fileName) {
+		return Paths.get(PathUtil.getBaseDir(), "share", "log", stepId, fileName).toFile();
+	}
+
+	private List<CSVRecord> waitAndGetLogFileCsvRecords(final File logFile)
+	throws IOException {
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
@@ -157,9 +190,26 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
+	protected List<CSVRecord> getLogFileCsvRecords(final String fileName)
+	throws IOException {
+		final File logFile = getLogFile(fileName);
+		return waitAndGetLogFileCsvRecords(logFile);
+	}
+
+	protected List<CSVRecord> getContainerLogFileCsvRecords(final String fileName)
+	throws IOException {
+		final File logFile = getContainerLogFile(fileName);
+		return waitAndGetLogFileCsvRecords(logFile);
+	}
+
 	protected List<CSVRecord> getMetricsMedLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.threshold.csv");
+	}
+
+	protected List<CSVRecord> getContainerMetricsMedLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.threshold.csv");
 	}
 
 	protected List<CSVRecord> getMetricsMedTotalLogRecords()
@@ -167,9 +217,19 @@ extends ParameterizedSysTestBase {
 		return getLogFileCsvRecords("metrics.threshold.total.csv");
 	}
 
+	protected List<CSVRecord> getContainerMetricsMedTotalLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.threshold.total.csv");
+	}
+
 	protected List<CSVRecord> getMetricsLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("metrics.csv");
+	}
+
+	protected List<CSVRecord> getContainerMetricsLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.csv");
 	}
 
 	protected List<CSVRecord> getMetricsTotalLogRecords()
@@ -177,16 +237,22 @@ extends ParameterizedSysTestBase {
 		return getLogFileCsvRecords("metrics.total.csv");
 	}
 
+	protected List<CSVRecord> getContainerMetricsTotalLogRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("metrics.total.csv");
+	}
+
 	protected List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
 		return getLogFileCsvRecords("io.trace.csv");
 	}
 
-	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	protected List<CSVRecord> getContainerIoTraceLogRecords()
 	throws IOException {
-		final File logFile = Paths
-			.get(PathUtil.getBaseDir(), "log", stepId, "io.trace.csv")
-			.toFile();
+		return getContainerLogFileCsvRecords("io.trace.csv");
+	}
+
+	private void waitLogFile(final File logFile) {
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t ++) {
 			if(logFile.exists()) {
@@ -202,6 +268,11 @@ extends ParameterizedSysTestBase {
 				return;
 			}
 		}
+	}
+
+	private void testIoTraceLogFile(
+		final File logFile, final Consumer<CSVRecord> csvRecordTestFunc
+	) throws IOException {
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			try(final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br)) {
 				csvParser.forEach(csvRecordTestFunc);
@@ -209,9 +280,28 @@ extends ParameterizedSysTestBase {
 		}
 	}
 
+	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
+		final File logFile = getLogFile("io.trace.csv");
+		waitLogFile(logFile);
+		testIoTraceLogFile(logFile, csvRecordTestFunc);
+	}
+
+	protected void testContainerIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
+		final File logFile = getContainerLogFile("io.trace.csv");
+		waitLogFile(logFile);
+		testIoTraceLogFile(logFile, csvRecordTestFunc);
+	}
+
 	protected List<CSVRecord> getPartsUploadRecords()
 	throws IOException {
 		return getLogFileCsvRecords("parts.upload.csv");
+	}
+
+	protected List<CSVRecord> getContainerPartsUploadRecords()
+	throws IOException {
+		return getContainerLogFileCsvRecords("parts.upload.csv");
 	}
 
 	protected static void testMetricsLogRecords(
@@ -628,8 +718,6 @@ extends ParameterizedSysTestBase {
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
-			//final int configConcurrency = Integer.parseInt(m.group("concurrency"));
-			//final int actualDriverCount = Integer.parseInt(m.group("driverCount"));
 			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
 			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
@@ -684,5 +772,92 @@ extends ParameterizedSysTestBase {
 		if(tableHeaderCount > 0) {
 			assertTrue(rowCount / tableHeaderCount <= TABLE_HEADER_PERIOD);
 		}
+	}
+
+	protected void testFinalMetricsTableRowStdout(
+		final String stdOutContent, final String stepId, final IoType expectedIoType,
+		final int driverCount, final int expectedConcurrency, final long countLimit,
+		final long timeLimit, final SizeInBytes expectedItemDataSize
+	) throws Exception {
+		
+		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW_FINAL.matcher(stdOutContent);
+		boolean rowFoundFlag = false;
+		Date nextTimstamp = null;
+		int actualConcurrencyCurr = -1;
+		float actualConcurrencyLastMean = -1;
+		long succCount = -1;
+		long failCount = -1;
+		float stepTimeSec = -1;
+		float tp = -1;
+		float bw = -1;
+		long lat = 0;
+		long dur = -1;
+		
+		while(m.find()) {
+			final String actualStepNameEnding = m.group("stepName");
+			if(stepId.endsWith(actualStepNameEnding) || stepId.equals(actualStepNameEnding)) {
+				final IoType actualIoType = IoType.valueOf(m.group("ioType"));
+				if(actualIoType.equals(expectedIoType)) {
+					rowFoundFlag = true;
+					nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
+					actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
+					actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
+					succCount = Long.parseLong(m.group("succCount"));
+					failCount = Long.parseLong(m.group("failCount"));
+					stepTimeSec = Float.parseFloat(m.group("stepTime"));
+					tp = Float.parseFloat(m.group("tp"));
+					bw = Float.parseFloat(m.group("bw"));
+					lat = Long.parseLong(m.group("lat"));
+					dur = Long.parseLong(m.group("dur"));
+					break;
+				}
+			}
+		}
+
+		assertTrue(
+			"Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \""
+				+ expectedIoType + "\" was not found",
+			rowFoundFlag
+		);
+		assertTrue(actualConcurrencyCurr >= 0);
+		assertTrue(driverCount * expectedConcurrency >= actualConcurrencyCurr);
+		assertTrue(actualConcurrencyLastMean >= 0);
+		assertTrue(driverCount * expectedConcurrency >= actualConcurrencyLastMean);
+		assertTrue("Successful operations count should be > 0", succCount > 0);
+		assertEquals("Failure count should be 0", failCount, 0);
+		assertTrue("Step time should be > 0", stepTimeSec > 0);
+		if(timeLimit > 0) {
+			assertTrue(
+				"Step time (" + stepTimeSec + ") should not be much more than time limit ("
+					+ timeLimit + ")",
+				stepTimeSec <= timeLimit + 10
+			);
+		}
+		assertTrue("Final throughput should be >= 0", tp >= 0);
+		if(expectedItemDataSize != null && tp > 0) {
+			final float avgItemSize = MIB * bw / tp;
+			if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
+				assertEquals(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") should be approx equal the expected (" + expectedItemDataSize + ")",
+					expectedItemDataSize.get(), avgItemSize, expectedItemDataSize.get() / 10
+				);
+			} else {
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
+					avgItemSize >= expectedItemDataSize.getMin()
+				);
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
+					avgItemSize <= expectedItemDataSize.getMax()
+				);
+			}
+		}
+		assertTrue(
+			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
+			lat <= dur
+		);
 	}
 }

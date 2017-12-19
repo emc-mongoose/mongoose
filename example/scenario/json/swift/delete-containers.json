@@ -1,0 +1,49 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"type": "path"
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "swift"
+			},
+			"net": {
+				"http": {
+					"namespace": "test"
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "swift-delete-containers.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "swift-delete-containers.csv"
+					}
+				},
+				"load": {
+					"type": "delete"
+				}
+			}
+		}
+	]
+}

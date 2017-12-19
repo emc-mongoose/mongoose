@@ -6,21 +6,12 @@ dependencies {
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		project(":api:model"),
 		project(":ui"),
-		project(":load:generator"),
-		project(":load:controller"),
 		project(":storage:driver"),
 		project(":storage:driver:builder"),
-		project(":storage:driver:net"),
-		project(":storage:driver:net:http"),
-		project(":storage:driver:net:http:amzs3"),
-		project(":storage:driver:net:http:swift"),
-		project(":storage:driver:net:http:emc"),
-		project(":storage:driver:net:http:emc:atmos"),
-		project(":storage:driver:net:http:emc:s3"),
+        project(":storage:driver:net"),
+        project(":storage:driver:net:http"),
 		project(":storage:driver:nio"),
-		project(":storage:driver:nio:fs"),
-		project(":storage:driver:service"),
-		project(":run"),
+		project(":scenario"),
 		"junit:junit:4.12",
 		"com.github.fge:json-schema-validator:2.2.6",
 		"commons-io:commons-io:2.5",
@@ -30,7 +21,8 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-			"Class-Path": setClassPath(configurations),
+            "Class-Path": classPathString(configurations.testRuntime),
+            "Main-Class": "org.junit.runner.JUnitCore",
 		)
 	}
 	from sourceSets.test.output

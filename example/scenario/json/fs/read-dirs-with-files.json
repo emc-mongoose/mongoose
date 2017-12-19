@@ -1,0 +1,170 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"type": "path"
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 10
+				}
+			}
+		},
+		"load": {
+			"limit": {
+				"concurrency": 10
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "fs"
+			}
+		}
+	},
+	"steps": [
+		{
+			// create 10 directories
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "read-dirs-with-files.json",
+						"path": "read-dirs-with-files"
+					},
+					"naming": {
+						"type": "asc",
+						"radix": 10,
+						"length": 1
+					}
+				}
+			}
+		}, {
+			// fill each of 10 created directories with files
+			"type": "parallel",
+			"config": {
+				"item": {
+					"type": "data"
+				},
+				"load": {
+					"limit": {
+						"concurrency": 1
+					}
+				},
+				"test": {
+					"step": {
+						"limit": {
+							"count": 100
+						}
+					}
+				}
+			},
+			"steps": [
+				{
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/0"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/1"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/2"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/3"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/4"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/5"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/6"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/7"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/8"
+							}
+						}
+					}
+				}, {
+					"type": "precondition",
+					"config": {
+						"item": {
+							"output": {
+								"path": "read-dirs-with-files/9"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			// read 10 directories with the files
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "read-dirs-with-files.json"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

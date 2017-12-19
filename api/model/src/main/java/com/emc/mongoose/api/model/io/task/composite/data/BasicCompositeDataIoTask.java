@@ -28,7 +28,7 @@ implements CompositeDataIoTask<I> {
 	private AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
 
 	private transient final Map<String, String> contextData = new HashMap<>();
-	private transient final List<PartialDataIoTask> subTasks = new ArrayList<>();
+	private transient final List<PartialDataIoTask<I>> subTasks = new ArrayList<>();
 
 	public BasicCompositeDataIoTask() {
 		super();
@@ -62,7 +62,7 @@ implements CompositeDataIoTask<I> {
 	}
 
 	@Override
-	public final List<PartialDataIoTask> getSubTasks() {
+	public final List<? extends PartialDataIoTask<I>> getSubTasks() {
 
 		if(!subTasks.isEmpty()) {
 			return subTasks;
@@ -71,7 +71,7 @@ implements CompositeDataIoTask<I> {
 		final int equalPartsCount = sizeThreshold > 0 ? (int) (contentSize / sizeThreshold) : 0;
 		final long tailPartSize = contentSize % sizeThreshold;
 		I nextPart;
-		PartialDataIoTask nextSubTask;
+		PartialDataIoTask<I> nextSubTask;
 		for(int i = 0; i < equalPartsCount; i ++) {
 			nextPart = item.slice(i * sizeThreshold, sizeThreshold);
 			nextSubTask = new BasicPartialDataIoTask<>(

@@ -11,7 +11,7 @@ import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.OutputCoroutine;
 import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
 
-import com.emc.mongoose.api.common.concurrent.WeightThrottle;
+import com.github.akurilov.commons.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.io.IoType;
@@ -89,7 +89,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		if(countLimit > 0) {
 			this.countLimit = countLimit;
 		} else if(sizeLimit.get() > 0 && this.transferSizeEstimate > 0) {
-			this.countLimit = sizeLimit.get() / this.transferSizeEstimate;
+			this.countLimit = sizeLimit.get() / this.transferSizeEstimate + 1;
 		} else {
 			this.countLimit = Long.MAX_VALUE;
 		}
@@ -153,7 +153,7 @@ implements LoadGenerator<I, O>, Coroutine {
 	@Override
 	public final void recycle(final O ioTask) {
 		if(recycleQueue != null) {
-			if(!recycleQueue.add(ioTask)) {
+			if(!recycleQueue.offer(ioTask)) {
 				if(!recycleQueueFullState && 0 == recycleQueue.remainingCapacity()) {
 					recycleQueueFullState = true;
 					Loggers.ERR.error("{}: cannot recycle I/O tasks, queue is full", name);

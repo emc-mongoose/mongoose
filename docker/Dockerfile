@@ -1,9 +1,13 @@
-FROM openjdk:8-jre-alpine
+ARG MONGOOSE_VERSION
 
-ADD build/dist/mongoose-*.tgz /opt/
+FROM emcmongoose/mongoose-base:${MONGOOSE_VERSION}
 
-RUN ln -s /opt/mongoose-* /opt/mongoose
+ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-s3/releases/download/latest/mongoose-storage-driver-s3.jar", "/opt/mongoose/ext/mongoose-storage-driver-s3.jar"]
 
-EXPOSE 9010
+ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-atmos/releases/download/latest/mongoose-storage-driver-atmos.jar", "/opt/mongoose/ext/mongoose-storage-driver-atmos.jar"]
 
-ENTRYPOINT ["java", "-jar", "/opt/mongoose/mongoose.jar"]
+ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-swift/releases/download/latest/mongoose-storage-driver-swift.jar", "/opt/mongoose/ext/mongoose-storage-driver-swift.jar"]
+
+ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-emc-s3/releases/download/latest/mongoose-storage-driver-emc-s3.jar", "/opt/mongoose/ext/mongoose-storage-driver-emc-s3.jar"]
+
+ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-fs/releases/download/latest/mongoose-storage-driver-fs.jar", "/opt/mongoose/ext/mongoose-storage-driver-fs.jar"]

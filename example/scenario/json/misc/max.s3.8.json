@@ -1,0 +1,508 @@
+{
+	"type": "sequential",
+	"config": {
+		"storage": {
+			"net": {
+				"node": {
+					"port": 9020
+				}
+			},
+			"driver": {
+				"type": "s3"
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"size": "10KB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/init.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000,
+							"time": "${INIT_RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 40
+					}
+				}
+			}
+		},
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"data": {
+						"size": "10KB"
+					},
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/init.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"limit": {
+							"count": 10000,
+							"time": "${INIT_RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 40
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": "10KB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W10KB/items.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-W10KB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 320
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": "100KB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W100KB/items.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-W100KB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 320
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": "1MB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W1MB/items.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-W1MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 160
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": "10MB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W10MB/items.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-W10MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 80
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": "100MB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W100MB/items.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-W100MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 80
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"size": "200MB"
+					},
+					"output": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W200MB/items.csv",
+						"path": "${BUCKET}"
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-W200MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				},
+				"load": {
+					"limit": {
+						"concurrency": 80
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W10KB/items.csv",
+						"path": "${BUCKET}"
+					},
+					"data": {
+						"size": "10KB",
+						"verify": true
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 320
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-R10KB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W100KB/items.csv",
+						"path": "${BUCKET}"
+					},
+					"data": {
+						"size": "100KB",
+						"verify": true
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 320
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-R100KB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W1MB/items.csv",
+						"path": "${BUCKET}"
+					},
+					"data": {
+						"size": "1MB",
+						"verify": true
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 160
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-R1MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W10MB/items.csv",
+						"path": "${BUCKET}"
+					},
+					"data": {
+						"size": "10MB",
+						"verify": true
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 80
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-R10MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W100MB/items.csv",
+						"path": "${BUCKET}"
+					},
+					"data": {
+						"size": "100MB",
+						"verify": true
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 80
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-R100MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "${MONGOOSE_DIR}/log/MAX-W200MB/items.csv",
+						"path": "${BUCKET}"
+					},
+					"data": {
+						"size": "200MB",
+						"verify": true
+					}
+				},
+				"load": {
+					"type": "read",
+					"limit": {
+						"concurrency": 80
+					},
+					"generator": {
+						"recycle": {
+							"enabled": true
+						}
+					}
+				},
+				"test": {
+					"step": {
+						"id": "MAX-R200MB",
+						"limit": {
+							"time": "${RUN_TIME}"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "command",
+			"value": "sleep ${WAIT_TIME}",
+			"blocking": true
+		}
+	]
+}

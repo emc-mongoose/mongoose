@@ -1,6 +1,8 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
+import java.nio.file.Paths
+
 description = "Mongoose is a high-load storage performance testing tool"
 
 buildscript {
@@ -13,9 +15,20 @@ buildscript {
 }
 
 allprojects {
+
 	apply plugin: "java"
+	apply plugin: "maven"
+	apply plugin: "signing"
+
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
+
+	signing {
+		required {
+			gradle.taskGraph.hasTask("uploadArchives")
+		}
+		sign configurations.archives
+	}
 }
 
 ext {
@@ -24,43 +37,53 @@ ext {
 		commonsCodec : "1.10",
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
-		jackson : "2.9.0",
-		javaCommons : "[1.0.8,)",
-		javaCoroutines : "[1.0.13,)",
+		jackson : "2.9.1",
+		javaCommons : "[1.4.1,)",
+		javaCoroutines : "[1.1.3,)",
 		javassist : "3.21.0-GA",
 		slf4j : "1.7.24",
 		log4j : "2.8.2",
-		metrics : "3.2.4",
-		nagaina : "[3.5.18,)",
-		netty : "4.1.15.Final",
+		metrics : "3.2.5",
+		nagaina : "[3.6.10,)",
+		netty : "4.1.17.Final",
+		nettyConnectionPool : "[0.1.6,)"
 	]
 
 	mutualProjects = subprojects.findAll {
 		it != project("api") && it != project("load") && it != project("storage") &&
 			it != project("tests")
 	}
+}
 
-	setClassPath = {
-		configurations -> [
-			configurations.runtime
-				.collect { file ->
-					// it's 3rd party if jar file name doesn't contain the root project name
-					if(-1 == file.name.indexOf(rootProject.name)) {
-						["lib", file.name].join(File.separator)
-					} else {
-						file.name
-					}
+def classPathString(final configuration) {
+	return configuration
+		.collect {
+			file ->
+				// it's 3rd party if jar file name doesn't contain the root project name
+				if(-1 == file.name.indexOf(rootProject.name)) {
+					["lib", file.name].join(File.separator)
+				} else {
+					file.name
 				}
-				.join(" "),
-		]
-			.join(" ")
-	}
+		}
+		.join(" ")
+}
+
+def extClassPathString(final configuration) {
+	return configuration
+		.collect {
+			file ->
+				// it's 3rd party if jar file name doesn't contain the root project name
+				if(-1 == file.name.indexOf(rootProject.name)) {
+					["..", "lib", file.name].join(File.separator)
+				} else {
+					["..", file.name].join(File.separator)
+				}
+		}
+		.join(" ")
 }
 
 subprojects {
-
-	apply plugin: "maven"
-	apply plugin: "signing"
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
@@ -116,16 +139,16 @@ subprojects {
 	}
 
 	test {
-		jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+		///jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
-		systemProperty "com.sun.management.jmxremote", "true"
-		systemProperty "com.sun.management.jmxremote.port", "9010"
-		systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
-		systemProperty "com.sun.management.jmxremote.local.only", "false"
-		systemProperty "com.sun.management.jmxremote.authenticate", "false"
-		systemProperty "com.sun.management.jmxremote.ssl", "false"
+		//systemProperty "com.sun.management.jmxremote", "true"
+		//systemProperty "com.sun.management.jmxremote.port", "9010"
+		//systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
+		//systemProperty "com.sun.management.jmxremote.local.only", "false"
+		//systemProperty "com.sun.management.jmxremote.authenticate", "false"
+		//systemProperty "com.sun.management.jmxremote.ssl", "false"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
@@ -133,18 +156,11 @@ subprojects {
 		}
 	}
 
-	signing {
-		required {
-			gradle.taskGraph.hasTask("uploadArchives")
-		}
-		sign configurations.archives
-	}
-
 	// see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
 
 		// prevent the execution for empty (not leaf) subprojects and tests packages
-		if(project.name.contains("tests") || !(project in mutualProjects)) {
+		if(project.path.contains("tests") || !(project in mutualProjects)) {
 			return
 		}
 
@@ -212,17 +228,43 @@ task wrapper(type: Wrapper) {
 	gradleVersion = "3.5"
 }
 
-task dist(type: Tar) {
+static def isExtProject(final Project p) {
+    final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
+    return f.exists() && f.isDirectory() && f.listFiles().length > 0
+}
+
+static def isTestsProject(final Project p) {
+	if(p == null) {
+		return false
+	} else if(p.name.contains("test")) {
+		return true
+	} else {
+		return isTestsProject(p.parent)
+	}
+}
+
+task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
-	dependsOn tasks.withType(Jar)
-	baseName = rootProject.name
+	baseName = "$rootProject.name-base"
 	compression = Compression.GZIP
 	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	into("$baseName-$rootProject.version") {
+	into("$rootProject.name-$rootProject.version") {
 		into("config") {
 			from { "config" }
+		}
+		into("example") {
+			from { "example" }
+		}
+		final extProjects = mutualProjects.findAll { isExtProject(it) }
+		final nonExtNonTestProjects = mutualProjects.findAll {
+			!isExtProject(it) && !isTestsProject(it)
+		}
+		into("ext") {
+			for(final Project p: extProjects) {
+				from p.jar.outputs.files
+			}
 		}
 		into("lib") {
 			for(Project p: mutualProjects) {
@@ -231,11 +273,10 @@ task dist(type: Tar) {
 				}
 			}
 		}
-		for(Project p: mutualProjects) {
-			from p.jar.outputs.files
-		}
-		into("scenario") {
-			from { "scenario" }
+		for(final Project p: nonExtNonTestProjects) {
+			if(!p.displayName.contains(":storage:driver:service")) {
+				from p.jar.outputs.files
+			}
 		}
 	}
 }

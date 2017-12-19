@@ -1,9 +1,17 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
+
 import com.github.akurilov.coroutines.Coroutine;
+
+import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
+import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
+import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
+
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
@@ -11,12 +19,7 @@ import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
-import com.emc.mongoose.storage.driver.net.base.pool.BasicMultiNodeConnPool;
-import com.emc.mongoose.storage.driver.net.base.pool.ConnLeaseException;
-import com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
-import com.emc.mongoose.api.common.concurrent.ThreadUtil;
-import com.emc.mongoose.api.common.net.ssl.SslContext;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -25,7 +28,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.storage.driver.net.base.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
@@ -87,20 +89,22 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@SuppressWarnings("unchecked")
 	protected NetStorageDriverBase(
-		final String jobName, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String jobName, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+
+		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
+
 		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
-		final long sto = netConfig.getTimeoutMilliSec();
-		if(sto < 0 || sto > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException(
-				"Socket timeout shouldn't be more than " + Integer.MAX_VALUE +
-				" seconds and less than 0"
-			);
+		if(sslFlag) {
+			Loggers.MSG.info("{}: SSL/TLS is enabled", jobName);
+		}
+		final int sto = netConfig.getTimeoutMilliSec();
+		if(sto > 0) {
+			this.socketTimeout = sto;
 		} else {
-			this.socketTimeout = (int) sto;
+			this.socketTimeout = 0;
 		}
 		final NodeConfig nodeConfig = netConfig.getNodeConfig();
 		storageNodePort = nodeConfig.getPort();
@@ -206,8 +210,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new BasicMultiNodeConnPool(
-			concurrencyLevel, concurrencyThrottle, storageNodeAddrs, bootstrap, this,
-			storageNodePort, connAttemptsLimit
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
+			connAttemptsLimit
 		);
 	}
 	
@@ -285,7 +289,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		connPool.preCreateConnections();
+		if(concurrencyLevel > 0) {
+			try {
+				connPool.preCreateConnections(concurrencyLevel);
+			} catch(final ConnectException e) {
+				LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
+			}
+		}
 	}
 	
 	@Override
@@ -325,7 +335,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
-		} catch(final ConnLeaseException e) {
+		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
 			ioTask.setStatus(IoTask.Status.FAIL_IO);
 			complete(null, ioTask);
@@ -378,7 +388,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			if(!isInterrupted()) {
 				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
 			}
-		} catch(final ConnLeaseException e) {
+		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);
@@ -418,7 +428,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				if(!(dataIoTask instanceof CompositeDataIoTask)) {
 					final DataItem dataItem = (DataItem) item;
 					final String srcPath = dataIoTask.getSrcPath();
-					if(null == srcPath || srcPath.isEmpty()) {
+					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
 						if(sslFlag) {
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
 						} else {
@@ -575,12 +585,18 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	public final void channelCreated(final Channel channel)
 	throws Exception {
-		final ChannelPipeline pipeline = channel.pipeline();
-		appendHandlers(pipeline);
-		if(Loggers.MSG.isTraceEnabled()) {
-			Loggers.MSG.trace(
-				"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
-			);
+		try(
+			final Instance ctx = CloseableThreadContext
+				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
+			final ChannelPipeline pipeline = channel.pipeline();
+			appendHandlers(pipeline);
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
+				);
+			}
 		}
 	}
 
@@ -596,6 +612,18 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
 			);
 			pipeline.addLast(new SslHandler(sslEngine));
+			/*try {
+				final SslContext sslCtx = SslContextBuilder
+					.forClient()
+					.trustManager(InsecureTrustManagerFactory.INSTANCE)
+					.build();
+				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
+			} catch(final SSLException e) {
+				LogUtil.exception(
+					Level.ERROR, e, "Failed to enable the SSL/TLS for the connection: {}",
+					pipeline.channel()
+				);
+			}*/
 		}
 		if(socketTimeout > 0) {
 			pipeline.addLast(

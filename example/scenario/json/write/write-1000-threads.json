@@ -1,0 +1,10 @@
+{
+	"type": "load",
+	"config": {
+		"load": {
+			"limit": {
+				"concurrency": 1000
+			}
+		}
+	}
+}

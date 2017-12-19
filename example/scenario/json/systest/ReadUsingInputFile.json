@@ -1,0 +1,50 @@
+{
+	"type": "sequential",
+	"config": {
+		"storage": {
+			"net": {
+				"http": {
+					"namespace": "ns1"
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "command",
+			"value": "rm -f ReadUsingInputFileTest.csv"
+		},
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "ReadUsingInputFileTest.csv"
+					}
+				},
+				"test": {
+					"step": {
+						"limit": {
+							"count": 200000,
+							"size": "200GB",
+							"time": "3m"
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config": {
+				"item": {
+					"input": {
+						"file": "ReadUsingInputFileTest.csv"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}

@@ -54,7 +54,7 @@ implements StorageDriver<I, O> {
 		}
 	}
 
-	private final DataInput contentSrc;
+	private final DataInput itemDataInput;
 	private final int batchSize;
 	private final int outputQueueCapacity;
 	protected final BlockingQueue<O> childTasksQueue;
@@ -81,10 +81,10 @@ implements StorageDriver<I, O> {
 	private final IoTasksDispatchCoroutine ioTasksDispatchCoroutine;
 	
 	protected StorageDriverBase(
-		final String stepId, final DataInput contentSrc, final LoadConfig loadConfig,
+		final String stepId, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
-		this.contentSrc = contentSrc;
+		this.itemDataInput = itemDataInput;
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();
 		this.outputQueueCapacity = queueConfig.getOutput();
@@ -181,11 +181,11 @@ implements StorageDriver<I, O> {
 		return n;
 	}
 	
-	private void prepareIoTask(final O ioTask)
+	protected void prepareIoTask(final O ioTask)
 	throws ServerException {
 		ioTask.reset();
 		if(ioTask instanceof DataIoTask) {
-			((DataIoTask) ioTask).getItem().setDataInput(contentSrc);
+			((DataIoTask) ioTask).getItem().setDataInput(itemDataInput);
 		}
 		final String dstPath = ioTask.getDstPath();
 		final Credential credential = ioTask.getCredential();
@@ -346,7 +346,7 @@ implements StorageDriver<I, O> {
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			ioTasksDispatchCoroutine.close();
-			contentSrc.close();
+			itemDataInput.close();
 			childTasksQueue.clear();
 			inTasksQueue.clear();
 			final int ioResultsQueueSize = ioResultsQueue.size();

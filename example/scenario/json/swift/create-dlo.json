@@ -1,0 +1,38 @@
+{
+	"type": "load",
+	"config": {
+		"item": {
+			"data": {
+				"ranges": {
+					"threshold": "64MB"
+				},
+				"size": "1GB"
+			}
+		},
+		"load": {
+			"batch": {
+				"size": 1
+			},
+			"limit": {
+				"concurrency": 10
+			}
+		},
+		"storage": {
+			"driver": {
+				"type": "swift"
+			},
+			"net": {
+				"http": {
+					"namespace": "dlo"
+				}
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 100
+				}
+			}
+		}
+	}
+}

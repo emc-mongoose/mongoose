@@ -1,0 +1,54 @@
+{
+	"type": "sequential",
+	"config": {
+		"item": {
+			"data": {
+				"size": "256KB"
+			}
+		},
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "read-multiple-fixed-ranges.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config": {
+				"item": {
+					"data": {
+						"ranges": {
+							"fixed": [
+								"123-456",
+								"789-1011",
+								"121314-151617",
+								"181920-212223",
+								"242526-"
+							]
+						}
+					},
+					"input": {
+						"file": "read-multiple-fixed-ranges.csv"
+					}
+				},
+				"load": {
+					"type": "read"
+				}
+			}
+		}
+	]
+}
+
+

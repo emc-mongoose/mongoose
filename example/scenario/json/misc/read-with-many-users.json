@@ -1,0 +1,85 @@
+{
+	"type": "sequential",
+	"config": {
+		"test": {
+			"step": {
+				"limit": {
+					"count": 1000
+				}
+			}
+		}
+	},
+	"steps": [
+		{
+			"type": "precondition",
+			"config": {
+				"item": {
+					"output": {
+						"file": "read-with-many-users.csv",
+						"path": "read-with-many-users"
+					}
+				}
+			}
+		}, {
+			"type": "parallel",
+			"steps": [
+				{
+					"type": "load",
+					"config": {
+						"storage": {
+							"auth": {
+								"uid": "user1",
+								"secret": "secret1"
+							}
+						},
+						"item": {
+							"input": {
+								"file": "read-with-many-users.csv"
+							}
+						},
+						"load": {
+							"type": "read"
+						}
+					}
+				},
+				{
+					"type": "load",
+					"config": {
+						"storage": {
+							"auth": {
+								"uid": "user2",
+								"secret": "secret2"
+							}
+						},
+						"item": {
+							"input": {
+								"file": "read-with-many-users.csv"
+							}
+						},
+						"load": {
+							"type": "read"
+						}
+					}
+				}, {
+					"type": "load",
+					"config": {
+						"storage": {
+							"auth": {
+								"uid": "user3",
+								"secret": "secret3"
+							}
+						},
+						"item": {
+							"input": {
+								"file": "read-with-many-users.csv"
+							}
+						},
+						"load": {
+							"type": "read"
+						}
+					}
+				}
+			]
+		}
+	]
+}
