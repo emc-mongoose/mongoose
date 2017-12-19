@@ -37,7 +37,7 @@ dependencies {
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
-		"com.github.emc-mongoose:mongoose-storage-driver-fs:0.1.10",
+		"com.github.emc-mongoose:mongoose-storage-driver-fs:0.1.11",
 		"com.github.emc-mongoose:mongoose-storage-driver-s3:0.1.5",
 		"com.github.emc-mongoose:mongoose-storage-driver-atmos:0.1.5",
 		"com.github.emc-mongoose:mongoose-storage-driver-swift:0.1.5",
