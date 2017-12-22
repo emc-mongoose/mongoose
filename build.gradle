@@ -228,6 +228,9 @@ task wrapper(type: Wrapper) {
 	gradleVersion = "3.5"
 }
 
+// travis deploy stage runs "./gradlew check" again which is unnecessary
+check.dependsOn -= test
+
 static def isExtProject(final Project p) {
     final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
     return f.exists() && f.isDirectory() && f.listFiles().length > 0
