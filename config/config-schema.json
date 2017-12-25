@@ -259,12 +259,6 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"addrs": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						},
 						"recycle": {
 							"type": "object",
 							"additionalProperties": false,

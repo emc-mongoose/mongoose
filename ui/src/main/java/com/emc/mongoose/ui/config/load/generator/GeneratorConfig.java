@@ -13,15 +13,10 @@ import java.util.List;
 public final class GeneratorConfig
 implements Serializable {
 
-	public static final String KEY_ADDRS = "addrs";
 	public static final String KEY_RECYCLE = "recycle";
 	public static final String KEY_REMOTE = "remote";
 	public static final String KEY_SHUFFLE = "shuffle";
 	public static final String KEY_WEIGHT = "weight";
-
-	public final void setAddrs(final List<String> addrs) {
-		this.addrs = addrs;
-	}
 
 	public final void setRecycle(final RecycleConfig recycleConfig) {
 		this.recycleConfig = recycleConfig;
@@ -39,7 +34,6 @@ implements Serializable {
 		this.weight = weight;
 	}
 
-	@JsonProperty(KEY_ADDRS) private List<String> addrs;
 	@JsonProperty(KEY_RECYCLE) private RecycleConfig recycleConfig;
 	@JsonProperty(KEY_REMOTE) private boolean remoteFlag;
 	@JsonProperty(KEY_SHUFFLE) private boolean shuffleFlag;
@@ -49,15 +43,10 @@ implements Serializable {
 	}
 
 	public GeneratorConfig(final GeneratorConfig other) {
-		this.addrs = new ArrayList<>(other.getAddrs());
 		this.recycleConfig= new RecycleConfig(other.getRecycleConfig());
 		this.remoteFlag = other.getRemote();
 		this.shuffleFlag = other.getShuffle();
 		this.weight = other.getWeight();
-	}
-
-	public final List<String> getAddrs() {
-		return addrs;
 	}
 
 	public final RecycleConfig getRecycleConfig() {

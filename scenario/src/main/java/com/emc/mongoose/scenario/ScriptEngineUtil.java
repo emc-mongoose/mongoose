@@ -75,7 +75,7 @@ public interface ScriptEngineUtil {
 					Arrays.toString(sef.getMimeTypes().toArray())
 				);
 			}
-			// 3rd: consider the scenario file a Javascript file
+			// 3rd: treat the scenario file as a Javascript file
 			se = sem.getEngineByName("js");
 		}
 
@@ -108,7 +108,8 @@ public interface ScriptEngineUtil {
 		specificConfig = new Config(config);
 		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPeriod(0);
 		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPersist(false);
-		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
+		specificConfig
+			.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPersist(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
 		se.put("PreconditionLoad", new LoadStep(specificConfig));

@@ -13,6 +13,7 @@ implements Serializable {
 	public static final String KEY_TYPE = "type";
 	public static final String KEY_PREFIX = "prefix";
 	public static final String KEY_RADIX = "radix";
+	public static final String KEY_STEP = "step";
 	public static final String KEY_OFFSET = "offset";
 	public static final String KEY_LENGTH = "length";
 
@@ -28,6 +29,10 @@ implements Serializable {
 		this.radix = radix;
 	}
 
+	public final void setStep(final int step) {
+		this.step = step;
+	}
+
 	public final void setOffset(final long offset) {
 		this.offset = offset;
 	}
@@ -39,6 +44,7 @@ implements Serializable {
 	@JsonProperty(KEY_TYPE) private String type;
 	@JsonProperty(KEY_PREFIX) private String prefix;
 	@JsonProperty(KEY_RADIX) private int radix;
+	@JsonProperty(KEY_STEP) private int step;
 	@JsonProperty(KEY_OFFSET) private long offset;
 	@JsonProperty(KEY_LENGTH) private int length;
 
@@ -49,6 +55,7 @@ implements Serializable {
 		this.type = other.getType();
 		this.prefix = other.getPrefix();
 		this.radix = other.getRadix();
+		this.step = other.getStep();
 		this.offset = other.getOffset();
 		this.length = other.getLength();
 	}
@@ -63,6 +70,10 @@ implements Serializable {
 
 	public final int getRadix() {
 		return radix;
+	}
+
+	public final int getStep() {
+		return step;
 	}
 
 	public final long getOffset() {

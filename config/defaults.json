@@ -50,6 +50,8 @@
 			// The radix for the item ids. May be in the range of 2..36.
 			// A correct value is necessary to pass the content verification in the case of read load.
 			"radix": 36,
+			//
+			"step": 1,
 			// The start id for the new item ids
 			"offset": 0,
 			// The name length for the new items.
@@ -77,10 +79,6 @@
 			"size": 4096
 		},
 		"generator": {
-			// Reserved, not used
-			"addrs": [
-				"127.0.0.1"
-			],
 			"recycle": {
 				// Specifies whether to recycle the load tasks or not
 				"enabled": false,
@@ -219,7 +217,7 @@
 				// An user may place here a key-value pair which will be used as HTTP header.
 				"headers": {
 					"Connection": "Keep-Alive",
-					"User-Agent": "mongoose/3.6.0"
+					"User-Agent": "mongoose/4.0.0"
 				},
 				// The HTTP storage namespace.
 				// WARNING: the default value (null) will not work in the case of Swift API
@@ -272,7 +270,7 @@
 		}
 	},
 	// The Mongoose version
-	"version": "3.6.0",
+	"version": "4.0.0",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
 	"aliasing": [
 
