@@ -155,37 +155,14 @@
 			"uid": null
 		},
 		"driver": {
-			// Distributed mode: the list of the storage drivers IPs or hostnames,
-			// may include port numbers to override the default port number value
-			"addrs": [
-				"127.0.0.1"
-			],
-			// Distributed mode: the common port number to start the storage driver services
-			"port": 1099,
-			//
 			"queue": {
 				"input": 1000000,
 				"output": 1000000
 			},
-			// Distributed mode: the flag to enable using remote storage drivers
-			"remote": false,
 			// The count of the shared/global I/O executor threads. 0 (default) is reserved to use the CPU cores/threads count
 			"threads": 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
 			"type": "s3"
-		},
-		// The "mock" section is used by the storage mock embedded into the system tests runtime
-		"mock": {
-			"capacity": 1000000,
-			"container": {
-				"capacity": 1000000,
-				"countLimit": 1000000
-			},
-			"fail": {
-				"connections": 0,
-				"responses": 0
-			},
-			"node": false
 		},
 		"net": {
 			// Socket options
@@ -249,6 +226,8 @@
 			"file": null
 		},
 		"step": {
+			// The flag to enable the distributed mode for the given scenario step
+			"distributed": false,
 			// The test step id. Generated automatically if not specified (null).
 			// Specifies also the logs sub directory path: log/<STEP_ID>/
 			"id": null,
@@ -266,6 +245,15 @@
 				"size": 0,
 				// The maximum time to perform a load step. 0 means no time limit
 				"time": "0s"
+			},
+			"node": {
+				// Distributed mode: the list of the Mongoose node IPs or hostnames,
+				// may include port numbers to override the default port number value
+				"addrs": [
+					"127.0.0.1"
+				],
+				// Distributed mode: the common port number to connect the Mongoose nodes
+				"port": 1099
 			}
 		}
 	},
@@ -547,6 +535,23 @@
 			"name": "load-rate-limit",
 			"deprecated": true,
 			"target": "load-limit-rate"
+		},
+
+		// v4.0
+		{
+			"name": "storage-driver-remote",
+			"deprecated": true,
+			"target": "test-step-distributed"
+		},
+		{
+			"name": "storage-driver-addrs",
+			"deprecated": true,
+			"target": "test-step-node-addrs"
+		},
+		{
+			"name": "storage-driver-port",
+			"deprecated": true,
+			"target": "test-step-node-port"
 		}
 	]
 }
