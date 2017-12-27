@@ -2,8 +2,8 @@ package com.emc.mongoose.scenario.step;
 
 import java.rmi.RemoteException;
 
-public interface Pausible {
+public interface Startable {
 
-	void pause()
+	void start()
 	throws IllegalStateException, RemoteException;
 }
