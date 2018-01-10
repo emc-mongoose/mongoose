@@ -1,7 +1,5 @@
 package com.emc.mongoose.api.model.svc;
 
-import com.emc.mongoose.api.model.concurrent.Daemon;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -10,7 +8,7 @@ import java.rmi.RemoteException;
  A remote service which has a name for resolution by URI.
  */
 public interface Service
-extends Remote, Daemon {
+extends Remote {
 
 	int getRegistryPort()
 	throws RemoteException;

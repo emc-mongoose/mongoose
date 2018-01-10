@@ -23,8 +23,7 @@ implements ConfigurableStep {
 	}
 
 	@Override
-	public StepBase config(final Map<String, Object> stepConfig)
-	throws ScenarioParseException {
+	public StepBase config(final Map<String, Object> stepConfig) {
 		final List<Map<String, Object>> stepConfigsCopy = new ArrayList<>();
 		if(stepConfigs != null) {
 			stepConfigsCopy.addAll(stepConfigs);

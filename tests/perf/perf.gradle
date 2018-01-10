@@ -12,7 +12,6 @@ dependencies {
 		project(":storage:driver:net"),
 		project(":storage:driver:net:http"),
 		project(":storage:driver:nio"),
-		project(":storage:driver:service"),
 		project(":ui"),
 		"junit:junit:4.12",
 	)
