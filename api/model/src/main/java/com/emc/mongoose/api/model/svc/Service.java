@@ -8,7 +8,7 @@ import java.rmi.RemoteException;
  A remote service which has a name for resolution by URI.
  */
 public interface Service
-extends Remote {
+extends AutoCloseable, Remote {
 
 	int getRegistryPort()
 	throws RemoteException;
