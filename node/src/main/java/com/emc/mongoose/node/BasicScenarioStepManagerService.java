@@ -1,17 +1,17 @@
 package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceUtil;
-import com.emc.mongoose.scenario.sna.ScenarioStepService;
+import com.emc.mongoose.scenario.sna.ScenarioStepManagerService;
 
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 
-public final class BasicScenarioStepService
-implements ScenarioStepService {
+public final class BasicScenarioStepManagerService
+implements ScenarioStepManagerService {
 
 	private final int port;
 
-	public BasicScenarioStepService(final int port) {
+	public BasicScenarioStepManagerService(final int port) {
 		this.port = port;
 		ServiceUtil.create(this, port);
 	}

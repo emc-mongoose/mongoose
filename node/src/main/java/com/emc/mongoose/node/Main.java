@@ -51,8 +51,8 @@ public final class Main {
 			Service inputFileSvc = null;
 			Service scenarioStepSvc = null;
 			try {
-				inputFileSvc = new BasicInputFileService(listenPort);
-				scenarioStepSvc = new BasicScenarioStepService(listenPort);
+				inputFileSvc = new BasicFileManagerService(listenPort);
+				scenarioStepSvc = new BasicScenarioStepManagerService(listenPort);
 				while(true) {
 					Thread.currentThread().wait(Long.MAX_VALUE);
 				}

@@ -2,8 +2,8 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.model.svc.Service;
 
-public interface InputFileService
+public interface FileManagerService
 extends Service {
 
-	String SVC_NAME = "input/file";
+	String SVC_NAME = "file/manager";
 }

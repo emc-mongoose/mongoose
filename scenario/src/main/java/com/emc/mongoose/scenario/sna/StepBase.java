@@ -62,7 +62,7 @@ implements Step {
 			+ hashCode();
 		final Config config = new Config(baseConfig);
 		if(stepConfigs != null && stepConfigs.size() > 0) {
-			for(final Map<String, Object> nextStepConfig : stepConfigs) {
+			for(final Map<String, Object> nextStepConfig: stepConfigs) {
 				config.apply(nextStepConfig, autoStepId);
 			}
 		}
