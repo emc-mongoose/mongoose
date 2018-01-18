@@ -8,11 +8,11 @@ public interface FileService
 extends Service {
 
 	String SVC_NAME_PREFIX = "file/";
-	int BUFF_SIZE = 0x2000;
+	byte[] EMPTY = new byte[0];
 
 	byte[] read()
 	throws IOException;
 
-	int write(final byte[] buff)
+	void write(final byte[] buff)
 	throws IOException;
 }

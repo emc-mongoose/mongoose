@@ -6,4 +6,7 @@ public interface FileManagerService
 extends Service {
 
 	String SVC_NAME = "file/manager";
+
+	String getFileService(final String path)
+	throws Exception;
 }

@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.api.model.concurrent;
 
 import java.util.concurrent.TimeUnit;
 

@@ -52,10 +52,10 @@ public final class Main {
 			Service scenarioStepSvc = null;
 			try {
 				inputFileSvc = new BasicFileManagerService(listenPort);
+				inputFileSvc.start();
 				scenarioStepSvc = new BasicScenarioStepManagerService(listenPort);
-				while(true) {
-					Thread.currentThread().wait(Long.MAX_VALUE);
-				}
+				scenarioStepSvc.start();
+				scenarioStepSvc.await();
 			} finally {
 				if(inputFileSvc != null) {
 					inputFileSvc.close();

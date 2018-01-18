@@ -2,7 +2,6 @@ package com.emc.mongoose.api.model.concurrent;
 
 import java.io.Closeable;
 import java.rmi.RemoteException;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**

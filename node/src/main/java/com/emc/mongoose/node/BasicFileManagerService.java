@@ -2,6 +2,7 @@ package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileManagerService;
+import com.emc.mongoose.scenario.sna.FileService;
 
 import java.rmi.RemoteException;
 
@@ -11,12 +12,23 @@ implements FileManagerService {
 
 	public BasicFileManagerService(final int port) {
 		super(port);
-		start();
 	}
 
 	@Override
 	public String getName()
 	throws RemoteException {
 		return SVC_NAME;
+	}
+
+	@Override
+	protected final void doClose() {
+	}
+
+	@Override
+	public String getFileService(final String path)
+	throws Exception {
+		final FileService fileSvc = new BasicFileService(path, port);
+		fileSvc.start();
+		return fileSvc.getName();
 	}
 }

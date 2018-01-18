@@ -1,5 +1,7 @@
 package com.emc.mongoose.api.model.svc;
 
+import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -8,7 +10,7 @@ import java.rmi.RemoteException;
  A remote service which has a name for resolution by URI.
  */
 public interface Service
-extends AutoCloseable, Remote {
+extends AsyncRunnable, Remote {
 
 	int getRegistryPort()
 	throws RemoteException;

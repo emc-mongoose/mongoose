@@ -1,5 +1,7 @@
 package com.emc.mongoose.node;
 
+import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
+
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileService;
 
@@ -22,7 +24,7 @@ implements FileService {
 	private final FileChannel fileChannel;
 	private final String filePath;
 
-	public BasicFileService(final int port, final String filePath)
+	public BasicFileService(final String filePath, final int port)
 	throws IOException {
 		super(port);
 		if(filePath == null) {
@@ -44,21 +46,43 @@ implements FileService {
 	@Override
 	public final byte[] read()
 	throws IOException {
-		final ByteBuffer bb = ByteBuffer.allocate(BUFF_SIZE);
-
-		return bb.array();
+		final long remainingSize = fileChannel.size() - fileChannel.position();
+		final int buffSize = (int) Math.min(REUSABLE_BUFF_SIZE_MAX, remainingSize);
+		if(buffSize > 0) {
+			final ByteBuffer bb = ByteBuffer.allocate(buffSize);
+			int doneSize = 0;
+			int n;
+			while(doneSize < buffSize) {
+				n = fileChannel.read(bb);
+				if(n < 0) {
+					// unexpected but possible: the file is shorter than was estimated before
+					final byte[] buff = new byte[bb.position()];
+					bb.rewind();
+					bb.get(buff);
+					return buff;
+				} else {
+					doneSize += n;
+				}
+			}
+			return bb.array();
+		} else {
+			return EMPTY;
+		}
 	}
 
 	@Override
-	public final int write(final byte[] buff)
+	public final void write(final byte[] buff)
 	throws IOException {
-		return fileChannel.write(ByteBuffer.wrap(buff));
+		final ByteBuffer bb = ByteBuffer.wrap(buff);
+		int n = 0;
+		while(n < buff.length) {
+			n = fileChannel.write(bb);
+		}
 	}
 
 	@Override
-	public final void close()
+	protected final void doClose()
 	throws IOException {
-		super.close();
 		fileChannel.close();
 		Files.delete(Paths.get(filePath));
 	}

@@ -1,5 +1,6 @@
 package com.emc.mongoose.scenario.sna;
 
+import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
 import com.emc.mongoose.scenario.ScenarioParseException;
 
 public interface Step

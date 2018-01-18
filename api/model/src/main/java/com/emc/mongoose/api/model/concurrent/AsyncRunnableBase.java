@@ -1,21 +1,21 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.api.model.concurrent;
 
-import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.scenario.sna.AsyncRunnable.State.FINISHED;
-import static com.emc.mongoose.scenario.sna.AsyncRunnable.State.INITIAL;
-import static com.emc.mongoose.scenario.sna.AsyncRunnable.State.STARTED;
-import static com.emc.mongoose.scenario.sna.AsyncRunnable.State.STOPPED;
-
-import org.apache.logging.log4j.Level;
+import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.FINISHED;
+import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.INITIAL;
+import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STARTED;
+import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STOPPED;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 public abstract class AsyncRunnableBase
 implements AsyncRunnable {
 
-	private AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
+	private static final Logger LOG = Logger.getLogger(AsyncRunnableBase.class.getName());
+
+	private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	protected final Object state = new Object();
 
 	@Override
@@ -43,7 +43,7 @@ implements AsyncRunnable {
 
 	@Override
 	public final AsyncRunnableBase stop()
-	throws IllegalStateException {
+	throws IllegalStateException, Exception {
 		if(stateRef.compareAndSet(STARTED, STOPPED)) {
 			doStop();
 			state.notifyAll();
@@ -63,7 +63,7 @@ implements AsyncRunnable {
 	}
 
 	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
+	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		t = System.currentTimeMillis();
@@ -80,7 +80,7 @@ implements AsyncRunnable {
 
 	@Override
 	public final void close()
-	throws IllegalStateException {
+	throws IllegalStateException, Exception {
 		// stop first
 		if(stateRef.compareAndSet(STARTED, STOPPED)) {
 			doStop();
@@ -98,17 +98,17 @@ implements AsyncRunnable {
 			try {
 				await();
 			} catch(final IllegalStateException e) {
-				LogUtil.exception(Level.ERROR, e, "Failed to await \"{}\"", toString());
+				LOG.warning("Failed to await \"" + toString() + "\"");
 			} catch(final InterruptedException e) {
 				throw new CancellationException();
 			}
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to start \"{}\"", toString());
+			LOG.warning("Failed to start \"" + toString() + "\"");
 		} finally {
 			try {
 				close();
-			} catch(final IllegalStateException e) {
-				LogUtil.exception(Level.ERROR, e, "Failed to close \"{}\"", toString());
+			} catch(final Exception e) {
+				LOG.warning("Failed to close \"" + toString() + "\"");
 			}
 		}
 	}
@@ -120,7 +120,9 @@ implements AsyncRunnable {
 
 	protected abstract void doStart();
 
-	protected abstract void doStop();
+	protected abstract void doStop()
+	throws Exception;
 
-	protected abstract void doClose();
+	protected abstract void doClose()
+	throws Exception;
 }

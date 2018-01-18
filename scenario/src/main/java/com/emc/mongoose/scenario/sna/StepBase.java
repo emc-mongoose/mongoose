@@ -1,5 +1,6 @@
 package com.emc.mongoose.scenario.sna;
 
+import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
 import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
