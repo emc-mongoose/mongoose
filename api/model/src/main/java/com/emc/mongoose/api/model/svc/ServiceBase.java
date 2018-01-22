@@ -28,7 +28,11 @@ implements Service {
 
 	@Override
 	protected void doStop()
-	throws RemoteException, MalformedURLException {
-		ServiceUtil.close(this);
+	throws RemoteException {
+		try {
+			ServiceUtil.close(this);
+		} catch(final MalformedURLException e) {
+			throw new RemoteException("Failed to stop the service " + getName(), e);
+		}
 	}
 }

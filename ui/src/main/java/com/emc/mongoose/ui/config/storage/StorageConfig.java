@@ -2,7 +2,6 @@ package com.emc.mongoose.ui.config.storage;
 
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.ui.config.storage.mock.MockConfig;
 import com.emc.mongoose.ui.config.storage.net.NetConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,7 +17,6 @@ implements Serializable {
 	public static final String KEY_AUTH = "auth";
 	public static final String KEY_NET = "net";
 	public static final String KEY_DRIVER = "driver";
-	public static final String KEY_MOCK = "mock";
 
 	public final void setAuthConfig(final AuthConfig authConfig) {
 		this.authConfig = authConfig;
@@ -32,14 +30,9 @@ implements Serializable {
 		this.driverConfig = driverConfig;
 	}
 
-	public final void setMockConfig(final MockConfig mockConfig) {
-		this.mockConfig = mockConfig;
-	}
-
 	@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
 	@JsonProperty(KEY_NET) private NetConfig netConfig;
 	@JsonProperty(KEY_DRIVER) private DriverConfig driverConfig;
-	@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
 
 	public StorageConfig() {
 	}
@@ -48,7 +41,6 @@ implements Serializable {
 		this.authConfig = new AuthConfig(other.getAuthConfig());
 		this.netConfig = new NetConfig(other.getNetConfig());
 		this.driverConfig = new DriverConfig(other.getDriverConfig());
-		this.mockConfig = new MockConfig(other.getMockConfig());
 	}
 
 	public AuthConfig getAuthConfig() {
@@ -61,9 +53,5 @@ implements Serializable {
 
 	public DriverConfig getDriverConfig() {
 		return driverConfig;
-	}
-
-	public MockConfig getMockConfig() {
-		return mockConfig;
 	}
 }

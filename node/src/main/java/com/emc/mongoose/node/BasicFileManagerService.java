@@ -4,7 +4,7 @@ import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileManagerService;
 import com.emc.mongoose.scenario.sna.FileService;
 
-import java.rmi.RemoteException;
+import java.io.IOException;
 
 public final class BasicFileManagerService
 extends ServiceBase
@@ -15,8 +15,7 @@ implements FileManagerService {
 	}
 
 	@Override
-	public String getName()
-	throws RemoteException {
+	public String getName() {
 		return SVC_NAME;
 	}
 
@@ -26,7 +25,7 @@ implements FileManagerService {
 
 	@Override
 	public String getFileService(final String path)
-	throws Exception {
+	throws IOException {
 		final FileService fileSvc = new BasicFileService(path, port);
 		fileSvc.start();
 		return fileSvc.getName();

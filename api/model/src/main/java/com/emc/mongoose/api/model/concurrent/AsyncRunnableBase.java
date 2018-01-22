@@ -5,7 +5,9 @@ import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.INITIAL;
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STARTED;
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STOPPED;
 
-import java.util.concurrent.CancellationException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -21,6 +23,26 @@ implements AsyncRunnable {
 	@Override
 	public final State state() {
 		return stateRef.get();
+	}
+
+	@Override
+	public boolean isInitial() {
+		return INITIAL.equals(stateRef.get());
+	}
+
+	@Override
+	public boolean isStarted() {
+		return STARTED.equals(stateRef.get());
+	}
+
+	@Override
+	public boolean isStopped() {
+		return STOPPED.equals(stateRef.get());
+	}
+
+	@Override
+	public boolean isFinished() {
+		return FINISHED.equals(stateRef.get());
 	}
 
 	@Override
@@ -43,7 +65,7 @@ implements AsyncRunnable {
 
 	@Override
 	public final AsyncRunnableBase stop()
-	throws IllegalStateException, Exception {
+	throws IllegalStateException, RemoteException {
 		if(stateRef.compareAndSet(STARTED, STOPPED)) {
 			doStop();
 			state.notifyAll();
@@ -68,7 +90,7 @@ implements AsyncRunnable {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
-			if(!STARTED.equals(stateRef.get())) {
+			if(!isStarted()) {
 				return true;
 			}
 			synchronized(state) {
@@ -80,7 +102,7 @@ implements AsyncRunnable {
 
 	@Override
 	public final void close()
-	throws IllegalStateException, Exception {
+	throws IllegalStateException, IOException {
 		// stop first
 		if(stateRef.compareAndSet(STARTED, STOPPED)) {
 			doStop();
@@ -91,28 +113,6 @@ implements AsyncRunnable {
 		state.notifyAll();
 	}
 
-	@Override
-	public final void run() {
-		try {
-			start();
-			try {
-				await();
-			} catch(final IllegalStateException e) {
-				LOG.warning("Failed to await \"" + toString() + "\"");
-			} catch(final InterruptedException e) {
-				throw new CancellationException();
-			}
-		} catch(final IllegalStateException e) {
-			LOG.warning("Failed to start \"" + toString() + "\"");
-		} finally {
-			try {
-				close();
-			} catch(final Exception e) {
-				LOG.warning("Failed to close \"" + toString() + "\"");
-			}
-		}
-	}
-
 	protected final void doFinish() {
 		stateRef.set(FINISHED);
 		state.notifyAll();
@@ -121,8 +121,8 @@ implements AsyncRunnable {
 	protected abstract void doStart();
 
 	protected abstract void doStop()
-	throws Exception;
+	throws RemoteException;
 
 	protected abstract void doClose()
-	throws Exception;
+	throws IOException;
 }

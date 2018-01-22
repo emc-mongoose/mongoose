@@ -1,26 +1,40 @@
 package com.emc.mongoose.scenario.sna;
 
-import com.emc.mongoose.api.model.svc.ServiceUtil;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
-import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.ui.log.LogUtil.BLUE;
+import static com.emc.mongoose.ui.log.LogUtil.CYAN;
+import static com.emc.mongoose.ui.log.LogUtil.RED;
+import static com.emc.mongoose.ui.log.LogUtil.RESET;
+
 import org.apache.logging.log4j.Level;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public final class CommandStep
 extends StepBase {
 
+	public static final String TYPE = "Command";
+	private static final ThreadFactory THREAD_FACTORY = new LogContextThreadFactory(
+		"processMonitor", true
+	);
+
 	private String cmd = null;
+	private Process process = null;
+	private Thread processMonitor = null;
+
+	public CommandStep(final Config baseConfig) {
+		this(baseConfig, null, null);
+	}
 
 	public CommandStep(
 		final Config baseConfig, final List<Map<String, Object>> stepConfigs,
@@ -38,84 +52,90 @@ extends StepBase {
 	}
 
 	@Override
-	protected final void doStart(final Config actualConfig)
-	throws InterruptedException {
+	protected final void doStartLocal(final Config actualConfig) {
 
-		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
-		final boolean distributedFlag = stepConfig.getDistributed();
+		final boolean stdOutColorFlag = actualConfig.getOutputConfig().getColor();
+		Loggers.MSG.info(
+			"Invoking the shell command:\n{}{}{}",
+			stdOutColorFlag ? CYAN : "", cmd, stdOutColorFlag ? RESET : ""
+		);
 
-		if(distributedFlag) {
-
-			final NodeConfig nodeConfig = stepConfig.getNodeConfig();
-			final int nodePort = nodeConfig.getPort();
-
-			final List<String> nodeAddrs = nodeConfig.getAddrs().stream()
-				.map(
-					nodeAddr -> nodeAddr.contains(":") ?
-						nodeAddr : nodeAddr + ':' + Integer.toString(nodePort)
-				)
-				.collect(Collectors.toList());
-
-			final List<ScenarioStepManagerService> stepMgrSvcs = nodeAddrs.stream()
-				.map(
-					nodeAddrWithPort -> {
-
-						ScenarioStepManagerService stepMgrSvc;
-						try {
-							stepMgrSvc = ServiceUtil.resolve(
-								nodeAddrWithPort, ScenarioStepManagerService.SVC_NAME
-							);
-						} catch(final NotBoundException | IOException | URISyntaxException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
-								ScenarioStepManagerService.SVC_NAME, nodeAddrWithPort
-							);
-							return null;
-						}
-
-						String stepSvcName;
-						try {
-							stepSvcName = stepMgrSvc.getScenarioStepService();
-						} catch(final Exception e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to start the new scenario step service @ {}",
-								nodeAddrWithPort
-							);
-							return null;
-						}
-
-						ScenarioStepService stepSvc;
-						try {
-							stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
-						} catch(final IOException | URISyntaxException | NotBoundException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
-								ScenarioStepManagerService.SVC_NAME, nodeAddrWithPort
-							);
-							return null;
-						}
-
-						return stepMgrSvc;
-					}
-				)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
-		} else {
-
+		try {
+			process = new ProcessBuilder("sh", "-c", cmd).start();
+		} catch(final IOException e) {
+			return;
 		}
+
+		processMonitor = THREAD_FACTORY.newThread(
+			() -> {
+				final BufferedReader stdOut = new BufferedReader(
+					new InputStreamReader(process.getInputStream())
+				);
+				final BufferedReader stdErr = new BufferedReader(
+					new InputStreamReader(process.getErrorStream())
+				);
+				try {
+					String nextLine;
+					while(true) {
+						nextLine = stdOut.readLine();
+						Loggers.MSG.info(
+							"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
+							stdOutColorFlag ? RESET : ""
+						);
+						nextLine = stdErr.readLine();
+						Loggers.MSG.info(
+							"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
+							stdOutColorFlag ? RESET : ""
+						);
+						if(process.waitFor(1, TimeUnit.MILLISECONDS)) {
+							final int exitCode = process.exitValue();
+							Loggers.MSG.log(
+								exitCode == 0 ? Level.DEBUG : Level.WARN,
+								"Command \"{}\" exited with code {}", cmd, exitCode
+							);
+						}
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.WARN, e, "Failed to read from the process stdout either stdin"
+					);
+				} catch(final InterruptedException e) {
+					throw new CancellationException();
+				} finally {
+					try {
+						stdOut.close();
+						stdErr.close();
+					} catch(final IOException ignored) {
+					}
+					// change the step state
+					doFinish();
+				}
+			}
+		);
+		processMonitor.start();
 	}
 
 	@Override
 	protected final void doStop() {
+		super.doStop();
+		if(!distributedFlag) {
+			processMonitor.interrupt();
+			process.destroyForcibly();
+		}
 	}
 
 	@Override
 	protected final void doClose() {
+		super.doClose();
+		if(!distributedFlag) {
+			processMonitor = null;
+			process = null;
+		}
 	}
 
 	@Override
 	protected final String getTypeName() {
-		return "command";
+		return TYPE;
 	}
 
 	@Override
