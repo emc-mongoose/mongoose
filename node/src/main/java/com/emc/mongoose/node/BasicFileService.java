@@ -38,8 +38,7 @@ implements FileService {
 	}
 
 	@Override
-	public final String getName()
-	throws RemoteException {
+	public final String getName() {
 		return SVC_NAME_PREFIX + filePath;
 	}
 

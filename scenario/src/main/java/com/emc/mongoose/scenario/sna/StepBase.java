@@ -82,12 +82,6 @@ implements Step, Runnable {
 			}
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.WARN, cause, "{} step failed", id);
-		} finally {
-			try {
-				close();
-			} catch(final Exception e) {
-				LogUtil.exception(Level.WARN, e, "{} step failed to close", id);
-			}
 		}
 	}
 
@@ -136,7 +130,9 @@ implements Step, Runnable {
 
 				String stepSvcName;
 				try {
-					stepSvcName = stepMgrSvc.getStepService(getTypeName(), actualConfig);
+					stepSvcName = stepMgrSvc.getStepService(
+						getTypeName(), configSlices.get(nodeAddrWithPort)
+					);
 				} catch(final Exception e) {
 					LogUtil.exception(
 						Level.WARN, e, "Failed to start the new scenario step service @ {}",
@@ -153,32 +149,6 @@ implements Step, Runnable {
 						Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
 						StepManagerService.SVC_NAME, nodeAddrWithPort
 					);
-					return;
-				}
-
-				try {
-					stepSvc.config(configSlices.get(nodeAddrWithPort));
-				} catch(final Exception e) {
-					try {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to configure the step service \"{}\" @ {}",
-							stepSvc.getName(), nodeAddrWithPort
-						);
-					} catch(final Exception ignored) {
-					}
-					return;
-				}
-
-				try {
-					stepSvc.start();
-				} catch(final Exception e) {
-					try {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to start the step service \"{}\" @ {}",
-							stepSvc.getName(), nodeAddrWithPort
-						);
-					} catch(final Exception ignored) {
-					}
 					return;
 				}
 
@@ -239,18 +209,13 @@ implements Step, Runnable {
 	protected abstract String getTypeName();
 
 	@Override
-	public StepBase config(final Object config)
-	throws ScenarioParseException {
-		if(config instanceof Map) {
-			final List<Map<String, Object>> stepConfigsCopy = new ArrayList<>();
-			if(stepConfigs != null) {
-				stepConfigsCopy.addAll(stepConfigs);
-			}
-			stepConfigsCopy.add((Map<String, Object>) config);
-			return copyInstance(stepConfigsCopy);
-		} else {
-			return copyInstance(config);
+	public StepBase config(final Map<String, Object> config) {
+		final List<Map<String, Object>> stepConfigsCopy = new ArrayList<>();
+		if(stepConfigs != null) {
+			stepConfigsCopy.addAll(stepConfigs);
 		}
+		stepConfigsCopy.add(config);
+		return copyInstance(stepConfigsCopy);
 	}
 
 	@Override
@@ -258,11 +223,17 @@ implements Step, Runnable {
 		return id;
 	}
 
-	protected abstract StepBase copyInstance(final Object config);
+	protected abstract StepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 
 	protected void sliceConfig(
 		final Config config, final List<String> nodeAddrs, final Map<String, Config> configSlices
 	) {
-
+		nodeAddrs.forEach(
+			nodeAddrWithPort -> {
+				final Config configSlice = new Config(config);
+				configSlice.getTestConfig().getStepConfig().setDistributed(false);
+				configSlices.put(nodeAddrWithPort, configSlice);
+			}
+		);
 	}
 }

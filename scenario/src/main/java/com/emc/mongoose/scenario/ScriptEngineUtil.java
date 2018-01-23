@@ -87,7 +87,6 @@ public interface ScriptEngineUtil {
 	 @param config the configuration
 	 */
 	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
-		se.put(CommandStep.TYPE, new CommandStep(config));
 		se.put("ChainLoad", new ChainLoadStep(config));
 		se.put("Load", new LoadStep(config));
 		se.put("WeightedLoad", new WeightedLoadStep(config));

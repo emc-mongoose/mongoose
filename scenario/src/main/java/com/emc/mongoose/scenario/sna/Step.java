@@ -4,18 +4,18 @@ import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
 import com.emc.mongoose.scenario.ScenarioParseException;
 
 import java.rmi.RemoteException;
+import java.util.Map;
 
 public interface Step
 extends AsyncRunnable {
 
 	/**
 	 Configure the step. The actual behavior depends on the particular step type
-	 @param config
-	 @return the copied step instance
-	 @throws ScenarioParseException
+	 @param config a dictionary of the configuration values to override the inherited config
+	 @return <b>new/copied</b> step instance with the applied config values
 	 */
-	Step config(final Object config)
-	throws ScenarioParseException, RemoteException;
+	Step config(final Map<String, Object> config)
+	throws RemoteException;
 
 	/**
 	 @return the step id

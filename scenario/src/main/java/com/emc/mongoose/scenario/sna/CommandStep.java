@@ -29,7 +29,7 @@ extends StepBase {
 	);
 
 	private String cmd = null;
-	private Process process = null;
+	private volatile Process process = null;
 	private Thread processMonitor = null;
 
 	public CommandStep(final Config baseConfig) {
@@ -68,33 +68,45 @@ extends StepBase {
 
 		processMonitor = THREAD_FACTORY.newThread(
 			() -> {
+
 				final BufferedReader stdOut = new BufferedReader(
 					new InputStreamReader(process.getInputStream())
 				);
 				final BufferedReader stdErr = new BufferedReader(
 					new InputStreamReader(process.getErrorStream())
 				);
+
 				try {
+
 					String nextLine;
-					while(true) {
-						nextLine = stdOut.readLine();
-						Loggers.MSG.info(
-							"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
-							stdOutColorFlag ? RESET : ""
-						);
-						nextLine = stdErr.readLine();
-						Loggers.MSG.info(
-							"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
-							stdOutColorFlag ? RESET : ""
-						);
+					int exitCode = -1;
+
+					do {
+
 						if(process.waitFor(1, TimeUnit.MILLISECONDS)) {
-							final int exitCode = process.exitValue();
+							exitCode = process.exitValue();
 							Loggers.MSG.log(
 								exitCode == 0 ? Level.DEBUG : Level.WARN,
 								"Command \"{}\" exited with code {}", cmd, exitCode
 							);
 						}
-					}
+
+						while(null != (nextLine = stdOut.readLine())) {
+							Loggers.MSG.info(
+								"{}{}{}", stdOutColorFlag ? BLUE : "", nextLine,
+								stdOutColorFlag ? RESET : ""
+							);
+						}
+
+						while(null != (nextLine = stdErr.readLine())) {
+							Loggers.MSG.info(
+								"{}{}{}", stdOutColorFlag ? RED : "", nextLine,
+								stdOutColorFlag ? RESET : ""
+							);
+						}
+
+					} while(exitCode == -1);
+
 				} catch(final IOException e) {
 					LogUtil.exception(
 						Level.WARN, e, "Failed to read from the process stdout either stdin"

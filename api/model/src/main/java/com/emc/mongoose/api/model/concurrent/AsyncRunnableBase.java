@@ -6,7 +6,6 @@ import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STARTED;
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STOPPED;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,7 +17,7 @@ implements AsyncRunnable {
 	private static final Logger LOG = Logger.getLogger(AsyncRunnableBase.class.getName());
 
 	private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
-	protected final Object state = new Object();
+	private final Object state = new Object();
 
 	@Override
 	public final State state() {
@@ -54,7 +53,9 @@ implements AsyncRunnable {
 		}
 		if(passFlag) {
 			doStart();
-			state.notifyAll();
+			synchronized(state) {
+				state.notifyAll();
+			}
 		} else {
 			throw new IllegalStateException(
 				"Not allowed to start while state is \"" + stateRef.get() + "\""
@@ -68,7 +69,9 @@ implements AsyncRunnable {
 	throws IllegalStateException, RemoteException {
 		if(stateRef.compareAndSet(STARTED, STOPPED)) {
 			doStop();
-			state.notifyAll();
+			synchronized(state) {
+				state.notifyAll();
+			}
 		} else {
 			throw new IllegalStateException(
 				"Not allowed to stop while state is \"" + stateRef.get() + "\""
@@ -110,12 +113,16 @@ implements AsyncRunnable {
 		// then close actually
 		doClose();
 		stateRef.set(null);
-		state.notifyAll();
+		synchronized(state) {
+			state.notifyAll();
+		}
 	}
 
 	protected final void doFinish() {
 		stateRef.set(FINISHED);
-		state.notifyAll();
+		synchronized(state) {
+			state.notifyAll();
+		}
 	}
 
 	protected abstract void doStart();

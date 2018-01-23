@@ -56,6 +56,8 @@ public final class Main {
 				scenarioStepSvc = new BasicStepManagerService(listenPort);
 				scenarioStepSvc.start();
 				scenarioStepSvc.await();
+			} catch(final Throwable cause) {
+				cause.printStackTrace(System.err);
 			} finally {
 				if(inputFileSvc != null) {
 					inputFileSvc.close();
