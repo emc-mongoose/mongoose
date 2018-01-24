@@ -9,13 +9,13 @@ public enum ItemType {
 	PATH,
 	TOKEN;
 	
-	public static ItemFactory getItemFactory(final ItemType itemType) {
+	public static ItemFactory<? extends Item> getItemFactory(final ItemType itemType) {
 		if(ItemType.DATA.equals(itemType)) {
-			return new BasicDataItemFactory();
+			return new BasicDataItemFactory<BasicDataItem>();
 		} else if(ItemType.PATH.equals(itemType)) {
-			return new BasicPathItemFactory();
+			return new BasicPathItemFactory<BasicPathItem>();
 		} else if(ItemType.TOKEN.equals(itemType)) {
-			return new BasicTokenItemFactory();
+			return new BasicTokenItemFactory<BasicTokenItem>();
 		} else {
 			throw new AssertionError("Item type \"" + itemType + "\" is not supported");
 		}

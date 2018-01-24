@@ -148,7 +148,7 @@ public abstract class ServiceUtil {
 
 	@SuppressWarnings("unchecked")
 	public static <S extends Service> S resolve(final String addr, final String name)
-	throws NotBoundException, IOException, URISyntaxException {
+	throws NotBoundException, RemoteException, URISyntaxException, MalformedURLException {
 		final String svcUri = getRemoteSvcUri(addr, name).toString();
 		return (S) Naming.lookup(svcUri);
 	}

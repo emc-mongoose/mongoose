@@ -1,19 +1,32 @@
 package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
+import com.emc.mongoose.api.model.item.CsvFileItemInput;
+import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
+import com.github.akurilov.commons.io.Input;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,18 +111,28 @@ implements Step, Runnable {
 		return config;
 	}
 
-	protected void doStartRemote(final Config actualConfig, final NodeConfig nodeConfig) {
+	protected void doStartRemote(final Config actualConfig, final NodeConfig nodeConfig)
+	throws IllegalArgumentException {
 
 		final int nodePort = nodeConfig.getPort();
 
-		final List<String> nodeAddrs = nodeConfig.getAddrs().stream()
+		final List<String> nodeAddrs = nodeConfig
+			.getAddrs()
+			.stream()
 			.map(
 				nodeAddr -> nodeAddr.contains(":") ?
-							nodeAddr : nodeAddr + ':' + Integer.toString(nodePort)
+					nodeAddr : nodeAddr + ':' + Integer.toString(nodePort)
 			)
 			.collect(Collectors.toList());
 
-		final Map<String, Config> configSlices = new HashMap<>();
+		if(nodeAddrs.size() < 1) {
+			throw new IllegalArgumentException(
+				"There should be at least 1 node address to be configured if the distributed " +
+					"mode is enabled"
+			);
+		}
+
+		final Map<String, Config> configSlices = new HashMap<>(nodeAddrs.size());
 		sliceConfig(actualConfig, nodeAddrs, configSlices);
 
 		nodeAddrs.forEach(
@@ -228,12 +251,84 @@ implements Step, Runnable {
 	protected void sliceConfig(
 		final Config config, final List<String> nodeAddrs, final Map<String, Config> configSlices
 	) {
+
 		nodeAddrs.forEach(
 			nodeAddrWithPort -> {
+				// disable the distributed mode flag
 				final Config configSlice = new Config(config);
 				configSlice.getTestConfig().getStepConfig().setDistributed(false);
 				configSlices.put(nodeAddrWithPort, configSlice);
 			}
 		);
+
+		final ItemConfig itemConfig = config.getItemConfig();
+
+		// slice the item input file (if any)
+		final InputConfig itemInputConfig = itemConfig.getInputConfig();
+		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
+		final String itemInputFile = itemInputConfig.getFile();
+
+		if(itemInputFile != null && !itemInputFile.isEmpty()) {
+
+			final int nodeCount = nodeAddrs.size();
+			final Map<String, FileService> fileSvcs = new HashMap<>(nodeCount);
+			nodeAddrs.forEach(
+				nodeAddrWithPort -> {
+					try {
+						final FileManagerService fileMgrSvc = ServiceUtil.resolve(
+							nodeAddrWithPort, FileManagerService.SVC_NAME
+						);
+						try {
+							final String fileSvcName = fileMgrSvc.getFileService(null);
+							try {
+								final FileService fileSvc = ServiceUtil.resolve(
+									nodeAddrWithPort, fileSvcName
+								);
+								fileSvcs.put(nodeAddrWithPort, fileSvc);
+							} catch(final NotBoundException | RemoteException e) {
+								LogUtil.exception(
+									Level.ERROR, e,
+									"Failed to communicate the file service \"{}\" @ {}",
+									fileSvcName, nodeAddrWithPort
+								);
+							} catch(final MalformedURLException | URISyntaxException e) {
+								e.printStackTrace();
+							}
+						} catch(final IOException e) {
+
+						}
+					} catch(final NotBoundException | RemoteException e) {
+						LogUtil.exception(
+							Level.ERROR, e, "Failed to communicate the file manage service @ {}",
+							nodeAddrWithPort
+						);
+					} catch(final MalformedURLException | URISyntaxException e) {
+						e.printStackTrace();
+					}
+				}
+			);
+
+			final List<? extends Item> itemsBuff = new ArrayList<>(batchSize);
+			final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+			final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
+			int n;
+
+			try(
+				final Input<? extends Item> itemInput = new CsvFileItemInput<>(
+					Paths.get(itemInputFile), itemFactory
+				)
+			) {
+				n = itemInput.get((List) itemsBuff, batchSize);
+				if(n > 0) {
+
+				}
+			} catch(final NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
+				);
+			}
+		}
 	}
 }
