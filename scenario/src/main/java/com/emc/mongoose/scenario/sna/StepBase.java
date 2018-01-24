@@ -271,9 +271,15 @@ implements Step, Runnable {
 		if(itemInputFile != null && !itemInputFile.isEmpty()) {
 
 			final int nodeCount = nodeAddrs.size();
+			final List<Item> itemsBuff = new ArrayList<>(batchSize);
+			final List<List<Item>> nodeItemsBuff = new ArrayList<>(nodeCount);
+
 			final Map<String, FileService> fileSvcs = new HashMap<>(nodeCount);
 			nodeAddrs.forEach(
 				nodeAddrWithPort -> {
+
+					nodeItemsBuff.add(new ArrayList<>(batchSize));
+
 					try {
 						final FileManagerService fileMgrSvc = ServiceUtil.resolve(
 							nodeAddrWithPort, FileManagerService.SVC_NAME
@@ -285,30 +291,34 @@ implements Step, Runnable {
 									nodeAddrWithPort, fileSvcName
 								);
 								fileSvcs.put(nodeAddrWithPort, fileSvc);
-							} catch(final NotBoundException | RemoteException e) {
+							} catch(
+								final NotBoundException | RemoteException | MalformedURLException |
+									URISyntaxException e
+							) {
 								LogUtil.exception(
 									Level.ERROR, e,
 									"Failed to communicate the file service \"{}\" @ {}",
 									fileSvcName, nodeAddrWithPort
 								);
-							} catch(final MalformedURLException | URISyntaxException e) {
-								e.printStackTrace();
 							}
 						} catch(final IOException e) {
-
+							LogUtil.exception(
+								Level.ERROR, e, "Failed to create the remote file service @ {}",
+								nodeAddrWithPort
+							);
 						}
-					} catch(final NotBoundException | RemoteException e) {
+					} catch(
+						final NotBoundException | RemoteException | MalformedURLException |
+							URISyntaxException e
+					) {
 						LogUtil.exception(
 							Level.ERROR, e, "Failed to communicate the file manage service @ {}",
 							nodeAddrWithPort
 						);
-					} catch(final MalformedURLException | URISyntaxException e) {
-						e.printStackTrace();
 					}
 				}
 			);
 
-			final List<? extends Item> itemsBuff = new ArrayList<>(batchSize);
 			final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 			final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
 			int n;
@@ -320,6 +330,11 @@ implements Step, Runnable {
 			) {
 				n = itemInput.get((List) itemsBuff, batchSize);
 				if(n > 0) {
+					for(int i = 0; i < n; i ++) {
+						nodeItemsBuff
+							.get(i % nodeCount)
+							.add(itemsBuff.get(i));
+					}
 
 				}
 			} catch(final NoSuchMethodException e) {
