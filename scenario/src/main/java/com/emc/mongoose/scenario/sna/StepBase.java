@@ -6,7 +6,6 @@ import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
-import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
@@ -16,22 +15,25 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
+import com.github.akurilov.commons.func.Function2;
+import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.net.NetUtil;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
+import java.io.EOFException;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class StepBase
@@ -116,13 +118,12 @@ implements Step, Runnable {
 
 		final int nodePort = nodeConfig.getPort();
 
+		final Function<String, String> addPortIfMissingPartialFunc = Function2
+			.partial2(NetUtil::addPortIfMissing, nodePort);
 		final List<String> nodeAddrs = nodeConfig
 			.getAddrs()
 			.stream()
-			.map(
-				nodeAddr -> nodeAddr.contains(":") ?
-					nodeAddr : nodeAddr + ':' + Integer.toString(nodePort)
-			)
+			.map(addPortIfMissingPartialFunc)
 			.collect(Collectors.toList());
 
 		if(nodeAddrs.size() < 1) {
@@ -135,49 +136,57 @@ implements Step, Runnable {
 		final Map<String, Config> configSlices = new HashMap<>(nodeAddrs.size());
 		sliceConfig(actualConfig, nodeAddrs, configSlices);
 
-		nodeAddrs.forEach(
-			nodeAddrWithPort -> {
+		final Function<String, StepService> resolveStepSvcPartialFunc = Function2
+			.partial1(this::resolveStepSvc, configSlices);
+		nodeAddrs
+			.parallelStream()
+			.map(resolveStepSvcPartialFunc)
+			.filter(Objects::nonNull)
+			.forEach(stepSvcs::add);
+	}
 
-				StepManagerService stepMgrSvc;
-				try {
-					stepMgrSvc = ServiceUtil.resolve(
-						nodeAddrWithPort, StepManagerService.SVC_NAME
-					);
-				} catch(final Exception e) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
-						StepManagerService.SVC_NAME, nodeAddrWithPort
-					);
-					return;
-				}
+	private StepService resolveStepSvc(
+		final Map<String, Config> configSlices, final String nodeAddrWithPort
+	) {
 
-				String stepSvcName;
-				try {
-					stepSvcName = stepMgrSvc.getStepService(
-						getTypeName(), configSlices.get(nodeAddrWithPort)
-					);
-				} catch(final Exception e) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to start the new scenario step service @ {}",
-						nodeAddrWithPort
-					);
-					return;
-				}
+		StepManagerService stepMgrSvc;
+		try {
+			stepMgrSvc = ServiceUtil.resolve(
+				nodeAddrWithPort, StepManagerService.SVC_NAME
+			);
+		} catch(final Exception e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
+				StepManagerService.SVC_NAME, nodeAddrWithPort
+			);
+			return null;
+		}
 
-				StepService stepSvc;
-				try {
-					stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
-				} catch(final Exception e) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
-						StepManagerService.SVC_NAME, nodeAddrWithPort
-					);
-					return;
-				}
+		String stepSvcName;
+		try {
+			stepSvcName = stepMgrSvc.getStepService(
+				getTypeName(), configSlices.get(nodeAddrWithPort)
+			);
+		} catch(final Exception e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to start the new scenario step service @ {}",
+				nodeAddrWithPort
+			);
+			return null;
+		}
 
-				stepSvcs.add(stepSvc);
-			}
-		);
+		StepService stepSvc;
+		try {
+			stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
+		} catch(final Exception e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
+				StepManagerService.SVC_NAME, nodeAddrWithPort
+			);
+			return null;
+		}
+
+		return stepSvc;
 	}
 
 	protected abstract void doStartLocal(final Config actualConfig);
@@ -187,21 +196,7 @@ implements Step, Runnable {
 		if(distributedFlag) {
 			stepSvcs
 				.parallelStream()
-				.forEach(
-					stepSvc -> {
-						try {
-							stepSvc.stop();
-						} catch(final Exception e) {
-							try {
-								LogUtil.exception(
-									Level.WARN, e, "Failed to stop the step service \"{}\"",
-									stepSvc.getName()
-								);
-							} catch(final Exception ignored) {
-							}
-						}
-					}
-				);
+				.forEach(StepService::stopStepSvc);
 		}
 	}
 
@@ -210,21 +205,7 @@ implements Step, Runnable {
 		if(distributedFlag) {
 			stepSvcs
 				.parallelStream()
-				.forEach(
-					stepSvc -> {
-						try {
-							stepSvc.close();
-						} catch(final Exception e) {
-							try {
-								LogUtil.exception(
-									Level.WARN, e, "Failed to close the step service \"{}\"",
-									stepSvc.getName()
-								);
-							} catch(final Exception ignored) {
-							}
-						}
-					}
-				);
+				.forEach(StepService::closeStepSvc);
 		}
 		stepSvcs.clear();
 	}
@@ -252,14 +233,9 @@ implements Step, Runnable {
 		final Config config, final List<String> nodeAddrs, final Map<String, Config> configSlices
 	) {
 
-		nodeAddrs.forEach(
-			nodeAddrWithPort -> {
-				// disable the distributed mode flag
-				final Config configSlice = new Config(config);
-				configSlice.getTestConfig().getStepConfig().setDistributed(false);
-				configSlices.put(nodeAddrWithPort, configSlice);
-			}
-		);
+		nodeAddrs
+			.stream()
+			.map(Function3.partial12(Step::initConfigSlices, config, configSlices));
 
 		final ItemConfig itemConfig = config.getItemConfig();
 
@@ -272,52 +248,14 @@ implements Step, Runnable {
 
 			final int nodeCount = nodeAddrs.size();
 			final List<Item> itemsBuff = new ArrayList<>(batchSize);
-			final List<List<Item>> nodeItemsBuff = new ArrayList<>(nodeCount);
+			final Map<String, StringBuilder> nodeItemsData = new HashMap<>(nodeCount);
 
 			final Map<String, FileService> fileSvcs = new HashMap<>(nodeCount);
-			nodeAddrs.forEach(
-				nodeAddrWithPort -> {
-
-					nodeItemsBuff.add(new ArrayList<>(batchSize));
-
-					try {
-						final FileManagerService fileMgrSvc = ServiceUtil.resolve(
-							nodeAddrWithPort, FileManagerService.SVC_NAME
-						);
-						try {
-							final String fileSvcName = fileMgrSvc.getFileService(null);
-							try {
-								final FileService fileSvc = ServiceUtil.resolve(
-									nodeAddrWithPort, fileSvcName
-								);
-								fileSvcs.put(nodeAddrWithPort, fileSvc);
-							} catch(
-								final NotBoundException | RemoteException | MalformedURLException |
-									URISyntaxException e
-							) {
-								LogUtil.exception(
-									Level.ERROR, e,
-									"Failed to communicate the file service \"{}\" @ {}",
-									fileSvcName, nodeAddrWithPort
-								);
-							}
-						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.ERROR, e, "Failed to create the remote file service @ {}",
-								nodeAddrWithPort
-							);
-						}
-					} catch(
-						final NotBoundException | RemoteException | MalformedURLException |
-							URISyntaxException e
-					) {
-						LogUtil.exception(
-							Level.ERROR, e, "Failed to communicate the file manage service @ {}",
-							nodeAddrWithPort
-						);
-					}
-				}
-			);
+			final Function<String, Map<String, FileService>> resolveFileSvcsPartialFunc = Function3
+				.partial12(FileService::resolveFileSvcs, nodeItemsData, fileSvcs);
+			nodeAddrs
+				.parallelStream()
+				.map(resolveFileSvcsPartialFunc);
 
 			final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 			final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
@@ -328,14 +266,27 @@ implements Step, Runnable {
 					Paths.get(itemInputFile), itemFactory
 				)
 			) {
-				n = itemInput.get((List) itemsBuff, batchSize);
-				if(n > 0) {
-					for(int i = 0; i < n; i ++) {
-						nodeItemsBuff
-							.get(i % nodeCount)
-							.add(itemsBuff.get(i));
+				final Function<String, String> writeItemDataPartialFunc = Function3
+					.partial12(FileService::writeItemData, nodeItemsData, fileSvcs);
+				while(true) {
+					try {
+						n = itemInput.get((List) itemsBuff, batchSize);
+					} catch(final EOFException e) {
+						break;
 					}
-
+					if(n > 0) {
+						for(int i = 0; i < n; i ++) {
+							nodeItemsData
+								.get(nodeAddrs.get(i % nodeCount))
+								.append(itemsBuff.get(i).toString())
+								.append(System.lineSeparator());
+						}
+						nodeAddrs
+							.parallelStream()
+							.map(writeItemDataPartialFunc);
+					} else {
+						break;
+					}
 				}
 			} catch(final NoSuchMethodException e) {
 				throw new RuntimeException(e);
@@ -343,6 +294,12 @@ implements Step, Runnable {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
 				);
+			} finally {
+				final Function<String, String> setConfigSlicesItemInputFilePartialFunc = Function3
+					.partial12(Step::setConfigSlicesItemInputFile, configSlices, fileSvcs);
+				nodeAddrs
+					.parallelStream()
+					.map(setConfigSlicesItemInputFilePartialFunc);
 			}
 		}
 	}

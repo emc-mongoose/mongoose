@@ -11,7 +11,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -35,11 +34,6 @@ implements FileService {
 			this.filePath = SVC_NAME_PREFIX + filePath;
 			this.fileChannel = FileChannel.open(Paths.get(filePath), READ, NOFOLLOW_LINKS);
 		}
-	}
-
-	@Override
-	public final String getName() {
-		return SVC_NAME_PREFIX + filePath;
 	}
 
 	@Override
@@ -77,6 +71,16 @@ implements FileService {
 		while(n < buff.length) {
 			n = fileChannel.write(bb);
 		}
+	}
+
+	@Override
+	public final String getFilePath() {
+		return filePath;
+	}
+
+	@Override
+	public final String getName() {
+		return SVC_NAME_PREFIX + filePath;
 	}
 
 	@Override
