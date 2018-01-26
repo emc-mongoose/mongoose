@@ -3,7 +3,6 @@ package com.emc.mongoose.scenario;
 import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.step.ChainLoadStep;
-import com.emc.mongoose.scenario.sna.CommandStep;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.WeightedLoadStep;
 import com.emc.mongoose.ui.config.Config;
