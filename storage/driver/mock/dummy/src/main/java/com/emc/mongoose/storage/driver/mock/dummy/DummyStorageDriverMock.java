@@ -237,7 +237,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException {
+	throws InterruptedException {
 		return true;
 	}
 

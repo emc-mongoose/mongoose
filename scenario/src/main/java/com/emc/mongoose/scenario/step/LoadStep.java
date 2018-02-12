@@ -106,7 +106,7 @@ implements Step {
 			.setLimitConfig(limitConfig)
 			.setItemType(itemType)
 			.setItemFactory(itemFactory)
-			.setStorageDrivers(drivers)
+			//.setStorageDriver(drivers)
 			.setAuthConfig(storageConfig.getAuthConfig())
 			.build();
 		Loggers.MSG.info("Load generators initialized");

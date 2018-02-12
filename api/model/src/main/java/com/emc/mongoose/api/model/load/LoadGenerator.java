@@ -23,9 +23,9 @@ extends Daemon {
 
 	/**
 	 Set the generated tasks destination
-	 @param ioTaskOutputs list of the task outputs
+	 @param ioTaskOutput tasks output
 	 */
-	void setOutputs(final List<? extends Output<O>> ioTaskOutputs);
+	void setOutput(final Output<O> ioTaskOutput);
 
 	/**
 	 @return sum of the new tasks and recycled ones

@@ -76,23 +76,22 @@ extends DaemonBase
 implements LoadController<I, O> {
 	
 	private final String name;
-	private final Int2ObjectMap<LoadGenerator<I, O>> generatorsMap;
-	private final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap;
-	private final Map<LoadGenerator<I, O>, GetActualConcurrencySumCoroutine>
-		getActualConcurrencySumCoroutines;
+	private final Int2ObjectMap<LoadGenerator<I, O>> generatorByOrigin;
+	private final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator;
+	private final Map<LoadGenerator<I, O>, GetActualConcurrencyCoroutine>
+		getActualConcurrencyCoroutines;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final long failCountLimit;
 	private final boolean failRateLimitFlag;
-	private final ConcurrentMap<I, O> latestIoResultsPerItem;
+	private final ConcurrentMap<I, O> latestIoResultsByItem;
 	private final int batchSize;
 	private final boolean isAnyCircular;
 	private final List<Coroutine> transferCoroutines = new ArrayList<>();
 
-	private final Int2ObjectMap<MetricsContext> ioStats = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<MetricsContext> metricsByIoType = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
-	private final Int2IntMap concurrencyMap;
-	private final Int2IntMap driversCountMap;
+	private final Int2IntMap concurrencyByIoType;
 	private final Throttle<Object> rateThrottle;
 	private final WeightThrottle weightThrottle;
 	private final boolean tracePersistFlag;
@@ -101,10 +100,10 @@ implements LoadController<I, O> {
 	
 	/**
 	 @param name test step name
-	 @param driversMap generator to drivers list map
+	 @param driverByGenerator generator to drivers list map
 	 **/
 	public BasicLoadController(
-		final String name, final Map<LoadGenerator<I, O>, List<StorageDriver<I, O>>> driversMap,
+		final String name, final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, SizeInBytes> itemDataSizes,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final StepConfig stepConfig,
 		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
@@ -124,27 +123,26 @@ implements LoadController<I, O> {
 			weightThrottle = new WeightThrottle(weightMap);
 		}
 
-		generatorsMap = new Int2ObjectOpenHashMap<>(driversMap.size());
-		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+		generatorByOrigin = new Int2ObjectOpenHashMap<>(driverByGenerator.size());
+		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
 			// hashCode() returns the origin code
-			generatorsMap.put(nextGenerator.hashCode(), nextGenerator);
+			generatorByOrigin.put(nextGenerator.hashCode(), nextGenerator);
 			nextGenerator.setWeightThrottle(weightThrottle);
 			nextGenerator.setRateThrottle(rateThrottle);
-			nextGenerator.setOutputs(driversMap.get(nextGenerator));
+			nextGenerator.setOutput(driverByGenerator.get(nextGenerator));
 		}
 
 		final MetricsConfig anyMetricsConfig = outputConfigs
 			.values().iterator().next().getMetricsConfig();
 		tracePersistFlag = anyMetricsConfig.getTraceConfig().getPersist();
 
-		this.driversMap = driversMap;
-		concurrencyMap = new Int2IntOpenHashMap(driversMap.size());
-		driversCountMap = new Int2IntOpenHashMap(driversMap.size());
-		getActualConcurrencySumCoroutines = new HashMap<>();
+		this.driverByGenerator = driverByGenerator;
+		concurrencyByIoType = new Int2IntOpenHashMap(driverByGenerator.size());
+		getActualConcurrencyCoroutines = new HashMap<>();
 		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
 		boolean anyCircularFlag = false;
-		for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
-			final List<StorageDriver<I, O>> nextDrivers = driversMap.get(nextGenerator);
+		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
+			final StorageDriver<I, O> nextDriver = driverByGenerator.get(nextGenerator);
 			final MetricsConfig nextMetricsConfig = outputConfigs
 				.get(nextGenerator).getMetricsConfig();
 			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
@@ -154,19 +152,18 @@ implements LoadController<I, O> {
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final IoType ioType = IoType.valueOf(ioTypeName);
 			final int ioTypeCode = ioType.ordinal();
-			driversCountMap.put(ioTypeCode, nextDrivers.size());
 			int ioTypeSpecificConcurrency = 0;
 			try {
-				ioTypeSpecificConcurrency = nextDrivers.get(0).getConcurrencyLevel();
-				concurrencyMap.put(ioTypeCode, ioTypeSpecificConcurrency);
+				ioTypeSpecificConcurrency = nextDriver.getConcurrencyLevel();
+				concurrencyByIoType.put(ioTypeCode, ioTypeSpecificConcurrency);
 			} catch(final RemoteException e) {
 				LogUtil.exception(Level.ERROR, e, "Failed to invoke the remote method");
 			}
-			ioStats.put(
+			metricsByIoType.put(
 				ioTypeCode,
 				new BasicMetricsContext(
 					name, ioType, () -> getActualConcurrency(nextGenerator),
-					nextDrivers.size(), ioTypeSpecificConcurrency,
+					1, ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
 					itemDataSizes.get(nextGenerator),
 					(int) nextMetricsConfig.getAverageConfig().getPeriod(),
@@ -177,25 +174,23 @@ implements LoadController<I, O> {
 				)
 			);
 
-			getActualConcurrencySumCoroutines.put(
-				nextGenerator, new GetActualConcurrencySumCoroutine(SVC_EXECUTOR, nextDrivers)
+			getActualConcurrencyCoroutines.put(
+				nextGenerator, new GetActualConcurrencyCoroutine(SVC_EXECUTOR, nextDriver)
 			);
 
-			for(final StorageDriver<I, O> nextDriver : nextDrivers) {
-				final Coroutine transferCoroutine = new TransferCoroutine<>(
-					SVC_EXECUTOR, nextDriver, this, batchSize
-				);
-				transferCoroutines.add(transferCoroutine);
-			}
+			final Coroutine transferCoroutine = new TransferCoroutine<>(
+				SVC_EXECUTOR, nextDriver, this, batchSize
+			);
+			transferCoroutines.add(transferCoroutine);
 		}
 
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
 			final int
 				recycleLimit = firstLoadConfig.getGeneratorConfig().getRecycleConfig().getLimit();
-			latestIoResultsPerItem = new ConcurrentHashMap<>(recycleLimit);
+			latestIoResultsByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
-			latestIoResultsPerItem = null;
+			latestIoResultsByItem = null;
 		}
 
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
@@ -219,8 +214,8 @@ implements LoadController<I, O> {
 			long succCountSum = 0;
 			long failCountSum = 0;
 			MetricsContext.Snapshot lastStats;
-			for(final int ioTypeCode : ioStats.keySet()) {
-				lastStats = ioStats.get(ioTypeCode).getLastSnapshot();
+			for(final int ioTypeCode : metricsByIoType.keySet()) {
+				lastStats = metricsByIoType.get(ioTypeCode).getLastSnapshot();
 				succCountSum += lastStats.getSuccCount();
 				failCountSum += lastStats.getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
@@ -238,8 +233,8 @@ implements LoadController<I, O> {
 	private boolean isDoneSizeLimit() {
 		if(sizeLimit > 0) {
 			long sizeSum = 0;
-			for(final int ioTypeCode : ioStats.keySet()) {
-				sizeSum += ioStats.get(ioTypeCode).getLastSnapshot().getByteCount();
+			for(final int ioTypeCode : metricsByIoType.keySet()) {
+				sizeSum += metricsByIoType.get(ioTypeCode).getLastSnapshot().getByteCount();
 				if(sizeSum >= sizeLimit) {
 					Loggers.MSG.debug(
 						"{}: size limit reached, done {} >= {} limit",
@@ -254,18 +249,11 @@ implements LoadController<I, O> {
 
 	private boolean allIoTasksCompleted() {
 		long generatedIoTasks = 0;
-		for(final LoadGenerator<I, O> generator : generatorsMap.values()) {
-			try {
-				if(generator.isInterrupted()) {
-					generatedIoTasks += generator.getGeneratedTasksCount();
-				} else {
-					return false;
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to communicate with load generator \"{}\"",
-					generator
-				);
+		for(final LoadGenerator<I, O> generator : generatorByOrigin.values()) {
+			if(generator.isInterrupted()) {
+				generatedIoTasks += generator.getGeneratedTasksCount();
+			} else {
+				return false;
 			}
 		}
 		return counterResults.longValue() >= generatedIoTasks;
@@ -273,21 +261,17 @@ implements LoadController<I, O> {
 
 	// issue SLTM-938 fix
 	private boolean nothingToRecycle() {
-		if(generatorsMap.size() == 1) {
-			final LoadGenerator<I, O> soleLoadGenerator = generatorsMap.values().iterator().next();
-			try {
-				if(soleLoadGenerator.isStarted()) {
-					return false;
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(Level.WARN, e, "Failed to check the load generator state");
+		if(generatorByOrigin.size() == 1) {
+			final LoadGenerator<I, O> soleLoadGenerator = generatorByOrigin.values().iterator().next();
+			if(soleLoadGenerator.isStarted()) {
+				return false;
 			}
 			// load generator has done its work
 			final long generatedIoTasks = soleLoadGenerator.getGeneratedTasksCount();
 			if(
 				soleLoadGenerator.isRecycling() &&
 				counterResults.sum() >= generatedIoTasks && // all generated I/O tasks executed at least once
-				latestIoResultsPerItem.size() == 0 // no successful I/O results
+				latestIoResultsByItem.size() == 0 // no successful I/O results
 			) {
 				return true;
 			}
@@ -316,8 +300,8 @@ implements LoadController<I, O> {
 		double failRateLast = 0;
 		double succRateLast = 0;
 		MetricsContext.Snapshot nextMetricsSnapshot;
-		for(final int ioTypeCode : ioStats.keySet()) {
-			nextMetricsSnapshot = ioStats.get(ioTypeCode).getLastSnapshot();
+		for(final int ioTypeCode : metricsByIoType.keySet()) {
+			nextMetricsSnapshot = metricsByIoType.get(ioTypeCode).getLastSnapshot();
 			failCountSum += nextMetricsSnapshot.getFailCount();
 			failRateLast += nextMetricsSnapshot.getFailRateLast();
 			succRateLast += nextMetricsSnapshot.getSuccRateLast();
@@ -343,40 +327,32 @@ implements LoadController<I, O> {
 	private boolean isIdle()
 	throws ConcurrentModificationException {
 
-		for(final LoadGenerator<I, O> nextLoadGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O> nextLoadGenerator : driverByGenerator.keySet()) {
 
-			try {
-				if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
-					return false;
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to communicate with load generator \"{}\"",
-					nextLoadGenerator
-				);
+			if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
+				return false;
 			}
 
-			for(final StorageDriver<I, O> nextStorageDriver : driversMap.get(nextLoadGenerator)) {
-				try {
-					if(
-						!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
-						!nextStorageDriver.isIdle()
-					) {
-						return false;
-					}
-				} catch(final NoSuchObjectException e) {
-					if(!isClosed() && !isInterrupted()) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
-							nextStorageDriver
-						);
-					}
-				} catch(final RemoteException e) {
+			final StorageDriver<I, O> nextStorageDriver = driverByGenerator.get(nextLoadGenerator);
+			try {
+				if(
+					!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
+					!nextStorageDriver.isIdle()
+				) {
+					return false;
+				}
+			} catch(final NoSuchObjectException e) {
+				if(!isClosed() && !isInterrupted()) {
 					LogUtil.exception(
 						Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
 						nextStorageDriver
 					);
 				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
+					nextStorageDriver
+				);
 			}
 		}
 
@@ -411,7 +387,7 @@ implements LoadController<I, O> {
 		}
 		
 		final int ioTypeCode = ioTaskResult.getIoType().ordinal();
-		final MetricsContext ioTypeStats = ioStats.get(ioTypeCode);
+		final MetricsContext ioTypeStats = metricsByIoType.get(ioTypeCode);
 		final IoTask.Status status = ioTaskResult.getStatus();
 		
 		if(Status.SUCC.equals(status)) {
@@ -430,9 +406,9 @@ implements LoadController<I, O> {
 				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
 				final int originCode = ioTaskResult.getOriginCode();
-				final LoadGenerator<I, O> loadGenerator = generatorsMap.get(originCode);
+				final LoadGenerator<I, O> loadGenerator = generatorByOrigin.get(originCode);
 				if(loadGenerator.isRecycling()) {
-					latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
+					latestIoResultsByItem.put(ioTaskResult.getItem(), ioTaskResult);
 					loadGenerator.recycle(ioTaskResult);
 				} else if(ioResultsOutput != null) {
 					try {
@@ -509,15 +485,15 @@ implements LoadController<I, O> {
 				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
 			}
 
-			ioTypeStats = ioStats.get(ioTypeCode);
+			ioTypeStats = metricsByIoType.get(ioTypeCode);
 
 			if(Status.SUCC.equals(status)) {
 				if(ioTaskResult instanceof PartialIoTask) {
 					ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 				} else {
-					loadGenerator = generatorsMap.get(originCode);
+					loadGenerator = generatorByOrigin.get(originCode);
 					if(loadGenerator.isRecycling()) {
-						latestIoResultsPerItem.put(ioTaskResult.getItem(), ioTaskResult);
+						latestIoResultsByItem.put(ioTaskResult.getItem(), ioTaskResult);
 						loadGenerator.recycle(ioTaskResult);
 					} else if(ioResultsOutput != null) {
 						try {
@@ -560,39 +536,34 @@ implements LoadController<I, O> {
 	
 	@Override
 	public final int getActualConcurrency(final LoadGenerator<I, O> loadGenerator) {
-		return getActualConcurrencySumCoroutines.get(loadGenerator).getActualConcurrencySum();
+		return getActualConcurrencyCoroutines.get(loadGenerator).getActualConcurrencySum();
 	}
 	
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-
-		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
-
-			final List<StorageDriver<I, O>> nextGeneratorDrivers = driversMap.get(nextGenerator);
-			for(final StorageDriver<I, O> nextDriver : nextGeneratorDrivers) {
-				try {
-					nextDriver.start();
-				} catch(final IllegalStateException | RemoteException e) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
-					);
-				}
+		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
+			final StorageDriver<I, O> nextDriver = driverByGenerator.get(nextGenerator);
+			try {
+				nextDriver.start();
+			} catch(final IllegalStateException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
+				);
 			}
-
 			try {
 				nextGenerator.start();
-			} catch(final IllegalStateException | RemoteException e) {
+			} catch(final IllegalStateException e) {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
 				);
 			}
 		}
 
-		for(final int ioTypeCode : concurrencyMap.keySet()) {
-			ioStats.get(ioTypeCode).start();
+		for(final int ioTypeCode : concurrencyByIoType.keySet()) {
+			metricsByIoType.get(ioTypeCode).start();
 			try {
-				MetricsManager.register(this, ioStats.get(ioTypeCode));
+				MetricsManager.register(this, metricsByIoType.get(ioTypeCode));
 			} catch(final InterruptedException e) {
 				throw new CancellationException(e.getMessage());
 			}
@@ -601,7 +572,7 @@ implements LoadController<I, O> {
 		for(final Coroutine transferCoroutine : transferCoroutines) {
 			transferCoroutine.start();
 		}
-		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
+		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
 			getConcurrencyCoroutine.start();
 		}
 	}
@@ -615,7 +586,7 @@ implements LoadController<I, O> {
 			new LogContextThreadFactory("shutdownWorker", true)
 		);
 
-		for(final LoadGenerator<I, O> nextGenerator : driversMap.keySet()) {
+		for(final LoadGenerator<I, O> generator : driverByGenerator.keySet()) {
 			shutdownExecutor.submit(
 				() -> {
 					try(
@@ -623,46 +594,40 @@ implements LoadController<I, O> {
 							.put(KEY_TEST_STEP_ID, name)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
-						nextGenerator.interrupt();
+						generator.interrupt();
 						Loggers.MSG.debug(
 							"{}: load generator \"{}\" interrupted", getName(),
-							nextGenerator.toString()
-						);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to interrupt the generator {}", getName(),
-							nextGenerator.toString()
+							generator.toString()
 						);
 					}
 				}
 			);
-			for(final StorageDriver<I, O> driver : driversMap.get(nextGenerator)) {
-				shutdownExecutor.submit(
-					() -> {
-						try(
-							final Instance ctx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, name)
-								.put(KEY_CLASS_NAME, getClass().getSimpleName())
-						) {
-							driver.shutdown();
-							Loggers.MSG.debug(
-								"{}: next storage driver {} shutdown", getName(),
-								(
-									(driver instanceof Service)?
-										((Service) driver).getName() + " @ " +
-											ServiceUtil.getAddress((Service) driver) :
-										driver.toString()
-								)
-							);
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.WARN, e, "failed to shutdown the driver {}", getName(),
-								driver.toString()
-							);
-						}
+			final StorageDriver<I, O> driver = driverByGenerator.get(generator);
+			shutdownExecutor.submit(
+				() -> {
+					try(
+						final Instance ctx = CloseableThreadContext
+							.put(KEY_TEST_STEP_ID, name)
+							.put(KEY_CLASS_NAME, getClass().getSimpleName())
+					) {
+						driver.shutdown();
+						Loggers.MSG.debug(
+							"{}: next storage driver {} shutdown", getName(),
+							(
+								(driver instanceof Service)?
+									((Service) driver).getName() + " @ " +
+										ServiceUtil.getAddress((Service) driver) :
+									driver.toString()
+							)
+						);
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							Level.WARN, e, "failed to shutdown the driver {}", getName(),
+							driver.toString()
+						);
 					}
-				);
-			}
+				}
+			);
 		}
 		
 		Loggers.MSG.debug("{}: shutting down the storage drivers...", getName());
@@ -708,7 +673,7 @@ implements LoadController<I, O> {
 				Loggers.MSG.debug("{}: await exit due to \"BAD\" state", getName());
 				return true;
 			}
-			synchronized(driversMap) {
+			synchronized(driverByGenerator) {
 				if(!isAnyCircular && allIoTasksCompleted()) {
 					Loggers.MSG.debug(
 						"{}: await exit because all I/O tasks have been completed", getName()
@@ -737,35 +702,34 @@ implements LoadController<I, O> {
 			new LogContextThreadFactory("interruptWorker", true)
 		);
 
-		synchronized(driversMap) {
-			for(final LoadGenerator<I, O> nextGenerator : generatorsMap.values()) {
-				for(final StorageDriver<I, O> driver : driversMap.get(nextGenerator)) {
-					interruptExecutor.submit(
-						() -> {
-							try(
-								final Instance ctx = CloseableThreadContext
-									.put(KEY_TEST_STEP_ID, name)
-									.put(KEY_CLASS_NAME, getClass().getSimpleName())
-							) {
-								driver.interrupt();
-								Loggers.MSG.debug(
-									"{}: next storage driver {} interrupted", getName(),
-									(
-										(driver instanceof Service)?
-											((Service) driver).getName() + " @ " +
-												ServiceUtil.getAddress((Service) driver) :
-											driver.toString()
-									)
-								);
-							} catch(final RemoteException e) {
-								LogUtil.exception(
-									Level.DEBUG, e, "{}: failed to interrupt the driver {}",
-									getName(), driver.toString()
-								);
-							}
+		synchronized(driverByGenerator) {
+			for(final LoadGenerator<I, O> generator : driverByGenerator.keySet()) {
+				final StorageDriver<I, O> driver = driverByGenerator.get(generator);
+				interruptExecutor.submit(
+					() -> {
+						try(
+							final Instance ctx = CloseableThreadContext
+								.put(KEY_TEST_STEP_ID, name)
+								.put(KEY_CLASS_NAME, getClass().getSimpleName())
+						) {
+							driver.interrupt();
+							Loggers.MSG.debug(
+								"{}: next storage driver {} interrupted", getName(),
+								(
+									(driver instanceof Service)?
+										((Service) driver).getName() + " @ " +
+											ServiceUtil.getAddress((Service) driver) :
+										driver.toString()
+								)
+							);
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								Level.DEBUG, e, "{}: failed to interrupt the driver {}",
+								getName(), driver.toString()
+							);
 						}
-					);
-				}
+					}
+				);
 			}
 		}
 		
@@ -784,7 +748,7 @@ implements LoadController<I, O> {
 		for(final Coroutine transferCoroutine : transferCoroutines) {
 			transferCoroutine.stop();
 		}
-		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
+		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
 			getConcurrencyCoroutine.stop();
 		}
 
@@ -792,40 +756,38 @@ implements LoadController<I, O> {
 			ThreadUtil.getHardwareThreadCount(),
 			new LogContextThreadFactory("ioResultsWorker", true)
 		);
-		synchronized(driversMap) {
-			for(final LoadGenerator<I, O> generator : generatorsMap.values()) {
-				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-					ioResultsExecutor.submit(
-						() -> {
-							try(
-								final Instance ctx = CloseableThreadContext
-									.put(KEY_TEST_STEP_ID, name)
-									.put(KEY_CLASS_NAME, getClass().getSimpleName())
-							) {
-								try {
-									final List<O> finalResults = driver.getAll();
-									if(finalResults != null) {
-										final int finalResultsCount = finalResults.size();
-										if(finalResultsCount > 0) {
-											Loggers.MSG.debug(
-												"{}: the driver \"{}\" returned {} final I/O " +
-													"results to process",
-												getName(), driver.toString(), finalResults.size()
-											);
-											put(finalResults, 0, finalResultsCount);
-										}
+		synchronized(driverByGenerator) {
+			for(final StorageDriver<I, O> driver : driverByGenerator.values()) {
+				ioResultsExecutor.submit(
+					() -> {
+						try(
+							final Instance ctx = CloseableThreadContext
+								.put(KEY_TEST_STEP_ID, name)
+								.put(KEY_CLASS_NAME, getClass().getSimpleName())
+						) {
+							try {
+								final List<O> finalResults = driver.getAll();
+								if(finalResults != null) {
+									final int finalResultsCount = finalResults.size();
+									if(finalResultsCount > 0) {
+										Loggers.MSG.debug(
+											"{}: the driver \"{}\" returned {} final I/O " +
+												"results to process",
+											getName(), driver.toString(), finalResults.size()
+										);
+										put(finalResults, 0, finalResultsCount);
 									}
-								} catch(final Throwable cause) {
-									LogUtil.exception(
-										Level.WARN, cause,
-										"{}: failed to process the final results for the driver {}",
-										getName(), driver.toString()
-									);
 								}
+							} catch(final Throwable cause) {
+								LogUtil.exception(
+									Level.WARN, cause,
+									"{}: failed to process the final results for the driver {}",
+									getName(), driver.toString()
+								);
 							}
 						}
-					);
-				}
+					}
+				);
 			}
 
 			ioResultsExecutor.shutdown();
@@ -845,13 +807,13 @@ implements LoadController<I, O> {
 			}
 		}
 
-		if(latestIoResultsPerItem != null && ioResultsOutput != null) {
+		if(latestIoResultsByItem != null && ioResultsOutput != null) {
 			try {
-				final int ioResultCount = latestIoResultsPerItem.size();
+				final int ioResultCount = latestIoResultsByItem.size();
 				Loggers.MSG.info(
 					"{}: please wait while performing {} I/O results output...", name, ioResultCount
 				);
-				for(final O latestItemIoResult : latestIoResultsPerItem.values()) {
+				for(final O latestItemIoResult : latestIoResultsByItem.values()) {
 					try {
 						if(!ioResultsOutput.put(latestItemIoResult)) {
 							Loggers.ERR.debug(
@@ -874,7 +836,7 @@ implements LoadController<I, O> {
 			} finally {
 				Loggers.MSG.info("{}: I/O results output done", name);
 			}
-			latestIoResultsPerItem.clear();
+			latestIoResultsByItem.clear();
 		}
 		if(ioResultsOutput != null) {
 			try {
@@ -892,7 +854,7 @@ implements LoadController<I, O> {
 			}
 		}
 
-		for(final MetricsContext nextStats : ioStats.values()) {
+		for(final MetricsContext nextStats : metricsByIoType.values()) {
 			try {
 				MetricsManager.unregister(this, nextStats);
 			} catch(final InterruptedException e) {
@@ -907,72 +869,9 @@ implements LoadController<I, O> {
 	protected final void doClose()
 	throws IOException {
 
-		final ExecutorService closeExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareThreadCount(),
-			new LogContextThreadFactory("interruptWorker", true)
-		);
-
-		synchronized (driversMap) {
-
-			for(final LoadGenerator<I, O> generator : driversMap.keySet()) {
-
-				closeExecutor.submit(
-					() -> {
-						try {
-							generator.close();
-							Loggers.MSG.debug(
-								"{}: the load generator \"{}\" has been closed", getName(),
-								generator
-							);
-						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.WARN, e, "{}: failed to close the generator {}", getName(),
-								generator
-							);
-						}
-					}
-				);
-
-				for(final StorageDriver<I, O> driver : driversMap.get(generator)) {
-					closeExecutor.submit(
-						() -> {
-							try {
-								driver.close();
-								Loggers.MSG.debug("{}: next storage driver {} closed", getName(),
-									((driver instanceof Service) ?
-										((Service) driver).getName() + " @ " +
-											ServiceUtil.getAddress((Service) driver) :
-										driver.toString())
-								);
-							} catch(final NoSuchObjectException ignored) {
-								// closing causes this normally
-							} catch(final IOException e) {
-								LogUtil.exception(
-									Level.WARN, e, "{}: failed to close the driver {}",
-									getName(), driver.toString()
-								);
-							}
-						}
-					);
-				}
-			}
-
-			closeExecutor.shutdown();
-			try {
-				if(closeExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-					Loggers.MSG.debug(
-						"{}: all generators and storage drivers have been closed in time", getName()
-					);
-				} else {
-					closeExecutor.shutdownNow();
-					Loggers.ERR.warn("{}: timeout while closing storage driver(s)", getName());
-				}
-			} catch(final InterruptedException e) {
-				throw new CancellationException(e.getMessage());
-			}
-
-			generatorsMap.clear();
-			driversMap.clear();
+		synchronized (driverByGenerator) {
+			generatorByOrigin.clear();
+			driverByGenerator.clear();
 		}
 
 		for(final Coroutine transferCoroutine : transferCoroutines) {
@@ -985,7 +884,7 @@ implements LoadController<I, O> {
 			}
 		}
 		transferCoroutines.clear();
-		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencySumCoroutines.values()) {
+		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
 			try {
 				getConcurrencyCoroutine.close();
 			} catch(final IOException e) {
@@ -995,12 +894,12 @@ implements LoadController<I, O> {
 				);
 			}
 		}
-		getActualConcurrencySumCoroutines.clear();
+		getActualConcurrencyCoroutines.clear();
 
-		for(final MetricsContext nextStats : ioStats.values()) {
+		for(final MetricsContext nextStats : metricsByIoType.values()) {
 			nextStats.close();
 		}
-		ioStats.clear();
+		metricsByIoType.clear();
 
 		Loggers.MSG.debug("{}: closed the load controller", getName());
 	}

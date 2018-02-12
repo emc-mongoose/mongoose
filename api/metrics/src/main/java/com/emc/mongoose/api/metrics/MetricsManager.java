@@ -252,7 +252,7 @@ implements Coroutine {
 	
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException {
+	throws InterruptedException {
 		if(isStarted() || isShutdown()) {
 			state.wait(timeUnit.toMillis(timeout));
 		}

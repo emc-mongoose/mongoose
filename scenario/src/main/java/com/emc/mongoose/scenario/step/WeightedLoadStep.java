@@ -134,7 +134,7 @@ extends ConfigurableStepBase {
 					.setItemType(itemType)
 					.setLoadConfig(loadConfig)
 					.setLimitConfig(limitConfig)
-					.setStorageDrivers(drivers)
+					//.setStorageDriver(drivers)
 					.setAuthConfig(storageConfig.getAuthConfig())
 					.build();
 				

@@ -59,7 +59,7 @@ extends LogMessageBase {
 			.append('"').append(FMT_DATE_ISO8601.format(new Date())).append('"').append(',')
 			.append(metricsCtx.getIoType().name()).append(',')
 			.append(metricsCtx.getConcurrency()).append(',')
-			.append(metricsCtx.getDriverCount()).append(',')
+			.append(metricsCtx.getNodeCount()).append(',')
 			.append(snapshot.getActualConcurrencyLast()).append(',')
 			.append(snapshot.getActualConcurrencyMean()).append(',')
 			.append(snapshot.getSuccCount()).append(',')

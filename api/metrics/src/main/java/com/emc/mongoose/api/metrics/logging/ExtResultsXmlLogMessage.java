@@ -48,7 +48,7 @@ extends LogMessageBase {
 		final int ioTypeCode = metricsCtx.getIoType().ordinal();
 		buffer.append("operation=\"").append(IoType.values()[ioTypeCode].name()).append("\" ");
 		final int concurrency = metricsCtx.getConcurrency();
-		final int driversCount = metricsCtx.getDriverCount();
+		final int driversCount = metricsCtx.getNodeCount();
 		buffer.append("threads=\"").append(concurrency * driversCount).append("\" ");
 		buffer.append("RequestThreads=\"").append(concurrency).append("\" ");
 		buffer.append("clients=\"").append(driversCount).append("\" ");

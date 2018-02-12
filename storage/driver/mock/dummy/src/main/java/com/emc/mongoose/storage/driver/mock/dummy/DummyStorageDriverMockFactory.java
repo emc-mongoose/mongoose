@@ -25,7 +25,7 @@ implements StorageDriverFactory<I, O, T> {
 	public final T create(
 		final String stepId, final DataInput dataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
-	) throws OmgShootMyFootException, InterruptedException {
+	) throws OmgShootMyFootException {
 		return (T) new DummyStorageDriverMock<>(
 			stepId, dataInput, loadConfig, storageConfig, verifyFlag
 		);

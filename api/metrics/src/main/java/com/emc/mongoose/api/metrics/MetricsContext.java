@@ -33,7 +33,7 @@ extends Closeable {
 	
 	String getStepId();
 	IoType getIoType();
-	int getDriverCount();
+	int getNodeCount();
 	int getConcurrency();
 	int getConcurrencyThreshold();
 	int getActualConcurrency();

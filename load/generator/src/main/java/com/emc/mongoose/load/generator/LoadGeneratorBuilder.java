@@ -35,9 +35,7 @@ public interface LoadGeneratorBuilder<
 	
 	LoadGeneratorBuilder<I, O, T> setAuthConfig(final AuthConfig authConfig);
 	
-	LoadGeneratorBuilder<I, O, T> setStorageDrivers(
-		final List<StorageDriver<I, O>> storageDrivers
-	);
+	LoadGeneratorBuilder<I, O, T> setStorageDriver(StorageDriver<I, O> storageDriver);
 	
 	LoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput);
 

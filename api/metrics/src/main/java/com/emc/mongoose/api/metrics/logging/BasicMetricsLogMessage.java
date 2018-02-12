@@ -66,7 +66,7 @@ extends LogMessageBase {
 		}
 		buffer
 			.append('-').append(metricsCtx.getConcurrency())
-			.append('x').append(metricsCtx.getDriverCount())
+			.append('x').append(metricsCtx.getNodeCount())
 			.append(": c=(").append(formatFixedWidth(snapshot.getActualConcurrencyMean(), 6))
 			.append("); n=(");
 		if(stdOutColorFlag) {

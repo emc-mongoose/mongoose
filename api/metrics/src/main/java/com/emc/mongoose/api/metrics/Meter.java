@@ -27,7 +27,7 @@ implements MeterMBean {
 		final Hashtable<String, String> props = new Hashtable<>();
 		props.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
 		props.put(KEY_LOAD_TYPE, metricsCtx.getIoType().name());
-		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.getDriverCount()));
+		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.getNodeCount()));
 		props.put(KEY_STORAGE_DRIVER_CONCURRENCY, Integer.toString(metricsCtx.getConcurrency()));
 		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.setMetricsListener(this);

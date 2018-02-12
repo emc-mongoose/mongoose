@@ -1,7 +1,6 @@
 package com.emc.mongoose.api.model.concurrent;
 
 import java.io.Closeable;
-import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -16,33 +15,28 @@ extends Closeable {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED, CLOSED
 	}
 
-	State getState()
-	throws RemoteException;
+	State getState();
 
 	void start()
-	throws IllegalStateException, RemoteException;
+	throws IllegalStateException;
 
-	boolean isStarted()
-	throws RemoteException;
+	boolean isStarted();
 	
 	void shutdown()
-	throws IllegalStateException, RemoteException;
+	throws IllegalStateException;
 	
-	boolean isShutdown()
-	throws RemoteException;
+	boolean isShutdown();
 	
 	void await()
-	throws InterruptedException, RemoteException;
+	throws InterruptedException;
 
 	boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException, RemoteException;
+	throws InterruptedException;
 	
 	void interrupt()
-	throws IllegalStateException, RemoteException;
+	throws IllegalStateException;
 	
-	boolean isInterrupted()
-	throws RemoteException;
+	boolean isInterrupted();
 	
-	boolean isClosed()
-	throws RemoteException;
+	boolean isClosed();
 }

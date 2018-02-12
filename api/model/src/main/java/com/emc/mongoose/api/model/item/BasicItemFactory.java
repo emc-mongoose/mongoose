@@ -1,7 +1,5 @@
 package com.emc.mongoose.api.model.item;
 
-import java.io.IOException;
-
 /**
  Created by kurila on 14.07.16.
  */
@@ -21,10 +19,5 @@ implements ItemFactory<I> {
 	@Override
 	public Class<I> getItemClass() {
 		return (Class<I>) BasicItem.class;
-	}
-
-	@Override
-	public void close()
-	throws IOException {
 	}
 }

@@ -4,6 +4,7 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformSnapshot;
+
 import com.emc.mongoose.api.model.io.IoType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -34,7 +35,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final String stepId;
 	private final IoType ioType;
 	private final IntSupplier actualConcurrencyGauge;
-	private final int driverCount;
+	private final int nodeCount;
 	private final int concurrency;
 	private final int thresholdConcurrency;
 	private final SizeInBytes itemDataSize;
@@ -51,7 +52,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 
 	public BasicMetricsContext(
 		final String stepId, final IoType ioType, final IntSupplier actualConcurrencyGauge,
-		final int driverCount, final int concurrency, final int thresholdConcurrency,
+		final int nodeCount, final int concurrency, final int thresholdConcurrency,
 		final SizeInBytes itemDataSize, final int updateIntervalSec, final boolean stdOutColorFlag,
 		final boolean avgPersistFlag, final boolean sumPersistFlag,
 		final boolean perfDbResultsFileFlag
@@ -59,7 +60,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.stepId = stepId;
 		this.ioType = ioType;
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		this.driverCount = driverCount;
+		this.nodeCount = nodeCount;
 		this.concurrency = concurrency;
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
 			thresholdConcurrency : Integer.MAX_VALUE;
@@ -208,8 +209,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final int getDriverCount() {
-		return driverCount;
+	public final int getNodeCount() {
+		return nodeCount;
 	}
 	//
 	@Override
@@ -323,7 +324,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new BasicMetricsContext(
-			stepId, ioType, actualConcurrencyGauge, driverCount, concurrency, 0, itemDataSize,
+			stepId, ioType, actualConcurrencyGauge, nodeCount, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);
@@ -365,7 +366,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	//
 	@Override
 	public final String toString() {
-		return "MetricsContext(" + ioType.name() + '-' + concurrency + 'x' + driverCount  + '@' +
+		return "MetricsContext(" + ioType.name() + '-' + concurrency + 'x' + nodeCount + '@' +
 			stepId + ")";
 	}
 	//

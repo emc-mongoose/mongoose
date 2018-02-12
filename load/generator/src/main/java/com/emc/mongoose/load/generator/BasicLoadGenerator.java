@@ -4,16 +4,13 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
 import com.github.akurilov.commons.concurrent.Throttle;
+import com.github.akurilov.commons.concurrent.WeightThrottle;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
 import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.OutputCoroutine;
-import com.github.akurilov.coroutines.RoundRobinOutputCoroutine;
 
-import com.github.akurilov.commons.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -51,7 +48,7 @@ implements LoadGenerator<I, O>, Coroutine {
 
 	private volatile WeightThrottle weightThrottle = null;
 	private volatile Throttle<Object> rateThrottle = null;
-	private volatile OutputCoroutine<O> ioTaskOutput = null;
+	private volatile Output<O> ioTaskOutput = null;
 	private volatile boolean recycleQueueFullState = false;
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean taskInputFinishFlag = false;
@@ -80,7 +77,7 @@ implements LoadGenerator<I, O>, Coroutine {
 		final Input<I> itemInput, final int batchSize, final long transferSizeEstimate,
 		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
 		final int recycleQueueSize, final boolean shuffleFlag
-	) throws OmgShootMyFootException {
+	) {
 		this.batchSize = batchSize;
 		this.itemInput = itemInput;
 		this.transferSizeEstimate = transferSizeEstimate;
@@ -115,14 +112,8 @@ implements LoadGenerator<I, O>, Coroutine {
 	}
 
 	@Override
-	public final void setOutputs(final List<? extends Output<O>> ioTaskOutputs) {
-		if(this.ioTaskOutput != null && !this.ioTaskOutput.isClosed()) {
-			try {
-				this.ioTaskOutput.close();
-			} catch(final IOException ignored) {
-			}
-		}
-		this.ioTaskOutput = new RoundRobinOutputCoroutine<>(SVC_EXECUTOR, ioTaskOutputs, batchSize);
+	public final void setOutput(final Output<O> ioTaskOutput) {
+		this.ioTaskOutput = ioTaskOutput;
 	}
 
 	@Override
@@ -334,9 +325,6 @@ implements LoadGenerator<I, O>, Coroutine {
 	protected void doStart()
 	throws IllegalStateException {
 		SVC_EXECUTOR.start(this);
-		if(ioTaskOutput != null) {
-			ioTaskOutput.start();
-		}
 	}
 
 	@Override
@@ -393,8 +381,6 @@ implements LoadGenerator<I, O>, Coroutine {
 		// I/O task builder is instantiated by the load generator builder which forgets it
 		// so the load generator should close it
 		ioTaskBuilder.close();
-		//
-		ioTaskOutput.close();
 	}
 	
 	@Override

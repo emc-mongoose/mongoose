@@ -53,7 +53,6 @@ implements Input<I> {
 	@Override
 	public final void close()
 	throws IOException {
-		itemFactory.close();
 		idInput.close();
 	}
 

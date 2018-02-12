@@ -2,9 +2,7 @@ package com.emc.mongoose.scenario;
 
 import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.scenario.step.ChainLoadStep;
-import com.emc.mongoose.scenario.step.LoadStep;
-import com.emc.mongoose.scenario.step.WeightedLoadStep;
+import com.emc.mongoose.scenario.sna.LoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -86,9 +84,7 @@ public interface ScriptEngineUtil {
 	 @param config the configuration
 	 */
 	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
-		se.put("ChainLoad", new ChainLoadStep(config));
 		se.put("Load", new LoadStep(config));
-		se.put("WeightedLoad", new WeightedLoadStep(config));
 	}
 
 	/**

@@ -136,7 +136,7 @@ extends ConfigurableStepBase {
 						.setItemType(itemType)
 						.setLoadConfig(loadConfig)
 						.setLimitConfig(sharedTestStepConfig.getLimitConfig())
-						.setStorageDrivers(drivers)
+						//.setStorageDriver(drivers)
 						.setAuthConfig(storageConfig.getAuthConfig())
 						.build();
 				} else {
@@ -146,7 +146,7 @@ extends ConfigurableStepBase {
 						.setItemType(itemType)
 						.setLoadConfig(loadConfig)
 						.setLimitConfig(sharedTestStepConfig.getLimitConfig())
-						.setStorageDrivers(drivers)
+						//.setStorageDriver(drivers)
 						.setAuthConfig(storageConfig.getAuthConfig())
 						.setItemInput(nextItemBuff)
 						.build();
@@ -196,13 +196,9 @@ extends ConfigurableStepBase {
 			LogUtil.exception(Level.WARN, e, "Failed to init the load generator");
 		}
 
-		try {
-			for(final LoadController nextController : loadChain) {
-				nextController.start();
-				Loggers.MSG.info("Load step \"{}\" started", nextController.getName());
-			}
-		} catch(final RemoteException e) {
-			LogUtil.exception(Level.WARN, e, "Unexpected failure while starting the controller");
+		for(final LoadController nextController : loadChain) {
+			nextController.start();
+			Loggers.MSG.info("Load step \"{}\" started", nextController.getName());
 		}
 
 		long timeRemainSec = timeLimitSec;
@@ -214,17 +210,13 @@ extends ConfigurableStepBase {
 			if(timeRemainSec > 0) {
 				tsStart = System.currentTimeMillis();
 				try {
-					try {
-						if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
-							Loggers.MSG.info("Load step \"{}\" done", controller.getName());
-						} else {
-							Loggers.MSG.info("Load step \"{}\" timeout", controller.getName());
-						}
-					} finally {
-						controller.interrupt();
+					if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
+						Loggers.MSG.info("Load step \"{}\" done", controller.getName());
+					} else {
+						Loggers.MSG.info("Load step \"{}\" timeout", controller.getName());
 					}
-				} catch(final RemoteException e) {
-					throw new AssertionError(e);
+				} finally {
+					controller.interrupt();
 				}
 				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
 			} else {

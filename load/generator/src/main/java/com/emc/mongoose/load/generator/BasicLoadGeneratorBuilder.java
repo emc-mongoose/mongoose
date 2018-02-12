@@ -79,7 +79,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private ItemType itemType;
 	private ItemFactory<I> itemFactory;
 	private AuthConfig authConfig;
-	private List<StorageDriver<I, O>> storageDrivers;
+	private StorageDriver<I, O> storageDriver;
 	private Input<I> itemInput = null;
 	private long sizeEstimate = 0;
 	private int batchSize;
@@ -122,10 +122,10 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setStorageDrivers(
-		final List<StorageDriver<I, O>> storageDrivers
+	public BasicLoadGeneratorBuilder<I, O, T> setStorageDriver(
+		final StorageDriver<I, O> storageDriver
 	) {
-		this.storageDrivers = storageDrivers;
+		this.storageDriver = storageDriver;
 		return this;
 	}
 	
@@ -308,14 +308,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		// adjust the storage drivers for the estimated transfer size
 		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
-			for(final StorageDriver<I, O> storageDriver : storageDrivers) {
-				try {
-					storageDriver.adjustIoBuffers(sizeEstimate, ioType);
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
-					);
-				}
+			try {
+				storageDriver.adjustIoBuffers(sizeEstimate, ioType);
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
+				);
 			}
 		}
 
@@ -447,8 +445,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				final String namingPrefix = namingConfig.getPrefix();
 				final int namingRadix = namingConfig.getRadix();
 				itemInput = new StorageItemInput<>(
-					storageDrivers.get(0), batchSize, itemFactory, itemInputPath, namingPrefix,
-					namingRadix
+					storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix, namingRadix
 				);
 			}
 		} else {

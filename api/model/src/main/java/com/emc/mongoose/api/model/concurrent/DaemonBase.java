@@ -94,7 +94,7 @@ implements Daemon {
 	
 	@Override
 	public final void await()
-	throws InterruptedException, RemoteException {
+	throws InterruptedException {
 		await(Long.MAX_VALUE, TimeUnit.SECONDS);
 	}
 	

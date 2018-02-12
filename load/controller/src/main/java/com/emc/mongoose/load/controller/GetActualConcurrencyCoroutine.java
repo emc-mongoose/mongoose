@@ -8,42 +8,29 @@ import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  Created by andrey on 22.08.17.
  */
-public class GetActualConcurrencySumCoroutine
+public class GetActualConcurrencyCoroutine
 extends ExclusiveCoroutineBase {
 
-	private final List<? extends StorageDriver> storageDrivers;
-	private final LongAdder tmpSum = new LongAdder();
+	private final StorageDriver storageDriver;
 
-	private volatile Iterator<? extends StorageDriver> it;
 	private volatile int lastValue = 0;
 
-	public GetActualConcurrencySumCoroutine(
+	public GetActualConcurrencyCoroutine(
 		final CoroutinesProcessor coroutinesProcessor,
-		final List<? extends StorageDriver> storageDrivers
+		final StorageDriver storageDriver
 	) {
 		super(coroutinesProcessor);
-		this.storageDrivers = storageDrivers;
-		this.it = storageDrivers.iterator();
+		this.storageDriver = storageDriver;
 	}
 
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
 		try {
-			if(!it.hasNext()) {
-				lastValue = (int) tmpSum.sumThenReset();
-				it = storageDrivers.iterator();
-			}
-			tmpSum.add(it.next().getActiveTaskCount());
-		} catch(final NoSuchElementException e) {
-			LogUtil.exception(Level.DEBUG, e, "Storage driver list is empty");
+			lastValue = storageDriver.getActiveTaskCount();
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				Level.DEBUG, e, "Failed to invoke the remote storage driver's method"

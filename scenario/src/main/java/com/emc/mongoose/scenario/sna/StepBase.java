@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Level;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,9 +44,11 @@ implements Step, Runnable {
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final Map<String, String> env;
-	protected final List<StepService> stepSvcs = new ArrayList<>();
-	protected boolean distributedFlag = false;
 	protected String id;
+
+	protected boolean distributedFlag = false;
+	protected List<StepService> stepSvcs = null;
+	protected Map<String, FileService> itemInputFileSvcs = null;
 
 	protected StepBase(
 		final Config baseConfig, final List<Map<String, Object>> stepConfigs,
@@ -96,7 +99,7 @@ implements Step, Runnable {
 				doStartLocal(actualConfig);
 			}
 		} catch(final Throwable cause) {
-			LogUtil.exception(Level.WARN, cause, "{} step failed", id);
+			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 	}
 
@@ -138,11 +141,11 @@ implements Step, Runnable {
 
 		final Function<String, StepService> resolveStepSvcPartialFunc = Function2
 			.partial1(this::resolveStepSvc, configSlices);
-		nodeAddrs
+		stepSvcs = nodeAddrs
 			.parallelStream()
 			.map(resolveStepSvcPartialFunc)
 			.filter(Objects::nonNull)
-			.forEach(stepSvcs::add);
+			.collect(Collectors.toList());
 	}
 
 	private StepService resolveStepSvc(
@@ -197,18 +200,52 @@ implements Step, Runnable {
 			stepSvcs
 				.parallelStream()
 				.forEach(StepService::stopStepSvc);
+		} else {
+			doStopLocal();
 		}
 	}
 
+	protected abstract void doStopLocal();
+
 	@Override
 	protected void doClose() {
+
 		if(distributedFlag) {
+
 			stepSvcs
 				.parallelStream()
 				.forEach(StepService::closeStepSvc);
+			stepSvcs.clear();
+			stepSvcs = null;
+
+			if(itemInputFileSvcs != null) {
+				itemInputFileSvcs
+					.keySet()
+					.parallelStream()
+					.forEach(
+						nodeAddrWithPort -> {
+							final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
+							try {
+								fileSvc.close();
+							} catch(final IOException e) {
+								try {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to close the file service \"{}\" @ {}",
+										fileSvc.getName(), nodeAddrWithPort
+									);
+								} catch(final RemoteException ignored) {
+								}
+							}
+						}
+					);
+			}
+		} else {
+			doCloseLocal();
 		}
-		stepSvcs.clear();
 	}
+
+	protected abstract void doCloseLocal();
 
 	protected abstract String getTypeName();
 
@@ -250,9 +287,9 @@ implements Step, Runnable {
 			final List<Item> itemsBuff = new ArrayList<>(batchSize);
 			final Map<String, StringBuilder> nodeItemsData = new HashMap<>(nodeCount);
 
-			final Map<String, FileService> fileSvcs = new HashMap<>(nodeCount);
+			itemInputFileSvcs = new HashMap<>(nodeCount);
 			final Function<String, Map<String, FileService>> resolveFileSvcsPartialFunc = Function3
-				.partial12(FileService::resolveFileSvcs, nodeItemsData, fileSvcs);
+				.partial12(FileService::resolveFileSvcs, nodeItemsData, itemInputFileSvcs);
 			nodeAddrs
 				.parallelStream()
 				.map(resolveFileSvcsPartialFunc);
@@ -267,7 +304,7 @@ implements Step, Runnable {
 				)
 			) {
 				final Function<String, String> writeItemDataPartialFunc = Function3
-					.partial12(FileService::writeItemData, nodeItemsData, fileSvcs);
+					.partial12(FileService::writeItemData, nodeItemsData, itemInputFileSvcs);
 				while(true) {
 					try {
 						n = itemInput.get((List) itemsBuff, batchSize);
@@ -296,7 +333,7 @@ implements Step, Runnable {
 				);
 			} finally {
 				final Function<String, String> setConfigSlicesItemInputFilePartialFunc = Function3
-					.partial12(Step::setConfigSlicesItemInputFile, configSlices, fileSvcs);
+					.partial12(Step::setConfigSlicesItemInputFile, configSlices, itemInputFileSvcs);
 				nodeAddrs
 					.parallelStream()
 					.map(setConfigSlicesItemInputFilePartialFunc);
