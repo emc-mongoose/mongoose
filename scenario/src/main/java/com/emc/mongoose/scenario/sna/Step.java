@@ -1,17 +1,12 @@
 package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
-import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.apache.logging.log4j.Level;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Map;
 
@@ -31,6 +26,13 @@ extends AsyncRunnable {
 	 */
 	String id()
 	throws RemoteException;
+
+	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
+		final Config configSlice = new Config(config);
+		// disable the distributed mode flag
+		configSlice.getTestConfig().getStepConfig().setDistributed(false);
+		return configSlice;
+	}
 
 	static String initConfigSlices(
 		final Config config, final Map<String, Config> configSlices, final String nodeAddrWithPort

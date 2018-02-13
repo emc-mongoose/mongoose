@@ -136,9 +136,7 @@ implements Step, Runnable {
 			);
 		}
 
-		final Map<String, Config> configSlices = new HashMap<>(nodeAddrs.size());
-		sliceConfig(actualConfig, nodeAddrs, configSlices);
-
+		final Map<String, Config> configSlices = sliceConfigs(actualConfig, nodeAddrs);
 		final Function<String, StepService> resolveStepSvcPartialFunc = Function2
 			.partial1(this::resolveStepSvc, configSlices);
 		stepSvcs = nodeAddrs
@@ -199,10 +197,25 @@ implements Step, Runnable {
 		if(distributedFlag) {
 			stepSvcs
 				.parallelStream()
-				.forEach(StepService::stopStepSvc);
+				.forEach(StepBase::stopStepSvc);
 		} else {
 			doStopLocal();
 		}
+	}
+
+	private static StepService stopStepSvc(final StepService stepSvc) {
+		try {
+			stepSvc.stop();
+		} catch(final Exception e) {
+			try {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to stop the step service \"{}\"",
+					stepSvc.getName()
+				);
+			} catch(final Exception ignored) {
+			}
+		}
+		return stepSvc;
 	}
 
 	protected abstract void doStopLocal();
@@ -214,7 +227,7 @@ implements Step, Runnable {
 
 			stepSvcs
 				.parallelStream()
-				.forEach(StepService::closeStepSvc);
+				.forEach(StepBase::closeStepSvc);
 			stepSvcs.clear();
 			stepSvcs = null;
 
@@ -245,6 +258,21 @@ implements Step, Runnable {
 		}
 	}
 
+	private static StepService closeStepSvc(final StepService stepSvc) {
+		try {
+			stepSvc.close();
+		} catch(final Exception e) {
+			try {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to close the step service \"{}\"",
+					stepSvc.getName()
+				);
+			} catch(final Exception ignored) {
+			}
+		}
+		return stepSvc;
+	}
+
 	protected abstract void doCloseLocal();
 
 	protected abstract String getTypeName();
@@ -266,13 +294,16 @@ implements Step, Runnable {
 
 	protected abstract StepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 
-	protected void sliceConfig(
-		final Config config, final List<String> nodeAddrs, final Map<String, Config> configSlices
-	) {
+	protected Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
 
-		nodeAddrs
+		final Map<String, Config> configSlices = nodeAddrs
 			.stream()
-			.map(Function3.partial12(Step::initConfigSlices, config, configSlices));
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					Function2.partial1(Step::initConfigSlice, config)
+				)
+			);
 
 		final ItemConfig itemConfig = config.getItemConfig();
 
@@ -339,5 +370,7 @@ implements Step, Runnable {
 					.map(setConfigSlicesItemInputFilePartialFunc);
 			}
 		}
+
+		return configSlices;
 	}
 }

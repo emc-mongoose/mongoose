@@ -39,16 +39,16 @@ ext {
 	depVersion = [
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
-		disruptor : "3.3.7",
-		jackson : "2.9.3",
+		disruptor : "3.3.8",
+		jackson : "2.9.4",
 		javaCommons : "[1.4.4,)",
 		javaCoroutines : "[1.1.3,)",
 		javassist : "3.22.0-GA",
-		slf4j : "1.8.0-beta0",
-		log4j : "2.10.0",
+		slf4j : "1.8.0-beta1",
+		log4j : "2.8.2",
 		metrics : "4.0.2",
 		nagaina : "[3.6.10,)",
-		netty : "4.1.20.Final",
+		netty : "4.1.21.Final",
 		nettyConnectionPool : "[0.1.6,)"
 	]
 
