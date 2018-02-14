@@ -34,16 +34,6 @@ extends AsyncRunnable {
 		return configSlice;
 	}
 
-	static String initConfigSlices(
-		final Config config, final Map<String, Config> configSlices, final String nodeAddrWithPort
-	) {
-		final Config configSlice = new Config(config);
-		// disable the distributed mode flag
-		configSlice.getTestConfig().getStepConfig().setDistributed(false);
-		configSlices.put(nodeAddrWithPort, configSlice);
-		return nodeAddrWithPort;
-	}
-
 	static String setConfigSlicesItemInputFile(
 		final Map<String, Config> configSlices, final Map<String, FileService> fileSvcs,
 		final String nodeAddrWithPort

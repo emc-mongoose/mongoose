@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.TimeUnit;
 
 public class LoadStep
 extends StepBase {
@@ -50,18 +49,13 @@ extends StepBase {
 	private volatile StorageDriver driver = null;
 	private volatile LoadController controller = null;
 	private volatile DataInput dataInput = null;
-	private volatile long timeLimitSec = Long.MAX_VALUE;
-	private volatile long tsStart;
 
 	public LoadStep(final Config baseConfig) {
-		this(baseConfig, null, null);
+		this(baseConfig, null);
 	}
 
-	protected LoadStep(
-		final Config baseConfig, final List<Map<String, Object>> stepConfigs,
-		final Map<String, String> env
-	) {
-		super(baseConfig, stepConfigs, env);
+	protected LoadStep(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
+		super(baseConfig, stepConfigs);
 	}
 
 	@Override
@@ -130,11 +124,6 @@ extends StepBase {
 			throw new IllegalStateException("Failed to initialize the load generator");
 		}
 
-		long t = limitConfig.getTime();
-		if(t > 0) {
-			timeLimitSec = t;
-		}
-
 		final Map<LoadGenerator, StorageDriver> driverByGenerator = new HashMap<>();
 		driverByGenerator.put(generator, driver);
 		final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>();
@@ -168,27 +157,10 @@ extends StepBase {
 		}
 
 		controller.start();
-		tsStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 	}
 
 	@Override
 	protected void doStopLocal() {
-
-		final long t = tsStart - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-		if(t < 0) {
-			Loggers.ERR.warn(
-				"Looks like stopped earlier than started, won't account the elapsed time"
-			);
-		} else if(t > timeLimitSec) {
-			Loggers.MSG.warn(
-				"Looks like the elapsed time ({}[s]) is more than the limit ({}[s]), won't resume",
-				t, timeLimitSec
-			);
-			timeLimitSec = 0;
-		} else {
-			timeLimitSec -= t;
-		}
-
 		controller.interrupt();
 		generator.interrupt();
 		driver.interrupt();
@@ -251,6 +223,6 @@ extends StepBase {
 
 	@Override
 	protected StepBase copyInstance(final List<Map<String, Object>> stepConfigs) {
-		return new LoadStep(baseConfig, stepConfigs, env);
+		return new LoadStep(baseConfig, stepConfigs);
 	}
 }

@@ -88,7 +88,7 @@ implements AsyncRunnable {
 	}
 
 	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		t = System.currentTimeMillis();

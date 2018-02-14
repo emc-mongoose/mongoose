@@ -15,6 +15,7 @@ import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
+import com.emc.mongoose.ui.log.Loggers;
 import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,20 +45,18 @@ implements Step, Runnable {
 
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
-	protected final Map<String, String> env;
-	protected String id;
 
-	protected boolean distributedFlag = false;
-	protected List<StepService> stepSvcs = null;
-	protected Map<String, FileService> itemInputFileSvcs = null;
+	private volatile Config actualConfig = null;
+	private String id = null;
+	private boolean distributedFlag = false;
+	private List<StepService> stepSvcs = null;
+	private Map<String, FileService> itemInputFileSvcs = null;
+	private volatile long timeLimitSec = Long.MAX_VALUE;
+	private volatile long tsStart = -1;
 
-	protected StepBase(
-		final Config baseConfig, final List<Map<String, Object>> stepConfigs,
-		final Map<String, String> env
-	) {
+	protected StepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
 		this.baseConfig = baseConfig;
 		this.stepConfigs = stepConfigs;
-		this.env = env;
 	}
 
 	@Override
@@ -84,7 +84,8 @@ implements Step, Runnable {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		final Config actualConfig = initConfig();
+
+		actualConfig = initConfig();
 		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
 		final String stepId = stepConfig.getId();
 		try(
@@ -92,27 +93,39 @@ implements Step, Runnable {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
+
 			distributedFlag = stepConfig.getDistributed();
 			if(distributedFlag) {
 				doStartRemote(actualConfig, stepConfig.getNodeConfig());
 			} else {
 				doStartLocal(actualConfig);
 			}
+
+			long t = stepConfig.getLimitConfig().getTime();
+			if(t > 0) {
+				timeLimitSec = t;
+			}
+			tsStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 	}
 
 	protected Config initConfig() {
-		final String autoStepId = getTypeName() + "_" + LogUtil.getDateTimeStamp() + "_"
-			+ hashCode();
+		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp()
+			+ "_" + hashCode();
 		final Config config = new Config(baseConfig);
-		if(stepConfigs != null && stepConfigs.size() > 0) {
+		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+		if(stepConfigs == null || stepConfigs.size() == 0) {
+			if(stepConfig.getIdTmp()) {
+				stepConfig.setId(autoStepId);
+			}
+		} else {
 			for(final Map<String, Object> nextStepConfig: stepConfigs) {
 				config.apply(nextStepConfig, autoStepId);
 			}
 		}
-		id = config.getTestConfig().getStepConfig().getId();
+		id = stepConfig.getId();
 		return config;
 	}
 
@@ -194,12 +207,28 @@ implements Step, Runnable {
 
 	@Override
 	protected void doStop() {
+
 		if(distributedFlag) {
 			stepSvcs
 				.parallelStream()
 				.forEach(StepBase::stopStepSvc);
 		} else {
 			doStopLocal();
+		}
+
+		final long t = tsStart - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+		if(t < 0) {
+			Loggers.ERR.warn(
+				"Stopped earlier than started, won't account the elapsed time"
+			);
+		} else if(t > timeLimitSec) {
+			Loggers.MSG.warn(
+				"The elapsed time ({}[s]) is more than the limit ({}[s]), won't resume",
+				t, timeLimitSec
+			);
+			timeLimitSec = 0;
+		} else {
+			timeLimitSec -= t;
 		}
 	}
 
