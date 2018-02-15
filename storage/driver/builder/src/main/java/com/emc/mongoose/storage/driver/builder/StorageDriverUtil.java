@@ -31,7 +31,6 @@ public interface StorageDriverUtil {
 					.setItemConfig(itemConfig)
 					.setContentSource(contentSrc)
 					.setLoadConfig(loadConfig)
-					.setAverageConfig(avgMetricsConfig)
 					.setStorageConfig(storageConfig)
 					.build()
 			);

@@ -25,9 +25,6 @@ public interface StorageDriverBuilder<
 	LoadConfig getLoadConfig()
 	throws RemoteException;
 
-	AverageConfig getAverageConfig()
-	throws RemoteException;
-
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
@@ -41,9 +38,6 @@ public interface StorageDriverBuilder<
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
-	throws RemoteException;
-
-	StorageDriverBuilder<I, O, T> setAverageConfig(final AverageConfig avgConfig)
 	throws RemoteException;
 
 	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)

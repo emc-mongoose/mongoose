@@ -9,12 +9,9 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 
 public abstract class AsyncRunnableBase
 implements AsyncRunnable {
-
-	private static final Logger LOG = Logger.getLogger(AsyncRunnableBase.class.getName());
 
 	private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 	private final Object state = new Object();
@@ -88,19 +85,19 @@ implements AsyncRunnable {
 	}
 
 	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
+	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		t = System.currentTimeMillis();
-		while(System.currentTimeMillis() - t < timeOutMilliSec) {
-			if(!isStarted()) {
-				return true;
+		while(isStarted()) {
+			if(System.currentTimeMillis() - t >= timeOutMilliSec) {
+				return false;
 			}
 			synchronized(state) {
 				state.wait(100);
 			}
 		}
-		return false;
+		return true;
 	}
 
 	@Override
@@ -113,13 +110,6 @@ implements AsyncRunnable {
 		// then close actually
 		doClose();
 		stateRef.set(null);
-		synchronized(state) {
-			state.notifyAll();
-		}
-	}
-
-	protected final void doFinish() {
-		stateRef.set(FINISHED);
 		synchronized(state) {
 			state.notifyAll();
 		}

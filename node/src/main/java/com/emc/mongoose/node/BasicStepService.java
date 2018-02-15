@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public final class BasicStepService
 extends ServiceBase
@@ -81,5 +82,15 @@ implements StepService {
 	public final String id()
 	throws RemoteException {
 		return step.id();
+	}
+
+	@Override
+	public boolean await(final long timeout, final TimeUnit timeUnit)
+	throws IllegalStateException, InterruptedException {
+		try {
+			return step.await(timeout, timeUnit);
+		} catch(final RemoteException ignored) {
+		}
+		return false;
 	}
 }

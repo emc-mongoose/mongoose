@@ -12,7 +12,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.storage.driver.base.StorageDriverFactory;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
 import com.emc.mongoose.ui.log.Loggers;
@@ -33,7 +32,6 @@ public class BasicStorageDriverBuilder<
 	private DataInput contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
-	private AverageConfig avgMetricsConfig;
 	private StorageConfig storageConfig;
 
 	protected final String getStepId() {
@@ -48,11 +46,6 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public LoadConfig getLoadConfig() {
 		return loadConfig;
-	}
-
-	@Override
-	public AverageConfig getAverageConfig() {
-		return avgMetricsConfig;
 	}
 
 	@Override
@@ -81,14 +74,6 @@ public class BasicStorageDriverBuilder<
 	@Override
 	public BasicStorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
-		return this;
-	}
-
-	@Override
-	public BasicStorageDriverBuilder<I, O, T> setAverageConfig(
-		final AverageConfig avgMetricsConfig
-	) {
-		this.avgMetricsConfig = avgMetricsConfig;
 		return this;
 	}
 

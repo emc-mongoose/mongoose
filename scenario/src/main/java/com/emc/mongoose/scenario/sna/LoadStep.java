@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 public class LoadStep
 extends StepBase {
@@ -59,6 +60,15 @@ extends StepBase {
 	}
 
 	@Override
+	protected boolean awaitLocal(final long timeout, final TimeUnit timeUnit)
+	throws IllegalStateException, InterruptedException {
+		if(controller == null) {
+			throw new IllegalStateException("Load controller is null");
+		}
+		return controller.await(timeout, timeUnit);
+	}
+
+	@Override
 	protected void doStartLocal(final Config actualConfig) {
 
 		final ItemConfig itemConfig = actualConfig.getItemConfig();
@@ -67,7 +77,6 @@ extends StepBase {
 		final TestConfig testConfig = actualConfig.getTestConfig();
 		final OutputConfig outputConfig = actualConfig.getOutputConfig();
 
-		final AverageConfig avgMetricsConfig = outputConfig.getMetricsConfig().getAverageConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
 		final StepConfig stepConfig = testConfig.getStepConfig();
 
@@ -99,7 +108,6 @@ extends StepBase {
 				.setItemConfig(itemConfig)
 				.setContentSource(dataInput)
 				.setLoadConfig(loadConfig)
-				.setAverageConfig(avgMetricsConfig)
 				.setStorageConfig(storageConfig)
 				.build();
 		} catch(final OmgShootMyFootException e) {
@@ -162,8 +170,6 @@ extends StepBase {
 	@Override
 	protected void doStopLocal() {
 		controller.interrupt();
-		generator.interrupt();
-		driver.interrupt();
 	}
 
 	@Override

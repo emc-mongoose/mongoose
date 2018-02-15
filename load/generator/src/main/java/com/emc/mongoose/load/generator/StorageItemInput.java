@@ -1,8 +1,8 @@
 package com.emc.mongoose.load.generator;
 
 import com.github.akurilov.commons.io.collection.BufferingInputBase;
-import com.emc.mongoose.api.model.io.task.IoTask;
 
+import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.DataItemFactory;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
@@ -71,5 +71,12 @@ extends BufferingInputBase<I> {
 	throws IOException {
 		super.reset();
 		poisonedFlag = false;
+	}
+
+	@Override
+	public final void close()
+	throws IOException {
+		super.close();
+		storageDriver.close();
 	}
 }
