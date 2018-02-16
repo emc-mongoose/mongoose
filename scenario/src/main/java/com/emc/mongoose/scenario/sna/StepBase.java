@@ -18,6 +18,7 @@ import com.emc.mongoose.ui.config.item.data.DataConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
+import com.emc.mongoose.ui.config.item.output.OutputConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -528,9 +529,10 @@ implements Step, Runnable {
 										try {
 											fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
 											fileSvc.closeFile();
+											final String filePath = fileSvc.filePath();
 											Loggers.MSG.info(
 												"Use temporary remote item output file \"{}\" @ {}",
-												fileSvc.filePath(), fileSvc
+												filePath, fileSvc
 											);
 										} catch(final IOException ignored) {
 										}
@@ -541,6 +543,23 @@ implements Step, Runnable {
 								}
 							)
 					)
+				);
+			itemInputFileSvcs
+				.keySet()
+				.stream()
+				.forEach(
+					nodeAddrWithPort -> {
+						final OutputConfig itemOutputConfig = configSlices
+							.get(nodeAddrWithPort).getItemConfig().getOutputConfig();
+						itemOutputConfig.setFile(null);
+						final FileService fileSvc = itemOutputFileSvcs.get(nodeAddrWithPort);
+						if(fileSvc != null) {
+							try {
+								itemOutputConfig.setFile(fileSvc.filePath());
+							} catch(final RemoteException ignored) {
+							}
+						}
+					}
 				);
 		}
 
