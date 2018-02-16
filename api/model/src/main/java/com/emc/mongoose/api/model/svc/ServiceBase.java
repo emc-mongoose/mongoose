@@ -16,7 +16,7 @@ implements Service {
 	}
 
 	@Override
-	public final int getRegistryPort()
+	public final int registryPort()
 	throws RemoteException {
 		return port;
 	}
@@ -32,7 +32,7 @@ implements Service {
 		try {
 			ServiceUtil.close(this);
 		} catch(final MalformedURLException e) {
-			throw new RemoteException("Failed to stop the service " + getName(), e);
+			throw new RemoteException("Failed to stop the service " + name(), e);
 		}
 	}
 }

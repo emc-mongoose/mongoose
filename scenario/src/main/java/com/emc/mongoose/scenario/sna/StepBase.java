@@ -4,7 +4,6 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
@@ -13,18 +12,12 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.load.generator.StorageItemInput;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
-import com.emc.mongoose.storage.driver.builder.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.item.data.DataConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.OutputConfig;
-import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -33,7 +26,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.commons.func.Function2;
-import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 
@@ -43,13 +35,17 @@ import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -314,7 +310,7 @@ implements Step, Runnable {
 			try {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to stop the step service \"{}\"",
-					stepSvc.getName()
+					stepSvc.name()
 				);
 			} catch(final Exception ignored) {
 			}
@@ -326,36 +322,89 @@ implements Step, Runnable {
 
 	@Override
 	protected void doClose() {
-
 		if(distributedFlag) {
-
-			stepSvcs
-				.parallelStream()
-				.forEach(StepBase::closeStepSvc);
-			stepSvcs.clear();
-			stepSvcs = null;
-
-			if(itemInputFileSvcs != null) {
-				itemInputFileSvcs
-					.entrySet()
-					.parallelStream()
-					.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
-			}
+			doCloseRemote();
 		} else {
 			doCloseLocal();
 		}
 	}
 
-	private static StepService closeStepSvc(final StepService stepSvc) {
-		try {
-			stepSvc.close();
-		} catch(final Exception e) {
-			try {
+	private void doCloseRemote() {
+
+		stepSvcs
+			.parallelStream()
+			.forEach(StepBase::closeStepSvc);
+		stepSvcs.clear();
+		stepSvcs = null;
+
+		if(itemInputFileSvcs != null) {
+			itemInputFileSvcs
+				.entrySet()
+				.parallelStream()
+				.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
+		}
+
+		if(itemOutputFileSvcs != null) {
+			final String itemOutputFile = actualConfig
+				.getItemConfig().getOutputConfig().getFile();
+			Loggers.MSG.info(
+				"Transferring the items output data from the remote nodes to the local file \"{}\"",
+				itemOutputFile
+			);
+			try(
+				final OutputStream out = Files.newOutputStream(
+					Paths.get(itemOutputFile), FileService.WRITE_OPEN_OPTIONS
+				)
+			) {
+				itemOutputFileSvcs
+					.values()
+					.parallelStream()
+					.filter(Objects::nonNull)
+					.forEach(
+						fileSvc -> {
+							try {
+								fileSvc.open(FileService.READ_OPTIONS);
+								byte buff[];
+								while(true) {
+									buff = fileSvc.read();
+									synchronized(out) {
+										out.write(buff);
+									}
+								}
+							} catch(final EOFException e) {
+							} catch(final IOException e) {
+								LogUtil.exception(
+									Level.WARN, e, "Remote items output file transfer failure"
+								);
+							} finally {
+								try {
+									fileSvc.close();
+								} catch(final IOException ignored) {
+								}
+							}
+						}
+					);
+			} catch(final IOException e) {
 				LogUtil.exception(
-					Level.WARN, e, "Failed to close the step service \"{}\"",
-					stepSvc.getName()
+					Level.ERROR, e, "Failed to open the local file \"{}\" for the items output",
+					itemOutputFile
 				);
-			} catch(final Exception ignored) {
+			}
+		}
+	}
+
+	private static StepService closeStepSvc(final StepService stepSvc) {
+		if(stepSvc != null) {
+			try {
+				stepSvc.close();
+			} catch(final Exception e) {
+				try {
+					LogUtil.exception(
+						Level.WARN, e, "Failed to close the step service \"{}\"",
+						stepSvc.name()
+					);
+				} catch(final Exception ignored) {
+				}
 			}
 		}
 		return stepSvc;
@@ -364,15 +413,17 @@ implements Step, Runnable {
 	private static FileService closeFileSvc(
 		final FileService fileSvc, final String nodeAddrWithPort
 	) {
-		try {
-			fileSvc.close();
-		} catch(final IOException e) {
+		if(fileSvc != null) {
 			try {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to close the file service \"{}\" @ {}",
-					fileSvc.getName(), nodeAddrWithPort
-				);
-			} catch(final RemoteException ignored) {
+				fileSvc.close();
+			} catch(final IOException e) {
+				try {
+					LogUtil.exception(
+						Level.WARN, e, "Failed to close the file service \"{}\" @ {}",
+						fileSvc.name(), nodeAddrWithPort
+					);
+				} catch(final RemoteException ignored) {
+				}
 			}
 		}
 		return fileSvc;
@@ -399,6 +450,46 @@ implements Step, Runnable {
 
 	protected abstract StepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 
+	private static Optional<FileService> resolveFileService(
+		final String nodeAddrWithPort, final String path
+	) {
+		try {
+			return FileManagerService
+				.resolve(nodeAddrWithPort)
+				.map(
+					fileMgrSvc -> {
+						try {
+							return fileMgrSvc.createFileService(path);
+						} catch(final IOException e) {
+							LogUtil.exception(
+								Level.ERROR, e, "Failed to create the remote file service @ {}",
+								nodeAddrWithPort
+							);
+						}
+						return null;
+					}
+				)
+				.map(
+					fileSvcName -> {
+						try {
+							return ServiceUtil.resolve(nodeAddrWithPort, fileSvcName);
+						} catch(final IOException | URISyntaxException | NotBoundException e) {
+							LogUtil.exception(
+								Level.ERROR, e, "Failed to resolve the file service \"{}\" @ {}",
+								fileSvcName, nodeAddrWithPort
+							);
+						}
+						return null;
+					}
+				);
+		} catch(final RemoteException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to resolve the file manager service @ {}", nodeAddrWithPort
+			);
+			return Optional.empty();
+		}
+	}
+
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
 
 		final Map<String, Config> configSlices = nodeAddrs
@@ -420,11 +511,37 @@ implements Step, Runnable {
 			LogUtil.exception(Level.WARN, e, "Failed to use the item input");
 		}
 
-		// slice an item output (if any configured)
+		// item output file (if any)
 		final String itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
-			itemOutputFileSvcs = new HashMap<>(nodeAddrs.size());
-
+			itemOutputFileSvcs = nodeAddrs
+				.parallelStream()
+				.collect(
+					Collectors.toMap(
+						Function.identity(),
+						Function2
+							.partial2(StepBase::resolveFileService, null)
+							.andThen(
+								optionalFileSvc -> {
+									if(optionalFileSvc.isPresent()) {
+										final FileService fileSvc = optionalFileSvc.get();
+										try {
+											fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
+											fileSvc.closeFile();
+											Loggers.MSG.info(
+												"Use temporary remote item output file \"{}\" @ {}",
+												fileSvc.filePath(), fileSvc
+											);
+										} catch(final IOException ignored) {
+										}
+										return fileSvc;
+									} else {
+										return null;
+									}
+								}
+							)
+					)
+				);
 		}
 
 		return configSlices;
@@ -496,17 +613,38 @@ implements Step, Runnable {
 
 		final int nodeCount = nodeAddrs.size();
 		final List<Item> itemsBuff = new ArrayList<>(batchSize);
-		final Map<String, StringBuilder> nodeItemsData = new HashMap<>(nodeCount);
+		final Map<String, StringBuilder> nodeItemsData = nodeAddrs
+			.stream()
+			.collect(Collectors.toMap(Function.identity(), StringBuilder::new));
 
-		itemInputFileSvcs = new HashMap<>(nodeCount);
-		final Function<String, Map<String, FileService>> resolveFileSvcsPartialFunc = Function3
-			.partial12(FileService::resolveFileSvcs, nodeItemsData, itemInputFileSvcs);
-		nodeAddrs
+		itemInputFileSvcs = nodeAddrs
 			.parallelStream()
-			.map(resolveFileSvcsPartialFunc);
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					Function2
+						.partial2(StepBase::resolveFileService, null)
+						.andThen(
+							optionalFileSvc -> {
+								if(optionalFileSvc.isPresent()) {
+									final FileService fileSvc = optionalFileSvc.get();
+									try {
+										optionalFileSvc.get().open(FileService.WRITE_OPEN_OPTIONS);
+									} catch(final IOException e) {
+										LogUtil.exception(
+											Level.WARN, e,
+											"Failed to open the remote file for writing"
+										);
+									}
+									return fileSvc;
+								} else {
+									return null;
+								}
+							}
+						)
+				)
+			);
 
-		final Function<String, String> writeItemDataPartialFunc = Function3
-			.partial12(FileService::writeItemData, nodeItemsData, itemInputFileSvcs);
 		int n;
 		while(true) {
 			try {
@@ -523,16 +661,64 @@ implements Step, Runnable {
 				}
 				nodeAddrs
 					.parallelStream()
-					.map(writeItemDataPartialFunc);
+					.forEach(
+						nodeAddrWithPort -> {
+							final StringBuilder buff = nodeItemsData.get(nodeAddrWithPort);
+							final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
+							if(fileSvc != null) {
+								try {
+									fileSvc.write(buff.toString().getBytes());
+									buff.setLength(0);
+								} catch(final IOException e) {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to write the items input data to the remote "
+											+ "file @ {}",
+										nodeAddrWithPort
+									);
+								}
+							}
+						}
+					);
 			} else {
 				break;
 			}
 		}
 
-		final Function<String, String> setConfigSlicesItemInputFilePartialFunc = Function3
-			.partial12(Step::setConfigSlicesItemInputFile, configSlices, itemInputFileSvcs);
 		nodeAddrs
 			.parallelStream()
-			.map(setConfigSlicesItemInputFilePartialFunc);
+			.map(itemInputFileSvcs::get)
+			.filter(Objects::nonNull)
+			.forEach(
+				fileSvc -> {
+					try{
+						fileSvc.closeFile();
+					} catch(final IOException e) {
+						LogUtil.exception(Level.DEBUG, e, "Failed to close the remote file");
+					}
+				}
+			);
+
+		nodeAddrs
+			.parallelStream()
+			.forEach(
+				nodeAddrWithPort -> {
+					final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
+					if(fileSvc != null) {
+						try {
+							configSlices
+								.get(nodeAddrWithPort)
+								.getItemConfig()
+								.getInputConfig()
+								.setFile(fileSvc.filePath());
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								Level.WARN, e, "Failed to invoke the file service \"{}\" call @ {}",
+								fileSvc, nodeAddrWithPort
+							);
+						}
+					}
+				}
+			);
 	}
 }

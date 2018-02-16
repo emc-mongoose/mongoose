@@ -5,41 +5,52 @@ import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZ
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileService;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Paths;
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
 
 public final class BasicFileService
 extends ServiceBase
 implements FileService {
 
-	private final FileChannel fileChannel;
-	private final String filePath;
+	private volatile FileChannel fileChannel = null;
+	private volatile String filePath = null;
 
 	public BasicFileService(final String filePath, final int port)
 	throws IOException {
 		super(port);
 		if(filePath == null) {
 			final File tmpFile = File.createTempFile("mongoose.node.", ".tmp");
-			this.filePath = SVC_NAME_PREFIX + tmpFile.getAbsolutePath();
-			this.fileChannel = FileChannel.open(tmpFile.toPath(), WRITE, TRUNCATE_EXISTING);
+			this.filePath = tmpFile.getPath();
 		} else {
-			this.filePath = SVC_NAME_PREFIX + filePath;
-			this.fileChannel = FileChannel.open(Paths.get(filePath), READ, NOFOLLOW_LINKS);
+			this.filePath = filePath;
 		}
+	}
+
+	@Override
+	public final void open(final OpenOption[] openOptions)
+	throws IOException {
+		if(fileChannel != null) {
+			throw new IllegalStateException("File \"" + filePath + "\" is already open");
+		}
+		this.fileChannel = FileChannel.open(Paths.get(filePath), openOptions);
 	}
 
 	@Override
 	public final byte[] read()
 	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
 		final long remainingSize = fileChannel.size() - fileChannel.position();
+		if(remainingSize <= 0) {
+			throw new EOFException();
+		}
 		final int buffSize = (int) Math.min(REUSABLE_BUFF_SIZE_MAX, remainingSize);
 		if(buffSize > 0) {
 			final ByteBuffer bb = ByteBuffer.allocate(buffSize);
@@ -66,6 +77,9 @@ implements FileService {
 	@Override
 	public final void write(final byte[] buff)
 	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
 		final ByteBuffer bb = ByteBuffer.wrap(buff);
 		int n = 0;
 		while(n < buff.length) {
@@ -74,19 +88,73 @@ implements FileService {
 	}
 
 	@Override
-	public final String getFilePath() {
+	public final long position()
+	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
+		return fileChannel.position();
+	}
+
+	@Override
+	public final void position(final long newPosition)
+	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
+		fileChannel.position(newPosition);
+	}
+
+	@Override
+	public final long size()
+	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
+		return fileChannel.size();
+	}
+
+	@Override
+	public final void truncate(final long size)
+	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
+		fileChannel.truncate(size);
+	}
+
+	@Override
+	public final void flush()
+	throws IOException {
+		if(fileChannel == null) {
+			throw new IllegalStateException();
+		}
+		fileChannel.force(true);
+	}
+
+	@Override
+	public final void closeFile()
+	throws IOException {
+		if(fileChannel != null) {
+			fileChannel.close();
+			fileChannel = null;
+		}
+	}
+
+	@Override
+	public final String filePath() {
 		return filePath;
 	}
 
 	@Override
-	public final String getName() {
-		return SVC_NAME_PREFIX + filePath;
+	public final String name() {
+		return SVC_NAME_PREFIX + (filePath.startsWith("/") ? ("/" + filePath) : filePath);
 	}
 
 	@Override
 	protected final void doClose()
 	throws IOException {
-		fileChannel.close();
+		closeFile();
 		Files.delete(Paths.get(filePath));
 	}
 }

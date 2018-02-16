@@ -2,10 +2,6 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.item.input.InputConfig;
-import com.emc.mongoose.ui.log.LogUtil;
-
-import org.apache.logging.log4j.Level;
 
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -28,29 +24,12 @@ extends AsyncRunnable {
 	throws RemoteException;
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
+
 		final Config configSlice = new Config(config);
+
 		// disable the distributed mode flag
 		configSlice.getTestConfig().getStepConfig().setDistributed(false);
-		return configSlice;
-	}
 
-	static String setConfigSlicesItemInputFile(
-		final Map<String, Config> configSlices, final Map<String, FileService> fileSvcs,
-		final String nodeAddrWithPort
-	) {
-		final FileService fileSvc = fileSvcs.get(nodeAddrWithPort);
-		final InputConfig inputConfigSlice = configSlices
-			.get(nodeAddrWithPort)
-			.getItemConfig()
-			.getInputConfig();
-		try {
-			inputConfigSlice.setFile(fileSvc.getFilePath());
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				Level.WARN, e, "Failed to invoke the remote method @{}",
-				nodeAddrWithPort
-			);
-		}
-		return nodeAddrWithPort;
+		return configSlice;
 	}
 }

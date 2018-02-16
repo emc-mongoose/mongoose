@@ -17,7 +17,7 @@ implements StepManagerService {
 	}
 
 	@Override
-	public final String getName() {
+	public final String name() {
 		return SVC_NAME;
 	}
 
@@ -37,7 +37,7 @@ implements StepManagerService {
 	throws RemoteException {
 		final StepService stepSvc = new BasicStepService(port, stepType, config);
 		stepSvc.start();
-		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.getName());
-		return stepSvc.getName();
+		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
+		return stepSvc.name();
 	}
 }

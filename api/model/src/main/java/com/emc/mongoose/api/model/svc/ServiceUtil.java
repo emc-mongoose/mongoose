@@ -131,7 +131,7 @@ public abstract class ServiceUtil {
 				//ensureRmiUseFixedPort(port);
 				ensureRmiRegistryIsAvailableAt(port);
 				UnicastRemoteObject.exportObject(svc, port);
-				final String svcName = svc.getName();
+				final String svcName = svc.name();
 				svcUri = getLocalSvcUri(svcName, port).toString();
 				if(!SVC_MAP.containsKey(svcName + ":" + port)) {
 					Naming.rebind(svcUri, svc);
@@ -163,16 +163,16 @@ public abstract class ServiceUtil {
 
 	public static String close(final Service svc)
 	throws RemoteException, MalformedURLException {
-		final String svcName = svc.getName();
+		final String svcName = svc.name();
 		String svcUri = null;
 		try {
 			UnicastRemoteObject.unexportObject(svc, true);
 		} finally {
 			try {
-				svcUri = getLocalSvcUri(svcName, svc.getRegistryPort()).toString();
+				svcUri = getLocalSvcUri(svcName, svc.registryPort()).toString();
 				Naming.unbind(svcUri);
 				synchronized(SVC_MAP) {
-					if(null == SVC_MAP.remove(svcName + ":" + svc.getRegistryPort())) {
+					if(null == SVC_MAP.remove(svcName + ":" + svc.registryPort())) {
 						System.err.println(
 							"Failed to remove the service \"" + svcName + "\""
 						);

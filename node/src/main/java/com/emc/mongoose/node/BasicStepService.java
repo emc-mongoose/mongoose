@@ -68,7 +68,7 @@ implements StepService {
 	}
 
 	@Override
-	public String getName() {
+	public String name() {
 		return SVC_NAME_PREFIX + hashCode();
 	}
 

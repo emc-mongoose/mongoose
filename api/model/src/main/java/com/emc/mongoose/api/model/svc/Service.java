@@ -12,9 +12,9 @@ import java.rmi.RemoteException;
 public interface Service
 extends AsyncRunnable, Remote {
 
-	int getRegistryPort()
+	int registryPort()
 	throws RemoteException;
 
-	String getName()
+	String name()
 	throws RemoteException;
 }

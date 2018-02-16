@@ -615,7 +615,7 @@ implements LoadController<I, O> {
 							"{}: next storage driver {} shutdown", getName(),
 							(
 								(driver instanceof Service)?
-									((Service) driver).getName() + " @ " +
+									((Service) driver).name() + " @ " +
 										ServiceUtil.getAddress((Service) driver) :
 									driver.toString()
 							)
@@ -717,7 +717,7 @@ implements LoadController<I, O> {
 								"{}: next storage driver {} interrupted", getName(),
 								(
 									(driver instanceof Service)?
-										((Service) driver).getName() + " @ " +
+										((Service) driver).name() + " @ " +
 											ServiceUtil.getAddress((Service) driver) :
 										driver.toString()
 								)

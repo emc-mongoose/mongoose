@@ -3,7 +3,6 @@ package com.emc.mongoose.node;
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileManagerService;
 import com.emc.mongoose.scenario.sna.FileService;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ implements FileManagerService {
 	}
 
 	@Override
-	public String getName() {
+	public String name() {
 		return SVC_NAME;
 	}
 
@@ -33,11 +32,11 @@ implements FileManagerService {
 	}
 
 	@Override
-	public String getFileService(final String path)
+	public String createFileService(final String path)
 	throws IOException {
 		final FileService fileSvc = new BasicFileService(path, port);
 		fileSvc.start();
-		Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.getName());
-		return fileSvc.getName();
+		Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.name());
+		return fileSvc.name();
 	}
 }
