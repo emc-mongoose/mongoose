@@ -189,38 +189,32 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final int getConcurrencyLevel()
-	throws RemoteException {
+	public final int getConcurrencyLevel() {
 		return concurrencyLevel;
 	}
 
 	@Override
-	public final int getActiveTaskCount()
-	throws RemoteException {
+	public final int getActiveTaskCount() {
 		return (int) (getScheduledTaskCount() - getCompletedTaskCount());
 	}
 
 	@Override
-	public final long getScheduledTaskCount()
-	throws RemoteException {
+	public final long getScheduledTaskCount() {
 		return scheduledTaskCount.sum();
 	}
 
 	@Override
-	public final long getCompletedTaskCount()
-	throws RemoteException {
+	public final long getCompletedTaskCount() {
 		return completedTaskCount.sum();
 	}
 
 	@Override
-	public final boolean isIdle()
-	throws RemoteException {
+	public final boolean isIdle() {
 		return ioResultsQueue.isEmpty();
 	}
 
 	@Override
-	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
-	throws RemoteException {
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
 	}
 
 	@Override

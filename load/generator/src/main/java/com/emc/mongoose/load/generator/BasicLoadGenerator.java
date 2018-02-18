@@ -256,18 +256,11 @@ implements LoadGenerator<I, O>, Coroutine {
 								"{}: finish due to output's EOF", BasicLoadGenerator.this.toString()
 							);
 							outputFinishFlag = true;
-						} catch(final RemoteException e) {
-							final Throwable cause = e.getCause();
-							if(cause instanceof EOFException) {
-								Loggers.MSG.debug(
-									"{}: finish due to output's EOF",
-									BasicLoadGenerator.this.toString()
-								);
-								outputFinishFlag = true;
-							} else {
-								LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-								e.printStackTrace(System.err);
-							}
+						} catch(final IOException e) {
+							LogUtil.exception(
+								Level.ERROR, e, "{}: I/O task output failure",
+								BasicLoadGenerator.this.toString()
+							);
 						}
 					} else {
 						try {

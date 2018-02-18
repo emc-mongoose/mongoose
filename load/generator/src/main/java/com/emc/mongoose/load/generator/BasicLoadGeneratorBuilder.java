@@ -1,12 +1,13 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
+
+import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
-import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
@@ -25,7 +26,6 @@ import com.emc.mongoose.api.model.item.ItemNamingType;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.item.NewDataItemInput;
 import com.emc.mongoose.api.model.io.IoType;
-
 import static com.emc.mongoose.api.common.Constants.M;
 import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
@@ -51,7 +51,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -308,13 +307,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		// adjust the storage drivers for the estimated transfer size
 		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
-			try {
-				storageDriver.adjustIoBuffers(sizeEstimate, ioType);
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to adjust the storage driver buffer sizes"
-				);
-			}
+			storageDriver.adjustIoBuffers(sizeEstimate, ioType);
 		}
 
 		final RecycleConfig recycleConfig = generatorConfig.getRecycleConfig();

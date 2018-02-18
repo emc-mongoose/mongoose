@@ -1,9 +1,16 @@
 package com.emc.mongoose.api.model.svc;
 
 import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
+import sun.rmi.server.UnicastRef;
+import sun.rmi.transport.Channel;
+import sun.rmi.transport.LiveRef;
+import sun.rmi.transport.tcp.TCPEndpoint;
 
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
+import java.rmi.server.RemoteObjectInvocationHandler;
+
+import static java.lang.reflect.Proxy.getInvocationHandler;
 
 public abstract class ServiceBase
 extends AsyncRunnableBase
@@ -16,8 +23,7 @@ implements Service {
 	}
 
 	@Override
-	public final int registryPort()
-	throws RemoteException {
+	public final int registryPort() {
 		return port;
 	}
 

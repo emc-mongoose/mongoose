@@ -19,14 +19,15 @@ extends ServiceBase
 implements FileService {
 
 	private volatile FileChannel fileChannel = null;
-	private volatile String filePath = null;
+	private final String filePath;
 
-	public BasicFileService(final String filePath, final int port)
-	throws IOException {
+	public BasicFileService(final String filePath, final int port) {
 		super(port);
 		if(filePath == null) {
-			final File tmpFile = File.createTempFile("mongoose.node.", ".tmp");
-			this.filePath = tmpFile.getPath();
+			final String tmpDir = System.getProperty("java.io.tmpdir");
+			this.filePath = Paths
+				.get(tmpDir, "mongoose", Long.toString(System.nanoTime()))
+				.toString();
 		} else {
 			this.filePath = filePath;
 		}
@@ -148,7 +149,7 @@ implements FileService {
 
 	@Override
 	public final String name() {
-		return SVC_NAME_PREFIX + (filePath.startsWith("/") ? ("/" + filePath) : filePath);
+		return SVC_NAME_PREFIX + (filePath.startsWith("/") ? filePath : ("/" + filePath));
 	}
 
 	@Override

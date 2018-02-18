@@ -4,16 +4,14 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.RateThrottle;
 import com.github.akurilov.commons.concurrent.Throttle;
 import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
+import com.github.akurilov.commons.concurrent.WeightThrottle;
 
 import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.TransferCoroutine;
 
-import com.emc.mongoose.api.model.svc.Service;
-import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
 import com.emc.mongoose.api.model.load.LoadController;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
-import com.github.akurilov.commons.concurrent.WeightThrottle;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.io.task.IoTask.Status;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
@@ -152,13 +150,8 @@ implements LoadController<I, O> {
 			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
 			final IoType ioType = IoType.valueOf(ioTypeName);
 			final int ioTypeCode = ioType.ordinal();
-			int ioTypeSpecificConcurrency = 0;
-			try {
-				ioTypeSpecificConcurrency = nextDriver.getConcurrencyLevel();
-				concurrencyByIoType.put(ioTypeCode, ioTypeSpecificConcurrency);
-			} catch(final RemoteException e) {
-				LogUtil.exception(Level.ERROR, e, "Failed to invoke the remote method");
-			}
+			final int ioTypeSpecificConcurrency = nextDriver.getConcurrencyLevel();
+			concurrencyByIoType.put(ioTypeCode, ioTypeSpecificConcurrency);
 			metricsByIoType.put(
 				ioTypeCode,
 				new BasicMetricsContext(
@@ -326,36 +319,18 @@ implements LoadController<I, O> {
 
 	private boolean isIdle()
 	throws ConcurrentModificationException {
-
 		for(final LoadGenerator<I, O> nextLoadGenerator : driverByGenerator.keySet()) {
-
 			if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
 				return false;
 			}
-
 			final StorageDriver<I, O> nextStorageDriver = driverByGenerator.get(nextLoadGenerator);
-			try {
-				if(
-					!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
-					!nextStorageDriver.isIdle()
-				) {
-					return false;
-				}
-			} catch(final NoSuchObjectException e) {
-				if(!isClosed() && !isInterrupted()) {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
-						nextStorageDriver
-					);
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to communicate with storage driver \"{}\"",
-					nextStorageDriver
-				);
+			if(
+				!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
+				!nextStorageDriver.isIdle()
+			) {
+				return false;
 			}
 		}
-
 		return true;
 	}
 
@@ -612,18 +587,7 @@ implements LoadController<I, O> {
 					) {
 						driver.shutdown();
 						Loggers.MSG.debug(
-							"{}: next storage driver {} shutdown", getName(),
-							(
-								(driver instanceof Service)?
-									((Service) driver).name() + " @ " +
-										ServiceUtil.getAddress((Service) driver) :
-									driver.toString()
-							)
-						);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							Level.WARN, e, "failed to shutdown the driver {}", getName(),
-							driver.toString()
+							"{}: next storage driver {} shutdown", getName(), driver.toString()
 						);
 					}
 				}
@@ -715,17 +679,7 @@ implements LoadController<I, O> {
 							driver.interrupt();
 							Loggers.MSG.debug(
 								"{}: next storage driver {} interrupted", getName(),
-								(
-									(driver instanceof Service)?
-										((Service) driver).name() + " @ " +
-											ServiceUtil.getAddress((Service) driver) :
-										driver.toString()
-								)
-							);
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.DEBUG, e, "{}: failed to interrupt the driver {}",
-								getName(), driver.toString()
+								driver.toString()
 							);
 						}
 					}

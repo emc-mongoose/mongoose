@@ -9,6 +9,7 @@ import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.load.generator.StorageItemInput;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
@@ -532,7 +533,7 @@ implements Step, Runnable {
 											final String filePath = fileSvc.filePath();
 											Loggers.MSG.info(
 												"Use temporary remote item output file \"{}\" @ {}",
-												filePath, fileSvc
+												filePath, Service.address(fileSvc)
 											);
 										} catch(final IOException ignored) {
 										}
@@ -544,9 +545,8 @@ implements Step, Runnable {
 							)
 					)
 				);
-			itemInputFileSvcs
+			itemOutputFileSvcs
 				.keySet()
-				.stream()
 				.forEach(
 					nodeAddrWithPort -> {
 						final OutputConfig itemOutputConfig = configSlices

@@ -17,7 +17,7 @@ extends Service {
 		StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS
 	};
 	OpenOption[] WRITE_OPEN_OPTIONS = new OpenOption[] {
-		StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
 	};
 
 	void open(final OpenOption[] openOptions)

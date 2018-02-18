@@ -1,13 +1,9 @@
 package com.emc.mongoose.load.controller;
 
 import com.github.akurilov.coroutines.CoroutinesProcessor;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
-import org.apache.logging.log4j.Level;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 
 /**
  Created by andrey on 22.08.17.
@@ -29,13 +25,7 @@ extends ExclusiveCoroutineBase {
 
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
-		try {
-			lastValue = storageDriver.getActiveTaskCount();
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				Level.DEBUG, e, "Failed to invoke the remote storage driver's method"
-			);
-		}
+		lastValue = storageDriver.getActiveTaskCount();
 	}
 
 	public int getActualConcurrencySum() {
@@ -43,7 +33,6 @@ extends ExclusiveCoroutineBase {
 	}
 
 	@Override
-	protected final void doClose()
-	throws IOException {
+	protected final void doClose() {
 	}
 }

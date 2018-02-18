@@ -9,15 +9,13 @@ import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 
 import java.io.IOException;
-import java.rmi.Remote;
-import java.rmi.RemoteException;
 import java.util.List;
 
 /**
  Created on 11.07.16.
  */
 public interface StorageDriver<I extends Item, O extends IoTask<I>>
-extends Daemon, Input<O>, Output<O>, Remote {
+extends Daemon, Input<O>, Output<O> {
 	
 	int BUFF_SIZE_MIN = 0x1_000;
 	int BUFF_SIZE_MAX = 0x1_000_000;
@@ -28,38 +26,29 @@ extends Daemon, Input<O>, Output<O>, Remote {
 	) throws IOException;
 
 	@Override
-	default int get(final List<O> buff, final int limit)
-	throws RemoteException {
+	default int get(final List<O> buff, final int limit) {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 	
 	@Override
-	default void reset()
-	throws RemoteException {
+	default void reset() {
 		throw new AssertionError("Shouldn't be invoked");
 	}
 
 	/**
 	 * @return 0 if the concurrency is not limited
-	 * @throws RemoteException
 	 */
-	int getConcurrencyLevel()
-	throws RemoteException;
+	int getConcurrencyLevel();
 
-	int getActiveTaskCount()
-	throws RemoteException;
+	int getActiveTaskCount();
 	
-	long getScheduledTaskCount()
-	throws RemoteException;
+	long getScheduledTaskCount();
 	
-	long getCompletedTaskCount()
-	throws RemoteException;
+	long getCompletedTaskCount();
 
-	boolean isIdle()
-	throws RemoteException;
+	boolean isIdle();
 
-	void adjustIoBuffers(final long avgTransferSize, final IoType ioType)
-	throws RemoteException;
+	void adjustIoBuffers(final long avgTransferSize, final IoType ioType);
 
 	@Override
 	void close()

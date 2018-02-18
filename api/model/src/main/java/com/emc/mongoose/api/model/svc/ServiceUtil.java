@@ -201,13 +201,4 @@ public abstract class ServiceUtil {
 		REGISTRY_MAP.clear();
 	}
 
-	public static String getAddress(final Service svc)
-	throws RemoteException {
-		final RemoteObjectInvocationHandler h = (RemoteObjectInvocationHandler) getInvocationHandler(svc);
-		final LiveRef ref = ((UnicastRef) h.getRef()).getLiveRef();
-		final Channel channel = ref.getChannel();
-		final TCPEndpoint endpoint = (TCPEndpoint) channel.getEndpoint();
-		return endpoint.getHost() + ":" + endpoint.getPort();
-	}
-
 }

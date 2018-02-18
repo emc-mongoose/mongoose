@@ -52,8 +52,6 @@ extends NioStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public void adjustIoBuffers(
-		final long avgTransferSize, final IoType ioType
-	) throws RemoteException {
+	public void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
 	}
 }

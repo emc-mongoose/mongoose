@@ -5,7 +5,7 @@ import com.emc.mongoose.scenario.sna.FileManagerService;
 import com.emc.mongoose.scenario.sna.FileService;
 import com.emc.mongoose.ui.log.Loggers;
 
-import java.io.IOException;
+import java.rmi.RemoteException;
 
 public final class BasicFileManagerService
 extends ServiceBase
@@ -33,7 +33,7 @@ implements FileManagerService {
 
 	@Override
 	public String createFileService(final String path)
-	throws IOException {
+	throws RemoteException {
 		final FileService fileSvc = new BasicFileService(path, port);
 		fileSvc.start();
 		Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.name());
