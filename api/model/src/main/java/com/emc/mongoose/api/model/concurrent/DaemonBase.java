@@ -9,7 +9,6 @@ import static com.emc.mongoose.api.model.concurrent.Daemon.State.SHUTDOWN;
 import static com.emc.mongoose.api.model.concurrent.Daemon.State.STARTED;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;

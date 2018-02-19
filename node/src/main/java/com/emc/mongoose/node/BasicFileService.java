@@ -4,12 +4,15 @@ import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZ
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileService;
+import com.emc.mongoose.ui.log.LogUtil;
+
+import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
@@ -18,19 +21,26 @@ public final class BasicFileService
 extends ServiceBase
 implements FileService {
 
-	private volatile FileChannel fileChannel = null;
+	private volatile SeekableByteChannel fileChannel = null;
 	private final String filePath;
 
 	public BasicFileService(final String filePath, final int port) {
 		super(port);
 		if(filePath == null) {
-			final String tmpDir = System.getProperty("java.io.tmpdir");
+			if(!Files.exists(TMP_DIR)) {
+				try {
+					Files.createDirectories(TMP_DIR);
+				} catch(final IOException e) {
+					LogUtil.exception(Level.DEBUG, e, "Failed to create tmp directory {}", TMP_DIR);
+				}
+			}
 			this.filePath = Paths
-				.get(tmpDir, "mongoose", Long.toString(System.nanoTime()))
+				.get(TMP_DIR.toString(), Long.toString(System.nanoTime()))
 				.toString();
 		} else {
 			this.filePath = filePath;
 		}
+		new File(this.filePath).deleteOnExit();
 	}
 
 	@Override
@@ -39,7 +49,7 @@ implements FileService {
 		if(fileChannel != null) {
 			throw new IllegalStateException("File \"" + filePath + "\" is already open");
 		}
-		this.fileChannel = FileChannel.open(Paths.get(filePath), openOptions);
+		this.fileChannel = Files.newByteChannel(Paths.get(filePath), openOptions);
 	}
 
 	@Override
@@ -122,15 +132,6 @@ implements FileService {
 			throw new IllegalStateException();
 		}
 		fileChannel.truncate(size);
-	}
-
-	@Override
-	public final void flush()
-	throws IOException {
-		if(fileChannel == null) {
-			throw new IllegalStateException();
-		}
-		fileChannel.force(true);
 	}
 
 	@Override

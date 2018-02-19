@@ -22,7 +22,6 @@ import org.apache.logging.log4j.ThreadContext;
 import javax.management.MalformedObjectNameException;
 import java.io.Closeable;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +48,6 @@ implements Coroutine {
 	private long nextOutputTs;
 
 	private MetricsManager() {
-		SVC_EXECUTOR.start(this);
 	}
 	
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
@@ -68,6 +66,9 @@ implements Coroutine {
 	public static void register(final LoadController controller, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
+			if(INSTANCE.allMetrics.size() == 0) {
+				SVC_EXECUTOR.start(INSTANCE);
+			}
 			try(
 				final Instance stepIdCtx = CloseableThreadContext
 					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
@@ -140,6 +141,9 @@ implements Coroutine {
 					INSTANCE.allMetrics.remove(controller);
 				}
 			} finally {
+				if(INSTANCE.allMetrics.size() == 0) {
+					SVC_EXECUTOR.stop(INSTANCE);
+				}
 				INSTANCE.allMetricsLock.unlock();
 				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
 			}

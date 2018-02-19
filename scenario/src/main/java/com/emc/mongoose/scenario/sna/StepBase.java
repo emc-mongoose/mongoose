@@ -349,49 +349,54 @@ implements Step, Runnable {
 		if(itemOutputFileSvcs != null) {
 			final String itemOutputFile = actualConfig
 				.getItemConfig().getOutputConfig().getFile();
-			Loggers.MSG.info(
-				"Transferring the items output data from the remote nodes to the local file \"{}\"",
-				itemOutputFile
-			);
-			try(
-				final OutputStream out = Files.newOutputStream(
-					Paths.get(itemOutputFile), FileService.WRITE_OPEN_OPTIONS
-				)
-			) {
-				itemOutputFileSvcs
-					.values()
-					.parallelStream()
-					.filter(Objects::nonNull)
-					.forEach(
-						fileSvc -> {
-							try {
-								fileSvc.open(FileService.READ_OPTIONS);
-								byte buff[];
-								while(true) {
-									buff = fileSvc.read();
-									synchronized(out) {
-										out.write(buff);
-									}
-								}
-							} catch(final EOFException e) {
-							} catch(final IOException e) {
-								LogUtil.exception(
-									Level.WARN, e, "Remote items output file transfer failure"
-								);
-							} finally {
-								try {
-									fileSvc.close();
-								} catch(final IOException ignored) {
+			transferItemOutputDataToTheLocalFile(itemOutputFileSvcs, itemOutputFile);
+			itemOutputFileSvcs
+				.entrySet()
+				.parallelStream()
+				.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
+		}
+	}
+
+	private static void transferItemOutputDataToTheLocalFile(
+		final Map<String, FileService> itemOutputFileSvcs, final String itemOutputFile
+	) {
+		Loggers.MSG.info(
+			"Transfer the items output data from the remote nodes to the local file \"{}\"...",
+			itemOutputFile
+		);
+		try(
+			final OutputStream out = Files.newOutputStream(
+				Paths.get(itemOutputFile), FileService.WRITE_OPEN_OPTIONS
+			)
+		) {
+			itemOutputFileSvcs
+				.values()
+				.parallelStream()
+				.filter(Objects::nonNull)
+				.forEach(
+					fileSvc -> {
+						try {
+							fileSvc.open(FileService.READ_OPTIONS);
+							byte buff[];
+							while(true) {
+								buff = fileSvc.read();
+								synchronized(out) {
+									out.write(buff);
 								}
 							}
+						} catch(final EOFException e) {
+						} catch(final IOException e) {
+							LogUtil.exception(
+								Level.WARN, e, "Remote items output file transfer failure"
+							);
 						}
-					);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to open the local file \"{}\" for the items output",
-					itemOutputFile
+					}
 				);
-			}
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to open the local file \"{}\" for the items output",
+				itemOutputFile
+			);
 		}
 	}
 
@@ -511,6 +516,8 @@ implements Step, Runnable {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to use the item input");
+		} catch(final Throwable cause) {
+			cause.printStackTrace(System.err);
 		}
 
 		// item output file (if any)
@@ -634,7 +641,7 @@ implements Step, Runnable {
 		final List<Item> itemsBuff = new ArrayList<>(batchSize);
 		final Map<String, StringBuilder> nodeItemsData = nodeAddrs
 			.stream()
-			.collect(Collectors.toMap(Function.identity(), StringBuilder::new));
+			.collect(Collectors.toMap(Function.identity(), n -> new StringBuilder()));
 
 		itemInputFileSvcs = nodeAddrs
 			.parallelStream()
@@ -672,11 +679,20 @@ implements Step, Runnable {
 				break;
 			}
 			if(n > 0) {
-				for(int i = 0; i < n; i ++) {
-					nodeItemsData
-						.get(nodeAddrs.get(i % nodeCount))
-						.append(itemsBuff.get(i).toString())
-						.append(System.lineSeparator());
+				if(nodeCount > 1) {
+					for(int i = 0; i < n; i ++) {
+						nodeItemsData
+							.get(nodeAddrs.get(i % nodeCount))
+							.append(itemsBuff.get(i).toString())
+							.append(System.lineSeparator());
+					}
+				} else {
+					final StringBuilder singleNodeItemsData = nodeItemsData.get(nodeAddrs.get(0));
+					itemsBuff
+						.stream()
+						.map(Object::toString)
+						.map(singleNodeItemsData::append)
+						.forEach(data -> data.append(System.lineSeparator()));
 				}
 				nodeAddrs
 					.parallelStream()
@@ -686,6 +702,7 @@ implements Step, Runnable {
 							final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
 							if(fileSvc != null) {
 								try {
+									final byte[] buffData = buff.toString().getBytes();
 									fileSvc.write(buff.toString().getBytes());
 									buff.setLength(0);
 								} catch(final IOException e) {

@@ -5,6 +5,8 @@ import com.emc.mongoose.api.model.svc.Service;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.rmi.RemoteException;
 
@@ -17,8 +19,9 @@ extends Service {
 		StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS
 	};
 	OpenOption[] WRITE_OPEN_OPTIONS = new OpenOption[] {
-		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
+		StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 	};
+	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
 
 	void open(final OpenOption[] openOptions)
 	throws IOException;
@@ -39,9 +42,6 @@ extends Service {
 	throws IOException;
 
 	void truncate(final long size)
-	throws IOException;
-
-	void flush()
 	throws IOException;
 
 	void closeFile()
