@@ -74,6 +74,7 @@ implements Step, Runnable {
 	private List<StepService> stepSvcs = null;
 	private Map<String, FileService> itemInputFileSvcs = null;
 	private Map<String, FileService> itemOutputFileSvcs = null;
+	private Map<String, FileService> ioTraceLogFileSvcs = null;
 
 	protected StepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
 		this.baseConfig = baseConfig;
@@ -226,7 +227,19 @@ implements Step, Runnable {
 			);
 		}
 
+		ioTraceLogFileSvcs = nodeAddrs
+			.stream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					Function2
+						.partial2(StepBase::resolveFileService, "log/" + id + "/io.trace.csv")
+						.andThen(Optional::get)
+				)
+			);
+
 		final Map<String, Config> configSlices = sliceConfigs(actualConfig, nodeAddrs);
+
 		final Function<String, StepService> resolveStepSvcPartialFunc = Function2
 			.partial1(this::resolveStepSvc, configSlices);
 		stepSvcs = nodeAddrs
@@ -699,6 +712,7 @@ implements Step, Runnable {
 				.entrySet()
 				.parallelStream()
 				.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
+			itemInputFileSvcs.clear();
 		}
 
 		if(itemOutputFileSvcs != null) {
@@ -709,6 +723,29 @@ implements Step, Runnable {
 				.entrySet()
 				.parallelStream()
 				.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
+			itemOutputFileSvcs.clear();
+		}
+
+		if(ioTraceLogFileSvcs != null) {
+			ioTraceLogFileSvcs
+				.values()
+				.parallelStream()
+				.forEach(
+					ioTraceLogFileSvc -> {
+						try {
+							ioTraceLogFileSvc.open(FileService.READ_OPTIONS);
+							byte[] data;
+							while(true) {
+								data = ioTraceLogFileSvc.read();
+							}
+						} catch(final RemoteException e) {
+
+						} catch(final IOException e) {
+
+						}
+					}
+				);
+			ioTraceLogFileSvcs.clear();
 		}
 	}
 
