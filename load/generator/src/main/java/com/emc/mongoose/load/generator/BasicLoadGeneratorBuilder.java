@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Input;
 
@@ -50,6 +51,7 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -442,10 +444,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 				);
 			}
 		} else {
+			final Path itemInputFilePath = Paths.get(itemInputFile);
 			try {
-				itemInput = new CsvFileItemInput<>(Paths.get(itemInputFile), itemFactory);
-			} catch(final NoSuchMethodException e) {
-				throw new RuntimeException(e);
+				final String mimeType = Files.probeContentType(itemInputFilePath);
+				if(mimeType.startsWith("text")) {
+					try {
+						itemInput = new CsvFileItemInput<>(itemInputFilePath, itemFactory);
+					} catch(final NoSuchMethodException e){
+						throw new RuntimeException(e);
+					}
+				} else {
+					itemInput = new BinFileInput<>(itemInputFilePath);
+				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile

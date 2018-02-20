@@ -29,17 +29,21 @@ import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -230,6 +234,357 @@ implements Step, Runnable {
 			.map(resolveStepSvcPartialFunc)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+	}
+
+	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
+
+		final Map<String, Config> configSlices = nodeAddrs
+			.stream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					Function2.partial1(Step::initConfigSlice, config)
+				)
+			);
+
+		// slice an item input (if any)
+		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
+		try(final Input<? extends Item> itemInput = getItemInput(config, batchSize)) {
+			if(itemInput != null) {
+				sliceItemInput(itemInput, nodeAddrs, configSlices, batchSize);
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to use the item input");
+		} catch(final Throwable cause) {
+			cause.printStackTrace(System.err);
+		}
+
+		// item output file (if any)
+		final String itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
+		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
+			itemOutputFileSvcs = nodeAddrs
+				.parallelStream()
+				.collect(
+					Collectors.toMap(
+						Function.identity(),
+						Function2
+							.partial2(StepBase::resolveFileService, null)
+							.andThen(
+								optionalFileSvc -> {
+									if(optionalFileSvc.isPresent()) {
+										final FileService fileSvc = optionalFileSvc.get();
+										try {
+											fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
+											fileSvc.closeFile();
+											final String filePath = fileSvc.filePath();
+											Loggers.MSG.info(
+												"Use temporary remote item output file \"{}\" @ {}",
+												filePath, Service.address(fileSvc)
+											);
+										} catch(final IOException ignored) {
+										}
+										return fileSvc;
+									} else {
+										return null;
+									}
+								}
+							)
+					)
+				);
+			itemOutputFileSvcs
+				.keySet()
+				.forEach(
+					nodeAddrWithPort -> {
+						final OutputConfig itemOutputConfig = configSlices
+							.get(nodeAddrWithPort).getItemConfig().getOutputConfig();
+						itemOutputConfig.setFile(null);
+						final FileService fileSvc = itemOutputFileSvcs.get(nodeAddrWithPort);
+						if(fileSvc != null) {
+							try {
+								itemOutputConfig.setFile(fileSvc.filePath());
+							} catch(final RemoteException ignored) {
+							}
+						}
+					}
+				);
+		}
+
+		return configSlices;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Input<? extends Item> getItemInput(final Config config, final int batchSize) {
+
+		final ItemConfig itemConfig = config.getItemConfig();
+		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+		final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
+		final InputConfig itemInputConfig = itemConfig.getInputConfig();
+		final String itemInputFile = itemInputConfig.getFile();
+
+		if(itemInputFile != null && !itemInputFile.isEmpty()) {
+
+			final Path itemInputFilePath = Paths.get(itemInputFile);
+			try {
+				final String mimeType = Files.probeContentType(itemInputFilePath);
+				if(mimeType.startsWith("text")) {
+					try {
+						return new CsvFileItemInput<>(itemInputFilePath, itemFactory);
+					} catch(final NoSuchMethodException e) {
+						throw new RuntimeException(e);
+					}
+				} else {
+					return new BinFileInput<>(itemInputFilePath);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to open the item input file \"{}\"", itemInputFile
+				);
+			}
+		} else {
+
+			final String itemInputPath = itemInputConfig.getPath();
+			if(itemInputPath != null && !itemInputPath.isEmpty()) {
+				final DataConfig dataConfig = itemConfig.getDataConfig();
+				final com.emc.mongoose.ui.config.item.data.input.InputConfig
+					dataInputConfig = dataConfig.getInputConfig();
+				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
+				try {
+					final DataInput dataInput = DataInput.getInstance(
+						dataInputConfig.getFile(), dataInputConfig.getSeed(),
+						dataLayerConfig.getSize(), dataLayerConfig.getCache()
+					);
+					final StorageDriver storageDriver = new BasicStorageDriverBuilder<>()
+						.setTestStepName(config.getTestConfig().getStepConfig().getId())
+						.setItemConfig(itemConfig)
+						.setContentSource(dataInput)
+						.setLoadConfig(config.getLoadConfig())
+						.setStorageConfig(config.getStorageConfig())
+						.build();
+					final NamingConfig namingConfig = itemConfig.getNamingConfig();
+					final String namingPrefix = namingConfig.getPrefix();
+					final int namingRadix = namingConfig.getRadix();
+					return new StorageItemInput<>(
+						storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix,
+						namingRadix
+					);
+				} catch(final IOException | IllegalStateException | IllegalArgumentException e) {
+					LogUtil.exception(Level.WARN, e, "Failed to initialize the data input");
+				} catch(final OmgShootMyFootException e) {
+					LogUtil.exception(Level.ERROR, e, "Failed to initialize the storage driver");
+				} catch(final InterruptedException e) {
+					throw new CancellationException();
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private void sliceItemInput(
+		final Input<? extends Item> itemInput, final List<String> nodeAddrs,
+		final Map<String, Config> configSlices, final int batchSize
+	) throws IOException {
+
+		itemInputFileSvcs = nodeAddrs
+			.parallelStream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					Function2
+						.partial2(StepBase::resolveFileService, null)
+						.andThen(
+							optionalFileSvc -> {
+								if(optionalFileSvc.isPresent()) {
+									final FileService fileSvc = optionalFileSvc.get();
+									try {
+										optionalFileSvc.get().open(FileService.WRITE_OPEN_OPTIONS);
+									} catch(final IOException e) {
+										LogUtil.exception(
+											Level.WARN, e,
+											"Failed to open the remote file for writing"
+										);
+									}
+									return fileSvc;
+								} else {
+									return null;
+								}
+							}
+						)
+				)
+			);
+
+		final int nodeCount = nodeAddrs.size();
+		final Map<String, ByteArrayOutputStream> itemsDataByNode = nodeAddrs
+			.stream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					n -> new ByteArrayOutputStream(batchSize * 0x40)
+				)
+			);
+		final Map<String, ObjectOutputStream> itemsOutByNode = itemsDataByNode
+			.keySet()
+			.stream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					n -> {
+						try {
+							return new ObjectOutputStream(itemsDataByNode.get(n));
+						} catch(final IOException ignored) {
+						}
+						return null;
+					}
+				)
+			);
+		final List<Item> itemsBuff = new ArrayList<>(batchSize);
+
+		int n;
+		ObjectOutputStream out = itemsOutByNode.get(nodeAddrs.get(0));
+
+		while(true) {
+
+			// get the next batch of items
+			try {
+				n = itemInput.get((List) itemsBuff, batchSize);
+			} catch(final EOFException e) {
+				break;
+			}
+
+			if(n > 0) {
+
+				// convert the items to the text representation
+				if(nodeCount > 1) {
+					// distribute the items using round robin
+					for(int i = 0; i < n; i ++) {
+						itemsOutByNode
+							.get(nodeAddrs.get(i % nodeCount))
+							.writeUnshared(itemsBuff.get(i));
+					}
+				} else {
+					for(int i = 0; i < n; i ++) {
+						out.writeUnshared(itemsBuff.get(i));
+					}
+				}
+
+				itemsBuff.clear();
+
+				// write the text items data to the remote input files
+				nodeAddrs
+					.parallelStream()
+					.forEach(
+						nodeAddrWithPort -> {
+							final ByteArrayOutputStream buff = itemsDataByNode.get(nodeAddrWithPort);
+							final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
+							if(fileSvc != null) {
+								try {
+									final byte[] data = buff.toByteArray();
+									fileSvc.write(data);
+									buff.reset();
+								} catch(final IOException e) {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to write the items input data to the remote "
+											+ "file @ {}",
+										nodeAddrWithPort
+									);
+								}
+							}
+						}
+					);
+			} else {
+				break;
+			}
+		}
+
+		nodeAddrs
+			.parallelStream()
+			.map(itemsOutByNode::get)
+			.filter(Objects::nonNull)
+			.forEach(
+				o -> {
+					try {
+						o.close();
+					} catch(final IOException ignored) {
+					}
+				}
+			);
+
+		nodeAddrs
+			.parallelStream()
+			.map(itemInputFileSvcs::get)
+			.filter(Objects::nonNull)
+			.forEach(
+				fileSvc -> {
+					try{
+						fileSvc.closeFile();
+					} catch(final IOException e) {
+						LogUtil.exception(Level.DEBUG, e, "Failed to close the remote file");
+					}
+				}
+			);
+
+		nodeAddrs
+			.parallelStream()
+			.forEach(
+				nodeAddrWithPort -> {
+					final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
+					if(fileSvc != null) {
+						try {
+							configSlices
+								.get(nodeAddrWithPort)
+								.getItemConfig()
+								.getInputConfig()
+								.setFile(fileSvc.filePath());
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								Level.WARN, e, "Failed to invoke the file service \"{}\" call @ {}",
+								fileSvc, nodeAddrWithPort
+							);
+						}
+					}
+				}
+			);
+	}
+
+	private static Optional<FileService> resolveFileService(
+		final String nodeAddrWithPort, final String path
+	) {
+		try {
+			return FileManagerService
+				.resolve(nodeAddrWithPort)
+				.map(
+					fileMgrSvc -> {
+						try {
+							return fileMgrSvc.createFileService(path);
+						} catch(final IOException e) {
+							LogUtil.exception(
+								Level.ERROR, e, "Failed to create the remote file service @ {}",
+								nodeAddrWithPort
+							);
+						}
+						return null;
+					}
+				)
+				.map(
+					fileSvcName -> {
+						try {
+							return ServiceUtil.resolve(nodeAddrWithPort, fileSvcName);
+						} catch(final IOException | URISyntaxException | NotBoundException e) {
+							LogUtil.exception(
+								Level.ERROR, e, "Failed to resolve the file service \"{}\" @ {}",
+								fileSvcName, nodeAddrWithPort
+							);
+						}
+						return null;
+					}
+				);
+		} catch(final RemoteException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to resolve the file manager service @ {}", nodeAddrWithPort
+			);
+			return Optional.empty();
+		}
 	}
 
 	private StepService resolveStepSvc(
@@ -456,305 +811,4 @@ implements Step, Runnable {
 	}
 
 	protected abstract StepBase copyInstance(final List<Map<String, Object>> stepConfigs);
-
-	private static Optional<FileService> resolveFileService(
-		final String nodeAddrWithPort, final String path
-	) {
-		try {
-			return FileManagerService
-				.resolve(nodeAddrWithPort)
-				.map(
-					fileMgrSvc -> {
-						try {
-							return fileMgrSvc.createFileService(path);
-						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.ERROR, e, "Failed to create the remote file service @ {}",
-								nodeAddrWithPort
-							);
-						}
-						return null;
-					}
-				)
-				.map(
-					fileSvcName -> {
-						try {
-							return ServiceUtil.resolve(nodeAddrWithPort, fileSvcName);
-						} catch(final IOException | URISyntaxException | NotBoundException e) {
-							LogUtil.exception(
-								Level.ERROR, e, "Failed to resolve the file service \"{}\" @ {}",
-								fileSvcName, nodeAddrWithPort
-							);
-						}
-						return null;
-					}
-				);
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to resolve the file manager service @ {}", nodeAddrWithPort
-			);
-			return Optional.empty();
-		}
-	}
-
-	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
-
-		final Map<String, Config> configSlices = nodeAddrs
-			.stream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					Function2.partial1(Step::initConfigSlice, config)
-				)
-			);
-
-		// slice an item input (if any)
-		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
-		try(final Input<? extends Item> itemInput = getItemInput(config, batchSize)) {
-			if(itemInput != null) {
-				sliceItemInput(itemInput, nodeAddrs, configSlices, batchSize);
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to use the item input");
-		} catch(final Throwable cause) {
-			cause.printStackTrace(System.err);
-		}
-
-		// item output file (if any)
-		final String itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
-		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
-			itemOutputFileSvcs = nodeAddrs
-				.parallelStream()
-				.collect(
-					Collectors.toMap(
-						Function.identity(),
-						Function2
-							.partial2(StepBase::resolveFileService, null)
-							.andThen(
-								optionalFileSvc -> {
-									if(optionalFileSvc.isPresent()) {
-										final FileService fileSvc = optionalFileSvc.get();
-										try {
-											fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
-											fileSvc.closeFile();
-											final String filePath = fileSvc.filePath();
-											Loggers.MSG.info(
-												"Use temporary remote item output file \"{}\" @ {}",
-												filePath, Service.address(fileSvc)
-											);
-										} catch(final IOException ignored) {
-										}
-										return fileSvc;
-									} else {
-										return null;
-									}
-								}
-							)
-					)
-				);
-			itemOutputFileSvcs
-				.keySet()
-				.forEach(
-					nodeAddrWithPort -> {
-						final OutputConfig itemOutputConfig = configSlices
-							.get(nodeAddrWithPort).getItemConfig().getOutputConfig();
-						itemOutputConfig.setFile(null);
-						final FileService fileSvc = itemOutputFileSvcs.get(nodeAddrWithPort);
-						if(fileSvc != null) {
-							try {
-								itemOutputConfig.setFile(fileSvc.filePath());
-							} catch(final RemoteException ignored) {
-							}
-						}
-					}
-				);
-		}
-
-		return configSlices;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Input<? extends Item> getItemInput(final Config config, final int batchSize)
-	throws IOException {
-
-		final ItemConfig itemConfig = config.getItemConfig();
-		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
-		final InputConfig itemInputConfig = itemConfig.getInputConfig();
-		final String itemInputFile = itemInputConfig.getFile();
-
-		if(itemInputFile != null && !itemInputFile.isEmpty()) {
-
-			try {
-				return new CsvFileItemInput<>(Paths.get(itemInputFile), itemFactory);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to open the item input file \"{}\"", itemInputFile
-				);
-			} catch(final NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-
-			final String itemInputPath = itemInputConfig.getPath();
-			if(itemInputPath != null && !itemInputPath.isEmpty()) {
-				final DataConfig dataConfig = itemConfig.getDataConfig();
-				final com.emc.mongoose.ui.config.item.data.input.InputConfig
-					dataInputConfig = dataConfig.getInputConfig();
-				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
-				final DataInput dataInput = DataInput.getInstance(
-					dataInputConfig.getFile(), dataInputConfig.getSeed(),
-					dataLayerConfig.getSize(), dataLayerConfig.getCache()
-				);
-				try {
-					final StorageDriver storageDriver = new BasicStorageDriverBuilder<>()
-						.setTestStepName(config.getTestConfig().getStepConfig().getId())
-						.setItemConfig(itemConfig)
-						.setContentSource(dataInput)
-						.setLoadConfig(config.getLoadConfig())
-						.setStorageConfig(config.getStorageConfig())
-						.build();
-					final NamingConfig namingConfig = itemConfig.getNamingConfig();
-					final String namingPrefix = namingConfig.getPrefix();
-					final int namingRadix = namingConfig.getRadix();
-					return new StorageItemInput<>(
-						storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix,
-						namingRadix
-					);
-				} catch(final OmgShootMyFootException e) {
-					LogUtil.exception(Level.ERROR, e, "Failed to initialize the storage driver");
-				} catch(final InterruptedException e) {
-					throw new CancellationException();
-				}
-			}
-		}
-
-		return null;
-	}
-
-	private void sliceItemInput(
-		final Input<? extends Item> itemInput, final List<String> nodeAddrs,
-		final Map<String, Config> configSlices, final int batchSize
-	) throws IOException {
-
-		final int nodeCount = nodeAddrs.size();
-		final List<Item> itemsBuff = new ArrayList<>(batchSize);
-		final Map<String, StringBuilder> nodeItemsData = nodeAddrs
-			.stream()
-			.collect(Collectors.toMap(Function.identity(), n -> new StringBuilder()));
-
-		itemInputFileSvcs = nodeAddrs
-			.parallelStream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					Function2
-						.partial2(StepBase::resolveFileService, null)
-						.andThen(
-							optionalFileSvc -> {
-								if(optionalFileSvc.isPresent()) {
-									final FileService fileSvc = optionalFileSvc.get();
-									try {
-										optionalFileSvc.get().open(FileService.WRITE_OPEN_OPTIONS);
-									} catch(final IOException e) {
-										LogUtil.exception(
-											Level.WARN, e,
-											"Failed to open the remote file for writing"
-										);
-									}
-									return fileSvc;
-								} else {
-									return null;
-								}
-							}
-						)
-				)
-			);
-
-		int n;
-		while(true) {
-			try {
-				n = itemInput.get((List) itemsBuff, batchSize);
-			} catch(final EOFException e) {
-				break;
-			}
-			if(n > 0) {
-				if(nodeCount > 1) {
-					for(int i = 0; i < n; i ++) {
-						nodeItemsData
-							.get(nodeAddrs.get(i % nodeCount))
-							.append(itemsBuff.get(i).toString())
-							.append(System.lineSeparator());
-					}
-				} else {
-					final StringBuilder singleNodeItemsData = nodeItemsData.get(nodeAddrs.get(0));
-					itemsBuff
-						.stream()
-						.map(Object::toString)
-						.map(singleNodeItemsData::append)
-						.forEach(data -> data.append(System.lineSeparator()));
-				}
-				nodeAddrs
-					.parallelStream()
-					.forEach(
-						nodeAddrWithPort -> {
-							final StringBuilder buff = nodeItemsData.get(nodeAddrWithPort);
-							final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
-							if(fileSvc != null) {
-								try {
-									final byte[] buffData = buff.toString().getBytes();
-									fileSvc.write(buff.toString().getBytes());
-									buff.setLength(0);
-								} catch(final IOException e) {
-									LogUtil.exception(
-										Level.WARN, e,
-										"Failed to write the items input data to the remote "
-											+ "file @ {}",
-										nodeAddrWithPort
-									);
-								}
-							}
-						}
-					);
-			} else {
-				break;
-			}
-		}
-
-		nodeAddrs
-			.parallelStream()
-			.map(itemInputFileSvcs::get)
-			.filter(Objects::nonNull)
-			.forEach(
-				fileSvc -> {
-					try{
-						fileSvc.closeFile();
-					} catch(final IOException e) {
-						LogUtil.exception(Level.DEBUG, e, "Failed to close the remote file");
-					}
-				}
-			);
-
-		nodeAddrs
-			.parallelStream()
-			.forEach(
-				nodeAddrWithPort -> {
-					final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
-					if(fileSvc != null) {
-						try {
-							configSlices
-								.get(nodeAddrWithPort)
-								.getItemConfig()
-								.getInputConfig()
-								.setFile(fileSvc.filePath());
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to invoke the file service \"{}\" call @ {}",
-								fileSvc, nodeAddrWithPort
-							);
-						}
-					}
-				}
-			);
-	}
 }
