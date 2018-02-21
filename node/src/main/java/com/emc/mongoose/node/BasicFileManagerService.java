@@ -4,6 +4,9 @@ import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileManagerService;
 import com.emc.mongoose.scenario.sna.FileService;
 import com.emc.mongoose.ui.log.Loggers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 
 import java.rmi.RemoteException;
 
@@ -38,5 +41,18 @@ implements FileManagerService {
 		fileSvc.start();
 		Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.name());
 		return fileSvc.name();
+	}
+
+	@Override
+	public String createLogFileService(final String loggerName)
+	throws RemoteException {
+		final Logger logger = LogManager.getLogger(loggerName);
+		final String fileName = (
+			(RollingRandomAccessFileAppender)
+				((org.apache.logging.log4j.core.Logger) logger)
+					.getAppenders()
+				.get("RollingRandomAccessFile")
+		).getFileName();
+		return createFileService(fileName);
 	}
 }

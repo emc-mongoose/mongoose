@@ -41,6 +41,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,9 +73,10 @@ implements Step, Runnable {
 	private String id = null;
 	private boolean distributedFlag = false;
 	private List<StepService> stepSvcs = null;
+	private Map<String, Optional<FileManagerService>> fileMgrSvcs = null;
 	private Map<String, FileService> itemInputFileSvcs = null;
 	private Map<String, FileService> itemOutputFileSvcs = null;
-	private Map<String, FileService> ioTraceLogFileSvcs = null;
+	private Map<String, Optional<FileService>> ioTraceLogFileSvcs = null;
 
 	protected StepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
 		this.baseConfig = baseConfig;
@@ -211,7 +213,6 @@ implements Step, Runnable {
 	throws IllegalArgumentException {
 
 		final int nodePort = nodeConfig.getPort();
-
 		final Function<String, String> addPortIfMissingPartialFunc = Function2
 			.partial2(NetUtil::addPortIfMissing, nodePort);
 		final List<String> nodeAddrs = nodeConfig
@@ -219,7 +220,6 @@ implements Step, Runnable {
 			.stream()
 			.map(addPortIfMissingPartialFunc)
 			.collect(Collectors.toList());
-
 		if(nodeAddrs.size() < 1) {
 			throw new IllegalArgumentException(
 				"There should be at least 1 node address to be configured if the distributed " +
@@ -227,19 +227,11 @@ implements Step, Runnable {
 			);
 		}
 
-		ioTraceLogFileSvcs = nodeAddrs
-			.stream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					Function2
-						.partial2(StepBase::resolveFileService, "log/" + id + "/io.trace.csv")
-						.andThen(Optional::get)
-				)
-			);
-
+		initFileManagerServices(nodeAddrs);
+		if(actualConfig.getOutputConfig().getMetricsConfig().getTraceConfig().getPersist()) {
+			initIoTraceLogFileServices(nodeAddrs);
+		}
 		final Map<String, Config> configSlices = sliceConfigs(actualConfig, nodeAddrs);
-
 		final Function<String, StepService> resolveStepSvcPartialFunc = Function2
 			.partial1(this::resolveStepSvc, configSlices);
 		stepSvcs = nodeAddrs
@@ -247,6 +239,75 @@ implements Step, Runnable {
 			.map(resolveStepSvcPartialFunc)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+	}
+
+	private void initFileManagerServices(final List<String> nodeAddrs) {
+		fileMgrSvcs = nodeAddrs
+			.parallelStream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					nodeAddrWithPort -> {
+						try {
+							return Optional.of(
+								ServiceUtil.resolve(nodeAddrWithPort, FileManagerService.SVC_NAME)
+							);
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.ERROR, e,
+								"Failed to resolve the remote file manager service @ {}",
+								nodeAddrWithPort
+							);
+						}
+						return Optional.empty();
+					}
+				)
+			);
+	}
+
+	private void initIoTraceLogFileServices(final List<String> nodeAddrs) {
+		ioTraceLogFileSvcs = nodeAddrs
+			.stream()
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					nodeAddrWithPort -> fileMgrSvcs
+						.get(nodeAddrWithPort)
+						.flatMap(
+							fileMgrSvc -> {
+								try {
+									return Optional.of(
+										fileMgrSvc.createLogFileService(Loggers.IO_TRACE.getName())
+									);
+								} catch(final RemoteException e) {
+									LogUtil.exception(
+										Level.WARN, e, "Failed to create the log file service @ {}",
+										nodeAddrWithPort
+									);
+								}
+								return Optional.empty();
+							}
+						)
+						.flatMap(
+							ioTraceLogFileName -> {
+								final String ioTraceLogFileSvcName = FileService.SVC_NAME_PREFIX
+									+ '/' + ioTraceLogFileName;
+								try {
+									return Optional.of(
+										ServiceUtil.resolve(nodeAddrWithPort, ioTraceLogFileSvcName)
+									);
+								} catch(final Exception e) {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to resolve the log file service \"{}\" @ {}",
+										nodeAddrWithPort
+									);
+								}
+								return Optional.empty();
+							}
+						)
+				)
+			);
 	}
 
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
@@ -737,11 +798,30 @@ implements Step, Runnable {
 							byte[] data;
 							while(true) {
 								data = ioTraceLogFileSvc.read();
+								if(data.length == 0) {
+									break; // EOF
+								}
+								Loggers.IO_TRACE.info(new String(data));
 							}
 						} catch(final RemoteException e) {
+							final Throwable cause = e.getCause();
+							if(!(cause instanceof EOFException)) {
 
+							}
 						} catch(final IOException e) {
-
+							LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
+						} finally {
+							try {
+								ioTraceLogFileSvc.close();
+							} catch(final IOException e) {
+								try {
+									LogUtil.exception(
+										Level.DEBUG, e, "Failed to close the remote file {}",
+										ioTraceLogFileSvc.filePath()
+									);
+								} catch(final RemoteException ignored) {
+								}
+							}
 						}
 					}
 				);

@@ -23,12 +23,30 @@ extends Service {
 	};
 	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
 
+	/**
+	 Open the remote file for subsequent read either write operations
+	 @param openOptions
+	 @throws RemoteException the cause may be IllegalStateException if the file is open already
+	 either IOException if failed to open file
+	 */
 	void open(final OpenOption[] openOptions)
 	throws IOException;
 
+	/**
+	 Read the next batch of bytes from the remote file
+	 @return the bytes been read, may return empty buffer in case of EOF
+	 @throws RemoteException the cause may IllegalStateException if the file isn't open yet either
+	 EOFException if end of file is reached
+	 */
 	byte[] read()
 	throws IOException;
 
+	/**
+	 Write some bytes to the remote file. Blocks until all the bytes are written.
+	 @param buff the bytes to write to the remote file
+	 @throws RemoteException  the cause may IllegalStateException if the file isn't open yet either
+	 another IOException
+	 */
 	void write(final byte[] buff)
 	throws IOException;
 
