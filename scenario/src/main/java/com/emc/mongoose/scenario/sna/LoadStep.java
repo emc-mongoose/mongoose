@@ -18,7 +18,6 @@ import com.emc.mongoose.ui.config.item.data.input.InputConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.test.TestConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;

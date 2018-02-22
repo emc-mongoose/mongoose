@@ -19,7 +19,6 @@ import com.emc.mongoose.ui.config.item.data.DataConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
-import com.emc.mongoose.ui.config.item.output.OutputConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -28,6 +27,7 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.commons.func.Function2;
+import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
@@ -41,12 +41,9 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,8 +71,8 @@ implements Step, Runnable {
 	private boolean distributedFlag = false;
 	private List<StepService> stepSvcs = null;
 	private Map<String, Optional<FileManagerService>> fileMgrSvcs = null;
-	private Map<String, FileService> itemInputFileSvcs = null;
-	private Map<String, FileService> itemOutputFileSvcs = null;
+	private Map<String, Optional<FileService>> itemInputFileSvcs = null;
+	private Map<String, Optional<FileService>> itemOutputFileSvcs = null;
 	private Map<String, Optional<FileService>> ioTraceLogFileSvcs = null;
 
 	protected StepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
@@ -273,11 +270,11 @@ implements Step, Runnable {
 					Function.identity(),
 					nodeAddrWithPort -> fileMgrSvcs
 						.get(nodeAddrWithPort)
-						.flatMap(
+						.map(
 							fileMgrSvc -> {
 								try {
-									return Optional.of(
-										fileMgrSvc.createLogFileService(Loggers.IO_TRACE.getName())
+									return fileMgrSvc.createLogFileService(
+										Loggers.IO_TRACE.getName(), id
 									);
 								} catch(final RemoteException e) {
 									LogUtil.exception(
@@ -285,25 +282,23 @@ implements Step, Runnable {
 										nodeAddrWithPort
 									);
 								}
-								return Optional.empty();
+								return null;
 							}
 						)
-						.flatMap(
-							ioTraceLogFileName -> {
-								final String ioTraceLogFileSvcName = FileService.SVC_NAME_PREFIX
-									+ '/' + ioTraceLogFileName;
+						.map(
+							ioTraceLogFileSvcName -> {
 								try {
-									return Optional.of(
-										ServiceUtil.resolve(nodeAddrWithPort, ioTraceLogFileSvcName)
+									return ServiceUtil.resolve(
+										nodeAddrWithPort, ioTraceLogFileSvcName
 									);
 								} catch(final Exception e) {
 									LogUtil.exception(
 										Level.WARN, e,
 										"Failed to resolve the log file service \"{}\" @ {}",
-										nodeAddrWithPort
+										ioTraceLogFileSvcName, nodeAddrWithPort
 									);
 								}
-								return Optional.empty();
+								return null;
 							}
 						)
 				)
@@ -323,7 +318,7 @@ implements Step, Runnable {
 
 		// slice an item input (if any)
 		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
-		try(final Input<? extends Item> itemInput = getItemInput(config, batchSize)) {
+		try(final Input<? extends Item> itemInput = createItemInput(config, batchSize)) {
 			if(itemInput != null) {
 				sliceItemInput(itemInput, nodeAddrs, configSlices, batchSize);
 			}
@@ -341,45 +336,20 @@ implements Step, Runnable {
 				.collect(
 					Collectors.toMap(
 						Function.identity(),
-						Function2
-							.partial2(StepBase::resolveFileService, null)
-							.andThen(
-								optionalFileSvc -> {
-									if(optionalFileSvc.isPresent()) {
-										final FileService fileSvc = optionalFileSvc.get();
-										try {
-											fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
-											fileSvc.closeFile();
-											final String filePath = fileSvc.filePath();
-											Loggers.MSG.info(
-												"Use temporary remote item output file \"{}\" @ {}",
-												filePath, Service.address(fileSvc)
-											);
-										} catch(final IOException ignored) {
-										}
-										return fileSvc;
-									} else {
-										return null;
-									}
-								}
+						nodeAddrWithPort -> fileMgrSvcs
+							.get(nodeAddrWithPort)
+							.map(
+								Function3.partial13(
+									StepBase::createFileService, nodeAddrWithPort, null
+								)
 							)
+							.map(
+								Function2
+									.partial1(StepBase::resolveService, nodeAddrWithPort)
+									.andThen(svc -> (FileService) svc)
+							)
+							.map(Function2.partial1(StepBase::createRemoteFile, nodeAddrWithPort))
 					)
-				);
-			itemOutputFileSvcs
-				.keySet()
-				.forEach(
-					nodeAddrWithPort -> {
-						final OutputConfig itemOutputConfig = configSlices
-							.get(nodeAddrWithPort).getItemConfig().getOutputConfig();
-						itemOutputConfig.setFile(null);
-						final FileService fileSvc = itemOutputFileSvcs.get(nodeAddrWithPort);
-						if(fileSvc != null) {
-							try {
-								itemOutputConfig.setFile(fileSvc.filePath());
-							} catch(final RemoteException ignored) {
-							}
-						}
-					}
 				);
 		}
 
@@ -387,7 +357,7 @@ implements Step, Runnable {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Input<? extends Item> getItemInput(final Config config, final int batchSize) {
+	private static Input<? extends Item> createItemInput(final Config config, final int batchSize) {
 
 		final ItemConfig itemConfig = config.getItemConfig();
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
@@ -464,24 +434,39 @@ implements Step, Runnable {
 			.collect(
 				Collectors.toMap(
 					Function.identity(),
-					Function2
-						.partial2(StepBase::resolveFileService, null)
-						.andThen(
-							optionalFileSvc -> {
-								if(optionalFileSvc.isPresent()) {
-									final FileService fileSvc = optionalFileSvc.get();
-									try {
-										optionalFileSvc.get().open(FileService.WRITE_OPEN_OPTIONS);
-									} catch(final IOException e) {
-										LogUtil.exception(
-											Level.WARN, e,
-											"Failed to open the remote file for writing"
-										);
-									}
-									return fileSvc;
-								} else {
-									return null;
+					nodeAddrWithPort -> fileMgrSvcs
+						.get(nodeAddrWithPort)
+						.map(
+							fileMgrSvc -> {
+								try {
+									return fileMgrSvc.createFileService(null);
+								} catch(final RemoteException e) {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to create the remote file service @ {}",
+										nodeAddrWithPort
+									);
 								}
+								return null;
+							}
+						)
+						.map(
+							Function2
+								.partial1(StepBase::resolveService, nodeAddrWithPort)
+								.andThen(svc -> (FileService) svc)
+						)
+						.map(
+							fileSvc -> {
+								try {
+									fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
+								} catch(final IOException e) {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to open the remote file for writing @ {}",
+										nodeAddrWithPort
+									);
+								}
+								return fileSvc;
 							}
 						)
 				)
@@ -548,22 +533,27 @@ implements Step, Runnable {
 					.parallelStream()
 					.forEach(
 						nodeAddrWithPort -> {
-							final ByteArrayOutputStream buff = itemsDataByNode.get(nodeAddrWithPort);
-							final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
-							if(fileSvc != null) {
-								try {
-									final byte[] data = buff.toByteArray();
-									fileSvc.write(data);
-									buff.reset();
-								} catch(final IOException e) {
-									LogUtil.exception(
-										Level.WARN, e,
-										"Failed to write the items input data to the remote "
-											+ "file @ {}",
-										nodeAddrWithPort
-									);
-								}
-							}
+							final ByteArrayOutputStream buff = itemsDataByNode.get(
+								nodeAddrWithPort
+							);
+							itemInputFileSvcs
+								.get(nodeAddrWithPort)
+								.ifPresent(
+									itemInputFileSvc -> {
+										try {
+											final byte[] data = buff.toByteArray();
+											itemInputFileSvc.write(data);
+											buff.reset();
+										} catch(final IOException e) {
+											LogUtil.exception(
+												Level.WARN, e,
+												"Failed to write the items input data to the " +
+													"remote file @ {}",
+												nodeAddrWithPort
+											);
+										}
+									}
+								);
 						}
 					);
 			} else {
@@ -584,10 +574,11 @@ implements Step, Runnable {
 				}
 			);
 
-		nodeAddrs
+		itemInputFileSvcs
+			.values()
 			.parallelStream()
-			.map(itemInputFileSvcs::get)
-			.filter(Objects::nonNull)
+			.filter(Optional::isPresent)
+			.map(Optional::get)
 			.forEach(
 				fileSvc -> {
 					try{
@@ -601,64 +592,71 @@ implements Step, Runnable {
 		nodeAddrs
 			.parallelStream()
 			.forEach(
-				nodeAddrWithPort -> {
-					final FileService fileSvc = itemInputFileSvcs.get(nodeAddrWithPort);
-					if(fileSvc != null) {
-						try {
-							configSlices
-								.get(nodeAddrWithPort)
-								.getItemConfig()
-								.getInputConfig()
-								.setFile(fileSvc.filePath());
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to invoke the file service \"{}\" call @ {}",
-								fileSvc, nodeAddrWithPort
-							);
+				nodeAddrWithPort -> itemInputFileSvcs
+					.get(nodeAddrWithPort)
+					.ifPresent(
+						fileSvc -> {
+							try {
+								configSlices
+									.get(nodeAddrWithPort)
+									.getItemConfig()
+									.getInputConfig()
+									.setFile(fileSvc.filePath());
+							} catch(final RemoteException e) {
+								LogUtil.exception(
+									Level.WARN, e,
+									"Failed to invoke the file service \"{}\" call @ {}",
+									fileSvc, nodeAddrWithPort
+								);
+							}
 						}
-					}
-				}
+					)
 			);
 	}
 
-	private static Optional<FileService> resolveFileService(
-		final String nodeAddrWithPort, final String path
+	private static String createFileService(
+		final String nodeAddrWithPort, final FileManagerService fileMgrSvc, final String fileSvcName
 	) {
 		try {
-			return FileManagerService
-				.resolve(nodeAddrWithPort)
-				.map(
-					fileMgrSvc -> {
-						try {
-							return fileMgrSvc.createFileService(path);
-						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.ERROR, e, "Failed to create the remote file service @ {}",
-								nodeAddrWithPort
-							);
-						}
-						return null;
-					}
-				)
-				.map(
-					fileSvcName -> {
-						try {
-							return ServiceUtil.resolve(nodeAddrWithPort, fileSvcName);
-						} catch(final IOException | URISyntaxException | NotBoundException e) {
-							LogUtil.exception(
-								Level.ERROR, e, "Failed to resolve the file service \"{}\" @ {}",
-								fileSvcName, nodeAddrWithPort
-							);
-						}
-						return null;
-					}
-				);
+			return fileMgrSvc.createFileService(fileSvcName);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
-				Level.ERROR, e, "Failed to resolve the file manager service @ {}", nodeAddrWithPort
+				Level.WARN, e, "Failed to create the file service @{}", nodeAddrWithPort
 			);
-			return Optional.empty();
 		}
+		return null;
+	}
+
+	private static Service resolveService(final String nodeAddrWithPort, final String svcName) {
+		try {
+			return ServiceUtil.resolve(nodeAddrWithPort, svcName);
+		} catch(final Exception e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to resolve the service @ {}", nodeAddrWithPort
+			);
+		}
+		return null;
+	}
+
+	private static FileService createRemoteFile(
+		final String nodeAddrWithPort, final FileService fileSvc
+	) {
+		try {
+			fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
+			fileSvc.closeFile();
+			final String filePath = fileSvc.filePath();
+			Loggers.MSG.info(
+				"Use temporary remote item output file \"{}\" @ {}",
+				filePath, Service.address(fileSvc)
+			);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.WARN, e,
+				"Failed to create the remote file @ {}",
+				nodeAddrWithPort
+			);
+		}
+		return fileSvc;
 	}
 
 	private StepService resolveStepSvc(
@@ -772,18 +770,20 @@ implements Step, Runnable {
 			itemInputFileSvcs
 				.entrySet()
 				.parallelStream()
-				.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
+				.filter(entry -> entry.getValue().isPresent())
+				.forEach(entry -> closeFileSvc(entry.getValue().get(), entry.getKey()));
 			itemInputFileSvcs.clear();
 		}
 
 		if(itemOutputFileSvcs != null) {
 			final String itemOutputFile = actualConfig
 				.getItemConfig().getOutputConfig().getFile();
-			transferItemOutputDataToTheLocalFile(itemOutputFileSvcs, itemOutputFile);
+			transferItemOutputData(itemOutputFileSvcs, itemOutputFile);
 			itemOutputFileSvcs
 				.entrySet()
 				.parallelStream()
-				.forEach(entry -> closeFileSvc(entry.getValue(), entry.getKey()));
+				.filter(entry -> entry.getValue().isPresent())
+				.forEach(entry -> closeFileSvc(entry.getValue().get(), entry.getKey()));
 			itemOutputFileSvcs.clear();
 		}
 
@@ -791,46 +791,15 @@ implements Step, Runnable {
 			ioTraceLogFileSvcs
 				.values()
 				.parallelStream()
-				.forEach(
-					ioTraceLogFileSvc -> {
-						try {
-							ioTraceLogFileSvc.open(FileService.READ_OPTIONS);
-							byte[] data;
-							while(true) {
-								data = ioTraceLogFileSvc.read();
-								if(data.length == 0) {
-									break; // EOF
-								}
-								Loggers.IO_TRACE.info(new String(data));
-							}
-						} catch(final RemoteException e) {
-							final Throwable cause = e.getCause();
-							if(!(cause instanceof EOFException)) {
-
-							}
-						} catch(final IOException e) {
-							LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
-						} finally {
-							try {
-								ioTraceLogFileSvc.close();
-							} catch(final IOException e) {
-								try {
-									LogUtil.exception(
-										Level.DEBUG, e, "Failed to close the remote file {}",
-										ioTraceLogFileSvc.filePath()
-									);
-								} catch(final RemoteException ignored) {
-								}
-							}
-						}
-					}
-				);
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.forEach(StepBase::transferIoTraceData);
 			ioTraceLogFileSvcs.clear();
 		}
 	}
 
-	private static void transferItemOutputDataToTheLocalFile(
-		final Map<String, FileService> itemOutputFileSvcs, final String itemOutputFile
+	private static void transferItemOutputData(
+		final Map<String, Optional<FileService>> itemOutputFileSvcs, final String itemOutputFile
 	) {
 		Loggers.MSG.info(
 			"Transfer the items output data from the remote nodes to the local file \"{}\"...",
@@ -844,7 +813,8 @@ implements Step, Runnable {
 			itemOutputFileSvcs
 				.values()
 				.parallelStream()
-				.filter(Objects::nonNull)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
 				.forEach(
 					fileSvc -> {
 						try {
@@ -906,6 +876,41 @@ implements Step, Runnable {
 			}
 		}
 		return fileSvc;
+	}
+
+	private static void transferIoTraceData(final FileService ioTraceLogFileSvc) {
+		try {
+			ioTraceLogFileSvc.open(FileService.READ_OPTIONS);
+			byte[] data;
+			while(true) {
+				data = ioTraceLogFileSvc.read();
+				if(data.length == 0) {
+					break; // EOF
+				}
+				Loggers.IO_TRACE.info(new String(data));
+			}
+		} catch(final RemoteException e) {
+			final Throwable cause = e.getCause();
+			if(!(cause instanceof EOFException)) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to read the data from the remote file"
+				);
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
+		} finally {
+			try {
+				ioTraceLogFileSvc.close();
+			} catch(final IOException e) {
+				try {
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to close the remote file {}",
+						ioTraceLogFileSvc.filePath()
+					);
+				} catch(final RemoteException ignored) {
+				}
+			}
+		}
 	}
 
 	protected abstract void doCloseLocal();

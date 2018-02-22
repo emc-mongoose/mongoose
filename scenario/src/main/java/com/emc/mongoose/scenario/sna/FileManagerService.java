@@ -12,6 +12,6 @@ extends Service {
 	String createFileService(final String path)
 	throws RemoteException;
 
-	String createLogFileService(final String loggerName)
+	String createLogFileService(final String loggerName, final String testStepId)
 	throws RemoteException;
 }

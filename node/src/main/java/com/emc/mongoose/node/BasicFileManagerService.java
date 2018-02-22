@@ -4,11 +4,17 @@ import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileManagerService;
 import com.emc.mongoose.scenario.sna.FileService;
 import com.emc.mongoose.ui.log.Loggers;
+
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
+import org.apache.logging.log4j.core.async.AsyncLogger;
 
 import java.rmi.RemoteException;
+
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 public final class BasicFileManagerService
 extends ServiceBase
@@ -44,15 +50,19 @@ implements FileManagerService {
 	}
 
 	@Override
-	public String createLogFileService(final String loggerName)
+	public String createLogFileService(final String loggerName, final String testStepId)
 	throws RemoteException {
-		final Logger logger = LogManager.getLogger(loggerName);
-		final String fileName = (
-			(RollingRandomAccessFileAppender)
-				((org.apache.logging.log4j.core.Logger) logger)
-					.getAppenders()
-				.get("RollingRandomAccessFile")
-		).getFileName();
-		return createFileService(fileName);
+		try(
+			final CloseableThreadContext.Instance
+				logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, testStepId)
+		) {
+			final Logger logger = LogManager.getLogger(loggerName);
+			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
+			final String filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
+			final String fileName = filePtrn.contains("${ctx:stepId}") ?
+				filePtrn.replace("${ctx:stepId}", testStepId) :
+				filePtrn;
+			return createFileService(fileName);
+		}
 	}
 }
