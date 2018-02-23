@@ -1,12 +1,14 @@
 package com.emc.mongoose.api.metrics;
 
+import com.emc.mongoose.ui.log.LogUtil;
+import org.apache.logging.log4j.Level;
+
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import java.io.IOException;
 import java.util.Hashtable;
 
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
@@ -33,18 +35,16 @@ implements MeterMBean {
 		metricsCtx.setMetricsListener(this);
 		try {
 			MBEAN_SERVER.registerMBean(this, objectName);
-		} catch(final InstanceAlreadyExistsException e) {
-
-		} catch(final MBeanRegistrationException e) {
-
-		} catch(final NotCompliantMBeanException e) {
-
+		} catch(
+			final InstanceAlreadyExistsException | MBeanRegistrationException
+				| NotCompliantMBeanException e
+		) {
+			LogUtil.exception(Level.WARN, e, "Failed to start the metrics JMX service");
 		}
 	}
 
 	@Override
-	public final void close()
-	throws IOException {
+	public final void close() {
 		metricsCtx.setMetricsListener(null);
 		try {
 			MBEAN_SERVER.unregisterMBean(objectName);
