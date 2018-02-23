@@ -270,6 +270,7 @@ implements Step, Runnable {
 					Function.identity(),
 					nodeAddrWithPort -> fileMgrSvcs
 						.get(nodeAddrWithPort)
+						.filter(fileMgrSvc -> ! ServiceUtil.isLocalAddress(nodeAddrWithPort))
 						.map(
 							fileMgrSvc -> {
 								try {

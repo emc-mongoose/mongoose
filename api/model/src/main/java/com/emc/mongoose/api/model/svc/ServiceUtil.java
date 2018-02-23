@@ -1,13 +1,9 @@
 package com.emc.mongoose.api.model.svc;
 
 import com.github.akurilov.commons.net.FixedPortRmiSocketFactory;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
-import sun.rmi.server.UnicastRef;
-import sun.rmi.transport.Channel;
-import sun.rmi.transport.LiveRef;
-import sun.rmi.transport.tcp.TCPEndpoint;
 
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -25,12 +21,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
-import java.rmi.server.RemoteObjectInvocationHandler;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Enumeration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import static java.lang.reflect.Proxy.getInvocationHandler;
 
 /**
  Created on 28.09.16.
@@ -68,8 +62,8 @@ public abstract class ServiceUtil {
 	}
 
 	public static URI getLocalSvcUri(final String svcName, final int port)
-	throws URISyntaxException {
-		final String hostName = getHostAddr();
+	throws URISyntaxException, SocketException {
+		final String hostName = getAnyExternalHostAddress();
 		return new URI(RMI_SCHEME, null, hostName, port, "/" + svcName, null, null);
 	}
 
@@ -90,39 +84,72 @@ public abstract class ServiceUtil {
 		return new URI(RMI_SCHEME, null, addr, port, "/" + svcName, null, null);
 	}
 
-	public static String getHostAddr() {
+	public static String getAnyExternalHostAddress()
+	throws SocketException {
 
 		String hostName = System.getProperty(KEY_RMI_HOSTNAME);
 		if(hostName != null) {
 			return hostName;
 		}
 
-		InetAddress addr = null;
-		try {
-			final Enumeration<NetworkInterface> netIfaces = NetworkInterface.getNetworkInterfaces();
-			NetworkInterface nextNetIface;
-			String nextNetIfaceName;
-			while(netIfaces.hasMoreElements()) {
-				nextNetIface = netIfaces.nextElement();
-				nextNetIfaceName = nextNetIface.getDisplayName();
-				if(!nextNetIface.isLoopback() && nextNetIface.isUp()) {
-					final Enumeration<InetAddress> addrs = nextNetIface.getInetAddresses();
-					while(addrs.hasMoreElements()) {
-						addr = addrs.nextElement();
-						if(Inet4Address.class.isInstance(addr)) {
-							break;
-						}
+		return Collections
+			.list(NetworkInterface.getNetworkInterfaces())
+			.stream()
+			.filter(
+				netIface -> {
+					try {
+						return ! netIface.isLoopback() && netIface.isUp();
+					} catch(final SocketException e) {
+						return false;
 					}
 				}
-			}
+			)
+			.map(NetworkInterface::getInetAddresses)
+			.map(
+				inetAddrs -> Collections
+					.list(inetAddrs)
+					.stream()
+					.filter(inetAddr -> inetAddr instanceof Inet4Address)
+					.map(InetAddress::getHostAddress)
+					.findFirst()
+					.orElse(null)
+			)
+			.findFirst()
+			.orElse(InetAddress.getLoopbackAddress().getHostAddress());
+	}
+
+	public static boolean isLocalAddress(final String addrWithPort) {
+
+		final String addr;
+		final int portSepPos = addrWithPort.lastIndexOf(':');
+		if(portSepPos == -1) {
+			addr = addrWithPort;
+		} else {
+			addr = addrWithPort.substring(0, portSepPos);
+		}
+
+		try {
+			return Collections
+				.list(NetworkInterface.getNetworkInterfaces())
+				.stream()
+				.map(NetworkInterface::getInetAddresses)
+				.anyMatch(
+					ifaceAddrs -> Collections
+						.list(ifaceAddrs)
+						.stream()
+						.anyMatch(
+							inetAddress -> addr.equals(inetAddress.getCanonicalHostName())
+								|| addr.equals(inetAddress.getHostName())
+								|| addr.equals(inetAddress.getHostAddress())
+						)
+				);
 		} catch(final SocketException e) {
 			e.printStackTrace(System.err);
 		}
-		if(addr == null) {
-			addr = InetAddress.getLoopbackAddress();
-		}
-		return addr.getHostAddress();
+
+		return false;
 	}
+
 
 	public static String create(final Service svc, final int port) {
 		String svcUri = null;
@@ -143,7 +170,7 @@ public abstract class ServiceUtil {
 		} catch(final IOException | URISyntaxException e) {
 			e.printStackTrace(System.err);
 		}
-		return svcUri;
+	return svcUri;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -178,7 +205,7 @@ public abstract class ServiceUtil {
 						);
 					}
 				}
-			} catch(final NotBoundException | URISyntaxException e) {
+			} catch(final NotBoundException | URISyntaxException | SocketException e) {
 				e.printStackTrace(System.err);
 			}
 		}
