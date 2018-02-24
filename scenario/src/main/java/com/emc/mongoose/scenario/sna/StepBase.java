@@ -1,6 +1,8 @@
 package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.metrics.BasicMetricsContext;
+import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -31,7 +33,8 @@ import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
-
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -170,7 +173,6 @@ implements Step, Runnable {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-
 			distributedFlag = stepConfig.getDistributed();
 			if(distributedFlag) {
 				doStartRemote(actualConfig, stepConfig.getNodeConfig());

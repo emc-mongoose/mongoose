@@ -8,7 +8,6 @@ import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
-import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -38,8 +37,7 @@ public final class MetricsManager
 extends DaemonBase
 implements Coroutine {
 	
-	private final Map<LoadController, Map<MetricsContext, Closeable>>
-		allMetrics = new HashMap<>();
+	private final Map<String, Map<MetricsContext, Closeable>> allMetrics = new HashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock allMetricsLock = new ReentrantLock();
 	
@@ -63,21 +61,16 @@ implements Coroutine {
 		}
 	}
 	
-	public static void register(final LoadController controller, final MetricsContext metricsCtx)
+	public static void register(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			if(INSTANCE.allMetrics.size() == 0) {
 				SVC_EXECUTOR.start(INSTANCE);
 			}
-			try(
-				final Instance stepIdCtx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
-			) {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
 				final Map<MetricsContext, Closeable>
-					controllerMetrics = INSTANCE.allMetrics.computeIfAbsent(
-						controller, c -> new HashMap<>()
-					);
-				controllerMetrics.put(metricsCtx, new Meter(metricsCtx));
+					stepMetrics = INSTANCE.allMetrics.computeIfAbsent(id, c -> new HashMap<>());
+				stepMetrics.put(metricsCtx, new Meter(metricsCtx));
 				Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 			} catch(final MalformedObjectNameException e) {
 				LogUtil.exception(
@@ -95,16 +88,12 @@ implements Coroutine {
 		}
 	}
 	
-	public static void unregister(final LoadController controller, final MetricsContext metricsCtx)
+	public static void unregister(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
-			try(
-				final Instance stepIdCtx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, metricsCtx.getStepId())
-			) {
-				final Map<MetricsContext, Closeable>
-					controllerMetrics = INSTANCE.allMetrics.get(controller);
-				if(controllerMetrics != null) {
+			try(final Instance stepIdCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
+				final Map<MetricsContext, Closeable> stepMetrics = INSTANCE.allMetrics.get(id);
+				if(stepMetrics != null) {
 					metricsCtx.refreshLastSnapshot(); // last time
 					// check for the metrics threshold state if entered
 					if(
@@ -126,7 +115,7 @@ implements Coroutine {
 						new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx), true)
 					);
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
-					final Closeable meterMBean = controllerMetrics.remove(metricsCtx);
+					final Closeable meterMBean = stepMetrics.remove(metricsCtx);
 					if(meterMBean != null) {
 						try {
 							meterMBean.close();
@@ -137,8 +126,8 @@ implements Coroutine {
 				} else {
 					Loggers.ERR.debug("Metrics context \"{}\" has not been registered", metricsCtx);
 				}
-				if(controllerMetrics != null && controllerMetrics.size() == 0) {
-					INSTANCE.allMetrics.remove(controller);
+				if(stepMetrics != null && stepMetrics.size() == 0) {
+					INSTANCE.allMetrics.remove(id);
 				}
 			} finally {
 				if(INSTANCE.allMetrics.size() == 0) {
@@ -164,11 +153,8 @@ implements Coroutine {
 			try {
 				int actualConcurrency;
 				int nextConcurrencyThreshold;
-				for(final LoadController controller : allMetrics.keySet()) {
-					if(controller.isInterrupted() || controller.isClosed()) {
-						continue;
-					}
-					for(final MetricsContext metricsCtx : allMetrics.get(controller).keySet()) {
+				for(final String id : allMetrics.keySet()) {
+					for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
 
 						ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
 
@@ -205,17 +191,15 @@ implements Coroutine {
 						lastOutputTs = metricsCtx.getLastOutputTs();
 						nextOutputTs = System.currentTimeMillis();
 						if(
-							outputPeriodMillis > 0 &&
-								nextOutputTs - lastOutputTs >= outputPeriodMillis
+							outputPeriodMillis > 0
+								&& nextOutputTs - lastOutputTs >= outputPeriodMillis
 						) {
-							if(!controller.isInterrupted() && !controller.isClosed()) {
-								selectedMetrics.add(metricsCtx);
-								metricsCtx.setLastOutputTs(nextOutputTs);
-								if(metricsCtx.getAvgPersistFlag()) {
-									Loggers.METRICS_FILE.info(
-										new MetricsCsvLogMessage(metricsCtx)
-									);
-								}
+							selectedMetrics.add(metricsCtx);
+							metricsCtx.setLastOutputTs(nextOutputTs);
+							if(metricsCtx.getAvgPersistFlag()) {
+								Loggers.METRICS_FILE.info(
+									new MetricsCsvLogMessage(metricsCtx)
+								);
 							}
 						}
 					}
@@ -281,8 +265,8 @@ implements Coroutine {
 		try {
 			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 				try {
-					for(final LoadController controller : allMetrics.keySet()) {
-						allMetrics.get(controller).clear();
+					for(final String id : allMetrics.keySet()) {
+						allMetrics.get(id).clear();
 					}
 					allMetrics.clear();
 				} finally {

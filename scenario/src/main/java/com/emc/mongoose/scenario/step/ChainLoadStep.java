@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -198,7 +197,7 @@ extends ConfigurableStepBase {
 
 		for(final LoadController nextController : loadChain) {
 			nextController.start();
-			Loggers.MSG.info("Load step \"{}\" started", nextController.getName());
+			Loggers.MSG.info("Load step \"{}\" started", nextController.id());
 		}
 
 		long timeRemainSec = timeLimitSec;
@@ -211,9 +210,9 @@ extends ConfigurableStepBase {
 				tsStart = System.currentTimeMillis();
 				try {
 					if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
-						Loggers.MSG.info("Load step \"{}\" done", controller.getName());
+						Loggers.MSG.info("Load step \"{}\" done", controller.id());
 					} else {
-						Loggers.MSG.info("Load step \"{}\" timeout", controller.getName());
+						Loggers.MSG.info("Load step \"{}\" timeout", controller.id());
 					}
 				} finally {
 					controller.interrupt();
@@ -235,7 +234,7 @@ extends ConfigurableStepBase {
 					nextController.close();
 				} catch(final IOException e) {
 					LogUtil.exception(
-						Level.WARN, e, "Failed to close the step \"{}\"",  nextController.getName()
+						Level.WARN, e, "Failed to close the step \"{}\"",  nextController.id()
 					);
 				}
 			}

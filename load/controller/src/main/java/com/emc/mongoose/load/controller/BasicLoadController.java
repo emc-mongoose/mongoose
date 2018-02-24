@@ -51,8 +51,6 @@ import org.apache.logging.log4j.ThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -73,7 +71,7 @@ public class BasicLoadController<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadController<I, O> {
 	
-	private final String name;
+	private final String id;
 	private final Int2ObjectMap<LoadGenerator<I, O>> generatorByOrigin;
 	private final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator;
 	private final Map<LoadGenerator<I, O>, GetActualConcurrencyCoroutine>
@@ -83,38 +81,36 @@ implements LoadController<I, O> {
 	private final long failCountLimit;
 	private final boolean failRateLimitFlag;
 	private final ConcurrentMap<I, O> latestIoResultsByItem;
-	private final int batchSize;
 	private final boolean isAnyCircular;
 	private final List<Coroutine> transferCoroutines = new ArrayList<>();
 
 	private final Int2ObjectMap<MetricsContext> metricsByIoType = new Int2ObjectOpenHashMap<>();
 	private final LongAdder counterResults = new LongAdder();
 	private final Int2IntMap concurrencyByIoType;
-	private final Throttle<Object> rateThrottle;
-	private final WeightThrottle weightThrottle;
 	private final boolean tracePersistFlag;
 
 	private volatile Output<O> ioResultsOutput;
 	
 	/**
-	 @param name test step name
+	 @param id test step id
 	 @param driverByGenerator generator to drivers list map
 	 **/
 	public BasicLoadController(
-		final String name, final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator,
+		final String id, final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator,
 		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, SizeInBytes> itemDataSizes,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final StepConfig stepConfig,
 		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
-		this.name = name;
+		this.id = id;
 		final LoadConfig firstLoadConfig = loadConfigs.values().iterator().next();
 		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
+		final Throttle<Object> rateThrottle;
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
 		} else {
 			rateThrottle = null;
 		}
-		
+		final WeightThrottle weightThrottle;
 		if(weightMap == null || weightMap.size() == 0 || weightMap.size() == 1) {
 			weightThrottle = null;
 		} else {
@@ -137,7 +133,7 @@ implements LoadController<I, O> {
 		this.driverByGenerator = driverByGenerator;
 		concurrencyByIoType = new Int2IntOpenHashMap(driverByGenerator.size());
 		getActualConcurrencyCoroutines = new HashMap<>();
-		this.batchSize = firstLoadConfig.getBatchConfig().getSize();
+		final int batchSize = firstLoadConfig.getBatchConfig().getSize();
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
 			final StorageDriver<I, O> nextDriver = driverByGenerator.get(nextGenerator);
@@ -155,7 +151,10 @@ implements LoadController<I, O> {
 			metricsByIoType.put(
 				ioTypeCode,
 				new BasicMetricsContext(
-					name, ioType, () -> getActualConcurrency(nextGenerator),
+					id, ioType,
+					() -> getActualConcurrencyCoroutines
+						.get(nextGenerator)
+						.getActualConcurrencySum(),
 					1, ioTypeSpecificConcurrency,
 					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
 					itemDataSizes.get(nextGenerator),
@@ -199,7 +198,7 @@ implements LoadController<I, O> {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
 				Loggers.MSG.debug(
-					"{}: count limit reached, {} results >= {} limit", name, counterResults.sum(),
+					"{}: count limit reached, {} results >= {} limit", id, counterResults.sum(),
 					countLimit
 				);
 				return true;
@@ -213,8 +212,7 @@ implements LoadController<I, O> {
 				failCountSum += lastStats.getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					Loggers.MSG.debug(
-						"{}: count limit reached, {} successful + {} failed >= {} limit",
-						name, succCountSum, failCountSum, countLimit
+						"{}: count limit reached, {} successful + {} failed >= {} limit", id, succCountSum, failCountSum, countLimit
 					);
 					return true;
 				}
@@ -230,8 +228,7 @@ implements LoadController<I, O> {
 				sizeSum += metricsByIoType.get(ioTypeCode).getLastSnapshot().getByteCount();
 				if(sizeSum >= sizeLimit) {
 					Loggers.MSG.debug(
-						"{}: size limit reached, done {} >= {} limit",
-						name, SizeInBytes.formatFixedSize(sizeSum), sizeLimit
+						"{}: size limit reached, done {} >= {} limit", id, SizeInBytes.formatFixedSize(sizeSum), sizeLimit
 					);
 					return true;
 				}
@@ -274,11 +271,11 @@ implements LoadController<I, O> {
 
 	private boolean isDone() {
 		if(isDoneCountLimit()) {
-			Loggers.MSG.debug("{}: done due to max count done state", getName());
+			Loggers.MSG.debug("{}: done due to max count done state", id());
 			return true;
 		}
 		if(isDoneSizeLimit()) {
-			Loggers.MSG.debug("{}: done due to max size done state", getName());
+			Loggers.MSG.debug("{}: done due to max size done state", id());
 			return true;
 		}
 		return false;
@@ -302,15 +299,14 @@ implements LoadController<I, O> {
 		if(failCountSum > failCountLimit) {
 			Loggers.ERR.warn(
 				"{}: failure count ({}) is more than the configured limit ({}), stopping the step",
-				name, failCountSum, failCountLimit
+				id, failCountSum, failCountLimit
 			);
 			return true;
 		}
 		if(failRateLimitFlag && failRateLast > succRateLast) {
 			Loggers.ERR.warn(
 				"{}: failures rate ({} failures/sec) is more than success rate ({} op/sec), " +
-					"stopping the step",
-				name, failRateLast, succRateLast
+					"stopping the step", id, failRateLast, succRateLast
 			);
 			return true;
 		}
@@ -335,8 +331,8 @@ implements LoadController<I, O> {
 	}
 
 	@Override
-	public final String getName() {
-		return name;
+	public final String id() {
+		return id;
 	}
 
 	@Override
@@ -347,7 +343,7 @@ implements LoadController<I, O> {
 	@Override
 	public final boolean put(final O ioTaskResult) {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, name);
+		ThreadContext.put(KEY_TEST_STEP_ID, id);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
@@ -394,14 +390,9 @@ implements LoadController<I, O> {
 						LogUtil.exception(
 							Level.DEBUG, e, "I/O task destination end of input"
 						);
-					} catch(final NoSuchObjectException e) {
-						LogUtil.exception(
-							Level.DEBUG, e,
-							"Remote I/O task destination is not more available"
-						);
 					} catch(final IOException e) {
 						LogUtil.exception(
-							Level.WARN, e, "Failed to put the I/O task to the destionation"
+							Level.WARN, e, "Failed to put the I/O task to the destination"
 						);
 					}
 				}
@@ -420,7 +411,7 @@ implements LoadController<I, O> {
 	@Override
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, name);
+		ThreadContext.put(KEY_TEST_STEP_ID, id);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
@@ -479,14 +470,9 @@ implements LoadController<I, O> {
 							LogUtil.exception(
 								Level.DEBUG, e, "I/O task destination end of input"
 							);
-						} catch(final NoSuchObjectException e) {
-							LogUtil.exception(
-								Level.DEBUG, e,
-								"Remote I/O task destination is not more available"
-							);
 						} catch(final IOException e) {
 							LogUtil.exception(
-								Level.WARN, e, "Failed to put the I/O task to the destionation"
+								Level.WARN, e, "Failed to put the I/O task to the destination"
 							);
 						}
 					}
@@ -510,46 +496,21 @@ implements LoadController<I, O> {
 	}
 	
 	@Override
-	public final int getActualConcurrency(final LoadGenerator<I, O> loadGenerator) {
-		return getActualConcurrencyCoroutines.get(loadGenerator).getActualConcurrencySum();
-	}
-	
-	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
-			final StorageDriver<I, O> nextDriver = driverByGenerator.get(nextGenerator);
-			try {
-				nextDriver.start();
-			} catch(final IllegalStateException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to start the driver {}", nextDriver.toString()
-				);
+		driverByGenerator.values().forEach(StorageDriver::start);
+		driverByGenerator.keySet().forEach(LoadGenerator::start);
+		metricsByIoType.forEach(
+			(ioTypeCode, metricsCtx) -> {
+				try {
+					MetricsManager.register(id, metricsCtx);
+				} catch(final InterruptedException e) {
+					throw new CancellationException(e.getMessage());
+				}
 			}
-			try {
-				nextGenerator.start();
-			} catch(final IllegalStateException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to start the generator {}", nextGenerator.toString()
-				);
-			}
-		}
-
-		for(final int ioTypeCode : concurrencyByIoType.keySet()) {
-			metricsByIoType.get(ioTypeCode).start();
-			try {
-				MetricsManager.register(this, metricsByIoType.get(ioTypeCode));
-			} catch(final InterruptedException e) {
-				throw new CancellationException(e.getMessage());
-			}
-		}
-
-		for(final Coroutine transferCoroutine : transferCoroutines) {
-			transferCoroutine.start();
-		}
-		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
-			getConcurrencyCoroutine.start();
-		}
+		);
+		transferCoroutines.forEach(Coroutine::start);
+		getActualConcurrencyCoroutines.values().forEach(Coroutine::start);
 	}
 
 	@Override
@@ -566,12 +527,12 @@ implements LoadController<I, O> {
 				() -> {
 					try(
 						final Instance ctx = CloseableThreadContext
-							.put(KEY_TEST_STEP_ID, name)
+							.put(KEY_TEST_STEP_ID, id)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
 						generator.interrupt();
 						Loggers.MSG.debug(
-							"{}: load generator \"{}\" interrupted", getName(),
+							"{}: load generator \"{}\" interrupted", id(),
 							generator.toString()
 						);
 					}
@@ -582,25 +543,25 @@ implements LoadController<I, O> {
 				() -> {
 					try(
 						final Instance ctx = CloseableThreadContext
-							.put(KEY_TEST_STEP_ID, name)
+							.put(KEY_TEST_STEP_ID, id)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
 						driver.shutdown();
 						Loggers.MSG.debug(
-							"{}: next storage driver {} shutdown", getName(), driver.toString()
+							"{}: next storage driver {} shutdown", id(), driver.toString()
 						);
 					}
 				}
 			);
 		}
 		
-		Loggers.MSG.debug("{}: shutting down the storage drivers...", getName());
+		Loggers.MSG.debug("{}: shutting down the storage drivers...", id());
 		shutdownExecutor.shutdown();
 		try {
 			if(shutdownExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				Loggers.MSG.debug("{}: load controller was shut down properly", getName());
+				Loggers.MSG.debug("{}: load controller was shut down properly", id());
 			} else {
-				Loggers.ERR.warn("{}: load controller shutdown timeout", getName());
+				Loggers.ERR.warn("{}: load controller shutdown timeout", id());
 			}
 		} catch(final InterruptedException e) {
 			throw new CancellationException(e.getMessage());
@@ -613,7 +574,7 @@ implements LoadController<I, O> {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		//
 		Loggers.MSG.debug(
-			"{}: await for the done condition at most for {}[s]", getName(),
+			"{}: await for the done condition at most for {}[s]", id(),
 			TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
 		t = System.currentTimeMillis();
@@ -622,38 +583,38 @@ implements LoadController<I, O> {
 				state.wait(100);
 			}
 			if(isInterrupted()) {
-				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", id());
 				return true;
 			}
 			if(isClosed()) {
-				Loggers.MSG.debug("{}: await exit due to \"closed\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"closed\" state", id());
 				return true;
 			}
 			if(isDone()) {
-				Loggers.MSG.debug("{}: await exit due to \"done\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"done\" state", id());
 				return true;
 			}
 			if(isFailThresholdReached()) {
-				Loggers.MSG.debug("{}: await exit due to \"BAD\" state", getName());
+				Loggers.MSG.debug("{}: await exit due to \"BAD\" state", id());
 				return true;
 			}
 			synchronized(driverByGenerator) {
 				if(!isAnyCircular && allIoTasksCompleted()) {
 					Loggers.MSG.debug(
-						"{}: await exit because all I/O tasks have been completed", getName()
+						"{}: await exit because all I/O tasks have been completed", id()
 					);
 					return true;
 				}
 				// issue SLTM-938 fix
 				if(nothingToRecycle()) {
 					Loggers.ERR.debug(
-						"{}: exit because there's no I/O task to recycle (all failed)", getName()
+						"{}: exit because there's no I/O task to recycle (all failed)", id()
 					);
 					return true;
 				}
 			}
 		}
-		Loggers.MSG.debug("{}: await exit due to timeout", getName());
+		Loggers.MSG.debug("{}: await exit due to timeout", id());
 		return false;
 	}
 
@@ -673,12 +634,12 @@ implements LoadController<I, O> {
 					() -> {
 						try(
 							final Instance ctx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, name)
+								.put(KEY_TEST_STEP_ID, id)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							driver.interrupt();
 							Loggers.MSG.debug(
-								"{}: next storage driver {} interrupted", getName(),
+								"{}: next storage driver {} interrupted", id(),
 								driver.toString()
 							);
 						}
@@ -687,13 +648,13 @@ implements LoadController<I, O> {
 			}
 		}
 		
-		Loggers.MSG.debug("{}: interrupting the storage drivers...", getName());
+		Loggers.MSG.debug("{}: interrupting the storage drivers...", id());
 		interruptExecutor.shutdown();
 		try {
 			if(interruptExecutor.awaitTermination(100, TimeUnit.SECONDS)) {
-				Loggers.MSG.debug("{}: storage drivers have been interrupted properly", getName());
+				Loggers.MSG.debug("{}: storage drivers have been interrupted properly", id());
 			} else {
-				Loggers.ERR.warn("{}: storage drivers interrupting timeout", getName());
+				Loggers.ERR.warn("{}: storage drivers interrupting timeout", id());
 			}
 		} catch(final InterruptedException e) {
 			throw new CancellationException(e.getMessage());
@@ -716,7 +677,7 @@ implements LoadController<I, O> {
 					() -> {
 						try(
 							final Instance ctx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, name)
+								.put(KEY_TEST_STEP_ID, id)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							try {
@@ -727,7 +688,7 @@ implements LoadController<I, O> {
 										Loggers.MSG.debug(
 											"{}: the driver \"{}\" returned {} final I/O " +
 												"results to process",
-											getName(), driver.toString(), finalResults.size()
+											id(), driver.toString(), finalResults.size()
 										);
 										put(finalResults, 0, finalResultsCount);
 									}
@@ -736,7 +697,7 @@ implements LoadController<I, O> {
 								LogUtil.exception(
 									Level.WARN, cause,
 									"{}: failed to process the final results for the driver {}",
-									getName(), driver.toString()
+									id(), driver.toString()
 								);
 							}
 						}
@@ -749,11 +710,11 @@ implements LoadController<I, O> {
 			try {
 				if(ioResultsExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
 					Loggers.MSG.debug(
-						"{}: final I/O result have been got and processed properly", getName()
+						"{}: final I/O result have been got and processed properly", id()
 					);
 				} else {
 					Loggers.ERR.warn(
-						"{}: timeout while getting and processing the final I/O results", getName()
+						"{}: timeout while getting and processing the final I/O results", id()
 					);
 				}
 			} catch(final InterruptedException e) {
@@ -765,44 +726,44 @@ implements LoadController<I, O> {
 			try {
 				final int ioResultCount = latestIoResultsByItem.size();
 				Loggers.MSG.info(
-					"{}: please wait while performing {} I/O results output...", name, ioResultCount
+					"{}: please wait while performing {} I/O results output...", id, ioResultCount
 				);
 				for(final O latestItemIoResult : latestIoResultsByItem.values()) {
 					try {
 						if(!ioResultsOutput.put(latestItemIoResult)) {
 							Loggers.ERR.debug(
 								"{}: item info output fails to ingest, blocking the closing method",
-								getName()
+								id()
 							);
 							while(!ioResultsOutput.put(latestItemIoResult)) {
 								Thread.sleep(1);
 							}
-							Loggers.MSG.debug("{}: closing method unblocked", getName());
+							Loggers.MSG.debug("{}: closing method unblocked", id());
 						}
 					} catch (final IOException e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to output the latest results", getName()
+							Level.WARN, e, "{}: failed to output the latest results", id()
 						);
 					}
 				}
 			} catch(final InterruptedException e) {
 				throw new CancellationException(e.getMessage());
 			} finally {
-				Loggers.MSG.info("{}: I/O results output done", name);
+				Loggers.MSG.info("{}: I/O results output done", id);
 			}
 			latestIoResultsByItem.clear();
 		}
 		if(ioResultsOutput != null) {
 			try {
 				ioResultsOutput.put((O) null);
-				Loggers.MSG.debug("{}: poisoned the items output", getName());
+				Loggers.MSG.debug("{}: poisoned the items output", id());
 			} catch(final IOException e) {
 				LogUtil.exception(
-					Level.WARN, e, "{}: failed to poison the results output", getName()
+					Level.WARN, e, "{}: failed to poison the results output", id()
 				);
 			} catch(final NullPointerException e) {
 				LogUtil.exception(
-					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", getName(),
+					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", id(),
 					ioResultsOutput
 				);
 			}
@@ -810,13 +771,13 @@ implements LoadController<I, O> {
 
 		for(final MetricsContext nextStats : metricsByIoType.values()) {
 			try {
-				MetricsManager.unregister(this, nextStats);
+				MetricsManager.unregister(id, nextStats);
 			} catch(final InterruptedException e) {
 				throw new CancellationException(e.getMessage());
 			}
 		}
 
-		Loggers.MSG.debug("{}: interrupted the load controller", getName());
+		Loggers.MSG.debug("{}: interrupted the load controller", id());
 	}
 
 	@Override
@@ -838,6 +799,7 @@ implements LoadController<I, O> {
 			}
 		}
 		transferCoroutines.clear();
+
 		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
 			try {
 				getConcurrencyCoroutine.close();
@@ -855,6 +817,6 @@ implements LoadController<I, O> {
 		}
 		metricsByIoType.clear();
 
-		Loggers.MSG.debug("{}: closed the load controller", getName());
+		Loggers.MSG.debug("{}: closed the load controller", id());
 	}
 }
