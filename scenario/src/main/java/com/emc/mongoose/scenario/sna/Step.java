@@ -23,6 +23,12 @@ extends AsyncRunnable {
 	String id()
 	throws RemoteException;
 
+	/**
+	 * @return the current effective concurrency
+	 */
+	int actualConcurrency()
+	throws RemoteException;
+
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
 
 		final Config configSlice = new Config(config);

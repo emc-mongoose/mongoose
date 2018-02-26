@@ -1,7 +1,9 @@
 package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
@@ -18,6 +20,7 @@ import com.emc.mongoose.ui.config.item.data.input.InputConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.test.TestConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
@@ -141,7 +144,7 @@ extends StepBase {
 		outputConfigMap.put(generator, outputConfig);
 
 		controller = new BasicLoadController(
-			testStepId, driverByGenerator, null, itemDataSizes, loadConfigMap, stepConfig,
+			testStepId, driverByGenerator, null, metricsByIoType, loadConfigMap, stepConfig,
 			outputConfigMap
 		);
 
@@ -164,6 +167,78 @@ extends StepBase {
 		}
 
 		controller.start();
+	}
+
+	@Override
+	protected void init() {
+
+		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp()
+			+ "_" + hashCode();
+		final Config config = new Config(baseConfig);
+		if(stepConfigs == null || stepConfigs.size() == 0) {
+			final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+			if(stepConfig.getIdTmp()) {
+				stepConfig.setId(autoStepId);
+			}
+		} else {
+			for(final Map<String, Object> nextStepConfig : stepConfigs) {
+				config.apply(nextStepConfig, autoStepId);
+			}
+		}
+		actualConfig(config);
+
+		final OutputConfig outputConfig = config.getOutputConfig();
+		final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
+		final IoType ioType = IoType.valueOf(
+			config.getLoadConfig().getType().toUpperCase()
+		);
+		final int ioTypeCode = ioType.ordinal();
+		final SizeInBytes itemDataSize = config.getItemConfig().getDataConfig().getSize();
+		final int concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
+		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+		final String id = stepConfig.getId();
+		if(isDistributed()) {
+			final int nodeCount = stepConfig.getNodeConfig().getAddrs().size();
+			metricsByIoType.put(
+				ioTypeCode,
+				new BasicMetricsContext(
+					id,
+					ioType,
+					this::actualConcurrency,
+					nodeCount,
+					concurrency * nodeCount,
+					(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
+					itemDataSize,
+					(int) metricsConfig.getAverageConfig().getPeriod(),
+					outputConfig.getColor(),
+					metricsConfig.getAverageConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+				)
+			);
+		} else {
+			metricsByIoType.put(
+				ioTypeCode,
+				new BasicMetricsContext(
+					id,
+					ioType,
+					this::actualConcurrency,
+					1,
+					concurrency,
+					(int) (concurrency * metricsConfig.getThreshold()),
+					itemDataSize,
+					(int) metricsConfig.getAverageConfig().getPeriod(),
+					outputConfig.getColor(),
+					metricsConfig.getAverageConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+				)
+			);
+		}
+	}
+
+	protected final int actualConcurrencyLocal() {
+		return driver.getActiveTaskCount();
 	}
 
 	@Override

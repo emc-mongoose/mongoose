@@ -1,8 +1,8 @@
 package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -35,6 +35,7 @@ import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -66,6 +67,7 @@ implements Step, Runnable {
 
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
+	protected final Int2ObjectMap<MetricsContext> metricsByIoType = new Int2ObjectOpenHashMap<>();
 
 	private volatile Config actualConfig = null;
 	private volatile long timeLimitSec = Long.MAX_VALUE;
@@ -165,7 +167,18 @@ implements Step, Runnable {
 	protected void doStart()
 	throws IllegalStateException {
 
-		actualConfig = initConfig();
+		init();
+
+		metricsByIoType.forEach(
+			(ioTypeCode, metricsCtx) -> {
+				try {
+					MetricsManager.register(id, metricsCtx);
+				} catch(final InterruptedException e) {
+					throw new CancellationException(e.getMessage());
+				}
+			}
+		);
+
 		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
 		final String stepId = stepConfig.getId();
 		try(
@@ -173,7 +186,6 @@ implements Step, Runnable {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			distributedFlag = stepConfig.getDistributed();
 			if(distributedFlag) {
 				doStartRemote(actualConfig, stepConfig.getNodeConfig());
 			} else {
@@ -190,22 +202,17 @@ implements Step, Runnable {
 		}
 	}
 
-	protected Config initConfig() {
-		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp()
-			+ "_" + hashCode();
-		final Config config = new Config(baseConfig);
-		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
-		if(stepConfigs == null || stepConfigs.size() == 0) {
-			if(stepConfig.getIdTmp()) {
-				stepConfig.setId(autoStepId);
-			}
-		} else {
-			for(final Map<String, Object> nextStepConfig: stepConfigs) {
-				config.apply(nextStepConfig, autoStepId);
-			}
-		}
-		id = stepConfig.getId();
-		return config;
+	protected abstract void init();
+
+	protected final void actualConfig(final Config actualConfig) {
+		this.actualConfig = actualConfig;
+		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
+		this.id = stepConfig.getId();
+		this.distributedFlag = stepConfig.getDistributed();
+	}
+
+	protected final boolean isDistributed() {
+		return distributedFlag;
 	}
 
 	protected void doStartRemote(final Config actualConfig, final NodeConfig nodeConfig)
@@ -711,6 +718,18 @@ implements Step, Runnable {
 	@Override
 	protected void doStop() {
 
+		metricsByIoType
+			.values()
+			.forEach(
+				metricsCtx -> {
+					try {
+						MetricsManager.unregister(id(), metricsCtx);
+					} catch(final InterruptedException e) {
+						throw new CancellationException(e.getMessage());
+					}
+				}
+			);
+
 		if(distributedFlag) {
 			stepSvcs
 				.parallelStream()
@@ -754,11 +773,26 @@ implements Step, Runnable {
 
 	@Override
 	protected void doClose() {
+
 		if(distributedFlag) {
 			doCloseRemote();
 		} else {
 			doCloseLocal();
 		}
+
+		metricsByIoType
+			.values()
+			.forEach(
+				metricsCtx -> {
+					try {
+						metricsCtx.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to close the metrics context \"{}\"", metricsCtx
+						);
+					}
+				}
+			);
 	}
 
 	private void doCloseRemote() {
@@ -934,6 +968,32 @@ implements Step, Runnable {
 	public final String id() {
 		return id;
 	}
+
+	@Override
+	public final int actualConcurrency() {
+		if(isDistributed()) {
+			return stepSvcs
+				.parallelStream()
+				.mapToInt(
+					stepSvc -> {
+						try {
+							return stepSvc.actualConcurrency();
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								Level.TRACE, e, "Failed to get the remote actual concurrency"
+							);
+						}
+						return 0;
+					}
+				)
+				.sum();
+
+		} else {
+			return actualConcurrencyLocal();
+		}
+	}
+
+	protected abstract int actualConcurrencyLocal();
 
 	protected abstract StepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 }

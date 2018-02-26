@@ -6,6 +6,9 @@ import com.github.akurilov.commons.concurrent.Throttle;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.concurrent.WeightThrottle;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.TransferCoroutine;
@@ -22,9 +25,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
-import com.emc.mongoose.api.metrics.MetricsManager;
-import com.emc.mongoose.api.metrics.BasicMetricsContext;
-import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
@@ -39,11 +39,6 @@ import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -53,7 +48,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -74,8 +68,6 @@ implements LoadController<I, O> {
 	private final String id;
 	private final Int2ObjectMap<LoadGenerator<I, O>> generatorByOrigin;
 	private final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator;
-	private final Map<LoadGenerator<I, O>, GetActualConcurrencyCoroutine>
-		getActualConcurrencyCoroutines;
 	private final long countLimit;
 	private final long sizeLimit;
 	private final long failCountLimit;
@@ -83,10 +75,8 @@ implements LoadController<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultsByItem;
 	private final boolean isAnyCircular;
 	private final List<Coroutine> transferCoroutines = new ArrayList<>();
-
-	private final Int2ObjectMap<MetricsContext> metricsByIoType = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectMap<MetricsContext> metricsByIoType;
 	private final LongAdder counterResults = new LongAdder();
-	private final Int2IntMap concurrencyByIoType;
 	private final boolean tracePersistFlag;
 
 	private volatile Output<O> ioResultsOutput;
@@ -97,7 +87,7 @@ implements LoadController<I, O> {
 	 **/
 	public BasicLoadController(
 		final String id, final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator,
-		final Int2IntMap weightMap, final Map<LoadGenerator<I, O>, SizeInBytes> itemDataSizes,
+		final Int2IntMap weightMap, final Int2ObjectMap<MetricsContext> metricsByIoType,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final StepConfig stepConfig,
 		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
@@ -116,6 +106,7 @@ implements LoadController<I, O> {
 		} else {
 			weightThrottle = new WeightThrottle(weightMap);
 		}
+		this.metricsByIoType = metricsByIoType;
 
 		generatorByOrigin = new Int2ObjectOpenHashMap<>(driverByGenerator.size());
 		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
@@ -131,45 +122,13 @@ implements LoadController<I, O> {
 		tracePersistFlag = anyMetricsConfig.getTraceConfig().getPersist();
 
 		this.driverByGenerator = driverByGenerator;
-		concurrencyByIoType = new Int2IntOpenHashMap(driverByGenerator.size());
-		getActualConcurrencyCoroutines = new HashMap<>();
 		final int batchSize = firstLoadConfig.getBatchConfig().getSize();
 		boolean anyCircularFlag = false;
 		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
 			final StorageDriver<I, O> nextDriver = driverByGenerator.get(nextGenerator);
-			final MetricsConfig nextMetricsConfig = outputConfigs
-				.get(nextGenerator).getMetricsConfig();
-			final LoadConfig nextLoadConfig = loadConfigs.get(nextGenerator);
 			if(nextGenerator.isRecycling()) {
 				anyCircularFlag = true;
 			}
-			final String ioTypeName = nextLoadConfig.getType().toUpperCase();
-			final IoType ioType = IoType.valueOf(ioTypeName);
-			final int ioTypeCode = ioType.ordinal();
-			final int ioTypeSpecificConcurrency = nextDriver.getConcurrencyLevel();
-			concurrencyByIoType.put(ioTypeCode, ioTypeSpecificConcurrency);
-			metricsByIoType.put(
-				ioTypeCode,
-				new BasicMetricsContext(
-					id, ioType,
-					() -> getActualConcurrencyCoroutines
-						.get(nextGenerator)
-						.getActualConcurrencySum(),
-					1, ioTypeSpecificConcurrency,
-					(int) (ioTypeSpecificConcurrency * nextMetricsConfig.getThreshold()),
-					itemDataSizes.get(nextGenerator),
-					(int) nextMetricsConfig.getAverageConfig().getPeriod(),
-					outputConfigs.get(nextGenerator).getColor(),
-					nextMetricsConfig.getAverageConfig().getPersist(),
-					nextMetricsConfig.getSummaryConfig().getPersist(),
-					nextMetricsConfig.getSummaryConfig().getPerfDbResultsFile()
-				)
-			);
-
-			getActualConcurrencyCoroutines.put(
-				nextGenerator, new GetActualConcurrencyCoroutine(SVC_EXECUTOR, nextDriver)
-			);
-
 			final Coroutine transferCoroutine = new TransferCoroutine<>(
 				SVC_EXECUTOR, nextDriver, this, batchSize
 			);
@@ -500,17 +459,7 @@ implements LoadController<I, O> {
 	throws IllegalStateException {
 		driverByGenerator.values().forEach(StorageDriver::start);
 		driverByGenerator.keySet().forEach(LoadGenerator::start);
-		metricsByIoType.forEach(
-			(ioTypeCode, metricsCtx) -> {
-				try {
-					MetricsManager.register(id, metricsCtx);
-				} catch(final InterruptedException e) {
-					throw new CancellationException(e.getMessage());
-				}
-			}
-		);
 		transferCoroutines.forEach(Coroutine::start);
-		getActualConcurrencyCoroutines.values().forEach(Coroutine::start);
 	}
 
 	@Override
@@ -663,9 +612,6 @@ implements LoadController<I, O> {
 		for(final Coroutine transferCoroutine : transferCoroutines) {
 			transferCoroutine.stop();
 		}
-		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
-			getConcurrencyCoroutine.stop();
-		}
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
@@ -769,26 +715,16 @@ implements LoadController<I, O> {
 			}
 		}
 
-		for(final MetricsContext nextStats : metricsByIoType.values()) {
-			try {
-				MetricsManager.unregister(id, nextStats);
-			} catch(final InterruptedException e) {
-				throw new CancellationException(e.getMessage());
-			}
-		}
-
 		Loggers.MSG.debug("{}: interrupted the load controller", id());
 	}
 
 	@Override
 	protected final void doClose()
 	throws IOException {
-
 		synchronized (driverByGenerator) {
 			generatorByOrigin.clear();
 			driverByGenerator.clear();
 		}
-
 		for(final Coroutine transferCoroutine : transferCoroutines) {
 			try {
 				transferCoroutine.close();
@@ -799,24 +735,6 @@ implements LoadController<I, O> {
 			}
 		}
 		transferCoroutines.clear();
-
-		for(final Coroutine getConcurrencyCoroutine : getActualConcurrencyCoroutines.values()) {
-			try {
-				getConcurrencyCoroutine.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to stop the service coroutine {}",
-					getConcurrencyCoroutine
-				);
-			}
-		}
-		getActualConcurrencyCoroutines.clear();
-
-		for(final MetricsContext nextStats : metricsByIoType.values()) {
-			nextStats.close();
-		}
-		metricsByIoType.clear();
-
 		Loggers.MSG.debug("{}: closed the load controller", id());
 	}
 }
