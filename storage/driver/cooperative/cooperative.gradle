@@ -1,4 +1,4 @@
-description = "mongoose-storage-driver-nio"
+description = "mongoose-storage-driver-cooperative"
 
 dependencies {
 	compile(
@@ -6,7 +6,7 @@ dependencies {
 		"com.github.akurilov:java-coroutines:${depVersion.javaCoroutines}",
 		project(":api:model"),
 		project(":ui"),
-		project(":storage:driver:cooperative"),
+		project(":storage:driver"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
@@ -21,7 +21,7 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-            "Class-Path": classPathString(configurations.runtime),
+			"Class-Path": classPathString(configurations.runtime),
 		)
 	}
 }

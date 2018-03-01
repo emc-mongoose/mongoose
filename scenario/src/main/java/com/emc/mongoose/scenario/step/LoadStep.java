@@ -127,7 +127,7 @@ implements Step {
 		loadConfigMap.put(loadGenerator, loadConfig);
 		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
 		outputConfigMap.put(loadGenerator, outputConfig);
-		try(
+		/*try(
 			final LoadController controller = new BasicLoadController(
 				stepId, driversMap, null, itemDataSizes, loadConfigMap, stepConfig, outputConfigMap
 			)
@@ -150,6 +150,6 @@ implements Step {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
-		}
+		}*/
 	}
 }

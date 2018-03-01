@@ -1,5 +1,6 @@
-package com.emc.mongoose.storage.driver.net.http.base;
+package com.emc.mongoose.storage.driver.net.http;
 
+import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.github.akurilov.commons.collection.Range;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
@@ -20,7 +21,7 @@ import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 import com.emc.mongoose.api.model.item.PathItem;
 import com.emc.mongoose.api.model.item.TokenItem;
 import com.emc.mongoose.api.model.storage.Credential;
-import com.emc.mongoose.storage.driver.net.base.NetStorageDriverBase;
+import com.emc.mongoose.storage.driver.net.NetStorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.net.http.HttpConfig;
@@ -68,6 +69,15 @@ import java.util.function.Function;
 public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
+
+	public static final AsyncCurrentDateSupplier DATE_SUPPLIER;
+	static {
+		try {
+			DATE_SUPPLIER = new AsyncCurrentDateSupplier(SVC_EXECUTOR);
+		} catch(final OmgDoesNotPerformException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
 

@@ -159,7 +159,7 @@ extends ConfigurableStepBase {
 				loadConfigMap.put(loadGenerator, loadConfig);
 				final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
 				outputConfigMap.put(loadGenerator, outputConfig);
-				final LoadController loadController = new BasicLoadController(
+				/*final LoadController loadController = new BasicLoadController(
 					sharedTestStepConfig.getId(), driversMap, null, itemDataSizes, loadConfigMap,
 					sharedTestStepConfig, outputConfigMap
 				);
@@ -187,7 +187,7 @@ extends ConfigurableStepBase {
 						);
 						loadController.setIoResultsOutput(itemOutput);
 					}
-				}
+				}*/
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the data input");

@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.base.data;
+package com.emc.mongoose.storage.driver.net.data;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.DirectMemUtil;

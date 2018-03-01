@@ -85,6 +85,12 @@ implements StepService {
 	}
 
 	@Override
+	public final int actualConcurrency()
+	throws RemoteException {
+		return step.actualConcurrency();
+	}
+
+	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		try {

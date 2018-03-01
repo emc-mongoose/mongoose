@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.base;
+package com.emc.mongoose.storage.driver.net;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.ui.log.LogUtil;

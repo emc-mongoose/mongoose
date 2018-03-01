@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.base.data;
+package com.emc.mongoose.storage.driver.net.data;
 
 import static com.emc.mongoose.api.model.storage.StorageDriver.BUFF_SIZE_MAX;
 

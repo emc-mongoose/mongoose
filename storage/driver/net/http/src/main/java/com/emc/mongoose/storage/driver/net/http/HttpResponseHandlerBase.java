@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.http.base;
+package com.emc.mongoose.storage.driver.net.http;
 
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -6,8 +6,8 @@ import com.emc.mongoose.api.model.io.task.path.PathIoTask;
 import com.emc.mongoose.api.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.storage.driver.net.base.ResponseHandlerBase;
-import static com.emc.mongoose.storage.driver.net.base.data.ResponseContentUtil.verifyChunk;
+import com.emc.mongoose.storage.driver.net.ResponseHandlerBase;
+import static com.emc.mongoose.storage.driver.net.data.ResponseContentUtil.verifyChunk;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_UNKNOWN;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.RESP_FAIL_AUTH;

@@ -7,13 +7,12 @@ import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.storage.Credential;
-import com.emc.mongoose.storage.driver.nio.base.NioStorageDriverBase;
+import com.emc.mongoose.storage.driver.nio.NioStorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.github.akurilov.commons.math.Random;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 
 public class NioStorageDriverMock<I extends Item, O extends IoTask<I>>

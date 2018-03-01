@@ -1,8 +1,8 @@
-package com.emc.mongoose.storage.driver.net.http.base;
+package com.emc.mongoose.storage.driver.net.http;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.storage.driver.net.base.NetStorageDriver;
+import com.emc.mongoose.storage.driver.net.NetStorageDriver;
 
 /**
  Created by kurila on 30.08.16.

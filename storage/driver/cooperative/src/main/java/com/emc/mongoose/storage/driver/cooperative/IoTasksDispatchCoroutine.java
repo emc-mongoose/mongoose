@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.base;
+package com.emc.mongoose.storage.driver.cooperative;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -28,16 +28,16 @@ extends ExclusiveCoroutineBase {
 	private final int batchSize;
 	private final BlockingQueue<O> childTasksQueue;
 	private final BlockingQueue<O> inTasksQueue;
-	private final StorageDriverBase<I, O> storageDriver;
+	private final CooperativeStorageDriverBase<I, O> storageDriver;
 	private final OptLockBuffer<O> buff;
 
 	private int n = 0; // the current count of the I/O tasks in the buffer
 	private int m;
 
 	public IoTasksDispatchCoroutine(
-		final CoroutinesProcessor coroutinesProcessor, final StorageDriverBase<I, O> storageDriver,
-		final BlockingQueue<O> inTasksQueue, final BlockingQueue<O> childTasksQueue,
-		final String stepId, final int batchSize
+		final CoroutinesProcessor coroutinesProcessor,
+		final CooperativeStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inTasksQueue,
+		final BlockingQueue<O> childTasksQueue, final String stepId, final int batchSize
 	) {
 		this(
 			coroutinesProcessor, new OptLockArrayBuffer<>(batchSize), storageDriver, inTasksQueue,
@@ -47,7 +47,7 @@ extends ExclusiveCoroutineBase {
 
 	private IoTasksDispatchCoroutine(
 		final CoroutinesProcessor coroutinesProcessor, final OptLockBuffer<O> buff,
-		final StorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inTasksQueue,
+		final CooperativeStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inTasksQueue,
 		final BlockingQueue<O> childTasksQueue, final String stepId, final int batchSize
 	) {
 		super(coroutinesProcessor, buff);

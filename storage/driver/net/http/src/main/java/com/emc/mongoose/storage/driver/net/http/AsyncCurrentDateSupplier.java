@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.base;
+package com.emc.mongoose.storage.driver.net.http;
 
 import com.emc.mongoose.api.common.env.DateUtil;
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;

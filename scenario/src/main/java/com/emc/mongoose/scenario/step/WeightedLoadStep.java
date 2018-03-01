@@ -148,7 +148,7 @@ extends ConfigurableStepBase {
 			LogUtil.exception(Level.WARN, e, "Failed to init the content source");
 		}
 
-		try(
+		/*try(
 			final LoadController controller = new BasicLoadController(
 				id, driverMap, weightMap, itemDataSizes, loadConfigMap, sharedTestStepConfig,
 				outputConfigMap
@@ -175,7 +175,7 @@ extends ConfigurableStepBase {
 			LogUtil.exception(Level.ERROR, e, "Unexpected failure");
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item output file");
-		}
+		}*/
 	}
 
 	@Override

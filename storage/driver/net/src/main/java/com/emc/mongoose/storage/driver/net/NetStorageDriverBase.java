@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.base;
+package com.emc.mongoose.storage.driver.net;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.net.ssl.SslContext;
@@ -11,19 +11,19 @@ import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
+import com.emc.mongoose.storage.driver.cooperative.CooperativeStorageDriverBase;
+import com.emc.mongoose.storage.driver.net.data.DataItemFileRegion;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.composite.data.CompositeDataIoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.DataItem;
-import com.emc.mongoose.storage.driver.net.base.data.DataItemFileRegion;
-import com.emc.mongoose.storage.driver.net.base.data.SeekableByteChannelChunkedNioStream;
+import com.emc.mongoose.storage.driver.net.data.SeekableByteChannelChunkedNioStream;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
@@ -69,7 +69,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 30.09.16.
  */
 public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends StorageDriverBase<I, O>
+extends CooperativeStorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();

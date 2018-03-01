@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.nio.base;
+package com.emc.mongoose.storage.driver.nio;
 
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
@@ -7,6 +7,7 @@ import com.github.akurilov.coroutines.CoroutinesProcessor;
 import com.github.akurilov.coroutines.Coroutine;
 import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
 
+import com.emc.mongoose.storage.driver.cooperative.CooperativeStorageDriverBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
@@ -18,7 +19,6 @@ import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Note that this kind of storage driver uses the service coroutines facility to execute the I/O
  */
 public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends StorageDriverBase<I, O>
+extends CooperativeStorageDriverBase<I, O>
 implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
@@ -54,10 +54,10 @@ implements NioStorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String testSteoName, final DataInput dataInput, final LoadConfig loadConfig,
+		final String testStepId, final DataInput dataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
-		super(testSteoName, dataInput, loadConfig, storageConfig, verifyFlag);
+		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
 		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
