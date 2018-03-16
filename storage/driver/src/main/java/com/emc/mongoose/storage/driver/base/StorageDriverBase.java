@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -10,10 +9,8 @@ import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
-import com.emc.mongoose.api.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.api.model.storage.StorageDriver;
@@ -23,12 +20,9 @@ import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.log.Loggers;
 
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
 
-import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,20 +30,16 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
 /**
  Created by kurila on 11.07.16.
  */
 public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
-	extends DaemonBase
-	implements StorageDriver<I,O> {
+extends DaemonBase
+implements StorageDriver<I,O> {
 
 	private final DataInput itemDataInput;
-	private final int outputQueueCapacity;
 	protected final String stepId;
 	private final BlockingQueue<O> ioResultsQueue;
 	protected final int concurrencyLevel;
@@ -75,7 +65,7 @@ public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
 		this.itemDataInput = itemDataInput;
 		final DriverConfig driverConfig = storageConfig.getDriverConfig();
 		final QueueConfig queueConfig = driverConfig.getQueueConfig();
-		this.outputQueueCapacity = queueConfig.getOutput();
+		final int outputQueueCapacity = queueConfig.getOutput();
 		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
 		final AuthConfig authConfig = storageConfig.getAuthConfig();

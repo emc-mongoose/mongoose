@@ -5,6 +5,7 @@ import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
@@ -13,13 +14,14 @@ import com.emc.mongoose.ui.log.Loggers;
 import java.io.EOFException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PreemptiveStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
-implements PreemptiveStorageDriver<I,O> {
+implements StorageDriver<I,O> {
 
 	private final ThreadPoolExecutor ioExecutor;
 
@@ -28,6 +30,12 @@ implements PreemptiveStorageDriver<I,O> {
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(stepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
+		if(ioWorkerCount != concurrencyLevel) {
+			throw new IllegalArgumentException(
+				"Storage driver I/O worker count (" + ioWorkerCount + ") should be equal to the "
+					+ " concurrency limit (" + concurrencyLevel + ")"
+			);
+		}
 		final int inQueueSize = storageConfig.getDriverConfig().getQueueConfig().getInput();
 		ioExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
@@ -64,7 +72,7 @@ implements PreemptiveStorageDriver<I,O> {
 			}
 		} catch(final RejectedExecutionException ignored) {
 		}
-		return to - i;
+		return i - from;
 	}
 
 	@Override
@@ -111,14 +119,29 @@ implements PreemptiveStorageDriver<I,O> {
 
 	@Override
 	protected void doShutdown() {
+		// prevent enqueuing new I/O tasks
 		ioExecutor.shutdown();
+		// drop all pending I/O tasks
+		ioExecutor.getQueue().clear();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
 	@Override
 	protected void doInterrupt() {
-		final List<Runnable> tasks = ioExecutor.shutdownNow();
-		Loggers.MSG.debug("{}: interrupted, {} active tasks remain", toString(), tasks.size());
+		Loggers.MSG.debug("{}: interrupting...", toString());
+		try {
+			if(ioExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+				Loggers.MSG.debug("{}: interrupting finished in 1 seconds", toString());
+			} else {
+				Loggers.ERR.debug(
+					"{}: interrupting did not finish in 1 second, forcing", toString()
+				);
+			}
+		} catch(final InterruptedException e) {
+			throw new CancellationException(e.getMessage());
+		} finally {
+			Loggers.MSG.debug("{}: interrupted", toString());
+		}
 	}
 
 	@Override

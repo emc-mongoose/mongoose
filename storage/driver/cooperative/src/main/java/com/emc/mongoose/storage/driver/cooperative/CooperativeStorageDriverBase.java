@@ -6,6 +6,7 @@ import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 public abstract class CooperativeStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
-implements CooperativeStorageDriver<I, O> {
+implements StorageDriver<I, O> {
 
 	protected final Semaphore concurrencyThrottle;
 	protected final BlockingQueue<O> childTasksQueue;

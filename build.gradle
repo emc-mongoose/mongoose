@@ -41,7 +41,7 @@ ext {
 		commonsLang : "2.6",
 		disruptor : "3.3.8",
 		jackson : "2.9.4",
-		javaCommons : "[1.4.4,)",
+		javaCommons : "[1.4.6,)",
 		javaCoroutines : "[1.1.3,)",
 		javassist : "3.22.0-GA",
 		slf4j : "1.8.0-beta1",

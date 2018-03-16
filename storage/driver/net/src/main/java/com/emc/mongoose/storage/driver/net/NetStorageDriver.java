@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.net;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.storage.driver.cooperative.CooperativeStorageDriver;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
@@ -14,7 +14,7 @@ import java.util.Map;
  Created by kurila on 30.09.16.
  */
 public interface NetStorageDriver<I extends Item, O extends IoTask<I>>
-extends CooperativeStorageDriver<I, O> {
+extends StorageDriver<I, O> {
 
 	enum Transport {
 		NIO,
