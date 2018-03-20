@@ -1,6 +1,5 @@
 package com.emc.mongoose.api.metrics.logging;
 
-import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;

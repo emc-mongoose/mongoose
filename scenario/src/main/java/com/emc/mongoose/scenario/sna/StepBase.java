@@ -169,16 +169,6 @@ implements Step, Runnable {
 
 		init();
 
-		metricsByIoType.forEach(
-			(ioTypeCode, metricsCtx) -> {
-				try {
-					MetricsManager.register(id, metricsCtx);
-				} catch(final InterruptedException e) {
-					throw new CancellationException(e.getMessage());
-				}
-			}
-		);
-
 		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
 		final String stepId = stepConfig.getId();
 		try(
@@ -200,6 +190,16 @@ implements Step, Runnable {
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
+
+		metricsByIoType.forEach(
+			(ioTypeCode, metricsCtx) -> {
+				try {
+					MetricsManager.register(id, metricsCtx);
+				} catch(final InterruptedException e) {
+					throw new CancellationException(e.getMessage());
+				}
+			}
+		);
 	}
 
 	protected abstract void init();
