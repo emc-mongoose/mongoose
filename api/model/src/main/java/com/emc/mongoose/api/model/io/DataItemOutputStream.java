@@ -30,6 +30,7 @@ extends ByteCountOutputStream {
 		dataItem.read(buffWrapper);
 		buffWrapper.rewind();
 		dataItem.verify(buffWrapper);
+		dataItem.position(dataItem.position() + 1);
 		byteCount.increment();
 	}
 
@@ -44,6 +45,7 @@ extends ByteCountOutputStream {
 		}
 		buffWrapper.position(offset).limit(offset + length);
 		dataItem.verify(buffWrapper);
+		dataItem.position(dataItem.position() + length);
 		byteCount.add(length);
 	}
 
@@ -57,6 +59,7 @@ extends ByteCountOutputStream {
 			buffWrapper = ByteBuffer.wrap(buff);
 		}
 		dataItem.verify(buffWrapper);
+		dataItem.position(dataItem.position() + buff.length);
 		byteCount.add(buff.length);
 	}
 
