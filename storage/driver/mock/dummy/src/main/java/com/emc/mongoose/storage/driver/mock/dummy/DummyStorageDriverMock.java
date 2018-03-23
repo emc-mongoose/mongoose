@@ -18,7 +18,6 @@ import com.emc.mongoose.ui.log.Loggers;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
