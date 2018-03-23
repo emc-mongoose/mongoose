@@ -3,6 +3,7 @@ package com.emc.mongoose.api.metrics;
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.SlidingWindowReservoir;
+import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.api.model.io.IoType;
 
@@ -71,10 +72,10 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 
-		respLatency = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		respLatency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		reqDuration = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
 		actualConcurrency = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
