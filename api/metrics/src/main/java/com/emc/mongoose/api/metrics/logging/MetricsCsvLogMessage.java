@@ -77,7 +77,7 @@ extends LogMessageBase {
 			.append(snapshot.getDurationMed()).append(',')
 			.append(snapshot.getDurationHiQ()).append(',')
 			.append(snapshot.getDurationMax()).append(',')
-			.append(snapshot.getDurationMean()).append(',')
+			.append(snapshot.getLatencyMean()).append(',')
 			.append(snapshot.getLatencyMin()).append(',')
 			.append(snapshot.getLatencyLoQ()).append(',')
 			.append(snapshot.getLatencyMed()).append(',')
