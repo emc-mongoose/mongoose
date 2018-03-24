@@ -46,7 +46,7 @@ public class ConfigTest {
 	throws IOException {
 		final Config config = Config.loadDefaults();
 		assertThat(config, notNullValue());
-		assertThat(config.getVersion(), equalTo("3.6.1", "version"));
+		assertThat(config.getVersion(), equalTo("4.0.0", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
 		assertThat(netConfig, notNullValue());
 		assertThat(netConfig.getTimeoutMilliSec(), equalTo(0, "storage.net.timeoutMilliSec"));
@@ -149,7 +149,7 @@ public class ConfigTest {
 		assertThat(headers.containsKey(HttpConfig.KEY_HEADER_USER_AGENT),
 			equalTo(true, "storage.net.http.headers[User-Agent]"));
 		assertThat(headers.get(HttpConfig.KEY_HEADER_USER_AGENT),
-			equalTo("mongoose/3.6.1", "storage.net.http.headers[User-Agent]"));
+			equalTo("mongoose/4.0.0", "storage.net.http.headers[User-Agent]"));
 		assertThat(httpConfig.getNamespace(), nullValue("storage.net.http.namespace"));
 		assertThat(httpConfig.getVersioning(), equalTo(false, "storage.net.http.versioning"));
 		assertThat(
