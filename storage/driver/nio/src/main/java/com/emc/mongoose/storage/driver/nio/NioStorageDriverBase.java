@@ -45,6 +45,7 @@ extends CooperativeStorageDriverBase<I, O>
 implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
+	private final static CoroutinesProcessor IO_EXECUTOR = new CoroutinesProcessor(false);
 
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
@@ -71,7 +72,7 @@ implements NioStorageDriver<I, O> {
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskBuffs[i] = new OptLockArrayBuffer<>(ioTaskBuffCapacity);
-			ioCoroutines.add(new NioCoroutine(SVC_EXECUTOR, ioTaskBuffs[i]));
+			ioCoroutines.add(new NioCoroutine(IO_EXECUTOR, ioTaskBuffs[i]));
 		}
 	}
 

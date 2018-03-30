@@ -26,6 +26,8 @@ import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.api.model.concurrent.DaemonBase.SVC_EXECUTOR;
+
 import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.commons.func.Function2;
@@ -79,6 +81,7 @@ implements Step, Runnable {
 	private Map<String, Optional<FileService>> itemInputFileSvcs = null;
 	private Map<String, Optional<FileService>> itemOutputFileSvcs = null;
 	private Map<String, Optional<FileService>> ioTraceLogFileSvcs = null;
+	private GetActualConcurrencySumCoroutine actualConcurrencySumCoroutine = null;
 
 	protected StepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
 		this.baseConfig = baseConfig;
@@ -193,6 +196,7 @@ implements Step, Runnable {
 
 		metricsByIoType.forEach(
 			(ioTypeCode, metricsCtx) -> {
+				metricsCtx.start();
 				try {
 					MetricsManager.register(id, metricsCtx);
 				} catch(final InterruptedException e) {
@@ -245,6 +249,9 @@ implements Step, Runnable {
 			.map(resolveStepSvcPartialFunc)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+		actualConcurrencySumCoroutine = new GetActualConcurrencySumCoroutine(
+			SVC_EXECUTOR, stepSvcs
+		);
 	}
 
 	private void initFileManagerServices(final List<String> nodeAddrs) {
@@ -718,6 +725,10 @@ implements Step, Runnable {
 	@Override
 	protected void doStop() {
 
+		if(distributedFlag) {
+			actualConcurrencySumCoroutine.stop();
+		}
+
 		metricsByIoType
 			.values()
 			.forEach(
@@ -796,6 +807,14 @@ implements Step, Runnable {
 	}
 
 	private void doCloseRemote() {
+
+		try {
+			actualConcurrencySumCoroutine.close();
+		} catch(final Exception e) {
+			LogUtil.exception(
+				Level.DEBUG, e, "{}: failed to close the actual concurrency sum coroutine", id
+			);
+		}
 
 		stepSvcs
 			.parallelStream()
@@ -972,22 +991,7 @@ implements Step, Runnable {
 	@Override
 	public final int actualConcurrency() {
 		if(isDistributed()) {
-			return stepSvcs
-				.parallelStream()
-				.mapToInt(
-					stepSvc -> {
-						try {
-							return stepSvc.actualConcurrency();
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.TRACE, e, "Failed to get the remote actual concurrency"
-							);
-						}
-						return 0;
-					}
-				)
-				.sum();
-
+			return actualConcurrencySumCoroutine.getActualConcurrencySum();
 		} else {
 			return actualConcurrencyLocal();
 		}

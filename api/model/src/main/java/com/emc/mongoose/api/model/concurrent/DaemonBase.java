@@ -23,7 +23,7 @@ public abstract class DaemonBase
 implements Daemon {
 
 	private static final Logger LOG = Logger.getLogger(DaemonBase.class.getName());
-	protected static final CoroutinesProcessor SVC_EXECUTOR = new CoroutinesProcessor();
+	public static final CoroutinesProcessor SVC_EXECUTOR = new CoroutinesProcessor();
 
 	public static void setThreadCount(final int threadCount) {
 		SVC_EXECUTOR.setThreadCount(threadCount);
