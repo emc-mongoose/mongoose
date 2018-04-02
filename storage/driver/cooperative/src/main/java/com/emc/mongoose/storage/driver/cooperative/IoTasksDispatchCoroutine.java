@@ -101,7 +101,7 @@ extends ExclusiveCoroutineBase {
 			LogUtil.exception(
 				Level.DEBUG, e, "{}: failed to submit some I/O tasks due to the illegal " +
 					"storage driver state ({})",
-				storageDriver.toString(), storageDriver.getState()
+				storageDriver.toString(), storageDriver.state()
 			);
 		}
 	}

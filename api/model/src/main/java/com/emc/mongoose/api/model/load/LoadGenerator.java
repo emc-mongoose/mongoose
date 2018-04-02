@@ -33,8 +33,6 @@ extends AsyncRunnable {
 	long getTransferSizeEstimate();
 
 	IoType getIoType();
-	
-	int getBatchSize();
 
 	/**
 	 @return the origin code shared by the generated tasks

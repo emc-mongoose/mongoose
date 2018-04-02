@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.net;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.ui.log.LogUtil;
-
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_IO;
@@ -14,6 +13,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.PrematureChannelClosureException;
 import io.netty.handler.timeout.IdleStateEvent;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -57,7 +57,7 @@ extends SimpleChannelInboundHandler<M> {
 		final Channel channel = ctx.channel();
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		if(ioTask != null) {
-			if(driver.isInterrupted() || driver.isClosed()) {
+			if(driver.isStopped() || driver.isClosed()) {
 				ioTask.setStatus(INTERRUPTED);
 			} else if(cause instanceof PrematureChannelClosureException) {
 				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
@@ -66,7 +66,7 @@ extends SimpleChannelInboundHandler<M> {
 				LogUtil.exception(Level.WARN, cause, "Client handler failure");
 				ioTask.setStatus(FAIL_UNKNOWN);
 			}
-			if(!driver.isInterrupted()) {
+			if(!driver.isStopped()) {
 				try {
 					driver.complete(channel, ioTask);
 				} catch(final Exception e) {

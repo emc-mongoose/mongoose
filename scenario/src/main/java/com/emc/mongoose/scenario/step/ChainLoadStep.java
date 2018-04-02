@@ -215,7 +215,7 @@ extends ConfigurableStepBase {
 						Loggers.MSG.info("Load step \"{}\" timeout", controller.id());
 					}
 				} finally {
-					controller.interrupt();
+					controller.stop();
 				}
 				timeRemainSec -= (System.currentTimeMillis() - tsStart) / 1000;
 			} else {

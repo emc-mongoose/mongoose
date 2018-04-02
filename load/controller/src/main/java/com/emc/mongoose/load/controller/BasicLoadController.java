@@ -47,6 +47,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
@@ -172,7 +173,8 @@ implements LoadController<I, O> {
 				failCountSum += lastStats.getFailCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					Loggers.MSG.debug(
-						"{}: count limit reached, {} successful + {} failed >= {} limit", id, succCountSum, failCountSum, countLimit
+						"{}: count limit reached, {} successful + {} failed >= {} limit", id,
+						succCountSum, failCountSum, countLimit
 					);
 					return true;
 				}
@@ -188,7 +190,8 @@ implements LoadController<I, O> {
 				sizeSum += metricsByIoType.get(ioTypeCode).getLastSnapshot().getByteCount();
 				if(sizeSum >= sizeLimit) {
 					Loggers.MSG.debug(
-						"{}: size limit reached, done {} >= {} limit", id, SizeInBytes.formatFixedSize(sizeSum), sizeLimit
+						"{}: size limit reached, done {} >= {} limit", id,
+						SizeInBytes.formatFixedSize(sizeSum), sizeLimit
 					);
 					return true;
 				}
@@ -200,10 +203,13 @@ implements LoadController<I, O> {
 	private boolean allIoTasksCompleted() {
 		long generatedIoTasks = 0;
 		for(final LoadGenerator<I, O> generator : generatorByOrigin.values()) {
-			if(generator.isInterrupted()) {
-				generatedIoTasks += generator.getGeneratedTasksCount();
-			} else {
-				return false;
+			try {
+				if(generator.isStopped()) {
+					generatedIoTasks += generator.getGeneratedTasksCount();
+				} else {
+					return false;
+				}
+			} catch(final RemoteException ignored) {
 			}
 		}
 		return counterResults.longValue() >= generatedIoTasks;
@@ -213,8 +219,11 @@ implements LoadController<I, O> {
 	private boolean nothingToRecycle() {
 		if(generatorByOrigin.size() == 1) {
 			final LoadGenerator<I, O> soleLoadGenerator = generatorByOrigin.values().iterator().next();
-			if(soleLoadGenerator.isStarted()) {
-				return false;
+			try {
+				if(soleLoadGenerator.isStarted()) {
+					return false;
+				}
+			} catch(final RemoteException ignored) {
 			}
 			// load generator has done its work
 			final long generatedIoTasks = soleLoadGenerator.getGeneratedTasksCount();
@@ -276,15 +285,20 @@ implements LoadController<I, O> {
 	private boolean isIdle()
 	throws ConcurrentModificationException {
 		for(final LoadGenerator<I, O> nextLoadGenerator : driverByGenerator.keySet()) {
-			if(!nextLoadGenerator.isInterrupted() && !nextLoadGenerator.isClosed()) {
-				return false;
-			}
-			final StorageDriver<I, O> nextStorageDriver = driverByGenerator.get(nextLoadGenerator);
-			if(
-				!nextStorageDriver.isClosed() && !nextStorageDriver.isInterrupted() &&
-				!nextStorageDriver.isIdle()
-			) {
-				return false;
+			try {
+				if(!nextLoadGenerator.isStopped() && !nextLoadGenerator.isClosed()) {
+					return false;
+				}
+				final StorageDriver<I, O> nextStorageDriver = driverByGenerator.get(
+					nextLoadGenerator
+				);
+				if(
+					!nextStorageDriver.isStopped() && !nextStorageDriver.isClosed() &&
+					!nextStorageDriver.isIdle()
+				) {
+					return false;
+				}
+			} catch(final RemoteException ignored) {
 			}
 		}
 		return true;
@@ -458,8 +472,26 @@ implements LoadController<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		driverByGenerator.values().forEach(StorageDriver::start);
-		driverByGenerator.keySet().forEach(LoadGenerator::start);
+		driverByGenerator
+			.values()
+			.forEach(
+				driver -> {
+					try {
+						driver.start();
+					} catch(final RemoteException ignored) {
+					}
+				}
+			);
+		driverByGenerator
+			.keySet().
+			forEach(
+				generator -> {
+					try {
+						generator.start();
+					} catch(final RemoteException ignored) {
+					}
+				}
+			);
 		resultsTransferCoroutines.forEach(Coroutine::start);
 	}
 
@@ -480,11 +512,12 @@ implements LoadController<I, O> {
 							.put(KEY_TEST_STEP_ID, id)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
-						generator.interrupt();
+						generator.stop();
 						Loggers.MSG.debug(
 							"{}: load generator \"{}\" interrupted", id(),
 							generator.toString()
 						);
+					} catch(final RemoteException ignored) {
 					}
 				}
 			);
@@ -500,6 +533,7 @@ implements LoadController<I, O> {
 						Loggers.MSG.debug(
 							"{}: next storage driver {} shutdown", id(), driver.toString()
 						);
+					} catch(final RemoteException ignored) {
 					}
 				}
 			);
@@ -587,11 +621,12 @@ implements LoadController<I, O> {
 								.put(KEY_TEST_STEP_ID, id)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
-							driver.interrupt();
+							driver.stop();
 							Loggers.MSG.debug(
 								"{}: next storage driver {} interrupted", id(),
 								driver.toString()
 							);
+						} catch(final RemoteException ignored) {
 						}
 					}
 				);
@@ -720,8 +755,7 @@ implements LoadController<I, O> {
 	}
 
 	@Override
-	protected final void doClose()
-	throws IOException {
+	protected final void doClose() {
 		synchronized (driverByGenerator) {
 			generatorByOrigin.clear();
 			driverByGenerator.clear();

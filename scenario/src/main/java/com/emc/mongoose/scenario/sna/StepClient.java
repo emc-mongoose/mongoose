@@ -1,7 +1,7 @@
 package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -54,7 +54,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class StepClient
-extends AsyncRunnableBase
+extends DaemonBase
 implements Step {
 
 	private final Step step;
@@ -112,6 +112,10 @@ implements Step {
 			ServiceTaskExecutor.INSTANCE, stepSvcs
 		);
 		actualConcurrencySumCoroutine.start();
+	}
+
+	@Override
+	protected final void doShutdown() {
 	}
 
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {

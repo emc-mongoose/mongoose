@@ -33,6 +33,10 @@ implements Service {
 	}
 
 	@Override
+	protected void doShutdown() {
+	}
+
+	@Override
 	protected void doStop()
 	throws RemoteException {
 		try {

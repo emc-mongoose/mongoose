@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,11 @@ extends StepBase {
 		if(controller == null) {
 			throw new IllegalStateException("Load controller is null");
 		}
-		return controller.await(timeout, timeUnit);
+		try {
+			return controller.await(timeout, timeUnit);
+		} catch(final RemoteException ignored) {
+		}
+		return false;
 	}
 
 	@Override
@@ -166,7 +171,10 @@ extends StepBase {
 			}
 		}
 
-		controller.start();
+		try {
+			controller.start();
+		} catch(final RemoteException ignored) {
+		}
 	}
 
 	@Override
@@ -242,47 +250,53 @@ extends StepBase {
 	}
 
 	@Override
+	protected final void doShutdown() {
+	}
+
+	@Override
 	protected void doStopLocal() {
-		controller.interrupt();
+		try {
+			controller.stop();
+		} catch(final RemoteException ignored) {
+		}
 	}
 
 	@Override
 	protected void doCloseLocal() {
 
-		if(driver != null && driver.isClosed()) {
-			try {
+		try {
+			if(driver != null && driver.isClosed()) {
 				driver.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to close the storage driver \"{}\"", driver.toString()
-				);
 			}
-			driver = null;
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to close the storage driver \"{}\"", driver.toString()
+			);
 		}
+		driver = null;
 
-		if(generator != null && !generator.isClosed()) {
-			try {
+		try {
+			if(generator != null && !generator.isClosed()) {
 				generator.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to close the load generator \"{}\"",
-					generator.toString()
-				);
 			}
-			generator = null;
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to close the load generator \"{}\"", generator.toString()
+			);
 		}
+		generator = null;
 
-		if(controller != null && !controller.isClosed()) {
-			try {
+		try {
+			if(controller != null && !controller.isClosed()) {
 				controller.close();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to close the load controller \"{}\"",
-					controller.toString()
-				);
 			}
-			controller = null;
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to close the load controller \"{}\"",
+				controller.toString()
+			);
 		}
+		controller = null;
 
 		if(dataInput != null) {
 			try {

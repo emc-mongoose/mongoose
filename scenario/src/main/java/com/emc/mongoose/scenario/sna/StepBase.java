@@ -2,13 +2,12 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.metrics.MetricsManager;
-import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-
 import com.emc.mongoose.ui.log.Loggers;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -26,7 +25,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 public abstract class StepBase
-extends AsyncRunnableBase
+extends DaemonBase
 implements Step, Runnable {
 
 	protected final Config baseConfig;
