@@ -23,6 +23,9 @@ extends AsyncRunnable {
 	String id()
 	throws RemoteException;
 
+	String getTypeName()
+	throws RemoteException;
+
 	/**
 	 * @return the current effective concurrency
 	 */

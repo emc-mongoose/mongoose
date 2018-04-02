@@ -297,7 +297,7 @@ extends StepBase {
 	}
 
 	@Override
-	protected String getTypeName() {
+	public String getTypeName() {
 		return TYPE;
 	}
 

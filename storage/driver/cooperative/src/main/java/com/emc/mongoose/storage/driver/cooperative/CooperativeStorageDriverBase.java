@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.cooperative;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
+import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
@@ -52,7 +53,7 @@ implements StorageDriver<I, O> {
 		}
 		final int batchSize = loadConfig.getBatchConfig().getSize();
 		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine<>(
-			SVC_EXECUTOR, this, inTasksQueue, childTasksQueue, stepId, batchSize
+			ServiceTaskExecutor.INSTANCE, this, inTasksQueue, childTasksQueue, stepId, batchSize
 		);
 	}
 

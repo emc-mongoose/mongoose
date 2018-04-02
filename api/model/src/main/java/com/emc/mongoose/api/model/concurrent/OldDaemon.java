@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
  A stateful execution entity. Usually contains the list of the concurrent service tasks implemented
  as coroutines.
  */
-public interface Daemon
+public interface OldDaemon
 extends Closeable {
 
 	enum State {

@@ -4,10 +4,7 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-
 import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
-import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -19,6 +16,9 @@ import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.log.Loggers;
+
+import com.github.akurilov.commons.concurrent.ThreadUtil;
+import com.github.akurilov.commons.io.Input;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 

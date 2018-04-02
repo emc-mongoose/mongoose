@@ -2,20 +2,18 @@ package com.emc.mongoose.api.model.load;
 
 import com.github.akurilov.commons.concurrent.Throttle;
 import com.github.akurilov.commons.io.Output;
-
-import com.emc.mongoose.api.model.concurrent.Daemon;
 import com.github.akurilov.commons.concurrent.WeightThrottle;
+
+import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.io.IoType;
-
-import java.util.List;
 
 /**
  Created on 11.07.16.
  */
 public interface LoadGenerator<I extends Item, O extends IoTask<I>>
-extends Daemon {
+extends AsyncRunnable {
 	
 	void setWeightThrottle(final WeightThrottle weightThrottle);
 

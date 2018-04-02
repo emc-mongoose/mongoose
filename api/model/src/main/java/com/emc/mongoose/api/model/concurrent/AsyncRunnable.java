@@ -8,11 +8,11 @@ public interface AsyncRunnable
 extends Closeable {
 
 	enum State {
-		INITIAL, STARTED, STOPPED, FINISHED
+		INITIAL, STARTED, SHUTDOWN, STOPPED, FINISHED
 	}
 
 	/**
-	 @return the current state
+	 @return the current state, null if closed
 	 */
 	State state()
 	throws RemoteException;
@@ -30,6 +30,12 @@ extends Closeable {
 	throws RemoteException;
 
 	/**
+	 @return true if the state is "shutdown", false otherwise
+	 */
+	boolean isShutdown()
+	throws RemoteException;
+
+	/**
 	 @return true if the state is "stopped", false otherwise
 	 */
 	boolean isStopped()
@@ -42,11 +48,24 @@ extends Closeable {
 	throws RemoteException;
 
 	/**
+	 @return true if there's no state, false otherwise
+	 */
+	boolean isClosed()
+	throws RemoteException;
+
+	/**
 	 Start/resume the execution
 	 @return the same instance with state changed to <i>STARTED</i> if call was successful.
 	 @throws IllegalStateException if the previous state is not <i>INITIAL</i> neither <i>STOPPED</i>
 	 */
 	AsyncRunnable start()
+	throws IllegalStateException, RemoteException;
+
+	/**
+	 Notify to stop to enqueue incoming requests. The await method should be used after this to make
+	 sure that everything accepted before the shutdown is done.
+	 */
+	AsyncRunnable shutdown()
 	throws IllegalStateException, RemoteException;
 
 	/**

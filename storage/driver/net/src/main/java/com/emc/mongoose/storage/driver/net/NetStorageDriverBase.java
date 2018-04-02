@@ -385,7 +385,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
 		} catch(final RejectedExecutionException e) {
-			if(!isInterrupted()) {
+			if(!isStopped()) {
 				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
 			}
 		} catch(final ConnectException e) {
@@ -635,7 +635,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected final void doInterrupt()
+	protected final void doStop()
 	throws IllegalStateException {
 		try(
 			final Instance ctx = CloseableThreadContext

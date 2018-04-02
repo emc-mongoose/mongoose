@@ -1,26 +1,26 @@
 package com.emc.mongoose.api.metrics;
 
-import com.github.akurilov.coroutines.Coroutine;
-
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.metrics.logging.BasicMetricsLogMessage;
 import com.emc.mongoose.api.metrics.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.api.metrics.logging.MetricsCsvLogMessage;
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+
+import com.github.akurilov.coroutines.Coroutine;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.ThreadContext;
 
 import javax.management.MalformedObjectNameException;
 import java.io.Closeable;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,38 +34,33 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 18.05.17.
  */
 public final class MetricsManager
-extends DaemonBase
-implements Coroutine {
-	
-	private final Map<String, Map<MetricsContext, Closeable>> allMetrics = new HashMap<>();
-	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
-	private final Lock allMetricsLock = new ReentrantLock();
-	
-	private long outputPeriodMillis;
-	private long lastOutputTs;
-	private long nextOutputTs;
+extends DaemonBase {
 
-	private MetricsManager() {
-	}
-	
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
 
 	static {
-
 		try {
 			INSTANCE = new MetricsManager();
-			INSTANCE.start();
 		} catch(final Throwable cause) {
 			throw new AssertionError(cause);
 		}
 	}
+
+	private final Map<String, Map<MetricsContext, Closeable>> allMetrics = new HashMap<>();
+	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
+	private final Lock allMetricsLock = new ReentrantLock();
+
+	private final Coroutine coroutine = new MetricsManagerCoroutine(allMetricsLock, allMetrics);
 	
+	private MetricsManager() {
+	}
+
 	public static void register(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			if(INSTANCE.allMetrics.size() == 0) {
-				SVC_EXECUTOR.start(INSTANCE);
+				INSTANCE.start();
 			}
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
 				final Map<MetricsContext, Closeable>
@@ -131,7 +126,10 @@ implements Coroutine {
 				}
 			} finally {
 				if(INSTANCE.allMetrics.size() == 0) {
-					SVC_EXECUTOR.stop(INSTANCE);
+					try {
+						INSTANCE.stop();
+					} catch(final RemoteException ignored) {
+					}
 				}
 				INSTANCE.allMetricsLock.unlock();
 				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
@@ -140,81 +138,6 @@ implements Coroutine {
 			Loggers.ERR.warn(
 				"Locking timeout at unregister call, thread dump:\n{}", new ThreadDump().toString()
 			);
-		}
-	}
-	
-	@Override
-	public final void run() {
-
-		if(allMetricsLock.tryLock()) {
-
-			ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-
-			try {
-				int actualConcurrency;
-				int nextConcurrencyThreshold;
-				for(final String id : allMetrics.keySet()) {
-					for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
-
-						ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
-
-						actualConcurrency = metricsCtx.getActualConcurrency();
-						metricsCtx.refreshLastSnapshot();
-
-						// threshold load state checks
-						nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
-						if(
-							nextConcurrencyThreshold > 0 &&
-								actualConcurrency >= nextConcurrencyThreshold
-						) {
-							if(
-								!metricsCtx.isThresholdStateEntered() &&
-									!metricsCtx.isThresholdStateExited()
-							) {
-								Loggers.MSG.info(
-									"{}: the threshold of {} active tasks count is " +
-									"reached, starting the additional metrics accounting",
-									metricsCtx.toString(),
-									metricsCtx.getConcurrencyThreshold()
-								);
-								metricsCtx.enterThresholdState();
-							}
-						} else if(
-							metricsCtx.isThresholdStateEntered() &&
-								!metricsCtx.isThresholdStateExited()
-						) {
-							exitMetricsThresholdState(metricsCtx);
-						}
-
-						// periodic output
-						outputPeriodMillis = metricsCtx.getOutputPeriodMillis();
-						lastOutputTs = metricsCtx.getLastOutputTs();
-						nextOutputTs = System.currentTimeMillis();
-						if(
-							outputPeriodMillis > 0
-								&& nextOutputTs - lastOutputTs >= outputPeriodMillis
-						) {
-							selectedMetrics.add(metricsCtx);
-							metricsCtx.setLastOutputTs(nextOutputTs);
-							if(metricsCtx.getAvgPersistFlag()) {
-								Loggers.METRICS_FILE.info(
-									new MetricsCsvLogMessage(metricsCtx)
-								);
-							}
-						}
-					}
-				}
-
-				// periodic console output
-				if(!selectedMetrics.isEmpty()) {
-					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
-					selectedMetrics.clear();
-				}
-			} catch(final Throwable cause) {
-				LogUtil.exception(Level.WARN, cause, "Metrics manager failure");
-			} finally {
-				allMetricsLock.unlock();
-			}
 		}
 	}
 
@@ -239,16 +162,8 @@ implements Coroutine {
 	}
 	
 	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException {
-		if(isStarted() || isShutdown()) {
-			state.wait(timeUnit.toMillis(timeout));
-		}
-		return !(isStarted() || isShutdown());
-	}
-
-	@Override
 	protected final void doStart() {
+		coroutine.start();
 	}
 
 	@Override
@@ -256,8 +171,8 @@ implements Coroutine {
 	}
 
 	@Override
-	protected final void doInterrupt() {
-		SVC_EXECUTOR.stop(this);
+	protected final void doStop() {
+		coroutine.stop();
 	}
 	
 	@Override
@@ -280,15 +195,5 @@ implements Coroutine {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
 		}
-	}
-
-	@Override
-	public void stop() {
-		interrupt();
-	}
-
-	@Override
-	public boolean isStopped() {
-		return isInterrupted();
 	}
 }

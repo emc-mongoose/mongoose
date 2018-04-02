@@ -1,5 +1,7 @@
 package com.emc.mongoose.load.controller;
 
+import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.RateThrottle;
 import com.github.akurilov.commons.concurrent.Throttle;
@@ -15,7 +17,6 @@ import com.github.akurilov.coroutines.TransferCoroutine;
 
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
 import com.emc.mongoose.api.model.load.LoadController;
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.io.task.IoTask.Status;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -74,7 +75,7 @@ implements LoadController<I, O> {
 	private final boolean failRateLimitFlag;
 	private final ConcurrentMap<I, O> latestIoResultsByItem;
 	private final boolean isAnyCircular;
-	private final List<Coroutine> transferCoroutines = new ArrayList<>();
+	private final List<Coroutine> resultsTransferCoroutines = new ArrayList<>();
 	private final Int2ObjectMap<MetricsContext> metricsByIoType;
 	private final LongAdder counterResults = new LongAdder();
 	private final boolean tracePersistFlag;
@@ -129,10 +130,10 @@ implements LoadController<I, O> {
 			if(nextGenerator.isRecycling()) {
 				anyCircularFlag = true;
 			}
-			final Coroutine transferCoroutine = new TransferCoroutine<>(
-				SVC_EXECUTOR, nextDriver, this, batchSize
+			final Coroutine resultsTransferCoroutine = new TransferCoroutine<>(
+				ServiceTaskExecutor.INSTANCE, nextDriver, this, batchSize
 			);
-			transferCoroutines.add(transferCoroutine);
+			resultsTransferCoroutines.add(resultsTransferCoroutine);
 		}
 
 		this.isAnyCircular = anyCircularFlag;
@@ -459,7 +460,7 @@ implements LoadController<I, O> {
 	throws IllegalStateException {
 		driverByGenerator.values().forEach(StorageDriver::start);
 		driverByGenerator.keySet().forEach(LoadGenerator::start);
-		transferCoroutines.forEach(Coroutine::start);
+		resultsTransferCoroutines.forEach(Coroutine::start);
 	}
 
 	@Override
@@ -531,7 +532,7 @@ implements LoadController<I, O> {
 			synchronized(state) {
 				state.wait(100);
 			}
-			if(isInterrupted()) {
+			if(isStopped()) {
 				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", id());
 				return true;
 			}
@@ -568,7 +569,7 @@ implements LoadController<I, O> {
 	}
 
 	@Override
-	protected final void doInterrupt()
+	protected final void doStop()
 	throws IllegalStateException {
 		
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
@@ -609,7 +610,7 @@ implements LoadController<I, O> {
 			throw new CancellationException(e.getMessage());
 		}
 
-		for(final Coroutine transferCoroutine : transferCoroutines) {
+		for(final Coroutine transferCoroutine : resultsTransferCoroutines) {
 			transferCoroutine.stop();
 		}
 
@@ -725,7 +726,7 @@ implements LoadController<I, O> {
 			generatorByOrigin.clear();
 			driverByGenerator.clear();
 		}
-		for(final Coroutine transferCoroutine : transferCoroutines) {
+		for(final Coroutine transferCoroutine : resultsTransferCoroutines) {
 			try {
 				transferCoroutine.close();
 			} catch(final IOException e) {
@@ -734,7 +735,7 @@ implements LoadController<I, O> {
 				);
 			}
 		}
-		transferCoroutines.clear();
+		resultsTransferCoroutines.clear();
 		Loggers.MSG.debug("{}: closed the load controller", id());
 	}
 }

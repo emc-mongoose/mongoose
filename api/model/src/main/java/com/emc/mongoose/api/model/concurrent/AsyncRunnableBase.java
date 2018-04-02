@@ -2,6 +2,7 @@ package com.emc.mongoose.api.model.concurrent;
 
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.FINISHED;
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.INITIAL;
+import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.SHUTDOWN;
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STARTED;
 import static com.emc.mongoose.api.model.concurrent.AsyncRunnable.State.STOPPED;
 
@@ -14,7 +15,7 @@ public abstract class AsyncRunnableBase
 implements AsyncRunnable {
 
 	private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
-	private final Object state = new Object();
+	protected final Object state = new Object();
 
 	@Override
 	public final State state() {
@@ -32,6 +33,11 @@ implements AsyncRunnable {
 	}
 
 	@Override
+	public boolean isShutdown() {
+		return SHUTDOWN.equals(stateRef.get());
+	}
+
+	@Override
 	public boolean isStopped() {
 		return STOPPED.equals(stateRef.get());
 	}
@@ -42,13 +48,14 @@ implements AsyncRunnable {
 	}
 
 	@Override
+	public boolean isClosed() {
+		return null == stateRef.get();
+	}
+
+	@Override
 	public final AsyncRunnableBase start()
 	throws IllegalStateException {
-		boolean passFlag = stateRef.compareAndSet(INITIAL, STARTED);
-		if(!passFlag) {
-			passFlag = stateRef.compareAndSet(STOPPED, STARTED);
-		}
-		if(passFlag) {
+		if(stateRef.compareAndSet(INITIAL, STARTED) || stateRef.compareAndSet(STOPPED, STARTED)) {
 			doStart();
 			synchronized(state) {
 				state.notifyAll();
@@ -62,9 +69,29 @@ implements AsyncRunnable {
 	}
 
 	@Override
+	public final AsyncRunnableBase shutdown()
+	throws IllegalStateException {
+		if(stateRef.compareAndSet(STARTED, SHUTDOWN)) {
+			doShutdown();
+			synchronized(state) {
+				notifyAll();
+			}
+		} else {
+			throw new IllegalStateException(
+				"Not allowed to shutdown while state is \"" + stateRef.get() + "\""
+			);
+		}
+		return this;
+	}
+
+	@Override
 	public final AsyncRunnableBase stop()
 	throws IllegalStateException, RemoteException {
-		if(stateRef.compareAndSet(STARTED, STOPPED)) {
+		try {
+			shutdown();
+		} catch(final IllegalStateException ignored) {
+		}
+		if(stateRef.compareAndSet(STARTED, STOPPED) || stateRef.compareAndSet(SHUTDOWN, STARTED)) {
 			doStop();
 			synchronized(state) {
 				state.notifyAll();
@@ -89,7 +116,7 @@ implements AsyncRunnable {
 	throws IllegalStateException, InterruptedException {
 		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
 		t = System.currentTimeMillis();
-		while(isStarted()) {
+		while(isStarted() || isShutdown()) {
 			if(System.currentTimeMillis() - t >= timeOutMilliSec) {
 				return false;
 			}
@@ -101,7 +128,7 @@ implements AsyncRunnable {
 	}
 
 	@Override
-	public final void close()
+	public void close()
 	throws IllegalStateException, IOException {
 		// stop first
 		if(stateRef.compareAndSet(STARTED, STOPPED)) {
@@ -116,6 +143,8 @@ implements AsyncRunnable {
 	}
 
 	protected abstract void doStart();
+
+	protected abstract void doShutdown();
 
 	protected abstract void doStop()
 	throws RemoteException;

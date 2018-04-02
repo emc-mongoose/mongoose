@@ -85,6 +85,12 @@ implements StepService {
 	}
 
 	@Override
+	public final String getTypeName()
+	throws RemoteException {
+		return step.getTypeName();
+	}
+
+	@Override
 	public final int actualConcurrency()
 	throws RemoteException {
 		return step.actualConcurrency();

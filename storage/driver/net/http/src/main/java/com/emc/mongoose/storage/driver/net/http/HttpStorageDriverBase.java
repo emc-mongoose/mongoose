@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.net.http;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.github.akurilov.commons.collection.Range;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
@@ -73,7 +74,7 @@ implements HttpStorageDriver<I, O> {
 	public static final AsyncCurrentDateSupplier DATE_SUPPLIER;
 	static {
 		try {
-			DATE_SUPPLIER = new AsyncCurrentDateSupplier(SVC_EXECUTOR);
+			DATE_SUPPLIER = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
 		} catch(final OmgDoesNotPerformException e) {
 			throw new RuntimeException(e);
 		}
@@ -86,7 +87,7 @@ implements HttpStorageDriver<I, O> {
 	private static final Function<String, BatchSupplier<String>>
 		ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 			try {
-				return new AsyncPatternDefinedSupplier(SVC_EXECUTOR, pattern);
+				return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
 			} catch(final OmgShootMyFootException e) {
 				LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
 				return null;
@@ -442,7 +443,7 @@ implements HttpStorageDriver<I, O> {
 		} catch(final URISyntaxException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
 		} catch(final Exception e) {
-			if(!isInterrupted() && !isClosed()) {
+			if(!isStopped() && !isClosed()) {
 				LogUtil.exception(Level.WARN, e, "Send HTTP request failure");
 			}
 		} catch(final Throwable e) {

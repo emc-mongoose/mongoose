@@ -127,7 +127,7 @@ implements StorageDriver<I,O> {
 	}
 
 	@Override
-	protected void doInterrupt() {
+	protected void doStop() {
 		Loggers.MSG.debug("{}: interrupting...", toString());
 		try {
 			if(ioExecutor.awaitTermination(1, TimeUnit.SECONDS)) {

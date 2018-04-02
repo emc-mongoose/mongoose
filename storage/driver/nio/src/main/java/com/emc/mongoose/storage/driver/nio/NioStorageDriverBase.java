@@ -189,7 +189,7 @@ implements NioStorageDriver<I, O> {
 	}
 
 	@Override
-	protected final void doInterrupt()
+	protected final void doStop()
 	throws IllegalStateException {
 		for(final Coroutine ioCoroutine : ioCoroutines) {
 			ioCoroutine.stop();

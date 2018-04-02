@@ -1,8 +1,9 @@
 package com.emc.mongoose.api.model.storage;
 
-import com.emc.mongoose.api.model.concurrent.Daemon;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
+
+import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -15,7 +16,7 @@ import java.util.List;
  Created on 11.07.16.
  */
 public interface StorageDriver<I extends Item, O extends IoTask<I>>
-extends Daemon, Input<O>, Output<O> {
+extends AsyncRunnable, Input<O>, Output<O> {
 	
 	int BUFF_SIZE_MIN = 0x1_000;
 	int BUFF_SIZE_MAX = 0x1_000_000;

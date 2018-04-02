@@ -1,8 +1,5 @@
 package com.emc.mongoose.storage.driver.mock.dummy;
 
-import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.io.Input;
-
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
@@ -15,6 +12,9 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.log.Loggers;
+
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.io.Input;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -235,7 +235,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	protected final void doInterrupt()
+	protected final void doStop()
 	throws IllegalStateException {
 		Loggers.MSG.debug("{}: interrupted", toString());
 	}
