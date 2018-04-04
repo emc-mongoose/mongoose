@@ -23,7 +23,6 @@ extends AsyncRunnableBase {
 	@Override
 	public final void close()
 	throws IOException {
-		stop();
 		REGISTRY.remove(this);
 		super.close();
 	}

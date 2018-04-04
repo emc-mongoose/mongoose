@@ -56,8 +56,8 @@ implements AsyncRunnable {
 	public final AsyncRunnableBase start()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(INITIAL, STARTED) || stateRef.compareAndSet(STOPPED, STARTED)) {
-			doStart();
 			synchronized(state) {
+				doStart();
 				state.notifyAll();
 			}
 		} else {
@@ -72,9 +72,9 @@ implements AsyncRunnable {
 	public final AsyncRunnableBase shutdown()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(STARTED, SHUTDOWN)) {
-			doShutdown();
 			synchronized(state) {
-				notifyAll();
+				doShutdown();
+				state.notifyAll();
 			}
 		} else {
 			throw new IllegalStateException(
@@ -92,8 +92,8 @@ implements AsyncRunnable {
 		} catch(final IllegalStateException ignored) {
 		}
 		if(stateRef.compareAndSet(STARTED, STOPPED) || stateRef.compareAndSet(SHUTDOWN, STARTED)) {
-			doStop();
 			synchronized(state) {
+				doStop();
 				state.notifyAll();
 			}
 		} else {
@@ -131,13 +131,14 @@ implements AsyncRunnable {
 	public void close()
 	throws IllegalStateException, IOException {
 		// stop first
-		if(stateRef.compareAndSet(STARTED, STOPPED)) {
-			doStop();
+		try {
+			stop();
+		} catch(final IllegalStateException ignored) {
 		}
 		// then close actually
-		doClose();
-		stateRef.set(null);
 		synchronized(state) {
+			doClose();
+			stateRef.set(null);
 			state.notifyAll();
 		}
 	}

@@ -189,9 +189,7 @@ extends StepBase {
 				stepConfig.setId(autoStepId);
 			}
 		} else {
-			for(final Map<String, Object> nextStepConfig : stepConfigs) {
-				config.apply(nextStepConfig, autoStepId);
-			}
+			stepConfigs.forEach(nextStepConfig -> config.apply(nextStepConfig, autoStepId));
 		}
 		actualConfig(config);
 
@@ -246,7 +244,7 @@ extends StepBase {
 	}
 
 	protected final int actualConcurrencyLocal() {
-		return driver.getActiveTaskCount();
+		return driver == null ? 0 : driver.getActiveTaskCount();
 	}
 
 	@Override

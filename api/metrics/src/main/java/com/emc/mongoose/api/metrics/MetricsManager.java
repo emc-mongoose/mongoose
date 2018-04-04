@@ -90,7 +90,7 @@ extends DaemonBase {
 								if(
 									!metricsCtx.isThresholdStateEntered() &&
 										!metricsCtx.isThresholdStateExited()
-									) {
+								) {
 									Loggers.MSG.info(
 										"{}: the threshold of {} active tasks count is " +
 											"reached, starting the additional metrics accounting",
@@ -260,7 +260,21 @@ extends DaemonBase {
 
 	@Override
 	protected final void doStop() {
-		coroutine.stop();
+		try {
+			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
+				try {
+					coroutine.stop();
+				} finally {
+					allMetricsLock.unlock();
+				}
+			} else {
+				Loggers.ERR.warn(
+					"Locking timeout at stopping, thread dump:\n{}", new ThreadDump().toString()
+				);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
+		}
 	}
 	
 	@Override

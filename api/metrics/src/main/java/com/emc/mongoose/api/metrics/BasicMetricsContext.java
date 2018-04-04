@@ -2,7 +2,6 @@ package com.emc.mongoose.api.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 
@@ -78,7 +77,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		respLatencySum = new LongAdder();
 		reqDuration = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(new SlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		actualConcurrency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);

@@ -57,7 +57,7 @@ implements Step, Runnable {
 		try {
 			start();
 			try {
-				await();
+				await(timeLimitSec, TimeUnit.SECONDS);
 			} catch(final IllegalStateException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to await \"{}\"", toString());
 			} catch(final InterruptedException e) {
@@ -185,12 +185,6 @@ implements Step, Runnable {
 	protected void doClose()
 	throws IOException {
 
-		if(stepClient == null) {
-			doCloseLocal();
-		} else {
-			stepClient.close();
-		}
-
 		metricsByIoType
 			.values()
 			.forEach(
@@ -204,6 +198,12 @@ implements Step, Runnable {
 					}
 				}
 			);
+
+		if(stepClient == null) {
+			doCloseLocal();
+		} else {
+			stepClient.close();
+		}
 	}
 
 	protected abstract void doCloseLocal();
