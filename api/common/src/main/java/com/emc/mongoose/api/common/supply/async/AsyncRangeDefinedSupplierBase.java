@@ -1,13 +1,14 @@
 package com.emc.mongoose.api.common.supply.async;
 
-import com.github.akurilov.commons.concurrent.InitCallable;
-import com.github.akurilov.commons.concurrent.Initializable;
+import com.github.akurilov.concurrent.InitCallable;
+import com.github.akurilov.concurrent.Initializable;
+import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+
 import com.github.akurilov.commons.math.Random;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.RangeDefinedSupplier;
-import com.github.akurilov.coroutines.CoroutinesProcessor;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,14 +27,13 @@ implements Initializable, RangeDefinedSupplier<T> {
 	private final BatchSupplier<T> newValueSupplier;
 
 	protected AsyncRangeDefinedSupplierBase(
-		final CoroutinesProcessor coroutinesProcessor,
-		final long seed, final T minValue, final T maxValue
+		final CoroutinesExecutor executor, final long seed, final T minValue, final T maxValue
 	) throws OmgDoesNotPerformException {
 		this.rnd = new Random(seed);
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
 		this.newValueSupplier = new AsyncUpdatingValueSupplier<>(
-			coroutinesProcessor,
+			executor,
 			minValue,
 			new InitCallable<T>() {
 				//

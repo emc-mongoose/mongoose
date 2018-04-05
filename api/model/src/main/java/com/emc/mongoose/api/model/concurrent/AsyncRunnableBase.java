@@ -91,7 +91,7 @@ implements AsyncRunnable {
 			shutdown();
 		} catch(final IllegalStateException ignored) {
 		}
-		if(stateRef.compareAndSet(STARTED, STOPPED) || stateRef.compareAndSet(SHUTDOWN, STARTED)) {
+		if(stateRef.compareAndSet(STARTED, STOPPED) || stateRef.compareAndSet(SHUTDOWN, STOPPED)) {
 			synchronized(state) {
 				doStop();
 				state.notifyAll();

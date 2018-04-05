@@ -1,7 +1,7 @@
 package com.emc.mongoose.api.model.item;
 
 import com.github.akurilov.commons.io.Input;
-import com.github.akurilov.coroutines.StoppableTask;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 
@@ -265,7 +265,7 @@ implements TransferConvertBuffer<I, O> {
 	@Override
 	public final void close() {
 		try {
-			if(!lock.tryLock(StoppableTask.CLOSE_TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+			if(!lock.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 				LOG.log(Level.WARNING, "Failed to obtain the lock in time to close safely");
 			}
 		} catch(final InterruptedException e) {

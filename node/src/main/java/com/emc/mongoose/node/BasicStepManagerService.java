@@ -36,7 +36,6 @@ implements StepManagerService {
 	public final String getStepService(final String stepType, final Config config)
 	throws RemoteException {
 		final StepService stepSvc = new BasicStepService(port, stepType, config);
-		stepSvc.start();
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();
 	}

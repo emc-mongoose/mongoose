@@ -1,16 +1,9 @@
 package com.emc.mongoose.api.model.svc;
 
-import com.emc.mongoose.api.model.concurrent.AsyncRunnableBase;
-import sun.rmi.server.UnicastRef;
-import sun.rmi.transport.Channel;
-import sun.rmi.transport.LiveRef;
-import sun.rmi.transport.tcp.TCPEndpoint;
+import com.github.akurilov.concurrent.AsyncRunnableBase;
 
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
-import java.rmi.server.RemoteObjectInvocationHandler;
-
-import static java.lang.reflect.Proxy.getInvocationHandler;
 
 public abstract class ServiceBase
 extends AsyncRunnableBase
@@ -37,12 +30,14 @@ implements Service {
 	}
 
 	@Override
-	protected void doStop()
-	throws RemoteException {
+	protected void doStop() {
 		try {
 			ServiceUtil.close(this);
-		} catch(final MalformedURLException e) {
-			throw new RemoteException("Failed to stop the service " + name(), e);
+		} catch(final RemoteException | MalformedURLException e) {
+			try {
+				throw new RemoteException("Failed to stop the service " + name(), e);
+			} catch(final RemoteException ignored) {
+			}
 		}
 	}
 }

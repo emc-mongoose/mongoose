@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.model.svc;
 
-import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
+import com.github.akurilov.concurrent.AsyncRunnable;
+
 import sun.rmi.server.UnicastRef;
 import sun.rmi.transport.Channel;
 import sun.rmi.transport.LiveRef;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.service;
 
-import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.CoroutineBase;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.CoroutineBase;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.io.IoType;

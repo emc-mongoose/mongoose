@@ -3,17 +3,17 @@ package com.emc.mongoose.load.controller;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.commons.concurrent.RateThrottle;
-import com.github.akurilov.commons.concurrent.Throttle;
+import com.github.akurilov.concurrent.RateThrottle;
+import com.github.akurilov.concurrent.Throttle;
 import com.github.akurilov.commons.io.Output;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
-import com.github.akurilov.commons.concurrent.WeightThrottle;
+import com.github.akurilov.concurrent.ThreadUtil;
+import com.github.akurilov.concurrent.WeightThrottle;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
-import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.TransferCoroutine;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.TransferCoroutine;
 
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
 import com.emc.mongoose.api.model.load.LoadController;
@@ -483,8 +483,8 @@ implements LoadController<I, O> {
 				}
 			);
 		driverByGenerator
-			.keySet().
-			forEach(
+			.keySet()
+			.forEach(
 				generator -> {
 					try {
 						generator.start();
@@ -492,7 +492,15 @@ implements LoadController<I, O> {
 					}
 				}
 			);
-		resultsTransferCoroutines.forEach(Coroutine::start);
+		resultsTransferCoroutines
+			.forEach(
+				coroutine -> {
+					try {
+						coroutine.start();
+					} catch(final RemoteException ignored) {
+					}
+				}
+			);
 	}
 
 	@Override
@@ -646,7 +654,10 @@ implements LoadController<I, O> {
 		}
 
 		for(final Coroutine transferCoroutine : resultsTransferCoroutines) {
-			transferCoroutine.stop();
+			try {
+				transferCoroutine.stop();
+			} catch(final RemoteException ignored) {
+			}
 		}
 
 		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(

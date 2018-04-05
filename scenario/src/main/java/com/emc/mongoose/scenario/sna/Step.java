@@ -1,6 +1,7 @@
 package com.emc.mongoose.scenario.sna;
 
-import com.emc.mongoose.api.model.concurrent.AsyncRunnable;
+import com.github.akurilov.concurrent.AsyncRunnable;
+
 import com.emc.mongoose.ui.config.Config;
 
 import java.rmi.RemoteException;

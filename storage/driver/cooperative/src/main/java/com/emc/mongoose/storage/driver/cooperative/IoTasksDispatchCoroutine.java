@@ -8,8 +8,8 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
-import com.github.akurilov.coroutines.CoroutinesProcessor;
-import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
+import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -35,22 +35,22 @@ extends ExclusiveCoroutineBase {
 	private int m;
 
 	public IoTasksDispatchCoroutine(
-		final CoroutinesProcessor coroutinesProcessor,
-		final CooperativeStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inTasksQueue,
-		final BlockingQueue<O> childTasksQueue, final String stepId, final int batchSize
+		final CoroutinesExecutor executor, final CooperativeStorageDriverBase<I, O> storageDriver,
+		final BlockingQueue<O> inTasksQueue, final BlockingQueue<O> childTasksQueue,
+		final String stepId, final int batchSize
 	) {
 		this(
-			coroutinesProcessor, new OptLockArrayBuffer<>(batchSize), storageDriver, inTasksQueue,
+			executor, new OptLockArrayBuffer<>(batchSize), storageDriver, inTasksQueue,
 			childTasksQueue, stepId, batchSize
 		);
 	}
 
 	private IoTasksDispatchCoroutine(
-		final CoroutinesProcessor coroutinesProcessor, final OptLockBuffer<O> buff,
+		final CoroutinesExecutor executor, final OptLockBuffer<O> buff,
 		final CooperativeStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inTasksQueue,
 		final BlockingQueue<O> childTasksQueue, final String stepId, final int batchSize
 	) {
-		super(coroutinesProcessor, buff);
+		super(executor, buff);
 		this.storageDriver = storageDriver;
 		this.inTasksQueue = inTasksQueue;
 		this.childTasksQueue = childTasksQueue;

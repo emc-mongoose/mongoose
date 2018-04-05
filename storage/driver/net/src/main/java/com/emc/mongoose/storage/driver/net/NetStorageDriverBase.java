@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.driver.net;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
+import com.github.akurilov.concurrent.ThreadUtil;
 
-import com.github.akurilov.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
 
 import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;

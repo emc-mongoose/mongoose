@@ -3,13 +3,13 @@ package com.emc.mongoose.load.generator;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
-import com.github.akurilov.commons.concurrent.Throttle;
-import com.github.akurilov.commons.concurrent.WeightThrottle;
+import com.github.akurilov.concurrent.Throttle;
+import com.github.akurilov.concurrent.WeightThrottle;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
-import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.CoroutineBase;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.CoroutineBase;
 
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
@@ -232,7 +232,7 @@ implements LoadGenerator<I, O> {
 					if(isFinished()) {
 						try {
 							stop();
-						} catch(final IllegalStateException ignored) {
+						} catch(final RemoteException | IllegalStateException ignored) {
 						}
 					}
 				}
@@ -331,12 +331,19 @@ implements LoadGenerator<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		coroutine.start();
+		try {
+			coroutine.start();
+		} catch(final RemoteException ignored) {
+		}
 	}
 
 	@Override
-	protected final void doShutdown() {
-		coroutine.stop();
+	protected final void doShutdown()
+	throws IllegalStateException {
+		try {
+			coroutine.stop();
+		} catch(final RemoteException ignored) {
+		}
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} I/O tasks",
 			BasicLoadGenerator.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),

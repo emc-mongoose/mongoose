@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.concurrent;
 
-import com.github.akurilov.commons.concurrent.ContextAwareThreadFactory;
+import com.github.akurilov.concurrent.ContextAwareThreadFactory;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;

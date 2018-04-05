@@ -20,6 +20,7 @@ import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -163,7 +164,6 @@ implements StorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	protected final void ioTaskCompleted(final O ioTask) {
-
 		super.ioTaskCompleted(ioTask);
 
 		completedTaskCount.increment();
@@ -199,7 +199,10 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doShutdown() {
-		ioTasksDispatchCoroutine.stop();
+		try {
+			ioTasksDispatchCoroutine.stop();
+		} catch(final RemoteException ignored) {
+		}
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 

@@ -6,6 +6,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.akurilov.concurrent.AsyncRunnable;
+import com.github.akurilov.concurrent.AsyncRunnableBase;
+
 /**
  Modifies the async runnable to make sure that all instances are closed even if an user hits ^C
  */

@@ -180,8 +180,7 @@ extends StepBase {
 	@Override
 	protected void init() {
 
-		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp()
-			+ "_" + hashCode();
+		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
 		final Config config = new Config(baseConfig);
 		if(stepConfigs == null || stepConfigs.size() == 0) {
 			final StepConfig stepConfig = config.getTestConfig().getStepConfig();

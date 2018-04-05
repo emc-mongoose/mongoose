@@ -106,6 +106,17 @@ implements Step {
 			.parallelStream()
 			.map(resolveStepSvcPartialFunc)
 			.filter(Objects::nonNull)
+			.peek(
+				stepSvc -> {
+					try {
+						stepSvc.start();
+					} catch(final RemoteException | IllegalStateException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to start the step service {}",  stepSvc
+						);
+					}
+				}
+			)
 			.collect(Collectors.toList());
 
 		actualConcurrencySumCoroutine = new GetActualConcurrencySumCoroutine(
@@ -649,7 +660,10 @@ implements Step {
 
 	@Override
 	protected final void doStop() {
-		actualConcurrencySumCoroutine.stop();
+		try {
+			actualConcurrencySumCoroutine.stop();
+		} catch(final RemoteException ignored) {
+		}
 		stepSvcs
 			.parallelStream()
 			.forEach(StepClient::stopStepSvc);

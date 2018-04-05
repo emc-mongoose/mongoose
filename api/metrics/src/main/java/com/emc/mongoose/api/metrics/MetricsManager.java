@@ -12,8 +12,8 @@ import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
-import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.CoroutineBase;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.CoroutineBase;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -147,8 +147,9 @@ extends DaemonBase {
 	public static void register(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
-			if(INSTANCE.allMetrics.size() == 0) {
+			if(!INSTANCE.isStarted()) {
 				INSTANCE.start();
+				Loggers.MSG.info("Started the metrics manager coroutine");
 			}
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
 				final Map<MetricsContext, Closeable>
@@ -216,6 +217,7 @@ extends DaemonBase {
 				if(INSTANCE.allMetrics.size() == 0) {
 					try {
 						INSTANCE.stop();
+						Loggers.MSG.info("Stopped the metrics manager coroutine");
 					} catch(final RemoteException ignored) {
 					}
 				}
@@ -251,7 +253,22 @@ extends DaemonBase {
 	
 	@Override
 	protected final void doStart() {
-		coroutine.start();
+		try {
+			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
+				try {
+					coroutine.start();
+				} catch(final RemoteException ignored) {
+				} finally {
+					allMetricsLock.unlock();
+				}
+			} else {
+				Loggers.ERR.warn(
+					"Locking timeout at starting, thread dump:\n{}", new ThreadDump().toString()
+				);
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
+		}
 	}
 
 	@Override
@@ -264,6 +281,7 @@ extends DaemonBase {
 			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 				try {
 					coroutine.stop();
+				} catch(final RemoteException ignored) {
 				} finally {
 					allMetricsLock.unlock();
 				}

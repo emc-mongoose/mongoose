@@ -87,7 +87,7 @@ implements Step, Runnable {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			if(distributedFlag) {
+			if(isDistributed()) {
 				stepClient = new StepClient(this, actualConfig);
 				stepClient.start();
 			} else {

@@ -1,15 +1,15 @@
 package com.emc.mongoose.api.common.supply.async;
 
-import com.github.akurilov.commons.concurrent.InitCallable;
-
-import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.CoroutinesProcessor;
-import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
+import com.github.akurilov.concurrent.InitCallable;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,17 +25,15 @@ extends BasicUpdatingValueSupplier<T> {
 	private final Coroutine updateTask;
 	
 	public AsyncUpdatingValueSupplier(
-		final CoroutinesProcessor coroutinesProcessor, final T initialValue,
-		final InitCallable<T> updateAction
-	)
-	throws OmgDoesNotPerformException {
+		final CoroutinesExecutor executor, final T initialValue, final InitCallable<T> updateAction
+	) throws OmgDoesNotPerformException {
 
 		super(initialValue, null);
 		if(updateAction == null) {
 			throw new NullPointerException("Argument should not be null");
 		}
 
-		updateTask = new ExclusiveCoroutineBase(coroutinesProcessor) {
+		updateTask = new ExclusiveCoroutineBase(executor) {
 
 			@Override
 			protected final void invokeTimedExclusively(final long startTimeNanos) {
@@ -54,7 +52,10 @@ extends BasicUpdatingValueSupplier<T> {
 			}
 		};
 
-		updateTask.start();
+		try {
+			updateTask.start();
+		} catch(final RemoteException ignored) {
+		}
 	}
 	
 	public static abstract class InitializedCallableBase<T>

@@ -2,8 +2,8 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.ui.log.LogUtil;
 
-import com.github.akurilov.coroutines.CoroutinesProcessor;
-import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
+import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
 
 import org.apache.logging.log4j.Level;
 
@@ -27,9 +27,9 @@ extends ExclusiveCoroutineBase {
 	private volatile int lastValue = 0;
 
 	public GetActualConcurrencySumCoroutine(
-		final CoroutinesProcessor coroutinesProcessor, final List<? extends StepService> stepSvcs
+		final CoroutinesExecutor executor, final List<? extends StepService> stepSvcs
 	) {
-		super(coroutinesProcessor);
+		super(executor);
 		this.stepSvcs = stepSvcs;
 		this.it = stepSvcs.iterator();
 	}

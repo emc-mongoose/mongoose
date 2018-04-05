@@ -1,6 +1,6 @@
 package com.emc.mongoose.tests.system.util;
 
-import com.github.akurilov.commons.concurrent.ThreadUtil;
+import com.github.akurilov.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 
 import java.io.IOException;

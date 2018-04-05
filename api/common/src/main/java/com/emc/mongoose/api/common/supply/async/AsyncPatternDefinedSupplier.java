@@ -5,7 +5,7 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.supply.PatternDefinedSupplier;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 
-import com.github.akurilov.coroutines.CoroutinesProcessor;
+import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
 
 public final class AsyncPatternDefinedSupplier
 extends AsyncUpdatingValueSupplier<String>
@@ -13,22 +13,21 @@ implements PatternDefinedSupplier {
 	
 	private final PatternDefinedSupplier wrappedSupplier;
 	
-	public AsyncPatternDefinedSupplier(
-		final CoroutinesProcessor coroutinesProcessor, final String pattern
-	) throws OmgShootMyFootException {
+	public AsyncPatternDefinedSupplier(final CoroutinesExecutor executor, final String pattern)
+	throws OmgShootMyFootException {
 		this(
-			coroutinesProcessor,
+			executor,
 			new RangePatternDefinedSupplier(
-				pattern, AsyncStringSupplierFactory.getInstance(coroutinesProcessor)
+				pattern, AsyncStringSupplierFactory.getInstance(executor)
 			)
 		);
 	}
 	
 	private AsyncPatternDefinedSupplier(
-		final CoroutinesProcessor coroutinesProcessor, final PatternDefinedSupplier wrappedSupplier
+		final CoroutinesExecutor executor, final PatternDefinedSupplier wrappedSupplier
 	) throws OmgDoesNotPerformException {
 		super(
-			coroutinesProcessor,
+			executor,
 			null,
 			new InitializedCallableBase<String>() {
 				private final StringBuilder result = new StringBuilder();

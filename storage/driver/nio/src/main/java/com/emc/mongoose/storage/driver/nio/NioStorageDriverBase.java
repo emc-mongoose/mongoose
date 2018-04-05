@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.driver.nio;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
 
-import com.github.akurilov.coroutines.CoroutinesProcessor;
-import com.github.akurilov.coroutines.Coroutine;
-import com.github.akurilov.coroutines.ExclusiveCoroutineBase;
+import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
 
 import com.emc.mongoose.storage.driver.cooperative.CooperativeStorageDriverBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
@@ -14,7 +14,7 @@ import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.PENDING;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
+import com.github.akurilov.concurrent.ThreadUtil;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,7 @@ extends CooperativeStorageDriverBase<I, O>
 implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
-	private final static CoroutinesProcessor IO_EXECUTOR = new CoroutinesProcessor(false);
+	private final static CoroutinesExecutor IO_EXECUTOR = new CoroutinesExecutor(false);
 
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
@@ -90,10 +91,8 @@ implements NioStorageDriver<I, O> {
 		private int ioTaskBuffSize;
 		private O ioTask;
 
-		public NioCoroutine(
-			final CoroutinesProcessor coroutinesProcessor, final OptLockBuffer<O> ioTaskBuff
-		) {
-			super(coroutinesProcessor, ioTaskBuff);
+		public NioCoroutine(final CoroutinesExecutor executor, final OptLockBuffer<O> ioTaskBuff) {
+			super(executor, ioTaskBuff);
 			this.ioTaskBuff = ioTaskBuff;
 			this.ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
 		}
@@ -184,7 +183,10 @@ implements NioStorageDriver<I, O> {
 	throws IllegalStateException {
 		super.doStart();
 		for(final Coroutine ioCoroutine : ioCoroutines) {
-			ioCoroutine.start();
+			try {
+				ioCoroutine.start();
+			} catch(final RemoteException ignored) {
+			}
 		}
 	}
 
@@ -192,7 +194,10 @@ implements NioStorageDriver<I, O> {
 	protected final void doStop()
 	throws IllegalStateException {
 		for(final Coroutine ioCoroutine : ioCoroutines) {
-			ioCoroutine.stop();
+			try {
+				ioCoroutine.stop();
+			} catch(final RemoteException ignored) {
+			}
 		}
 	}
 

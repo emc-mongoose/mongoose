@@ -7,6 +7,7 @@ import com.emc.mongoose.scenario.sna.Step;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 
+import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -22,6 +23,8 @@ implements StepService {
 
 	public BasicStepService(final int port, final String stepType, final Config config) {
 		super(port);
+		// don't override the test-step-id value on the remote node again
+		config.getTestConfig().getStepConfig().setIdTmp(false);
 		switch(stepType) {
 			case LoadStep.TYPE:
 				step = new LoadStep(config);
@@ -29,6 +32,9 @@ implements StepService {
 			default:
 				throw new IllegalArgumentException("Unexpected step type: " + stepType);
 		}
+		Loggers.MSG.info(
+			"New step service for \"{}\"", config.getTestConfig().getStepConfig().getId()
+		);
 		super.doStart();
 	}
 
@@ -36,6 +42,7 @@ implements StepService {
 	protected final void doStart() {
 		try {
 			step.start();
+			Loggers.MSG.info("Step service for \"{}\" is started", step.id());
 		} catch(final IllegalStateException | RemoteException e) {
 			try {
 				LogUtil.exception(
@@ -50,6 +57,7 @@ implements StepService {
 	protected void doStop() {
 		try {
 			step.stop();
+			Loggers.MSG.info("Step service for \"{}\" is stopped", step.id());
 		} catch(final IllegalStateException | RemoteException e) {
 			try {
 				LogUtil.exception(
@@ -65,6 +73,7 @@ implements StepService {
 	throws IOException {
 		super.doStop();
 		step.close();
+		Loggers.MSG.info("Step service for \"{}\" is closed", step.id());
 	}
 
 	@Override
