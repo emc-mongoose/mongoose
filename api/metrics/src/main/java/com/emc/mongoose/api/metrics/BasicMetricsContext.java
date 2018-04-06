@@ -18,7 +18,7 @@ import java.util.function.IntSupplier;
  Created by kurila on 15.09.15.
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
-public final class BasicMetricsContext
+public class BasicMetricsContext
 implements Comparable<BasicMetricsContext>, MetricsContext {
 
 	private final Clock clock = new ResumableUserTimeClock();
@@ -35,7 +35,6 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final String stepId;
 	private final IoType ioType;
 	private final IntSupplier actualConcurrencyGauge;
-	private final int nodeCount;
 	private final int concurrency;
 	private final int thresholdConcurrency;
 	private final SizeInBytes itemDataSize;
@@ -45,22 +44,20 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	private final boolean perfDbResultsFileFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
-	private volatile Snapshot lastSnapshot = null;
+	private volatile MetricsSnapshot lastSnapshot = null;
 	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public BasicMetricsContext(
 		final String stepId, final IoType ioType, final IntSupplier actualConcurrencyGauge,
-		final int nodeCount, final int concurrency, final int thresholdConcurrency,
-		final SizeInBytes itemDataSize, final int updateIntervalSec, final boolean stdOutColorFlag,
-		final boolean avgPersistFlag, final boolean sumPersistFlag,
-		final boolean perfDbResultsFileFlag
+		final int concurrency, final int thresholdConcurrency, final SizeInBytes itemDataSize,
+		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
+		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
 	) {
 		this.stepId = stepId;
 		this.ioType = ioType;
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		this.nodeCount = nodeCount;
 		this.concurrency = concurrency;
 		this.thresholdConcurrency = thresholdConcurrency > 0 ?
 			thresholdConcurrency : Integer.MAX_VALUE;
@@ -87,7 +84,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final void start() {
+	public void start() {
 		tsStart = System.currentTimeMillis();
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
@@ -210,7 +207,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	//
 	@Override
 	public final int getNodeCount() {
-		return nodeCount;
+		return 1;
 	}
 	//
 	@Override
@@ -300,7 +297,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final Snapshot getLastSnapshot() {
+	public final MetricsSnapshot getLastSnapshot() {
 		if(lastSnapshot == null) {
 			refreshLastSnapshot();
 		}
@@ -324,7 +321,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new BasicMetricsContext(
-			stepId, ioType, actualConcurrencyGauge, nodeCount, concurrency, 0, itemDataSize,
+			stepId, ioType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);
@@ -366,12 +363,12 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	//
 	@Override
 	public final String toString() {
-		return "MetricsContext(" + ioType.name() + '-' + concurrency + 'x' + nodeCount + '@' +
+		return "MetricsContext(" + ioType.name() + '-' + concurrency + "x1@" +
 			stepId + ")";
 	}
 	//
 	protected static final class BasicSnapshot
-	implements Snapshot {
+	implements MetricsSnapshot {
 		//
 		private final long countSucc;
 		private final double succRateLast;

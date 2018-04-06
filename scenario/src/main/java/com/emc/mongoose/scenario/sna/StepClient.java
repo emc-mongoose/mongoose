@@ -20,6 +20,7 @@ import com.emc.mongoose.ui.config.item.data.DataConfig;
 import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.ui.config.item.input.InputConfig;
 import com.emc.mongoose.ui.config.item.naming.NamingConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -139,6 +140,30 @@ implements Step {
 					Function2.partial1(Step::initConfigSlice, config)
 				)
 			);
+
+		// slice the count limit (if any)
+		final int nodeCount = nodeAddrs.size();
+		final long countLimit = config.getTestConfig().getStepConfig().getLimitConfig().getCount();
+		if(nodeCount > 1 && countLimit > 0) {
+			final long countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
+			long remainingCountLimit = countLimit;
+			for(final String nodeAddr : configSlices.keySet()) {
+				final LimitConfig limitConfigSlice = configSlices
+					.get(nodeAddr)
+					.getTestConfig()
+					.getStepConfig()
+					.getLimitConfig();
+				if(remainingCountLimit > countLimitPerNode) {
+					Loggers.MSG.info("Node \"{}\": count limit = {}", nodeAddr, countLimitPerNode);
+					limitConfigSlice.setCount(countLimitPerNode);
+					remainingCountLimit -= countLimitPerNode;
+				} else {
+					Loggers.MSG.info("Node \"{}\": count limit = {}", nodeAddr, remainingCountLimit);
+					limitConfigSlice.setCount(remainingCountLimit);
+					remainingCountLimit = 0;
+				}
+			}
+		}
 
 		// slice an item input (if any)
 		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
@@ -695,6 +720,7 @@ implements Step {
 				Level.DEBUG, e, "{}: failed to close the actual concurrency sum coroutine", id()
 			);
 		}
+		actualConcurrencySumCoroutine = null;
 
 		stepSvcs
 			.parallelStream()
@@ -709,6 +735,7 @@ implements Step {
 				.filter(entry -> entry.getValue().isPresent())
 				.forEach(entry -> closeFileSvc(entry.getValue().get(), entry.getKey()));
 			itemInputFileSvcs.clear();
+			itemInputFileSvcs = null;
 		}
 
 		if(itemOutputFileSvcs != null) {
@@ -721,6 +748,7 @@ implements Step {
 				.filter(entry -> entry.getValue().isPresent())
 				.forEach(entry -> closeFileSvc(entry.getValue().get(), entry.getKey()));
 			itemOutputFileSvcs.clear();
+			itemOutputFileSvcs = null;
 		}
 
 		if(ioTraceLogFileSvcs != null) {
@@ -731,6 +759,7 @@ implements Step {
 				.map(Optional::get)
 				.forEach(StepClient::transferIoTraceData);
 			ioTraceLogFileSvcs.clear();
+			ioTraceLogFileSvcs = null;
 		}
 	}
 

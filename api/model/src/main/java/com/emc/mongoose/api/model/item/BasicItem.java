@@ -14,7 +14,7 @@ implements Item {
 	private int hashCode; // needed for the distributed mode
 
 	public BasicItem() {
-		this.hashCode = super.hashCode();
+		this.hashCode = (int) System.nanoTime();
 	}
 	
 	public BasicItem(final String value) {
@@ -22,7 +22,7 @@ implements Item {
 			throw new IllegalArgumentException("Empty/null item value");
 		}
 		this.name = value;
-		this.hashCode = super.hashCode();
+		this.hashCode = (int) System.nanoTime();
 	}
 	
 	@Override

@@ -10,5 +10,5 @@ public interface MetricsListener {
 	 Update the state with the snapshot
 	 @param snapshot the metrics snapshot to update the metrics listener state
 	 */
-	void notify(final MetricsContext.Snapshot snapshot);
+	void notify(final MetricsSnapshot snapshot);
 }

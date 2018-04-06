@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.controller;
 
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -166,7 +167,7 @@ implements LoadController<I, O> {
 			}
 			long succCountSum = 0;
 			long failCountSum = 0;
-			MetricsContext.Snapshot lastStats;
+			MetricsSnapshot lastStats;
 			for(final int ioTypeCode : metricsByIoType.keySet()) {
 				lastStats = metricsByIoType.get(ioTypeCode).getLastSnapshot();
 				succCountSum += lastStats.getSuccCount();
@@ -258,7 +259,7 @@ implements LoadController<I, O> {
 		long failCountSum = 0;
 		double failRateLast = 0;
 		double succRateLast = 0;
-		MetricsContext.Snapshot nextMetricsSnapshot;
+		MetricsSnapshot nextMetricsSnapshot;
 		for(final int ioTypeCode : metricsByIoType.keySet()) {
 			nextMetricsSnapshot = metricsByIoType.get(ioTypeCode).getLastSnapshot();
 			failCountSum += nextMetricsSnapshot.getFailCount();

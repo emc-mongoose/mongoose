@@ -42,7 +42,7 @@ ext {
 		disruptor : "3.4.1",
 		jackson : "2.9.4",
 		javaCommons : "[1.4.7,)",
-		javaConcurrent : "[1.1.4,)",
+		javaConcurrent : "[1.1.5,)",
 		javassist : "3.22.0-GA",
 		slf4j : "1.8.0-beta2",
 		log4j : "2.8.2",

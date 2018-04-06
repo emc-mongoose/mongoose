@@ -70,6 +70,7 @@ implements Step, Runnable {
 				close();
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "Failed to close \"{}\"", toString());
+				e.printStackTrace();
 			}
 		}
 	}

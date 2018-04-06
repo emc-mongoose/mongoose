@@ -5,7 +5,6 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.api.model.io.IoType;
 
 import java.io.Closeable;
-import java.io.Serializable;
 
 /**
  Created by andrey on 14.07.16.
@@ -20,13 +19,17 @@ extends Closeable {
 	boolean isStarted();
 
 	void markSucc(final long size, final long duration, final long latency);
+
 	void markPartSucc(final long size, final long duration, final long latency);
+
 	void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	);
+
 	void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]);
 
 	void markFail();
+
 	void markFail(final long count);
 
 	void markElapsedTime(final long millis);
@@ -48,7 +51,9 @@ extends Closeable {
 	void setLastOutputTs(final long ts);
 	
 	void refreshLastSnapshot();
-	Snapshot getLastSnapshot();
+
+	MetricsSnapshot getLastSnapshot();
+
 	void setMetricsListener(final MetricsListener metricsListener);
 
 	boolean isThresholdStateEntered();
@@ -62,59 +67,4 @@ extends Closeable {
 
 	void exitThresholdState()
 	throws IllegalStateException;
-	
-	interface Snapshot
-	extends Serializable {
-
-		/** @return value in milliseconds */
-		long getStartTimeMillis();
-		//
-		long getSuccCount();
-		double getSuccRateMean();
-		double getSuccRateLast();
-		//
-		long getFailCount();
-		double getFailRateMean();
-		double getFailRateLast();
-		//
-		long getByteCount();
-		double getByteRateMean();
-		double getByteRateLast();
-		
-		/** @return value in milliseconds */
-		long getElapsedTimeMillis();
-
-		int getActualConcurrencyLast();
-
-		double getActualConcurrencyMean();
-
-		/** @return value in microseconds */
-		long getDurationSum();
-		/** @return value in microseconds */
-		long getLatencySum();
-		/** @return value in microseconds */
-		long getDurationMin();
-		/** @return value in microseconds */
-		long getDurationLoQ();
-		/** @return value in microseconds */
-		long getDurationMed();
-		/** @return value in microseconds */
-		long getDurationHiQ();
-		/** @return value in microseconds */
-		long getDurationMax();
-		/** @return value in microseconds */
-		double getDurationMean();
-		/** @return value in microseconds */
-		long getLatencyMin();
-		/** @return value in microseconds */
-		long getLatencyLoQ();
-		/** @return value in microseconds */
-		long getLatencyMed();
-		/** @return value in microseconds */
-		long getLatencyHiQ();
-		/** @return value in microseconds */
-		long getLatencyMax();
-		/** @return value in microseconds */
-		double getLatencyMean();
-	}
 }

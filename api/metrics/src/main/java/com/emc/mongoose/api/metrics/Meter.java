@@ -84,7 +84,7 @@ implements MeterMBean {
 	private double latencyMean;
 
 	@Override
-	public final void notify(final MetricsContext.Snapshot snapshot) {
+	public final void notify(final MetricsSnapshot snapshot) {
 		this.startTimeMillis = snapshot.getStartTimeMillis();
 		this.succCount = snapshot.getSuccCount();
 		this.succRateMean = snapshot.getSuccRateMean();

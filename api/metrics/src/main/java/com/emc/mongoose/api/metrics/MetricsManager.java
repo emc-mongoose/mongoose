@@ -41,7 +41,6 @@ extends DaemonBase {
 
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
-
 	static {
 		try {
 			INSTANCE = new MetricsManager();
