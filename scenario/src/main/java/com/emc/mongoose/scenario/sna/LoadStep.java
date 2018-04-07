@@ -5,6 +5,8 @@ import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
@@ -15,28 +17,13 @@ import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.item.data.DataConfig;
-import com.emc.mongoose.ui.config.item.data.input.InputConfig;
-import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.OutputConfig;
-import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.test.TestConfig;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
-import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-
 import com.github.akurilov.commons.io.Output;
-import com.github.akurilov.commons.system.SizeInBytes;
-
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -50,9 +37,9 @@ extends StepBase {
 
 	public static final String TYPE = "Load";
 
-	private volatile LoadGenerator generator = null;
-	private volatile StorageDriver driver = null;
-	private volatile LoadController controller = null;
+	private volatile LoadGenerator<? extends Item, ? extends IoTask> generator = null;
+	private volatile StorageDriver<? extends Item, ? extends IoTask> driver = null;
+	private volatile LoadController<? extends Item, ? extends IoTask> controller = null;
 	private volatile DataInput dataInput = null;
 
 	public LoadStep(final Config baseConfig) {
@@ -79,21 +66,21 @@ extends StepBase {
 	@Override
 	protected void doStartLocal(final Config actualConfig) {
 
-		final ItemConfig itemConfig = actualConfig.getItemConfig();
-		final LoadConfig loadConfig = actualConfig.getLoadConfig();
-		final StorageConfig storageConfig = actualConfig.getStorageConfig();
-		final TestConfig testConfig = actualConfig.getTestConfig();
-		final OutputConfig outputConfig = actualConfig.getOutputConfig();
+		final var itemConfig = actualConfig.getItemConfig();
+		final var loadConfig = actualConfig.getLoadConfig();
+		final var storageConfig = actualConfig.getStorageConfig();
+		final var testConfig = actualConfig.getTestConfig();
+		final var outputConfig = actualConfig.getOutputConfig();
 
-		final DataConfig dataConfig = itemConfig.getDataConfig();
-		final StepConfig stepConfig = testConfig.getStepConfig();
+		final var dataConfig = itemConfig.getDataConfig();
+		final var stepConfig = testConfig.getStepConfig();
 
-		final InputConfig dataInputConfig = dataConfig.getInputConfig();
-		final LimitConfig limitConfig = stepConfig.getLimitConfig();
+		final var dataInputConfig = dataConfig.getInputConfig();
+		final var limitConfig = stepConfig.getLimitConfig();
 
-		final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
+		final var dataLayerConfig = dataInputConfig.getLayerConfig();
 
-		final String testStepId = stepConfig.getId();
+		final var testStepId = stepConfig.getId();
 		Loggers.MSG.info("Run the load step \"{}\"", testStepId);
 
 		try {
@@ -106,8 +93,8 @@ extends StepBase {
 			throw new IllegalStateException("Failed to initialize the data input");
 		}
 
-		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final ItemFactory itemFactory = ItemType.getItemFactory(itemType);
+		final var itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+		final var itemFactory = ItemType.getItemFactory(itemType);
 		Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 		try {
@@ -131,7 +118,7 @@ extends StepBase {
 				.setLoadConfig(loadConfig)
 				.setLimitConfig(limitConfig)
 				.setItemType(itemType)
-				.setItemFactory(itemFactory)
+				.setItemFactory((ItemFactory) itemFactory)
 				.setStorageDriver(driver)
 				.setAuthConfig(storageConfig.getAuthConfig())
 				.build();
@@ -140,29 +127,29 @@ extends StepBase {
 			throw new IllegalStateException("Failed to initialize the load generator");
 		}
 
-		final Map<LoadGenerator, StorageDriver> driverByGenerator = new HashMap<>();
+		final var driverByGenerator = new HashMap<>();
 		driverByGenerator.put(generator, driver);
-		final Map<LoadGenerator, SizeInBytes> itemDataSizes = new HashMap<>();
+		final var itemDataSizes = new HashMap<>();
 		itemDataSizes.put(generator, dataConfig.getSize());
-		final Map<LoadGenerator, LoadConfig> loadConfigMap = new HashMap<>();
+		final var loadConfigMap = new HashMap<>();
 		loadConfigMap.put(generator, loadConfig);
-		final Map<LoadGenerator, OutputConfig> outputConfigMap = new HashMap<>();
+		final var outputConfigMap = new HashMap<>();
 		outputConfigMap.put(generator, outputConfig);
 
-		controller = new BasicLoadController(
+		controller = new BasicLoadController<>(
 			testStepId, driverByGenerator, null, metricsByIoType, loadConfigMap, stepConfig,
 			outputConfigMap
 		);
 
-		final String itemOutputFile = itemConfig.getOutputConfig().getFile();
+		final var itemOutputFile = itemConfig.getOutputConfig().getFile();
 		if(itemOutputFile != null && itemOutputFile.length() > 0) {
-			final Path itemOutputPath = Paths.get(itemOutputFile);
+			final var itemOutputPath = Paths.get(itemOutputFile);
 			if(Files.exists(itemOutputPath)) {
 				Loggers.ERR.warn("Items output file \"{}\" already exists", itemOutputPath);
 			}
 			try {
-				final Output itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-				controller.setIoResultsOutput(itemOutput);
+				final var itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+				controller.setIoResultsOutput((Output) itemOutput);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					Level.ERROR, e,
@@ -181,10 +168,10 @@ extends StepBase {
 	@Override
 	protected void init() {
 
-		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
-		final Config config = new Config(baseConfig);
+		final var autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
+		final var config = new Config(baseConfig);
 		if(stepConfigs == null || stepConfigs.size() == 0) {
-			final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+			final var stepConfig = config.getTestConfig().getStepConfig();
 			if(stepConfig.getIdTmp()) {
 				stepConfig.setId(autoStepId);
 			}
@@ -193,18 +180,16 @@ extends StepBase {
 		}
 		actualConfig(config);
 
-		final OutputConfig outputConfig = config.getOutputConfig();
-		final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
-		final IoType ioType = IoType.valueOf(
-			config.getLoadConfig().getType().toUpperCase()
-		);
-		final int ioTypeCode = ioType.ordinal();
-		final SizeInBytes itemDataSize = config.getItemConfig().getDataConfig().getSize();
-		final int concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
-		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
-		final String id = stepConfig.getId();
+		final var outputConfig = config.getOutputConfig();
+		final var metricsConfig = outputConfig.getMetricsConfig();
+		final var ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
+		final var ioTypeCode = ioType.ordinal();
+		final var itemDataSize = config.getItemConfig().getDataConfig().getSize();
+		final var concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
+		final var stepConfig = config.getTestConfig().getStepConfig();
+		final var id = stepConfig.getId();
 		if(isDistributed()) {
-			final int nodeCount = stepConfig.getNodeConfig().getAddrs().size();
+			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
 			metricsByIoType.put(
 				ioTypeCode,
 				new AggregatingMetricsContext(
@@ -219,7 +204,7 @@ extends StepBase {
 					metricsConfig.getAverageConfig().getPersist(),
 					metricsConfig.getSummaryConfig().getPersist(),
 					metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
-					this::getLastMetricsSnapshot
+					() -> remoteMetricsSnapshots(ioTypeCode)
 				)
 			);
 		} else {
@@ -228,7 +213,7 @@ extends StepBase {
 				new BasicMetricsContext(
 					id,
 					ioType,
-					this::actualConcurrency,
+					this::actualConcurrencyLocal,
 					concurrency,
 					(int) (concurrency * metricsConfig.getThreshold()),
 					itemDataSize,

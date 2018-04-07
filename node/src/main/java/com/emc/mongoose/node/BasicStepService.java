@@ -1,5 +1,6 @@
 package com.emc.mongoose.node;
 
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.LoadStep;
 import com.emc.mongoose.scenario.sna.StepService;
@@ -100,9 +101,9 @@ implements StepService {
 	}
 
 	@Override
-	public final int actualConcurrency()
+	public final MetricsSnapshot metricsSnapshot(final int ioTypeCode)
 	throws RemoteException {
-		return step.actualConcurrency();
+		return step.metricsSnapshot(ioTypeCode);
 	}
 
 	@Override

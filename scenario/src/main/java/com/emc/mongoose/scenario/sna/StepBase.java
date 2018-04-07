@@ -19,6 +19,7 @@ import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,7 @@ implements Step, Runnable {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(isDistributed()) {
-				stepClient = new StepClient(this, actualConfig);
+				stepClient = new BasicStepClient(this, actualConfig);
 				stepClient.start();
 			} else {
 				doStartLocal(actualConfig);
@@ -131,7 +132,12 @@ implements Step, Runnable {
 		if(stepClient == null) {
 			return awaitLocal(timeout, timeUnit);
 		} else {
-			return stepClient.await(timeout, timeUnit);
+			try {
+				return stepClient.await(timeout, timeUnit);
+			} catch(final RemoteException e) {
+				LogUtil.exception(Level.WARN, e, "Connectivity failure");
+				return false;
+			}
 		}
 	}
 
@@ -226,17 +232,12 @@ implements Step, Runnable {
 	}
 
 	@Override
-	public final int actualConcurrency() {
-		if(stepClient == null) {
-			return actualConcurrencyLocal();
-		} else {
-			return stepClient.actualConcurrency();
-		}
+	public final MetricsSnapshot metricsSnapshot(final int ioTypeCode) {
+		return metricsByIoType.get(ioTypeCode).getLastSnapshot();
 	}
 
-	@Override
-	public final MetricsSnapshot getLastMetricsSnapshot(final int ioTypeCode) {
-		return metricsByIoType.get(ioTypeCode).getLastSnapshot();
+	protected final List<MetricsSnapshot> remoteMetricsSnapshots(final int ioTypeCode) {
+		return stepClient.remoteMetricsSnapshots(ioTypeCode);
 	}
 
 	protected abstract int actualConcurrencyLocal();

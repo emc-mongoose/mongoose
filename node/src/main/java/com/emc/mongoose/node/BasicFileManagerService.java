@@ -43,7 +43,7 @@ implements FileManagerService {
 	@Override
 	public String createFileService(final String path)
 	throws RemoteException {
-		final FileService fileSvc = new BasicFileService(path, port);
+		final var fileSvc = new BasicFileService(path, port);
 		fileSvc.start();
 		Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.name());
 		return fileSvc.name();
@@ -52,14 +52,11 @@ implements FileManagerService {
 	@Override
 	public String createLogFileService(final String loggerName, final String testStepId)
 	throws RemoteException {
-		try(
-			final CloseableThreadContext.Instance
-				logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, testStepId)
-		) {
-			final Logger logger = LogManager.getLogger(loggerName);
-			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
-			final String filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
-			final String fileName = filePtrn.contains("${ctx:stepId}") ?
+		try(final var logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, testStepId)) {
+			final var logger = LogManager.getLogger(loggerName);
+			final var appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
+			final var filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
+			final var fileName = filePtrn.contains("${ctx:stepId}") ?
 				filePtrn.replace("${ctx:stepId}", testStepId) :
 				filePtrn;
 			return createFileService(fileName);

@@ -29,13 +29,7 @@ extends AsyncRunnable {
 	String getTypeName()
 	throws RemoteException;
 
-	/**
-	 * @return the current effective concurrency
-	 */
-	int actualConcurrency()
-	throws RemoteException;
-
-	MetricsSnapshot getLastMetricsSnapshot(final int ioTypeCode)
+	MetricsSnapshot metricsSnapshot(final int ioTypeCode)
 	throws RemoteException;
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {

@@ -58,20 +58,20 @@ implements FileService {
 		if(fileChannel == null) {
 			throw new IllegalStateException();
 		}
-		final long remainingSize = fileChannel.size() - fileChannel.position();
+		final var remainingSize = fileChannel.size() - fileChannel.position();
 		if(remainingSize <= 0) {
 			throw new EOFException();
 		}
-		final int buffSize = (int) Math.min(REUSABLE_BUFF_SIZE_MAX, remainingSize);
+		final var buffSize = (int) Math.min(REUSABLE_BUFF_SIZE_MAX, remainingSize);
 		if(buffSize > 0) {
-			final ByteBuffer bb = ByteBuffer.allocate(buffSize);
+			final var bb = ByteBuffer.allocate(buffSize);
 			int doneSize = 0;
 			int n;
 			while(doneSize < buffSize) {
 				n = fileChannel.read(bb);
 				if(n < 0) {
 					// unexpected but possible: the file is shorter than was estimated before
-					final byte[] buff = new byte[bb.position()];
+					final var buff = new byte[bb.position()];
 					bb.rewind();
 					bb.get(buff);
 					return buff;
@@ -91,7 +91,7 @@ implements FileService {
 		if(fileChannel == null) {
 			throw new IllegalStateException();
 		}
-		final ByteBuffer bb = ByteBuffer.wrap(buff);
+		final var bb = ByteBuffer.wrap(buff);
 		int n = 0;
 		while(n < buff.length) {
 			n = fileChannel.write(bb);
