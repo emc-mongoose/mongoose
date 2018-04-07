@@ -1,8 +1,10 @@
 package com.emc.mongoose.scenario.sna;
 
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.github.akurilov.concurrent.AsyncRunnable;
 
 import com.emc.mongoose.ui.config.Config;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -31,6 +33,9 @@ extends AsyncRunnable {
 	 * @return the current effective concurrency
 	 */
 	int actualConcurrency()
+	throws RemoteException;
+
+	MetricsSnapshot getLastMetricsSnapshot(final int ioTypeCode)
 	throws RemoteException;
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {

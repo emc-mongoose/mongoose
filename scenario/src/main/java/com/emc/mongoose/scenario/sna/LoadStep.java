@@ -2,6 +2,7 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.BasicMetricsContext;
+import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.item.ItemFactory;
@@ -206,10 +207,9 @@ extends StepBase {
 			final int nodeCount = stepConfig.getNodeConfig().getAddrs().size();
 			metricsByIoType.put(
 				ioTypeCode,
-				new BasicMetricsContext(
+				new AggregatingMetricsContext(
 					id,
 					ioType,
-					this::actualConcurrency,
 					nodeCount,
 					concurrency * nodeCount,
 					(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
@@ -218,7 +218,8 @@ extends StepBase {
 					outputConfig.getColor(),
 					metricsConfig.getAverageConfig().getPersist(),
 					metricsConfig.getSummaryConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+					metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
+					this::getLastMetricsSnapshot
 				)
 			);
 		} else {
@@ -228,7 +229,6 @@ extends StepBase {
 					id,
 					ioType,
 					this::actualConcurrency,
-					1,
 					concurrency,
 					(int) (concurrency * metricsConfig.getThreshold()),
 					itemDataSize,

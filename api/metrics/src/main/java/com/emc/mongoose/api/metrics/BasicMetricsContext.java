@@ -382,15 +382,15 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		private transient com.codahale.metrics.Snapshot latSnapshot = null;
 		private final long sumDur;
 		private final long sumLat;
-		private final long startTime;
-		private final long elapsedTime;
+		private final long startTimeMillis;
+		private final long elapsedTimeMillis;
 		private final int actualConcurrencyLast;
 		private final double actualConcurrencyMean;
 		//
 		public BasicSnapshot(
 			final long countSucc, final double succRateLast, final long countFail,
 			final double failRateLast, final long countByte, final double byteRateLast,
-			final long startTime, final long elapsedTime, final int actualConcurrencyLast,
+			final long startTimeMillis, final long elapsedTimeMillis, final int actualConcurrencyLast,
 			final double actualConcurrencyMean, final long sumDur, final long sumLat,
 			final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
@@ -403,8 +403,8 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 			this.byteRateLast = byteRateLast;
 			this.sumDur = sumDur;
 			this.sumLat = sumLat;
-			this.startTime = startTime;
-			this.elapsedTime = elapsedTime;
+			this.startTimeMillis = startTimeMillis;
+			this.elapsedTimeMillis = elapsedTimeMillis;
 			this.actualConcurrencyLast = actualConcurrencyLast;
 			this.actualConcurrencyMean = actualConcurrencyMean;
 			this.durSnapshot = durSnapshot;
@@ -420,7 +420,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		//
 		@Override
 		public final double getSuccRateMean() {
-			return elapsedTime == 0 ? 0 : 1000.0 * countSucc / elapsedTime;
+			return elapsedTimeMillis == 0 ? 0 : 1000.0 * countSucc / elapsedTimeMillis;
 		}
 		//
 		@Override
@@ -435,7 +435,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		//
 		@Override
 		public final double getFailRateMean() {
-			return elapsedTime == 0 ? 0 : 1000.0 * countFail / elapsedTime;
+			return elapsedTimeMillis == 0 ? 0 : 1000.0 * countFail / elapsedTimeMillis;
 		}
 		//
 		@Override
@@ -450,7 +450,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		//
 		@Override
 		public final double getByteRateMean() {
-			return elapsedTime == 0 ? 0 : 1000.0 * countByte / elapsedTime;
+			return elapsedTimeMillis == 0 ? 0 : 1000.0 * countByte / elapsedTimeMillis;
 		}
 		//
 		@Override
@@ -512,6 +512,11 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 		//
 		@Override
+		public final long[] getDurationValues() {
+			return durValues;
+		}
+		//
+		@Override
 		public final long getLatencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
@@ -552,7 +557,7 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		//
 		@Override
 		public final long getLatencySum() {
-			return sumDur;
+			return sumLat;
 		}
 		//
 		@Override
@@ -564,13 +569,18 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 		}
 		//
 		@Override
+		public final long[] getLatencyValues() {
+			return latValues;
+		}
+		//
+		@Override
 		public final long getStartTimeMillis() {
-			return startTime;
+			return startTimeMillis;
 		}
 		
 		@Override
 		public final long getElapsedTimeMillis() {
-			return elapsedTime;
+			return elapsedTimeMillis;
 		}
 
 		@Override

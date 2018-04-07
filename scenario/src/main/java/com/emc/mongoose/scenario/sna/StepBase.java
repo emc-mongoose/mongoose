@@ -2,6 +2,7 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.metrics.MetricsManager;
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
@@ -231,6 +232,11 @@ implements Step, Runnable {
 		} else {
 			return stepClient.actualConcurrency();
 		}
+	}
+
+	@Override
+	public final MetricsSnapshot getLastMetricsSnapshot(final int ioTypeCode) {
+		return metricsByIoType.get(ioTypeCode).getLastSnapshot();
 	}
 
 	protected abstract int actualConcurrencyLocal();
