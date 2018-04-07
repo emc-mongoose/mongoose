@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.metrics.logging;
 
 import com.emc.mongoose.api.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
@@ -54,7 +55,7 @@ extends LogMessageBase {
 	
 	@Override
 	public final void formatTo(final StringBuilder strb) {
-		final MetricsContext.Snapshot snapshot = metricsCtx.getLastSnapshot();
+		final MetricsSnapshot snapshot = metricsCtx.getLastSnapshot();
 		strb
 			.append('"').append(FMT_DATE_ISO8601.format(new Date())).append('"').append(',')
 			.append(metricsCtx.getIoType().name()).append(',')

@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.metrics.logging;
 
 import com.emc.mongoose.api.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogMessageBase;
 import static com.emc.mongoose.api.common.env.DateUtil.FMT_DATE_METRICS_TABLE;
@@ -56,7 +57,7 @@ extends LogMessageBase {
 	public final void formatTo(final StringBuilder buffer) {
 		if(formattedMsg == null) {
 			final StrBuilder strb = new StrBuilder();
-			MetricsContext.Snapshot snapshot;
+			MetricsSnapshot snapshot;
 			long succCount;
 			long failCount;
 			IoType ioType;

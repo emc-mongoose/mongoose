@@ -1,8 +1,8 @@
 package com.emc.mongoose.api.metrics.logging;
 
 import static com.emc.mongoose.api.common.Constants.MIB;
-import static com.emc.mongoose.api.metrics.MetricsContext.Snapshot;
 import com.emc.mongoose.api.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogMessageBase;
 
@@ -35,7 +35,7 @@ extends LogMessageBase {
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
 		buffer.append("<result id=\"").append(metricsCtx.getStepId()).append("\" ");
-		final Snapshot snapshot = metricsCtx.getLastSnapshot();
+		final MetricsSnapshot snapshot = metricsCtx.getLastSnapshot();
 		final long startTimeMillis = snapshot.getStartTimeMillis();
 		final Date startDate = new Date(startTimeMillis);
 		buffer.append("StartDate=\"").append(FMT_DATE_RESULTS.format(startDate)).append("\" ");

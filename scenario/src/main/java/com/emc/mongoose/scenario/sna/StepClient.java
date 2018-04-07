@@ -236,10 +236,7 @@ implements Step {
 			fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
 			fileSvc.closeFile();
 			final String filePath = fileSvc.filePath();
-			Loggers.MSG.info(
-				"Use temporary remote item output file \"{}\" @ {}",
-				filePath, Service.address(fileSvc)
-			);
+			Loggers.MSG.info("Use temporary remote item output file \"{}\"", filePath);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				Level.WARN, e,

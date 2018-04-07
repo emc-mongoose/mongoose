@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.metrics.logging;
 
 import com.emc.mongoose.api.metrics.MetricsContext;
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.log.LogMessageBase;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -30,7 +31,7 @@ extends LogMessageBase {
 	
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
-		final MetricsContext.Snapshot snapshot = metricsCtx.getLastSnapshot();
+		final MetricsSnapshot snapshot = metricsCtx.getLastSnapshot();
 		final long succCount = snapshot.getSuccCount();
 		final long failCount = snapshot.getFailCount();
 		final IoType ioType = metricsCtx.getIoType();

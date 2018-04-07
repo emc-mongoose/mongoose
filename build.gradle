@@ -89,8 +89,8 @@ def extClassPathString(final configuration) {
 subprojects {
 
 	tasks.withType(JavaCompile) {
-		sourceCompatibility = JavaVersion.VERSION_1_8
-		targetCompatibility = JavaVersion.VERSION_1_8
+		sourceCompatibility = JavaVersion.VERSION_1_10
+		targetCompatibility = JavaVersion.VERSION_1_10
 	}
 
 	task("create-dirs").doLast(
@@ -228,7 +228,7 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "3.5"
+	gradleVersion = "4.6"
 }
 
 static def isExtProject(final Project p) {
