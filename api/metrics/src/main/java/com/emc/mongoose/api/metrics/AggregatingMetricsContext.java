@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 public class AggregatingMetricsContext
 implements MetricsContext {
 
+	private final long ts;
 	private final String stepId;
 	private final IoType ioType;
 	private final int nodeCount;
@@ -41,6 +42,7 @@ implements MetricsContext {
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
 		final boolean perfDbResultsFileFlag, final Supplier<List<MetricsSnapshot>> snapshotsSupplier
 	) {
+		this.ts = System.nanoTime();
 		this.stepId = stepId;
 		this.ioType = ioType;
 		this.nodeCount = nodeCount;
@@ -289,6 +291,16 @@ implements MetricsContext {
 			e.printStackTrace(System.err);
 		}
 		thresholdStateExitedFlag = true;
+	}
+
+	@Override
+	public final int hashCode() {
+		return (int) ts;
+	}
+
+	@Override
+	public final int compareTo(final MetricsContext other) {
+		return Long.compare(hashCode(), other.hashCode());
 	}
 
 	@Override

@@ -17,9 +17,14 @@ import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.system.SizeInBytes;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -127,16 +132,16 @@ extends StepBase {
 			throw new IllegalStateException("Failed to initialize the load generator");
 		}
 
-		final var driverByGenerator = new HashMap<>();
+		final var driverByGenerator = new HashMap<LoadGenerator, StorageDriver>();
 		driverByGenerator.put(generator, driver);
-		final var itemDataSizes = new HashMap<>();
+		final var itemDataSizes = new HashMap<LoadGenerator, SizeInBytes>();
 		itemDataSizes.put(generator, dataConfig.getSize());
-		final var loadConfigMap = new HashMap<>();
+		final var loadConfigMap = new HashMap<LoadGenerator, LoadConfig>();
 		loadConfigMap.put(generator, loadConfig);
-		final var outputConfigMap = new HashMap<>();
+		final var outputConfigMap = new HashMap<LoadGenerator, OutputConfig>();
 		outputConfigMap.put(generator, outputConfig);
 
-		controller = new BasicLoadController<>(
+		controller = new BasicLoadController(
 			testStepId, driverByGenerator, null, metricsByIoType, loadConfigMap, stepConfig,
 			outputConfigMap
 		);

@@ -19,7 +19,7 @@ import java.util.function.IntSupplier;
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
 public class BasicMetricsContext
-implements Comparable<BasicMetricsContext>, MetricsContext {
+implements MetricsContext {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
@@ -357,14 +357,18 @@ implements Comparable<BasicMetricsContext>, MetricsContext {
 	}
 	//
 	@Override
-	public final int compareTo(final BasicMetricsContext other) {
-		return Long.compare(ts, other.ts);
+	public final int hashCode() {
+		return (int) ts;
+	}
+	//
+	@Override
+	public final int compareTo(final MetricsContext other) {
+		return Long.compare(hashCode(), other.hashCode());
 	}
 	//
 	@Override
 	public final String toString() {
-		return "MetricsContext(" + ioType.name() + '-' + concurrency + "x1@" +
-			stepId + ")";
+		return "MetricsContext(" + ioType.name() + '-' + concurrency + "x1@" + stepId + ")";
 	}
 	//
 	protected static final class BasicSnapshot

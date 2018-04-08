@@ -10,7 +10,7 @@ import java.io.Closeable;
  Created by andrey on 14.07.16.
  */
 public interface MetricsContext
-extends Closeable {
+extends Closeable, Comparable<MetricsContext> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
