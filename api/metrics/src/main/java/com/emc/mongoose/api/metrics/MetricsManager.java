@@ -15,7 +15,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.github.akurilov.concurrent.coroutines.Coroutine;
 import com.github.akurilov.concurrent.coroutines.CoroutineBase;
 
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -72,8 +71,8 @@ extends DaemonBase {
 				try {
 					int actualConcurrency;
 					int nextConcurrencyThreshold;
-					for(final String id : allMetrics.keySet()) {
-						for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
+					for(final var id : allMetrics.keySet()) {
+						for(final var metricsCtx : allMetrics.get(id).keySet()) {
 
 							ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
 
@@ -150,9 +149,10 @@ extends DaemonBase {
 				INSTANCE.start();
 				Loggers.MSG.info("Started the metrics manager coroutine");
 			}
-			try(final Instance logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
-				final Map<MetricsContext, Closeable>
-					stepMetrics = INSTANCE.allMetrics.computeIfAbsent(id, c -> new HashMap<>());
+			try(final var logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
+				final var stepMetrics = INSTANCE.allMetrics.computeIfAbsent(
+					id, c -> new HashMap<>()
+				);
 				stepMetrics.put(metricsCtx, new Meter(metricsCtx));
 				Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 			} catch(final MalformedObjectNameException e) {
@@ -174,8 +174,8 @@ extends DaemonBase {
 	public static void unregister(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
-			try(final Instance stepIdCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
-				final Map<MetricsContext, Closeable> stepMetrics = INSTANCE.allMetrics.get(id);
+			try(final var stepIdCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
+				final var stepMetrics = INSTANCE.allMetrics.get(id);
 				if(stepMetrics != null) {
 					metricsCtx.refreshLastSnapshot(); // last time
 					// check for the metrics threshold state if entered
@@ -198,7 +198,7 @@ extends DaemonBase {
 						new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx), true)
 					);
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
-					final Closeable meterMBean = stepMetrics.remove(metricsCtx);
+					final var meterMBean = stepMetrics.remove(metricsCtx);
 					if(meterMBean != null) {
 						try {
 							meterMBean.close();
@@ -236,7 +236,7 @@ extends DaemonBase {
 				"stopping the additional metrics accounting",
 			metricsCtx.toString(), metricsCtx.getConcurrencyThreshold()
 		);
-		final MetricsContext lastThresholdMetrics = metricsCtx.getThresholdMetrics();
+		final var lastThresholdMetrics = metricsCtx.getThresholdMetrics();
 		if(lastThresholdMetrics.getSumPersistFlag()) {
 			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
 				new MetricsCsvLogMessage(lastThresholdMetrics)
@@ -299,7 +299,7 @@ extends DaemonBase {
 		try {
 			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 				try {
-					for(final String id : allMetrics.keySet()) {
+					for(final var id : allMetrics.keySet()) {
 						allMetrics.get(id).clear();
 					}
 					allMetrics.clear();

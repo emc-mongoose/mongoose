@@ -15,7 +15,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -26,22 +25,22 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
-public abstract class StepBase
+public abstract class LoadStepBase
 extends DaemonBase
-implements Step, Runnable {
+implements LoadStep, Runnable {
 
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final Int2ObjectMap<MetricsContext> metricsByIoType = new Int2ObjectOpenHashMap<>();
 
-	private volatile StepClient stepClient = null;
+	private volatile LoadStepClient stepClient = null;
 	private volatile Config actualConfig = null;
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
 	private String id = null;
 	private boolean distributedFlag = false;
 
-	protected StepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
+	protected LoadStepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
 		this.baseConfig = baseConfig;
 		this.stepConfigs = stepConfigs;
 	}
@@ -83,21 +82,21 @@ implements Step, Runnable {
 
 		init();
 
-		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
-		final String stepId = stepConfig.getId();
+		final var stepConfig = actualConfig.getTestConfig().getStepConfig();
+		final var stepId = stepConfig.getId();
 		try(
-			final Instance logCtx = CloseableThreadContext
+			final var logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(isDistributed()) {
-				stepClient = new BasicStepClient(this, actualConfig);
+				stepClient = new BasicLoadStepClient(this, actualConfig);
 				stepClient.start();
 			} else {
 				doStartLocal(actualConfig);
 			}
 
-			long t = stepConfig.getLimitConfig().getTime();
+			final var t = stepConfig.getLimitConfig().getTime();
 			if(t > 0) {
 				timeLimitSec = t;
 			}
@@ -217,8 +216,8 @@ implements Step, Runnable {
 	protected abstract void doCloseLocal();
 
 	@Override
-	public StepBase config(final Map<String, Object> config) {
-		final List<Map<String, Object>> stepConfigsCopy = new ArrayList<>();
+	public LoadStepBase config(final Map<String, Object> config) {
+		final var stepConfigsCopy = new ArrayList<Map<String, Object>>();
 		if(stepConfigs != null) {
 			stepConfigsCopy.addAll(stepConfigs);
 		}
@@ -242,5 +241,5 @@ implements Step, Runnable {
 
 	protected abstract int actualConcurrencyLocal();
 
-	protected abstract StepBase copyInstance(final List<Map<String, Object>> stepConfigs);
+	protected abstract LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 }

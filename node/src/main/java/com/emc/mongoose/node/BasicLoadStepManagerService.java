@@ -1,18 +1,17 @@
 package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.sna.StepManagerService;
-import com.emc.mongoose.scenario.sna.StepService;
+import com.emc.mongoose.scenario.sna.LoadStepManagerService;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 
 import java.rmi.RemoteException;
 
-public final class BasicStepManagerService
+public final class BasicLoadStepManagerService
 extends ServiceBase
-implements StepManagerService {
+implements LoadStepManagerService {
 
-	public BasicStepManagerService(final int port) {
+	public BasicLoadStepManagerService(final int port) {
 		super(port);
 	}
 
@@ -35,7 +34,7 @@ implements StepManagerService {
 	@Override
 	public final String getStepService(final String stepType, final Config config)
 	throws RemoteException {
-		final var stepSvc = new BasicStepService(port, stepType, config);
+		final var stepSvc = new BasicLoadStepService(port, stepType, config);
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();
 	}

@@ -267,8 +267,8 @@ implements MetricsContext {
 	//
 	@Override
 	public final void refreshLastSnapshot() {
-		final long currentTimeMillis = System.currentTimeMillis();
-		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
+		final var currentTimeMillis = System.currentTimeMillis();
+		final var currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum()) {
 				lastDurationSum = reqDurationSum.sum();

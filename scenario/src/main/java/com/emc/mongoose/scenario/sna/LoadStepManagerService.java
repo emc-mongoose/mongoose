@@ -5,7 +5,7 @@ import com.emc.mongoose.ui.config.Config;
 
 import java.rmi.RemoteException;
 
-public interface StepManagerService
+public interface LoadStepManagerService
 extends Service {
 
 	String SVC_NAME = "scenario/step/manager";

@@ -53,7 +53,7 @@ public final class Main {
 			try {
 				inputFileSvc = new BasicFileManagerService(listenPort);
 				inputFileSvc.start();
-				scenarioStepSvc = new BasicStepManagerService(listenPort);
+				scenarioStepSvc = new BasicLoadStepManagerService(listenPort);
 				scenarioStepSvc.start();
 				scenarioStepSvc.await();
 			} catch(final Throwable cause) {

@@ -1,6 +1,5 @@
 package com.emc.mongoose.api.metrics;
 
-import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformSnapshot;
 
 import com.emc.mongoose.api.model.io.IoType;
@@ -174,7 +173,7 @@ implements MetricsContext {
 	@Override
 	public void refreshLastSnapshot() {
 
-		final List<MetricsSnapshot> snapshots = snapshotsSupplier.get();
+		final var snapshots = snapshotsSupplier.get();
 		long countSucc = 0;
 		double succRateLast = 0;
 		long countFail = 0;
@@ -187,7 +186,7 @@ implements MetricsContext {
 		int durValCount = 0;
 		long sumLat = 0;
 		int latValCount = 0;
-		for(final MetricsSnapshot snapshot : snapshots) {
+		for(final var snapshot : snapshots) {
 			countSucc += snapshot.getSuccCount();
 			succRateLast += snapshot.getSuccRateLast();
 			countFail += snapshot.getFailCount();
@@ -201,24 +200,24 @@ implements MetricsContext {
 			sumLat += snapshot.getLatencySum();
 			latValCount += snapshot.getLatencyValues().length;
 		}
-		final long[] allDurations = new long[durValCount];
-		final long[] allLatencies = new long[latValCount];
+		final var allDurations = new long[durValCount];
+		final var allLatencies = new long[latValCount];
 		int lastDurIdx = 0;
 		int lastLatIdx = 0;
-		for(final MetricsSnapshot snapshot : snapshots) {
-			for(final long dur : snapshot.getDurationValues()) {
+		for(final var snapshot : snapshots) {
+			for(final var dur : snapshot.getDurationValues()) {
 				allDurations[lastDurIdx] = dur;
 				lastDurIdx ++;
 			}
-			for(final long lat : snapshot.getLatencyValues()) {
+			for(final var lat : snapshot.getLatencyValues()) {
 				allLatencies[lastLatIdx] = lat;
 				lastLatIdx ++;
 			}
 		}
-		final Snapshot durSnapshot = new UniformSnapshot(allDurations);
-		final Snapshot latSnapshot = new UniformSnapshot(allLatencies);
-		final long currentTimeMillis = System.currentTimeMillis();
-		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
+		final var durSnapshot = new UniformSnapshot(allDurations);
+		final var latSnapshot = new UniformSnapshot(allLatencies);
+		final var currentTimeMillis = System.currentTimeMillis();
+		final var currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 
 		lastSnapshot = new BasicMetricsContext.BasicSnapshot(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,

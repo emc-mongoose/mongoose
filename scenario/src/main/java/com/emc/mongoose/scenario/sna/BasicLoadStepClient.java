@@ -15,13 +15,6 @@ import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.load.generator.StorageItemInput;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.item.data.DataConfig;
-import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
-import com.emc.mongoose.ui.config.item.input.InputConfig;
-import com.emc.mongoose.ui.config.item.naming.NamingConfig;
-import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -37,9 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -48,25 +39,24 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public final class BasicStepClient
+public final class BasicLoadStepClient
 extends DaemonBase
-implements StepClient {
+implements LoadStepClient {
 
-	private final Step step;
+	private final LoadStep loadStep;
 	private final Config actualConfig;
 
-	public BasicStepClient(final Step step, final Config actualConfig) {
-		this.step = step;
+	public BasicLoadStepClient(final LoadStep loadStep, final Config actualConfig) {
+		this.loadStep = loadStep;
 		this.actualConfig = actualConfig;
 	}
 
-	private List<StepService> stepSvcs = null;
+	private List<LoadStepService> stepSvcs = null;
 	private Map<String, Optional<FileManagerService>> fileMgrSvcs = null;
 	private Map<String, Optional<FileService>> itemInputFileSvcs = null;
 	private Map<String, Optional<FileService>> itemOutputFileSvcs = null;
@@ -131,7 +121,7 @@ implements StepClient {
 			.collect(
 				Collectors.toMap(
 					Function.identity(),
-					Function2.partial1(Step::initConfigSlice, config)
+					Function2.partial1(LoadStep::initConfigSlice, config)
 				)
 			);
 
@@ -183,15 +173,15 @@ implements StepClient {
 							.get(nodeAddrWithPort)
 							.map(
 								Function3.partial13(
-									BasicStepClient::createFileService, nodeAddrWithPort, null
+									BasicLoadStepClient::createFileService, nodeAddrWithPort, null
 								)
 							)
 							.map(
 								Function2
-									.partial1(BasicStepClient::resolveService, nodeAddrWithPort)
+									.partial1(BasicLoadStepClient::resolveService, nodeAddrWithPort)
 									.andThen(svc -> (FileService) svc)
 							)
-							.map(Function2.partial1(BasicStepClient::createRemoteFile, nodeAddrWithPort))
+							.map(Function2.partial1(BasicLoadStepClient::createRemoteFile, nodeAddrWithPort))
 					)
 				);
 		}
@@ -418,7 +408,7 @@ implements StepClient {
 						)
 						.map(
 							Function2
-								.partial1(BasicStepClient::resolveService, nodeAddrWithPort)
+								.partial1(BasicLoadStepClient::resolveService, nodeAddrWithPort)
 								.andThen(svc -> (FileService) svc)
 						)
 						.map(
@@ -510,19 +500,19 @@ implements StepClient {
 		}
 	}
 
-	private StepService resolveStepSvc(
+	private LoadStepService resolveStepSvc(
 		final Map<String, Config> configSlices, final String nodeAddrWithPort
 	) {
 
-		StepManagerService stepMgrSvc;
+		LoadStepManagerService stepMgrSvc;
 		try {
 			stepMgrSvc = ServiceUtil.resolve(
-				nodeAddrWithPort, StepManagerService.SVC_NAME
+				nodeAddrWithPort, LoadStepManagerService.SVC_NAME
 			);
 		} catch(final Exception e) {
 			LogUtil.exception(
 				Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
-				StepManagerService.SVC_NAME, nodeAddrWithPort
+				LoadStepManagerService.SVC_NAME, nodeAddrWithPort
 			);
 			return null;
 		}
@@ -540,13 +530,13 @@ implements StepClient {
 			return null;
 		}
 
-		StepService stepSvc;
+		LoadStepService stepSvc;
 		try {
 			stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
 		} catch(final Exception e) {
 			LogUtil.exception(
 				Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
-				StepManagerService.SVC_NAME, nodeAddrWithPort
+				LoadStepManagerService.SVC_NAME, nodeAddrWithPort
 			);
 			return null;
 		}
@@ -569,7 +559,7 @@ implements StepClient {
 				stepSvc ->
 					(Runnable) () ->
 						Function3
-							.partial1(BasicStepClient::awaitStepService, stepSvc)
+							.partial1(BasicLoadStepClient::awaitStepService, stepSvc)
 							.apply(timeout, timeUnit)
 			)
 			.forEach(awaitExecutor::submit);
@@ -578,7 +568,7 @@ implements StepClient {
 	}
 
 	private static boolean awaitStepService(
-		final StepService stepSvc, final long timeout, final TimeUnit timeUnit
+		final LoadStepService stepSvc, final long timeout, final TimeUnit timeUnit
 	) {
 		try {
 			long commFailCount = 0;
@@ -674,10 +664,10 @@ implements StepClient {
 	protected final void doStop() {
 		stepSvcs
 			.parallelStream()
-			.forEach(BasicStepClient::stopStepSvc);
+			.forEach(BasicLoadStepClient::stopStepSvc);
 	}
 
-	private static StepService stopStepSvc(final StepService stepSvc) {
+	private static LoadStepService stopStepSvc(final LoadStepService stepSvc) {
 		try {
 			stepSvc.stop();
 		} catch(final Exception e) {
@@ -698,7 +688,7 @@ implements StepClient {
 
 		stepSvcs
 			.parallelStream()
-			.forEach(BasicStepClient::closeStepSvc);
+			.forEach(BasicLoadStepClient::closeStepSvc);
 		stepSvcs.clear();
 		stepSvcs = null;
 
@@ -731,7 +721,7 @@ implements StepClient {
 				.parallelStream()
 				.filter(Optional::isPresent)
 				.map(Optional::get)
-				.forEach(BasicStepClient::transferIoTraceData);
+				.forEach(BasicLoadStepClient::transferIoTraceData);
 			ioTraceLogFileSvcs.clear();
 			ioTraceLogFileSvcs = null;
 		}
@@ -781,7 +771,7 @@ implements StepClient {
 		}
 	}
 
-	private static StepService closeStepSvc(final StepService stepSvc) {
+	private static LoadStepService closeStepSvc(final LoadStepService stepSvc) {
 		if(stepSvc != null) {
 			try {
 				stepSvc.close();
@@ -853,20 +843,20 @@ implements StepClient {
 	}
 
 	@Override
-	public final BasicStepClient config(final Map<String, Object> config) {
+	public final BasicLoadStepClient config(final Map<String, Object> config) {
 		return this;
 	}
 
 	@Override
 	public final String id()
 	throws RemoteException {
-		return step.id();
+		return loadStep.id();
 	}
 
 	@Override
 	public String getTypeName()
 	throws RemoteException {
-		return step.getTypeName();
+		return loadStep.getTypeName();
 	}
 
 	@Override

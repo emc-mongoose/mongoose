@@ -2,7 +2,7 @@ package com.emc.mongoose.scenario;
 
 import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.scenario.sna.LoadStep;
+import com.emc.mongoose.scenario.sna.LinearLoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -84,7 +84,7 @@ public interface ScriptEngineUtil {
 	 @param config the configuration
 	 */
 	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
-		se.put("Load", new LoadStep(config));
+		se.put("Load", new LinearLoadStep(config));
 	}
 
 	/**
@@ -104,7 +104,7 @@ public interface ScriptEngineUtil {
 			.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPersist(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
-		se.put("PreconditionLoad", new LoadStep(specificConfig));
+		se.put("PreconditionLoad", new LinearLoadStep(specificConfig));
 
 		for(final IoType ioType : IoType.values()) {
 			specificConfig = new Config(config);
@@ -112,29 +112,29 @@ public interface ScriptEngineUtil {
 			specificConfig.getLoadConfig().setType(ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
-			se.put(stepName, new LoadStep(specificConfig));
+			se.put(stepName, new LinearLoadStep(specificConfig));
 		}
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().setVerify(true);
-		se.put("ReadVerifyLoad", new LoadStep(specificConfig));
+		se.put("ReadVerifyLoad", new LinearLoadStep(specificConfig));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("ReadRandomRangeLoad", new LoadStep(specificConfig));
+		se.put("ReadRandomRangeLoad", new LinearLoadStep(specificConfig));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().setVerify(true);
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("ReadVerifyRandomRangeLoad", new LoadStep(specificConfig));
+		se.put("ReadVerifyRandomRangeLoad", new LinearLoadStep(specificConfig));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.UPDATE.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("UpdateRandomRangeLoad", new LoadStep(specificConfig));
+		se.put("UpdateRandomRangeLoad", new LinearLoadStep(specificConfig));
 	}
 
 }

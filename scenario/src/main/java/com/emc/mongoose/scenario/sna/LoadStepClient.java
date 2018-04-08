@@ -4,8 +4,8 @@ import com.emc.mongoose.api.metrics.MetricsSnapshot;
 
 import java.util.List;
 
-public interface StepClient
-extends Step {
+public interface LoadStepClient
+extends LoadStep {
 
 	List<MetricsSnapshot> remoteMetricsSnapshots(final int ioTypeCode);
 }

@@ -2,9 +2,9 @@ package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.svc.ServiceBase;
+import com.emc.mongoose.scenario.sna.LinearLoadStep;
+import com.emc.mongoose.scenario.sna.LoadStepService;
 import com.emc.mongoose.scenario.sna.LoadStep;
-import com.emc.mongoose.scenario.sna.StepService;
-import com.emc.mongoose.scenario.sna.Step;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 
@@ -16,19 +16,19 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public final class BasicStepService
+public final class BasicLoadStepService
 extends ServiceBase
-implements StepService {
+implements LoadStepService {
 
-	private final Step step;
+	private final LoadStep loadStep;
 
-	public BasicStepService(final int port, final String stepType, final Config config) {
+	public BasicLoadStepService(final int port, final String stepType, final Config config) {
 		super(port);
 		// don't override the test-step-id value on the remote node again
 		config.getTestConfig().getStepConfig().setIdTmp(false);
 		switch(stepType) {
-			case LoadStep.TYPE:
-				step = new LoadStep(config);
+			case LinearLoadStep.TYPE:
+				loadStep = new LinearLoadStep(config);
 				break;
 			default:
 				throw new IllegalArgumentException("Unexpected step type: " + stepType);
@@ -42,12 +42,12 @@ implements StepService {
 	@Override
 	protected final void doStart() {
 		try {
-			step.start();
-			Loggers.MSG.info("Step service for \"{}\" is started", step.id());
+			loadStep.start();
+			Loggers.MSG.info("Step service for \"{}\" is started", loadStep.id());
 		} catch(final IllegalStateException | RemoteException e) {
 			try {
 				LogUtil.exception(
-					Level.ERROR, e, "Failed to start the wrapped step w/ id: {}", step.id()
+					Level.ERROR, e, "Failed to start the wrapped step w/ id: {}", loadStep.id()
 				);
 			} catch(final RemoteException ignored) {
 			}
@@ -57,12 +57,12 @@ implements StepService {
 	@Override
 	protected void doStop() {
 		try {
-			step.stop();
-			Loggers.MSG.info("Step service for \"{}\" is stopped", step.id());
+			loadStep.stop();
+			Loggers.MSG.info("Step service for \"{}\" is stopped", loadStep.id());
 		} catch(final IllegalStateException | RemoteException e) {
 			try {
 				LogUtil.exception(
-					Level.ERROR, e, "Failed to stop the wrapped step w/ id: {}", step.id()
+					Level.ERROR, e, "Failed to stop the wrapped step w/ id: {}", loadStep.id()
 				);
 			} catch(final RemoteException ignored) {
 			}
@@ -73,8 +73,8 @@ implements StepService {
 	protected final void doClose()
 	throws IOException {
 		super.doStop();
-		step.close();
-		Loggers.MSG.info("Step service for \"{}\" is closed", step.id());
+		loadStep.close();
+		Loggers.MSG.info("Step service for \"{}\" is closed", loadStep.id());
 	}
 
 	@Override
@@ -83,34 +83,34 @@ implements StepService {
 	}
 
 	@Override
-	public Step config(final Map<String, Object> config)
+	public LoadStep config(final Map<String, Object> config)
 	throws RemoteException {
-		return step.config(config);
+		return loadStep.config(config);
 	}
 
 	@Override
 	public final String id()
 	throws RemoteException {
-		return step.id();
+		return loadStep.id();
 	}
 
 	@Override
 	public final String getTypeName()
 	throws RemoteException {
-		return step.getTypeName();
+		return loadStep.getTypeName();
 	}
 
 	@Override
 	public final MetricsSnapshot metricsSnapshot(final int ioTypeCode)
 	throws RemoteException {
-		return step.metricsSnapshot(ioTypeCode);
+		return loadStep.metricsSnapshot(ioTypeCode);
 	}
 
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		try {
-			return step.await(timeout, timeUnit);
+			return loadStep.await(timeout, timeUnit);
 		} catch(final RemoteException ignored) {
 		}
 		return false;
