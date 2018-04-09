@@ -181,8 +181,36 @@ implements LoadStepClient {
 									.partial1(BasicLoadStepClient::resolveService, nodeAddrWithPort)
 									.andThen(svc -> (FileService) svc)
 							)
-							.map(Function2.partial1(BasicLoadStepClient::createRemoteFile, nodeAddrWithPort))
+							.map(
+								Function2.partial1(
+									BasicLoadStepClient::createRemoteFile, nodeAddrWithPort
+								)
+							)
 					)
+				);
+			// change the item output file value for each slice
+			nodeAddrs
+				.forEach(
+					nodeAddrWithPort -> itemOutputFileSvcs
+						.get(nodeAddrWithPort)
+						.ifPresent(
+							fileSvc -> {
+								try {
+									final var remoteItemOutputFile = fileSvc.filePath();
+									final var outputConfigSlice = configSlices
+										.get(nodeAddrWithPort)
+										.getItemConfig()
+										.getOutputConfig();
+									outputConfigSlice.setFile(remoteItemOutputFile);
+								} catch(final RemoteException e) {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to get the remote item output file path @ {}",
+										nodeAddrWithPort
+									);
+								}
+							}
+						)
 				);
 		}
 
