@@ -3,7 +3,6 @@ package com.emc.mongoose.scenario;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
-import com.emc.mongoose.ui.config.test.scenario.ScenarioConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -16,10 +15,8 @@ import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 
@@ -27,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Map;
 
 /**
  Created by andrey on 14.09.17.
@@ -39,7 +35,7 @@ public final class Main {
 
 		LogUtil.init();
 
-		final Config config = Config.loadDefaults();
+		final var config = Config.loadDefaults();
 		if(config == null) {
 			throw new AssertionError();
 		}
@@ -58,7 +54,7 @@ public final class Main {
 		}
 
 		try(
-			final Instance ctx = CloseableThreadContext
+			final var ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, config.getTestConfig().getStepConfig().getId())
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
@@ -67,22 +63,22 @@ public final class Main {
 
 			// get the scenario file/path
 			final Path scenarioPath;
-			final ScenarioConfig scenarioConfig = config.getTestConfig().getScenarioConfig();
-			final String scenarioFile = scenarioConfig.getFile();
+			final var scenarioConfig = config.getTestConfig().getScenarioConfig();
+			final var scenarioFile = scenarioConfig.getFile();
 			if(scenarioFile != null && !scenarioFile.isEmpty()) {
 				scenarioPath = Paths.get(scenarioFile);
 			} else {
 				scenarioPath = Paths.get(BASE_DIR, DIR_EXAMPLE_SCENARIO, "js", "default.js");
 			}
 
-			final StringBuilder strb = new StringBuilder();
+			final var strb = new StringBuilder();
 			Files
 				.lines(scenarioPath)
 				.forEach(line -> strb.append(line).append(System.lineSeparator()));
-			final String scenarioText = strb.toString();
+			final var scenarioText = strb.toString();
 			Loggers.SCENARIO.log(Level.INFO, scenarioText);
 
-			final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath);
+			final var scriptEngine = ScriptEngineUtil.resolve(scenarioPath);
 			if(scriptEngine == null) {
 				Loggers.ERR.fatal(
 					"Failed to resolve the scenario engine for the file \"{}\"", scenarioPath
@@ -94,8 +90,8 @@ public final class Main {
 				);
 
 				// expose the environment values
-				final Map<String, String> env = System.getenv();
-				for(final String envKey : env.keySet()) {
+				final var env = System.getenv();
+				for(final var envKey : env.keySet()) {
 					scriptEngine.put(envKey, env.get(envKey));
 				}
 

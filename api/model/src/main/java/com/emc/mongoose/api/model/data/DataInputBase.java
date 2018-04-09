@@ -41,10 +41,7 @@ implements DataInput {
 	@Override
 	public void close()
 	throws IOException {
-		if(inputBuff != null) {
-			DirectMemUtil.free(inputBuff);
-			inputBuff = null;
-		}
+		inputBuff = null;
 	}
 
 	@Override

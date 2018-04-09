@@ -760,6 +760,8 @@ implements LoadStepClient {
 							LogUtil.exception(
 								Level.WARN, e, "Remote items output file transfer failure"
 							);
+						} catch(final Throwable cause) {
+							LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
 						}
 					}
 				);
