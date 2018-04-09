@@ -66,6 +66,8 @@ implements LoadStep, Runnable {
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to start \"{}\"", toString());
+		} catch(final Throwable cause) {
+			cause.printStackTrace();
 		} finally {
 			try {
 				close();

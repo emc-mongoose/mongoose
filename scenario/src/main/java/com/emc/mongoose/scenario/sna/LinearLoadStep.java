@@ -75,7 +75,6 @@ extends LoadStepBase {
 		final var loadConfig = actualConfig.getLoadConfig();
 		final var storageConfig = actualConfig.getStorageConfig();
 		final var testConfig = actualConfig.getTestConfig();
-		final var outputConfig = actualConfig.getOutputConfig();
 
 		final var dataConfig = itemConfig.getDataConfig();
 		final var stepConfig = testConfig.getStepConfig();
@@ -132,6 +131,51 @@ extends LoadStepBase {
 			throw new IllegalStateException("Failed to initialize the load generator");
 		}
 
+		final var outputConfig = actualConfig.getOutputConfig();
+		final var metricsConfig = outputConfig.getMetricsConfig();
+		final var ioType = IoType.valueOf(actualConfig.getLoadConfig().getType().toUpperCase());
+		final var originCode = generator.hashCode();
+		final var itemDataSize = actualConfig.getItemConfig().getDataConfig().getSize();
+		final var concurrency = actualConfig.getLoadConfig().getLimitConfig().getConcurrency();
+		final var id = stepConfig.getId();
+		if(isDistributed()) {
+			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
+			metricsByOrigin.put(
+				originCode,
+				new AggregatingMetricsContext(
+					id,
+					ioType,
+					nodeCount,
+					concurrency * nodeCount,
+					(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
+					itemDataSize,
+					(int) metricsConfig.getAverageConfig().getPeriod(),
+					outputConfig.getColor(),
+					metricsConfig.getAverageConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
+					() -> remoteMetricsSnapshots(originCode)
+				)
+			);
+		} else {
+			metricsByOrigin.put(
+				originCode,
+				new BasicMetricsContext(
+					id,
+					ioType,
+					this::actualConcurrencyLocal,
+					concurrency,
+					(int) (concurrency * metricsConfig.getThreshold()),
+					itemDataSize,
+					(int) metricsConfig.getAverageConfig().getPeriod(),
+					outputConfig.getColor(),
+					metricsConfig.getAverageConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPersist(),
+					metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+				)
+			);
+		}
+
 		final var driverByGenerator = new HashMap<LoadGenerator, StorageDriver>();
 		driverByGenerator.put(generator, driver);
 		final var itemDataSizes = new HashMap<LoadGenerator, SizeInBytes>();
@@ -184,52 +228,6 @@ extends LoadStepBase {
 			stepConfigs.forEach(nextStepConfig -> config.apply(nextStepConfig, autoStepId));
 		}
 		actualConfig(config);
-
-		final var outputConfig = config.getOutputConfig();
-		final var metricsConfig = outputConfig.getMetricsConfig();
-		final var ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
-		final var originCode = generator.hashCode();
-		final var itemDataSize = config.getItemConfig().getDataConfig().getSize();
-		final var concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
-		final var stepConfig = config.getTestConfig().getStepConfig();
-		final var id = stepConfig.getId();
-		if(isDistributed()) {
-			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
-			metricsByOrigin.put(
-				originCode,
-				new AggregatingMetricsContext(
-					id,
-					ioType,
-					nodeCount,
-					concurrency * nodeCount,
-					(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
-					itemDataSize,
-					(int) metricsConfig.getAverageConfig().getPeriod(),
-					outputConfig.getColor(),
-					metricsConfig.getAverageConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
-					() -> remoteMetricsSnapshots(originCode)
-				)
-			);
-		} else {
-			metricsByOrigin.put(
-				originCode,
-				new BasicMetricsContext(
-					id,
-					ioType,
-					this::actualConcurrencyLocal,
-					concurrency,
-					(int) (concurrency * metricsConfig.getThreshold()),
-					itemDataSize,
-					(int) metricsConfig.getAverageConfig().getPeriod(),
-					outputConfig.getColor(),
-					metricsConfig.getAverageConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPerfDbResultsFile()
-				)
-			);
-		}
 	}
 
 	protected final int actualConcurrencyLocal() {
