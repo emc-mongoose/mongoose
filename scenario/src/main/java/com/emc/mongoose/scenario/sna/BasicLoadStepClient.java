@@ -786,13 +786,20 @@ implements LoadStepClient {
 	private static void transferItemOutputData(
 		final Map<String, Optional<FileService>> itemOutputFileSvcs, final String itemOutputFile
 	) {
-		Loggers.MSG.info(
-			"Transfer the items output data from the remote nodes to the local file \"{}\"...",
-			itemOutputFile
-		);
+		final var itemOutputFilePath = Paths.get(itemOutputFile);
+		if(Files.exists(itemOutputFilePath)) {
+			Loggers.MSG.warn(
+				"Item output file \"{}\" already exists - will be appended", itemOutputFile
+			);
+		} else {
+			Loggers.MSG.info(
+				"Transfer the items output data from the remote nodes to the local file \"{}\"...",
+				itemOutputFile
+			);
+		}
 		try(
 			final var out = Files.newOutputStream(
-				Paths.get(itemOutputFile), FileService.WRITE_OPEN_OPTIONS
+				Paths.get(itemOutputFile), FileService.APPEND_OPEN_OPTIONS
 			)
 		) {
 			itemOutputFileSvcs

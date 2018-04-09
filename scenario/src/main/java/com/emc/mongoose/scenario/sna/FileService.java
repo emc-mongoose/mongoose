@@ -21,6 +21,9 @@ extends Service {
 	OpenOption[] WRITE_OPEN_OPTIONS = new OpenOption[] {
 		StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
 	};
+	OpenOption[] APPEND_OPEN_OPTIONS = new OpenOption[] {
+		StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND
+	};
 	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
 
 	/**

@@ -192,8 +192,8 @@
 				{
 					"name" : "scenarioFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}scenario.json",
-					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}scenario.json",
+					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}scenario.txt",
+					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}scenario.txt",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
