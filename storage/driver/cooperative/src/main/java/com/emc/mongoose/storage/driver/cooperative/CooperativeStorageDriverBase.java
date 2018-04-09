@@ -171,7 +171,7 @@ implements StorageDriver<I, O> {
 		if(ioTask instanceof CompositeIoTask) {
 			final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
 			if(!parentTask.allSubTasksDone()) {
-				final List<O> subTasks = parentTask.getSubTasks();
+				final List<O> subTasks = parentTask.subTasks();
 				for(final O nextSubTask : subTasks) {
 					if(!childTasksQueue.offer(nextSubTask/*, 1, TimeUnit.MICROSECONDS*/)) {
 						Loggers.ERR.warn(
@@ -184,7 +184,7 @@ implements StorageDriver<I, O> {
 			}
 		} else if(ioTask instanceof PartialIoTask) {
 			final PartialIoTask subTask = (PartialIoTask) ioTask;
-			final CompositeIoTask parentTask = subTask.getParent();
+			final CompositeIoTask parentTask = subTask.parent();
 			if(parentTask.allSubTasksDone()) {
 				// execute once again to finalize the things if necessary:
 				// complete the multipart upload, for example

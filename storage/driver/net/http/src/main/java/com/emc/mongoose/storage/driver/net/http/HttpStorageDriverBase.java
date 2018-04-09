@@ -170,21 +170,21 @@ implements HttpStorageDriver<I, O> {
 	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
 
-		final I item = ioTask.getItem();
-		final IoType ioType = ioTask.getIoType();
-		final String srcPath = ioTask.getSrcPath();
+		final I item = ioTask.item();
+		final IoType ioType = ioTask.ioType();
+		final String srcPath = ioTask.srcPath();
 
 		final HttpMethod httpMethod;
 		final String uriPath;
 		if(item instanceof DataItem) {
 			httpMethod = getDataHttpMethod(ioType);
-			uriPath = getDataUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+			uriPath = getDataUriPath(item, srcPath, ioTask.dstPath(), ioType);
 		} else if(item instanceof TokenItem) {
 			httpMethod = getTokenHttpMethod(ioType);
-			uriPath = getTokenUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+			uriPath = getTokenUriPath(item, srcPath, ioTask.dstPath(), ioType);
 		} else if(item instanceof PathItem) {
 			httpMethod = getPathHttpMethod(ioType);
-			uriPath = getPathUriPath(item, srcPath, ioTask.getDstPath(), ioType);
+			uriPath = getPathUriPath(item, srcPath, ioTask.dstPath(), ioType);
 		} else {
 			throw new AssertionError("Unsupported item class: " + item.getClass().getName());
 		}
@@ -224,7 +224,7 @@ implements HttpStorageDriver<I, O> {
 				break;
 			case UPDATE:
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.getMarkedRangesSize());
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.markedRangesSize());
 				applyRangesHeaders(httpHeaders, dataIoTask);
 				break;
 			case DELETE:
@@ -235,7 +235,7 @@ implements HttpStorageDriver<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.getCredential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.credential());
 
 		return httpRequest;
 	}
@@ -299,16 +299,16 @@ implements HttpStorageDriver<I, O> {
 	) {
 		final long baseItemSize;
 		try {
-			baseItemSize = dataIoTask.getItem().size();
+			baseItemSize = dataIoTask.item().size();
 		} catch(final IOException e) {
 			throw new AssertionError(e);
 		}
-		final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+		final List<Range> fixedRanges = dataIoTask.fixedRanges();
 		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
 		strb.setLength(0);
 
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
-			final BitSet rangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
+			final BitSet rangesMaskPair[] = dataIoTask.markedRangesMaskPair();
 			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
 			}
@@ -422,7 +422,7 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel, final ChannelPromise channelPromise, final O ioTask
 	) {
 
-		final String nodeAddr = ioTask.getNodeAddr();
+		final String nodeAddr = ioTask.nodeAddr();
 		try {
 			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 			if(channel == null) {

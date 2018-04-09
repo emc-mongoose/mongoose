@@ -5,76 +5,76 @@ import java.io.Serializable;
 public interface MetricsSnapshot
 extends Serializable {
 
-	long getSuccCount();
+	long succCount();
 
-	long getFailCount();
+	long failCount();
 
-	long getByteCount();
-
-	/** @return value in milliseconds */
-	long getStartTimeMillis();
-	//
-	double getSuccRateMean();
-	double getSuccRateLast();
-	//
-	double getFailRateMean();
-	double getFailRateLast();
-	//
-	double getByteRateMean();
-	double getByteRateLast();
+	long byteCount();
 
 	/** @return value in milliseconds */
-	long getElapsedTimeMillis();
+	long startTimeMillis();
+	//
+	double succRateMean();
+	double succRateLast();
+	//
+	double failRateMean();
+	double failRateLast();
+	//
+	double byteRateMean();
+	double byteRateLast();
 
-	int getActualConcurrencyLast();
+	/** @return value in milliseconds */
+	long elapsedTimeMillis();
 
-	double getActualConcurrencyMean();
+	int actualConcurrencyLast();
 
-	/** @return value in microseconds */
-	long getDurationSum();
-
-	/** @return value in microseconds */
-	long getLatencySum();
-
-	/** @return value in microseconds */
-	long getDurationMin();
-
-	/** @return value in microseconds */
-	long getDurationLoQ();
-
-	/** @return value in microseconds */
-	long getDurationMed();
+	double actualConcurrencyMean();
 
 	/** @return value in microseconds */
-	long getDurationHiQ();
+	long durationSum();
 
 	/** @return value in microseconds */
-	long getDurationMax();
+	long latencySum();
 
 	/** @return value in microseconds */
-	double getDurationMean();
+	long durationMin();
+
+	/** @return value in microseconds */
+	long durationLoQ();
+
+	/** @return value in microseconds */
+	long durationMed();
+
+	/** @return value in microseconds */
+	long durationHiQ();
+
+	/** @return value in microseconds */
+	long durationMax();
+
+	/** @return value in microseconds */
+	double durationMean();
 
 	/** @return values in microseconds */
-	long[] getDurationValues();
+	long[] durationValues();
 
 	/** @return value in microseconds */
-	long getLatencyMin();
+	long latencyMin();
 
 	/** @return value in microseconds */
-	long getLatencyLoQ();
+	long latencyLoQ();
 
 	/** @return value in microseconds */
-	long getLatencyMed();
+	long latencyMed();
 
 	/** @return value in microseconds */
-	long getLatencyHiQ();
+	long latencyHiQ();
 
 	/** @return value in microseconds */
-	long getLatencyMax();
+	long latencyMax();
 
 	/** @return value in microseconds */
-	double getLatencyMean();
+	double latencyMean();
 
 	/** @return values in microseconds */
-	long[] getLatencyValues();
+	long[] latencyValues();
 }

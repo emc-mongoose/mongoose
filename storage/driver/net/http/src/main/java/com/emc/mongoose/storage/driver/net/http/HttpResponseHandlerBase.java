@@ -53,44 +53,44 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 		switch(statusClass) {
 			case INFORMATIONAL:
 				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
-				ioTask.setStatus(RESP_FAIL_CLIENT);
+				ioTask.status(RESP_FAIL_CLIENT);
 				break;
 			case SUCCESS:
-				ioTask.setStatus(SUCC);
+				ioTask.status(SUCC);
 				return true;
 			case REDIRECTION:
 				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
-				ioTask.setStatus(RESP_FAIL_CLIENT);
+				ioTask.status(RESP_FAIL_CLIENT);
 				break;
 			case CLIENT_ERROR:
 				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				if(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.equals(responseStatus)) {
-					ioTask.setStatus(RESP_FAIL_SVC);
+					ioTask.status(RESP_FAIL_SVC);
 				} else if(HttpResponseStatus.REQUEST_URI_TOO_LONG.equals(responseStatus)) {
-					ioTask.setStatus(RESP_FAIL_SVC);
+					ioTask.status(RESP_FAIL_SVC);
 				} else if(HttpResponseStatus.UNAUTHORIZED.equals(responseStatus)) {
-					ioTask.setStatus(RESP_FAIL_AUTH);
+					ioTask.status(RESP_FAIL_AUTH);
 				} else if(HttpResponseStatus.FORBIDDEN.equals(responseStatus)) {
-					ioTask.setStatus(RESP_FAIL_AUTH);
+					ioTask.status(RESP_FAIL_AUTH);
 				} else if(HttpResponseStatus.NOT_FOUND.equals(responseStatus)) {
-					ioTask.setStatus(RESP_FAIL_NOT_FOUND);
+					ioTask.status(RESP_FAIL_NOT_FOUND);
 				} else {
-					ioTask.setStatus(RESP_FAIL_CLIENT);
+					ioTask.status(RESP_FAIL_CLIENT);
 				}
 				break;
 			case SERVER_ERROR:
 				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
 				if(HttpResponseStatus.GATEWAY_TIMEOUT.equals(responseStatus)) {
-					ioTask.setStatus(FAIL_TIMEOUT);
+					ioTask.status(FAIL_TIMEOUT);
 				} else if(HttpResponseStatus.INSUFFICIENT_STORAGE.equals(responseStatus)) {
-					ioTask.setStatus(RESP_FAIL_SPACE);
+					ioTask.status(RESP_FAIL_SPACE);
 				} else {
-					ioTask.setStatus(RESP_FAIL_SVC);
+					ioTask.status(RESP_FAIL_SVC);
 				}
 				break;
 			case UNKNOWN:
 				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
-				ioTask.setStatus(FAIL_UNKNOWN);
+				ioTask.status(FAIL_UNKNOWN);
 				break;
 		}
 		
@@ -102,11 +102,11 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	protected void handleResponseContentChunk(
 		final Channel channel, final O ioTask, final ByteBuf contentChunk
 	) throws IOException {
-		if(IoType.READ.equals(ioTask.getIoType())) {
+		if(IoType.READ.equals(ioTask.ioType())) {
 			if(ioTask instanceof DataIoTask) {
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				final long countBytesDone = dataIoTask.getCountBytesDone();
-				if(dataIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
+				final long countBytesDone = dataIoTask.countBytesDone();
+				if(dataIoTask.respDataTimeStart() == 0) { // if not set yet - 1st time
 					try {
 						dataIoTask.startDataResponse();
 					} catch(final IllegalStateException e) {
@@ -116,11 +116,11 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					if(verifyFlag) {
-						if(!RESP_FAIL_CORRUPT.equals(ioTask.getStatus())) {
+						if(!RESP_FAIL_CORRUPT.equals(ioTask.status())) {
 							verifyChunk(dataIoTask, countBytesDone, contentChunk, chunkSize);
 						}
 					} else {
-						dataIoTask.setCountBytesDone(countBytesDone + chunkSize);
+						dataIoTask.countBytesDone(countBytesDone + chunkSize);
 					}
 				}
 			} else if(ioTask instanceof PathIoTask) {

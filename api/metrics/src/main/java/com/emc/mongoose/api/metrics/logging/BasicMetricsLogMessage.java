@@ -31,11 +31,11 @@ extends LogMessageBase {
 	
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
-		final MetricsSnapshot snapshot = metricsCtx.getLastSnapshot();
-		final long succCount = snapshot.getSuccCount();
-		final long failCount = snapshot.getFailCount();
-		final IoType ioType = metricsCtx.getIoType();
-		final boolean stdOutColorFlag = metricsCtx.getStdOutColorFlag();
+		final MetricsSnapshot snapshot = metricsCtx.lastSnapshot();
+		final long succCount = snapshot.succCount();
+		final long failCount = snapshot.failCount();
+		final IoType ioType = metricsCtx.ioType();
+		final boolean stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 		String ioTypeColorCode = WHITE;
 		switch(ioType) {
 			case NOOP:
@@ -57,18 +57,18 @@ extends LogMessageBase {
 				ioTypeColorCode = LogUtil.LIST_COLOR;
 				break;
 		}
-		buffer.append("Step \"").append(metricsCtx.getStepId()).append("\" results:\n\t");
+		buffer.append("Step \"").append(metricsCtx.stepId()).append("\" results:\n\t");
 		if(stdOutColorFlag) {
 			buffer.append(ioTypeColorCode);
 		}
-		buffer.append(metricsCtx.getIoType().name());
+		buffer.append(metricsCtx.ioType().name());
 		if(stdOutColorFlag) {
 			buffer.append(RESET);
 		}
 		buffer
-			.append('-').append(metricsCtx.getConcurrency())
-			.append('x').append(metricsCtx.getNodeCount())
-			.append(": c=(").append(formatFixedWidth(snapshot.getActualConcurrencyMean(), 6))
+			.append('-').append(metricsCtx.concurrency())
+			.append('x').append(metricsCtx.nodeCount())
+			.append(": c=(").append(formatFixedWidth(snapshot.actualConcurrencyMean(), 6))
 			.append("); n=(");
 		if(stdOutColorFlag) {
 			buffer.append(WHITE);
@@ -87,19 +87,19 @@ extends LogMessageBase {
 		}
 		buffer
 			.append("); t[s]=(")
-			.append(formatFixedWidth(snapshot.getElapsedTimeMillis() / K, 7)).append('/')
-			.append(formatFixedWidth(snapshot.getDurationSum() / M, 7)).append("); size=(")
-			.append(formatFixedSize(snapshot.getByteCount())).append("); TP[op/s]=(")
-			.append(formatFixedWidth(snapshot.getSuccRateMean(), 7)).append('/')
-			.append(formatFixedWidth(snapshot.getSuccRateLast(), 7)).append("); BW[MB/s]=(")
-			.append(formatFixedWidth(snapshot.getByteRateMean() / MIB, 6)).append('/')
-			.append(formatFixedWidth(snapshot.getByteRateLast() / MIB, 6)).append("); dur[us]=(")
-			.append((long) snapshot.getDurationMean()).append('/')
-			.append(snapshot.getDurationMin()).append('/')
-			.append(snapshot.getDurationMax()).append("); lat[us]=(")
-			.append((long) snapshot.getLatencyMean()).append('/')
-			.append(snapshot.getLatencyMin()).append('/')
-			.append(snapshot.getLatencyMax()).append(')')
+			.append(formatFixedWidth(snapshot.elapsedTimeMillis() / K, 7)).append('/')
+			.append(formatFixedWidth(snapshot.durationSum() / M, 7)).append("); size=(")
+			.append(formatFixedSize(snapshot.byteCount())).append("); TP[op/s]=(")
+			.append(formatFixedWidth(snapshot.succRateMean(), 7)).append('/')
+			.append(formatFixedWidth(snapshot.succRateLast(), 7)).append("); BW[MB/s]=(")
+			.append(formatFixedWidth(snapshot.byteRateMean() / MIB, 6)).append('/')
+			.append(formatFixedWidth(snapshot.byteRateLast() / MIB, 6)).append("); dur[us]=(")
+			.append((long) snapshot.durationMean()).append('/')
+			.append(snapshot.durationMin()).append('/')
+			.append(snapshot.durationMax()).append("); lat[us]=(")
+			.append((long) snapshot.latencyMean()).append('/')
+			.append(snapshot.latencyMin()).append('/')
+			.append(snapshot.latencyMax()).append(')')
 			.append(System.lineSeparator());
 	}
 }

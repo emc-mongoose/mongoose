@@ -63,11 +63,11 @@ extends LogMessageBase {
 			IoType ioType;
 			boolean stdOutColorFlag;
 			for(final MetricsContext metricsCtx : metrics) {
-				snapshot = metricsCtx.getLastSnapshot();
-				succCount = snapshot.getSuccCount();
-				failCount = snapshot.getFailCount();
-				ioType = metricsCtx.getIoType();
-				stdOutColorFlag = metricsCtx.getStdOutColorFlag();
+				snapshot = metricsCtx.lastSnapshot();
+				succCount = snapshot.succCount();
+				failCount = snapshot.failCount();
+				ioType = metricsCtx.ioType();
+				stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 				if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
 					strb.append(TABLE_HEADER);
 				}
@@ -76,7 +76,7 @@ extends LogMessageBase {
 				}
 				ROW_OUTPUT_COUNTER ++;
 				strb
-					.appendFixedWidthPadLeft(metricsCtx.getStepId(), 10, ' ')
+					.appendFixedWidthPadLeft(metricsCtx.stepId(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 12, ' ')
 					.append(TABLE_BORDER_VERTICAL);
@@ -102,16 +102,16 @@ extends LogMessageBase {
 							break;
 					}
 				}
-				strb.appendFixedWidthPadRight(metricsCtx.getIoType().name(), 6, ' ');
+				strb.appendFixedWidthPadRight(metricsCtx.ioType().name(), 6, ' ');
 				if(stdOutColorFlag) {
 					strb.append(RESET);
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(snapshot.getActualConcurrencyLast(), 10, ' ')
+					.appendFixedWidthPadLeft(snapshot.actualConcurrencyLast(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight(
-						formatFixedWidth(snapshot.getActualConcurrencyMean(), 10), 10, ' '
+						formatFixedWidth(snapshot.actualConcurrencyMean(), 10), 10, ' '
 					)
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
@@ -124,15 +124,15 @@ extends LogMessageBase {
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight((double) snapshot.getElapsedTimeMillis() / 1000, 7, ' ')
+					.appendFixedWidthPadRight((double) snapshot.elapsedTimeMillis() / 1000, 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(snapshot.getSuccRateLast(), 8, ' ')
+					.appendFixedWidthPadRight(snapshot.succRateLast(), 8, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(snapshot.getByteRateLast() / MIB, 7, ' ')
+					.appendFixedWidthPadRight(snapshot.byteRateLast() / MIB, 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft((long) snapshot.getLatencyMean(), 10, ' ')
+					.appendFixedWidthPadLeft((long) snapshot.latencyMean(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft((long) snapshot.getDurationMean(), 11, ' ')
+					.appendFixedWidthPadLeft((long) snapshot.durationMean(), 11, ' ')
 					.appendNewLine();
 				if(summaryFlag) {
 					strb.append(SUMMARY_DELIMETER);

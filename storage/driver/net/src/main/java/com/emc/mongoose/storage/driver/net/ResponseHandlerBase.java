@@ -58,13 +58,13 @@ extends SimpleChannelInboundHandler<M> {
 		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		if(ioTask != null) {
 			if(driver.isStopped() || driver.isClosed()) {
-				ioTask.setStatus(INTERRUPTED);
+				ioTask.status(INTERRUPTED);
 			} else if(cause instanceof PrematureChannelClosureException) {
 				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
-				ioTask.setStatus(FAIL_IO);
+				ioTask.status(FAIL_IO);
 			} else {
 				LogUtil.exception(Level.WARN, cause, "Client handler failure");
-				ioTask.setStatus(FAIL_UNKNOWN);
+				ioTask.status(FAIL_UNKNOWN);
 			}
 			if(!driver.isStopped()) {
 				try {

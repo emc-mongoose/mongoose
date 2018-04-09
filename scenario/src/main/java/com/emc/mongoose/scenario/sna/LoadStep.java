@@ -4,6 +4,7 @@ import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.ui.config.Config;
 
 import com.github.akurilov.concurrent.AsyncRunnable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -28,7 +29,7 @@ extends AsyncRunnable {
 	String getTypeName()
 	throws RemoteException;
 
-	MetricsSnapshot metricsSnapshot(final int ioTypeCode)
+	Int2ObjectMap<MetricsSnapshot> metricsSnapshots()
 	throws RemoteException;
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {

@@ -74,47 +74,47 @@ extends DaemonBase {
 					for(final var id : allMetrics.keySet()) {
 						for(final var metricsCtx : allMetrics.get(id).keySet()) {
 
-							ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
+							ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.stepId());
 
-							actualConcurrency = metricsCtx.getActualConcurrency();
+							actualConcurrency = metricsCtx.actualConcurrency();
 							metricsCtx.refreshLastSnapshot();
 
 							// threshold load state checks
-							nextConcurrencyThreshold = metricsCtx.getConcurrencyThreshold();
+							nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
 							if(
 								nextConcurrencyThreshold > 0 &&
 									actualConcurrency >= nextConcurrencyThreshold
 							) {
 								if(
-									!metricsCtx.isThresholdStateEntered() &&
-										!metricsCtx.isThresholdStateExited()
+									!metricsCtx.thresholdStateEntered() &&
+										!metricsCtx.thresholdStateExited()
 								) {
 									Loggers.MSG.info(
 										"{}: the threshold of {} active tasks count is " +
 											"reached, starting the additional metrics accounting",
 										metricsCtx.toString(),
-										metricsCtx.getConcurrencyThreshold()
+										metricsCtx.concurrencyThreshold()
 									);
 									metricsCtx.enterThresholdState();
 								}
 							} else if(
-								metricsCtx.isThresholdStateEntered() &&
-									!metricsCtx.isThresholdStateExited()
+								metricsCtx.thresholdStateEntered() &&
+									!metricsCtx.thresholdStateExited()
 							) {
 								exitMetricsThresholdState(metricsCtx);
 							}
 
 							// periodic output
-							outputPeriodMillis = metricsCtx.getOutputPeriodMillis();
-							lastOutputTs = metricsCtx.getLastOutputTs();
+							outputPeriodMillis = metricsCtx.outputPeriodMillis();
+							lastOutputTs = metricsCtx.lastOutputTs();
 							nextOutputTs = System.currentTimeMillis();
 							if(
 								outputPeriodMillis > 0
 									&& nextOutputTs - lastOutputTs >= outputPeriodMillis
 							) {
 								selectedMetrics.add(metricsCtx);
-								metricsCtx.setLastOutputTs(nextOutputTs);
-								if(metricsCtx.getAvgPersistFlag()) {
+								metricsCtx.lastOutputTs(nextOutputTs);
+								if(metricsCtx.avgPersistEnabled()) {
 									Loggers.METRICS_FILE.info(
 										new MetricsCsvLogMessage(metricsCtx)
 									);
@@ -131,7 +131,7 @@ extends DaemonBase {
 						selectedMetrics.clear();
 					}
 				} catch(final Throwable cause) {
-					LogUtil.exception(Level.WARN, cause, "Metrics manager failure");
+					LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
 				} finally {
 					allMetricsLock.unlock();
 				}
@@ -157,8 +157,7 @@ extends DaemonBase {
 				Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 			} catch(final MalformedObjectNameException e) {
 				LogUtil.exception(
-					Level.WARN, e,
-					"Failed to register the MBean for the metrics context \"{}\"",
+					Level.WARN, e, "Failed to register the MBean for the metrics context \"{}\"",
 					metricsCtx.toString()
 				);
 			} finally {
@@ -174,21 +173,21 @@ extends DaemonBase {
 	public static void unregister(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
-			try(final var stepIdCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
+			try(final var logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)) {
 				final var stepMetrics = INSTANCE.allMetrics.get(id);
 				if(stepMetrics != null) {
 					metricsCtx.refreshLastSnapshot(); // last time
 					// check for the metrics threshold state if entered
 					if(
-						metricsCtx.isThresholdStateEntered() && !metricsCtx.isThresholdStateExited()
+						metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()
 					) {
 						exitMetricsThresholdState(metricsCtx);
 					}
 					// file output
-					if(metricsCtx.getSumPersistFlag()) {
+					if(metricsCtx.sumPersistEnabled()) {
 						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
 					}
-					if(metricsCtx.getPerfDbResultsFileFlag()) {
+					if(metricsCtx.perfDbResultsFileEnabled()) {
 						Loggers.METRICS_EXT_RESULTS_FILE.info(
 							new ExtResultsXmlLogMessage(metricsCtx)
 						);
@@ -234,15 +233,15 @@ extends DaemonBase {
 		Loggers.MSG.info(
 			"{}: the active tasks count is below the threshold of {}, " +
 				"stopping the additional metrics accounting",
-			metricsCtx.toString(), metricsCtx.getConcurrencyThreshold()
+			metricsCtx.toString(), metricsCtx.concurrencyThreshold()
 		);
-		final var lastThresholdMetrics = metricsCtx.getThresholdMetrics();
-		if(lastThresholdMetrics.getSumPersistFlag()) {
+		final var lastThresholdMetrics = metricsCtx.thresholdMetrics();
+		if(lastThresholdMetrics.sumPersistEnabled()) {
 			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
 				new MetricsCsvLogMessage(lastThresholdMetrics)
 			);
 		}
-		if(lastThresholdMetrics.getPerfDbResultsFileFlag()) {
+		if(lastThresholdMetrics.perfDbResultsFileEnabled()) {
 			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
 				new ExtResultsXmlLogMessage(lastThresholdMetrics)
 			);

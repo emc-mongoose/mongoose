@@ -159,10 +159,10 @@ implements TransferConvertBuffer<I, O> {
 				while(ioResultsIter.hasNext()) {
 					nextIoResult = ioResultsIter.next();
 					if(delayMicroseconds > 0) {
-						nextFinishTime = nextIoResult.getRespTimeDone();
+						nextFinishTime = nextIoResult.respTimeDone();
 						currTime = IoTask.START_OFFSET_MICROS + nanoTime() / 1000;
 						if(currTime - nextFinishTime > delayMicroseconds) {
-							item = nextIoResult.getItem();
+							item = nextIoResult.item();
 							if(markLimit > 0 && markLimit > markBuffer.size()) {
 								markBuffer.add(nextIoResult);
 							}
@@ -171,7 +171,7 @@ implements TransferConvertBuffer<I, O> {
 							break;
 						}
 					} else {
-						item = nextIoResult.getItem();
+						item = nextIoResult.item();
 						if(markBuffer.size() < markLimit) {
 							markBuffer.add(nextIoResult);
 						}
@@ -206,10 +206,10 @@ implements TransferConvertBuffer<I, O> {
 				if(delayMicroseconds > 0) {
 					while(ioResultsIter.hasNext() && n < limit) {
 						nextIoResult = ioResultsIter.next();
-						nextFinishTime = nextIoResult.getRespTimeDone();
+						nextFinishTime = nextIoResult.respTimeDone();
 						currTime = IoTask.START_OFFSET_MICROS + nanoTime() / 1000;
 						if(currTime - nextFinishTime > delayMicroseconds) {
-							buffer.add(nextIoResult.getItem());
+							buffer.add(nextIoResult.item());
 							if(markLimit > 0 && markLimit > markBuffer.size()) {
 								markBuffer.add(nextIoResult);
 							}
@@ -221,7 +221,7 @@ implements TransferConvertBuffer<I, O> {
 				} else {
 					while(ioResultsIter.hasNext() && n < limit) {
 						nextIoResult = ioResultsIter.next();
-						buffer.add(nextIoResult.getItem());
+						buffer.add(nextIoResult.item());
 						if(markLimit > 0 && markLimit > markBuffer.size()) {
 							markBuffer.add(nextIoResult);
 						}

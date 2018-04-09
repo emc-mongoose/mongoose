@@ -10,7 +10,7 @@ import com.emc.mongoose.api.model.item.Item;
 public interface PartialIoTask<I extends Item>
 extends IoTask<I> {
 	
-	int getPartNumber();
+	int partNumber();
 
-	CompositeIoTask<I> getParent();
+	CompositeIoTask<I> parent();
 }

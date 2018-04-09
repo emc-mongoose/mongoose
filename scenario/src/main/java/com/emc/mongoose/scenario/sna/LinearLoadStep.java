@@ -142,7 +142,7 @@ extends LoadStepBase {
 		outputConfigMap.put(generator, outputConfig);
 
 		controller = new BasicLoadController(
-			testStepId, driverByGenerator, null, metricsByIoType, loadConfigMap, stepConfig,
+			testStepId, driverByGenerator, null, metricsByOrigin, loadConfigMap, stepConfig,
 			outputConfigMap
 		);
 
@@ -188,15 +188,15 @@ extends LoadStepBase {
 		final var outputConfig = config.getOutputConfig();
 		final var metricsConfig = outputConfig.getMetricsConfig();
 		final var ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
-		final var ioTypeCode = ioType.ordinal();
+		final var originCode = generator.hashCode();
 		final var itemDataSize = config.getItemConfig().getDataConfig().getSize();
 		final var concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
 		final var stepConfig = config.getTestConfig().getStepConfig();
 		final var id = stepConfig.getId();
 		if(isDistributed()) {
 			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
-			metricsByIoType.put(
-				ioTypeCode,
+			metricsByOrigin.put(
+				originCode,
 				new AggregatingMetricsContext(
 					id,
 					ioType,
@@ -209,12 +209,12 @@ extends LoadStepBase {
 					metricsConfig.getAverageConfig().getPersist(),
 					metricsConfig.getSummaryConfig().getPersist(),
 					metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
-					() -> remoteMetricsSnapshots(ioTypeCode)
+					() -> remoteMetricsSnapshots(originCode)
 				)
 			);
 		} else {
-			metricsByIoType.put(
-				ioTypeCode,
+			metricsByOrigin.put(
+				originCode,
 				new BasicMetricsContext(
 					id,
 					ioType,

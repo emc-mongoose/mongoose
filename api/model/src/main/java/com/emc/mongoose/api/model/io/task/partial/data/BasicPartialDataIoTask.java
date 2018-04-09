@@ -41,25 +41,25 @@ implements PartialDataIoTask<I> {
 	}
 
 	@Override
-	public BasicPartialDataIoTask<I> getResult() {
+	public BasicPartialDataIoTask<I> result() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return new BasicPartialDataIoTask<>(this);
 	}
 
 	@Override
-	public final int getPartNumber() {
+	public final int partNumber() {
 		return partNumber;
 	}
 
 	@Override
-	public final CompositeDataIoTask<I> getParent() {
+	public final CompositeDataIoTask<I> parent() {
 		return parent;
 	}
 
 	@Override
 	public final void finishResponse() {
 		super.finishResponse();
-		parent.subTaskCompleted();
+		parent.markSubTaskCompleted();
 	}
 
 	@Override

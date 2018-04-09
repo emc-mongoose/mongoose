@@ -31,7 +31,7 @@ implements LoadStep, Runnable {
 
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
-	protected final Int2ObjectMap<MetricsContext> metricsByIoType = new Int2ObjectOpenHashMap<>();
+	protected final Int2ObjectMap<MetricsContext> metricsByOrigin = new Int2ObjectOpenHashMap<>();
 
 	private volatile LoadStepClient stepClient = null;
 	private volatile Config actualConfig = null;
@@ -105,7 +105,7 @@ implements LoadStep, Runnable {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 
-		metricsByIoType.forEach(
+		metricsByOrigin.forEach(
 			(ioTypeCode, metricsCtx) -> {
 				metricsCtx.start();
 				try {
@@ -154,7 +154,7 @@ implements LoadStep, Runnable {
 			}
 		}
 
-		metricsByIoType
+		metricsByOrigin
 			.values()
 			.forEach(
 				metricsCtx -> {
@@ -192,7 +192,7 @@ implements LoadStep, Runnable {
 	protected void doClose()
 	throws IOException {
 
-		metricsByIoType
+		metricsByOrigin
 			.values()
 			.forEach(
 				metricsCtx -> {
@@ -230,13 +230,17 @@ implements LoadStep, Runnable {
 		return id;
 	}
 
-	@Override
-	public final MetricsSnapshot metricsSnapshot(final int ioTypeCode) {
-		return metricsByIoType.get(ioTypeCode).getLastSnapshot();
+	@Override @SuppressWarnings("deprecation")
+	public final Int2ObjectMap<MetricsSnapshot> metricsSnapshots() {
+		final var metricsSnapshots = new Int2ObjectOpenHashMap<MetricsSnapshot>(
+			metricsByOrigin.size()
+		);
+		metricsByOrigin.forEach((key, value) -> metricsSnapshots.put(key, value.lastSnapshot()));
+		return metricsSnapshots;
 	}
 
-	protected final List<MetricsSnapshot> remoteMetricsSnapshots(final int ioTypeCode) {
-		return stepClient.remoteMetricsSnapshots(ioTypeCode);
+	protected final List<MetricsSnapshot> remoteMetricsSnapshots(final int originCode) {
+		return stepClient.remoteMetricsSnapshots(originCode);
 	}
 
 	protected abstract int actualConcurrencyLocal();

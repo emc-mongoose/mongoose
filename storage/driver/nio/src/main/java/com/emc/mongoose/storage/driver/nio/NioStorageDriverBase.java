@@ -113,7 +113,7 @@ implements NioStorageDriver<I, O> {
 							continue;
 						}
 						// check if the task is invoked 1st time
-						if(PENDING.equals(ioTask.getStatus())) {
+						if(PENDING.equals(ioTask.status())) {
 							// do not start the new task if the state is not more active
 							if(!isStarted()) {
 								continue;
@@ -130,7 +130,7 @@ implements NioStorageDriver<I, O> {
 						// perform non blocking I/O for the task
 						invokeNio(ioTask);
 						// remove the task from the buffer if it is not active more
-						if(!ACTIVE.equals(ioTask.getStatus())) {
+						if(!ACTIVE.equals(ioTask.status())) {
 							concurrencyThrottle.release();
 							ioTaskCompleted(ioTask);
 						} else {
@@ -160,8 +160,8 @@ implements NioStorageDriver<I, O> {
 			Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
 			for(int i = 0; i < ioTaskBuffSize; i ++) {
 				ioTask = ioTaskBuff.get(i);
-				if(ACTIVE.equals(ioTask.getStatus())) {
-					ioTask.setStatus(INTERRUPTED);
+				if(ACTIVE.equals(ioTask.status())) {
+					ioTask.status(INTERRUPTED);
 					concurrencyThrottle.release();
 					ioTaskCompleted(ioTask);
 				}
@@ -258,13 +258,13 @@ implements NioStorageDriver<I, O> {
 		try {
 			ioTask.startResponse();
 			ioTask.finishResponse();
-			ioTask.setStatus(IoTask.Status.SUCC);
+			ioTask.status(IoTask.Status.SUCC);
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(
 				Level.WARN, e, "{}: finishing the I/O task which is in an invalid state",
 				ioTask.toString()
 			);
-			ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
+			ioTask.status(IoTask.Status.FAIL_UNKNOWN);
 		}
 	}
 	

@@ -101,72 +101,72 @@ implements MetricsContext {
 	}
 
 	@Override
-	public String getStepId() {
+	public String stepId() {
 		return stepId;
 	}
 
 	@Override
-	public IoType getIoType() {
+	public IoType ioType() {
 		return ioType;
 	}
 
 	@Override
-	public int getNodeCount() {
+	public int nodeCount() {
 		return nodeCount;
 	}
 
 	@Override
-	public int getConcurrency() {
+	public int concurrency() {
 		return concurrency;
 	}
 
 	@Override
-	public int getConcurrencyThreshold() {
+	public int concurrencyThreshold() {
 		return thresholdConcurrency;
 	}
 
 	@Override
-	public int getActualConcurrency() {
-		return getLastSnapshot().getActualConcurrencyLast();
+	public int actualConcurrency() {
+		return lastSnapshot().actualConcurrencyLast();
 	}
 
 	@Override
-	public SizeInBytes getItemDataSize() {
+	public SizeInBytes itemDataSize() {
 		return itemDataSize;
 	}
 
 	@Override
-	public boolean getStdOutColorFlag() {
+	public boolean stdOutColorEnabled() {
 		return stdOutColorFlag;
 	}
 
 	@Override
-	public boolean getAvgPersistFlag() {
+	public boolean avgPersistEnabled() {
 		return avgPersistFlag;
 	}
 
 	@Override
-	public boolean getSumPersistFlag() {
+	public boolean sumPersistEnabled() {
 		return sumPersistFlag;
 	}
 
 	@Override
-	public boolean getPerfDbResultsFileFlag() {
+	public boolean perfDbResultsFileEnabled() {
 		return perfDbResultsFileFlag;
 	}
 
 	@Override
-	public long getOutputPeriodMillis() {
+	public long outputPeriodMillis() {
 		return outputPeriodMillis;
 	}
 
 	@Override
-	public long getLastOutputTs() {
+	public long lastOutputTs() {
 		return lastOutputTs;
 	}
 
 	@Override
-	public void setLastOutputTs(final long ts) {
+	public void lastOutputTs(final long ts) {
 		this.lastOutputTs = ts;
 	}
 
@@ -187,29 +187,29 @@ implements MetricsContext {
 		long sumLat = 0;
 		int latValCount = 0;
 		for(final var snapshot : snapshots) {
-			countSucc += snapshot.getSuccCount();
-			succRateLast += snapshot.getSuccRateLast();
-			countFail += snapshot.getFailCount();
-			failRateLast += snapshot.getFailRateLast();
-			countByte += snapshot.getByteCount();
-			byteRateLast += snapshot.getByteRateLast();
-			actualConcurrencyLast += snapshot.getActualConcurrencyLast();
-			actualConcurrencyMean += snapshot.getActualConcurrencyMean();
-			sumDur += snapshot.getDurationSum();
-			durValCount += snapshot.getDurationValues().length;
-			sumLat += snapshot.getLatencySum();
-			latValCount += snapshot.getLatencyValues().length;
+			countSucc += snapshot.succCount();
+			succRateLast += snapshot.succRateLast();
+			countFail += snapshot.failCount();
+			failRateLast += snapshot.failRateLast();
+			countByte += snapshot.byteCount();
+			byteRateLast += snapshot.byteRateLast();
+			actualConcurrencyLast += snapshot.actualConcurrencyLast();
+			actualConcurrencyMean += snapshot.actualConcurrencyMean();
+			sumDur += snapshot.durationSum();
+			durValCount += snapshot.durationValues().length;
+			sumLat += snapshot.latencySum();
+			latValCount += snapshot.latencyValues().length;
 		}
 		final var allDurations = new long[durValCount];
 		final var allLatencies = new long[latValCount];
 		int lastDurIdx = 0;
 		int lastLatIdx = 0;
 		for(final var snapshot : snapshots) {
-			for(final var dur : snapshot.getDurationValues()) {
+			for(final var dur : snapshot.durationValues()) {
 				allDurations[lastDurIdx] = dur;
 				lastDurIdx ++;
 			}
-			for(final var lat : snapshot.getLatencyValues()) {
+			for(final var lat : snapshot.latencyValues()) {
 				allLatencies[lastLatIdx] = lat;
 				lastLatIdx ++;
 			}
@@ -234,7 +234,7 @@ implements MetricsContext {
 	}
 
 	@Override
-	public MetricsSnapshot getLastSnapshot() {
+	public MetricsSnapshot lastSnapshot() {
 		if(lastSnapshot == null) {
 			refreshLastSnapshot();
 		}
@@ -242,12 +242,12 @@ implements MetricsContext {
 	}
 
 	@Override
-	public void setMetricsListener(final MetricsListener metricsListener) {
+	public void metricsListener(final MetricsListener metricsListener) {
 		this.metricsListener = metricsListener;
 	}
 
 	@Override
-	public boolean isThresholdStateEntered() {
+	public boolean thresholdStateEntered() {
 		return thresholdMetricsCtx != null && thresholdMetricsCtx.isStarted();
 	}
 
@@ -266,12 +266,12 @@ implements MetricsContext {
 	}
 
 	@Override
-	public boolean isThresholdStateExited() {
+	public boolean thresholdStateExited() {
 		return thresholdStateExitedFlag;
 	}
 
 	@Override
-	public MetricsContext getThresholdMetrics() {
+	public MetricsContext thresholdMetrics() {
 		if(thresholdMetricsCtx == null) {
 			throw new IllegalStateException("Nested metrics context is not exist");
 		}

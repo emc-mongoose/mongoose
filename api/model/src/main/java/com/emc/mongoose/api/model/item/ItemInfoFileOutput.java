@@ -31,7 +31,7 @@ implements Output<O> {
 			close();
 			return true;
 		}
-		return itemInfoOutput.put(ioResult.getItem().toString());
+		return itemInfoOutput.put(ioResult.item().toString());
 	}
 	
 	@Override
@@ -49,7 +49,7 @@ implements Output<O> {
 					close();
 				}
 			}
-			itemsInfo.add(ioResult.getItem().toString());
+			itemsInfo.add(ioResult.item().toString());
 		}
 		return itemInfoOutput.put(itemsInfo, 0, n);
 	}
@@ -66,7 +66,7 @@ implements Output<O> {
 					close();
 				}
 			}
-			itemsInfo.add(nextIoResult.getItem().toString());
+			itemsInfo.add(nextIoResult.item().toString());
 		}
 		return itemInfoOutput.put(itemsInfo);
 	}

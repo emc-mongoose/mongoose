@@ -15,39 +15,39 @@ public interface DataIoTask<I extends DataItem>
 extends IoTask<I> {
 	
 	@Override
-	I getItem();
+	I item();
 	
 	void markRandomRanges(final int count);
 	
 	boolean hasMarkedRanges();
 	
-	long getMarkedRangesSize();
+	long markedRangesSize();
 	
-	BitSet[] getMarkedRangesMaskPair();
+	BitSet[] markedRangesMaskPair();
 	
-	List<Range> getFixedRanges();
+	List<Range> fixedRanges();
 
-	int getRandomRangesCount();
+	int randomRangesCount();
 
-	List<I> getSrcItemsToConcat();
+	List<I> srcItemsToConcat();
 	
-	int getCurrRangeIdx();
+	int currRangeIdx();
 	
-	void setCurrRangeIdx(final int i);
+	void currRangeIdx(final int i);
 	
-	DataItem getCurrRange();
+	DataItem currRange();
 	
-	DataItem getCurrRangeUpdate();
+	DataItem currRangeUpdate();
 
-	long getCountBytesDone();
+	long countBytesDone();
 
-	void setCountBytesDone(long n);
+	void countBytesDone(long n);
 
-	long getRespDataTimeStart();
+	long respDataTimeStart();
 
 	void startDataResponse()
 	throws IllegalStateException;
 
-	long getDataLatency();
+	long dataLatency();
 }
 

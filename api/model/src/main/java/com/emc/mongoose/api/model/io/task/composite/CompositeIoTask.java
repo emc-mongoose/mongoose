@@ -14,16 +14,16 @@ public interface CompositeIoTask<I extends Item>
 extends IoTask<I> {
 	
 	@Override
-	I getItem();
+	I item();
 	
 	String get(final String key);
 
 	void put(final String key, final String value);
 
-	List<? extends PartialIoTask> getSubTasks();
+	List<? extends PartialIoTask> subTasks();
 
-	/** Should be invoked only after getSubTasks() **/
-	void subTaskCompleted();
+	/** Should be invoked only after subTasks() **/
+	void markSubTaskCompleted();
 
 	boolean allSubTasksDone();
 }

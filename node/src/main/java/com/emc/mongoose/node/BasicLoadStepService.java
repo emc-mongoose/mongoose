@@ -9,6 +9,7 @@ import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import com.emc.mongoose.ui.log.Loggers;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -101,9 +102,9 @@ implements LoadStepService {
 	}
 
 	@Override
-	public final MetricsSnapshot metricsSnapshot(final int ioTypeCode)
+	public final Int2ObjectMap<MetricsSnapshot> metricsSnapshots()
 	throws RemoteException {
-		return loadStep.metricsSnapshot(ioTypeCode);
+		return loadStep.metricsSnapshots();
 	}
 
 	@Override

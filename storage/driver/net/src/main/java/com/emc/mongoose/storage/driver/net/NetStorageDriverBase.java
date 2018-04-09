@@ -309,13 +309,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			throw new IllegalStateException();
 		}
 		try {
-			if(IoType.NOOP.equals(ioTask.getIoType())) {
+			if(IoType.NOOP.equals(ioTask.ioType())) {
 				if(concurrencyThrottle.tryAcquire()) {
 					ioTask.startRequest();
 					sendRequest(null, null, ioTask);
 					ioTask.finishRequest();
 					concurrencyThrottle.release();
-					ioTask.setStatus(SUCC);
+					ioTask.status(SUCC);
 					ioTask.startResponse();
 					complete(null, ioTask);
 				} else {
@@ -327,7 +327,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					return false;
 				}
 				conn.attr(ATTR_KEY_IOTASK).set(ioTask);
-				ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+				ioTask.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
 				ioTask.startRequest();
 				sendRequest(
 					conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
@@ -337,7 +337,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
-			ioTask.setStatus(IoTask.Status.FAIL_IO);
+			ioTask.status(IoTask.Status.FAIL_IO);
 			complete(null, ioTask);
 		}
 		return true;
@@ -356,13 +356,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try {
 			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
-				if(IoType.NOOP.equals(nextIoTask.getIoType())) {
+				if(IoType.NOOP.equals(nextIoTask.ioType())) {
 					if(concurrencyThrottle.tryAcquire()) {
 						nextIoTask.startRequest();
 						sendRequest(null, null, nextIoTask);
 						nextIoTask.finishRequest();
 						concurrencyThrottle.release();
-						nextIoTask.setStatus(SUCC);
+						nextIoTask.status(SUCC);
 						nextIoTask.startResponse();
 						complete(null, nextIoTask);
 					} else {
@@ -374,7 +374,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						return i - from;
 					}
 					conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
-					nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+					nextIoTask.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
 					nextIoTask.startRequest();
 					sendRequest(
 						conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
@@ -392,7 +392,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);
-				nextIoTask.setStatus(IoTask.Status.FAIL_IO);
+				nextIoTask.status(IoTask.Status.FAIL_IO);
 				complete(null, nextIoTask);
 			}
 		}
@@ -419,15 +419,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final void sendRequestData(final Channel channel, final O ioTask)
 	throws IOException {
 		
-		final IoType ioType = ioTask.getIoType();
+		final IoType ioType = ioTask.ioType();
 		
 		if(IoType.CREATE.equals(ioType)) {
-			final I item = ioTask.getItem();
+			final I item = ioTask.item();
 			if(item instanceof DataItem) {
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				if(!(dataIoTask instanceof CompositeDataIoTask)) {
 					final DataItem dataItem = (DataItem) item;
-					final String srcPath = dataIoTask.getSrcPath();
+					final String srcPath = dataIoTask.srcPath();
 					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
 						if(sslFlag) {
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
@@ -435,28 +435,28 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							channel.write(new DataItemFileRegion(dataItem));
 						}
 					}
-					dataIoTask.setCountBytesDone(dataItem.size());
+					dataIoTask.countBytesDone(dataItem.size());
 				}
 			}
 		} else if(IoType.UPDATE.equals(ioType)) {
-			final I item = ioTask.getItem();
+			final I item = ioTask.item();
 			if(item instanceof DataItem) {
 				
 				final DataItem dataItem = (DataItem) item;
 				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				
-				final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+				final List<Range> fixedRanges = dataIoTask.fixedRanges();
 				if(fixedRanges == null || fixedRanges.isEmpty()) {
 					// random ranges update case
-					final BitSet updRangesMaskPair[] = dataIoTask.getMarkedRangesMaskPair();
+					final BitSet updRangesMaskPair[] = dataIoTask.markedRangesMaskPair();
 					final int rangeCount = getRangeCount(dataItem.size());
 					DataItem updatedRange;
 					if(sslFlag) {
 						// current layer updates first
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
 								channel.write(
 									new SeekableByteChannelChunkedNioStream(updatedRange)
 								);
@@ -465,8 +465,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						// then next layer updates if any
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
 								channel.write(
 									new SeekableByteChannelChunkedNioStream(updatedRange)
 								);
@@ -476,21 +476,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						// current layer updates first
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
 								channel.write(new DataItemFileRegion(updatedRange));
 							}
 						}
 						// then next layer updates if any
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
-								dataIoTask.setCurrRangeIdx(i);
-								updatedRange = dataIoTask.getCurrRangeUpdate();
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
 								channel.write(new DataItemFileRegion(updatedRange));
 							}
 						}
 					}
-					dataItem.commitUpdatedRanges(dataIoTask.getMarkedRangesMaskPair());
+					dataItem.commitUpdatedRanges(dataIoTask.markedRangesMaskPair());
 				} else { // fixed byte ranges case
 					final long baseItemSize = dataItem.size();
 					long beg;
@@ -515,7 +515,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 								beg = baseItemSize;
 								// note down the new size
 								dataItem.size(
-									dataItem.size() + dataIoTask.getMarkedRangesSize()
+									dataItem.size() + dataIoTask.markedRangesSize()
 								);
 							}
 							channel.write(
@@ -543,14 +543,14 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 								beg = baseItemSize;
 								// note down the new size
 								dataItem.size(
-									dataItem.size() + dataIoTask.getMarkedRangesSize()
+									dataItem.size() + dataIoTask.markedRangesSize()
 								);
 							}
 							channel.write(new DataItemFileRegion(dataItem.slice(beg, size)));
 						}
 					}
 				}
-				dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
+				dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
 			}
 		}
 	}

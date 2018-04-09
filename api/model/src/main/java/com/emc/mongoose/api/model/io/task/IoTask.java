@@ -18,7 +18,7 @@ extends Externalizable {
 
 	String SLASH = "/";
 	
-	int getOriginCode();
+	int originCode();
 
 	enum Status {
 		PENDING, // 0
@@ -36,29 +36,29 @@ extends Externalizable {
 		RESP_FAIL_CORRUPT, // 12
 		RESP_FAIL_SPACE // 13
 	}
-	IoType getIoType();
+	IoType ioType();
 
-	I getItem();
+	I item();
 
-	String getNodeAddr();
+	String nodeAddr();
 
-	void setNodeAddr(final String nodeAddr);
+	void nodeAddr(final String nodeAddr);
 
-	Status getStatus();
+	Status status();
 
-	void setStatus(final Status status);
+	void status(final Status status);
 
-	String getSrcPath();
+	String srcPath();
 	
-	void setSrcPath(final String srcPath);
+	void srcPath(final String srcPath);
 	
-	String getDstPath();
+	String dstPath();
 	
-	void setDstPath(final String dstPath);
+	void dstPath(final String dstPath);
 	
-	Credential getCredential();
+	Credential credential();
 
-	void setCredential(final Credential credential);
+	void credential(final Credential credential);
 
 	void startRequest()
 	throws IllegalStateException;
@@ -72,17 +72,17 @@ extends Externalizable {
 	void finishResponse()
 	throws IllegalStateException;
 
-	long getReqTimeStart();
+	long reqTimeStart();
 
-	long getReqTimeDone();
+	long reqTimeDone();
 
-	long getRespTimeStart();
+	long respTimeStart();
 
-	long getRespTimeDone();
+	long respTimeDone();
 
-	long getDuration();
+	long duration();
 
-	long getLatency();
+	long latency();
 
 	default void buildItemPath(final I item, final String itemPath) {
 		String itemName = item.getName();
@@ -99,7 +99,7 @@ extends Externalizable {
 		}
 	}
 	
-	<O extends IoTask<I>> O getResult();
+	<O extends IoTask<I>> O result();
 
 	void reset();
 }

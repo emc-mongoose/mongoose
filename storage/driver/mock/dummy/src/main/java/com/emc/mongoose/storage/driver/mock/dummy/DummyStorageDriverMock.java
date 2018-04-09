@@ -121,23 +121,23 @@ implements StorageDriver<I, O> {
 		ioTask.startResponse();
 		if(ioTask instanceof DataIoTask) {
 			final DataIoTask dataIoTask = (DataIoTask) ioTask;
-			final DataItem dataItem = dataIoTask.getItem();
-			switch(dataIoTask.getIoType()) {
+			final DataItem dataItem = dataIoTask.item();
+			switch(dataIoTask.ioType()) {
 				case CREATE:
-					dataIoTask.setCountBytesDone(dataItem.size());
+					dataIoTask.countBytesDone(dataItem.size());
 					break;
 				case READ:
 					dataIoTask.startDataResponse();
 				case UPDATE:
-					final List<Range> fixedRanges = dataIoTask.getFixedRanges();
+					final List<Range> fixedRanges = dataIoTask.fixedRanges();
 					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(dataIoTask.hasMarkedRanges()) {
-							dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
+							dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
 						} else {
-							dataIoTask.setCountBytesDone(dataItem.size());
+							dataIoTask.countBytesDone(dataItem.size());
 						}
 					} else {
-						dataIoTask.setCountBytesDone(dataIoTask.getMarkedRangesSize());
+						dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
 					}
 					break;
 				default:
@@ -146,7 +146,7 @@ implements StorageDriver<I, O> {
 			dataIoTask.startDataResponse();
 		}
 		ioTask.finishResponse();
-		ioTask.setStatus(IoTask.Status.SUCC);
+		ioTask.status(IoTask.Status.SUCC);
 	}
 
 	@Override

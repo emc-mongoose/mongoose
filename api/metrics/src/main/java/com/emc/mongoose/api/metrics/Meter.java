@@ -27,12 +27,12 @@ implements MeterMBean {
 	throws MalformedObjectNameException {
 		this.metricsCtx = metricsCtx;
 		final var props = new Hashtable<String, String>();
-		props.put(KEY_TEST_STEP_ID, metricsCtx.getStepId());
-		props.put(KEY_LOAD_TYPE, metricsCtx.getIoType().name());
-		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.getNodeCount()));
-		props.put(KEY_STORAGE_DRIVER_CONCURRENCY, Integer.toString(metricsCtx.getConcurrency()));
+		props.put(KEY_TEST_STEP_ID, metricsCtx.stepId());
+		props.put(KEY_LOAD_TYPE, metricsCtx.ioType().name());
+		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.nodeCount()));
+		props.put(KEY_STORAGE_DRIVER_CONCURRENCY, Integer.toString(metricsCtx.concurrency()));
 		objectName = new ObjectName(METRICS_DOMAIN, props);
-		metricsCtx.setMetricsListener(this);
+		metricsCtx.metricsListener(this);
 		try {
 			MBEAN_SERVER.registerMBean(this, objectName);
 		} catch(
@@ -45,7 +45,7 @@ implements MeterMBean {
 
 	@Override
 	public final void close() {
-		metricsCtx.setMetricsListener(null);
+		metricsCtx.metricsListener(null);
 		lastSnapshot = null;
 		try {
 			MBEAN_SERVER.unregisterMBean(objectName);
@@ -62,147 +62,147 @@ implements MeterMBean {
 	}
 
 	@Override
-	public final long getStartTimeMillis() {
-		return lastSnapshot.getStartTimeMillis();
+	public final long startTimeMillis() {
+		return lastSnapshot.startTimeMillis();
 	}
 
 	@Override
-	public final long getSuccCount() {
-		return lastSnapshot.getSuccCount();
+	public final long succCount() {
+		return lastSnapshot.succCount();
 	}
 
 	@Override
-	public final double getSuccRateMean() {
-		return lastSnapshot.getSuccRateMean();
+	public final double succRateMean() {
+		return lastSnapshot.succRateMean();
 	}
 
 	@Override
-	public final double getSuccRateLast() {
-		return lastSnapshot.getSuccRateLast();
+	public final double succRateLast() {
+		return lastSnapshot.succRateLast();
 	}
 
 	@Override
-	public final long getFailCount() {
-		return lastSnapshot.getFailCount();
+	public final long failCount() {
+		return lastSnapshot.failCount();
 	}
 
 	@Override
-	public final double getFailRateMean() {
-		return lastSnapshot.getFailRateMean();
+	public final double failRateMean() {
+		return lastSnapshot.failRateMean();
 	}
 
 	@Override
-	public final double getFailRateLast() {
-		return lastSnapshot.getFailRateLast();
+	public final double failRateLast() {
+		return lastSnapshot.failRateLast();
 	}
 
 	@Override
-	public final long getByteCount() {
-		return lastSnapshot.getByteCount();
+	public final long byteCount() {
+		return lastSnapshot.byteCount();
 	}
 
 	@Override
-	public final double getByteRateMean() {
-		return lastSnapshot.getByteRateMean();
+	public final double byteRateMean() {
+		return lastSnapshot.byteRateMean();
 	}
 
 	@Override
-	public final double getByteRateLast() {
-		return lastSnapshot.getByteRateLast();
+	public final double byteRateLast() {
+		return lastSnapshot.byteRateLast();
 	}
 
 	@Override
-	public final long getElapsedTimeMillis() {
-		return lastSnapshot.getElapsedTimeMillis();
+	public final long elapsedTimeMillis() {
+		return lastSnapshot.elapsedTimeMillis();
 	}
 
 	@Override
-	public final int getActualConcurrencyLast() {
-		return lastSnapshot.getActualConcurrencyLast();
+	public final int actualConcurrencyLast() {
+		return lastSnapshot.actualConcurrencyLast();
 	}
 
 	@Override
-	public final double getActualConcurrencyMean() {
-		return lastSnapshot.getActualConcurrencyMean();
+	public final double actualConcurrencyMean() {
+		return lastSnapshot.actualConcurrencyMean();
 	}
 
 	@Override
-	public final long getDurationSum() {
-		return lastSnapshot.getDurationSum();
+	public final long durationSum() {
+		return lastSnapshot.durationSum();
 	}
 
 	@Override
-	public final long getLatencySum() {
-		return lastSnapshot.getLatencySum();
+	public final long latencySum() {
+		return lastSnapshot.latencySum();
 	}
 
 	@Override
-	public final long getDurationMin() {
-		return lastSnapshot.getDurationMin();
+	public final long durationMin() {
+		return lastSnapshot.durationMin();
 	}
 
 	@Override
-	public final long getDurationLoQ() {
-		return lastSnapshot.getDurationLoQ();
+	public final long durationLoQ() {
+		return lastSnapshot.durationLoQ();
 	}
 
 	@Override
-	public final long getDurationMed() {
-		return lastSnapshot.getDurationMed();
+	public final long durationMed() {
+		return lastSnapshot.durationMed();
 	}
 
 	@Override
-	public final long getDurationHiQ() {
-		return lastSnapshot.getDurationHiQ();
+	public final long durationHiQ() {
+		return lastSnapshot.durationHiQ();
 	}
 
 	@Override
-	public final long getDurationMax() {
-		return lastSnapshot.getDurationMax();
+	public final long durationMax() {
+		return lastSnapshot.durationMax();
 	}
 
 	@Override
-	public final double getDurationMean() {
-		return lastSnapshot.getDurationMean();
+	public final double durationMean() {
+		return lastSnapshot.durationMean();
 	}
 
 	@Override
-	public long[] getDurationValues() {
-		return lastSnapshot.getDurationValues();
+	public long[] durationValues() {
+		return lastSnapshot.durationValues();
 	}
 
 	@Override
-	public final long getLatencyMin() {
-		return lastSnapshot.getLatencyMin();
+	public final long latencyMin() {
+		return lastSnapshot.latencyMin();
 	}
 
 	@Override
-	public final long getLatencyLoQ() {
-		return lastSnapshot.getLatencyLoQ();
+	public final long latencyLoQ() {
+		return lastSnapshot.latencyLoQ();
 	}
 
 	@Override
-	public final long getLatencyMed() {
-		return lastSnapshot.getLatencyMed();
+	public final long latencyMed() {
+		return lastSnapshot.latencyMed();
 	}
 
 	@Override
-	public final long getLatencyHiQ() {
-		return lastSnapshot.getLatencyHiQ();
+	public final long latencyHiQ() {
+		return lastSnapshot.latencyHiQ();
 	}
 
 	@Override
-	public final long getLatencyMax() {
-		return lastSnapshot.getLatencyMax();
+	public final long latencyMax() {
+		return lastSnapshot.latencyMax();
 	}
 
 	@Override
-	public final double getLatencyMean() {
-		return lastSnapshot.getLatencyMean();
+	public final double latencyMean() {
+		return lastSnapshot.latencyMean();
 	}
 
 	@Override
-	public long[] getLatencyValues() {
-		return lastSnapshot.getLatencyValues();
+	public long[] latencyValues() {
+		return lastSnapshot.latencyValues();
 	}
 }

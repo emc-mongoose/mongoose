@@ -36,7 +36,7 @@ implements TokenIoTask<I> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public BasicTokenIoTask<I> getResult() {
+	public BasicTokenIoTask<I> result() {
 		return new BasicTokenIoTask<>(this);
 	}
 	

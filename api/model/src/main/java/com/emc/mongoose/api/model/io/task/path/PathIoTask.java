@@ -10,7 +10,7 @@ public interface PathIoTask<I extends PathItem>
 extends IoTask<I> {
 
 	@Override
-	I getItem();
+	I item();
 	
 	long getCountBytesDone();
 	

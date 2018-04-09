@@ -38,7 +38,7 @@ implements PathIoTask<I> {
 	}
 	
 	@Override
-	public BasicPathIoTask<I> getResult() {
+	public BasicPathIoTask<I> result() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return new BasicPathIoTask<>(this);
 	}

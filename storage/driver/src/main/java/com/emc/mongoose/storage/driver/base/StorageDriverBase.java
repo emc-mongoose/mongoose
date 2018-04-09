@@ -94,10 +94,10 @@ implements StorageDriver<I,O> {
 	protected void prepareIoTask(final O ioTask) {
 		ioTask.reset();
 		if(ioTask instanceof DataIoTask) {
-			((DataIoTask) ioTask).getItem().setDataInput(itemDataInput);
+			((DataIoTask) ioTask).item().setDataInput(itemDataInput);
 		}
-		final String dstPath = ioTask.getDstPath();
-		final Credential credential = ioTask.getCredential();
+		final String dstPath = ioTask.dstPath();
+		final Credential credential = ioTask.credential();
 		if(credential != null) {
 			pathToCredMap.putIfAbsent(dstPath == null ? "" : dstPath, credential);
 			if(requestAuthTokenFunc != null) {
@@ -111,7 +111,7 @@ implements StorageDriver<I,O> {
 					Loggers.ERR.debug(
 						"Failed to compute the destination path for the I/O task {}", ioTask
 					);
-					ioTask.setStatus(IoTask.Status.FAIL_UNKNOWN);
+					ioTask.status(IoTask.Status.FAIL_UNKNOWN);
 				}
 			}
 		}
@@ -122,7 +122,7 @@ implements StorageDriver<I,O> {
 		if(Loggers.MSG.isTraceEnabled()) {
 			Loggers.MSG.trace("{}: I/O task completed", ioTask);
 		}
-		final O ioTaskResult = ioTask.getResult();
+		final O ioTaskResult = ioTask.result();
 		if(!ioResultsQueue.offer(ioTaskResult)) {
 			Loggers.ERR.warn(
 				"{}: I/O task results queue overflow, dropping the result", toString()

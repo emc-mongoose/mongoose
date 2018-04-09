@@ -12,8 +12,8 @@ public interface PartialDataIoTask<I extends DataItem>
 extends DataIoTask<I>, PartialIoTask<I> {
 
 	@Override
-	I getItem();
+	I item();
 
 	@Override
-	CompositeDataIoTask<I> getParent();
+	CompositeDataIoTask<I> parent();
 }

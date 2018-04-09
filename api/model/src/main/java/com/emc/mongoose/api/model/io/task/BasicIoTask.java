@@ -79,7 +79,7 @@ implements IoTask<I> {
 	}
 
 	@Override
-	public BasicIoTask<I> getResult() {
+	public BasicIoTask<I> result() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return new BasicIoTask<>(this);
 	}
@@ -93,67 +93,67 @@ implements IoTask<I> {
 	}
 	
 	@Override
-	public final int getOriginCode() {
+	public final int originCode() {
 		return originCode;
 	}
 	
 	@Override
-	public final I getItem() {
+	public final I item() {
 		return item;
 	}
 	
 	@Override
-	public final IoType getIoType() {
+	public final IoType ioType() {
 		return ioType;
 	}
 
 	@Override
-	public final String getNodeAddr() {
+	public final String nodeAddr() {
 		return nodeAddr;
 	}
 	
 	@Override
-	public final void setNodeAddr(final String nodeAddr) {
+	public final void nodeAddr(final String nodeAddr) {
 		this.nodeAddr = nodeAddr;
 	}
 	
 	@Override
-	public final Status getStatus() {
+	public final Status status() {
 		return status;
 	}
 	
 	@Override
-	public final void setStatus(final Status status) {
+	public final void status(final Status status) {
 		this.status = status;
 	}
 	
 	@Override
-	public final String getSrcPath() {
+	public final String srcPath() {
 		return srcPath;
 	}
 	
 	@Override
-	public final void setSrcPath(final String srcPath) {
+	public final void srcPath(final String srcPath) {
 		this.srcPath = srcPath;
 	}
 	
 	@Override
-	public final String getDstPath() {
+	public final String dstPath() {
 		return dstPath;
 	}
 	
 	@Override
-	public final void setDstPath(final String dstPath) {
+	public final void dstPath(final String dstPath) {
 		this.dstPath = dstPath;
 	}
 	
 	@Override
-	public final Credential getCredential() {
+	public final Credential credential() {
 		return credential;
 	}
 	
 	@Override
-	public final void setCredential(final Credential credential) {
+	public final void credential(final Credential credential) {
 		this.credential = credential;
 	}
 
@@ -194,32 +194,32 @@ implements IoTask<I> {
 	}
 
 	@Override
-	public final long getReqTimeStart() {
+	public final long reqTimeStart() {
 		return reqTimeStart;
 	}
 
 	@Override
-	public final long getReqTimeDone() {
+	public final long reqTimeDone() {
 		return reqTimeDone;
 	}
 
 	@Override
-	public final long getRespTimeStart() {
+	public final long respTimeStart() {
 		return respTimeStart;
 	}
 
 	@Override
-	public final long getRespTimeDone() {
+	public final long respTimeDone() {
 		return respTimeDone;
 	}
 
 	@Override
-	public final long getDuration() {
+	public final long duration() {
 		return respTimeDone - reqTimeStart;
 	}
 
 	@Override
-	public final long getLatency() {
+	public final long latency() {
 		return respTimeStart - reqTimeDone;
 	}
 

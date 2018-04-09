@@ -10,7 +10,7 @@ public interface TokenIoTask<I extends TokenItem>
 extends IoTask<I> {
 
 	@Override
-	I getItem();
+	I item();
 
 	long getCountBytesDone();
 	

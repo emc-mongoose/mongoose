@@ -34,36 +34,36 @@ extends Closeable, Comparable<MetricsContext> {
 
 	void markElapsedTime(final long millis);
 	
-	String getStepId();
-	IoType getIoType();
-	int getNodeCount();
-	int getConcurrency();
-	int getConcurrencyThreshold();
-	int getActualConcurrency();
-	SizeInBytes getItemDataSize();
+	String stepId();
+	IoType ioType();
+	int nodeCount();
+	int concurrency();
+	int concurrencyThreshold();
+	int actualConcurrency();
+	SizeInBytes itemDataSize();
 
-	boolean getStdOutColorFlag();
-	boolean getAvgPersistFlag();
-	boolean getSumPersistFlag();
-	boolean getPerfDbResultsFileFlag();
-	long getOutputPeriodMillis();
-	long getLastOutputTs();
-	void setLastOutputTs(final long ts);
+	boolean stdOutColorEnabled();
+	boolean avgPersistEnabled();
+	boolean sumPersistEnabled();
+	boolean perfDbResultsFileEnabled();
+	long outputPeriodMillis();
+	long lastOutputTs();
+	void lastOutputTs(final long ts);
 	
 	void refreshLastSnapshot();
 
-	MetricsSnapshot getLastSnapshot();
+	MetricsSnapshot lastSnapshot();
 
-	void setMetricsListener(final MetricsListener metricsListener);
+	void metricsListener(final MetricsListener metricsListener);
 
-	boolean isThresholdStateEntered();
+	boolean thresholdStateEntered();
 	
 	void enterThresholdState()
 	throws IllegalStateException;
 
-	boolean isThresholdStateExited();
+	boolean thresholdStateExited();
 
-	MetricsContext getThresholdMetrics();
+	MetricsContext thresholdMetrics();
 
 	void exitThresholdState()
 	throws IllegalStateException;

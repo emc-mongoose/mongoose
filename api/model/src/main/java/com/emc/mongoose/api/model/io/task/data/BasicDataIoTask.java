@@ -77,7 +77,7 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public BasicDataIoTask<T> getResult() {
+	public BasicDataIoTask<T> result() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return new BasicDataIoTask<>(this);
 	}
@@ -104,13 +104,13 @@ implements DataIoTask<T> {
 					if(fixedRanges == null || fixedRanges.isEmpty()) {
 						if(randomRangesCount > 0) {
 							markRandomRanges(randomRangesCount);
-							contentSize = getMarkedRangesSize();
+							contentSize = markedRangesSize();
 						} else {
 							// read the entire data item
 							contentSize = item.size();
 						}
 					} else {
-						contentSize = getMarkedRangesSize();
+						contentSize = markedRangesSize();
 						if(contentSize > item.size()) {
 							throw new IllegalArgumentException(
 								"Fixed ranges size (" + formatFixedSize(contentSize) + ") " +
@@ -129,7 +129,7 @@ implements DataIoTask<T> {
 							fixedRanges.add(new Range(0L, item.size() - 1, -1));
 						}
 					}
-					contentSize = getMarkedRangesSize();
+					contentSize = markedRangesSize();
 					break;
 				default:
 					contentSize = 0;
@@ -192,12 +192,12 @@ implements DataIoTask<T> {
 	}
 	
 	@Override
-	public final BitSet[] getMarkedRangesMaskPair() {
+	public final BitSet[] markedRangesMaskPair() {
 		return markedRangesMaskPair;
 	}
 	
 	@Override
-	public final long getMarkedRangesSize() {
+	public final long markedRangesSize() {
 		long sumSize = 0;
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
 			try {
@@ -236,33 +236,33 @@ implements DataIoTask<T> {
 	}
 	
 	@Override
-	public final List<Range> getFixedRanges() {
+	public final List<Range> fixedRanges() {
 		return fixedRanges;
 	}
 
 	@Override
-	public final int getRandomRangesCount() {
+	public final int randomRangesCount() {
 		return randomRangesCount;
 	}
 
 	@Override
-	public final List<T> getSrcItemsToConcat() {
+	public final List<T> srcItemsToConcat() {
 		return srcItemsToConcat;
 	}
 	
 	@Override
-	public final int getCurrRangeIdx() {
+	public final int currRangeIdx() {
 		return currRangeIdx;
 	}
 	
 	@Override
-	public final void setCurrRangeIdx(final int currRangeIdx) {
+	public final void currRangeIdx(final int currRangeIdx) {
 		currRange = null;
 		this.currRangeIdx = currRangeIdx;
 	}
 	
 	@Override
-	public final DataItem getCurrRange() {
+	public final DataItem currRange() {
 		try {
 			if(currRange == null && currRangeIdx < DataItem.getRangeCount(item.size())) {
 				final long currRangeSize = item.getRangeSize(currRangeIdx);
@@ -280,7 +280,7 @@ implements DataIoTask<T> {
 	}
 	
 	@Override
-	public final DataItem getCurrRangeUpdate() {
+	public final DataItem currRangeUpdate() {
 		if(currRange == null) {
 			final int layerIdx = item.layer();
 			if(markedRangesMaskPair[0].get(currRangeIdx)) {
@@ -301,17 +301,17 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public final long getCountBytesDone() {
+	public final long countBytesDone() {
 		return countBytesDone;
 	}
 
 	@Override
-	public final void setCountBytesDone(final long n) {
+	public final void countBytesDone(final long n) {
 		this.countBytesDone = n;
 	}
 
 	@Override
-	public final long getRespDataTimeStart() {
+	public final long respDataTimeStart() {
 		return respDataTimeStart;
 	}
 
@@ -327,7 +327,7 @@ implements DataIoTask<T> {
 	}
 
 	@Override
-	public final long getDataLatency() {
+	public final long dataLatency() {
 		return respDataTimeStart - reqTimeDone;
 	}
 

@@ -20,8 +20,8 @@ public final class IoTraceRecord<I extends Item, O extends IoTask<I>> {
 	protected final long transferSize;
 
 	public IoTraceRecord(final O ioTaskResult) {
-		storageNode = ioTaskResult.getNodeAddr();
-		final String itemInfo = ioTaskResult.getItem().toString();
+		storageNode = ioTaskResult.nodeAddr();
+		final String itemInfo = ioTaskResult.item().toString();
 		if(itemInfo != null) {
 			final int commaPos = itemInfo.indexOf(',', 0);
 			if(commaPos > 0) {
@@ -32,17 +32,17 @@ public final class IoTraceRecord<I extends Item, O extends IoTask<I>> {
 		} else {
 			itemPath = null;
 		}
-		ioTypeCode = ioTaskResult.getIoType().ordinal();
-		statusCode = ioTaskResult.getStatus().ordinal();
-		reqTimeStart = ioTaskResult.getReqTimeStart();
-		duration = ioTaskResult.getRespTimeDone() - reqTimeStart;
-		long t = ioTaskResult.getRespTimeStart() - ioTaskResult.getReqTimeDone();
+		ioTypeCode = ioTaskResult.ioType().ordinal();
+		statusCode = ioTaskResult.status().ordinal();
+		reqTimeStart = ioTaskResult.reqTimeStart();
+		duration = ioTaskResult.respTimeDone() - reqTimeStart;
+		long t = ioTaskResult.respTimeStart() - ioTaskResult.reqTimeDone();
 		respLatency = t < duration && t > 0 ? t : -1;
 		if(ioTaskResult instanceof DataIoTask) {
 			final DataIoTask dataIoResult = (DataIoTask) ioTaskResult;
-			t = ioTaskResult.getReqTimeDone() - dataIoResult.getRespDataTimeStart();
+			t = ioTaskResult.reqTimeDone() - dataIoResult.respDataTimeStart();
 			dataLatency = t < duration && t > 0 ? t : -1;
-			transferSize = dataIoResult.getCountBytesDone();
+			transferSize = dataIoResult.countBytesDone();
 		} else {
 			dataLatency = -1;
 			transferSize = -1;

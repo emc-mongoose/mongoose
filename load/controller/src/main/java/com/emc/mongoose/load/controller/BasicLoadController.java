@@ -29,10 +29,7 @@ import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.OutputConfig;
-import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
-import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.ui.config.test.step.limit.fail.FailConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -42,7 +39,6 @@ import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -56,7 +52,6 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
@@ -78,7 +73,7 @@ implements LoadController<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultsByItem;
 	private final boolean isAnyCircular;
 	private final List<Coroutine> resultsTransferCoroutines = new ArrayList<>();
-	private final Int2ObjectMap<MetricsContext> metricsByIoType;
+	private final Int2ObjectMap<MetricsContext> metricsByOrigin;
 	private final LongAdder counterResults = new LongAdder();
 	private final boolean tracePersistFlag;
 
@@ -90,13 +85,13 @@ implements LoadController<I, O> {
 	 **/
 	public BasicLoadController(
 		final String id, final Map<LoadGenerator<I, O>, StorageDriver<I, O>> driverByGenerator,
-		final Int2IntMap weightMap, final Int2ObjectMap<MetricsContext> metricsByIoType,
+		final Int2IntMap weightMap, final Int2ObjectMap<MetricsContext> metricsByOrigin,
 		final Map<LoadGenerator<I, O>, LoadConfig> loadConfigs, final StepConfig stepConfig,
 		final Map<LoadGenerator<I, O>, OutputConfig> outputConfigs
 	) {
 		this.id = id;
-		final LoadConfig firstLoadConfig = loadConfigs.values().iterator().next();
-		final double rateLimit = firstLoadConfig.getLimitConfig().getRate();
+		final var firstLoadConfig = loadConfigs.values().iterator().next();
+		final var rateLimit = firstLoadConfig.getLimitConfig().getRate();
 		final Throttle<Object> rateThrottle;
 		if(rateLimit > 0) {
 			rateThrottle = new RateThrottle<>(rateLimit);
@@ -109,10 +104,10 @@ implements LoadController<I, O> {
 		} else {
 			weightThrottle = new WeightThrottle(weightMap);
 		}
-		this.metricsByIoType = metricsByIoType;
+		this.metricsByOrigin = metricsByOrigin;
 
 		generatorByOrigin = new Int2ObjectOpenHashMap<>(driverByGenerator.size());
-		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
+		for(final var nextGenerator : driverByGenerator.keySet()) {
 			// hashCode() returns the origin code
 			generatorByOrigin.put(nextGenerator.hashCode(), nextGenerator);
 			nextGenerator.setWeightThrottle(weightThrottle);
@@ -120,19 +115,18 @@ implements LoadController<I, O> {
 			nextGenerator.setOutput(driverByGenerator.get(nextGenerator));
 		}
 
-		final MetricsConfig anyMetricsConfig = outputConfigs
-			.values().iterator().next().getMetricsConfig();
+		final var anyMetricsConfig = outputConfigs.values().iterator().next().getMetricsConfig();
 		tracePersistFlag = anyMetricsConfig.getTraceConfig().getPersist();
 
 		this.driverByGenerator = driverByGenerator;
-		final int batchSize = firstLoadConfig.getBatchConfig().getSize();
-		boolean anyCircularFlag = false;
-		for(final LoadGenerator<I, O> nextGenerator : driverByGenerator.keySet()) {
-			final StorageDriver<I, O> nextDriver = driverByGenerator.get(nextGenerator);
+		final var batchSize = firstLoadConfig.getBatchConfig().getSize();
+		var anyCircularFlag = false;
+		for(final var nextGenerator : driverByGenerator.keySet()) {
+			final var nextDriver = driverByGenerator.get(nextGenerator);
 			if(nextGenerator.isRecycling()) {
 				anyCircularFlag = true;
 			}
-			final Coroutine resultsTransferCoroutine = new TransferCoroutine<>(
+			final var resultsTransferCoroutine = new TransferCoroutine<>(
 				ServiceTaskExecutor.INSTANCE, nextDriver, this, batchSize
 			);
 			resultsTransferCoroutines.add(resultsTransferCoroutine);
@@ -140,18 +134,18 @@ implements LoadController<I, O> {
 
 		this.isAnyCircular = anyCircularFlag;
 		if(isAnyCircular) {
-			final int
+			final var
 				recycleLimit = firstLoadConfig.getGeneratorConfig().getRecycleConfig().getLimit();
 			latestIoResultsByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
 			latestIoResultsByItem = null;
 		}
 
-		final LimitConfig limitConfig = stepConfig.getLimitConfig();
+		final var limitConfig = stepConfig.getLimitConfig();
 		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
 		this.sizeLimit = limitConfig.getSize().get() > 0 ?
 			limitConfig.getSize().get() : Long.MAX_VALUE;
-		final FailConfig failConfig = limitConfig.getFailConfig();
+		final var failConfig = limitConfig.getFailConfig();
 		this.failCountLimit = failConfig.getCount() > 0 ? failConfig.getCount() : Long.MAX_VALUE;
 		this.failRateLimitFlag = failConfig.getRate();
 	}
@@ -168,10 +162,10 @@ implements LoadController<I, O> {
 			long succCountSum = 0;
 			long failCountSum = 0;
 			MetricsSnapshot lastStats;
-			for(final int ioTypeCode : metricsByIoType.keySet()) {
-				lastStats = metricsByIoType.get(ioTypeCode).getLastSnapshot();
-				succCountSum += lastStats.getSuccCount();
-				failCountSum += lastStats.getFailCount();
+			for(final var originCode : metricsByOrigin.keySet()) {
+				lastStats = metricsByOrigin.get(originCode).lastSnapshot();
+				succCountSum += lastStats.succCount();
+				failCountSum += lastStats.failCount();
 				if(succCountSum + failCountSum >= countLimit) {
 					Loggers.MSG.debug(
 						"{}: count limit reached, {} successful + {} failed >= {} limit", id,
@@ -187,8 +181,8 @@ implements LoadController<I, O> {
 	private boolean isDoneSizeLimit() {
 		if(sizeLimit > 0) {
 			long sizeSum = 0;
-			for(final int ioTypeCode : metricsByIoType.keySet()) {
-				sizeSum += metricsByIoType.get(ioTypeCode).getLastSnapshot().getByteCount();
+			for(final var originCode : metricsByOrigin.keySet()) {
+				sizeSum += metricsByOrigin.get(originCode).lastSnapshot().byteCount();
 				if(sizeSum >= sizeLimit) {
 					Loggers.MSG.debug(
 						"{}: size limit reached, done {} >= {} limit", id,
@@ -203,7 +197,7 @@ implements LoadController<I, O> {
 
 	private boolean allIoTasksCompleted() {
 		long generatedIoTasks = 0;
-		for(final LoadGenerator<I, O> generator : generatorByOrigin.values()) {
+		for(final var generator : generatorByOrigin.values()) {
 			try {
 				if(generator.isStopped()) {
 					generatedIoTasks += generator.getGeneratedTasksCount();
@@ -219,7 +213,7 @@ implements LoadController<I, O> {
 	// issue SLTM-938 fix
 	private boolean nothingToRecycle() {
 		if(generatorByOrigin.size() == 1) {
-			final LoadGenerator<I, O> soleLoadGenerator = generatorByOrigin.values().iterator().next();
+			final var soleLoadGenerator = generatorByOrigin.values().iterator().next();
 			try {
 				if(soleLoadGenerator.isStarted()) {
 					return false;
@@ -227,7 +221,7 @@ implements LoadController<I, O> {
 			} catch(final RemoteException ignored) {
 			}
 			// load generator has done its work
-			final long generatedIoTasks = soleLoadGenerator.getGeneratedTasksCount();
+			final var generatedIoTasks = soleLoadGenerator.getGeneratedTasksCount();
 			if(
 				soleLoadGenerator.isRecycling() &&
 				counterResults.sum() >= generatedIoTasks && // all generated I/O tasks executed at least once
@@ -260,11 +254,11 @@ implements LoadController<I, O> {
 		double failRateLast = 0;
 		double succRateLast = 0;
 		MetricsSnapshot nextMetricsSnapshot;
-		for(final int ioTypeCode : metricsByIoType.keySet()) {
-			nextMetricsSnapshot = metricsByIoType.get(ioTypeCode).getLastSnapshot();
-			failCountSum += nextMetricsSnapshot.getFailCount();
-			failRateLast += nextMetricsSnapshot.getFailRateLast();
-			succRateLast += nextMetricsSnapshot.getSuccRateLast();
+		for(final var originCode : metricsByOrigin.keySet()) {
+			nextMetricsSnapshot = metricsByOrigin.get(originCode).lastSnapshot();
+			failCountSum += nextMetricsSnapshot.failCount();
+			failRateLast += nextMetricsSnapshot.failRateLast();
+			succRateLast += nextMetricsSnapshot.succRateLast();
 		}
 		if(failCountSum > failCountLimit) {
 			Loggers.ERR.warn(
@@ -285,14 +279,12 @@ implements LoadController<I, O> {
 
 	private boolean isIdle()
 	throws ConcurrentModificationException {
-		for(final LoadGenerator<I, O> nextLoadGenerator : driverByGenerator.keySet()) {
+		for(final var nextLoadGenerator : driverByGenerator.keySet()) {
 			try {
 				if(!nextLoadGenerator.isStopped() && !nextLoadGenerator.isClosed()) {
 					return false;
 				}
-				final StorageDriver<I, O> nextStorageDriver = driverByGenerator.get(
-					nextLoadGenerator
-				);
+				final var nextStorageDriver = driverByGenerator.get(nextLoadGenerator);
 				if(
 					!nextStorageDriver.isStopped() && !nextStorageDriver.isClosed() &&
 					!nextStorageDriver.isIdle()
@@ -331,17 +323,17 @@ implements LoadController<I, O> {
 		) {
 			return true;
 		}
-		
-		final int ioTypeCode = ioTaskResult.getIoType().ordinal();
-		final MetricsContext ioTypeStats = metricsByIoType.get(ioTypeCode);
-		final IoTask.Status status = ioTaskResult.getStatus();
+
+		final var originCode = ioTaskResult.originCode();
+		final var ioTypeStats = metricsByOrigin.get(originCode);
+		final var status = ioTaskResult.status();
 		
 		if(Status.SUCC.equals(status)) {
-			final long reqDuration = ioTaskResult.getDuration();
-			final long respLatency = ioTaskResult.getLatency();
+			final var reqDuration = ioTaskResult.duration();
+			final var respLatency = ioTaskResult.latency();
 			final long countBytesDone;
 			if(ioTaskResult instanceof DataIoTask) {
-				countBytesDone = ((DataIoTask) ioTaskResult).getCountBytesDone();
+				countBytesDone = ((DataIoTask) ioTaskResult).countBytesDone();
 			} else if(ioTaskResult instanceof PathIoTask) {
 				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
 			} else {
@@ -351,10 +343,9 @@ implements LoadController<I, O> {
 			if(ioTaskResult instanceof PartialIoTask) {
 				ioTypeStats.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
-				final int originCode = ioTaskResult.getOriginCode();
-				final LoadGenerator<I, O> loadGenerator = generatorByOrigin.get(originCode);
+				final var loadGenerator = generatorByOrigin.get(originCode);
 				if(loadGenerator.isRecycling()) {
-					latestIoResultsByItem.put(ioTaskResult.getItem(), ioTaskResult);
+					latestIoResultsByItem.put(ioTaskResult.item(), ioTaskResult);
 					loadGenerator.recycle(ioTaskResult);
 				} else if(ioResultsOutput != null) {
 					try {
@@ -396,7 +387,6 @@ implements LoadController<I, O> {
 		int originCode;
 		LoadGenerator<I, O> loadGenerator;
 		O ioTaskResult;
-		int ioTypeCode;
 		Status status;
 		long reqDuration;
 		long respLatency;
@@ -415,18 +405,17 @@ implements LoadController<I, O> {
 				continue;
 			}
 
-			originCode = ioTaskResult.getOriginCode();
-			ioTypeCode = ioTaskResult.getIoType().ordinal();
-			status = ioTaskResult.getStatus();
-			reqDuration = ioTaskResult.getDuration();
-			respLatency = ioTaskResult.getLatency();
+			originCode = ioTaskResult.originCode();
+			status = ioTaskResult.status();
+			reqDuration = ioTaskResult.duration();
+			respLatency = ioTaskResult.latency();
 			if(ioTaskResult instanceof DataIoTask) {
-				countBytesDone = ((DataIoTask) ioTaskResult).getCountBytesDone();
+				countBytesDone = ((DataIoTask) ioTaskResult).countBytesDone();
 			} else if(ioTaskResult instanceof PathIoTask) {
 				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
 			}
 
-			ioTypeStats = metricsByIoType.get(ioTypeCode);
+			ioTypeStats = metricsByOrigin.get(originCode);
 
 			if(Status.SUCC.equals(status)) {
 				if(ioTaskResult instanceof PartialIoTask) {
@@ -434,7 +423,7 @@ implements LoadController<I, O> {
 				} else {
 					loadGenerator = generatorByOrigin.get(originCode);
 					if(loadGenerator.isRecycling()) {
-						latestIoResultsByItem.put(ioTaskResult.getItem(), ioTaskResult);
+						latestIoResultsByItem.put(ioTaskResult.item(), ioTaskResult);
 						loadGenerator.recycle(ioTaskResult);
 					} else if(ioResultsOutput != null) {
 						try {
@@ -508,16 +497,15 @@ implements LoadController<I, O> {
 	protected void doShutdown()
 	throws IllegalStateException {
 		
-		final ExecutorService shutdownExecutor = Executors.newFixedThreadPool(
-			ThreadUtil.getHardwareThreadCount(),
-			new LogContextThreadFactory("shutdownWorker", true)
+		final var shutdownExecutor = Executors.newFixedThreadPool(
+			ThreadUtil.getHardwareThreadCount(), new LogContextThreadFactory("shutdownWorker", true)
 		);
 
-		for(final LoadGenerator<I, O> generator : driverByGenerator.keySet()) {
+		for(final var generator : driverByGenerator.keySet()) {
 			shutdownExecutor.submit(
 				() -> {
 					try(
-						final Instance ctx = CloseableThreadContext
+						final var ctx = CloseableThreadContext
 							.put(KEY_TEST_STEP_ID, id)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
@@ -530,11 +518,11 @@ implements LoadController<I, O> {
 					}
 				}
 			);
-			final StorageDriver<I, O> driver = driverByGenerator.get(generator);
+			final var driver = driverByGenerator.get(generator);
 			shutdownExecutor.submit(
 				() -> {
 					try(
-						final Instance ctx = CloseableThreadContext
+						final var ctx = CloseableThreadContext
 							.put(KEY_TEST_STEP_ID, id)
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
@@ -564,13 +552,13 @@ implements LoadController<I, O> {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
-		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
+		final var timeOutMilliSec = timeUnit.toMillis(timeout);
 		//
 		Loggers.MSG.debug(
 			"{}: await for the done condition at most for {}[s]", id(),
 			TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
-		t = System.currentTimeMillis();
+		var t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
 			synchronized(state) {
 				state.wait(100);
@@ -615,18 +603,18 @@ implements LoadController<I, O> {
 	protected final void doStop()
 	throws IllegalStateException {
 		
-		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
+		final var interruptExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
 			new LogContextThreadFactory("interruptWorker", true)
 		);
 
 		synchronized(driverByGenerator) {
-			for(final LoadGenerator<I, O> generator : driverByGenerator.keySet()) {
-				final StorageDriver<I, O> driver = driverByGenerator.get(generator);
+			for(final var generator : driverByGenerator.keySet()) {
+				final var driver = driverByGenerator.get(generator);
 				interruptExecutor.submit(
 					() -> {
 						try(
-							final Instance ctx = CloseableThreadContext
+							final var ctx = CloseableThreadContext
 								.put(KEY_TEST_STEP_ID, id)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
@@ -654,30 +642,30 @@ implements LoadController<I, O> {
 			throw new CancellationException(e.getMessage());
 		}
 
-		for(final Coroutine transferCoroutine : resultsTransferCoroutines) {
+		for(final var transferCoroutine : resultsTransferCoroutines) {
 			try {
 				transferCoroutine.stop();
 			} catch(final RemoteException ignored) {
 			}
 		}
 
-		final ExecutorService ioResultsExecutor = Executors.newFixedThreadPool(
+		final var ioResultsExecutor = Executors.newFixedThreadPool(
 			ThreadUtil.getHardwareThreadCount(),
 			new LogContextThreadFactory("ioResultsWorker", true)
 		);
 		synchronized(driverByGenerator) {
-			for(final StorageDriver<I, O> driver : driverByGenerator.values()) {
+			for(final var driver : driverByGenerator.values()) {
 				ioResultsExecutor.submit(
 					() -> {
 						try(
-							final Instance ctx = CloseableThreadContext
+							final var ctx = CloseableThreadContext
 								.put(KEY_TEST_STEP_ID, id)
 								.put(KEY_CLASS_NAME, getClass().getSimpleName())
 						) {
 							try {
-								final List<O> finalResults = driver.getAll();
+								final var finalResults = driver.getAll();
 								if(finalResults != null) {
-									final int finalResultsCount = finalResults.size();
+									final var finalResultsCount = finalResults.size();
 									if(finalResultsCount > 0) {
 										Loggers.MSG.debug(
 											"{}: the driver \"{}\" returned {} final I/O " +
@@ -718,7 +706,7 @@ implements LoadController<I, O> {
 
 		if(latestIoResultsByItem != null && ioResultsOutput != null) {
 			try {
-				final int ioResultCount = latestIoResultsByItem.size();
+				final var ioResultCount = latestIoResultsByItem.size();
 				Loggers.MSG.info(
 					"{}: please wait while performing {} I/O results output...", id, ioResultCount
 				);
@@ -772,7 +760,7 @@ implements LoadController<I, O> {
 			generatorByOrigin.clear();
 			driverByGenerator.clear();
 		}
-		for(final Coroutine transferCoroutine : resultsTransferCoroutines) {
+		for(final var transferCoroutine : resultsTransferCoroutines) {
 			try {
 				transferCoroutine.close();
 			} catch(final IOException e) {

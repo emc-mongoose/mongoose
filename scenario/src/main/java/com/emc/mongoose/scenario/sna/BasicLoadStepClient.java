@@ -4,10 +4,10 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
+import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.svc.Service;
@@ -24,6 +24,8 @@ import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.ByteArrayOutputStream;
@@ -34,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +45,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class BasicLoadStepClient
@@ -50,10 +54,12 @@ implements LoadStepClient {
 
 	private final LoadStep loadStep;
 	private final Config actualConfig;
+	private final Map<LoadStepService, MetricsSnapshotsSupplierCoroutine> metricsSnapshotsSuppliers;
 
 	public BasicLoadStepClient(final LoadStep loadStep, final Config actualConfig) {
 		this.loadStep = loadStep;
 		this.actualConfig = actualConfig;
+		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
 
 	private List<LoadStepService> stepSvcs = null;
@@ -100,6 +106,11 @@ implements LoadStepClient {
 				stepSvc -> {
 					try {
 						stepSvc.start();
+						final var snapshotsFetcher = new RemoteMetricsSnapshotsSupplierCoroutine(
+							ServiceTaskExecutor.INSTANCE, stepSvc
+						);
+						snapshotsFetcher.start();
+						metricsSnapshotsSuppliers.put(stepSvc, snapshotsFetcher);
 					} catch(final RemoteException | IllegalStateException e) {
 						LogUtil.exception(
 							Level.WARN, e, "Failed to start the step service {}",  stepSvc
@@ -116,7 +127,7 @@ implements LoadStepClient {
 
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
 
-		final Map<String, Config> configSlices = nodeAddrs
+		final var configSlices = nodeAddrs
 			.stream()
 			.collect(
 				Collectors.toMap(
@@ -131,18 +142,21 @@ implements LoadStepClient {
 		if(nodeCount > 1 && countLimit > 0) {
 			final var countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
 			var remainingCountLimit = countLimit;
-			for(final var nodeAddr : configSlices.keySet()) {
-				final var limitConfigSlice = configSlices
-					.get(nodeAddr)
+			for(final var configEntry : configSlices.entrySet()) {
+				final var limitConfigSlice = configEntry.getValue()
 					.getTestConfig()
 					.getStepConfig()
 					.getLimitConfig();
 				if(remainingCountLimit > countLimitPerNode) {
-					Loggers.MSG.info("Node \"{}\": count limit = {}", nodeAddr, countLimitPerNode);
+					Loggers.MSG.info(
+						"Node \"{}\": count limit = {}", configEntry.getKey(), countLimitPerNode
+					);
 					limitConfigSlice.setCount(countLimitPerNode);
 					remainingCountLimit -= countLimitPerNode;
 				} else {
-					Loggers.MSG.info("Node \"{}\": count limit = {}", nodeAddr, remainingCountLimit);
+					Loggers.MSG.info(
+						"Node \"{}\": count limit = {}", configEntry.getKey(), remainingCountLimit
+					);
 					limitConfigSlice.setCount(remainingCountLimit);
 					remainingCountLimit = 0;
 				}
@@ -263,7 +277,7 @@ implements LoadStepClient {
 
 		final var itemConfig = config.getItemConfig();
 		final var itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
+		final var itemFactory = ItemType.getItemFactory(itemType);
 		final var itemInputConfig = itemConfig.getInputConfig();
 		final var itemInputFile = itemInputConfig.getFile();
 
@@ -467,7 +481,7 @@ implements LoadStepClient {
 		final var itemsBuff = new ArrayList<>(batchSize);
 
 		int n;
-		var out = itemsOutByNode.get(nodeAddrs.get(0));
+		final var out = itemsOutByNode.get(nodeAddrs.get(0));
 
 		while(true) {
 
@@ -532,7 +546,7 @@ implements LoadStepClient {
 		final Map<String, Config> configSlices, final String nodeAddrWithPort
 	) {
 
-		LoadStepManagerService stepMgrSvc;
+		final LoadStepManagerService stepMgrSvc;
 		try {
 			stepMgrSvc = ServiceUtil.resolve(
 				nodeAddrWithPort, LoadStepManagerService.SVC_NAME
@@ -545,7 +559,7 @@ implements LoadStepClient {
 			return null;
 		}
 
-		String stepSvcName;
+		final String stepSvcName;
 		try {
 			stepSvcName = stepMgrSvc.getStepService(
 				getTypeName(), configSlices.get(nodeAddrWithPort)
@@ -558,7 +572,7 @@ implements LoadStepClient {
 			return null;
 		}
 
-		LoadStepService stepSvc;
+		final LoadStepService stepSvc;
 		try {
 			stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
 		} catch(final Exception e) {
@@ -711,8 +725,23 @@ implements LoadStepClient {
 	}
 
 	@Override
-	public final void doClose()
-	throws RemoteException {
+	protected final void doClose() {
+
+		metricsSnapshotsSuppliers
+			.values()
+			.parallelStream()
+			.forEach(
+				snapshotsFetcher -> {
+					try {
+						snapshotsFetcher.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to close the remote metrics snapshot fetcher"
+						);
+					}
+				}
+			);
+		metricsSnapshotsSuppliers.clear();
 
 		stepSvcs
 			.parallelStream()
@@ -720,7 +749,7 @@ implements LoadStepClient {
 		stepSvcs.clear();
 		stepSvcs = null;
 
-		if(itemInputFileSvcs != null) {
+		if(null != itemInputFileSvcs) {
 			itemInputFileSvcs
 				.entrySet()
 				.parallelStream()
@@ -730,9 +759,8 @@ implements LoadStepClient {
 			itemInputFileSvcs = null;
 		}
 
-		if(itemOutputFileSvcs != null) {
-			final String itemOutputFile = actualConfig
-				.getItemConfig().getOutputConfig().getFile();
+		if(null != itemOutputFileSvcs) {
+			final var itemOutputFile = actualConfig.getItemConfig().getOutputConfig().getFile();
 			transferItemOutputData(itemOutputFileSvcs, itemOutputFile);
 			itemOutputFileSvcs
 				.entrySet()
@@ -743,7 +771,7 @@ implements LoadStepClient {
 			itemOutputFileSvcs = null;
 		}
 
-		if(ioTraceLogFileSvcs != null) {
+		if(null != ioTraceLogFileSvcs) {
 			ioTraceLogFileSvcs
 				.values()
 				.parallelStream()
@@ -802,7 +830,7 @@ implements LoadStepClient {
 	}
 
 	private static LoadStepService closeStepSvc(final LoadStepService stepSvc) {
-		if(stepSvc != null) {
+		if(null != stepSvc) {
 			try {
 				stepSvc.close();
 			} catch(final Exception e) {
@@ -821,7 +849,7 @@ implements LoadStepClient {
 	private static FileService closeFileSvc(
 		final FileService fileSvc, final String nodeAddrWithPort
 	) {
-		if(fileSvc != null) {
+		if(null != fileSvc) {
 			try {
 				fileSvc.close();
 			} catch(final IOException e) {
@@ -843,13 +871,13 @@ implements LoadStepClient {
 			byte[] data;
 			while(true) {
 				data = ioTraceLogFileSvc.read();
-				if(data.length == 0) {
+				if(0 == data.length) {
 					break; // EOF
 				}
 				Loggers.IO_TRACE.info(new String(data));
 			}
 		} catch(final RemoteException e) {
-			final Throwable cause = e.getCause();
+			final var cause = e.getCause();
 			if(!(cause instanceof EOFException)) {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to read the data from the remote file"
@@ -890,24 +918,18 @@ implements LoadStepClient {
 	}
 
 	@Override
-	public final MetricsSnapshot metricsSnapshot(final int ioTypeCode) {
-		return null;
+	public final Int2ObjectMap<MetricsSnapshot> metricsSnapshots() {
+		throw new IllegalStateException();
 	}
 
 	@Override
-	public final List<MetricsSnapshot> remoteMetricsSnapshots(final int ioTypeCode) {
-		return stepSvcs
+	public final List<MetricsSnapshot> remoteMetricsSnapshots(final int originCode) {
+		return metricsSnapshotsSuppliers
+			.values()
 			.stream()
-			.map(
-				stepSvc -> {
-					try {
-						return stepSvc.metricsSnapshot(ioTypeCode);
-					} catch(final RemoteException e) {
-						LogUtil.exception(Level.WARN, e, "Failed to fetch the metrics snapshot");
-						return null;
-					}
-				}
-			)
+			.map(Supplier::get)
+			.filter(Objects::nonNull)
+			.map(metricsSnapshots -> metricsSnapshots.get(originCode))
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
 	}

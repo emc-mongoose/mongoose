@@ -196,72 +196,72 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final String getStepId() {
+	public final String stepId() {
 		return stepId;
 	}
 	//
 	@Override
-	public final IoType getIoType() {
+	public final IoType ioType() {
 		return ioType;
 	}
 	//
 	@Override
-	public final int getNodeCount() {
+	public final int nodeCount() {
 		return 1;
 	}
 	//
 	@Override
-	public final int getConcurrency() {
+	public final int concurrency() {
 		return concurrency;
 	}
 	//
 	@Override
-	public final int getConcurrencyThreshold() {
+	public final int concurrencyThreshold() {
 		return thresholdConcurrency;
 	}
 
 	@Override
-	public final int getActualConcurrency() {
+	public final int actualConcurrency() {
 		return lastConcurrency = actualConcurrencyGauge.getAsInt();
 	}
 	//
 	@Override
-	public final SizeInBytes getItemDataSize() {
+	public final SizeInBytes itemDataSize() {
 		return itemDataSize;
 	}
 	//
 	@Override
-	public final boolean getStdOutColorFlag() {
+	public final boolean stdOutColorEnabled() {
 		return stdOutColorFlag;
 	}
 	//
 	@Override
-	public final boolean getAvgPersistFlag() {
+	public final boolean avgPersistEnabled() {
 		return avgPersistFlag;
 	}
 	//
 	@Override
-	public final boolean getSumPersistFlag() {
+	public final boolean sumPersistEnabled() {
 		return sumPersistFlag;
 	}
 	//
 	@Override
-	public final boolean getPerfDbResultsFileFlag() {
+	public final boolean perfDbResultsFileEnabled() {
 		return perfDbResultsFileFlag;
 	}
 	//
 	@Override
-	public final long getOutputPeriodMillis() {
+	public final long outputPeriodMillis() {
 		return outputPeriodMillis;
 	}
 	//
 	@Override
-	public final long getLastOutputTs() {
+	public final long lastOutputTs() {
 		return lastOutputTs;
 	}
 	
 	@Override
-	public final void setLastOutputTs(final long ts) {
+	public final void lastOutputTs(final long ts) {
 		lastOutputTs = ts;
 	}
 	//
@@ -297,7 +297,7 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final MetricsSnapshot getLastSnapshot() {
+	public final MetricsSnapshot lastSnapshot() {
 		if(lastSnapshot == null) {
 			refreshLastSnapshot();
 		}
@@ -305,12 +305,12 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final void setMetricsListener(final MetricsListener metricsListener) {
+	public final void metricsListener(final MetricsListener metricsListener) {
 		this.metricsListener = metricsListener;
 	}
 	//
 	@Override
-	public final boolean isThresholdStateEntered() {
+	public final boolean thresholdStateEntered() {
 		return thresholdMetricsCtx != null && thresholdMetricsCtx.isStarted();
 	}
 	//
@@ -329,7 +329,7 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final MetricsContext getThresholdMetrics()
+	public final MetricsContext thresholdMetrics()
 	throws IllegalStateException {
 		if(thresholdMetricsCtx == null) {
 			throw new IllegalStateException("Nested metrics context is not exist");
@@ -338,7 +338,7 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final boolean isThresholdStateExited() {
+	public final boolean thresholdStateExited() {
 		return thresholdStateExitedFlag;
 	}
 	//
@@ -418,52 +418,52 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getSuccCount() {
+		public final long succCount() {
 			return countSucc;
 		}
 		//
 		@Override
-		public final double getSuccRateMean() {
+		public final double succRateMean() {
 			return elapsedTimeMillis == 0 ? 0 : 1000.0 * countSucc / elapsedTimeMillis;
 		}
 		//
 		@Override
-		public final double getSuccRateLast() {
+		public final double succRateLast() {
 			return succRateLast;
 		}
 		//
 		@Override
-		public final long getFailCount() {
+		public final long failCount() {
 			return countFail;
 		}
 		//
 		@Override
-		public final double getFailRateMean() {
+		public final double failRateMean() {
 			return elapsedTimeMillis == 0 ? 0 : 1000.0 * countFail / elapsedTimeMillis;
 		}
 		//
 		@Override
-		public final double getFailRateLast() {
+		public final double failRateLast() {
 			return failRateLast;
 		}
 		//
 		@Override
-		public final long getByteCount() {
+		public final long byteCount() {
 			return countByte;
 		}
 		//
 		@Override
-		public final double getByteRateMean() {
+		public final double byteRateMean() {
 			return elapsedTimeMillis == 0 ? 0 : 1000.0 * countByte / elapsedTimeMillis;
 		}
 		//
 		@Override
-		public final double getByteRateLast() {
+		public final double byteRateLast() {
 			return byteRateLast;
 		}
 		//
 		@Override
-		public final long getDurationMin() {
+		public final long durationMin() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -471,7 +471,7 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getDurationLoQ() {
+		public final long durationLoQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -479,7 +479,7 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getDurationMed() {
+		public final long durationMed() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -487,7 +487,7 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getDurationHiQ() {
+		public final long durationHiQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -495,7 +495,7 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getDurationMax() {
+		public final long durationMax() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -503,12 +503,12 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getDurationSum() {
+		public final long durationSum() {
 			return sumDur;
 		}
 		//
 		@Override
-		public final double getDurationMean() {
+		public final double durationMean() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -516,12 +516,12 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long[] getDurationValues() {
+		public final long[] durationValues() {
 			return durValues;
 		}
 		//
 		@Override
-		public final long getLatencyMin() {
+		public final long latencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -529,7 +529,7 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getLatencyLoQ() {
+		public final long latencyLoQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -537,7 +537,7 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getLatencyMed() {
+		public final long latencyMed() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -545,14 +545,14 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getLatencyHiQ() {
+		public final long latencyHiQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
 			return (long) latSnapshot.getValue(0.75);
 		}//
 		@Override
-		public final long getLatencyMax() {
+		public final long latencyMax() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -560,12 +560,12 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long getLatencySum() {
+		public final long latencySum() {
 			return sumLat;
 		}
 		//
 		@Override
-		public final double getLatencyMean() {
+		public final double latencyMean() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -573,27 +573,27 @@ implements MetricsContext {
 		}
 		//
 		@Override
-		public final long[] getLatencyValues() {
+		public final long[] latencyValues() {
 			return latValues;
 		}
 		//
 		@Override
-		public final long getStartTimeMillis() {
+		public final long startTimeMillis() {
 			return startTimeMillis;
 		}
 		
 		@Override
-		public final long getElapsedTimeMillis() {
+		public final long elapsedTimeMillis() {
 			return elapsedTimeMillis;
 		}
 
 		@Override
-		public final int getActualConcurrencyLast() {
+		public final int actualConcurrencyLast() {
 			return actualConcurrencyLast;
 		}
 
 		@Override
-		public final double getActualConcurrencyMean() {
+		public final double actualConcurrencyMean() {
 			return actualConcurrencyMean;
 		}
 	}

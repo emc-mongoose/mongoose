@@ -62,7 +62,7 @@ implements CompositeDataIoTask<I> {
 	}
 
 	@Override
-	public final List<? extends PartialDataIoTask<I>> getSubTasks() {
+	public final List<? extends PartialDataIoTask<I>> subTasks() {
 
 		if(!subTasks.isEmpty()) {
 			return subTasks;
@@ -77,7 +77,7 @@ implements CompositeDataIoTask<I> {
 			nextSubTask = new BasicPartialDataIoTask<>(
 				originCode, ioType, nextPart, srcPath, dstPath, credential, i, this
 			);
-			nextSubTask.setSrcPath(srcPath);
+			nextSubTask.srcPath(srcPath);
 			subTasks.add(nextSubTask);
 		}
 		if(tailPartSize > 0) {
@@ -85,7 +85,7 @@ implements CompositeDataIoTask<I> {
 			nextSubTask = new BasicPartialDataIoTask<>(
 				originCode, ioType, nextPart, srcPath, dstPath, credential, equalPartsCount, this
 			);
-			nextSubTask.setSrcPath(srcPath);
+			nextSubTask.srcPath(srcPath);
 			subTasks.add(nextSubTask);
 		}
 
@@ -95,7 +95,7 @@ implements CompositeDataIoTask<I> {
 	}
 
 	@Override
-	public final void subTaskCompleted() {
+	public final void markSubTaskCompleted() {
 		pendingSubTasksCount.decrementAndGet();
 	}
 
@@ -105,7 +105,7 @@ implements CompositeDataIoTask<I> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public final BasicCompositeDataIoTask<I> getResult() {
+	public final BasicCompositeDataIoTask<I> result() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return new BasicCompositeDataIoTask<>(this);
 	}
