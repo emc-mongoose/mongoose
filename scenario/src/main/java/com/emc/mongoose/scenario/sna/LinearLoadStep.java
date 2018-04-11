@@ -138,43 +138,22 @@ extends LoadStepBase {
 		final var itemDataSize = actualConfig.getItemConfig().getDataConfig().getSize();
 		final var concurrency = actualConfig.getLoadConfig().getLimitConfig().getConcurrency();
 		final var id = stepConfig.getId();
-		if(isDistributed()) {
-			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
-			metricsByOrigin.put(
-				originCode,
-				new AggregatingMetricsContext(
-					id,
-					ioType,
-					nodeCount,
-					concurrency * nodeCount,
-					(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
-					itemDataSize,
-					(int) metricsConfig.getAverageConfig().getPeriod(),
-					outputConfig.getColor(),
-					metricsConfig.getAverageConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
-					() -> remoteMetricsSnapshots(originCode)
-				)
-			);
-		} else {
-			metricsByOrigin.put(
-				originCode,
-				new BasicMetricsContext(
-					id,
-					ioType,
-					this::actualConcurrencyLocal,
-					concurrency,
-					(int) (concurrency * metricsConfig.getThreshold()),
-					itemDataSize,
-					(int) metricsConfig.getAverageConfig().getPeriod(),
-					outputConfig.getColor(),
-					metricsConfig.getAverageConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPersist(),
-					metricsConfig.getSummaryConfig().getPerfDbResultsFile()
-				)
-			);
-		}
+		metricsByOrigin.put(
+			originCode,
+			new BasicMetricsContext(
+				id,
+				ioType,
+				this::actualConcurrencyLocal,
+				concurrency,
+				(int) (concurrency * metricsConfig.getThreshold()),
+				itemDataSize,
+				(int) metricsConfig.getAverageConfig().getPeriod(),
+				outputConfig.getColor(),
+				metricsConfig.getAverageConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+			)
+		);
 
 		final var driverByGenerator = new HashMap<LoadGenerator, StorageDriver>();
 		driverByGenerator.put(generator, driver);

@@ -1,9 +1,11 @@
 package com.emc.mongoose.scenario.sna;
 
+import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -91,9 +93,8 @@ implements LoadStep, Runnable {
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			if(isDistributed()) {
-				stepClient = new BasicLoadStepClient(this, actualConfig);
-				stepClient.start();
+			if(distributedFlag) {
+				doStartRemote(actualConfig);
 			} else {
 				doStartLocal(actualConfig);
 			}
@@ -121,8 +122,40 @@ implements LoadStep, Runnable {
 
 	protected abstract void init();
 
-	protected final boolean isDistributed() {
-		return distributedFlag;
+	private void doStartRemote(final Config actualConfig)
+	throws RemoteException {
+
+		final var stepConfig = actualConfig.getTestConfig().getStepConfig();
+		final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
+		final var ioType = IoType.valueOf(
+			actualConfig.getLoadConfig().getType().toUpperCase()
+		);
+		final var concurrency = actualConfig
+			.getLoadConfig().getLimitConfig().getConcurrency();
+		final var outputConfig = actualConfig.getOutputConfig();
+		final var metricsConfig = outputConfig.getMetricsConfig();
+		final var itemDataSize = actualConfig.getItemConfig().getDataConfig().getSize();
+
+		metricsByOrigin.put(
+			0,
+			new AggregatingMetricsContext(
+				id,
+				ioType,
+				nodeCount,
+				concurrency * nodeCount,
+				(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
+				itemDataSize,
+				(int) metricsConfig.getAverageConfig().getPeriod(),
+				outputConfig.getColor(),
+				metricsConfig.getAverageConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
+				() -> remoteMetricsSnapshots(0)
+			)
+		);
+
+		stepClient = new BasicLoadStepClient(this, actualConfig);
+		stepClient.start();
 	}
 
 	protected abstract void doStartLocal(final Config actualConfig);
